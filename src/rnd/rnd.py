@@ -7,19 +7,57 @@ from rnd_model import RNDNetwork
 
 # 定义RND模块
 class RND:
-    def __init__(self, input_dim, output_dim, distance_metric="mse", lr=1e-3):
+    def __init__(self, input_dim, output_dim, distance_metric="mse", 
+                 lr=1e-3, use_normalization=True):
         """
         初始化RND模块。
         :param input_dim: 输入数据的维度
         :param output_dim: 输出数据的维度
         :param distance_metric: 距离度量方案 ("mse", "kld", "cossim", "ce")
         :param lr: 学习率
+        :param use_normalization: 是否开启动态归一化
         """
         self.target_network = RNDNetwork(input_dim, output_dim)  # 目标网络
+        for param in self.target_network.parameters():
+            param.requires_grad = False
+            # 冻结目标网络的参数
         self.predictor_network = RNDNetwork(input_dim, output_dim)  # 预测网络
         self.optimizer = optim.Adam(self.predictor_network.parameters(), lr=lr)  # 优化器
         self.distance_metric = distance_metric  # 距离度量方案
         self.loss_fn = self._get_loss_fn(distance_metric)  # 损失函数
+        # 是否开启动态归一化
+        self.use_normalization = use_normalization
+        # 奖励归一化参数，采用动态归一化方法
+        self.intrinsic_reward_mean = 0.0  # 内在奖励的均值
+        self.intrinsic_reward_std = 1.0  # 内在奖励的标准差
+        self.intrinsic_reward_count = 0  # 内在奖励的计数
+        
+    def _update_reward_normalization(self, intrinsic_reward):
+        """
+        更新内在奖励的归一化参数。
+        :param intrinsic_reward: 当前批次的内在奖励
+        """
+        self.intrinsic_reward_count += 1
+        delta = intrinsic_reward - self.intrinsic_reward_mean
+        self.intrinsic_reward_mean += delta / self.intrinsic_reward_count
+        delta2 = intrinsic_reward - self.intrinsic_reward_mean
+        self.intrinsic_reward_std += delta * delta2
+        
+    def _normalize_reward(self, intrinsic_reward):
+        """
+        归一化内在奖励。
+        :param intrinsic_reward: 原始内在奖励
+        :return: 归一化后的内在奖励
+        """
+        if self.use_normalization:
+            # 更新归一化参数
+            self._update_reward_normalization(intrinsic_reward)
+            # 归一化奖励
+            normalized_intrinsic_reward = (intrinsic_reward - self.intrinsic_reward_mean) / (self.intrinsic_reward_std + 1e-8)
+            return normalized_intrinsic_reward
+        else:
+            # 不进行归一化，直接返回原始奖励
+            return intrinsic_reward
 
     def _get_loss_fn(self, distance_metric):
         """
@@ -56,7 +94,8 @@ class RND:
             intrinsic_reward = torch.sum(self.loss_fn(predictor_output, target_output), dim=-1).item()
         else:
             intrinsic_reward = torch.mean(self.loss_fn(target_output, predictor_output)).item()
-        return intrinsic_reward
+        # 返回归一化或原始奖励
+        return self._normalize_reward(intrinsic_reward)
 
     def update_predictor(self, state):
         """
