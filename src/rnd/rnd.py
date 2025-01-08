@@ -26,6 +26,9 @@ class RND:
         self.distance_metric = distance_metric  # 距离度量方案
         self.loss_fn = self._get_loss_fn(distance_metric)  # 损失函数
         # 是否开启动态归一化
+        '''
+        动态归一化方法在强化学习中具有显著优势，尤其是在实时性、内存效率、计算效率和适应性方面。通过增量式更新奖励的均值和标准差，动态归一化能够实时提供准确的归一化奖励信号，确保代理的策略更新稳定且高效。相比之下，全局归一化方法在这些方面存在明显不足，因此在实际应用中通常选择动态归一化。
+        '''
         self.use_normalization = use_normalization
         # 奖励归一化参数，采用动态归一化方法
         self.intrinsic_reward_mean = 0.0  # 内在奖励的均值
