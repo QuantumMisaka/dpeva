@@ -1,3 +1,4 @@
 build
 src/dpeva/dpeva.egg-info/*
 src/dpeva/*/*pycache*
+src/*/*pycache*
