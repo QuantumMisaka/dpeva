@@ -11,15 +11,5 @@ __author__ = "James Misaka"
 from .sampling import clustering, direct, pca, stratified_sampling
 from .uncertain import rnd, rnd_models
 
-# 定义包的公开接口
-__all__ = [
-    "clustering",
-    "direct",
-    "pca",
-    "stratified_sampling",
-    "rnd",
-    "rnd_models",
-]
-
 # 包的初始化代码（可选）
-print(f"Initializing dpeva version {__version__}")
+print(f"Initializing DP-EVA version {__version__}")

@@ -10,8 +10,8 @@ setup(
     author_email='ff6757442@gmail.com',
     description='A package for Deep Potential EVolution Accelerator (DP-EVA)',
     long_description=long_description,
-    packages=find_packages('src/dpeva'),
-    package_dir={'': 'src/dpeva'},
+    packages=find_packages('src'),
+    package_dir={'': 'src'},
     classifiers = [
     "Natural Language :: English",
     "Operating System :: POSIX :: Linux",
