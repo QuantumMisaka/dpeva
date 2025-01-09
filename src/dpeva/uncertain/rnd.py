@@ -9,6 +9,15 @@ import logging
 import time
 from .rnd_models import RNDNetwork
 
+ # Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    handlers=[
+        logging.FileHandler("rnd_training.log"),  # output to file
+        logging.StreamHandler()  # output to console
+    ]
+)
 
 # Define the RND module
 class RandomNetworkDistillation:
@@ -132,7 +141,7 @@ class RandomNetworkDistillation:
         return loss.item()  # Return the loss value of the current batch
     
     def train(self, train_data, num_epochs=40, batch_size=2048, initial_lr=1e-3, 
-              gamma=0.90, loss_down_step=5, log_file="rnd_training.log"):
+              gamma=0.90, loss_down_step=5,):
         """
         Train the RND model.
         :param train_data: Training data, shape (num_samples, input_dim)
@@ -142,15 +151,7 @@ class RandomNetworkDistillation:
         :param gamma: Learning rate decay factor, default is 0.90
         :param loss_down_ratio: Learning rate decay step, default is 10
         """
-         # Configure logging
-        logging.basicConfig(
-            level=logging.INFO,
-            format="%(asctime)s - %(levelname)s - %(message)s",
-            handlers=[
-                logging.FileHandler(log_file),  # output to file
-                logging.StreamHandler()  # output to console
-            ]
-        )
+        
         # Set the initial learning rate for the optimizer
         for param_group in self.optimizer.param_groups:
             param_group['lr'] = initial_lr

@@ -3,3 +3,5 @@ scikit-learn
 torch
 dpdata
 ase
+matplotlib
+seaborn

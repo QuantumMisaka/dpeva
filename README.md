@@ -12,7 +12,7 @@ Methods used in this project:
 - - Random Network Distillation (RND)
 - - Gaussian Mixture Model (GMM) (to be implemented)
 
-## Installation:
+## Installation(DO NOT Complete):
 
 Install the package via pip:
 ```bash
