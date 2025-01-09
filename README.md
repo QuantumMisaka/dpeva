@@ -8,5 +8,5 @@ Methods to be implemented:
 - Data sampling:
 - - DIRECT (in [maml](https://github.com/materialsvirtuallab/maml) package)
 - Uncertainty estimation based on descriptor space:
+- - Random Network Distillation (RND)
 - - Gaussian Mixture Model (GMM)
-- - Random Network Distribution (RND)

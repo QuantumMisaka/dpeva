@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.optim as optim
 import numpy as np
 import unittest
-from rnd_model import RNDNetwork
+from rnd.rndmodels import RNDNetwork
 
 # 定义RND模块
 class RND:
