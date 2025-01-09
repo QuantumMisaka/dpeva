@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dpeva"
+version = "0.1.0"
+description = "A package for Deep Potential EVolution Accelerator (DP-EVA)"
+readme = "README.md"
+authors = [
+    { name = "James Misaka", email = "ff6757442@gmail.com" }
+]
+license = { file = "LICENCE" }
+classifiers = [
+    "Natural Language :: English",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3 :: Only",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Scientific/Engineering :: Physics",
+    "Topic :: Scientific/Engineering :: Chemistry",
+    "Environment :: Console",
+]
+dependencies = [
+    "numpy",
+    "scikit-learn",
+    "torch",
+    "dpdata",
+    "ase",
+    "matplotlib",
+    "seaborn",
+]
+requires-python = ">=3.8"
+
+[project.urls]
+Homepage = "https://github.com/QuantumMisaka/dpeva"
+
+[tool.setuptools.packages.find]
+where = ["src"]
