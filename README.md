@@ -1,12 +1,25 @@
-# dpeva
-Deep Potential Evolution Accelerator
+# DP-EVA
+Deep Potential EVolution Accelerator
 
 ## Target:
-Using **single model** cuncurrent training to accelerate the evolution of deep potential models.
+Using **single model** cuncurrent learning method to accelerate the evolution of deep potential (and other machine learning interatomic potentials).
 
-Methods to be implemented:
+Methods used in this project:
 - Data sampling:
-- - DIRECT (in [maml](https://github.com/materialsvirtuallab/maml) package)
+- - DIRECT (from [maml](https://github.com/materialsvirtuallab/maml) package)
+- - modified DIRECT (to be implemented)
 - Uncertainty estimation based on descriptor space:
 - - Random Network Distillation (RND)
-- - Gaussian Mixture Model (GMM)
+- - Gaussian Mixture Model (GMM) (to be implemented)
+
+## Installation:
+
+Install the package via pip:
+```bash
+pip install git+https://github.com/quantummisaka/dpeva.git
+```
+
+Or clone the repository and install the package:
+```bash
+pip install .
+```

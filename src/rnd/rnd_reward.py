@@ -1,1 +1,0 @@
-# wirte rnd training re
