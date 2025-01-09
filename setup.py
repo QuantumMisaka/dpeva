@@ -6,8 +6,8 @@ setup(
     author='James Misaka',
     author_email='ff6757442@gmail.com',
     description='A package for Deep Potential EVolution Accelerator (DP-EVA)',
-    packages=find_packages(where='src'),
-    package_dir={'': 'src'},
+    packages=find_packages(where='dpeva'),
+    package_dir={'': 'dpeva'},
     install_requires=[
         "numpy",
         "scikit-learn",
