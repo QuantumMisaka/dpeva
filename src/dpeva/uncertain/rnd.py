@@ -118,6 +118,23 @@ class RandomNetworkDistillation:
             intrinsic_reward = torch.mean(self.loss_fn(target_output, predictor_output)).item()
         # Return normalized or raw reward
         return self._normalize_reward(intrinsic_reward)
+    
+    def eval_intrinsic_rewards(self, target_vector, batch_size=4096):
+        """
+        Calculate the intrinsic rewards for the target vector.
+        :param target_vector: Target vector, shape (num_samples, input_dim)
+        :param batch_size: Batch size, default is 4096
+        """
+        logger.info(f"Calculating intrinsic rewards for target vector of size {len(target_vector)} with batch size {batch_size}")
+        intrinsic_rewards = []
+        for i in range(0, len(target_vector), batch_size):
+            logger.info(f"Calculating intrinsic rewards for batch {i // batch_size + 1}/{len(target_vector) // batch_size}")
+            batch = target_vector[i:i + batch_size]  
+            batch_rewards = [self.get_intrinsic_reward(state) for state in batch]  
+            intrinsic_rewards.extend(batch_rewards)
+        intrinsic_rewards = np.array(intrinsic_rewards)
+        logger.info(f"Intrinsic rewards calculation done")
+        return intrinsic_rewards
 
     def update_predictor(self, state):
         """
@@ -184,20 +201,6 @@ class RandomNetworkDistillation:
             # Update the learning rate
             if epoch % loss_down_step == 0:
                 scheduler.step()
-    
-    def eval_intrisic_rewards(self, target_vector, batch_size=4096):
-        """
-        Calculate the intrinsic rewards for the target vector.
-        :param target_vector: Target vector, shape (num_samples, input_dim)
-        :param batch_size: Batch size, default is 4096
-        """
-        intrinsic_rewards = []
-        for i in range(0, len(target_vector), batch_size):
-            batch = target_vector[i:i + batch_size]  
-            batch_rewards = [self.get_intrinsic_reward(state) for state in batch]  
-            intrinsic_rewards.extend(batch_rewards)
-        intrinsic_rewards = np.array(intrinsic_rewards)
-        return intrinsic_rewards
 
     def save_predictor_network(self, path):
         """
