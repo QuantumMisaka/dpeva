@@ -1,9 +1,9 @@
 """Models for the Random Network Distillation (RND) algorithm."""
 
+from __future__ import annotations
+
 import torch
 import torch.nn as nn
-import torch.optim as optim
-import numpy as np
 import unittest
 
 

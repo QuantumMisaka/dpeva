@@ -7,10 +7,11 @@ import logging
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.decomposition import PCA
 
-logging.basicConfig()
+logging.basicConfig(
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+)
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
-
 
 class PrincipalComponentAnalysis(BaseEstimator, TransformerMixin):
     """Wrap around PCA in scikit-learn to support weighting PCs."""

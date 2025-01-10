@@ -1,5 +1,7 @@
 """Main module for Random Network Distillation (RND)"""
 
+from __future__ import annotations
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -9,15 +11,11 @@ import logging
 import time
 from .rnd_models import RNDNetwork
 
- # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    handlers=[
-        logging.FileHandler("rnd_training.log"),  # output to file
-        logging.StreamHandler()  # output to console
-    ]
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
 )
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 # Define the RND module
 class RandomNetworkDistillation:
@@ -49,7 +47,6 @@ class RandomNetworkDistillation:
         By incrementally updating the mean and standard deviation of rewards, dynamic normalization 
         can provide accurate normalized reward signals in real-time,
         ensuring stable and efficient policy updates for the agent. 
-        In contrast, global normalization methods have obvious shortcomings in these aspects, so dynamic normalization is usually preferred in practical applications.
         '''
         self.use_normalization = use_normalization # Whether to enable dynamic normalization
         self.intrinsic_reward_mean = 0.0  # Mean of intrinsic rewards
@@ -164,7 +161,7 @@ class RandomNetworkDistillation:
             epoch_start_time = time.time()  # Record the start time of the epoch
             epoch_loss = 0.0  # Record the total loss of the current epoch
 
-            logging.info(f"Epoch {epoch + 1}/{num_epochs} started, learning rate: {scheduler.get_last_lr()[0]:.6f}")
+            logger.info(f"Epoch {epoch + 1}/{num_epochs} started, learning rate: {scheduler.get_last_lr()[0]:.6f}")
 
             # Shuffle the data
             np.random.shuffle(train_data)
@@ -180,7 +177,7 @@ class RandomNetworkDistillation:
             epoch_time = time.time() - epoch_start_time  # Calculate the time taken for the epoch
 
             # Log the results
-            logging.info(f"Epoch {epoch + 1}/{num_epochs} completed, "
+            logger.info(f"Epoch {epoch + 1}/{num_epochs} completed, "
                          f"Time: {epoch_time:.2f}s, "
                          f"Loss: {epoch_loss:.6f}")
 
@@ -208,7 +205,7 @@ class RandomNetworkDistillation:
         :param path: Path to save the model
         """
         torch.save(self.predictor_network.state_dict(), path)
-        logging.info(f"Predictor network saved to {path}")
+        logger.info(f"Predictor network saved to {path}")
 
     def load_predictor_network(self, path):
         """
@@ -217,7 +214,7 @@ class RandomNetworkDistillation:
         """
         self.predictor_network.load_state_dict(torch.load(path))
         self.predictor_network.eval()
-        logging.info(f"Predictor network loaded from {path}")
+        logger.info(f"Predictor network loaded from {path}")
 
     def save_target_network(self, path):
         """
@@ -225,7 +222,7 @@ class RandomNetworkDistillation:
         :param path: Path to save the model
         """
         torch.save(self.target_network.state_dict(), path)
-        logging.info(f"Target network saved to {path}")
+        logger.info(f"Target network saved to {path}")
 
     def load_target_network(self, path):
         """
@@ -234,7 +231,7 @@ class RandomNetworkDistillation:
         """
         self.target_network.load_state_dict(torch.load(path))
         self.target_network.eval()
-        logging.info(f"Target network loaded from {path}")
+        logger.info(f"Target network loaded from {path}")
 
 # Unit tests
 class TestRND(unittest.TestCase):

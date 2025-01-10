@@ -8,7 +8,9 @@ import warnings
 import numpy as np
 from sklearn.base import BaseEstimator, TransformerMixin
 
-logging.basicConfig()
+logging.basicConfig(
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+)
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
