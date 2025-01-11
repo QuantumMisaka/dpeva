@@ -194,7 +194,7 @@ class RandomNetworkDistillation:
 
             # Save the predictor network every `save_freq` batches
             if (batch_idx + 1) % save_freq == 0:
-                predictor_network_path = os.path.join(save_path, f"predictor_network_batch.pth")
+                predictor_network_path = os.path.join(save_path, f"predictor_network.pth")
                 self.save_predictor_network(predictor_network_path)
 
             # Update the learning rate
