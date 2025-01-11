@@ -45,6 +45,7 @@ class RandomNetworkDistillation:
         self.distance_metric = distance_metric # Distance metric
         self.loss_fn = self._get_loss_fn(distance_metric)  # Loss function
 
+
     def _get_loss_fn(self, distance_metric):
         """
         Select the loss function based on the distance metric.
@@ -64,6 +65,7 @@ class RandomNetworkDistillation:
         else:
             raise ValueError(f"Unknown distance metric: {distance_metric}")
 
+
     def get_intrinsic_reward(self, state):
         """
         Calculate the intrinsic reward.
@@ -80,7 +82,7 @@ class RandomNetworkDistillation:
         return intrinsic_reward
     
     
-    def eval_intrinsic_rewards(self, target_vector, batch_size=2048, disp_freq=10):
+    def eval_intrinsic_rewards(self, target_vector, batch_size=2048, disp_freq=2):
         """
         Calculate the intrinsic rewards for the target vector.
         :param target_vector: Target data vector, shape (num_samples, input_dim)
@@ -88,20 +90,21 @@ class RandomNetworkDistillation:
         """
         logger.info(f"Calculating intrinsic rewards for size {len(target_vector)} with batch size {batch_size}")
         intrinsic_rewards = []
-        disped_flag = False
+        disped_flag = True
         for i in range(0, len(target_vector), batch_size):
             num_batches = len(target_vector) // batch_size + 1
             if disped_flag:
                 batch_start_time = time.perf_counter()
                 disped_flag = False
-            logger.info(f"Calculating intrinsic rewards for batch {i // batch_size + 1}/{num_batches}")
+            batch_now = i // batch_size + 1
+            logger.info(f"Calculating intrinsic rewards for batch {batch_now}/{num_batches}")
             batch = target_vector[i:i + batch_size]  
             batch_rewards = [self.get_intrinsic_reward(state) for state in batch]  
             intrinsic_rewards.extend(batch_rewards)
-            if (i + 1) % disp_freq == 0:
+            if batch_now % disp_freq == 0:
                 batch_time = time.perf_counter() - batch_start_time
                 logger.info(
-                    f"Batch {i + 1}/{num_batches} completed, "
+                    f"Batch {batch_now}/{num_batches} completed, "
                     f"Time: {batch_time:.2f}s, ")
                 disped_flag = True
         intrinsic_rewards = np.array(intrinsic_rewards)
@@ -125,7 +128,8 @@ class RandomNetworkDistillation:
         loss.backward()  # Backpropagation
         self.optimizer.step()  # Update parameters
         return loss.item()  # Return the loss value of the current batch
-    
+
+
     def train(self, train_data, 
               num_batches=5000, 
               batch_size=2048, 
@@ -196,6 +200,10 @@ class RandomNetworkDistillation:
             # Update the learning rate
             if (batch_idx + 1) % decay_steps == 0:
                 scheduler.step()
+        
+        # Save the predictor network after training
+        predictor_network_path = os.path.join(save_path, "predictor_network.pth")
+        logger.info(f"Training completed, saving the predictor network to {predictor_network_path}")
 
     def save_predictor_network(self, path):
         """
