@@ -28,3 +28,13 @@ pip install .
 See example directory for usage examples.
 
 More notebook and scripts will be added soon.
+
+## Notice
+
+This project is still under development. Please feel free to open an issue or pull request if you have any suggestions or questions.
+
+Especially, the detailed algorithm and way to use Random Network Distillation (RND) method is still in exploration.
+
+## License
+This project is licensed under the LGPL-v3 License - see the [LICENSE](LICENSE) file for details.
+```

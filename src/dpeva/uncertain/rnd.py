@@ -79,19 +79,31 @@ class RandomNetworkDistillation:
             intrinsic_reward = torch.mean(self.loss_fn(target_output, predictor_output)).item()
         return intrinsic_reward
     
-    def eval_intrinsic_rewards(self, target_vector, batch_size=4096):
+    
+    def eval_intrinsic_rewards(self, target_vector, batch_size=2048, disp_freq=10):
         """
         Calculate the intrinsic rewards for the target vector.
-        :param target_vector: Target vector, shape (num_samples, input_dim)
-        :param batch_size: Batch size, default is 4096
+        :param target_vector: Target data vector, shape (num_samples, input_dim)
+        :param batch_size: Batch size, default is 2048
         """
-        logger.info(f"Calculating intrinsic rewards for target vector of size {len(target_vector)} with batch size {batch_size}")
+        logger.info(f"Calculating intrinsic rewards for size {len(target_vector)} with batch size {batch_size}")
         intrinsic_rewards = []
+        disped_flag = False
         for i in range(0, len(target_vector), batch_size):
-            logger.info(f"Calculating intrinsic rewards for batch {i // batch_size + 1}/{len(target_vector) // batch_size + 1}")
+            num_batches = len(target_vector) // batch_size + 1
+            if disped_flag:
+                batch_start_time = time.perf_counter()
+                disped_flag = False
+            logger.info(f"Calculating intrinsic rewards for batch {i // batch_size + 1}/{num_batches}")
             batch = target_vector[i:i + batch_size]  
             batch_rewards = [self.get_intrinsic_reward(state) for state in batch]  
             intrinsic_rewards.extend(batch_rewards)
+            if (i + 1) % disp_freq == 0:
+                batch_time = time.perf_counter() - batch_start_time
+                logger.info(
+                    f"Batch {i + 1}/{num_batches} completed, "
+                    f"Time: {batch_time:.2f}s, ")
+                disped_flag = True
         intrinsic_rewards = np.array(intrinsic_rewards)
         logger.info(f"Intrinsic rewards calculation done")
         return intrinsic_rewards
