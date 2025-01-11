@@ -29,7 +29,7 @@ class RandomNetworkDistillation:
         :param output_dim: Dimension of the output data
         :param hidden_dim: Dimension of the hidden layer, default is 240
         :param num_residual_blocks: Number of residual blocks, default is 1
-        :param distance_metric: Distance metric ("mse", "kld", "cossim", "ce"), default is "cossim"
+        :param distance_metric: Distance metric ("mse", "kld", "cossim",), default is "cossim"
         :param use_normalization: Whether to enable dynamic normalization, default is False (may result in negative intrinsic rewards)
         :param device: Device to use for computation ('cpu' or 'cuda'), default is 'cpu'
         """
@@ -51,6 +51,7 @@ class RandomNetworkDistillation:
         :return: Corresponding loss function
         """
         if distance_metric == "kld":
+            # the loss of kld is the cross entropy between the target and the predictor
             softmax = nn.Softmax(dim=-1)
             log_softmax = nn.LogSoftmax(dim=-1)
             kld_novelty_func = lambda target, pred: torch.sum(softmax(target) * (log_softmax(target) - log_softmax(pred)), dim=-1)
@@ -59,11 +60,6 @@ class RandomNetworkDistillation:
             return nn.MSELoss(reduction='none')
         elif distance_metric == "cossim":
             return lambda target, pred: -(nn.CosineSimilarity(dim=-1)(target, pred) - 1) 
-        elif distance_metric == "ce":
-            # seems something wrong here
-            softmax = nn.Softmax(dim=-1)
-            log_softmax = nn.LogSoftmax(dim=-1)
-            return lambda target, pred: -torch.sum(softmax(target) * log_softmax(pred), dim=-1)
         else:
             raise ValueError(f"Unknown distance metric: {distance_metric}")
 
