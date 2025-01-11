@@ -22,7 +22,6 @@ class RandomNetworkDistillation:
     def __init__(self, input_dim, output_dim, 
                  hidden_dim=240, num_residual_blocks=1,
                  distance_metric="cossim", 
-                 use_normalization=False,
                  device='cpu'):
         """
         Initialize the RND module.
