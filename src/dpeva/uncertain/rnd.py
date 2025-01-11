@@ -13,7 +13,7 @@ from .rnd_models import RNDNetwork
 import os
 
 logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    format='%(asctime)s - %(levelname)s - %(message)s',
 )
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
