@@ -8,13 +8,14 @@ import gc
 import glob
 import logging
 import torch
+import warnings
 
-datadir = "./data-clean-v2-7-20873-npy"
-modelpath = "./FeCHO-dpa231-v2-7-3heads-100w.pt"
+datadir = "./sampled-data-direct-10p-npy"
+modelpath = "./model.ckpt.pt"
 savedir = "descriptors"
 
 omp = 16
-proc = 4
+#proc = 4
 os.environ['OMP_NUM_THREADS'] = f'{omp}'
 
 def descriptor_from_model(sys: dpdata.LabeledSystem, model:DeepPot):
@@ -34,14 +35,15 @@ for directory in all_set_directories:
     if os.path.exists(coord_path):
         all_directories.add(os.path.dirname(directory))
 all_directories = list(all_directories)
+all_directories.sort()
 
-model = DeepPot(modelpath, head="Target_FTS")
-
+# 配置日志格式，包含时间戳、日志级别和日志信息
 logging.basicConfig(
-    level=logging.INFO,  
-    format='%(asctime)s - %(levelname)s - %(message)s',  
-    datefmt='%Y-%m-%d %H:%M:%S'  
+    level=logging.INFO,  # 设置日志级别为 INFO
+    format='%(asctime)s - %(levelname)s - %(message)s',  # 定义日志格式
+    datefmt='%Y-%m-%d %H:%M:%S'  # 定义时间戳格式
 )
+
 
 logging.info("Start Generating Descriptors")
 
@@ -58,14 +60,21 @@ with open("running", "w") as fo:
             if os.path.exists(f"{save_key}/desc.npy"):
                 logging.info(f"Descriptors for {key} already exist, skip")
                 continue
-        else:
+        model = DeepPot(modelpath, head="Target_FTS")
+        try:
             desc = descriptor_from_model(onedata, model)
-            logging.info(f"Descriptors for {key} generated")
+        except torch.cuda.OutOfMemoryError:
+            warnings.warn(f"CUDA OOM, Skipping {key}")
+            continue
+        except Exception as e:
+            raise e
             
-            np.save(f"{savedir}/{key}/desc.npy", desc)
-            logging.info(f"Descriptors for {key} saved")
-            os.mkdir(save_key)
+        logging.info(f"Descriptors for {key} generated")
+        os.mkdir(save_key)
+        np.save(f"{savedir}/{key}/desc.npy", desc)
+        logging.info(f"Descriptors for {key} saved")
+        del onedata, model, desc
+        torch.cuda.empty_cache()
 
 logging.info("All Done !!!")
 os.system("mv running done")
-
