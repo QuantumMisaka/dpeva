@@ -17,7 +17,7 @@ class ResidualBlock(nn.Module):
         super(ResidualBlock, self).__init__()
         self.fc1 = nn.Linear(hidden_dim, hidden_dim)  # First fully connected layer
         self.fc2 = nn.Linear(hidden_dim, hidden_dim)  # Second fully connected layer
-        self.relu = nn.ReLU()  # Activation function
+        self.relu = nn.LeakyReLU()  # Activation function
 
     def forward(self, x):
         """
@@ -47,7 +47,7 @@ class RNDNetwork(nn.Module):
         self.fc1 = nn.Linear(input_dim, hidden_dim)  # Input layer
         self.residual_blocks = nn.Sequential(*[ResidualBlock(hidden_dim) for _ in range(num_residual_blocks)])  # Multiple residual blocks
         self.fc2 = nn.Linear(hidden_dim, output_dim)  # Output layer
-        self.relu = nn.ReLU()  # Activation function
+        self.relu = nn.LeakyReLU()  # Activation function
 
     def forward(self, x):
         """
