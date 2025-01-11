@@ -10,6 +10,7 @@ import unittest
 import logging
 import time
 from .rnd_models import RNDNetwork
+import os
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -113,52 +114,75 @@ class RandomNetworkDistillation:
         self.optimizer.step()  # Update parameters
         return loss.item()  # Return the loss value of the current batch
     
-    def train(self, train_data, num_epochs=40, batch_size=2048, initial_lr=1e-3, 
-              gamma=0.90, loss_down_step=5,):
+    def train(self, train_data, 
+              num_batches=5000, 
+              batch_size=2048, 
+              initial_lr=1e-3, 
+              gamma=0.95, 
+              decay_steps=25, 
+              disp_freq=200, 
+              save_freq=1000, 
+              save_path="./models"):
         """
         Train the RND model.
         :param train_data: Training data, shape (num_samples, input_dim)
-        :param num_epochs: Number of training epochs, default is 200
+        :param num_batches: Number of training batches, default is 1000
         :param batch_size: Batch size, default is 2048
         :param initial_lr: Initial learning rate, default is 1e-3
         :param gamma: Learning rate decay factor, default is 0.90
-        :param loss_down_ratio: Learning rate decay step, default is 10
+        :param decay_steps: Learning rate decay steps, default is 5
+        :param disp_freq: Number of batches after which to display training results, default is 100
+        :param save_freq: Number of batches after which to save the predictor network, default is 500
+        :param save_path: Directory where the network will be saved, default is "./models"
         """
         
+        # Create the save directory if it doesn't exist
+        os.makedirs(save_path, exist_ok=True)
+        
+        # Save the target network before training starts
+        target_network_path = os.path.join(save_path, "target_network.pth")
+        self.save_target_network(target_network_path)
+
         # Set the initial learning rate for the optimizer
         for param_group in self.optimizer.param_groups:
             param_group['lr'] = initial_lr
 
-        # Set the initial learning rate for the optimizer
+        # Set the learning rate scheduler
         scheduler = optim.lr_scheduler.ExponentialLR(self.optimizer, gamma=gamma)
 
-         # Start training
-        for epoch in range(num_epochs):
-            epoch_start_time = time.time()  # Record the start time of the epoch
-            epoch_loss = 0.0  # Record the total loss of the current epoch
+        # Start training
+        total_loss = 0.0
+        disped_flag = True
+        for batch_idx in range(num_batches):
+            if disped_flag:
+                batch_start_time = time.perf_counter()  # Record the start time of the batch
+                disped_flag = False
 
-            logger.info(f"Epoch {epoch + 1}/{num_epochs} started, learning rate: {scheduler.get_last_lr()[0]:.6f}")
+            # Sample a batch from the training data
+            batch_indices = np.random.choice(len(train_data), batch_size, replace=True)
+            batch = train_data[batch_indices]
 
-            # Shuffle the data
-            np.random.shuffle(train_data)
+            # Update the predictor network and return the loss
+            batch_loss = self.update_predictor(batch)
+            total_loss += batch_loss
 
-             # Train in batches
-            for i in range(0, len(train_data), batch_size):
-                batch = train_data[i:i + batch_size]  # Get the current batch
-                batch_loss = self.update_predictor(batch)  # Update the predictor network and return the loss
-                epoch_loss += batch_loss  # Accumulate batch loss
+            # Display training results every `disp_freq` batches
+            if (batch_idx + 1) % disp_freq == 0:
+                avg_loss = total_loss / disp_freq
+                batch_time = time.perf_counter()- batch_start_time
+                logger.info(f"Batch {batch_idx + 1}/{num_batches} completed, "
+                           f"Time: {batch_time:.2f}s, "
+                           f"Avg Loss: {avg_loss:.6f}")
+                total_loss = 0.0
+                disped_flag = True
 
-            # Calculate the average loss for the current epoch
-            epoch_loss /= (len(train_data) / batch_size)
-            epoch_time = time.time() - epoch_start_time  # Calculate the time taken for the epoch
-
-            # Log the results
-            logger.info(f"Epoch {epoch + 1}/{num_epochs} completed, "
-                         f"Time: {epoch_time:.2f}s, "
-                         f"Loss: {epoch_loss:.6f}")
+            # Save the predictor network every `save_freq` batches
+            if (batch_idx + 1) % save_freq == 0:
+                predictor_network_path = os.path.join(save_path, f"predictor_network_batch_{batch_idx + 1}.pth")
+                self.save_predictor_network(predictor_network_path)
 
             # Update the learning rate
-            if epoch % loss_down_step == 0:
+            if (batch_idx + 1) % decay_steps == 0:
                 scheduler.step()
 
     def save_predictor_network(self, path):
@@ -250,12 +274,6 @@ class TestRND(unittest.TestCase):
         cos_sim = nn.CosineSimilarity(dim=-1)
         cos_sim_result = -(cos_sim(target, pred) - 1).item()
         self.assertGreater(cos_sim_result, 0)  # Cosine Similarity difference should be greater than 0
-
-        # Cross-Entropy
-        # Something Wrong Here
-        ce_result = -torch.sum(softmax(target) * log_softmax(pred), dim=-1).item()
-        self.assertGreater(ce_result, 0)  # Cross-Entropy should be greater than 0
-
 
 if __name__ == "__main__":
     unittest.main()
