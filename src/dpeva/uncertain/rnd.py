@@ -135,7 +135,7 @@ class RandomNetworkDistillation:
               num_batches=5000, 
               batch_size=2048, 
               initial_lr=1e-3, 
-              gamma=0.95, 
+              gamma=0.98, 
               decay_steps=25, 
               disp_freq=200, 
               save_freq=1000, 
@@ -212,11 +212,11 @@ class RandomNetworkDistillation:
             # Update the predictor network and return the loss
             batch_loss = self.update_predictor(batch)
             total_loss += batch_loss
-            global_total_loss += batch_loss
 
             # Display training results every `disp_freq` batches or at the 0th batch
             if batch_idx == 0:
-                logger.info(f"Batch 0 trained, "
+                batch_time = time.perf_counter()- batch_start_time
+                logger.info(f"Batch 0/{num_batches} trained, "
                 f"Time: {batch_time:.2f}s, "
                 f"Avg Loss: {batch_loss:.6f}")
             
@@ -238,11 +238,12 @@ class RandomNetworkDistillation:
             if (batch_idx + 1) % decay_steps == 0:
                 scheduler.step()
         
-        # Log final state after training completes
-        total_time = time.perf_counter() - start_time
-        final_loss = total_loss / (num_batches % disp_freq)
-        logger.info(f"Batch {num_batches} loss: {final_loss:.6f}")
-        logger.info(f"Training completed. Total time: {total_time:.2f}s")
+        # Log final state after training completes if the final batch is not displayed
+        if not disped_flag:
+            total_time = time.perf_counter() - start_time
+            final_loss = total_loss / (num_batches % disp_freq)
+            logger.info(f"Batch {num_batches} loss: {final_loss:.6f}")
+            logger.info(f"Training completed. Total time: {total_time:.2f}s")
 
         # Save the predictor network after training
         predictor_network_path = os.path.join(save_path, "predictor_network.pth")
