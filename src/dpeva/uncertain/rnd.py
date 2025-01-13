@@ -155,10 +155,6 @@ class RandomNetworkDistillation:
         
         # Create the save directory if it doesn't exist
         os.makedirs(save_path, exist_ok=True)
-        
-        # Save the target network before training starts
-        target_network_path = os.path.join(save_path, "target_network.pth")
-        self.save_target_network(target_network_path)
 
         # Set the initial learning rate for the optimizer
         for param_group in self.optimizer.param_groups:
