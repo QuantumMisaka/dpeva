@@ -93,11 +93,11 @@ rnd = RandomNetworkDistillation(
 
 # iteratively use RND to choose the next data point
 # maintain a selected index for the selected data points
-select_index = np.array([])
+select_index = np.array([], dtype=int)
 
 for iter_ind in range(num_iter):
     logger.info(f"Selecting data point {iter_ind + 1}/{num_iter}...")
-    num_batches = int(np.sqrt(256 / (iter_ind + 1)) * 1000)  # number of batches 
+    num_batches = int(np.sqrt(128 / (iter_ind + 1)) * 1000)  # number of batches 
     decay_steps = num_batches // 200  # decay steps
     
     # dataset process and selection
@@ -111,11 +111,10 @@ for iter_ind in range(num_iter):
     else:
         pool_desc_added_list = []
         for num_ind, select_ind in enumerate(select_index):
-            # let the enhance weight downgradely 
-            enhance_weight = np.min((select_enhance 
-                        * np.exp( - (1 - enhance_decay) * 
-                                (len(select_index) - num_ind)), 1))
-            pool_desc_added_list.append(desc_pool[int(select_ind)] * enhance_weight)
+            # let the enhance weight downgrade by exponential rate
+            enhance_weight = int(np.max((select_enhance * np.exp(
+                - (1 - enhance_decay) * (len(select_index) - num_ind - 1)), 1)))
+            pool_desc_added_list.extend([desc_pool[int(select_ind)]] * enhance_weight)
         pool_desc_added = np.concatenate(pool_desc_added_list, axis=0)
         train_desc = np.concatenate([train_desc_raw, pool_desc_added], axis=0)
     # generate target desc data which purge the selected data points
@@ -138,6 +137,7 @@ for iter_ind in range(num_iter):
     intrinsic_rewards = rnd.eval_intrinsic_rewards(pool_desc_stru, batch_size=4096, disp_freq=1)
     
     # mask the selected data points
+    
     intrinsic_rewards[list(select_index)] = 0 # or -np.inf
     
     # plot the distribution of intrinsic rewards
