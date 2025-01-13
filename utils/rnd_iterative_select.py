@@ -110,12 +110,12 @@ for iter_ind in range(num_iter):
         train_desc = train_desc_raw.copy()
     else:
         pool_desc_added_list = []
-        for num_ind, select_ind in select_index:
+        for num_ind, select_ind in enumerate(select_index):
             # let the enhance weight downgradely 
             enhance_weight = np.min((select_enhance 
                         * np.exp( - (1 - enhance_decay) * 
                                 (len(select_index) - num_ind)), 1))
-            pool_desc_added_list.append(desc_pool[select_ind] * enhance_weight)
+            pool_desc_added_list.append(desc_pool[int(select_ind)] * enhance_weight)
         pool_desc_added = np.concatenate(pool_desc_added_list, axis=0)
         train_desc = np.concatenate([train_desc_raw, pool_desc_added], axis=0)
     # generate target desc data which purge the selected data points
