@@ -116,8 +116,10 @@ pool_desc_stru = np.concatenate(pool_desc_stru_list, axis=0)
 num_stru_pool = len(pool_desc_stru)
 DIRECT_sampler = DIRECTSampler(
     structure_encoder=None,
-    clustering=BirchClustering(n=int(num_stru_pool * 0.2), threshold_init=0.05),
-    select_k_from_clusters=SelectKFromClusters(k=2),
+    clustering=BirchClustering(
+        n=int(num_stru_pool * direct_cluster_ratio), 
+    threshold_init=direct_thr_init),
+    select_k_from_clusters=SelectKFromClusters(k=direct_k),
 )
 DIRECT_selection = DIRECT_sampler.fit_transform(pool_desc_stru)
 DIRECT_selected_indices = DIRECT_selection["selected_indexes"]
