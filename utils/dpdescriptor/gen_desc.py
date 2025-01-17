@@ -7,12 +7,13 @@ import os
 import gc
 import glob
 import logging
-import torch
+from torch.cuda import empty_cache
 import warnings
 
 datadir = "./sampled-data-direct-10p-npy"
 modelpath = "./model.ckpt.pt"
 savedir = "descriptors"
+datakey = "O*"
 
 omp = 16
 #proc = 4
@@ -26,24 +27,13 @@ def descriptor_from_model(sys: dpdata.LabeledSystem, model:DeepPot) -> np.ndarra
     atypes = list(type_trans[sys.data['atom_types']])
     predict = model.eval_descriptor(coords, cells, atypes)
     return predict
-#alldata = dpdata.MultiSystems.from_dir(datadir,datakey,fmt="deepmd/npy")
-all_set_directories = glob.glob(os.path.join(
-    datadir, '**', 'set.*'), recursive=True)
-all_directories = set()
-for directory in all_set_directories:
-    coord_path = os.path.join(directory, 'coord.npy')
-    if os.path.exists(coord_path):
-        all_directories.add(os.path.dirname(directory))
-all_directories = list(all_directories)
-all_directories.sort()
+alldata = dpdata.MultiSystems.from_dir(datadir,datakey,fmt="deepmd/npy")
 
-# 配置日志格式，包含时间戳、日志级别和日志信息
 logging.basicConfig(
-    level=logging.INFO,  # 设置日志级别为 INFO
-    format='%(asctime)s - %(levelname)s - %(message)s',  # 定义日志格式
-    datefmt='%Y-%m-%d %H:%M:%S'  # 定义时间戳格式
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
 )
-
 
 logging.info("Start Generating Descriptors")
 
@@ -51,8 +41,7 @@ if not os.path.exists(savedir):
     os.mkdir(savedir)
 
 with open("running", "w") as fo:
-    for onedir in all_directories:
-        onedata = dpdata.LabeledSystem(onedir, fmt="deepmd/npy")
+    for onedata in alldata:
         key = onedata.short_name
         save_key = f"{savedir}/{key}"
         logging.info(f"Generating descriptors for {key}")
@@ -61,26 +50,20 @@ with open("running", "w") as fo:
                 logging.info(f"Descriptors for {key} already exist, skip")
                 continue
         model = DeepPot(modelpath, head="Target_FTS")
-        try:
-            #desc = descriptor_from_model(onedata, model)
-            # try to use for-loop to avoid OOM
-            desc_list = []
-            for onesys in onedata:
-                desc_onesys = descriptor_from_model(onesys, model)
-                desc_list.append(desc_onesys)
-                #torch.cuda.empty_cache()
-            desc = np.concatenate(desc_list, axis=0)
-        except torch.cuda.OutOfMemoryError:
-            warnings.warn(f"CUDA OOM, Skipping {key}")
-            continue
-        except Exception as e:
-            raise e
+        #desc = descriptor_from_model(onedata, model)
+        # use for-loop to avoid OOM
+        desc_list = []
+        for onesys in onedata:
+            desc_onesys = descriptor_from_model(onesys, model)
+            desc_list.append(desc_onesys)
+            #torch.cuda.empty_cache()
+        desc = np.concatenate(desc_list, axis=0)
         logging.info(f"Descriptors for {key} generated")
         os.mkdir(save_key)
         np.save(f"{savedir}/{key}/desc.npy", desc)
         logging.info(f"Descriptors for {key} saved")
         del onedata, model, desc, desc_list
-        torch.cuda.empty_cache()
+        empty_cache()
 
 logging.info("All Done !!!")
 os.system("mv running done")
