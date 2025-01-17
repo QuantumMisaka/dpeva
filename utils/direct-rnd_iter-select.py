@@ -122,7 +122,7 @@ DIRECT_sampler = DIRECTSampler(
     select_k_from_clusters=SelectKFromClusters(k=direct_k),
 )
 DIRECT_selection = DIRECT_sampler.fit_transform(pool_desc_stru)
-DIRECT_selected_indices = DIRECT_selection["selected_indexes"]
+DIRECT_selected_indices = DIRECT_selection["selected_indices"]
 pool_desc_stru_selected = pool_desc_stru[DIRECT_selected_indices] 
 # the order for DIRECT_select_indices and pool_desc_stru_selected are the same
 

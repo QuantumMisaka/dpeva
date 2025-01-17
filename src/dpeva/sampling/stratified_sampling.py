@@ -74,8 +74,8 @@ class SelectKFromClusters(BaseEstimator, TransformerMixin):
                 interval for optimal coverage.
 
         Returns:
-            A dict with "PCAfeatures" used in clustering and "selected_indexes"
-                as the indexes of DIRECT sampled structures.
+            A dict with "PCAfeatures" used in clustering and "selected_indices"
+                as the indices of DIRECT sampled structures.
         """
         if any(key not in clustering_data for key in ["labels", "PCAfeatures"]):
             raise Exception(
@@ -92,42 +92,42 @@ class SelectKFromClusters(BaseEstimator, TransformerMixin):
             except Exception:
                 raise ValueError("n_sites must have same length as features processed in clustering.")
 
-        selected_indexes = []
+        selected_indices = []
         for label in set(clustering_data["labels"]):
-            indexes_same_label = np.where(label == clustering_data["labels"])[0]
-            features_same_label = clustering_data["PCAfeatures"][indexes_same_label]
+            indices_same_label = np.where(label == clustering_data["labels"])[0]
+            features_same_label = clustering_data["PCAfeatures"][indices_same_label]
             n_same_label = len(features_same_label)
             if "label_centers" in clustering_data and self.selection_criteria == "center":
                 center_same_label = clustering_data["label_centers"][label]
                 distance_to_center = np.linalg.norm(features_same_label - center_same_label, axis=1).reshape(
-                    len(indexes_same_label)
+                    len(indices_same_label)
                 )
-                select_k_indexes = np.array([int(i) for i in np.linspace(0, n_same_label - 1, self.k)])
-                selected_indexes.extend(
-                    indexes_same_label[np.argpartition(distance_to_center, select_k_indexes)[select_k_indexes]]
+                select_k_indices = np.array([int(i) for i in np.linspace(0, n_same_label - 1, self.k)])
+                selected_indices.extend(
+                    indices_same_label[np.argpartition(distance_to_center, select_k_indices)[select_k_indices]]
                 )
             elif self.selection_criteria == "smallest":
                 if self.k >= n_same_label:
-                    selected_indexes.extend(indexes_same_label)
+                    selected_indices.extend(indices_same_label)
                 else:
-                    select_k_indexes = np.arange(self.k)
-                    selected_indexes.extend(
-                        indexes_same_label[
+                    select_k_indices = np.arange(self.k)
+                    selected_indices.extend(
+                        indices_same_label[
                             np.argpartition(
-                                np.array(self.n_sites)[indexes_same_label],
-                                select_k_indexes,
-                            )[select_k_indexes]
+                                np.array(self.n_sites)[indices_same_label],
+                                select_k_indices,
+                            )[select_k_indices]
                         ]
                     )
             else:
-                selected_indexes.extend(indexes_same_label[np.random.randint(n_same_label, size=self.k)])
-        n_duplicate = len(selected_indexes) - len(set(selected_indexes))
+                selected_indices.extend(indices_same_label[np.random.randint(n_same_label, size=self.k)])
+        n_duplicate = len(selected_indices) - len(set(selected_indices))
         if not self.allow_duplicate and n_duplicate > 0:
-            selected_indexes = list(set(selected_indexes))
+            selected_indices = list(set(selected_indices))
         elif self.allow_duplicate and n_duplicate > 0:
             warnings.warn(f"There are {n_duplicate} duplicated selections.")
-        logger.info(f"Finally selected {len(selected_indexes)} configurations.")
+        logger.info(f"Finally selected {len(selected_indices)} configurations.")
         return {
             "PCAfeatures": clustering_data["PCAfeatures"],
-            "selected_indexes": selected_indexes,
+            "selected_indices": selected_indices,
         }
