@@ -29,10 +29,20 @@ dpdata_string = "O*"
 output_dim = 80  # output dimension
 hidden_dim = 160  # hidden dimension
 num_residual_blocks = 2  # number of residual blocks
-device = "cuda"  # device
+device = "cuda"
 num_iter = 100  # number of selection iterations
 sample_per_iter = 1  # number of samples per iteration
 train_mask = 0.4  # mask ratio for training data
+distance_metric = "cossim"
+rnd_train_batchsize=4096
+rnd_eval_batchsize=4096
+rnd_train_numb_batch = lambda x:int(np.sqrt(256 / (x + 1)) * 500)
+rnd_train_lr = 1e-3
+rnd_train_decay_gamma = 0.95
+rnd_train_decay_ratio = 100
+rnd_train_disp_freq = 500
+rnd_train_save_freq = 2000
+rnd_eval_disp_freq = 1
 
 
 # read descriptors/*/desc.npy data
@@ -86,7 +96,7 @@ rnd = RandomNetworkDistillation(
             output_dim=output_dim, 
             hidden_dim=hidden_dim, 
             num_residual_blocks=num_residual_blocks, 
-            distance_metric="cossim", 
+            distance_metric=distance_metric, 
             device=device)
 
 # iteratively use RND to choose the next data point
@@ -95,8 +105,8 @@ select_index = np.array([], dtype=int)
 
 for iter_ind in range(num_iter):
     logger.info(f"Selecting data point {iter_ind + 1}/{num_iter}...")
-    num_batches = int(np.sqrt(256 / (iter_ind + 1)) * 500)  # number of batches 
-    decay_steps = num_batches // 100  # decay steps
+    num_batches = rnd_train_numb_batch(iter_ind)  # number of batches 
+    decay_steps = num_batches // rnd_train_decay_ratio  # decay steps
     
     # dataset process and selection
     train_array = np.concatenate(desc_trn, axis=0)
@@ -118,15 +128,18 @@ for iter_ind in range(num_iter):
     
     rnd.train(train_desc, 
           num_batches=num_batches,
-          batch_size=4096,
-          initial_lr=1e-3,
-          gamma=0.95,
+          batch_size=rnd_train_batchsize,
+          initial_lr=rnd_train_lr,
+          gamma=rnd_train_decay_gamma,
           decay_steps=decay_steps,
-          disp_freq=500,
-          save_freq=2000)
+          disp_freq=rnd_train_disp_freq,
+          save_freq=rnd_train_save_freq)
     
     # calculate intrinsic reward
-    intrinsic_rewards = rnd.eval_intrinsic_rewards(pool_desc_stru, batch_size=4096, disp_freq=1)
+    intrinsic_rewards = rnd.eval_intrinsic_rewards(
+                    pool_desc_stru, 
+                    batch_size=rnd_eval_batchsize, 
+                    disp_freq=rnd_eval_disp_freq)
     
     # mask the selected data points
     
