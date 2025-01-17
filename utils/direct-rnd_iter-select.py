@@ -179,7 +179,7 @@ for iter_ind in range(num_iter):
 
     # select data points by the maximum intrinsic reward, give local indices
     select_ind_iter_local = np.argsort(intrinsic_rewards)[-sample_per_iter:]
-    select_ind_iter_global = DIRECT_selected_indices[select_ind_iter_local]
+    select_ind_iter_global = np.array([DIRECT_selected_indices[i] for i in select_ind_iter_local], dtype=int)
 
     logger.info(f"Selected data index: {select_ind_iter_local}/{select_ind_iter_global} in DIRECT_sampled/raw pool data with intrinsic rewards: {intrinsic_rewards[select_ind_iter_local]}, which has the system key {[desc_pool_keys[ind] for ind in select_ind_iter_global]}")
 
