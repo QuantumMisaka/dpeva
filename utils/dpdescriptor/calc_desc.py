@@ -52,8 +52,11 @@ if os.path.exists(save_key):
         sys.exit(0)
 else:
     model = DeepPot(modelpath, head="Target_FTS")
-    desc = descriptor_from_model(onedata, model)
-    #desc_dict[key] = desc
+    desc_list = []
+    for onesys in onedata:
+        desc_onesys = descriptor_from_model(onesys, model)
+        desc_list.append(desc_onesys)
+    desc = np.concatenate(desc_list, axis=0)
     os.mkdir(save_key)
     np.save(f"{savedir}/{key}/desc.npy", desc)
 logging.info(f"Descriptors for {key} Done")

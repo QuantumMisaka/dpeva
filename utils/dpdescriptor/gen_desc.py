@@ -18,7 +18,7 @@ omp = 16
 #proc = 4
 os.environ['OMP_NUM_THREADS'] = f'{omp}'
 
-def descriptor_from_model(sys: dpdata.LabeledSystem, model:DeepPot):
+def descriptor_from_model(sys: dpdata.LabeledSystem, model:DeepPot) -> np.ndarray:
     coords = sys.data["coords"]
     cells = sys.data["cells"]
     model_type_map = model.get_type_map()
@@ -62,18 +62,24 @@ with open("running", "w") as fo:
                 continue
         model = DeepPot(modelpath, head="Target_FTS")
         try:
-            desc = descriptor_from_model(onedata, model)
+            #desc = descriptor_from_model(onedata, model)
+            # try to use for-loop to avoid OOM
+            desc_list = []
+            for onesys in onedata:
+                desc_onesys = descriptor_from_model(onesys, model)
+                desc_list.append(desc_onesys)
+                #torch.cuda.empty_cache()
+            desc = np.concatenate(desc_list, axis=0)
         except torch.cuda.OutOfMemoryError:
             warnings.warn(f"CUDA OOM, Skipping {key}")
             continue
         except Exception as e:
             raise e
-            
         logging.info(f"Descriptors for {key} generated")
         os.mkdir(save_key)
         np.save(f"{savedir}/{key}/desc.npy", desc)
         logging.info(f"Descriptors for {key} saved")
-        del onedata, model, desc
+        del onedata, model, desc, desc_list
         torch.cuda.empty_cache()
 
 logging.info("All Done !!!")
