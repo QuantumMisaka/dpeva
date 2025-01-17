@@ -152,9 +152,6 @@ class RandomNetworkDistillation:
         :param save_freq: Number of batches after which to save the predictor network, default is 500
         :param save_path: Directory where the network will be saved, default is "./models"
         """
-        
-        # Create the save directory if it doesn't exist
-        os.makedirs(save_path, exist_ok=True)
 
         # Set the initial learning rate for the optimizer
         for param_group in self.optimizer.param_groups:
@@ -180,7 +177,7 @@ class RandomNetworkDistillation:
         scheduler = optim.lr_scheduler.ExponentialLR(self.optimizer, gamma=gamma)
 
         # Log the start of training
-        logger.info("Training started.")
+        logger.info(f"Training started with {num_batches} batches and batch size {batch_size} ...")
         start_time = time.perf_counter()
         
         # Save the predictor network at the start of training
