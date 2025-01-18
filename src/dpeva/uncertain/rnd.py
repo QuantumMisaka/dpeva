@@ -84,7 +84,6 @@ class RandomNetworkDistillation:
         :param state: Input state
         :return: Intrinsic reward value
         """
-        state = self._prepare_state_to_device(state) # Convert input data to tensor and add batch dimension
         target_output = self.target_network(state).detach()  # Output of the target network
         predictor_output = self.predictor_network(state)  # Output of the predictor network
         if self.distance_metric == "mse":
@@ -122,6 +121,37 @@ class RandomNetworkDistillation:
                 disped_flag = True
         logger.info("Intrinsic rewards calculation done")
         return intrinsic_rewards.detach().cpu().numpy()
+    
+    def eval_intrinsic_rewards_forloop(self, target_vector, batch_size=2048, disp_freq=1):
+        """
+        Calculate the intrinsic rewards for the target vector by for-loop format.
+        :param target_vector: Target data vector, shape (num_samples, input_dim)
+        :param batch_size: Batch size, default is 2048
+        """
+        # need more test, seems for-loop and batch-in have different output ?
+        logger.info(f"Calculating intrinsic rewards for size {len(target_vector)} with batch size {batch_size}")
+        intrinsic_rewards = []
+        disped_flag = True
+        for i in range(0, len(target_vector), batch_size):
+            num_batches = len(target_vector) // batch_size + 1
+            if disped_flag:
+                batch_start_time = time.perf_counter()
+                disped_flag = False
+            batch_now = i // batch_size + 1
+            logger.info(f"Calculating intrinsic rewards for batch {batch_now}/{num_batches}")
+            batch = target_vector[i:i + batch_size]
+            batch = self._prepare_state_to_device(batch)
+            batch_rewards = [self.get_intrinsic_reward(state) for state in batch]  
+            intrinsic_rewards.extend(batch_rewards)
+            if batch_now % disp_freq == 0:
+                batch_time = time.perf_counter() - batch_start_time
+                logger.info(
+                    f"Batch {batch_now}/{num_batches} completed, "
+                    f"Time: {batch_time:.2f}s, ")
+                disped_flag = True
+        intrinsic_rewards = np.array(intrinsic_rewards)
+        logger.info(f"Intrinsic rewards calculation done")
+        return intrinsic_rewards
 
 
     def update_predictor(self, state):
