@@ -35,7 +35,6 @@ class RandomNetworkDistillation:
         :param device: Device to use for computation ('cpu' or 'cuda'), default is 'cpu'
         """
         self.device = torch.device(device)
-        
         # Initialize target network, predictor network, and optimizer
         self.target_network = RNDNetwork(input_dim, output_dim, hidden_dim, num_residual_blocks).to(self.device)  # 目标网络
         for param in self.target_network.parameters():
@@ -45,6 +44,19 @@ class RandomNetworkDistillation:
         self.distance_metric = distance_metric # Distance metric
         self.loss_fn = self._get_loss_fn(distance_metric)  # Loss function
 
+    def _prepare_state_to_device(self, state):
+        """
+        Prepare state to torch.FloatTensor with device
+        :param state: np.ndarray or torch.Tensor
+        :return state: torch.Tensor in self.device
+        """
+        if isinstance(state, np.ndarray):
+            state = torch.FloatTensor(state).to(self.device)
+        elif isinstance(state, torch.Tensor):
+            state = state.to(self.device)
+        else:
+            raise TypeError(f"Unsupported input type: {type(state)}. Expected np.ndarray or torch.Tensor.")
+        return state
 
     def _get_loss_fn(self, distance_metric):
         """
@@ -72,7 +84,7 @@ class RandomNetworkDistillation:
         :param state: Input state
         :return: Intrinsic reward value
         """
-        state = torch.FloatTensor(state).unsqueeze(0).to(self.device)  # Convert input data to tensor and add batch dimension
+        state = self._prepare_state_to_device(state) # Convert input data to tensor and add batch dimension
         target_output = self.target_network(state).detach()  # Output of the target network
         predictor_output = self.predictor_network(state)  # Output of the predictor network
         if self.distance_metric == "mse":
@@ -82,34 +94,35 @@ class RandomNetworkDistillation:
         return intrinsic_reward
     
     
-    def eval_intrinsic_rewards(self, target_vector, batch_size=2048, disp_freq=2):
+    def eval_intrinsic_rewards(self, target_vector, batch_size=2048, disp_freq=1):
         """
         Calculate the intrinsic rewards for the target vector.
         :param target_vector: Target data vector, shape (num_samples, input_dim)
         :param batch_size: Batch size, default is 2048
         """
         logger.info(f"Calculating intrinsic rewards for size {len(target_vector)} with batch size {batch_size}")
-        intrinsic_rewards = []
+        intrinsic_rewards = torch.zeros(len(target_vector), device=self.device)
+        target_vector = self._prepare_state_to_device(target_vector)
         disped_flag = True
+        num_batches = len(target_vector) // batch_size + 1
         for i in range(0, len(target_vector), batch_size):
-            num_batches = len(target_vector) // batch_size + 1
             if disped_flag:
                 batch_start_time = time.perf_counter()
                 disped_flag = False
             batch_now = i // batch_size + 1
             logger.info(f"Calculating intrinsic rewards for batch {batch_now}/{num_batches}")
             batch = target_vector[i:i + batch_size]  
-            batch_rewards = [self.get_intrinsic_reward(state) for state in batch]  
-            intrinsic_rewards.extend(batch_rewards)
+            batch_rewards = self.get_intrinsic_reward(batch) 
+            intrinsic_rewards[i * batch_size:(i + 1) * batch_size] = batch_rewards
             if batch_now % disp_freq == 0:
                 batch_time = time.perf_counter() - batch_start_time
                 logger.info(
                     f"Batch {batch_now}/{num_batches} completed, "
                     f"Time: {batch_time:.2f}s, ")
                 disped_flag = True
-        intrinsic_rewards = np.array(intrinsic_rewards)
-        logger.info(f"Intrinsic rewards calculation done")
-        return intrinsic_rewards
+        logger.info("Intrinsic rewards calculation done")
+        return intrinsic_rewards.detach().cpu().numpy()
+
 
     def update_predictor(self, state):
         """
@@ -117,7 +130,7 @@ class RandomNetworkDistillation:
         :param state: Input state
         :return: Loss value of the current batch
         """
-        state = torch.FloatTensor(state).unsqueeze(0).to(self.device)  # Convert input data to tensor and add batch dimension
+        state = self._prepare_state_to_device(state) # Convert input data to tensor and add batch dimension
         target_output = self.target_network(state).detach()  # Output of the target network
         predictor_output = self.predictor_network(state)  # Output of the predictor network
         if self.distance_metric == "mse":
@@ -130,15 +143,14 @@ class RandomNetworkDistillation:
         return loss.item()  # Return the loss value of the current batch
 
 
-
-    def train(self, train_data, 
-              num_batches=5000, 
-              batch_size=2048, 
+    def train(self, train_data: np.ndarray, 
+              num_batches=10000, 
+              batch_size=4096, 
               initial_lr=1e-3, 
-              gamma=0.98, 
-              decay_steps=25, 
-              disp_freq=200, 
-              save_freq=1000, 
+              gamma=0.95, 
+              decay_steps=100, 
+              disp_freq=500, 
+              save_freq=2000, 
               save_path="./models"):
         """
         Train the RND model.
@@ -152,34 +164,21 @@ class RandomNetworkDistillation:
         :param save_freq: Number of batches after which to save the predictor network, default is 500
         :param save_path: Directory where the network will be saved, default is "./models"
         """
-
-        # Set the initial learning rate for the optimizer
-        for param_group in self.optimizer.param_groups:
-            param_group['lr'] = initial_lr
-
-        # Set the learning rate scheduler
-        scheduler = optim.lr_scheduler.ExponentialLR(self.optimizer, gamma=gamma)
-
-        # Start training
-        total_loss = 0.0
         # Create the save directory if it doesn't exist
         os.makedirs(save_path, exist_ok=True)
-        
-        # Save the target network before training starts
         target_network_path = os.path.join(save_path, "target_network.pth")
         self.save_target_network(target_network_path)
 
         # Set the initial learning rate for the optimizer
         for param_group in self.optimizer.param_groups:
             param_group['lr'] = initial_lr
-
-        # Set the learning rate scheduler
         scheduler = optim.lr_scheduler.ExponentialLR(self.optimizer, gamma=gamma)
-
+        
+        train_data = self._prepare_state_to_device(train_data)
+        # Start training
         # Log the start of training
         logger.info(f"Training started with {num_batches} batches and batch size {batch_size} ...")
         start_time = time.perf_counter()
-        
         # Save the predictor network at the start of training
         predictor_network_path = os.path.join(save_path, "predictor_network.pth")
         self.save_predictor_network(predictor_network_path)
@@ -187,28 +186,22 @@ class RandomNetworkDistillation:
         # Start training
         total_loss = 0.0
         disped_flag = True
-        
-        # Log initial state before training begins
-        initial_batch = train_data[:batch_size]
-        initial_loss = self.update_predictor(initial_batch)
-        logger.info(f"Initial batch loss: {initial_loss:.6f}")
-        
         for batch_idx in range(num_batches):
             if disped_flag:
                 batch_start_time = time.perf_counter()  # Record the start time of the batch
                 disped_flag = False
-
+            # batch = self._prepare_state_to_device(batch)
             # Sample a batch from the training data
-            batch_indices = np.random.choice(len(train_data), batch_size, replace=False)
+            batch_indices = np.random.choice(len(train_data), batch_size, replace=True)
             batch = train_data[batch_indices]
-
+            
             # Update the predictor network and return the loss
             batch_loss = self.update_predictor(batch)
             total_loss += batch_loss
 
             # Display training results every `disp_freq` batches or at the 0th batch
             if batch_idx == 0:
-                batch_time = time.perf_counter()- batch_start_time
+                batch_time = time.perf_counter() - batch_start_time
                 logger.info(f"Batch 0/{num_batches} trained, "
                 f"Time: {batch_time:.2f}s, "
                 f"Avg Loss: {batch_loss:.6f}")
