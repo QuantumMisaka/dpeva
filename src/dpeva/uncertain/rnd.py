@@ -199,7 +199,7 @@ class RandomNetworkDistillation:
                 disped_flag = False
 
             # Sample a batch from the training data
-            batch_indices = np.random.choice(len(train_data), batch_size, replace=True)
+            batch_indices = np.random.choice(len(train_data), batch_size, replace=False)
             batch = train_data[batch_indices]
 
             # Update the predictor network and return the loss

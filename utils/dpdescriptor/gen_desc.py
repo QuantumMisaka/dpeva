@@ -3,12 +3,8 @@ from deepmd.infer.deep_pot import DeepPot
 #from deepmd.calculator import DP
 import numpy as np
 import os
-#from multiprocessing import pool
-import gc
-import glob
 import logging
 from torch.cuda import empty_cache
-import warnings
 
 datadir = "./sampled-data-direct-10p-npy"
 modelpath = "./model.ckpt.pt"
@@ -16,10 +12,10 @@ savedir = "descriptors"
 datakey = "O*"
 
 omp = 16
-#proc = 4
+batch_size = 4
 os.environ['OMP_NUM_THREADS'] = f'{omp}'
 
-def descriptor_from_model(sys: dpdata.LabeledSystem, model:DeepPot) -> np.ndarray:
+def descriptor_from_model(sys: dpdata.System, model:DeepPot) -> np.ndarray:
     coords = sys.data["coords"]
     cells = sys.data["cells"]
     model_type_map = model.get_type_map()
@@ -42,6 +38,7 @@ if not os.path.exists(savedir):
 
 with open("running", "w") as fo:
     for onedata in alldata:
+        onedata: dpdata.System
         key = onedata.short_name
         save_key = f"{savedir}/{key}"
         logging.info(f"Generating descriptors for {key}")
@@ -53,10 +50,10 @@ with open("running", "w") as fo:
         #desc = descriptor_from_model(onedata, model)
         # use for-loop to avoid OOM
         desc_list = []
-        for onesys in onedata:
-            desc_onesys = descriptor_from_model(onesys, model)
-            desc_list.append(desc_onesys)
-            #torch.cuda.empty_cache()
+        for i in range(0, len(onedata), batch_size):
+            batch = onedata[i:i + batch_size]  
+            desc_batch = descriptor_from_model(batch, model)
+            desc_list.append(desc_batch)
         desc = np.concatenate(desc_list, axis=0)
         logging.info(f"Descriptors for {key} generated")
         os.mkdir(save_key)
@@ -66,4 +63,3 @@ with open("running", "w") as fo:
         empty_cache()
 
 logging.info("All Done !!!")
-os.system("mv running done")
