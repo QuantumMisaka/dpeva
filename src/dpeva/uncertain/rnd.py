@@ -91,14 +91,17 @@ class RandomNetworkDistillation:
         else:
             intrinsic_reward = torch.mean(self.loss_fn(target_output, predictor_output)).item()
         return intrinsic_reward
+        
     
-    
-    def eval_intrinsic_rewards(self, target_vector, batch_size=2048, disp_freq=1):
+    def eval_intrinsic_rewards_allbatch(self, target_vector, batch_size=2048, disp_freq=1):
         """
         Calculate the intrinsic rewards for the target vector.
         :param target_vector: Target data vector, shape (num_samples, input_dim)
         :param batch_size: Batch size, default is 2048
         """
+        # need more test, seems for-loop and batch-in have different output ?
+        # have problem: all values will be the same in the first batch, and other values will be 0
+        # this function and the get_intrisic_reward function should be detailedly tested
         logger.info(f"Calculating intrinsic rewards for size {len(target_vector)} with batch size {batch_size}")
         intrinsic_rewards = torch.zeros(len(target_vector), device=self.device)
         target_vector = self._prepare_state_to_device(target_vector)
@@ -122,13 +125,12 @@ class RandomNetworkDistillation:
         logger.info("Intrinsic rewards calculation done")
         return intrinsic_rewards.detach().cpu().numpy()
     
-    def eval_intrinsic_rewards_forloop(self, target_vector, batch_size=2048, disp_freq=1):
+    def eval_intrinsic_rewards(self, target_vector, batch_size=2048, disp_freq=1):
         """
         Calculate the intrinsic rewards for the target vector by for-loop format.
         :param target_vector: Target data vector, shape (num_samples, input_dim)
         :param batch_size: Batch size, default is 2048
         """
-        # need more test, seems for-loop and batch-in have different output ?
         logger.info(f"Calculating intrinsic rewards for size {len(target_vector)} with batch size {batch_size}")
         intrinsic_rewards = []
         disped_flag = True
