@@ -7,9 +7,9 @@ import logging
 from torch.cuda import empty_cache
 
 datadir = "./sampled-data-direct-10p-npy"
+format = "deepmd/npy" # default
 modelpath = "./model.ckpt.pt"
 savedir = "descriptors"
-datakey = "O*"
 
 omp = 16
 batch_size = 4
@@ -23,7 +23,8 @@ def descriptor_from_model(sys: dpdata.System, model:DeepPot) -> np.ndarray:
     atypes = list(type_trans[sys.data['atom_types']])
     predict = model.eval_descriptor(coords, cells, atypes)
     return predict
-alldata = dpdata.MultiSystems.from_dir(datadir,datakey,fmt="deepmd/npy")
+alldata = dpdata.MultiSystems()
+alldata.from_file(datadir, fmt=format)
 
 logging.basicConfig(
     level=logging.INFO,
