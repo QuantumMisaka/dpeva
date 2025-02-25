@@ -23,8 +23,7 @@ def descriptor_from_model(sys: dpdata.System, model:DeepPot) -> np.ndarray:
     atypes = list(type_trans[sys.data['atom_types']])
     predict = model.eval_descriptor(coords, cells, atypes)
     return predict
-alldata = dpdata.MultiSystems()
-alldata.from_file(datadir, fmt=format)
+alldata = dpdata.MultiSystems.from_file(datadir, fmt=format)
 
 logging.basicConfig(
     level=logging.INFO,
