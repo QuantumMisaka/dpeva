@@ -10,6 +10,7 @@ datadir = "./sampled-data-direct-10p-npy"
 format = "deepmd/npy" # default
 modelpath = "./model.ckpt.pt"
 savedir = "descriptors"
+data_string = "O*" # for dpdata.MultiSystems.from_dir
 
 omp = 16
 batch_size = 4
@@ -23,7 +24,8 @@ def descriptor_from_model(sys: dpdata.System, model:DeepPot) -> np.ndarray:
     atypes = list(type_trans[sys.data['atom_types']])
     predict = model.eval_descriptor(coords, cells, atypes)
     return predict
-alldata = dpdata.MultiSystems.from_file(datadir, fmt=format)
+#alldata = dpdata.MultiSystems.from_file(datadir, fmt=format)
+alldata = dpdata.MultiSystems.from_dir(datadir, data_string, fmt=format)
 
 logging.basicConfig(
     level=logging.INFO,

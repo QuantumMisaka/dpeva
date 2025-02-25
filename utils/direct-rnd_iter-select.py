@@ -89,6 +89,7 @@ assert desc_trn[0].shape[-1] == desc_pool[0].shape[-1], "The descriptor dimensio
 logger.info(f"Reading pool dpdata from {data_pool_path}...")
 dpdata_pool =  dpdata.MultiSystems.from_dir(data_pool_path, dpdata_string, fmt="deepmd/npy")
 
+
 dpdata_pool_dict = {}
 for lbsys in dpdata_pool:
     dpdata_pool_dict[lbsys.short_name] = lbsys
