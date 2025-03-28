@@ -5,14 +5,16 @@ Deep Potential EVolution Accelerator
 Using **single model** cuncurrent learning method to accelerate the evolution of deep potential (and other machine learning interatomic potentials).
 
 Methods used in this project:
-- Data sampling:
+- Data sampling baesd on encoder space:
 - - DIRECT (from [maml](https://github.com/materialsvirtuallab/maml) package)
-- - modified DIRECT (to be implemented)
-- Uncertainty estimation based on descriptor space:
-- - Random Network Distillation (RND)
-- - Gaussian Mixture Model (GMM) (to be implemented)
+- - 2-DIRECT and atomic-DIECT (usage in notebook)
+- Uncertainty estimation on atomic force evaluation in double variables:
+- - Query-by-committee uncertainty
+- - Random-Network-Distillation-like uncertainty
 
 ## Installation:
+
+Note: the src libraries only implemented DIRECT method now.
 
 Install the package via pip:
 ```bash
@@ -32,8 +34,6 @@ More notebook and scripts will be added soon.
 ## Notice
 
 This project is still under development. Please feel free to open an issue or pull request if you have any suggestions or questions.
-
-Especially, the detailed algorithm and way to use Random Network Distillation (RND) method is still in exploration.
 
 ## License
 This project is licensed under the LGPL-v3 License - see the [LICENSE](LICENSE) file for details.
