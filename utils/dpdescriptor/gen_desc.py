@@ -48,7 +48,6 @@ if not os.path.exists(savedir):
 with open("running", "w") as fo:
     starting_time = time.perf_counter()
     for item in sorted(glob.glob(f"{datadir}/*")):
-        onedata = dpdata.MultiSystems.from_file(item, fmt=format)
         key = os.path.split(item)[-1]
         save_key = f"{savedir}/{key}"
         logging.info(f"Generating descriptors for {key} system")
@@ -56,6 +55,7 @@ with open("running", "w") as fo:
             if os.path.exists(f"{save_key}/desc.npy"):
                 logging.info(f"Descriptors for {key} already exist, skip")
                 continue
+        onedata = dpdata.MultiSystems.from_file(item, fmt=format)
         # use for-loop to avoid OOM in old ver
         desc_list = []
         for onesys in onedata:
@@ -69,7 +69,7 @@ with open("running", "w") as fo:
         os.mkdir(save_key)
         np.save(f"{savedir}/{key}/desc.npy", desc)
         logging.info(f"Descriptors for {key} saved")
-        del onedata, model, desc, desc_list
+        del onedata, desc, desc_list
         empty_cache()
     ending_time = time.perf_counter()
     fo.write(f"DONE in {ending_time - starting_time} sec !")

@@ -63,7 +63,7 @@ with open("running", "w") as fo:
         os.mkdir(save_key)
         np.save(f"{savedir}/{key}/desc.npy", desc)
         logging.info(f"Descriptors for {key} saved")
-        del onedata, model, desc, desc_list
+        del onedata, desc, desc_list
         empty_cache()
     ending_time = time.perf_counter()
     fo.write(f"DONE in {ending_time - starting_time} sec !")
