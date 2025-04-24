@@ -43,7 +43,7 @@ logging.basicConfig(
 logging.info("Start Generating Descriptors")
 
 if not os.path.exists(savedir):
-    os.mkdir(savedir)
+    os.makedirs(savedir)
 
 with open("running", "w") as fo:
     starting_time = time.perf_counter()
@@ -55,7 +55,10 @@ with open("running", "w") as fo:
             if os.path.exists(f"{save_key}/desc.npy"):
                 logging.info(f"Descriptors for {key} already exist, skip")
                 continue
-        onedata = dpdata.MultiSystems.from_file(item, fmt=format)
+        if format == "deepmd/npy/mixed":
+            onedata = dpdata.MultiSystems.from_file(item, fmt=format)
+        else:
+            onedata = dpdata.System(item, fmt=format)
         # use for-loop to avoid OOM in old ver
         desc_list = []
         for onesys in onedata:
