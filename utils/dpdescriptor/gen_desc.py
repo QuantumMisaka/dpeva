@@ -19,14 +19,25 @@ omp = 16
 batch_size = 4000
 os.environ['OMP_NUM_THREADS'] = f'{omp}'
 
-def descriptor_from_model(sys: dpdata.System, model:DeepPot) -> np.ndarray:
+# notice: DeepPot.eval_descriptor have a parameter "mixed_type"
+def descriptor_from_model(sys: dpdata.System, model:DeepPot, nopbc=False) -> np.ndarray:
     coords = sys.data["coords"]
     cells = sys.data["cells"]
+    if nopbc or np.unique(cells) == 0:
+        cells = None
     model_type_map = model.get_type_map()
     type_trans = np.array([model_type_map.index(i) for i in sys.data['atom_names']])
     atypes = list(type_trans[sys.data['atom_types']])
     predict = model.eval_descriptor(coords, cells, atypes)
     return predict
+
+def get_desc_by_batch(sys: dpdata.System, model:DeepPot, batch_size: int, nopbc=False) -> list:
+    desc_list = []
+    for i in range(0, len(sys), batch_size):
+        batch = sys[i:i + batch_size]  
+        desc_batch = descriptor_from_model(batch, model, nopbc=nopbc)
+        desc_list.append(desc_batch)
+    return desc_list
 
 # init
 # mixed type need to be read-in iteratively in desc-gen
@@ -61,12 +72,15 @@ with open("running", "w") as fo:
             onedata = dpdata.System(item, fmt=format)
         # use for-loop to avoid OOM in old ver
         desc_list = []
-        for onesys in onedata:
-            onesys: dpdata.System
-            for i in range(0, len(onesys), batch_size):
-                batch = onesys[i:i + batch_size]  
-                desc_batch = descriptor_from_model(batch, model)
-                desc_list.append(desc_batch)
+        if format == "deepmd/npy/mixed":
+            for onesys in onedata:
+                nopbc = onesys.data['nopbc']
+                one_desc_list = get_desc_by_batch(onedata, model, batch_size, nopbc=nopbc)
+                desc_list.extend(one_desc_list)
+        else:
+            nopbc = onedata.data['nopbc']
+            desc_list = get_desc_by_batch(onedata, model, batch_size, nopbc=nopbc)
+
         desc = np.concatenate(desc_list, axis=0)
         logging.info(f"Descriptors for {key} generated")
         os.mkdir(save_key)
