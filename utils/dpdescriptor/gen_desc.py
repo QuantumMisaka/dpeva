@@ -23,7 +23,7 @@ os.environ['OMP_NUM_THREADS'] = f'{omp}'
 def descriptor_from_model(sys: dpdata.System, model:DeepPot, nopbc=False) -> np.ndarray:
     coords = sys.data["coords"]
     cells = sys.data["cells"]
-    if nopbc or np.unique(cells) == 0:
+    if nopbc:
         cells = None
     model_type_map = model.get_type_map()
     type_trans = np.array([model_type_map.index(i) for i in sys.data['atom_names']])
@@ -74,11 +74,11 @@ with open("running", "w") as fo:
         desc_list = []
         if format == "deepmd/npy/mixed":
             for onesys in onedata:
-                nopbc = onesys.data['nopbc']
+                nopbc = onesys.data.get('nopbc', False)
                 one_desc_list = get_desc_by_batch(onedata, model, batch_size, nopbc=nopbc)
                 desc_list.extend(one_desc_list)
         else:
-            nopbc = onedata.data['nopbc']
+            nopbc = onedata.data.get('nopbc', False)
             desc_list = get_desc_by_batch(onedata, model, batch_size, nopbc=nopbc)
 
         desc = np.concatenate(desc_list, axis=0)
