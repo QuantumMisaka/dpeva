@@ -5,19 +5,22 @@ from deepmd.infer.deep_pot import DeepPot
 import numpy as np
 import os
 import logging
+import sys
 import time
 import glob
 from torch.cuda import empty_cache
 
-datadir = "./sampled-data"
-format = "deepmd/npy/mixed" # default
-modelpath = "./model.ckpt.pt"
-savedir = "descriptors"
-head = None # multi head for LAM
+datadir = sys.argv[1]
+format = "deepmd/npy" # default
+modelpath = sys.argv[2]
+savedir = f"desc-{modelpath.split(".")[0]}-{datadir}"
+head = "OC20M" # multi head for LAM
 
-omp = 16
-batch_size = 4000
+omp = 24
 os.environ['OMP_NUM_THREADS'] = f'{omp}'
+batch_size = 1000  
+# batch_size can be as large as possible, but should all in one node
+# if any problem encountered, set batch_size to 1
 
 # notice: DeepPot.eval_descriptor have a parameter "mixed_type"
 def descriptor_from_model(sys: dpdata.System, model:DeepPot, nopbc=False) -> np.ndarray:
@@ -75,18 +78,17 @@ with open("running", "w") as fo:
         if format == "deepmd/npy/mixed":
             for onesys in onedata:
                 nopbc = onesys.data.get('nopbc', False)
-                one_desc_list = get_desc_by_batch(onedata, model, batch_size, nopbc=nopbc)
+                one_desc_list = get_desc_by_batch(onesys, model, batch_size, nopbc)
                 desc_list.extend(one_desc_list)
         else:
             nopbc = onedata.data.get('nopbc', False)
-            desc_list = get_desc_by_batch(onedata, model, batch_size, nopbc=nopbc)
-
+            desc_list = get_desc_by_batch(onedata, model, batch_size, nopbc)
         desc = np.concatenate(desc_list, axis=0)
         logging.info(f"Descriptors for {key} generated")
         os.mkdir(save_key)
         np.save(f"{savedir}/{key}/desc.npy", desc)
         logging.info(f"Descriptors for {key} saved")
-        del onedata, desc, desc_list
+        del onedata, desc
         empty_cache()
     ending_time = time.perf_counter()
     fo.write(f"DONE in {ending_time - starting_time} sec !")

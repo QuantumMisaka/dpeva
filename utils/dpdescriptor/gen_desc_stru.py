@@ -1,33 +1,46 @@
-# generated desc for deepmd/npy/mixed (and deepmd/npy)
-# directly get desc for stru by pooling, saving storage
+# generated desc_stru for deepmd/npy/mixed (and deepmd/npy)
 import dpdata
 from deepmd.infer.deep_pot import DeepPot
 #from deepmd.calculator import DP
 import numpy as np
 import os
 import logging
+import sys
 import time
 import glob
 from torch.cuda import empty_cache
 
-datadir = "./sampled-data"
-format = "deepmd/npy/mixed" # default
-modelpath = "./model.ckpt.pt"
-savedir = "descriptors"
-head = None # multi head for LAM
+datadir = sys.argv[1]
+format = "deepmd/npy" # default
+modelpath = sys.argv[2]
+savedir = f"desc-{modelpath.split(".")[0]}-{datadir}"
+head = "OC20M" # multi head for LAM
 
-omp = 16
-batch_size = 4000
+omp = 24
 os.environ['OMP_NUM_THREADS'] = f'{omp}'
+batch_size = 1000  
+# batch_size can be as large as possible, but should all in one node
+# if any problem encountered, set batch_size to 1
 
-def descriptor_from_model(sys: dpdata.System, model:DeepPot) -> np.ndarray:
+# notice: DeepPot.eval_descriptor have a parameter "mixed_type"
+def descriptor_from_model(sys: dpdata.System, model:DeepPot, nopbc=False) -> np.ndarray:
     coords = sys.data["coords"]
     cells = sys.data["cells"]
+    if nopbc:
+        cells = None
     model_type_map = model.get_type_map()
     type_trans = np.array([model_type_map.index(i) for i in sys.data['atom_names']])
     atypes = list(type_trans[sys.data['atom_types']])
     predict = model.eval_descriptor(coords, cells, atypes)
     return predict
+
+def get_desc_by_batch(sys: dpdata.System, model:DeepPot, batch_size: int, nopbc=False) -> list:
+    desc_list = []
+    for i in range(0, len(sys), batch_size):
+        batch = sys[i:i + batch_size]  
+        desc_batch = descriptor_from_model(batch, model, nopbc=nopbc)
+        desc_list.append(desc_batch)
+    return desc_list
 
 # init
 # mixed type need to be read-in iteratively in desc-gen
@@ -44,7 +57,7 @@ logging.basicConfig(
 logging.info("Start Generating Descriptors")
 
 if not os.path.exists(savedir):
-    os.mkdir(savedir)
+    os.makedirs(savedir)
 
 with open("running", "w") as fo:
     starting_time = time.perf_counter()
@@ -56,22 +69,27 @@ with open("running", "w") as fo:
             if os.path.exists(f"{save_key}/desc.npy"):
                 logging.info(f"Descriptors for {key} already exist, skip")
                 continue
-        onedata = dpdata.MultiSystems.from_file(item, fmt=format)
+        if format == "deepmd/npy/mixed":
+            onedata = dpdata.MultiSystems.from_file(item, fmt=format)
+        else:
+            onedata = dpdata.System(item, fmt=format)
         # use for-loop to avoid OOM in old ver
         desc_list = []
-        for onesys in onedata:
-            onesys: dpdata.System
-            for i in range(0, len(onesys), batch_size):
-                batch = onesys[i:i + batch_size]  
-                desc_batch = descriptor_from_model(batch, model)
-                desc_list.append(desc_batch)
+        if format == "deepmd/npy/mixed":
+            for onesys in onedata:
+                nopbc = onesys.data.get('nopbc', False)
+                one_desc_list = get_desc_by_batch(onesys, model, batch_size, nopbc)
+                desc_list.extend(one_desc_list)
+        else:
+            nopbc = onedata.data.get('nopbc', False)
+            desc_list = get_desc_by_batch(onedata, model, batch_size, nopbc)
         desc = np.concatenate(desc_list, axis=0)
         desc_stru = np.mean(desc, axis=1)
-        logging.info(f"Descriptors for {key} generated")
+        logging.info(f"Descriptors STRU for {key} generated")
         os.mkdir(save_key)
-        np.save(f"{savedir}/{key}/desc.npy", desc_stru)
-        logging.info(f"Descriptors for {key} saved")
-        del onedata, desc, desc_stru, desc_list
+        np.save(f"{savedir}/{key}/desc.npy", desc)
+        logging.info(f"Descriptors STRU for {key} saved")
+        del onedata, desc
         empty_cache()
     ending_time = time.perf_counter()
     fo.write(f"DONE in {ending_time - starting_time} sec !")
