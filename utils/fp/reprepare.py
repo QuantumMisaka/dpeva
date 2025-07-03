@@ -43,13 +43,13 @@ basic_input = {
     'smearing_sigma': 0.004,
     'basis_type': 'lcao',
     'mixing_type': 'broyden',
-    'mixing_beta': 0.1,
+    'mixing_beta': 0.4,
     'mixing_gg0': 1.0,
     'mixing_ndim': 20,
     'scf_thr': 1e-7,
     'scf_nmax': 300,
     'scf_os_stop': 1,
-    'scf_os_ndim': 50,
+    'scf_os_ndim': 80,
     'kpts': kpts,
     'pp': pp,
     'basis': basis,
@@ -81,10 +81,10 @@ def main():
         for ele in mag_eles:
             ind = [atom.index for atom in stru if atom.symbol == ele]
             if ele == 'Fe':
-                # set AFM or random FM/AFM
-                magmom = np.array([(-1)**n * np.random.randint(2,3) for n in range(0, len(ind))]).reshape(len(ind),1)
+                magmom = np.array([(1)**n * 5 for n in range(0, len(ind))]).reshape(len(ind),1)
+                # self-consistent FM is better than some AFM to mag-ground state
             else:
-                magmom = np.array([(1)**n * np.random.randint(1,2) for n in range(0, len(ind))]).reshape(len(ind),1)
+                magmom = np.array([(1)**n * 2 for n in range(0, len(ind))]).reshape(len(ind),1)
             init_magmom[ind] = magmom
         stru.set_initial_magnetic_moments(init_magmom)
         # write input

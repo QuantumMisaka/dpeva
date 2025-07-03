@@ -5,7 +5,7 @@ then
     mkdir -p $conv_dir
 fi
 
-for dir in */
+for dir in */N_*/
 do
         if grep -q "CONV" $dir/abacus.out
         then
