@@ -5,13 +5,14 @@ for project in */
 do
     for jobdir in ${project}/*/
     do
-        cp abacus-forloop.slurm ${jobdir}
         cd ${jobdir}
-        python subjob_dist.py
+        python ${ROOTDIR}/subjob_dist.py
         for subjobdir in N_*/
         do
-            cp abacus-forloop.slurm ${subjobdir}
+            cp ${ROOTDIR}/abacus-forloop.slurm ${subjobdir}
+            cp ${ROOTDIR}/reprepare.py ${subjobdir}
             cd ${subjobdir}
+            python reprepare.py
             sbatch abacus-forloop.slurm
             cd ${jobdir}
         done

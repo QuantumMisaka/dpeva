@@ -278,15 +278,9 @@ def sampled_dpdata_to_abacus(dataset_name, project_dir, vaccum=6.18, kpt_criteri
                 if "Fe" in str(stru.symbols):
                     if treat_stru:
                         set_magmom_for_Atoms(stru, mag_ele=["H","C","O", "Fe"], mag_num=[1,1,1,5])
-                        # set random mag for atoms
-                        # magmom = np.reshape([(-1)**n * randint(1,5)  for n in range(0, len(stru))]).reshape(len(stru),1)
-                        # stru.set_initial_magnetic_moments(magmom)
                 else:
                     if treat_stru:
                         set_magmom_for_Atoms(stru, mag_ele=["H","C","O"], mag_num=[1,1,1])
-                        # set random mag for atoms
-                        # magmom = np.array([(-1)**n * randint(1,2)  for n in range(0, len(stru))]).reshape(len(stru),1)
-                        #stru.set_initial_magnetic_moments(magmom)
                 write_input(open(f"{stru_dir_name}/INPUT", 'w'), parameters=input_parameters)
                 write_abacus(open(f"{stru_dir_name}/STRU", 'w'), stru, pp=input_parameters['pp'], basis=input_parameters['basis'])
                 with open(f"{stru_dir_name}/INPUT", "a") as fw:

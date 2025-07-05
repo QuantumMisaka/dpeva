@@ -57,11 +57,14 @@ basic_input = {
     'basis_dir': basis_dir,
     'cal_force': 1,
     'cal_stress': 1,
-    'init_chg': 'atomic',
+    'init_chg': 'auto',
     'out_stru': 1,
+    'out_mul': 1,
     'out_chg': 0,
     'out_bandgap': 1,
 }
+# optional parameter
+# onsite_radius 3.0
 
 ROOTDIR = os.getcwd()
 
