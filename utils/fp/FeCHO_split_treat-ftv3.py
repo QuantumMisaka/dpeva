@@ -6,6 +6,8 @@ import numpy as np
 import os
 import sys
 from ase.io.abacus import write_input, write_abacus
+from ase import Atoms
+from typing import List
 from copy import deepcopy
 from random import randint
 import dpdata
@@ -74,7 +76,7 @@ basic_input = {
     'smearing_sigma': 0.004,
     'basis_type': 'lcao',
     'mixing_type': 'broyden',
-    'mixing_beta': 0.2,
+    'mixing_beta': 0.4,
     'mixing_gg0': 1.0,
     'mixing_ndim': 20,
     'scf_thr': 1e-7,
@@ -90,6 +92,7 @@ basic_input = {
     'out_stru': 1,
     'out_chg': 0,
     'out_bandgap': 1,
+    'onsite_radius': 3.0,
 }
 
 ROOTDIR = os.getcwd()
@@ -166,6 +169,31 @@ def write_abacus_kpts(filename='KPT', kpoints=[1,1,1]):
         kptstring += f'{kpoints[0]} {kpoints[1]} {kpoints[2]} 0 0 0\n'
         fo.write(kptstring)
 
+def swap_crystal_lattice(structure: Atoms, swap_indices: List[int] = [1, 2]) -> Atoms:
+    """
+    Swap the lattice vector of a crystal structure by ASE.
+    """
+    # swap the cell for lattice
+    old_cellpar = structure.get_cell().cellpar()
+    new_cellpar = old_cellpar.copy()
+    # a,b,c
+    new_cellpar[swap_indices[0]] = old_cellpar[swap_indices[1]]
+    new_cellpar[swap_indices[1]] = old_cellpar[swap_indices[0]]
+    # alpha beta gamma
+    new_cellpar[swap_indices[0] + 3] = old_cellpar[swap_indices[1] + 3]
+    new_cellpar[swap_indices[1] + 3] = old_cellpar[swap_indices[0] + 3]
+    new_structure = structure.copy()
+    new_structure.set_cell(new_cellpar)
+    # swap the scaled positions
+    old_scaled_positions = structure.get_scaled_positions()
+    new_positions = old_scaled_positions.copy()
+    new_positions[:, swap_indices[0]] = old_scaled_positions[:, swap_indices[1]]
+    new_positions[:, swap_indices[1]] = old_scaled_positions[:, swap_indices[0]]
+    # set the new scaled positions after the setting of cell
+    new_structure.set_scaled_positions(new_positions)
+    return new_structure
+
+
 def sampled_dpdata_to_abacus(dataset_name, project_dir, vaccum=6.18, kpt_criteria=25, merge_traj=True):
     '''transfer sampled stru from dpdata/npy to abacus-input
     Args:
@@ -209,6 +237,7 @@ def sampled_dpdata_to_abacus(dataset_name, project_dir, vaccum=6.18, kpt_criteri
             vaccum_state = judge_vaccum(stru, vac=vaccum)
             input_parameters = deepcopy(basic_input)
             
+            # give different systems different input files accordingly
             if sum(vaccum_state) == 3:
                 stru_type = "cluster"
             # notice: some special cluster may have vaccum layer in a not enough large scale
@@ -241,6 +270,13 @@ def sampled_dpdata_to_abacus(dataset_name, project_dir, vaccum=6.18, kpt_criteri
                 # for most cases not needed but can added
                 # but for Fe-O surface the dipole correction is needed
                 vaccum_dim = vaccum_state.index(True)
+                # added in 0729
+                if vaccum_dim == 2:
+                    # change Z-axis vacuum to Y-axis vacuum
+                    stru = swap_crystal_lattice(stru, [1, 2])
+                    vaccum_dim = 1
+                    vaccum_state[1] = True
+                    vaccum_state[2] = False
                 input_parameters.update(
                     {
                         'efield_flag': 1,
@@ -268,7 +304,7 @@ def sampled_dpdata_to_abacus(dataset_name, project_dir, vaccum=6.18, kpt_criteri
                 }
             )
             # deal with gamma-only if it is true
-            if (sum(vaccum_state) == 3) or kpoints == [1,1,1]:
+            if (sum(vaccum_state) == 3) or (kpoints == [1,1,1]) or (cluster_identify == True):
                 input_parameters.update(
                     {
                         'gamma_only': 1
