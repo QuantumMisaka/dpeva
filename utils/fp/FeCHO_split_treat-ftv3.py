@@ -6,7 +6,7 @@ import numpy as np
 import os
 import sys
 from ase.io.abacus import write_input, write_abacus
-from ase import Atoms
+from ase import Atoms  #ase-abacus is needed
 from typing import List
 from copy import deepcopy
 from random import randint

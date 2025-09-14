@@ -1,0 +1,866 @@
+import logging
+# parameters
+# testing setting
+project = "stage4"
+uq_select_scheme = "tangent_lo"  # strict, circle_lo, tangent_lo, crossline_lo, loose
+testing_dir = "test-val-npy"
+testing_head = "results"
+# descriptor loading setting
+desc_dir = f"{project}/desc_other"
+desc_filename = "desc.npy"
+# testdata setting
+testdata_dir = f"{project}/other_dpdata"
+testdata_fmt = "deepmd/npy"
+testdata_string = "O*"  # for correspondence
+# figure setting
+kde_bw_adjust = 0.5
+fig_dpi = 150
+# save setting
+root_savedir = "dpeva_uqft"
+view_savedir = f"./{project}/{root_savedir}/view"
+dpdata_savedir = f"./{project}/{root_savedir}/dpdata"
+df_savedir = f"./{project}/{root_savedir}/dataframe"
+# selection setting
+uq_qbc_trust_lo = 0.12
+uq_qbc_trust_hi = 0.22
+uq_rnd_rescaled_trust_lo = uq_qbc_trust_lo
+uq_rnd_rescaled_trust_hi = uq_qbc_trust_hi
+num_selection = 200
+direct_k = 1
+direct_thr_init = 0.5
+
+# log setting
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S',
+    filemode='w',
+    filename="UQ-DIRECT-selection.log",
+)
+
+logger = logging.getLogger(__name__)
+
+import dpdata
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.ticker as mtick
+import dpdata
+import seaborn as sns
+import pandas as pd
+import os
+import shutil
+import glob
+
+from copy import deepcopy
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+from dpeva.sampling.direct import BirchClustering, DIRECTSampler, SelectKFromClusters
+
+plt.rcParams['xtick.direction'] = 'in'  # set the direction of xticks inside
+plt.rcParams['ytick.direction'] = 'in'  # set the direction of yticks inside
+plt.rcParams['font.size'] = 10  # set the font size
+
+
+class DPTestResults:
+    '''DPTestResults class to load the test results of deepmd-kit
+    
+    Attributes:
+        type_map: list of str, the list of atom types
+        data_e: np.ndarray, the energy data of test results
+        data_f: np.ndarray, the force data of test results
+        dataname_list: list of list, the list of dataname, frame index and natom
+        datanames_nframe: dict, the dict of dataname and nframe
+    '''
+    def __init__(self, headname):
+        self.type_map = ["H","C","O","Fe"]
+        self.set_dptest_detail(headname)
+    
+    def get_natom(self, dataname):
+        # get natoms from dataname
+        natom = 0
+        name_string = deepcopy(dataname)
+        for ele in self.type_map:
+            name_string = name_string.replace(ele, f" {ele},")
+        ele_num_pair_list = name_string.strip().split(" ")
+        for ind, ele_string in enumerate(ele_num_pair_list):
+            natom += int(ele_string.split(',')[1])
+        return natom
+    
+    def set_dataname(self, filename):
+        # 从对应的test result*.txt文件中读取每个数据对应的LabeledSystem以及nframe, 只能读取deepmd/npy数据测试后结果
+        datanames_indice_dict = {}
+        datanames_nframe_list = []
+        datanames_nframe_dict = {}
+        # read the "# DataName" line from the file and its index of columns
+
+        with open(filename, 'r') as f:
+            for i, line in enumerate(f):
+                if line.startswith("# "):
+                    dirname = line.split(" ")[1]
+                    dataname = dirname.split("/")[-1][:-1]
+                    datanames_indice_dict[dataname] = i
+        full_index = i
+        len_data = len(datanames_indice_dict)
+        for count, dataname in enumerate(datanames_indice_dict):
+            if count == len_data - 1:
+                datanames_nframe_dict[dataname] = full_index - datanames_indice_dict[dataname]
+            else:
+                list_indice = list(datanames_indice_dict.values())
+                datanames_nframe_dict[dataname] = list_indice[count + 1] - list_indice[count] - 1
+        # flatten the datanames_nframe
+        for dataname, count in datanames_nframe_dict.items():
+            for i in range(count):
+                natom = self.get_natom(dataname)
+                datanames_nframe_list.append([dataname,i,natom])
+        return datanames_nframe_list, datanames_nframe_dict
+
+    def set_dptest_detail(self, headname):
+        self.data_e = np.genfromtxt(f"{headname}.e_peratom.out", names=[f"data_Energy", f"pred_Energy"])
+        self.data_f = np.genfromtxt(f"{headname}.f.out", names=["data_fx", "data_fy", "data_fz", "pred_fx", "pred_fy", "pred_fz"])
+        self.dataname_list, self.datanames_nframe = self.set_dataname(f"{headname}.e_peratom.out")
+
+        # 计算pred和data的差值
+        self.diff_e = self.data_e[f"pred_Energy"] - self.data_e[f"data_Energy"]
+        self.diff_fx = self.data_f[f'pred_fx'] - self.data_f[f'data_fx']
+        self.diff_fy = self.data_f[f'pred_fy'] - self.data_f[f'data_fy']
+        self.diff_fz = self.data_f[f'pred_fz'] - self.data_f[f'data_fz']
+
+# check and make the directories
+logger.info(f"Initializing selection in {project} ---")
+if os.path.exists(project) == False:
+    logger.error(f"Project directory {project} not found!")
+    raise ValueError(f"Project directory {project} not found!")
+if os.path.exists(f"{project}/0/{testing_dir}") == False:
+    logger.error(f"Testing directory {testing_dir} not found!")
+    raise ValueError(f"Testing directory {testing_dir} not found!")
+if os.path.exists(desc_dir) == False:
+    logger.error(f"Descriptor directory {desc_dir} not found!")
+    raise ValueError(f"Descriptor directory {desc_dir} not found!")
+if os.path.exists(testdata_dir) == False:
+    logger.error(f"Testdata directory {testdata_dir} not found!")
+    raise ValueError(f"Testdata directory {testdata_dir} not found!")
+uq_options = ["strict", 
+              "circle_lo", 
+              "crossline_lo", 
+              "tangent_lo",
+              "loose"]
+if uq_select_scheme not in uq_options:
+    logger.error(f"UQ selection scheme {uq_select_scheme} not supported! Please choose from {uq_options}.")
+    raise ValueError(f"UQ selection scheme {uq_select_scheme} not supported! Please choose from {uq_options}.")
+if ((uq_qbc_trust_lo >= uq_qbc_trust_hi) 
+    or (uq_rnd_rescaled_trust_lo >= uq_rnd_rescaled_trust_hi)):
+    raise ValueError("Low trust threshold should be lower than High trust thershold !")
+
+if os.path.exists(view_savedir) == False:
+    os.makedirs(view_savedir)
+if os.path.exists(dpdata_savedir) == False:
+    os.makedirs(dpdata_savedir)
+if os.path.exists(df_savedir) == False:
+    os.makedirs(df_savedir)
+
+# load the test results
+logger.info("Loading the test results")
+dp_test_results_0 = DPTestResults(f"./{project}/0/{testing_dir}/{testing_head}")
+dp_test_results_1 = DPTestResults(f"./{project}/1/{testing_dir}/{testing_head}")
+dp_test_results_2 = DPTestResults(f"./{project}/2/{testing_dir}/{testing_head}")
+dp_test_results_3 = DPTestResults(f"./{project}/3/{testing_dir}/{testing_head}")
+
+# deal with existing label
+logger.info("Dealing with existing label")
+diff_e_0 = np.abs(dp_test_results_0.diff_e)
+diff_f_0 = np.sqrt(dp_test_results_0.diff_fx**2 + dp_test_results_0.diff_fy**2 + dp_test_results_0.diff_fz**2)
+# map diff_f_0 to each structures with max force diff
+index = 0
+diff_maxf_0_frame = []
+diff_rmsf_0_frame = []
+for item in dp_test_results_0.dataname_list:
+    natom = item[2]
+    diff_f_0_item = diff_f_0[index:index + natom]
+    diff_maxf_0_frame.append(np.max(diff_f_0_item))
+    diff_rmsf_0_frame.append(np.sqrt(np.mean(diff_f_0_item**2)))
+    index += natom
+diff_maxf_0_frame = np.array(diff_maxf_0_frame)
+diff_rmsf_0_frame = np.array(diff_rmsf_0_frame)
+
+# deal with atomic force UQ
+# use DPGEN formula: 
+# \epsilon_t=\max _i \sqrt{\left\langle\left\|F_{w, i}\left(\mathcal{R}_t\right)-\left\langle F_{w, i}\left(\mathcal{R}_t\right)\right\rangle\right\|^2\right\rangle}
+# starting from atomic force
+logger.info("Dealing with atomic force UQ by DPGEN formula")
+fx_0 = dp_test_results_0.data_f['pred_fx']
+fy_0 = dp_test_results_0.data_f['pred_fy']
+fz_0 = dp_test_results_0.data_f['pred_fz']
+fx_1 = dp_test_results_1.data_f['pred_fx']
+fy_1 = dp_test_results_1.data_f['pred_fy']
+fz_1 = dp_test_results_1.data_f['pred_fz']
+fx_2 = dp_test_results_2.data_f['pred_fx']
+fy_2 = dp_test_results_2.data_f['pred_fy']
+fz_2 = dp_test_results_2.data_f['pred_fz']
+fx_3 = dp_test_results_3.data_f['pred_fx']
+fy_3 = dp_test_results_3.data_f['pred_fy']
+fz_3 = dp_test_results_3.data_f['pred_fz'] 
+fx_expt = np.mean((fx_1, fx_2, fx_3), axis=0)
+fy_expt = np.mean((fy_1, fy_2, fy_3), axis=0)
+fz_expt = np.mean((fz_1, fz_2, fz_3), axis=0)
+
+# deal with QbC force UQ
+logger.info("Dealing with QbC force UQ")
+fx_qbc_square_diff =  np.mean(((fx_1 - fx_expt)**2, (fx_2 - fx_expt)**2, (fx_3 - fx_expt)**2), axis=0) 
+fy_qbc_square_diff =  np.mean(((fy_1 - fy_expt)**2, (fy_2 - fy_expt)**2, (fy_3 - fy_expt)**2), axis=0) 
+fz_qbc_square_diff =  np.mean(((fz_1 - fz_expt)**2, (fz_2 - fz_expt)**2, (fz_3 - fz_expt)**2), axis=0) 
+f_qbc_stddiff = np.sqrt(fx_qbc_square_diff + fy_qbc_square_diff + fz_qbc_square_diff)
+
+# assign atomic force stddiff to each structure and get UQ by max atomic force diff
+index = 0
+uq_qbc_for_list = []
+for item in dp_test_results_0.dataname_list:
+    natom = item[2]
+    f_qbc_stddiff_item = f_qbc_stddiff[index:index + natom]
+    uq_qbc_for_list.append(np.max(f_qbc_stddiff_item))
+    index += natom
+uq_qbc_for = np.array(uq_qbc_for_list)
+
+# deal with RND-like force UQ
+logger.info("Dealing with RND-like force UQ")
+fx_rnd_square_diff = np.mean(((fx_1 - fx_0)**2, (fx_2 - fx_0)**2, (fx_3 - fx_0)**2), axis=0) 
+fy_rnd_square_diff = np.mean(((fy_1 - fy_0)**2, (fy_2 - fy_0)**2, (fy_3 - fy_0)**2), axis=0) 
+fz_rnd_square_diff = np.mean(((fz_1 - fz_0)**2, (fz_2 - fz_0)**2, (fz_3 - fz_0)**2), axis=0) 
+f_rnd_stddiff = np.sqrt(fx_rnd_square_diff + fy_rnd_square_diff + fz_rnd_square_diff)
+
+# assign atomic force stddiff to each structure and get UQ by max atomic force diff
+index = 0
+uq_rnd_for_list = []
+for item in dp_test_results_0.dataname_list:
+    natom = item[2]
+    f_rnd_stddiff_item = f_rnd_stddiff[index:index + natom]
+    uq_rnd_for_list.append(np.max(f_rnd_stddiff_item))
+    index += natom
+uq_rnd_for = np.array(uq_rnd_for_list)
+
+# align RND to QbC by Z-Score
+logger.info("Aligning UQ-RND to UQ-QbC by Z-Score")
+scaler_qbc_for = StandardScaler()
+scaler_rnd_for = StandardScaler()
+uq_qbc_for_scaled = scaler_qbc_for.fit_transform(uq_qbc_for.reshape(-1,1)).flatten()
+uq_rnd_for_scaled = scaler_rnd_for.fit_transform(uq_rnd_for.reshape(-1,1)).flatten()
+uq_rnd_for_rescaled = scaler_qbc_for.inverse_transform(uq_rnd_for_scaled.reshape(-1,1)).flatten()
+
+# simplify the variables
+uq_x_lo = uq_qbc_trust_lo
+uq_y_lo = uq_rnd_rescaled_trust_lo
+uq_x_hi = uq_qbc_trust_hi
+uq_y_hi = uq_rnd_rescaled_trust_hi
+
+# plot and save the figures of UQ-force
+logger.info("Plotting and saving the figures of UQ-force")
+plt.figure(figsize=(8, 6))
+sns.kdeplot(uq_qbc_for, color="blue", label="UQ-QbC", bw_adjust=0.5)
+sns.kdeplot(uq_rnd_for, color="red", label="UQ-RND", bw_adjust=0.5)
+plt.title("Distribution of UQ-force by KDEplot")
+plt.xlabel("UQ Value")
+plt.ylabel("Density")
+plt.legend()
+plt.grid(True)
+plt.savefig(f"./{view_savedir}/UQ-force.png", dpi=fig_dpi)
+plt.close()
+
+# plot and save the figures of UQ-force rescaled
+logger.info("Plotting and saving the figures of UQ-force rescaled")
+plt.figure(figsize=(8, 6))
+sns.kdeplot(uq_qbc_for, color="blue", label="UQ-RND", bw_adjust=0.5)
+sns.kdeplot(uq_rnd_for_rescaled, color="red", label="UQ-QbC-rescaled", bw_adjust=0.5)
+plt.title("Distribution of UQ-force by KDEplot")
+plt.xlabel("UQ Value")
+plt.ylabel("Density")
+plt.legend()
+plt.grid(True)
+plt.savefig(f"./{view_savedir}/UQ-force-rescaled.png", dpi=fig_dpi)
+plt.close()
+
+# plot and save the figures of UQ-QbC-force with UQ trust range
+logger.info("Plotting and saving the figures of UQ-QbC-force with UQ trust range")
+plt.figure(figsize=(8, 6))
+sns.kdeplot(uq_qbc_for, color="blue", bw_adjust=0.5)
+plt.title("Distribution of UQ-QbC-force by KDEplot")
+plt.xlabel("UQ-QbC Value")
+plt.ylabel("Density")
+plt.grid(True)
+plt.axvline(uq_x_lo, color='purple', linestyle='--', linewidth=1)
+plt.axvline(uq_x_hi, color='purple', linestyle='--', linewidth=1)
+# show the UQ trust range
+plt.axvspan(np.min(uq_qbc_for), uq_x_lo, alpha=0.1, color='green')
+plt.axvspan(uq_x_lo, uq_x_hi, alpha=0.1, color='yellow')
+plt.axvspan(uq_x_hi, np.max(uq_qbc_for), alpha=0.1, color='red')
+plt.savefig(f"./{view_savedir}/UQ-QbC-force.png", dpi=fig_dpi)
+plt.close()
+
+# plot and save the figures of UQ-RND-force-rescaled with UQ trust range
+logger.info("Plotting and saving the figures of UQ-RND-force-rescaled with UQ trust range")
+plt.figure(figsize=(8, 6))
+sns.kdeplot(uq_rnd_for_rescaled, color="blue", bw_adjust=0.5)
+plt.title("Distribution of UQ-RND-force-rescaled by KDEplot")
+plt.xlabel("UQ-RND-rescaled Value")
+plt.ylabel("Density")
+plt.grid(True)
+plt.axvline(uq_x_lo, color='purple', linestyle='--', linewidth=1)
+plt.axvline(uq_x_hi, color='purple', linestyle='--', linewidth=1)
+# show the UQ trust range
+plt.axvspan(np.min(uq_rnd_for_rescaled), uq_x_lo, alpha=0.1, color='green')
+plt.axvspan(uq_x_lo, uq_x_hi, alpha=0.1, color='yellow')
+plt.axvspan(uq_x_hi, np.max(uq_rnd_for_rescaled), alpha=0.1, color='red')
+plt.savefig(f"./{view_savedir}/UQ-RND-force-rescaled.png", dpi=fig_dpi)
+plt.close()
+
+
+# plot and save the figures of UQ-force vs force diff
+logger.info("Plotting and saving the figures of UQ-force vs force diff")
+plt.figure(figsize=(8, 6))
+plt.scatter(uq_qbc_for, diff_maxf_0_frame, color="blue", label="QbC",s=20)
+plt.scatter(uq_rnd_for, diff_maxf_0_frame, color="red", label="RND",s=20)
+plt.title("UQ vs Force Diff")
+plt.xlabel("UQ Value")
+plt.ylabel("True Max Force Diff")
+plt.legend()
+plt.grid(True)
+plt.savefig(f"./{view_savedir}/UQ-force-fdiff-parity.png", dpi=fig_dpi)
+plt.close()
+
+# plot and save the figures of UQ-force-rescaled vs force diff
+logger.info("Plotting and saving the figures of UQ-force-rescaled vs force diff")
+plt.figure(figsize=(8, 6))
+plt.scatter(uq_qbc_for, diff_maxf_0_frame, color="blue", label="QbC")
+plt.scatter(uq_rnd_for_rescaled, diff_maxf_0_frame, color="red", label="RND-rescaled")
+plt.title("UQ vs Force Diff")
+plt.xlabel("UQ Value")
+plt.ylabel("True Max Force Diff")
+plt.legend()
+plt.grid(True)
+plt.savefig(f"./{view_savedir}/UQ-force-rescaled-fdiff-parity.png", dpi=fig_dpi)
+plt.close()
+
+# difference between UQ-qbc and UQ-rnd-rescaled
+logger.info("Calculating the difference between UQ-qbc and UQ-rnd-rescaled")
+uq_diff_for_scaled_to_qbc = np.abs(uq_rnd_for_rescaled - uq_qbc_for)
+
+# plot and save the figures of UQ-force-diff vs UQ-force
+logger.info("Plotting and saving the figures of UQ-diff vs UQ")
+plt.figure(figsize=(8, 6))
+plt.scatter(uq_diff_for_scaled_to_qbc, uq_qbc_for, color="blue", label="UQ-qbc-for", s=20)
+plt.scatter(uq_diff_for_scaled_to_qbc, uq_rnd_for_rescaled, color="red", label="UQ-rnd-for-rescaled", s=20)
+plt.title("UQ-diff vs UQ")
+plt.xlabel("UQ-diff Value")
+plt.ylabel("UQ Value")
+plt.legend()
+plt.grid(True)
+plt.savefig(f"./{view_savedir}/UQ-diff-UQ-parity.png", dpi=fig_dpi)
+plt.close()
+
+# plot and save the figures of UQ-force-diff vs force diff
+logger.info("Plotting and saving the figures of UQ-diff vs force diff")
+plt.figure(figsize=(8, 6))
+plt.scatter(uq_diff_for_scaled_to_qbc, diff_maxf_0_frame, color="blue", label="UQ-diff-force", s=20)
+plt.title("UQ-diff vs Force Diff")
+plt.xlabel("UQ-diff Value")
+plt.ylabel("True Max Force Diff")
+plt.legend()
+plt.grid(True)
+plt.savefig(f"./{view_savedir}/UQ-diff-fdiff-parity.png", dpi=fig_dpi)
+plt.close()
+
+# plot and save the sns.scatterplot figures of UQ-qbc-force and UQ-rnd-force-rescaled vs force diff
+logger.info("Plotting and saving the figures of UQ-qbc-force and UQ-rnd-force-rescaled vs force diff")
+df_uq_maxfor = pd.DataFrame({"UQ-QbC": uq_qbc_for, "UQ-RND-rescaled": uq_rnd_for_rescaled, "Max Force Diff": diff_maxf_0_frame})
+plt.figure(figsize=(8, 6))
+sns.scatterplot(data=df_uq_maxfor, 
+                x="UQ-QbC", 
+                y="UQ-RND-rescaled", 
+                hue="Max Force Diff", 
+                palette="Reds",
+                alpha=0.8,
+                s=60)
+plt.title("UQ-QbC and UQ-RND vs Max Force Diff", fontsize=14)
+plt.grid(True)
+plt.xlabel("UQ-QbC Value", fontsize=12)
+plt.ylabel("UQ-RND-rescaled Value", fontsize=12)
+plt.legend(title="Max Force Diff", fontsize=10)
+plt.grid(True)
+# set the xticks and yticks
+ax = plt.gca()
+x_major_locator = mtick.MultipleLocator(0.1)
+y_major_locator = mtick.MultipleLocator(0.1)
+ax.xaxis.set_major_locator(x_major_locator)
+ax.yaxis.set_major_locator(y_major_locator)
+# plot the UQ region of trust inside the plot
+plt.plot([0, uq_x_hi], [uq_y_hi, uq_y_hi], color='black', linestyle='--', linewidth=2)
+plt.plot([uq_x_hi, uq_x_hi], [0, uq_y_hi], color='black', linestyle='--', linewidth=2)
+if uq_select_scheme == "strict":
+    plt.plot([uq_x_lo, uq_x_lo], [uq_y_lo, uq_y_hi], color='purple', linestyle='--', linewidth=2)
+    plt.plot([uq_x_lo, uq_x_hi], [uq_y_lo, uq_y_lo], color='purple', linestyle='--', linewidth=2)
+elif uq_select_scheme == "circle_lo":
+    # ((uq_x-uq_x_hi)** 2 + (uq_y-uq_y_hi)**2 >= (uq_x_lo - uq_x_hi)**2 + (uq_y_lo - uq_y_hi)**2)
+    center = (uq_x_hi, uq_y_hi)
+    radius = np.sqrt((uq_x_lo - uq_x_hi)**2 + (uq_y_lo - uq_y_hi)**2)
+    theta = np.linspace(np.pi, 1.5*np.pi, 100)
+    x_val = center[0] + radius * np.cos(theta)
+    y_val = center[1] + radius * np.sin(theta)
+    plt.plot(x_val, y_val, color="purple", linestyle="--", linewidth=2)
+elif uq_select_scheme == "tangent_lo":
+    # ((uq_x-uq_x_hi)*(uq_x_hi-uq_x_lo) + (uq_y-uq_y_hi)*(uq_y_hi-uq_y_lo) >= 0)
+    x_val = np.linspace(0, uq_x_hi, 100)
+    y_val = - (uq_y_hi - uq_y_lo) / (uq_x_hi - uq_x_lo) * (x_val - uq_x_lo) + uq_y_lo
+    x_val = x_val[y_val < uq_y_hi]
+    y_val = y_val[y_val < uq_y_hi]
+    plt.plot(x_val, y_val, color="purple", linestyle="--", linewidth=2)
+elif uq_select_scheme == "crossline_lo":
+    def balance_linear_func(x_lo, x_hi, y_lo, y_hi, x_range=(0,10), num_points=20):
+        # y1 = (y_hi*x_lo - (y_hi - y_lo)*x)/x_lo
+        # y2 = (y_lo*x_hi - y_lo*x)/(x_hi - x_lo)
+        x_val = np.linspace(x_range[0], x_range[1], num_points)
+        delta_y = y_hi - y_lo
+        delta_x = x_hi - x_lo
+        y1 = (y_hi * x_lo - delta_y * x_val) / x_lo
+        y2 = (y_lo * x_hi - y_lo * x_val) / delta_x
+        y = np.max((y1, y2), axis=0)
+        return x_val, y
+    x_val, y_val = balance_linear_func(
+    uq_x_lo, uq_x_hi, uq_y_lo, uq_y_hi, (0, uq_x_hi), 100)
+    # filter the x_val and y_val in the range of uq_x_lo and uq_x_hi
+    x_val = x_val[y_val < uq_y_hi]
+    y_val = y_val[y_val < uq_y_hi]
+    plt.plot(x_val, y_val, color="purple", linestyle="--", linewidth=2)
+elif uq_select_scheme == "loose":
+    plt.plot([uq_x_lo, uq_x_lo], [0, uq_y_lo], color='purple', linestyle='--', linewidth=2)
+    plt.plot([0, uq_x_lo], [uq_y_lo, uq_y_lo], color='purple', linestyle='--', linewidth=2)
+else:
+    raise ValueError(f"UQ selection scheme {uq_select_scheme} not supported!")
+    
+plt.savefig(f"./{view_savedir}/UQ-force-qbc-rnd-fdiff-scatter.png", dpi=fig_dpi)
+plt.close()
+
+# deal with specific selection
+logger.info("Dealing with Selection in Target dpdata")
+datanames_ind_list = [f"{i[0]}-{i[1]}" for i in dp_test_results_0.dataname_list]
+data_dict_uq = {"dataname": datanames_ind_list, 
+             "uq_qbc_for": uq_qbc_for, 
+             "uq_rnd_for_rescaled": uq_rnd_for_rescaled,
+             "uq_rnd_for": uq_rnd_for,
+             "diff_maxf_0_frame": diff_maxf_0_frame,
+             }
+df_uq = pd.DataFrame(data_dict_uq)
+
+# load target testing data
+logger.info(f"Loading the target testing data from {testdata_dir}")
+test_data = dpdata.MultiSystems.from_dir(f"{testdata_dir}", 
+                                         f"{testdata_string}", 
+                                         fmt=f"{testdata_fmt}")
+
+# load descriptors/*/desc.npy data
+logger.info(f"Loading the target descriptors from {testdata_dir}")
+desc_string_test = f'{desc_dir}/*/{desc_filename}'
+desc_datanames = []
+desc_stru = []
+desc_iter_list = sorted(glob.glob(desc_string_test))
+for f in desc_iter_list:
+    # extract dirname of desc.npy from descriptors/*
+    directory, _ = os.path.split(f)
+    _, keyname = os.path.split(directory)
+    one_desc = np.load(f) # nframe, natoms, ndesc
+    for i in range(len(one_desc)):
+        desc_dataname = f"{keyname}-{i}"
+        desc_datanames.append(desc_dataname)
+        # mean the atomic descriptors to structure descriptors
+        one_desc_stru = np.mean(one_desc[i], axis=0).reshape(1, -1)
+        desc_stru.append(one_desc_stru)
+desc_stru = np.concatenate(desc_stru, axis=0)
+
+logger.info(f"Collecting data to dataframe and do UQ selection")
+df_desc = pd.DataFrame(desc_stru, 
+                       columns=[f"desc_stru_{i}" for i in range(desc_stru.shape[1])])
+df_desc["dataname"] = desc_datanames
+df_uq_desc = pd.merge(df_uq, df_desc, on="dataname")
+# save the dataframe
+logger.info(f"Save df_uq_desc dataframe to {df_savedir}/df_uq_desc.csv")
+df_uq_desc.to_csv(f"{df_savedir}/df_uq_desc.csv", index=True)
+
+# simplify
+uq_x = df_uq["uq_qbc_for"]
+uq_y = df_uq["uq_rnd_for_rescaled"]
+
+# uq selection
+if uq_select_scheme == "strict":
+    # strict selection: QbC and RND-like are both trustable
+    df_uq_desc_candidate = df_uq_desc[
+        (uq_x >= uq_x_lo)
+        & (uq_x <= uq_x_hi) 
+        & (uq_y >= uq_y_lo) 
+        & (uq_y <= uq_y_hi)
+    ]
+    df_uq_accurate = df_uq[
+        ((uq_x < uq_x_lo) &
+        (uq_y < uq_y_hi)) |
+        ((uq_x< uq_x_hi) &
+        (uq_y < uq_y_lo))
+    ]
+    df_uq_failed = df_uq[
+        (uq_x > uq_x_hi) |
+        (uq_y > uq_y_hi) 
+    ]
+elif uq_select_scheme == "circle_lo":
+    # balance selection: QbC and RND-like are trustable in a circle balance way
+    df_uq_desc_candidate = df_uq_desc[
+        ((uq_x <= uq_x_hi) & (uq_y <= uq_y_hi)) &
+        ((uq_x-uq_x_hi)** 2 + (uq_y-uq_y_hi)**2 <= (uq_x_hi - uq_x_lo)**2 + (uq_y_hi - uq_y_lo)**2)
+    ]
+    df_uq_accurate = df_uq[
+        ((uq_x-uq_x_hi)** 2 + (uq_y-uq_y_hi)**2 > (uq_x_lo - uq_x_hi)**2 + (uq_y_lo - uq_y_hi)**2) & ((uq_x < uq_x_hi) & (uq_y < uq_y_hi))
+        ]
+    df_uq_failed = df_uq[
+        (uq_x > uq_x_hi) |
+        (uq_y > uq_y_hi) 
+    ]
+elif uq_select_scheme == "tangent_lo":
+    # balance selection: QbC and RND-like are trustable in a tangent-circle balance way
+    df_uq_desc_candidate = df_uq_desc[
+        ((uq_x <= uq_x_hi) & (uq_y <= uq_y_hi)) &
+        ((uq_x-uq_x_lo)*(uq_x_lo-uq_x_hi) + (uq_y-uq_y_lo)*(uq_y_lo-uq_y_hi) <= 0)
+    ]
+    df_uq_accurate = df_uq[
+        ((uq_x-uq_x_lo)*(uq_x_lo-uq_x_hi) + (uq_y-uq_y_lo)*(uq_y_lo-uq_y_hi) > 0) 
+        & ((uq_x < uq_x_hi) & (uq_y < uq_y_hi)) 
+        ]
+    df_uq_failed = df_uq[
+        (uq_x > uq_x_hi) |
+        (uq_y > uq_y_hi)
+    ]
+    
+elif uq_select_scheme == "crossline_lo":
+    # balance selection: QbC and RND-like are trustable in a croseline balance way
+    df_uq_desc_candidate = df_uq_desc[
+        (uq_x <= uq_x_hi) & 
+        (uq_y <= uq_y_hi) &
+        (uq_x_lo * uq_y + (uq_y_hi - uq_y_lo) * uq_x >= uq_x_lo * uq_y_hi) &
+        (uq_x * uq_y_lo + (uq_x_hi - uq_x_lo) * uq_y >= uq_x_hi * uq_y_lo)
+    ]
+    df_uq_accurate = df_uq[
+        (uq_x_lo * uq_y + (uq_y_hi - uq_y_lo) * uq_x < uq_x_lo * uq_y_hi) |
+        (uq_x * uq_y_lo + (uq_x_hi - uq_x_lo) * uq_y < uq_x_hi * uq_y_lo)
+    ]
+    df_uq_failed = df_uq[
+        (uq_x > uq_x_hi) |
+        (uq_y > uq_y_hi) 
+    ]
+elif uq_select_scheme == "loose":
+    # loose selection: QbC or RND-like is either trustable
+    df_uq_desc_candidate = df_uq_desc[
+        ((uq_x >= uq_x_lo)
+        & (uq_x <= uq_x_hi)) 
+        | ((uq_y >= uq_y_lo) 
+        & (uq_y <= uq_y_hi))
+    ]
+    df_uq_accurate = df_uq[
+        (uq_x < uq_x_lo) &
+        (uq_y < uq_y_lo)
+    ]
+    df_uq_failed = df_uq[
+        (uq_x > uq_x_hi) |
+        (uq_y > uq_y_hi) 
+    ]
+else:
+    raise ValueError(f"UQ selection scheme {uq_select_scheme} not supported!")
+
+# UQ selection information
+logger.info(f"UQ scheme: {uq_select_scheme} between QbC and RND-like")
+logger.info(f"UQ selection information : {uq_select_scheme}")
+logger.info(f"Total number of structures: {len(df_uq_desc)}")
+logger.info(f"Accurate structures: {len(df_uq_accurate)}, Precentage: {len(df_uq_accurate) / len(df_uq_desc) * 100:.2f}%")
+logger.info(f"Candidate structures: {len(df_uq_desc_candidate)}, Precentage: {len(df_uq_desc_candidate) / len(df_uq_desc) * 100:.2f}%")
+logger.info(f"Failed structures: {len(df_uq_failed)}, Precentage: {len(df_uq_failed) / len(df_uq_desc) * 100:.2f}%")
+# store the selection information in df_uq dataframe
+df_uq['uq_identity'] = np.where(df_uq['dataname'].isin(df_uq_desc_candidate['dataname']), 'candidate',
+                                np.where(df_uq['dataname'].isin(df_uq_accurate['dataname']), 'accurate', 'failed'))
+# save the dataframe
+logger.info(f"Save df_uq dataframe to {df_savedir}/df_uq.csv after UQ selection and identication")
+df_uq.to_csv(f"{df_savedir}/df_uq.csv", index=True)
+# save the dataframe
+logger.info(f"Save df_uq_desc_candidate dataframe to {df_savedir}/df_uq_desc_sampled-UQ.csv")
+df_uq_desc_candidate.to_csv(f"{df_savedir}/df_uq_desc_sampled-UQ.csv", index=True)
+
+# Visualization of UQ selection in scatter
+# Two-dim scatter plot
+logger.info("Plotting and saving the figure of UQ-identity in QbC-RND 2D space")
+plt.figure(figsize=(8, 6))
+sns.scatterplot(data=df_uq, 
+                x="uq_qbc_for", 
+                y="uq_rnd_for_rescaled", 
+                hue="uq_identity", 
+                palette={f"candidate: {len(df_uq_desc_candidate)}": "orange", 
+                         f"accurate: {len(df_uq_accurate)}": "green", 
+                         f"failed: {len(df_uq_failed)}": "red"},
+                alpha=0.5,
+                s=60)
+plt.title("UQ QbC+RND Selection View", fontsize=14)
+plt.grid(True)
+plt.xlabel("UQ-QbC Value", fontsize=12)
+plt.ylabel("UQ-RND-rescaled Value", fontsize=12)
+plt.legend(title="Identity", fontsize=10)
+plt.grid(True)
+# set the xticks and yticks
+ax = plt.gca()
+x_major_locator = mtick.MultipleLocator(0.1)
+y_major_locator = mtick.MultipleLocator(0.1)
+ax.xaxis.set_major_locator(x_major_locator)
+ax.yaxis.set_major_locator(y_major_locator)
+# plot the UQ region of trust inside the plot
+plt.plot([0, uq_x_hi], [uq_y_hi, uq_y_hi], color='black', linestyle='--', linewidth=2)
+plt.plot([uq_x_hi, uq_x_hi], [0, uq_y_hi], color='black', linestyle='--', linewidth=2)
+if uq_select_scheme == "strict":
+    plt.plot([uq_x_lo, uq_x_lo], [uq_y_lo, uq_y_hi], color='purple', linestyle='--', linewidth=2)
+    plt.plot([uq_x_lo, uq_x_hi], [uq_y_lo, uq_y_lo], color='purple', linestyle='--', linewidth=2)
+elif uq_select_scheme == "circle_lo":
+    # ((uq_x-uq_x_hi)** 2 + (uq_y-uq_y_hi)**2 >= (uq_x_lo - uq_x_hi)**2 + (uq_y_lo - uq_y_hi)**2)
+    center = (uq_x_hi, uq_y_hi)
+    radius = np.sqrt((uq_x_lo - uq_x_hi)**2 + (uq_y_lo - uq_y_hi)**2)
+    theta = np.linspace(np.pi, 1.5*np.pi, 100)
+    x_val = center[0] + radius * np.cos(theta)
+    y_val = center[1] + radius * np.sin(theta)
+    plt.plot(x_val, y_val, color="purple", linestyle="--", linewidth=2)
+elif uq_select_scheme == "tangent_lo":
+    # ((uq_x-uq_x_hi)*(uq_x_hi-uq_x_lo) + (uq_y-uq_y_hi)*(uq_y_hi-uq_y_lo) >= 0)
+    x_val = np.linspace(0, uq_x_hi, 100)
+    y_val = - (uq_y_hi - uq_y_lo) / (uq_x_hi - uq_x_lo) * (x_val - uq_x_lo) + uq_y_lo
+    x_val = x_val[y_val < uq_y_hi]
+    y_val = y_val[y_val < uq_y_hi]
+    plt.plot(x_val, y_val, color="purple", linestyle="--", linewidth=2)
+elif uq_select_scheme == "crossline_lo":
+    def balance_linear_func(x_lo, x_hi, y_lo, y_hi, x_range=(0,10), num_points=20):
+        # y1 = (y_hi*x_lo - (y_hi - y_lo)*x)/x_lo
+        # y2 = (y_lo*x_hi - y_lo*x)/(x_hi - x_lo)
+        x_val = np.linspace(x_range[0], x_range[1], num_points)
+        delta_y = y_hi - y_lo
+        delta_x = x_hi - x_lo
+        y1 = (y_hi * x_lo - delta_y * x_val) / x_lo
+        y2 = (y_lo * x_hi - y_lo * x_val) / delta_x
+        y = np.max((y1, y2), axis=0)
+        return x_val, y
+    x_val, y_val = balance_linear_func(
+    uq_x_lo, uq_x_hi, uq_y_lo, uq_y_hi, (0, uq_x_hi), 100)
+    # filter the x_val and y_val in the range of uq_x_lo and uq_x_hi
+    x_val = x_val[y_val < uq_y_hi]
+    y_val = y_val[y_val < uq_y_hi]
+    plt.plot(x_val, y_val, color="purple", linestyle="--", linewidth=2)
+elif uq_select_scheme == "loose":
+    plt.plot([uq_x_lo, uq_x_lo], [0, uq_y_lo], color='purple', linestyle='--', linewidth=2)
+    plt.plot([0, uq_x_lo], [uq_y_lo, uq_y_lo], color='purple', linestyle='--', linewidth=2)
+else:
+    raise ValueError(f"UQ selection scheme {uq_select_scheme} not supported!")
+    
+plt.savefig(f"./{view_savedir}/UQ-force-qbc-rnd-identity-scatter.png", dpi=fig_dpi)
+plt.close()
+# one dim scatter plot for each UQ
+logger.info("Plotting and saving the figure of UQ-Candidate in QbC space against Max Force Diff")
+plt.figure(figsize=(8, 6))
+plt.scatter(uq_qbc_for, diff_maxf_0_frame, color="blue", label="UQ-QbC", s=20)
+plt.scatter(df_uq_desc_candidate["uq_qbc_for"], df_uq_desc_candidate["diff_maxf_0_frame"], color="orange", label="Candidate", s=20)
+plt.title("UQ vs Force Diff")
+plt.xlabel("UQ Value")
+plt.ylabel("True Max Force Diff")
+plt.legend()
+plt.grid(True)
+plt.savefig(f"./{view_savedir}/UQ-QbC-Candidate-fdiff-parity.png", dpi=fig_dpi)
+plt.close()
+logger.info("Plotting and saving the figure of UQ-Candidate in RND-rescaled space against Max Force Diff")
+plt.figure(figsize=(8, 6))
+plt.scatter(uq_rnd_for_rescaled, diff_maxf_0_frame, color="blue", label="UQ-RND-rescaled", s=20)
+plt.scatter(df_uq_desc_candidate["uq_rnd_for_rescaled"], df_uq_desc_candidate["diff_maxf_0_frame"], color="orange", label="Candidate", s=20)
+plt.title("UQ vs Force Diff")
+plt.xlabel("UQ Value")
+plt.ylabel("True Max Force Diff")
+plt.legend()
+plt.grid(True)
+plt.savefig(f"./{view_savedir}/UQ-RND-Candidate-fdiff-parity.png", dpi=fig_dpi)
+plt.close()
+
+
+# DIRECT selection on UQ data
+logger.info(f"Doing DIRECT Selection on UQ-selected data")
+DIRECT_sampler = DIRECTSampler(
+    structure_encoder=None,
+    clustering=BirchClustering(
+        n=num_selection // direct_k, 
+    threshold_init=direct_thr_init),
+    select_k_from_clusters=SelectKFromClusters(k=direct_k),
+)
+desc_features = [f"desc_stru_{i}" for i in range(desc_stru.shape[1])]
+DIRECT_selection = DIRECT_sampler.fit_transform(df_uq_desc_candidate[desc_features].values)
+DIRECT_selected_indices = DIRECT_selection["selected_indices"]
+explained_variance = DIRECT_sampler.pca.pca.explained_variance_
+selected_PC_dim = len([e for e in explained_variance if e > 1])
+DIRECT_selection["PCAfeatures_unweighted"] = DIRECT_selection["PCAfeatures"] / explained_variance[:selected_PC_dim]
+all_features = DIRECT_selection["PCAfeatures_unweighted"]
+
+df_uq_desc_selected_final = df_uq_desc_candidate.iloc[DIRECT_selected_indices]
+# save the dataframe
+logger.info(f"Saving df_uq_desc_selected_final dataframe to {df_savedir}/df_uq_desc_sampled-final.csv")
+df_uq_desc_selected_final.to_csv(f"{df_savedir}/df_uq_desc_sampled-final.csv", index=True)
+
+# Visualization of DIRECT results
+# Explained Variance
+logger.info(f"Visualization of DIRECT results compared with Random")
+plt.figure(figsize=(8, 6))
+plt.plot(
+    range(1, selected_PC_dim+6+1),
+    explained_variance[:selected_PC_dim+6],
+    "o-",
+)
+plt.xlabel(r"i$^{\mathrm{th}}$ PC", size=12)
+plt.ylabel("Explained variance", size=12)
+ax = plt.gca()
+ax.yaxis.set_major_formatter(mtick.PercentFormatter())
+plt.savefig(f"{view_savedir}/explained_variance.png", dpi=150)
+plt.close()
+# PCA feature converage
+def plot_PCAfeature_coverage(all_features, selected_indices, method="DIRECT", dpi=150, savedir='.'):
+    plt.plot(figsize=(8, 6))
+    selected_features = all_features[selected_indices]
+    plt.plot(all_features[:, 0], all_features[:, 1], "*", alpha=0.6, label=f"All {len(all_features):,} structures")
+    plt.plot(
+        selected_features[:, 0],
+        selected_features[:, 1],
+        "*",
+        alpha=0.6,
+        label=f"{method} sampled {len(selected_features):,}",
+    )
+    plt.legend(frameon=False, fontsize=10, reverse=True)
+    plt.ylabel("PC 2", size=12)
+    plt.xlabel("PC 1", size=12)
+    plt.savefig(f"{savedir}/{method}_PCA_feature_coverage.png", dpi=dpi)
+    plt.close()
+# DIRECT visualization
+plot_PCAfeature_coverage(all_features,
+                         DIRECT_selected_indices, 
+                         dpi=fig_dpi, 
+                         savedir=view_savedir)
+# Simulate a manual selection by random
+np.random.seed(42)
+manual_selection_index = np.random.choice(len(all_features), 
+                                          num_selection, 
+                                          replace=False)
+plot_PCAfeature_coverage(all_features,
+                         manual_selection_index, 
+                         "Random", 
+                         dpi=fig_dpi, 
+                         savedir=view_savedir)
+
+# feature converage score comparsion
+def calculate_feature_coverage_score(all_features, selected_indices, n_bins=100):
+    selected_features = all_features[selected_indices]
+    n_all = np.count_nonzero(
+        np.histogram(all_features, bins=np.linspace(min(all_features), max(all_features), n_bins))[0]
+    )
+    n_select = np.count_nonzero(
+        np.histogram(selected_features, bins=np.linspace(min(all_features), max(all_features), n_bins))[0]
+    )
+    return n_select / n_all
+def calculate_all_FCS(all_features, selected_indices, b_bins=100):
+    select_scores = [
+        calculate_feature_coverage_score(all_features[:, i], selected_indices, n_bins=b_bins)
+        for i in range(all_features.shape[1])
+    ]
+    return select_scores
+
+all_features = DIRECT_selection["PCAfeatures_unweighted"]
+scores_DIRECT = calculate_all_FCS(all_features, DIRECT_selection["selected_indices"], b_bins=100)
+scores_MS = calculate_all_FCS(all_features, manual_selection_index, b_bins=100)
+# plot the feature converage score comparsion
+x = np.arange(len(scores_DIRECT))
+x_ticks = [f"PC {n+1}" for n in range(len(x))]
+plt.figure(figsize=(15, 4))
+plt.bar(
+    x + 0.6,
+    scores_DIRECT,
+    width=0.3,
+    label=rf"DIRECT, $\overline{{\mathrm{{Coverage\ score}}}}$ = {np.mean(scores_DIRECT):.3f}",
+)
+plt.bar(
+    x + 0.3,
+    scores_MS,
+    width=0.3,
+    label=rf"Random, $\overline{{\mathrm{{Coverage\ score}}}}$ = {np.mean(scores_MS):.3f}",
+)
+plt.xticks(x + 0.45, x_ticks, size=12)
+plt.yticks(np.linspace(0, 1.0, 6), size=12)
+plt.ylabel("Coverage score", size=12)
+plt.legend(shadow=True, loc="lower right", fontsize=12)
+plt.savefig(f"{view_savedir}/coverage_score.png", dpi=fig_dpi)
+
+# visualization of final selection results in PCA space
+logger.info(f"Visualization of final selection results in PCA space")
+X = df_uq_desc[desc_features].values
+pca = PCA(n_components=2)
+PCs_alldata = pca.fit_transform(X)
+PCs_df = pd.DataFrame(data = PCs_alldata, columns = ['PC1', 'PC2'])
+df_alldataPC_visual = pd.concat([df_uq, PCs_df], axis = 1)
+# save the dataframe
+df_alldataPC_visual.to_csv(f"{df_savedir}/final_df.csv", index=True)
+
+# global indices of selected structures in original dataframe
+UQ_selected_indices_global = df_uq_desc_candidate.index
+final_selected_indices_global = df_uq_desc_selected_final.index
+num_all = len(df_uq.index)
+num_selected_UQ = len(UQ_selected_indices_global)
+num_selected_final = len(final_selected_indices_global)
+# first, plot all structures in the feature space
+plt.figure(figsize=(10, 8))
+plt.scatter(PCs_alldata[:, 0], 
+            PCs_alldata[:, 1], 
+            marker="*", 
+            color="gray", 
+            label=f"All {num_all} structures", 
+            alpha=0.7,
+            s=15)
+# second, plot the selected structures only by UQ
+plt.scatter(PCs_alldata[UQ_selected_indices_global, 0], 
+            PCs_alldata[UQ_selected_indices_global, 1], 
+            marker="*", 
+            color="blue", 
+            label=f"UQ sampled {num_selected_UQ}", 
+            alpha=0.7,
+            s=30)
+# third, plot the selected structures by UQ-DIRECT
+plt.scatter(PCs_alldata[final_selected_indices_global, 0], 
+            PCs_alldata[final_selected_indices_global, 1], 
+            marker="*", 
+            color="red", 
+            label=f"UQ-DIRECT sampled {num_selected_final}", 
+            s=30)
+plt.title(f"PCA of UQ-DIRECT sampling", fontsize=14)
+plt.xlabel("PC1", size=12)
+plt.ylabel("PC2", size=12)
+plt.legend(frameon=False, fontsize=12, reverse=True)
+logger.info(f"Saving the PCA view of UQ-DIRECT sampling to {view_savedir}/Final_sampled_PCAview.png")
+plt.savefig(f"{view_savedir}/Final_sampled_PCAview.png", dpi=fig_dpi)
+
+# selection of dpdata
+logger.info(f"Sampling dpdata based on selected indices")
+sampled_datanames = df_uq_desc.iloc[final_selected_indices_global]['dataname'].to_list()
+sampled_dpdata = dpdata.MultiSystems()
+other_dpdata = dpdata.MultiSystems()
+for lbsys in test_data:
+    for ind, sys in enumerate(lbsys):
+        dataname_sys = f"{sys.short_name}-{ind}"
+        if dataname_sys in sampled_datanames:
+            sampled_dpdata.append(sys)
+        else:
+            other_dpdata.append(sys)
+logger.info(f'Sampled dpdata: {sampled_dpdata}')
+logger.info(f'Other dpdata: {other_dpdata}')
+logger.info(f"Dumping sampled and other dpdata to {dpdata_savedir}")
+# remove existing dpdata dir
+if os.path.exists(f"{dpdata_savedir}/sampled_dpdata"):
+    shutil.rmtree(f"{dpdata_savedir}/sampled_dpdata")
+if os.path.exists(f"{dpdata_savedir}/other_dpdata"):
+    shutil.rmtree(f"{dpdata_savedir}/other_dpdata")
+sampled_dpdata.to_deepmd_npy(f"{dpdata_savedir}/sampled_dpdata")
+other_dpdata.to_deepmd_npy(f"{dpdata_savedir}/other_dpdata")
+
+logger.info("All Done!")
