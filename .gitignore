@@ -6,3 +6,4 @@ src/*pycache*
 examples/uncertain/models
 develop
 .vscode
+test
