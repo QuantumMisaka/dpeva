@@ -1,7 +1,7 @@
 import logging
 # parameters
 # testing setting
-project = "stage4"
+project = "stage9-2"
 uq_select_scheme = "tangent_lo"  # strict, circle_lo, tangent_lo, crossline_lo, loose
 testing_dir = "test-val-npy"
 testing_head = "results"
@@ -16,7 +16,7 @@ testdata_string = "O*"  # for correspondence
 kde_bw_adjust = 0.5
 fig_dpi = 150
 # save setting
-root_savedir = "dpeva_uqft"
+root_savedir = "dpeva_uq_post"
 view_savedir = f"./{project}/{root_savedir}/view"
 dpdata_savedir = f"./{project}/{root_savedir}/dpdata"
 df_savedir = f"./{project}/{root_savedir}/dataframe"
@@ -25,7 +25,7 @@ uq_qbc_trust_lo = 0.12
 uq_qbc_trust_hi = 0.22
 uq_rnd_rescaled_trust_lo = uq_qbc_trust_lo
 uq_rnd_rescaled_trust_hi = uq_qbc_trust_hi
-num_selection = 200
+num_selection = 100
 direct_k = 1
 direct_thr_init = 0.5
 
@@ -44,7 +44,6 @@ import dpdata
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mtick
-import dpdata
 import seaborn as sns
 import pandas as pd
 import os
@@ -55,75 +54,11 @@ from copy import deepcopy
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 from dpeva.sampling.direct import BirchClustering, DIRECTSampler, SelectKFromClusters
+from dpeva.io.dataproc import DPTestResults
 
 plt.rcParams['xtick.direction'] = 'in'  # set the direction of xticks inside
 plt.rcParams['ytick.direction'] = 'in'  # set the direction of yticks inside
 plt.rcParams['font.size'] = 10  # set the font size
-
-
-class DPTestResults:
-    '''DPTestResults class to load the test results of deepmd-kit
-    
-    Attributes:
-        type_map: list of str, the list of atom types
-        data_e: np.ndarray, the energy data of test results
-        data_f: np.ndarray, the force data of test results
-        dataname_list: list of list, the list of dataname, frame index and natom
-        datanames_nframe: dict, the dict of dataname and nframe
-    '''
-    def __init__(self, headname):
-        self.type_map = ["H","C","O","Fe"]
-        self.set_dptest_detail(headname)
-    
-    def get_natom(self, dataname):
-        # get natoms from dataname
-        natom = 0
-        name_string = deepcopy(dataname)
-        for ele in self.type_map:
-            name_string = name_string.replace(ele, f" {ele},")
-        ele_num_pair_list = name_string.strip().split(" ")
-        for ind, ele_string in enumerate(ele_num_pair_list):
-            natom += int(ele_string.split(',')[1])
-        return natom
-    
-    def set_dataname(self, filename):
-        # 从对应的test result*.txt文件中读取每个数据对应的LabeledSystem以及nframe, 只能读取deepmd/npy数据测试后结果
-        datanames_indice_dict = {}
-        datanames_nframe_list = []
-        datanames_nframe_dict = {}
-        # read the "# DataName" line from the file and its index of columns
-
-        with open(filename, 'r') as f:
-            for i, line in enumerate(f):
-                if line.startswith("# "):
-                    dirname = line.split(" ")[1]
-                    dataname = dirname.split("/")[-1][:-1]
-                    datanames_indice_dict[dataname] = i
-        full_index = i
-        len_data = len(datanames_indice_dict)
-        for count, dataname in enumerate(datanames_indice_dict):
-            if count == len_data - 1:
-                datanames_nframe_dict[dataname] = full_index - datanames_indice_dict[dataname]
-            else:
-                list_indice = list(datanames_indice_dict.values())
-                datanames_nframe_dict[dataname] = list_indice[count + 1] - list_indice[count] - 1
-        # flatten the datanames_nframe
-        for dataname, count in datanames_nframe_dict.items():
-            for i in range(count):
-                natom = self.get_natom(dataname)
-                datanames_nframe_list.append([dataname,i,natom])
-        return datanames_nframe_list, datanames_nframe_dict
-
-    def set_dptest_detail(self, headname):
-        self.data_e = np.genfromtxt(f"{headname}.e_peratom.out", names=[f"data_Energy", f"pred_Energy"])
-        self.data_f = np.genfromtxt(f"{headname}.f.out", names=["data_fx", "data_fy", "data_fz", "pred_fx", "pred_fy", "pred_fz"])
-        self.dataname_list, self.datanames_nframe = self.set_dataname(f"{headname}.e_peratom.out")
-
-        # 计算pred和data的差值
-        self.diff_e = self.data_e[f"pred_Energy"] - self.data_e[f"data_Energy"]
-        self.diff_fx = self.data_f[f'pred_fx'] - self.data_f[f'data_fx']
-        self.diff_fy = self.data_f[f'pred_fy'] - self.data_f[f'data_fy']
-        self.diff_fz = self.data_f[f'pred_fz'] - self.data_f[f'data_fz']
 
 # check and make the directories
 logger.info(f"Initializing selection in {project} ---")
@@ -165,9 +100,8 @@ dp_test_results_1 = DPTestResults(f"./{project}/1/{testing_dir}/{testing_head}")
 dp_test_results_2 = DPTestResults(f"./{project}/2/{testing_dir}/{testing_head}")
 dp_test_results_3 = DPTestResults(f"./{project}/3/{testing_dir}/{testing_head}")
 
-# deal with existing label
-logger.info("Dealing with existing label")
-diff_e_0 = np.abs(dp_test_results_0.diff_e)
+# deal with force difference between 0 head prediction and existing label, only for view
+logger.info("Dealing with force difference between 0 head prediction and existing label")
 diff_f_0 = np.sqrt(dp_test_results_0.diff_fx**2 + dp_test_results_0.diff_fy**2 + dp_test_results_0.diff_fz**2)
 # map diff_f_0 to each structures with max force diff
 index = 0
@@ -182,11 +116,8 @@ for item in dp_test_results_0.dataname_list:
 diff_maxf_0_frame = np.array(diff_maxf_0_frame)
 diff_rmsf_0_frame = np.array(diff_rmsf_0_frame)
 
-# deal with atomic force UQ
-# use DPGEN formula: 
-# \epsilon_t=\max _i \sqrt{\left\langle\left\|F_{w, i}\left(\mathcal{R}_t\right)-\left\langle F_{w, i}\left(\mathcal{R}_t\right)\right\rangle\right\|^2\right\rangle}
-# starting from atomic force
-logger.info("Dealing with atomic force UQ by DPGEN formula")
+# deal with atomic force and average 1, 2, 3
+logger.info("Dealing with atomic force and average 1, 2, 3")
 fx_0 = dp_test_results_0.data_f['pred_fx']
 fy_0 = dp_test_results_0.data_f['pred_fy']
 fz_0 = dp_test_results_0.data_f['pred_fz']
@@ -202,6 +133,12 @@ fz_3 = dp_test_results_3.data_f['pred_fz']
 fx_expt = np.mean((fx_1, fx_2, fx_3), axis=0)
 fy_expt = np.mean((fy_1, fy_2, fy_3), axis=0)
 fz_expt = np.mean((fz_1, fz_2, fz_3), axis=0)
+
+# deal with atomic force UQ
+# use DPGEN formula: 
+# \epsilon_t=\max _i \sqrt{\left\langle\left\|F_{w, i}\left(\mathcal{R}_t\right)-\left\langle F_{w, i}\left(\mathcal{R}_t\right)\right\rangle\right\|^2\right\rangle}
+# starting from atomic force
+logger.info("Dealing with atomic force UQ by DPGEN formula, in QbC and RND-like")
 
 # deal with QbC force UQ
 logger.info("Dealing with QbC force UQ")
@@ -252,6 +189,7 @@ uq_x_hi = uq_qbc_trust_hi
 uq_y_hi = uq_rnd_rescaled_trust_hi
 
 # plot and save the figures of UQ-force
+# pass
 logger.info("Plotting and saving the figures of UQ-force")
 plt.figure(figsize=(8, 6))
 sns.kdeplot(uq_qbc_for, color="blue", label="UQ-QbC", bw_adjust=0.5)
@@ -265,10 +203,11 @@ plt.savefig(f"./{view_savedir}/UQ-force.png", dpi=fig_dpi)
 plt.close()
 
 # plot and save the figures of UQ-force rescaled
+# pass
 logger.info("Plotting and saving the figures of UQ-force rescaled")
 plt.figure(figsize=(8, 6))
-sns.kdeplot(uq_qbc_for, color="blue", label="UQ-RND", bw_adjust=0.5)
-sns.kdeplot(uq_rnd_for_rescaled, color="red", label="UQ-QbC-rescaled", bw_adjust=0.5)
+sns.kdeplot(uq_qbc_for, color="blue", label="UQ-QbC", bw_adjust=0.5)
+sns.kdeplot(uq_rnd_for_rescaled, color="red", label="UQ-RND-rescaled", bw_adjust=0.5)
 plt.title("Distribution of UQ-force by KDEplot")
 plt.xlabel("UQ Value")
 plt.ylabel("Density")
@@ -278,6 +217,7 @@ plt.savefig(f"./{view_savedir}/UQ-force-rescaled.png", dpi=fig_dpi)
 plt.close()
 
 # plot and save the figures of UQ-QbC-force with UQ trust range
+# pass
 logger.info("Plotting and saving the figures of UQ-QbC-force with UQ trust range")
 plt.figure(figsize=(8, 6))
 sns.kdeplot(uq_qbc_for, color="blue", bw_adjust=0.5)
@@ -295,6 +235,7 @@ plt.savefig(f"./{view_savedir}/UQ-QbC-force.png", dpi=fig_dpi)
 plt.close()
 
 # plot and save the figures of UQ-RND-force-rescaled with UQ trust range
+# pass
 logger.info("Plotting and saving the figures of UQ-RND-force-rescaled with UQ trust range")
 plt.figure(figsize=(8, 6))
 sns.kdeplot(uq_rnd_for_rescaled, color="blue", bw_adjust=0.5)
@@ -313,6 +254,7 @@ plt.close()
 
 
 # plot and save the figures of UQ-force vs force diff
+# pass
 logger.info("Plotting and saving the figures of UQ-force vs force diff")
 plt.figure(figsize=(8, 6))
 plt.scatter(uq_qbc_for, diff_maxf_0_frame, color="blue", label="QbC",s=20)
@@ -326,10 +268,11 @@ plt.savefig(f"./{view_savedir}/UQ-force-fdiff-parity.png", dpi=fig_dpi)
 plt.close()
 
 # plot and save the figures of UQ-force-rescaled vs force diff
+# pass
 logger.info("Plotting and saving the figures of UQ-force-rescaled vs force diff")
 plt.figure(figsize=(8, 6))
-plt.scatter(uq_qbc_for, diff_maxf_0_frame, color="blue", label="QbC")
-plt.scatter(uq_rnd_for_rescaled, diff_maxf_0_frame, color="red", label="RND-rescaled")
+plt.scatter(uq_qbc_for, diff_maxf_0_frame, color="blue", label="QbC", s=20)
+plt.scatter(uq_rnd_for_rescaled, diff_maxf_0_frame, color="red", label="RND-rescaled", s=20)
 plt.title("UQ vs Force Diff")
 plt.xlabel("UQ Value")
 plt.ylabel("True Max Force Diff")
@@ -343,6 +286,7 @@ logger.info("Calculating the difference between UQ-qbc and UQ-rnd-rescaled")
 uq_diff_for_scaled_to_qbc = np.abs(uq_rnd_for_rescaled - uq_qbc_for)
 
 # plot and save the figures of UQ-force-diff vs UQ-force
+# pass
 logger.info("Plotting and saving the figures of UQ-diff vs UQ")
 plt.figure(figsize=(8, 6))
 plt.scatter(uq_diff_for_scaled_to_qbc, uq_qbc_for, color="blue", label="UQ-qbc-for", s=20)
@@ -356,6 +300,7 @@ plt.savefig(f"./{view_savedir}/UQ-diff-UQ-parity.png", dpi=fig_dpi)
 plt.close()
 
 # plot and save the figures of UQ-force-diff vs force diff
+# pass
 logger.info("Plotting and saving the figures of UQ-diff vs force diff")
 plt.figure(figsize=(8, 6))
 plt.scatter(uq_diff_for_scaled_to_qbc, diff_maxf_0_frame, color="blue", label="UQ-diff-force", s=20)
@@ -593,9 +538,9 @@ sns.scatterplot(data=df_uq,
                 x="uq_qbc_for", 
                 y="uq_rnd_for_rescaled", 
                 hue="uq_identity", 
-                palette={f"candidate: {len(df_uq_desc_candidate)}": "orange", 
-                         f"accurate: {len(df_uq_accurate)}": "green", 
-                         f"failed: {len(df_uq_failed)}": "red"},
+                palette={f"candidate": "orange", 
+                         f"accurate": "green", 
+                         f"failed": "red"},
                 alpha=0.5,
                 s=60)
 plt.title("UQ QbC+RND Selection View", fontsize=14)
@@ -603,7 +548,7 @@ plt.grid(True)
 plt.xlabel("UQ-QbC Value", fontsize=12)
 plt.ylabel("UQ-RND-rescaled Value", fontsize=12)
 plt.legend(title="Identity", fontsize=10)
-plt.grid(True)
+
 # set the xticks and yticks
 ax = plt.gca()
 x_major_locator = mtick.MultipleLocator(0.1)
@@ -657,6 +602,8 @@ else:
 plt.savefig(f"./{view_savedir}/UQ-force-qbc-rnd-identity-scatter.png", dpi=fig_dpi)
 plt.close()
 # one dim scatter plot for each UQ
+# for QbC
+# passed
 logger.info("Plotting and saving the figure of UQ-Candidate in QbC space against Max Force Diff")
 plt.figure(figsize=(8, 6))
 plt.scatter(uq_qbc_for, diff_maxf_0_frame, color="blue", label="UQ-QbC", s=20)
@@ -668,6 +615,9 @@ plt.legend()
 plt.grid(True)
 plt.savefig(f"./{view_savedir}/UQ-QbC-Candidate-fdiff-parity.png", dpi=fig_dpi)
 plt.close()
+
+# for RND
+# passed
 logger.info("Plotting and saving the figure of UQ-Candidate in RND-rescaled space against Max Force Diff")
 plt.figure(figsize=(8, 6))
 plt.scatter(uq_rnd_for_rescaled, diff_maxf_0_frame, color="blue", label="UQ-RND-rescaled", s=20)
