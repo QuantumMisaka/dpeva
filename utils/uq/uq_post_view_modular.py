@@ -872,9 +872,9 @@ class UQPostProcessor:
         # 2. 数据处理
         diff_maxf_0_frame, diff_rmsf_0_frame = self.processor.get_force_prediction_differences(dp_test_results_list[0])
         atomic_forces = self.processor.get_atomic_forces(dp_test_results_list)
-        f_qbc_stddiff = self.processor.calculate_force_stddiff_qbc(atomic_forces)
-        f_rnd_stddiff = self.processor.calculate_force_stddiff_rnd(atomic_forces)
-        uq_qbc_for, uq_rnd_for = self.processor.assign_uq_to_structures(f_qbc_stddiff, f_rnd_stddiff, dp_test_results_list[0].dataname_list)
+        f_stddiff_qbc = self.processor.calculate_force_stddiff_qbc(atomic_forces)
+        f_stddiff_rnd = self.processor.calculate_force_stddiff_rnd(atomic_forces)
+        uq_qbc_for, uq_rnd_for = self.processor.assign_uq_to_structures(f_stddiff_qbc, f_stddiff_rnd, dp_test_results_list[0].dataname_list)
         uq_rnd_for_rescaled = self.processor.align_uq_values(uq_qbc_for, uq_rnd_for)
         
         # 3. 可视化
@@ -882,6 +882,7 @@ class UQPostProcessor:
         self.visualizer.plot_uq_difference(uq_qbc_for, uq_rnd_for_rescaled, diff_maxf_0_frame)
         
         # 4. 数据选择
+        # 进一步重构方向：在df_uq出来之后，所有传值全部用df进行，不再单独传df里面有的值。
         df_uq, df_uq_desc = self.selector.create_dataframes(
             dp_test_results_list[0], uq_qbc_for, uq_rnd_for_rescaled, uq_rnd_for, diff_maxf_0_frame, desc_stru, desc_datanames)
         df_uq, df_uq_desc_candidate, df_uq_accurate, df_uq_failed = self.selector.select_candidates(df_uq, df_uq_desc)
