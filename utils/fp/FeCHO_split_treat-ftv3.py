@@ -9,7 +9,6 @@ from ase.io.abacus import write_input, write_abacus
 from ase import Atoms  #ase-abacus is needed
 from typing import List
 from copy import deepcopy
-from random import randint
 import dpdata
 import glob
 from tqdm import tqdm
