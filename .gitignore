@@ -1,8 +1,6 @@
 build
 src/dpeva.egg-info
-src/dpeva/*/*pycache*
-src/*/*pycache*
-src/*pycache*
+*pycache*
 examples/uncertain/models
 develop
 .vscode
