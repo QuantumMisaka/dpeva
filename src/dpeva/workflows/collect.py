@@ -13,9 +13,9 @@ from dpeva.uncertain.calculator import UQCalculator
 from dpeva.uncertain.filter import UQFilter
 from dpeva.uncertain.visualization import UQVisualizer
 
-class ActiveWorkflow:
+class CollectWorkflow:
     """
-    Orchestrates the Active Learning pipeline:
+    Orchestrates the Collection pipeline:
     Data Loading -> UQ Calculation -> Filtering -> DIRECT Sampling -> Visualization -> Export
     """
 

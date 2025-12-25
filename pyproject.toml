@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "dpeva"
-version = "0.2.0"
+version = "0.2.2"
 description = "Deep Potential EVolution Accelerator (DP-EVA)"
 readme = "README.md"
 authors = [

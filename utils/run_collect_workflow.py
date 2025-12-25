@@ -6,7 +6,7 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 src_path = os.path.join(current_dir, "../../src")
 sys.path.append(src_path)
 
-from dpeva.workflows.active import ActiveWorkflow
+from dpeva.workflows.collect import CollectWorkflow
 
 # Parameters
 project = "stage9-2"
@@ -41,5 +41,5 @@ config = {
 }
 
 if __name__ == "__main__":
-    workflow = ActiveWorkflow(config)
+    workflow = CollectWorkflow(config)
     workflow.run()
