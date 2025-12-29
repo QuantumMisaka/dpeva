@@ -87,9 +87,9 @@ with open("running", "w") as fo:
         desc_stru = np.mean(desc, axis=1)
         logging.info(f"Descriptors STRU for {key} generated")
         os.mkdir(save_key)
-        np.save(f"{savedir}/{key}/desc.npy", desc)
+        np.save(f"{savedir}/{key}/desc_stru.npy", desc_stru)
         logging.info(f"Descriptors STRU for {key} saved")
-        del onedata, desc
+        del onedata, desc, desc_stru
         empty_cache()
     ending_time = time.perf_counter()
     fo.write(f"DONE in {ending_time - starting_time} sec !")
