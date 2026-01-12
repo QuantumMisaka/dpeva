@@ -48,17 +48,21 @@ DPEVA (Deep Potential EVolution Accelerator) 是一个基于 Python 的机器学
 
 1.  **Training (`src/dpeva/training`)**:
     *   **`ParallelTrainer` 类**: 封装了并行微调的复杂逻辑。
-    *   **改进**: 支持配置对象化管理，自动处理随机种子和目录隔离，利用 `multiprocessing` 实现真并行。
+    *   **改进**: 支持配置对象化管理，集成 `JobManager` 实现本地/集群双模式调度。
 
-2.  **Inference (`src/dpeva/inference`)**:
+2.  **Submission (`src/dpeva/submission`)** (New):
+    *   **`JobManager` 类**: 统一的任务提交接口，支持 `local` 和 `slurm` 后端。
+    *   **`TemplateEngine`**: 基于 Python 原生 `string.Template` 的轻量级模板引擎，支持用户自定义 Slurm/Bash 脚本模板。
+
+3.  **Inference (`src/dpeva/inference`)**:
     *   **`ModelEvaluator` 类**: 统一的推理接口。
     *   **改进**: 支持批量模型评估，自动解析 `dp test` 输出，提供更友好的日志记录。
 
-3.  **Feature (`src/dpeva/feature`)**:
+4.  **Feature (`src/dpeva/feature`)**:
     *   **`DescriptorGenerator` 类**: 统一特征生成逻辑。
     *   **改进**: 将原子级和结构级特征生成合并为一个接口，通过参数控制；优化了显存管理。
 
-4.  **Collection (`src/dpeva/uncertain`, `src/dpeva/sampling`)**:
+5.  **Collection (`src/dpeva/uncertain`, `src/dpeva/sampling`)**:
     *   **模块化组件**: `UQCalculator` (计算), `UQFilter` (筛选), `UQVisualizer` (绘图), `DIRECTSampler` (采样)。
     *   **改进**: 各组件职责单一，易于测试和替换。
 
@@ -80,6 +84,7 @@ DPEVA (Deep Potential EVolution Accelerator) 是一个基于 Python 的机器学
 | **启动方式** | 运行分散的 Shell/Python 脚本 | 调用统一的 Workflow 类或入口脚本 | 🔄 修改 | 统一入口，配置驱动 |
 | **参数配置** | 硬编码在脚本变量中 | 通过 Config 字典/文件传递 | 🔄 修改 | 提高灵活性，支持版本控制 |
 | **多模型训练** | 串行生成脚本，手动 `nohup` 后台运行 | `ParallelTrainer` 多进程并发控制 | ⚡ 优化 | 进程管理更健壮，支持阻塞/非阻塞模式，可编程监控状态 |
+| **任务调度** | 仅支持本地后台运行 | 支持 Local/Slurm 双模式 | ➕ 新增 | 适应 HPC 集群环境，支持自定义模板 |
 | **特征生成** | 两个脚本分别处理原子/结构特征 | 单一接口 `output_mode` 参数控制 | ➕ 合并 | 消除重复代码，逻辑统一 |
 | **UQ 计算** | 耦合在 `uq-post-view.py` 中 | 独立类 `UQCalculator` | 📦 封装 | 算法与业务逻辑解耦 |
 | **可视化** | 绘图代码散落在逻辑代码中 | 独立类 `UQVisualizer` | 📦 封装 | 样式统一，复用性增强 |
@@ -183,7 +188,7 @@ pip install -e .
 | 功能模块 | 对应脚本 | 主要参数说明 |
 | :--- | :--- | :--- |
 | **数据采集** | `utils/run_collect_workflow.py` | - `project`: 项目名称<br>- `uq_select_scheme`: UQ筛选策略 (e.g., `tangent_lo`)<br>- `num_selection`: 采样数量 |
-| **并行微调** | `utils/run_train_workflow.py`* | - `work_dir`: 工作目录<br>- `mode`: `init` (初始化) 或 `cont` (接续)<br>- `num_models`: 模型数量 |
+| **并行微调** | `utils/run_train_workflow.py`* | - `work_dir`: 工作目录<br>- `mode`: `init` (初始化) 或 `cont` (接续)<br>- `backend`: `local` 或 `slurm` |
 | **特征生成** | `utils/run_feature_workflow.py`* | - `datadir`: 数据目录<br>- `modelpath`: 冻结模型路径<br>- `output_mode`: `atomic` 或 `structural` |
 | **推理评估** | `utils/run_infer_workflow.py`* | - `test_data_path`: 测试集路径<br>- `models_paths`: 模型列表 |
 
@@ -222,7 +227,7 @@ pip install -e .
 
 | 阶段 | 重构前 (Script-based) | 重构后 (Module-based) |
 | :--- | :--- | :--- |
-| **1. 训练** | `cd utils/dptrain`<br>`python run_parallel.py` (生成脚本)<br>`nohup sh train.sh &` (手动后台) | `python run_train_workflow.py`<br>(自动管理多进程并发，阻塞等待完成) |
+| **1. 训练** | `cd utils/dptrain`<br>`python run_parallel.py` (生成脚本)<br>`nohup sh train.sh &` (手动后台) | `python run_train_workflow.py`<br>(Local模式: 自动管理多进程并发; Slurm模式: 自动提交作业) |
 | **2. 推理** | `cd utils/dptest`<br>`sh test-val-npy.sh` (修改脚本参数)<br>(需等待训练完成，手动执行) | `python run_infer_workflow.py`<br>(可配置为训练完成后自动触发) |
 | **3. 特征** | `cd utils/dpdesc`<br>`python gen_desc.py` | `python run_feature_workflow.py`<br>(统一接口，支持增量生成) |
 | **4. 采集** | `cd utils/uq`<br>`python uq-post-view.py` | `python run_collect_workflow.py`<br>(逻辑清晰，日志规范) |

@@ -5,6 +5,7 @@ from dpeva.training.trainer import ParallelTrainer
 class TrainingWorkflow:
     """
     Workflow for parallel fine-tuning of DeepMD models.
+    Supports both local multiprocessing and Slurm submission.
     """
     
     def __init__(self, config):
@@ -25,6 +26,11 @@ class TrainingWorkflow:
         
         # OMP Settings
         self.omp_threads = config.get("omp_threads", 12)
+        
+        # Submission Configuration
+        self.backend = config.get("backend", "local") # 'local' or 'slurm'
+        self.slurm_config = config.get("slurm_config", {})
+        self.template_path = config.get("template_path")
 
     def _setup_logger(self):
         logging.basicConfig(
@@ -58,12 +64,15 @@ class TrainingWorkflow:
 
     def run(self):
         self.logger.info(f"Initializing Training Workflow in {self.work_dir}")
-        self.logger.info(f"Mode: {self.mode}")
+        self.logger.info(f"Mode: {self.mode}, Backend: {self.backend}")
         
         trainer = ParallelTrainer(
             base_config_path=self.input_json_path,
             work_dir=self.work_dir,
-            num_models=self.num_models
+            num_models=self.num_models,
+            backend=self.backend,
+            template_path=self.template_path,
+            slurm_config=self.slurm_config
         )
         
         finetune_heads = self._determine_finetune_heads()
@@ -73,5 +82,7 @@ class TrainingWorkflow:
         trainer.setup_workdirs(base_models, omp_threads=self.omp_threads)
         
         self.logger.info("Starting parallel training...")
+        # For Slurm, blocking=True currently just logs that it's waiting (implementation pending for polling)
+        # For Local, it waits for subprocesses.
         trainer.train(blocking=True)
-        self.logger.info("Training Workflow Completed.")
+        self.logger.info("Training Workflow Submission Completed.")
