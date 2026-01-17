@@ -12,7 +12,6 @@ DEFAULT_SLURM_TEMPLATE = """#!/bin/bash
 #SBATCH -p ${partition}
 #SBATCH -N ${nodes}
 #SBATCH -n ${ntasks}
-#SBATCH --ntasks-per-node=${ntasks_per_node}
 #SBATCH -t ${walltime}
 #SBATCH -o ${output_log}
 #SBATCH -e ${error_log}
@@ -53,7 +52,6 @@ class JobConfig:
     partition: str = "partition"
     nodes: int = 1
     ntasks: int = 1
-    ntasks_per_node: int = 1
     walltime: str = "24:00:00"
     output_log: str = "job.out"
     error_log: str = "job.err"
