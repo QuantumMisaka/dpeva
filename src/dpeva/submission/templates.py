@@ -15,6 +15,7 @@ DEFAULT_SLURM_TEMPLATE = """#!/bin/bash
 #SBATCH -t ${walltime}
 #SBATCH -o ${output_log}
 #SBATCH -e ${error_log}
+${optional_slurm_params}
 ${custom_headers}
 
 # Environment Setup
@@ -43,7 +44,7 @@ ${command}
 class JobConfig:
     """
     统一的作业配置类，包含所有可能用到的字段。
-    用户只需按需填充，未使用的字段将在渲染时使用默认值或空字符串。
+    遵循 'Explicit is better than implicit' 原则，核心 Slurm 参数应显式定义。
     """
     command: str
     job_name: str = "dpeva_job"
@@ -52,6 +53,12 @@ class JobConfig:
     partition: str = "partition"
     nodes: int = 1
     ntasks: int = 1
+    
+    # Advanced Slurm Options (适配不同集群环境)
+    gpus_per_node: int = 0      # 对应 #SBATCH --gpus-per-node
+    qos: Optional[str] = None   # 对应 #SBATCH --qos
+    nodelist: Optional[str] = None # 对应 #SBATCH -w
+    
     walltime: str = "24:00:00"
     output_log: str = "job.out"
     error_log: str = "job.err"
@@ -61,8 +68,28 @@ class JobConfig:
     env_setup: str = ""
 
     def to_dict(self) -> Dict[str, Any]:
-        """Convert dataclass to dictionary with all values as strings."""
-        return {k: str(v) for k, v in asdict(self).items()}
+        """
+        Convert dataclass to dictionary with all values as strings.
+        处理可选字段的格式化，保持模板简洁。
+        """
+        d = {k: str(v) for k, v in asdict(self).items()}
+        
+        # 聚合可选的 Slurm 参数，保持模板整洁
+        optional_params = []
+        
+        # 动态生成 Slurm 参数行
+        if self.gpus_per_node > 0:
+            optional_params.append(f"#SBATCH --gpus-per-node={self.gpus_per_node}")
+
+        if self.qos:
+            optional_params.append(f"#SBATCH --qos={self.qos}")
+
+        if self.nodelist:
+            optional_params.append(f"#SBATCH -w {self.nodelist}")
+            
+        d['optional_slurm_params'] = "\n".join(optional_params)
+            
+        return d
 
 # ==========================================
 # 模板引擎 (Template Engine)
