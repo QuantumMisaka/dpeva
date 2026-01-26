@@ -154,14 +154,13 @@ class CollectionWorkflow:
         
         # Load descriptors
         self.logger.info(f"Loading the target descriptors from {self.testdata_dir}") # Log message per original
-        desc_string_test = f'{self.desc_dir}/*/{self.desc_filename}'
+        desc_string_test = f'{self.desc_dir}/{self.desc_filename}'
         desc_datanames = []
         desc_stru = []
         desc_iter_list = sorted(glob.glob(desc_string_test))
         
         for f in desc_iter_list:
-            directory, _ = os.path.split(f)
-            _, keyname = os.path.split(directory)
+            keyname = os.path.basename(f).replace('.npy', '')
             one_desc = np.load(f)
             for i in range(len(one_desc)):
                 desc_datanames.append(f"{keyname}-{i}")

@@ -9,7 +9,7 @@ from sklearn.decomposition import PCA
 
 
 # load data
-desc_string = 'descriptors-30656/*/desc.npy'
+desc_string = 'descriptors-30656/*.npy'
 dpdata_name = "FeCHO-clean-30656"
 dpdata_path = "./clean-30656"
 dpdata_string = "C*"
@@ -32,14 +32,13 @@ if os.path.exists(f'{save_name}.pickle'):
     print(f"Data loaded from {save_name}.pickle")
     df_desc = pd.read_pickle(f'{save_name}.pickle')
 else:
-    # read descriptors/*/desc.npy data
+    # read descriptors/*.npy data
     print("Reading descriptor results...")
     desc_keys = []
     all_desc_stru = []
     for f in glob.glob(desc_string):
-        # extract dirname of desc.npy from descriptors/*
-        directory, _ = os.path.split(f)
-        _, keyname = os.path.split(directory)
+        # extract filename from descriptors/*.npy
+        keyname = os.path.basename(f).replace('.npy', '')
         desc_keys.append(keyname)
         one_desc = np.load(f) # nframe, natoms, ndesc
         # do average in natoms dimension

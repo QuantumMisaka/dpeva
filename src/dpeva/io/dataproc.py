@@ -91,8 +91,22 @@ class DPTestResults:
         self.data_f = np.genfromtxt(f"{headname}.f.out", names=["data_fx", "data_fy", "data_fz", "pred_fx", "pred_fy", "pred_fz"])
         self.dataname_list, self.datanames_nframe = self.get_dataname(f"{headname}.e_peratom.out")
 
-        # 计算pred和data的差值
-        self.diff_e = self.data_e[f"pred_Energy"] - self.data_e[f"data_Energy"]
-        self.diff_fx = self.data_f[f'pred_fx'] - self.data_f[f'data_fx']
-        self.diff_fy = self.data_f[f'pred_fy'] - self.data_f[f'data_fy']
-        self.diff_fz = self.data_f[f'pred_fz'] - self.data_f[f'data_fz']
+        # Check if ground truth exists (if all data values are 0, assume it doesn't exist)
+        is_force_zero = np.all(self.data_f['data_fx'] == 0) and \
+                        np.all(self.data_f['data_fy'] == 0) and \
+                        np.all(self.data_f['data_fz'] == 0)
+        is_energy_zero = np.all(self.data_e['data_Energy'] == 0)
+        
+        if is_force_zero and is_energy_zero:
+            self.has_ground_truth = False
+            self.diff_e = None
+            self.diff_fx = None
+            self.diff_fy = None
+            self.diff_fz = None
+        else:
+            self.has_ground_truth = True
+            # 计算pred和data的差值
+            self.diff_e = self.data_e[f"pred_Energy"] - self.data_e[f"data_Energy"]
+            self.diff_fx = self.data_f[f'pred_fx'] - self.data_f[f'data_fx']
+            self.diff_fy = self.data_f[f'pred_fy'] - self.data_f[f'data_fy']
+            self.diff_fz = self.data_f[f'pred_fz'] - self.data_f[f'data_fz']

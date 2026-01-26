@@ -18,7 +18,7 @@ config = {
     
     # Input Data Settings
     "desc_dir": f"{project}/desc_other",
-    "desc_filename": "desc.npy",
+    "desc_filename": "*.npy", # Modified to match flat structure
     "testdata_dir": f"{project}/other_dpdata",
     "testdata_fmt": "deepmd/npy",
     "testdata_string": "O*",
