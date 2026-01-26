@@ -1,0 +1,24 @@
+{
+    "work_dir": "./",
+    "input_json_path": "input.json",
+    "num_models": 4,
+    "mode": "init",
+    "seeds": [19090, 42, 10032, 2933],
+    "training_seeds": [19090, 42, 10032, 2933],
+    "finetune_head_name": "Hybrid_Perovskite",
+    "backend": "slurm",
+    "base_model_path": "DPA-3.1-3M.pt",
+    "training_data_path": "./sampled_dpdata",
+    "slurm_config": {
+        "partition": "4V100",
+        "gpus_per_node": 4,
+        "qos": "rush-4gpu",
+        "env_setup": [
+            "export OMP_NUM_THREADS=2",
+            "export BASE_MODEL=DPA-3.1-3M.pt",
+            "nvidia-smi dmon -s pucvmte -o T > nvdmon_job-${SLURM_JOB_ID}.log &",
+            "source /opt/envs/deepmd3.1.2.env",
+            "export DP_INTERFACE_PREC=high"
+        ]
+    }
+}

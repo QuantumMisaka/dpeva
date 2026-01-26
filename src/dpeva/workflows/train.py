@@ -54,6 +54,9 @@ class TrainingWorkflow:
         
         # Finetune head name configuration
         self.finetune_head_name = config.get("finetune_head_name", "Hybrid_Perovskite")
+        
+        # Override training data path if provided in config
+        self.training_data_path = config.get("training_data_path")
 
     def _setup_logger(self):
         logging.basicConfig(
@@ -98,7 +101,8 @@ class TrainingWorkflow:
             num_models=self.num_models,
             backend=self.backend,
             template_path=self.template_path,
-            slurm_config=self.slurm_config
+            slurm_config=self.slurm_config,
+            training_data_path=self.training_data_path # Pass the override path
         )
         
         finetune_heads = self._determine_finetune_heads()

@@ -13,7 +13,8 @@ class ParallelTrainer:
     """
     
     def __init__(self, base_config_path, work_dir, num_models=4, 
-                 backend="local", template_path=None, slurm_config=None):
+                 backend="local", template_path=None, slurm_config=None,
+                 training_data_path=None):
         """
         Initialize the ParallelTrainer.
         """
@@ -22,6 +23,7 @@ class ParallelTrainer:
         self.num_models = num_models
         self.backend = backend
         self.slurm_config = slurm_config or {}
+        self.training_data_path = training_data_path
         
         self.logger = logging.getLogger(__name__)
         
@@ -53,6 +55,12 @@ class ParallelTrainer:
             # This fixes the issue where relative paths in input.json break when run in subdirectories
             if "training" in config and "training_data" in config["training"]:
                  data_config = config["training"]["training_data"]
+                 
+                 # 0. Override systems path if training_data_path is provided
+                 if self.training_data_path:
+                     data_config["systems"] = self.training_data_path
+                     self.logger.info(f"Task {i}: Overridden data path with '{self.training_data_path}'")
+                 
                  if "systems" in data_config:
                      original_path = data_config["systems"]
                      

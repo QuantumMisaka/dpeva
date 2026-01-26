@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "dpeva"
-version = "0.2.2"
+dynamic = ["version"]
 description = "Deep Potential EVolution Accelerator (DP-EVA)"
 readme = "README.md"
 authors = [
@@ -40,3 +40,6 @@ Homepage = "https://github.com/QuantumMisaka/dpeva"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.dynamic]
+version = {attr = "dpeva.__version__"}
