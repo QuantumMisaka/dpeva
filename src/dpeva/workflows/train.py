@@ -18,11 +18,31 @@ class TrainingWorkflow:
         self.mode = config.get("mode", "cont") # 'init' or 'cont'
         
         # Seeds configuration
-        self.seeds = config.get("seeds", [19090, 42, 10032, 2933])
-        self.training_seeds = config.get("training_seeds", [19090, 42, 10032, 2933])
+        default_seeds = [19090, 42, 10032, 2933]
         
-        # Base models configuration
-        self.base_models_paths = config.get("base_models_paths", [])
+        if "seeds" in config:
+            self.seeds = config["seeds"]
+        else:
+             if self.num_models > len(default_seeds):
+                 self.logger.warning(f"num_models ({self.num_models}) > default seeds length. Cycling default seeds.")
+                 self.seeds = (default_seeds * (self.num_models // len(default_seeds) + 1))[:self.num_models]
+             else:
+                 self.seeds = default_seeds[:self.num_models]
+
+        if "training_seeds" in config:
+            self.training_seeds = config["training_seeds"]
+        else:
+             if self.num_models > len(default_seeds):
+                 self.training_seeds = (default_seeds * (self.num_models // len(default_seeds) + 1))[:self.num_models]
+             else:
+                 self.training_seeds = default_seeds[:self.num_models]
+        
+        # Base model configuration
+        self.base_model_path = config.get("base_model_path")
+        if config.get("base_models_paths"):
+             self.logger.warning("base_models_paths is deprecated. Use base_model_path (str) instead.")
+             if not self.base_model_path:
+                 self.base_model_path = config.get("base_models_paths")[0]
         
         # OMP Settings
         self.omp_threads = config.get("omp_threads", 12)
@@ -31,6 +51,9 @@ class TrainingWorkflow:
         self.backend = config.get("backend", "local") # 'local' or 'slurm'
         self.slurm_config = config.get("slurm_config", {})
         self.template_path = config.get("template_path")
+        
+        # Finetune head name configuration
+        self.finetune_head_name = config.get("finetune_head_name", "Hybrid_Perovskite")
 
     def _setup_logger(self):
         logging.basicConfig(
@@ -43,24 +66,27 @@ class TrainingWorkflow:
     def _determine_finetune_heads(self):
         """Determine finetune heads based on mode."""
         if self.mode == "init":
-            return ["Target_FTS", "RANDOM", "RANDOM", "RANDOM"]
+            # First model uses configured head name, others use RANDOM
+            heads = [self.finetune_head_name]
+            if self.num_models > 1:
+                heads.extend(["RANDOM"] * (self.num_models - 1))
+            return heads
         elif self.mode == "cont":
-            return ["Target_FTS"] * self.num_models
+            return [self.finetune_head_name] * self.num_models
         else:
             raise ValueError(f"Unknown mode: {self.mode}. Must be 'init' or 'cont'.")
 
     def _resolve_base_models(self):
         """Resolve base model paths based on mode."""
+        if not self.base_model_path:
+             raise ValueError("base_model_path must be provided")
+             
         if self.mode == "init":
-            # In init mode, we use the same base model for all (usually index 0 from list)
-            if not self.base_models_paths:
-                raise ValueError("base_models_paths must be provided even for init mode")
-            return [self.base_models_paths[0]] * self.num_models
+            return [self.base_model_path] * self.num_models
         else:
-            # In cont mode, we expect one base model per task
-            if len(self.base_models_paths) != self.num_models:
-                raise ValueError(f"In 'cont' mode, provide {self.num_models} base models.")
-            return self.base_models_paths
+            # For 'cont' mode, currently using the same base model path.
+            # Future extensions may require template string support for distinct models per task.
+            return [self.base_model_path] * self.num_models
 
     def run(self):
         self.logger.info(f"Initializing Training Workflow in {self.work_dir}")
@@ -82,7 +108,5 @@ class TrainingWorkflow:
         trainer.setup_workdirs(base_models, omp_threads=self.omp_threads)
         
         self.logger.info("Starting parallel training...")
-        # For Slurm, blocking=True currently just logs that it's waiting (implementation pending for polling)
-        # For Local, it waits for subprocesses.
         trainer.train(blocking=True)
         self.logger.info("Training Workflow Submission Completed.")

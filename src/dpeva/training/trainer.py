@@ -16,14 +16,6 @@ class ParallelTrainer:
                  backend="local", template_path=None, slurm_config=None):
         """
         Initialize the ParallelTrainer.
-        
-        Args:
-            base_config_path (str): Path to the base input.json template.
-            work_dir (str): Root directory for training tasks.
-            num_models (int): Number of models to train in parallel (default: 4).
-            backend (str): 'local' or 'slurm'.
-            template_path (str): Path to custom submission template file.
-            slurm_config (dict): Additional Slurm configuration (partition, nodes, etc.).
         """
         self.base_config_path = base_config_path
         self.work_dir = os.path.abspath(work_dir)
@@ -36,6 +28,11 @@ class ParallelTrainer:
         # Initialize JobManager
         self.job_manager = JobManager(mode=backend, custom_template_path=template_path)
         
+        # Ensure base_config_path is absolute or correct relative to CWD
+        if not os.path.exists(base_config_path):
+             self.logger.error(f"Config file not found at: {os.path.abspath(base_config_path)}")
+             raise FileNotFoundError(f"Config file not found: {base_config_path}")
+
         with open(base_config_path, 'r') as f:
             self.base_config = json.load(f)
 
@@ -51,6 +48,42 @@ class ParallelTrainer:
         self.configs = []
         for i in range(self.num_models):
             config = deepcopy(self.base_config)
+            
+            # Auto-resolve relative data path to absolute path
+            # This fixes the issue where relative paths in input.json break when run in subdirectories
+            if "training" in config and "training_data" in config["training"]:
+                 data_config = config["training"]["training_data"]
+                 if "systems" in data_config:
+                     original_path = data_config["systems"]
+                     
+                     # 1. Resolve relative path to absolute
+                     if isinstance(original_path, str) and not os.path.isabs(original_path):
+                         # Resolve relative to the base_config_path directory
+                         base_dir = os.path.dirname(self.base_config_path)
+                         abs_path = os.path.abspath(os.path.join(base_dir, original_path))
+                         data_config["systems"] = abs_path
+                         self.logger.info(f"Task {i}: Resolved data path '{original_path}' -> '{abs_path}'")
+                     
+                     # 2. Expand directory if it's a container folder (does not contain type.raw)
+                     # DeepMD expects a list of system directories, not a parent directory.
+                     current_systems_path = data_config["systems"]
+                     if isinstance(current_systems_path, str) and os.path.isdir(current_systems_path):
+                         # Check if this directory is ITSELF a system (has type.raw)
+                         if not os.path.exists(os.path.join(current_systems_path, "type.raw")):
+                             # It's likely a container directory. Scan for subdirectories.
+                             sub_dirs = [
+                                 os.path.join(current_systems_path, d) 
+                                 for d in os.listdir(current_systems_path) 
+                                 if os.path.isdir(os.path.join(current_systems_path, d))
+                             ]
+                             if sub_dirs:
+                                 # Sort to ensure deterministic order
+                                 sub_dirs.sort()
+                                 data_config["systems"] = sub_dirs
+                                 self.logger.info(f"Task {i}: Auto-expanded data path '{current_systems_path}' into {len(sub_dirs)} sub-systems")
+                             else:
+                                 self.logger.warning(f"Task {i}: Path '{current_systems_path}' is a directory but contains no subdirectories and no type.raw.")
+
             if "fitting_net" in config["model"]:
                  config["model"]["fitting_net"]["seed"] = seeds[i]
             config["training"]["seed"] = training_seeds[i]
@@ -85,19 +118,39 @@ class ParallelTrainer:
             base_model_name = os.path.basename(base_model_path)
             
             # Construct Command
-            cmd = f"""
+            gpus_per_node = self.slurm_config.get("gpus_per_node", 0)
+            
+            if gpus_per_node > 1:
+                # Use torchrun for multi-GPU
+                cmd = f"""
+export OMP_NUM_THREADS={omp_threads}
+# torchrun command adapted from gpu_DPAtrain-multigpu.sbatch
+torchrun --nproc_per_node=$((SLURM_NTASKS*SLURM_GPUS_ON_NODE)) \\
+    --no-python --rdzv_backend=c10d --rdzv_endpoint=localhost:0 \\
+    dp --pt train input.json --skip-neighbor-stat --finetune {base_model_name} 2>&1 | tee train.log
+dp --pt freeze
+"""
+            else:
+                # Standard single GPU/CPU command
+                cmd = f"""
 export OMP_NUM_THREADS={omp_threads}
 export DP_INTER_OP_PARALLELISM_THREADS={omp_threads // 2}
 export DP_INTRA_OP_PARALLELISM_THREADS={omp_threads}
 dp --pt train input.json --finetune {base_model_name} 2>&1 | tee train.log
+dp --pt freeze
 """
             # Create JobConfig
+            task_slurm_config = self.slurm_config.copy()
+            task_slurm_config.pop("job_name", None)
+            task_slurm_config.pop("output_log", None)
+            task_slurm_config.pop("error_log", None)
+            
             job_config = JobConfig(
                 job_name=f"dpeva_train_{i}",
                 command=cmd,
                 output_log="train.out",
                 error_log="train.err",
-                **self.slurm_config # Inject partition, nodes, etc.
+                **task_slurm_config # Inject partition, nodes, etc.
             )
             
             # Generate Script
@@ -113,15 +166,7 @@ dp --pt train input.json --finetune {base_model_name} 2>&1 | tee train.log
         Args:
             blocking (bool): If True, wait for all tasks to complete (Only valid for 'local' backend in current design).
         """
-        processes = [] # For local backend tracking
-        
-        # In Slurm mode, 'blocking' usually means polling squeue, which is complex.
-        # For now, we enforce blocking behavior only for local backend via multiprocessing pool wrapper if needed,
-        # BUT JobManager.submit is synchronous for 'local' (it runs subprocess.run).
-        # Wait, if JobManager.submit is blocking for local, we can't run parallel!
-        
-        # Correction: JobManager.submit for 'local' executes 'bash script.sh'.
-        # If we want parallel local execution, we need to wrap JobManager.submit in multiprocessing here.
+        processes = [] 
         
         if self.backend == "local":
             # Use multiprocessing to spawn local jobs in parallel
@@ -146,6 +191,5 @@ dp --pt train input.json --finetune {base_model_name} 2>&1 | tee train.log
                 self.job_manager.submit(self.script_paths[i], self.task_dirs[i])
             
             self.logger.info("All Slurm jobs submitted. Please check queue.")
-            # Note: 'blocking' is currently ignored for Slurm mode as we haven't implemented polling yet.
             if blocking:
                 self.logger.warning("Blocking wait is not yet implemented for Slurm backend.")
