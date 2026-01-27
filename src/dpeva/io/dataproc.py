@@ -55,6 +55,7 @@ class TestResultParser:
         
         # Load Energy
         # Format: data_E pred_E
+        self.logger.info(f"Loading energy file: {e_file}")
         try:
             self.data_e = np.genfromtxt(e_file, names=["data_e", "pred_e"])
         except Exception as e:
@@ -62,17 +63,21 @@ class TestResultParser:
             raise
 
         # Load Forces
+        self.logger.info(f"Loading force file: {f_file}")
         if os.path.exists(f_file):
             # Format: data_fx data_fy data_fz pred_fx pred_fy pred_fz
-            self.data_f = np.genfromtxt(f_file, names=["data_fx", "data_fy", "data_fz", "pred_fx", "pred_fy", "pred_fz"])
+            try:
+                self.data_f = np.genfromtxt(f_file, names=["data_fx", "data_fy", "data_fz", "pred_fx", "pred_fy", "pred_fz"])
+            except Exception as e:
+                self.logger.error(f"Failed to parse force file: {e}")
+                raise
         else:
             self.logger.warning(f"Force file not found: {f_file}")
             self.data_f = None
             
         # Load Virial (Optional)
         # Prioritize v_peratom.out as user requested, else fallback to v.out
-        vp_file = os.path.join(self.result_dir, f"{self.head}.v_peratom.out")
-        
+        self.logger.info(f"Loading virial file: {vp_file}")
         if os.path.exists(vp_file):
             try:
                 # 9 for data, 9 for pred
@@ -94,11 +99,19 @@ class TestResultParser:
         else:
             self.data_v = None
 
-        # Parse Data Names and Frame Info from Energy file comments
-        dataname_list, datanames_nframe = self._get_dataname_info(e_file)
+        try:
+            # Parse Data Names and Frame Info from Energy file comments
+            dataname_list, datanames_nframe = self._get_dataname_info(e_file)
+        except Exception as e:
+            self.logger.error(f"Failed to parse dataname info: {e}")
+            raise
         
-        # Check Ground Truth
-        self._check_ground_truth()
+        try:
+            # Check Ground Truth
+            self._check_ground_truth()
+        except Exception as e:
+            self.logger.error(f"Failed to check ground truth: {e}")
+            raise
         
         self.parsed_data = {
             "energy": self.data_e,
