@@ -1,7 +1,7 @@
 {
-    "datadir": "../../test/verification_test_run/other_dpdata_test",
-    "modelpath": "../../test/verification_test_run/DPA-3.1-3M.pt",
-    "savedir": "../../test/verification_test_run/desc_pool_python_slurm",
+    "datadir": "other_dpdata_test",
+    "modelpath": "DPA-3.1-3M.pt",
+    "savedir": "desc_pool_python",
     "head": "Hybrid_Perovskite",
     "mode": "python",
     "omp_threads": 2,
