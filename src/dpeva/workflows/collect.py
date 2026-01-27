@@ -56,6 +56,12 @@ class CollectionWorkflow:
         self.direct_thr_init = config.get("direct_thr_init", 0.5)
 
     def _setup_logger(self):
+        # Force reconfiguration of logging
+        root = logging.getLogger()
+        if root.handlers:
+            for handler in root.handlers[:]:
+                root.removeHandler(handler)
+                
         logging.basicConfig(
             level=logging.INFO,
             format='%(asctime)s - %(levelname)s - %(message)s',
