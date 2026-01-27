@@ -225,7 +225,7 @@ import os
 import sys
 import numpy as np
 
-# Ensure dpeva is in path
+# Ensure dpeva is in path, only used in develop
 sys.path.append("{os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))}")
 
 from dpeva.feature.generator import DescriptorGenerator
