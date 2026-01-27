@@ -497,32 +497,25 @@ for f in desc_iter_list:
     dataname, _ = os.path.splitext(os.path.basename(f))
     one_desc = np.load(f) # nframe, natoms, ndesc
     
-    # L2 Normalization of descriptors
-    # one_desc shape: (nframe, natoms, ndesc)
-    # We normalize along the last axis (ndesc) for each atom
-    # Avoid division by zero by adding a small epsilon
-    one_desc_modulo = np.linalg.norm(one_desc, axis=2, keepdims=True)
-    one_desc_norm = one_desc / (one_desc_modulo + 1e-12)
-    
     for i in range(len(one_desc)):
         desc_dataname = f"{dataname}-{i}"
         desc_datanames.append(desc_dataname)
     
-    # Vectorized computation for structure descriptors
-    # 1. Mean pooling of normalized atomic descriptors -> structure descriptor
-    # one_desc_norm shape: (n_frames, n_atoms, n_desc)
+    # one_desc shape: (n_frames, n_atoms, n_desc)
     # axis=1 is the atom dimension
     # one_desc_stru shape: (n_frames, n_desc)
-    one_desc_stru = np.mean(one_desc_norm, axis=1)
+    # one_desc do not need to L2 normalize
+    # we will directly mean them to get structure descriptor
+    one_desc_stru = np.mean(one_desc, axis=1)
 
-    # 2. L2 Normalization of structure descriptors (Structure Level)
+    # L2 Normalization of structure descriptors (Structure Level)
     # Norm along axis 1 (descriptor dimension)
     # stru_modulo shape: (n_frames, 1)
     stru_modulo = np.linalg.norm(one_desc_stru, axis=1, keepdims=True)
     # Avoid division by zero
-    one_desc_stru_final = one_desc_stru / (stru_modulo + 1e-12)
+    one_desc_stru_norm = one_desc_stru / (stru_modulo + 1e-12)
     
-    desc_stru.append(one_desc_stru_final)
+    desc_stru.append(one_desc_stru_norm)
 desc_stru = np.concatenate(desc_stru, axis=0)
 
 logger.info(f"Collecting data to dataframe and do UQ selection")
