@@ -17,7 +17,7 @@ class FeatureWorkflow:
         self.datadir = config.get("datadir")
         self.modelpath = config.get("modelpath")
         self.format = config.get("format", "deepmd/npy")
-        self.output_mode = config.get("output_mode", "structural") # 'atomic' or 'structural'
+        self.output_mode = config.get("output_mode", "atomic") # 'atomic' or 'structural'
         
         self.savedir = config.get("savedir", f"desc-{os.path.basename(self.modelpath).split('.')[0]}-{os.path.basename(self.datadir)}")
         

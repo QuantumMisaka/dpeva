@@ -298,12 +298,25 @@ if __name__ == "__main__":
         Returns:
             np.ndarray: The computed descriptors.
         """
-        self.logger.info(f"Loading data from {data_path} with format {data_format}")
+        sys_name = os.path.basename(data_path)
+        
+        # Check output mode
+        if output_mode != "atomic":
+            self.logger.warning(f"Output mode is '{output_mode}'. Note that only 'atomic' mode is consistent with 'dp eval-desc' CLI output.")
+            
+        # self.logger.info(f"Loading data from {data_path} with format {data_format}")
         
         if data_format == "deepmd/npy/mixed":
             onedata = dpdata.MultiSystems.from_file(data_path, fmt=data_format)
         else:
             onedata = dpdata.System(data_path, fmt=data_format)
+            
+        n_frames = len(onedata)
+        self.logger.info(f"# -----------------------------------")
+        self.logger.info(f"# -------output of python mode-------")
+        self.logger.info(f"# processing system : {sys_name}")
+        self.logger.info(f"# evaluating descriptors for {n_frames} frames")
+        self.logger.info(f"# output mode: {output_mode}")
             
         desc_list = []
         if data_format == "deepmd/npy/mixed":
@@ -319,6 +332,9 @@ if __name__ == "__main__":
         
         if output_mode == "structural":
             desc = np.mean(desc, axis=1)
+            
+        self.logger.info(f"# descriptor shape: {desc.shape}")
+        self.logger.info(f"# -----------------------------------")
             
         # Clear memory
         del onedata
