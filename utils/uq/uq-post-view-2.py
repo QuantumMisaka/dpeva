@@ -204,6 +204,19 @@ def filter_uq_for_viz(data, name="UQ"):
         logger.warning(f"{name}: Truncating {truncated_count} values outside [0, 2] for visualization.")
     return data[mask], mask
 
+# Stats for UQ variables
+logger.info("Calculating statistics for UQ variables (QbC, RND, RND_rescaled)")
+df_uq_stats = pd.DataFrame({
+    "UQ_QbC": uq_qbc_for,
+    "UQ_RND": uq_rnd_for,
+    "UQ_RND_rescaled": uq_rnd_for_rescaled
+})
+pd.set_option('display.max_columns', None)
+pd.set_option('display.width', 1000)
+pd.set_option('display.float_format', '{:.4f}'.format)
+stats_desc = df_uq_stats.describe(percentiles=[0.25, 0.5, 0.75, 0.95, 0.99])
+logger.info(f"UQ Statistics:\n{stats_desc}")
+
 uq_qbc_for_viz, mask_qbc = filter_uq_for_viz(uq_qbc_for, "UQ-QbC")
 uq_rnd_for_viz, mask_rnd = filter_uq_for_viz(uq_rnd_for, "UQ-RND")
 uq_rnd_for_rescaled_viz, mask_rnd_rescaled = filter_uq_for_viz(uq_rnd_for_rescaled, "UQ-RND-rescaled")
@@ -494,16 +507,22 @@ for f in desc_iter_list:
     for i in range(len(one_desc)):
         desc_dataname = f"{dataname}-{i}"
         desc_datanames.append(desc_dataname)
-        # mean the atomic descriptors to structure descriptors using NORMALIZED descriptors
-        # This ensures every atom contributes equally (Atomic Level Normalization)
-        one_desc_stru_mean = np.mean(one_desc_norm[i], axis=0).reshape(1, -1)
-        
-        # L2 Normalization of structure descriptor (Structure Level)
-        # This ensures the final structure vector is unit length, facilitating DIRECT/Clustering
-        stru_modulo = np.linalg.norm(one_desc_stru_mean)
-        one_desc_stru_final = one_desc_stru_mean / (stru_modulo + 1e-12)
-        
-        desc_stru.append(one_desc_stru_final)
+    
+    # Vectorized computation for structure descriptors
+    # 1. Mean pooling of normalized atomic descriptors -> structure descriptor
+    # one_desc_norm shape: (n_frames, n_atoms, n_desc)
+    # axis=1 is the atom dimension
+    # one_desc_stru shape: (n_frames, n_desc)
+    one_desc_stru = np.mean(one_desc_norm, axis=1)
+
+    # 2. L2 Normalization of structure descriptors (Structure Level)
+    # Norm along axis 1 (descriptor dimension)
+    # stru_modulo shape: (n_frames, 1)
+    stru_modulo = np.linalg.norm(one_desc_stru, axis=1, keepdims=True)
+    # Avoid division by zero
+    one_desc_stru_final = one_desc_stru / (stru_modulo + 1e-12)
+    
+    desc_stru.append(one_desc_stru_final)
 desc_stru = np.concatenate(desc_stru, axis=0)
 
 logger.info(f"Collecting data to dataframe and do UQ selection")

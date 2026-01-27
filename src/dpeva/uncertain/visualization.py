@@ -12,10 +12,9 @@ class UQVisualizer:
         self.save_dir = save_dir
         self.dpi = dpi
         
-        # Configure global plot settings to match original script
-        plt.rcParams['xtick.direction'] = 'in'
-        plt.rcParams['ytick.direction'] = 'in'
-        plt.rcParams['font.size'] = 10
+        # Configure global plot settings
+        from dpeva.utils.visual_style import set_visual_style
+        set_visual_style()
         
         if not os.path.exists(save_dir):
             os.makedirs(save_dir)
