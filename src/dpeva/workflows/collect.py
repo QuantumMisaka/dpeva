@@ -86,6 +86,8 @@ class CollectionWorkflow:
             for i in range(4)
         ]
         
+        has_ground_truth = preds[0].has_ground_truth
+        
         self.logger.info("Dealing with force difference between 0 head prediction and existing label")
         self.logger.info("Dealing with atomic force and average 1, 2, 3")
         self.logger.info("Dealing with atomic force UQ by DPGEN formula, in QbC and RND-like")
@@ -95,9 +97,22 @@ class CollectionWorkflow:
         calculator = UQCalculator()
         uq_results = calculator.compute_qbc_rnd(preds[0], preds[1], preds[2], preds[3])
         
-        self.logger.info("Aligning UQ-RND to UQ-QbC by Z-Score")
+        self.logger.info("Aligning UQ-RND to UQ-QbC by RobustScaler (Median/IQR alignment)")
         uq_rnd_rescaled = calculator.align_scales(uq_results["uq_qbc_for"], uq_results["uq_rnd_for"])
         
+        # Stats for UQ variables
+        self.logger.info("Calculating statistics for UQ variables (QbC, RND, RND_rescaled)")
+        df_uq_stats = pd.DataFrame({
+            "UQ_QbC": uq_results["uq_qbc_for"],
+            "UQ_RND": uq_results["uq_rnd_for"],
+            "UQ_RND_rescaled": uq_rnd_rescaled
+        })
+        pd.set_option('display.max_columns', None)
+        pd.set_option('display.width', 1000)
+        pd.set_option('display.float_format', '{:.4f}'.format)
+        stats_desc = df_uq_stats.describe(percentiles=[0.25, 0.5, 0.75, 0.95, 0.99])
+        self.logger.info(f"UQ Statistics:\n{stats_desc}")
+
         # 2. Visualization (UQ Distributions)
         vis = UQVisualizer(self.view_savedir, dpi=self.config.get("fig_dpi", 150))
         
@@ -113,19 +128,18 @@ class CollectionWorkflow:
         
         self.logger.info("Plotting and saving the figures of UQ-RND-force-rescaled with UQ trust range")
         vis.plot_uq_with_trust_range(uq_rnd_rescaled, "UQ-RND-force-rescaled", "UQ-RND-force-rescaled.png",
-                                     self.uq_qbc_trust_lo, self.uq_qbc_trust_hi) # Note: using same thresholds as QbC per original script logic for visualization boundary
+                                     self.uq_qbc_trust_lo, self.uq_qbc_trust_hi)
         
-        self.logger.info("Plotting and saving the figures of UQ-force vs force diff")
-        vis.plot_uq_vs_error(uq_results["uq_qbc_for"], uq_results["uq_rnd_for"], uq_results["diff_maxf_0_frame"])
-        
-        self.logger.info("Plotting and saving the figures of UQ-force-rescaled vs force diff")
-        vis.plot_uq_vs_error(uq_results["uq_qbc_for"], uq_rnd_rescaled, uq_results["diff_maxf_0_frame"], rescaled=True)
-        
-        self.logger.info("Calculating the difference between UQ-qbc and UQ-rnd-rescaled")
-        self.logger.info("Plotting and saving the figures of UQ-diff")
-        self.logger.info("Plotting and saving the figures of UQ-diff vs UQ")
-        self.logger.info("Plotting and saving the figures of UQ-diff vs force diff")
-        vis.plot_uq_diff_parity(uq_results["uq_qbc_for"], uq_rnd_rescaled, uq_results["diff_maxf_0_frame"])
+        if has_ground_truth:
+            self.logger.info("Plotting and saving the figures of UQ-force vs force diff")
+            vis.plot_uq_vs_error(uq_results["uq_qbc_for"], uq_results["uq_rnd_for"], uq_results["diff_maxf_0_frame"])
+            
+            self.logger.info("Plotting and saving the figures of UQ-force-rescaled vs force diff")
+            vis.plot_uq_vs_error(uq_results["uq_qbc_for"], uq_rnd_rescaled, uq_results["diff_maxf_0_frame"], rescaled=True)
+            
+            self.logger.info("Calculating the difference between UQ-qbc and UQ-rnd-rescaled")
+            self.logger.info("Plotting and saving the figures of UQ-diff")
+            vis.plot_uq_diff_parity(uq_results["uq_qbc_for"], uq_rnd_rescaled, uq_results["diff_maxf_0_frame"])
         
         self.logger.info("Plotting and saving the figures of UQ-qbc-force and UQ-rnd-force-rescaled vs force diff")
         # Creating temp df for visualization
@@ -133,9 +147,13 @@ class CollectionWorkflow:
             "uq_qbc_for": uq_results["uq_qbc_for"],
             "uq_rnd_for_rescaled": uq_rnd_rescaled,
             "uq_rnd_for": uq_results["uq_rnd_for"],
-            "diff_maxf_0_frame": uq_results["diff_maxf_0_frame"]
         })
-        # This call actually handles the "Plotting ... vs force diff" logic internally in vis
+        if has_ground_truth:
+            df_temp["diff_maxf_0_frame"] = uq_results["diff_maxf_0_frame"]
+        else:
+            # Add dummy column for hue if no ground truth
+            df_temp["diff_maxf_0_frame"] = np.zeros(len(df_temp))
+            
         vis.plot_2d_uq_scatter(df_temp, self.uq_scheme, 
                               self.uq_qbc_trust_lo, self.uq_qbc_trust_hi, 
                               self.uq_rnd_trust_lo, self.uq_rnd_trust_hi)
@@ -144,29 +162,65 @@ class CollectionWorkflow:
         self.logger.info("Dealing with Selection in Target dpdata")
         datanames_ind_list = [f"{i[0]}-{i[1]}" for i in preds[0].dataname_list]
         
-        df_uq = pd.DataFrame({
+        data_dict_uq = {
             "dataname": datanames_ind_list,
             "uq_qbc_for": uq_results["uq_qbc_for"],
             "uq_rnd_for_rescaled": uq_rnd_rescaled,
             "uq_rnd_for": uq_results["uq_rnd_for"],
-            "diff_maxf_0_frame": uq_results["diff_maxf_0_frame"]
-        })
+        }
+        if has_ground_truth:
+            data_dict_uq["diff_maxf_0_frame"] = uq_results["diff_maxf_0_frame"]
+            
+        df_uq = pd.DataFrame(data_dict_uq)
         
         # Load descriptors
-        self.logger.info(f"Loading the target descriptors from {self.testdata_dir}") # Log message per original
-        desc_string_test = f'{self.desc_dir}/{self.desc_filename}'
+        self.logger.info(f"Loading the target descriptors from {self.desc_dir}")
+        # Note: uq-post-view-2.py uses '/*/{desc_filename}' or '/*.npy' depending on context. 
+        # Here we assume standard structure, but let's be robust.
+        if '*' in self.desc_dir:
+             desc_pattern = self.desc_dir
+        else:
+             # Try both patterns
+             desc_pattern_1 = os.path.join(self.desc_dir, "*.npy")
+             desc_pattern_2 = os.path.join(self.desc_dir, "*", self.desc_filename)
+             if len(glob.glob(desc_pattern_1)) > 0:
+                 desc_pattern = desc_pattern_1
+             else:
+                 desc_pattern = desc_pattern_2
+                 
         desc_datanames = []
         desc_stru = []
-        desc_iter_list = sorted(glob.glob(desc_string_test))
+        desc_iter_list = sorted(glob.glob(desc_pattern))
+        
+        if not desc_iter_list:
+             self.logger.warning(f"No descriptors found in {self.desc_dir}")
         
         for f in desc_iter_list:
-            keyname = os.path.basename(f).replace('.npy', '')
+            # Handle different directory structures
+            # If dpeva/desc_dir/sysname.npy -> keyname = sysname
+            # If dpeva/desc_dir/sysname/desc.npy -> keyname = sysname
+            if f.endswith(self.desc_filename):
+                 keyname = os.path.basename(os.path.dirname(f))
+            else:
+                 keyname = os.path.basename(f).replace('.npy', '')
+                 
             one_desc = np.load(f)
             for i in range(len(one_desc)):
                 desc_datanames.append(f"{keyname}-{i}")
-                desc_stru.append(np.mean(one_desc[i], axis=0).reshape(1, -1))
+            
+            # Mean pooling and L2 normalization per frame
+            # one_desc shape: (n_frames, n_atoms, n_desc)
+            one_desc_stru = np.mean(one_desc, axis=1) # (n_frames, n_desc)
+            
+            # L2 Normalization
+            stru_modulo = np.linalg.norm(one_desc_stru, axis=1, keepdims=True)
+            one_desc_stru_norm = one_desc_stru / (stru_modulo + 1e-12)
+            desc_stru.append(one_desc_stru_norm)
         
-        desc_stru = np.concatenate(desc_stru, axis=0)
+        if len(desc_stru) > 0:
+            desc_stru = np.concatenate(desc_stru, axis=0)
+        else:
+            raise ValueError("No descriptors loaded!")
         
         self.logger.info(f"Collecting data to dataframe and do UQ selection")
         df_desc = pd.DataFrame(desc_stru, columns=[f"desc_stru_{i}" for i in range(desc_stru.shape[1])])
@@ -202,16 +256,19 @@ class CollectionWorkflow:
         
         # Visualize Selection
         self.logger.info("Plotting and saving the figure of UQ-identity in QbC-RND 2D space")
-        # We need to pass the updated df_uq which now has 'uq_identity'
         vis.plot_2d_uq_scatter(df_uq, self.uq_scheme, 
                               self.uq_qbc_trust_lo, self.uq_qbc_trust_hi, 
                               self.uq_rnd_trust_lo, self.uq_rnd_trust_hi)
                               
-        self.logger.info("Plotting and saving the figure of UQ-Candidate in QbC space against Max Force Diff")
-        self.logger.info("Plotting and saving the figure of UQ-Candidate in RND-rescaled space against Max Force Diff")
-        vis.plot_candidate_vs_error(df_uq, df_candidate)
+        if has_ground_truth:
+            self.logger.info("Plotting and saving the figure of UQ-Candidate vs Max Force Diff")
+            vis.plot_candidate_vs_error(df_uq, df_candidate)
         
         # 4. DIRECT Sampling
+        if len(df_candidate) == 0:
+            self.logger.warning("No structures selected by UQ scheme! Skipping DIRECT selection.")
+            return
+
         self.logger.info(f"Doing DIRECT Selection on UQ-selected data")
         
         DIRECT_sampler = DIRECTSampler(
@@ -261,14 +318,6 @@ class CollectionWorkflow:
         
         self.logger.info(f"Visualization of final selection results in PCA space")
         
-        # Pass df_uq (full data) to visualizer to help it reconstruct global indices if needed
-        # But our visualizer helper just plots what we give it or recalculates PCA
-        # We need to map final indices to global context for the visualizer
-        
-        # Note: df_candidate.index gives indices relative to df_uq_desc (original concat)
-        # df_final.index gives the same global indices
-        # We need to pass these global indices to visualizer
-        
         # Add uq_identity to df_uq_desc for visualizer usage
         df_uq_desc = uq_filter.get_identity_labels(df_uq_desc, df_candidate, df_accurate)
         
@@ -276,8 +325,6 @@ class CollectionWorkflow:
                                       DIRECT_selected_indices, manual_selection_index,
                                       scores_DIRECT, scores_MS, 
                                       df_uq_desc, df_final.index)
-        
-        self.logger.info(f"Saving the PCA view of UQ-DIRECT sampling to {self.view_savedir}/Final_sampled_PCAview.png")
         
         # Save Final PCA Data
         df_alldataPC_visual = pd.concat([df_uq, PCs_df], axis=1)
@@ -288,20 +335,51 @@ class CollectionWorkflow:
         sampled_datanames = df_final['dataname'].to_list()
         
         self.logger.info(f"Loading the target testing data from {self.testdata_dir}")
-        test_data = dpdata.MultiSystems.from_dir(f"{self.testdata_dir}", 
-                                                 f"{self.testdata_string}", 
-                                                 fmt=f"{self.testdata_fmt}")
+        # Custom robust loading
+        test_data = [] 
+        # Check if testdata_dir has subdirectories
+        found_dirs = sorted(glob.glob(os.path.join(self.testdata_dir, "*")))
         
+        for d in found_dirs:
+            if not os.path.isdir(d):
+                continue
+            try:
+                sys = dpdata.LabeledSystem(d, fmt=self.testdata_fmt)
+            except:
+                try:
+                    sys = dpdata.System(d, fmt=self.testdata_fmt)
+                except Exception as e:
+                    self.logger.warning(f"Failed to load {d}: {e}")
+                    continue
+            test_data.append(sys)
+            
         sampled_dpdata = dpdata.MultiSystems()
         other_dpdata = dpdata.MultiSystems()
         
-        for lbsys in test_data:
-            for ind, sys in enumerate(lbsys):
-                dataname_sys = f"{sys.short_name}-{ind}"
+        for sys in test_data:
+            # sys might be a System or LabeledSystem. 
+            # In uq-post-view-2.py, it appended to test_data list.
+            # Here we iterate. sys is ONE system (corresponding to one directory).
+            # But wait, dpdata.MultiSystems.from_dir usually returns a MultiSystems object where each element is a LabeledSystem.
+            # If we load manually, we have a list of Systems.
+            # We need to match datanames.
+            
+            # The dataname logic in uq-post-view-2.py relies on knowing the index in the list.
+            # dataname is "keyname-index". 
+            # keyname comes from directory name (short_name).
+            # index comes from frame index.
+            
+            # Iterate frames in sys
+            sys_name = sys.short_name
+            # If sys.short_name is empty or not matching directory, we should use directory name.
+            # But dpdata usually sets short_name to directory basename.
+            
+            for i in range(len(sys)):
+                dataname_sys = f"{sys_name}-{i}"
                 if dataname_sys in sampled_datanames:
-                    sampled_dpdata.append(sys)
+                    sampled_dpdata.append(sys[i])
                 else:
-                    other_dpdata.append(sys)
+                    other_dpdata.append(sys[i])
                     
         self.logger.info(f'Sampled dpdata: {sampled_dpdata}')
         self.logger.info(f'Other dpdata: {other_dpdata}')

@@ -4,6 +4,7 @@ import matplotlib.ticker as mtick
 import seaborn as sns
 import numpy as np
 import os
+import logging
 
 class UQVisualizer:
     """Handles visualization of Uncertainty Quantification (UQ) and sampling results."""
@@ -19,13 +20,27 @@ class UQVisualizer:
         if not os.path.exists(save_dir):
             os.makedirs(save_dir)
 
+    def _filter_uq(self, data, name="UQ"):
+        """Filter UQ data to be within [0, 2] and warn if truncation occurs."""
+        mask = (data >= 0) & (data <= 2.0)
+        truncated_count = len(data) - np.sum(mask)
+        if truncated_count > 0:
+            logging.getLogger(__name__).warning(f"{name}: Truncating {truncated_count} values outside [0, 2] for visualization.")
+        return data[mask], mask
+
     def plot_uq_distribution(self, uq_qbc, uq_rnd, uq_rnd_rescaled=None):
         """Plots KDE distribution of UQ metrics."""
+        # Filter data
+        uq_qbc_viz, _ = self._filter_uq(uq_qbc, "UQ-QbC")
+        uq_rnd_viz, _ = self._filter_uq(uq_rnd, "UQ-RND")
+        
         # 1. Raw UQ comparison
         plt.figure(figsize=(8, 6))
-        sns.kdeplot(uq_qbc, color="blue", label="UQ-QbC", bw_adjust=0.5)
-        sns.kdeplot(uq_rnd, color="red", label="UQ-RND", bw_adjust=0.5)
-        plt.title("Distribution of UQ-force by KDEplot")
+        if len(uq_qbc_viz) > 0:
+            sns.kdeplot(uq_qbc_viz, color="blue", label="UQ-QbC", bw_adjust=0.5)
+        if len(uq_rnd_viz) > 0:
+            sns.kdeplot(uq_rnd_viz, color="red", label="UQ-RND", bw_adjust=0.5)
+        plt.title("Distribution of UQ-force by KDEplot (Truncated [0, 2])")
         plt.xlabel("UQ Value")
         plt.ylabel("Density")
         plt.legend()
@@ -35,10 +50,14 @@ class UQVisualizer:
 
         # 2. Rescaled comparison
         if uq_rnd_rescaled is not None:
+            uq_rnd_rescaled_viz, _ = self._filter_uq(uq_rnd_rescaled, "UQ-RND-rescaled")
+            
             plt.figure(figsize=(8, 6))
-            sns.kdeplot(uq_qbc, color="blue", label="UQ-QbC", bw_adjust=0.5)
-            sns.kdeplot(uq_rnd_rescaled, color="red", label="UQ-RND-rescaled", bw_adjust=0.5)
-            plt.title("Distribution of UQ-force by KDEplot")
+            if len(uq_qbc_viz) > 0:
+                sns.kdeplot(uq_qbc_viz, color="blue", label="UQ-QbC", bw_adjust=0.5)
+            if len(uq_rnd_rescaled_viz) > 0:
+                sns.kdeplot(uq_rnd_rescaled_viz, color="red", label="UQ-RND-rescaled", bw_adjust=0.5)
+            plt.title("Distribution of UQ-force by KDEplot (Truncated [0, 2])")
             plt.xlabel("UQ Value")
             plt.ylabel("Density")
             plt.legend()
@@ -48,9 +67,12 @@ class UQVisualizer:
 
     def plot_uq_with_trust_range(self, uq_data, label, filename, trust_lo, trust_hi):
         """Plots UQ distribution with trust range highlights."""
+        uq_data_viz, _ = self._filter_uq(uq_data, label)
+        
         plt.figure(figsize=(8, 6))
-        sns.kdeplot(uq_data, color="blue", bw_adjust=0.5)
-        plt.title(f"Distribution of {label} by KDEplot")
+        if len(uq_data_viz) > 0:
+            sns.kdeplot(uq_data_viz, color="blue", bw_adjust=0.5)
+        plt.title(f"Distribution of {label} by KDEplot (Truncated [0, 2])")
         plt.xlabel(f"{label} Value")
         plt.ylabel("Density")
         plt.grid(True)
@@ -59,9 +81,13 @@ class UQVisualizer:
         plt.axvline(trust_hi, color='purple', linestyle='--', linewidth=1)
         
         # Highlight regions
-        plt.axvspan(np.min(uq_data), trust_lo, alpha=0.1, color='green')
+        # Use viz min/max for span
+        viz_min = np.min(uq_data_viz) if len(uq_data_viz) > 0 else 0
+        viz_max = np.max(uq_data_viz) if len(uq_data_viz) > 0 else 2
+        
+        plt.axvspan(viz_min, trust_lo, alpha=0.1, color='green')
         plt.axvspan(trust_lo, trust_hi, alpha=0.1, color='yellow')
-        plt.axvspan(trust_hi, np.max(uq_data), alpha=0.1, color='red')
+        plt.axvspan(trust_hi, viz_max, alpha=0.1, color='red')
         
         plt.savefig(f"{self.save_dir}/{filename}", dpi=self.dpi)
         plt.close()
@@ -71,10 +97,17 @@ class UQVisualizer:
         label_rnd = "RND-rescaled" if rescaled else "RND"
         filename = "UQ-force-rescaled-fdiff-parity.png" if rescaled else "UQ-force-fdiff-parity.png"
         
+        # Filter for scatter plots
+        uq_qbc_viz, mask_qbc = self._filter_uq(uq_qbc, "UQ-QbC")
+        uq_rnd_viz, mask_rnd = self._filter_uq(uq_rnd, f"UQ-{label_rnd}")
+        
         plt.figure(figsize=(8, 6))
-        plt.scatter(uq_qbc, diff_maxf, color="blue", label="QbC", s=20)
-        plt.scatter(uq_rnd, diff_maxf, color="red", label=label_rnd, s=20)
-        plt.title("UQ vs Force Diff")
+        if len(uq_qbc_viz) > 0:
+            plt.scatter(uq_qbc_viz, diff_maxf[mask_qbc], color="blue", label="QbC", s=20)
+        if len(uq_rnd_viz) > 0:
+            plt.scatter(uq_rnd_viz, diff_maxf[mask_rnd], color="red", label=label_rnd, s=20)
+        
+        plt.title("UQ vs Force Diff (Truncated [0, 2])")
         plt.xlabel("UQ Value")
         plt.ylabel("True Max Force Diff")
         plt.legend()
@@ -113,17 +146,26 @@ class UQVisualizer:
         """Plots 2D scatter of QbC vs RND with filtering boundaries."""
         # 1. Scatter with Max Force Diff as hue
         plt.figure(figsize=(8, 6))
+        
+        hue_col = "diff_maxf_0_frame"
+        if hue_col not in df_uq.columns:
+            hue_col = None
+            
         sns.scatterplot(data=df_uq, 
                         x="uq_qbc_for", 
                         y="uq_rnd_for_rescaled", 
-                        hue="diff_maxf_0_frame", 
-                        palette="Reds",
+                        hue=hue_col, 
+                        palette="Reds" if hue_col else None,
                         alpha=0.8,
                         s=60)
-        plt.title("UQ-QbC and UQ-RND vs Max Force Diff", fontsize=14)
+        title = "UQ-QbC and UQ-RND"
+        if hue_col:
+            title += " vs Max Force Diff"
+        plt.title(title, fontsize=14)
         self._setup_2d_plot_axes(trust_lo, trust_hi, rnd_trust_lo, rnd_trust_hi)
         self._draw_boundary(scheme, trust_lo, trust_hi, rnd_trust_lo, rnd_trust_hi)
-        plt.legend(title="Max Force Diff", fontsize=10)
+        if hue_col:
+            plt.legend(title="Max Force Diff", fontsize=10)
         plt.savefig(f"{self.save_dir}/UQ-force-qbc-rnd-fdiff-scatter.png", dpi=self.dpi)
         plt.close()
 
@@ -246,8 +288,15 @@ class UQVisualizer:
         plt.ylabel("UQ-RND-rescaled Value", fontsize=12)
         plt.grid(True)
         ax = plt.gca()
-        ax.xaxis.set_major_locator(mtick.MultipleLocator(0.1))
-        ax.yaxis.set_major_locator(mtick.MultipleLocator(0.1))
+        
+        # Only set fine ticks if range is small enough
+        xlim = ax.get_xlim()
+        ylim = ax.get_ylim()
+        
+        if (xlim[1] - xlim[0]) < 10:
+            ax.xaxis.set_major_locator(mtick.MultipleLocator(0.1))
+        if (ylim[1] - ylim[0]) < 10:
+            ax.yaxis.set_major_locator(mtick.MultipleLocator(0.1))
 
     def _draw_boundary(self, scheme, uq_x_lo, uq_x_hi, uq_y_lo, uq_y_hi):
         # Draw bounding box

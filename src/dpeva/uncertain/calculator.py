@@ -55,7 +55,10 @@ class UQCalculator:
         uq_rnd_for_list = []
         
         # Calculate force difference for model 0 if labels exist (for visualization)
-        diff_f_0 = np.sqrt(predictions_0.diff_fx**2 + predictions_0.diff_fy**2 + predictions_0.diff_fz**2)
+        diff_f_0 = None
+        if getattr(predictions_0, 'has_ground_truth', True) and predictions_0.diff_fx is not None:
+             diff_f_0 = np.sqrt(predictions_0.diff_fx**2 + predictions_0.diff_fy**2 + predictions_0.diff_fz**2)
+             
         diff_maxf_0_frame = []
         diff_rmsf_0_frame = []
 
@@ -67,9 +70,13 @@ class UQCalculator:
             # RND
             uq_rnd_for_list.append(np.max(f_rnd_stddiff[index:index + natom]))
             # Diff 0
-            diff_item = diff_f_0[index:index + natom]
-            diff_maxf_0_frame.append(np.max(diff_item))
-            diff_rmsf_0_frame.append(np.sqrt(np.mean(diff_item**2)))
+            if diff_f_0 is not None:
+                diff_item = diff_f_0[index:index + natom]
+                diff_maxf_0_frame.append(np.max(diff_item))
+                diff_rmsf_0_frame.append(np.sqrt(np.mean(diff_item**2)))
+            else:
+                diff_maxf_0_frame.append(0.0)
+                diff_rmsf_0_frame.append(0.0)
             
             index += natom
 
@@ -85,7 +92,7 @@ class UQCalculator:
 
     def align_scales(self, uq_qbc, uq_rnd):
         """
-        Aligns RND UQ scale to QbC UQ scale using Z-Score normalization.
+        Aligns RND UQ scale to QbC UQ scale using RobustScaler (Median/IQR).
         
         Args:
             uq_qbc: QbC uncertainty values.
@@ -94,8 +101,10 @@ class UQCalculator:
         Returns:
             uq_rnd_rescaled: RND values rescaled to match QbC distribution.
         """
-        scaler_qbc = StandardScaler()
-        scaler_rnd = StandardScaler()
+        from sklearn.preprocessing import RobustScaler
+        
+        scaler_qbc = RobustScaler()
+        scaler_rnd = RobustScaler()
         
         uq_qbc_scaled = scaler_qbc.fit_transform(uq_qbc.reshape(-1, 1)).flatten()
         uq_rnd_scaled = scaler_rnd.fit_transform(uq_rnd.reshape(-1, 1)).flatten()

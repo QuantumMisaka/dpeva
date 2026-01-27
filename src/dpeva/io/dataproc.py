@@ -45,6 +45,7 @@ class TestResultParser:
         # File paths based on dp test output convention
         e_file = os.path.join(self.result_dir, f"{self.head}.e_peratom.out")
         f_file = os.path.join(self.result_dir, f"{self.head}.f.out")
+        vp_file = os.path.join(self.result_dir, f"{self.head}.v_peratom.out")
         v_file = os.path.join(self.result_dir, f"{self.head}.v.out")
         
         if not os.path.exists(e_file):
@@ -55,18 +56,18 @@ class TestResultParser:
         
         # Load Energy
         # Format: data_E pred_E
-        self.logger.info(f"Loading energy file: {e_file}")
         try:
+            self.logger.info(f"Loading energy file: {e_file}")
             self.data_e = np.genfromtxt(e_file, names=["data_e", "pred_e"])
         except Exception as e:
             self.logger.error(f"Failed to parse energy file: {e}")
             raise
 
         # Load Forces
-        self.logger.info(f"Loading force file: {f_file}")
         if os.path.exists(f_file):
             # Format: data_fx data_fy data_fz pred_fx pred_fy pred_fz
             try:
+                self.logger.info(f"Loading force file: {f_file}")
                 self.data_f = np.genfromtxt(f_file, names=["data_fx", "data_fy", "data_fz", "pred_fx", "pred_fy", "pred_fz"])
             except Exception as e:
                 self.logger.error(f"Failed to parse force file: {e}")
@@ -77,9 +78,9 @@ class TestResultParser:
             
         # Load Virial (Optional)
         # Prioritize v_peratom.out as user requested, else fallback to v.out
-        self.logger.info(f"Loading virial file: {vp_file}")
         if os.path.exists(vp_file):
             try:
+                self.logger.info(f"Loading virial file: {vp_file}")
                 # 9 for data, 9 for pred
                 names = [f"data_v{i}" for i in range(9)] + [f"pred_v{i}" for i in range(9)]
                 self.data_v = np.genfromtxt(vp_file, names=names)
@@ -89,6 +90,7 @@ class TestResultParser:
                 self.data_v = None
         elif os.path.exists(v_file):
             try:
+                self.logger.info(f"Loading virial file: {v_file}")
                 # 9 for data, 9 for pred
                 names = [f"data_v{i}" for i in range(9)] + [f"pred_v{i}" for i in range(9)]
                 self.data_v = np.genfromtxt(v_file, names=names)
@@ -144,7 +146,7 @@ class TestResultParser:
         
         # Sort type_map by length descending to ensure correct regex matching (e.g. Fe before F)
         sorted_types = sorted(self.type_map, key=len, reverse=True)
-        pattern = f"({'|'.join(sorted_types)})(\d+)"
+        pattern = rf"({'|'.join(sorted_types)})(\d+)"
         
         for item in dataname_list:
             dataname = item[0]
@@ -198,7 +200,8 @@ class TestResultParser:
                 parts = line.strip().split(" ")
                 if len(parts) >= 2:
                     dirname = parts[1]
-                    dataname = os.path.basename(dirname.rstrip('/'))
+                    # Strip trailing colon if present (common in some dp test outputs)
+                    dataname = os.path.basename(dirname.strip().rstrip(':').rstrip('/'))
                     datanames_indice_dict[dataname] = i
 
         full_index = len(lines)
