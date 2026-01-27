@@ -93,37 +93,15 @@ class FeatureWorkflow:
             generator.run_cli_generation(self.datadir, self.savedir)
             self.logger.info(f"Job submitted. Output directory: {self.savedir}")
             
-        else: # direct mode
-            self.logger.info("Running in Direct (Python API) mode")
-            # Logic for direct mode (iterating over subdirs manually if needed)
-            # Original logic seemed to assume datadir was one system or handled by dpdata
-            
-            # Let's try to iterate over subdirectories to match typical dpdata usage if datadir is a pool
-            subdirs = [os.path.join(self.datadir, d) for d in os.listdir(self.datadir) if os.path.isdir(os.path.join(self.datadir, d))]
-            if not subdirs:
-                # Maybe datadir is the system itself
-                subdirs = [self.datadir]
-                
-            total_systems = len(subdirs)
-            self.logger.info(f"Found {total_systems} potential systems to process")
-            
-            for i, system_path in enumerate(subdirs):
-                system_name = os.path.basename(system_path)
-                self.logger.info(f"Processing system {i+1}/{total_systems}: {system_name}")
-                
-                try:
-                    desc = generator.compute_descriptors_direct(
-                        data_path=system_path,
-                        data_format=self.format,
-                        output_mode=self.output_mode
-                    )
-                    
-                    # Save descriptors in flat format: savedir/system_name.npy
-                    output_file = os.path.join(self.savedir, f"{system_name}.npy")
-                    np.save(output_file, desc)
-                    self.logger.info(f"Saved descriptors to {output_file}")
-                    
-                except Exception as e:
-                    self.logger.error(f"Failed to process {system_name}: {e}")
+        elif self.mode == "python": # Python Native mode
+            self.logger.info(f"Running in Python Native mode (backend: {self.backend})")
+            generator.run_python_generation(
+                data_path=self.datadir,
+                output_dir=self.savedir,
+                data_format=self.format,
+                output_mode=self.output_mode
+            )
+        else:
+            self.logger.error(f"Unknown mode: {self.mode}")
 
         self.logger.info("Feature Generation Workflow Completed.")

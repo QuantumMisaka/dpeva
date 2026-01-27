@@ -18,7 +18,7 @@ class DescriptorGenerator:
     Generates atomic and structural descriptors using a pre-trained DeepPot model.
     Supports two modes:
     1. 'cli' (Recommended): Uses `dp --pt eval-desc` command (supports Local/Slurm).
-    2. 'direct' (Legacy): Uses `deepmd.infer` Python API directly.
+    2. 'python' (Native): Uses `deepmd.infer` Python API directly.
     """
     
     def __init__(self, model_path, head="OC20M", batch_size=1000, omp_threads=24, 
@@ -31,7 +31,7 @@ class DescriptorGenerator:
             head (str): Head type for multi-head models (default: "OC20M").
             batch_size (int): Batch size for inference (default: 1000). Ignored in 'cli' mode.
             omp_threads (int): Number of OMP threads (default: 24).
-            mode (str): 'cli' or 'direct'. 'cli' uses `dp eval-desc`.
+            mode (str): 'cli' or 'python'. 'cli' uses `dp eval-desc`.
             backend (str): 'local' or 'slurm'. Only used in 'cli' mode.
             slurm_config (dict): Configuration for Slurm submission.
             env_setup (str): Environment setup script for job execution.
@@ -47,18 +47,23 @@ class DescriptorGenerator:
         
         self.logger = logging.getLogger(__name__)
         
-        if self.mode == "direct":
-            if not _DEEPMD_AVAILABLE:
-                raise ImportError("DeepMD-kit not found or not importable. Cannot use 'direct' mode.")
-            # Set OMP threads for direct mode
-            os.environ['OMP_NUM_THREADS'] = f'{omp_threads}'
-            # Load model
-            self.model = DeepPot(model_path, head=head)
+        if self.mode == "python":
+            if self.backend == "local":
+                if not _DEEPMD_AVAILABLE:
+                    raise ImportError("DeepMD-kit not found or not importable. Cannot use 'python' mode.")
+                # Set OMP threads for python mode
+                os.environ['OMP_NUM_THREADS'] = f'{omp_threads}'
+                # Load model
+                self.model = DeepPot(model_path, head=head)
+            else:
+                # For Slurm backend, we don't load the model here.
+                # It will be loaded in the generated worker script.
+                self.job_manager = JobManager(mode=backend)
         elif self.mode == "cli":
             # Initialize JobManager
             self.job_manager = JobManager(mode=backend)
         else:
-            raise ValueError(f"Unknown mode: {mode}. Use 'cli' or 'direct'.")
+            raise ValueError(f"Unknown mode: {mode}. Use 'cli' or 'python'.")
 
     # ==========================================
     # CLI Mode Methods (New Implementation)
@@ -139,7 +144,7 @@ export OMP_NUM_THREADS={self.omp_threads}
             pass
 
     # ==========================================
-    # Direct Mode Methods (Legacy Implementation)
+    # Python Mode Methods (Native Implementation)
     # ==========================================
 
     def _descriptor_from_model(self, sys: dpdata.System, nopbc=False) -> np.ndarray:
@@ -165,9 +170,125 @@ export OMP_NUM_THREADS={self.omp_threads}
             desc_list.append(desc_batch)
         return desc_list
 
-    def compute_descriptors_direct(self, data_path, data_format="deepmd/npy", output_mode="atomic"):
+    def run_python_generation(self, data_path, output_dir, data_format="deepmd/npy", output_mode="atomic"):
         """
-        Compute descriptors for a given dataset using direct API.
+        Run descriptor generation in 'python' mode.
+        If backend is 'local', runs directly.
+        If backend is 'slurm', submits a job.
+        
+        Args:
+            data_path (str): Path to the dataset.
+            output_dir (str): Directory to save descriptors.
+            data_format (str): Data format.
+            output_mode (str): Output mode ('atomic' or 'structural').
+        """
+        abs_data_path = os.path.abspath(data_path)
+        abs_output_dir = os.path.abspath(output_dir)
+        os.makedirs(abs_output_dir, exist_ok=True)
+        
+        if self.backend == "local":
+            self.logger.info("Running python descriptor generation locally...")
+            
+            # Check if data_path contains sub-systems (simple heuristic: if it has subdirectories)
+            # This matches typical dpdata usage where data_path is a pool of systems.
+            # If data_path itself is a system, this loop might need adjustment.
+            # We use the same logic as in FeatureWorkflow before:
+            subdirs = [os.path.join(abs_data_path, d) for d in os.listdir(abs_data_path) 
+                       if os.path.isdir(os.path.join(abs_data_path, d))]
+            
+            if not subdirs:
+                # Treat as single system
+                subdirs = [abs_data_path]
+            
+            total = len(subdirs)
+            for i, sys_path in enumerate(subdirs):
+                sys_name = os.path.basename(sys_path)
+                # self.logger.info(f"Processing {sys_name} ({i+1}/{total})")
+                
+                try:
+                    desc = self.compute_descriptors_python(
+                        data_path=sys_path,
+                        data_format=data_format,
+                        output_mode=output_mode
+                    )
+                    out_file = os.path.join(abs_output_dir, f"{sys_name}.npy")
+                    np.save(out_file, desc)
+                except Exception as e:
+                    self.logger.error(f"Failed to process {sys_name}: {e}")
+                    
+        elif self.backend == "slurm":
+            self.logger.info("Preparing to submit python descriptor generation job via Slurm...")
+            
+            # 1. Generate Worker Script
+            worker_script_content = f"""
+import os
+import sys
+import numpy as np
+
+# Ensure dpeva is in path
+sys.path.append("{os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))}")
+
+from dpeva.feature.generator import DescriptorGenerator
+
+def main():
+    generator = DescriptorGenerator(
+        model_path="{self.model_path}",
+        head="{self.head}",
+        batch_size={self.batch_size},
+        omp_threads={self.omp_threads},
+        mode="python",
+        backend="local"
+    )
+    
+    generator.run_python_generation(
+        data_path="{abs_data_path}",
+        output_dir="{abs_output_dir}",
+        data_format="{data_format}",
+        output_mode="{output_mode}"
+    )
+
+if __name__ == "__main__":
+    main()
+"""
+            worker_script_path = os.path.join(abs_output_dir, "run_desc_worker.py")
+            with open(worker_script_path, "w") as f:
+                f.write(worker_script_content.strip())
+            
+            # 2. Generate Slurm Script
+            job_name = f"dpeva_py_desc_{os.path.basename(abs_data_path)}"
+            
+            # Filter slurm config
+            task_slurm_config = self.slurm_config.copy()
+            for k in ["job_name", "output_log", "error_log"]:
+                task_slurm_config.pop(k, None)
+                
+            # Env setup
+            if not self.env_setup:
+                self.env_setup = f"export OMP_NUM_THREADS={self.omp_threads}"
+                
+            cmd = f"python3 {worker_script_path}"
+            
+            job_config = JobConfig(
+                job_name=job_name,
+                command=cmd,
+                env_setup=self.env_setup,
+                output_log="eval_desc_py.out",
+                error_log="eval_desc_py.err",
+                **task_slurm_config
+            )
+            
+            script_name = "run_evaldesc_py.slurm"
+            script_path = os.path.join(abs_output_dir, script_name)
+            
+            self.job_manager.generate_script(job_config, script_path)
+            
+            # 3. Submit
+            self.logger.info(f"Submitting python mode job for {data_path}")
+            self.job_manager.submit(script_path, working_dir=abs_output_dir)
+
+    def compute_descriptors_python(self, data_path, data_format="deepmd/npy", output_mode="atomic"):
+        """
+        Compute descriptors for a given dataset using native Python API.
         
         Args:
             data_path (str): Path to the dataset (system directory).

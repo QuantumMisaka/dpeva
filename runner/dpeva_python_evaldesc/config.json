@@ -1,0 +1,24 @@
+{
+    "datadir": "../../test/verification_test_run/other_dpdata_test",
+    "modelpath": "../../test/verification_test_run/DPA-3.1-3M.pt",
+    "savedir": "../../test/verification_test_run/desc_pool_python_slurm",
+    "head": "Hybrid_Perovskite",
+    "mode": "python",
+    "omp_threads": 2,
+    "batch_size": 500,
+    "submission": {
+        "backend": "slurm",
+        "env_setup": [
+            "nvidia-smi dmon -s pucvmte -o T > nvdmon_job_py_${SLURM_JOB_ID}.log &",
+            "source /opt/envs/deepmd3.1.2.env",
+            "export DP_INTERFACE_PREC=high"
+        ],
+        "slurm_config": {
+            "partition": "4V100",
+            "nodes": 1,
+            "ntasks": 1,
+            "gpus_per_node": 1,
+            "qos": "rush-1o2gpu"
+        }
+    }
+}
