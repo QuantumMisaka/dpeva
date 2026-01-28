@@ -227,11 +227,7 @@ class UQVisualizer:
 
     def plot_2d_uq_scatter(self, df_uq, scheme, trust_lo, trust_hi, rnd_trust_lo, rnd_trust_hi):
         """Deprecated: Use plot_uq_fdiff_scatter and plot_uq_identity_scatter instead."""
-        if "diff_maxf_0_frame" in df_uq.columns:
-            self.plot_uq_fdiff_scatter(df_uq, scheme, trust_lo, trust_hi, rnd_trust_lo, rnd_trust_hi)
-        
-        if "uq_identity" in df_uq.columns:
-            self.plot_uq_identity_scatter(df_uq, scheme, trust_lo, trust_hi, rnd_trust_lo, rnd_trust_hi)
+        pass
 
     def plot_candidate_vs_error(self, df_uq, df_candidate):
         """Plots Candidate UQ vs Error."""
@@ -260,73 +256,145 @@ class UQVisualizer:
         plt.close()
 
     def plot_pca_analysis(self, explained_variance, selected_PC_dim, all_features, direct_indices, random_indices,
-                          scores_direct, scores_random, df_uq, final_indices):
-        """Plots all PCA and DIRECT related figures."""
+                          scores_direct, scores_random, df_uq, final_indices, n_candidates=None):
+        """
+        Plots all PCA and DIRECT related figures.
+        
+        Args:
+            all_features (np.ndarray): PCA features for all samples (Joint if joint sampling used).
+            direct_indices (list): Indices selected by DIRECT (in all_features).
+            random_indices (list): Indices selected by Random (in all_features).
+            scores_direct (list): Coverage scores for DIRECT.
+            scores_random (list): Coverage scores for Random.
+            df_uq (pd.DataFrame): Dataframe of candidates (for Final_sampled_PCAview).
+            final_indices (list): Indices of finally selected candidates (relative to df_uq if n_candidates is None).
+            n_candidates (int, optional): Number of candidate samples. If provided, assumes all_features 
+                                          contains [Candidates; Training]. Used to distinguish markers.
+        """
         # 1. Explained Variance
         plt.figure(figsize=(8, 6))
-        plt.plot(range(1, selected_PC_dim+6+1), explained_variance[:selected_PC_dim+6], "o-")
-        plt.xlabel(r"i$^{\mathrm{th}}$ PC", size=12)
-        plt.ylabel("Explained variance", size=12)
+        plt.plot(range(1, selected_PC_dim+6+1), explained_variance[:selected_PC_dim+6], "o-", color="#4c72b0")
+        plt.xlabel(r"i$^{\mathrm{th}}$ PC", size=14)
+        plt.ylabel("Explained variance", size=14)
         plt.gca().yaxis.set_major_formatter(mtick.PercentFormatter())
+        plt.grid(True, linestyle='-', alpha=0.6)
+        plt.title("Explained Variance Ratio", fontsize=16)
         plt.savefig(f"{self.save_dir}/explained_variance.png", dpi=self.dpi)
         plt.close()
 
         # 2. PCA Feature Coverage (DIRECT vs Random)
-        self._plot_coverage(all_features, direct_indices, "DIRECT")
-        self._plot_coverage(all_features, random_indices, "Random")
+        # Use provided all_features directly (already PCA projected)
+        self._plot_coverage(all_features, direct_indices, "DIRECT", n_candidates)
+        self._plot_coverage(all_features, random_indices, "Random", n_candidates)
 
         # 3. Coverage Score Bar Chart
         x = np.arange(len(scores_direct))
         x_ticks = [f"PC {n+1}" for n in range(len(x))]
-        plt.figure(figsize=(15, 4))
-        plt.bar(x + 0.6, scores_direct, width=0.3, label=rf"DIRECT, $\overline{{\mathrm{{Coverage\ score}}}}$ = {np.mean(scores_direct):.3f}")
-        plt.bar(x + 0.3, scores_random, width=0.3, label=rf"Random, $\overline{{\mathrm{{Coverage\ score}}}}$ = {np.mean(scores_random):.3f}")
+        plt.figure(figsize=(15, 5))
+        plt.bar(x + 0.6, scores_direct, width=0.3, label=rf"DIRECT, $\overline{{\mathrm{{Coverage\ score}}}}$ = {np.mean(scores_direct):.3f}", color="#4c72b0")
+        plt.bar(x + 0.3, scores_random, width=0.3, label=rf"Random, $\overline{{\mathrm{{Coverage\ score}}}}$ = {np.mean(scores_random):.3f}", color="#dd8452")
         plt.xticks(x + 0.45, x_ticks, size=12)
         plt.yticks(np.linspace(0, 1.0, 6), size=12)
-        plt.ylabel("Coverage score", size=12)
+        plt.ylabel("Coverage score", size=14)
+        plt.grid(True, axis='y', linestyle='-', alpha=0.6)
         plt.legend(shadow=True, loc="lower right", fontsize=12)
+        plt.title("Coverage Score Analysis (Joint Space)", fontsize=16)
         plt.savefig(f"{self.save_dir}/coverage_score.png", dpi=self.dpi)
         plt.close()
 
         # 4. Final Selection in PCA Space
-        # Note: Recalculating PCA on all data for visualization as per original script logic
-        from sklearn.decomposition import PCA
-        X = df_uq[[col for col in df_uq.columns if col.startswith("desc_stru_")]].values
-        pca_vis = PCA(n_components=2)
-        PCs_alldata = pca_vis.fit_transform(X)
+        plt.figure(figsize=(12, 10))
         
-        # Get indices relative to df_uq
-        # candidate_indices are subset of all, final_indices are subset of candidate
-        # Need to map final_indices (which are indices into candidate df) back to global indices
-        # In the original script, final_indices are indices OF the candidate dataframe
-        # We need to ensure we use the correct global indices for plotting
+        # Define consistent styles
+        style_train = {"color": "#C0C0C0", "alpha": 0.4, "s": 15, "marker": "."} # Increased alpha from 0.3
+        style_cand = {"color": "#4169E1", "alpha": 0.6, "s": 25, "marker": "*"}  # RoyalBlue
+        style_sel_new = {"color": "red", "edgecolors": "black", "linewidth": 0.8, "s": 100, "marker": "*"}
         
-        # Map back to integer indices for array slicing
-        # Assuming df_uq has integer index range(0, N)
-        candidate_global_indices = df_uq[df_uq['uq_identity'] == 'candidate'].index
-        final_global_indices = final_indices # These should be passed as global indices
-        
-        plt.figure(figsize=(10, 8))
-        plt.scatter(PCs_alldata[:, 0], PCs_alldata[:, 1], marker="*", color="gray", label=f"All {len(df_uq)} structures", alpha=0.7, s=15)
-        plt.scatter(PCs_alldata[candidate_global_indices, 0], PCs_alldata[candidate_global_indices, 1], marker="*", color="blue", label=f"UQ sampled {len(candidate_global_indices)}", alpha=0.7, s=30)
-        plt.scatter(PCs_alldata[final_global_indices, 0], PCs_alldata[final_global_indices, 1], marker="*", color="red", label=f"UQ-DIRECT sampled {len(final_global_indices)}", s=30)
-        plt.title(f"PCA of UQ-DIRECT sampling", fontsize=14)
-        plt.xlabel("PC1", size=12)
-        plt.ylabel("PC2", size=12)
-        plt.legend(frameon=False, fontsize=12, reverse=True)
+        if n_candidates is not None:
+            # Joint Mode Visualization
+            PCs_alldata = all_features
+            
+            # Plot Training (Background)
+            training_pcs = PCs_alldata[n_candidates:]
+            if len(training_pcs) > 0:
+                plt.scatter(training_pcs[:, 0], training_pcs[:, 1], 
+                           label=f"Training {len(training_pcs):,}", **style_train)
+            
+            # Plot Candidates (Middle ground)
+            cand_mask = (df_uq["uq_identity"] == "candidate").values
+            acc_mask = (df_uq["uq_identity"] == "accurate").values
+            fail_mask = (df_uq["uq_identity"] == "failed").values
+            
+            pcs_cand = PCs_alldata[:n_candidates]
+            
+            # Plot specific statuses if needed, or just general candidate pool
+            # For this summary view, we prioritize showing the pool structure
+            if np.any(cand_mask):
+                plt.scatter(pcs_cand[cand_mask, 0], pcs_cand[cand_mask, 1], 
+                           label=f"Candidate Pool {np.sum(cand_mask):,}", **style_cand)
+            
+            # Identify new candidates selected
+            new_cand_indices = [idx for idx in direct_indices if idx < n_candidates]
+            
+            if len(new_cand_indices) > 0:
+                plt.scatter(PCs_alldata[new_cand_indices, 0], PCs_alldata[new_cand_indices, 1], 
+                           label=f"Selected New {len(new_cand_indices)}", **style_sel_new, zorder=10)
+
+        else:
+            # Legacy Mode (Candidate Only)
+            PCs_alldata = all_features
+            plt.scatter(PCs_alldata[:, 0], PCs_alldata[:, 1], 
+                       label=f"All {len(df_uq):,}", **style_train) # Use train style for background
+            
+            plt.scatter(PCs_alldata[direct_indices, 0], PCs_alldata[direct_indices, 1], 
+                       label=f"Selected {len(direct_indices)}", **style_sel_new)
+
+        plt.title(f"PCA of UQ-DIRECT sampling", fontsize=16)
+        plt.xlabel("PC1", size=14)
+        plt.ylabel("PC2", size=14)
+        plt.grid(True, linestyle='-', alpha=0.6)
+        plt.legend(frameon=True, fontsize=12, loc='upper left')
         plt.savefig(f"{self.save_dir}/Final_sampled_PCAview.png", dpi=self.dpi)
         plt.close()
         
-        return pd.DataFrame(PCs_alldata, columns=['PC1', 'PC2'])
+        return pd.DataFrame(all_features[:, :2], columns=['PC1', 'PC2'])
 
-    def _plot_coverage(self, all_features, selected_indices, method):
-        plt.figure(figsize=(8, 6))
-        selected_features = all_features[selected_indices]
-        plt.plot(all_features[:, 0], all_features[:, 1], "*", alpha=0.6, label=f"All {len(all_features):,} structures")
-        plt.plot(selected_features[:, 0], selected_features[:, 1], "*", alpha=0.6, label=f"{method} sampled {len(selected_features):,}")
-        plt.legend(frameon=False, fontsize=10, reverse=True)
-        plt.ylabel("PC 2", size=12)
-        plt.xlabel("PC 1", size=12)
+    def _plot_coverage(self, all_features, selected_indices, method, n_candidates=None):
+        plt.figure(figsize=(10, 8))
+        
+        # Consistent styles
+        style_train = {"color": "#C0C0C0", "alpha": 0.4, "marker": "."} 
+        style_cand = {"color": "#6fa8dc", "alpha": 0.5, "marker": "*"} # Lighter blue for background
+        style_sel_train = {"color": "gray", "marker": "x", "s": 60, "linewidth": 1.5}
+        style_sel_new = {"color": "#FF8C00", "edgecolors": "black", "linewidth": 0.8, "s": 100, "marker": "*"} # DarkOrange for Coverage plots
+        
+        if n_candidates is not None:
+            # Plot Training background
+            training_pcs = all_features[n_candidates:]
+            candidate_pcs = all_features[:n_candidates]
+            
+            plt.plot(training_pcs[:, 0], training_pcs[:, 1], linestyle='None', label=f"Training {len(training_pcs):,}", **style_train)
+            plt.plot(candidate_pcs[:, 0], candidate_pcs[:, 1], linestyle='None', label=f"Candidates {len(candidate_pcs):,}", **style_cand)
+            
+            # Split selected into Train/Cand
+            sel_cand = all_features[[idx for idx in selected_indices if idx < n_candidates]]
+            sel_train = all_features[[idx for idx in selected_indices if idx >= n_candidates]]
+            
+            if len(sel_train) > 0:
+                plt.scatter(sel_train[:, 0], sel_train[:, 1], label=f"Selected (Train) {len(sel_train)}", **style_sel_train)
+            if len(sel_cand) > 0:
+                plt.scatter(sel_cand[:, 0], sel_cand[:, 1], label=f"Selected (New) {len(sel_cand)}", **style_sel_new, zorder=10)
+                
+        else:
+            selected_features = all_features[selected_indices]
+            plt.plot(all_features[:, 0], all_features[:, 1], "*", color="gray", alpha=0.5, label=f"All {len(all_features):,} structures")
+            plt.plot(selected_features[:, 0], selected_features[:, 1], "*", color="#FF8C00", alpha=0.8, label=f"{method} sampled {len(selected_features):,}")
+            
+        plt.legend(frameon=True, fontsize=12)
+        plt.ylabel("PC 2", size=14)
+        plt.xlabel("PC 1", size=14)
+        plt.title(f"{method} Coverage Analysis", fontsize=16)
+        plt.grid(True, linestyle='-', alpha=0.6)
         plt.savefig(f"{self.save_dir}/{method}_PCA_feature_coverage.png", dpi=self.dpi)
         plt.close()
 
@@ -369,9 +437,7 @@ class UQVisualizer:
             plt.plot(x_val[mask], y_val[mask], color="purple", linestyle="--", linewidth=2)
             
         elif scheme == "crossline_lo":
-            # Simplified reproduction of the complex crossline logic
-            # y1 = (y_hi*x_lo - (y_hi - y_lo)*x)/x_lo
-            # y2 = (y_lo*x_hi - y_lo*x)/(x_hi - x_lo)
+            # Crossline logic: intersection of two lines
             x_val = np.linspace(0, uq_x_hi, 100)
             delta_y = uq_y_hi - uq_y_lo
             delta_x = uq_x_hi - uq_x_lo

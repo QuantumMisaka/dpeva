@@ -51,7 +51,10 @@ class CollectionWorkflow:
         self.desc_filename = config.get("desc_filename", "desc.npy")
         self.testdata_dir = config.get("testdata_dir")
         self.testdata_fmt = config.get("testdata_fmt", "deepmd/npy")
-        self.testdata_string = config.get("testdata_string", "O*")
+        
+        # Training Set Paths (used in joint DIRECT for diversity maximization)
+        self.training_data_dir = config.get("training_data_dir")
+        self.training_desc_dir = config.get("training_desc_dir")
         
         # Save Dirs
         self.root_savedir = config.get("root_savedir", "dpeva_uq_post")
@@ -168,6 +171,105 @@ class CollectionWorkflow:
         for d in [self.view_savedir, self.dpdata_savedir, self.df_savedir]:
             if not os.path.exists(d):
                 os.makedirs(d)
+
+    def _load_descriptors(self, desc_dir, desc_filename="desc.npy", label="descriptors"):
+        """
+        Loads descriptors from a directory.
+        Supports both nested structure (sys/desc.npy) and flat structure (sys.npy).
+        Prioritizes flat structure (*.npy) over nested structure (*/desc.npy).
+        
+        Args:
+            desc_dir (str): Path to the descriptor directory.
+            desc_filename (str): Name of the descriptor file (default: "desc.npy") used in nested structure.
+            label (str): Label for logging purposes.
+
+        Returns:
+            tuple: (desc_datanames, desc_stru)
+        """
+        self.logger.info(f"Loading {label} from {desc_dir}")
+        
+        # Check for different file patterns
+        flat_pattern = os.path.join(desc_dir, "*.npy")
+        nested_pattern = os.path.join(desc_dir, "*", desc_filename)
+        
+        # Determine which pattern to use
+        # Priority: User explicit wildcard > Flat (*.npy) > Nested (*/desc.npy)
+        
+        if '*' in desc_dir:
+             desc_pattern = desc_dir
+        elif len(glob.glob(flat_pattern)) > 0:
+             desc_pattern = flat_pattern
+        elif len(glob.glob(nested_pattern)) > 0:
+             self.logger.warning(f"Using deprecated nested descriptor structure: {nested_pattern}. "
+                                 "Please switch to flat *.npy structure, which is the default in `dp eval-desc`.")
+             desc_pattern = nested_pattern
+        else:
+             # Default fallback if nothing found (will return empty later)
+             desc_pattern = flat_pattern
+                 
+        desc_datanames = []
+        desc_stru = []
+        desc_iter_list = sorted(glob.glob(desc_pattern))
+        
+        if not desc_iter_list:
+             self.logger.warning(f"No {label} found in {desc_dir}")
+             return [], np.array([])
+        
+        for f in desc_iter_list:
+            # Determine keyname based on structure
+            # Flat: .../sysname.npy -> sysname
+            # Nested: .../sysname/desc.npy -> sysname
+            if f.endswith(desc_filename) and os.path.basename(f) == desc_filename:
+                 # Nested structure
+                 keyname = os.path.basename(os.path.dirname(f))
+            else:
+                 # Flat structure (or user wildcard matching npy)
+                 keyname = os.path.basename(f).replace('.npy', '')
+                 
+            try:
+                one_desc = np.load(f)
+            except Exception as e:
+                self.logger.error(f"Failed to load descriptor file {f}: {e}")
+                continue
+                
+            for i in range(len(one_desc)):
+                desc_datanames.append(f"{keyname}-{i}")
+            
+            # Mean pooling and L2 normalization per frame
+            one_desc_stru = np.mean(one_desc, axis=1) # (n_frames, n_desc)
+            
+            # L2 Normalization
+            stru_modulo = np.linalg.norm(one_desc_stru, axis=1, keepdims=True)
+            one_desc_stru_norm = one_desc_stru / (stru_modulo + 1e-12)
+            desc_stru.append(one_desc_stru_norm)
+        
+        if len(desc_stru) > 0:
+            desc_stru = np.concatenate(desc_stru, axis=0)
+        else:
+            return [], np.array([])
+            
+        return desc_datanames, desc_stru
+
+    def _count_frames_in_data(self, data_dir, fmt="deepmd/npy"):
+        """Counts total frames in dataset to verify consistency."""
+        total_frames = 0
+        found_dirs = sorted(glob.glob(os.path.join(data_dir, "*")))
+        for d in found_dirs:
+            if not os.path.isdir(d):
+                continue
+            try:
+                # Use dpdata to count frames quickly if possible, or just load
+                # Loading might be slow for huge datasets, but necessary for consistency check
+                # A lightweight check is to look at set.000/box.npy
+                # But let's use dpdata for robustness
+                try:
+                    sys = dpdata.LabeledSystem(d, fmt=fmt)
+                except:
+                    sys = dpdata.System(d, fmt=fmt)
+                total_frames += len(sys)
+            except Exception:
+                pass
+        return total_frames
 
     def run(self):
         """
@@ -304,58 +406,21 @@ class CollectionWorkflow:
             
         df_uq = pd.DataFrame(data_dict_uq)
         
-        # Load descriptors
-        self.logger.info(f"Loading the target descriptors from {self.desc_dir}")
-        # Note: uq-post-view-2.py uses '/*/{desc_filename}' or '/*.npy' depending on context. 
-        # Here we assume standard structure, but let's be robust.
-        if '*' in self.desc_dir:
-             desc_pattern = self.desc_dir
-        else:
-             # Try both patterns
-             desc_pattern_1 = os.path.join(self.desc_dir, "*.npy")
-             desc_pattern_2 = os.path.join(self.desc_dir, "*", self.desc_filename)
-             if len(glob.glob(desc_pattern_1)) > 0:
-                 desc_pattern = desc_pattern_1
-             else:
-                 desc_pattern = desc_pattern_2
-                 
-        desc_datanames = []
-        desc_stru = []
-        desc_iter_list = sorted(glob.glob(desc_pattern))
+        # Load descriptors (Candidates)
+        desc_datanames, desc_stru = self._load_descriptors(self.desc_dir, self.desc_filename, "candidate descriptors")
         
-        if not desc_iter_list:
-             self.logger.warning(f"No descriptors found in {self.desc_dir}")
-        
-        for f in desc_iter_list:
-            # Handle different directory structures
-            # If dpeva/desc_dir/sysname.npy -> keyname = sysname
-            # If dpeva/desc_dir/sysname/desc.npy -> keyname = sysname
-            if f.endswith(self.desc_filename):
-                 keyname = os.path.basename(os.path.dirname(f))
-            else:
-                 keyname = os.path.basename(f).replace('.npy', '')
-                 
-            one_desc = np.load(f)
-            for i in range(len(one_desc)):
-                desc_datanames.append(f"{keyname}-{i}")
-            
-            # Mean pooling and L2 normalization per frame
-            # one_desc shape: (n_frames, n_atoms, n_desc)
-            one_desc_stru = np.mean(one_desc, axis=1) # (n_frames, n_desc)
-            
-            # L2 Normalization
-            stru_modulo = np.linalg.norm(one_desc_stru, axis=1, keepdims=True)
-            one_desc_stru_norm = one_desc_stru / (stru_modulo + 1e-12)
-            desc_stru.append(one_desc_stru_norm)
-        
-        if len(desc_stru) > 0:
-            desc_stru = np.concatenate(desc_stru, axis=0)
-        else:
-            raise ValueError("No descriptors loaded!")
+        if len(desc_stru) == 0:
+            raise ValueError("No candidate descriptors loaded!")
         
         self.logger.info(f"Collecting data to dataframe and do UQ selection")
         df_desc = pd.DataFrame(desc_stru, columns=[f"desc_stru_{i}" for i in range(desc_stru.shape[1])])
         df_desc["dataname"] = desc_datanames
+        
+        # Verify consistency for candidates
+        if len(df_desc) != len(df_uq):
+             self.logger.warning(f"Mismatch: UQ data has {len(df_uq)} frames, but descriptors have {len(df_desc)} frames.")
+             # We can proceed if merge handles it (inner join), but it's risky.
+             # Ideally they should match.
         
         df_uq_desc = pd.merge(df_uq, df_desc, on="dataname")
         
@@ -402,22 +467,76 @@ class CollectionWorkflow:
 
         self.logger.info(f"Doing DIRECT Selection on UQ-selected data")
         
+        # --- Joint with Training Data Logic ---
+        use_joint_sampling = False
+        train_desc_stru = np.array([])
+        
+        if self.training_desc_dir:
+            self.logger.info(f"Training descriptors provided at {self.training_desc_dir}. Attempting joint sampling.")
+            _, train_desc_stru = self._load_descriptors(self.training_desc_dir, self.desc_filename, "training descriptors")
+            
+            if len(train_desc_stru) > 0:
+                # Consistency Check
+                if self.training_data_dir:
+                    self.logger.info(f"Verifying training data consistency from {self.training_data_dir}")
+                    n_train_frames = self._count_frames_in_data(self.training_data_dir)
+                    if n_train_frames != len(train_desc_stru):
+                        self.logger.error(f"Training set mismatch: Found {n_train_frames} frames in data but {len(train_desc_stru)} frames in descriptors.")
+                        raise ValueError("Training data frame count mismatch with descriptors!")
+                    else:
+                        self.logger.info(f"Training set verified: {n_train_frames} frames.")
+                else:
+                    self.logger.warning("Training descriptors provided but training data path not specified. "
+                                        "Consistency check skipped. Proceeding with joint sampling.")
+                
+                use_joint_sampling = True
+                self.logger.info(f"Joint sampling enabled: {len(df_candidate)} candidates + {len(train_desc_stru)} training samples.")
+            else:
+                self.logger.warning("Training descriptors provided but empty or failed to load. Falling back to candidate-only sampling.")
+        
+        # Prepare Features for DIRECT
+        candidate_features = df_candidate[[col for col in df_desc.columns if col.startswith("desc_stru_")]].values
+        
+        if use_joint_sampling:
+            # Combine [Candidate; Training]
+            combined_features = np.vstack([candidate_features, train_desc_stru])
+            self.logger.info(f"Combined feature shape: {combined_features.shape}")
+            features_for_direct = combined_features
+        else:
+            features_for_direct = candidate_features
+            
+        # DIRECT Sampling
         DIRECT_sampler = DIRECTSampler(
             structure_encoder=None,
             clustering=BirchClustering(n=self.num_selection // self.direct_k, threshold_init=self.direct_thr_init),
             select_k_from_clusters=SelectKFromClusters(k=self.direct_k),
         )
         
-        desc_features = [col for col in df_desc.columns if col.startswith("desc_stru_")]
-        DIRECT_selection = DIRECT_sampler.fit_transform(df_candidate[desc_features].values)
+        DIRECT_selection = DIRECT_sampler.fit_transform(features_for_direct)
         
-        DIRECT_selected_indices = DIRECT_selection["selected_indices"]
+        selected_indices_raw = DIRECT_selection["selected_indices"]
+        all_pca_features = DIRECT_selection["PCAfeatures"]
         explained_variance = DIRECT_sampler.pca.pca.explained_variance_
         selected_PC_dim = len([e for e in explained_variance if e > 1])
         
-        # Normalize features for coverage calc
-        DIRECT_selection["PCAfeatures_unweighted"] = DIRECT_selection["PCAfeatures"] / explained_variance[:selected_PC_dim]
-        all_features = DIRECT_selection["PCAfeatures_unweighted"]
+        # Filter indices to keep only candidates for Export
+        n_candidates = len(candidate_features)
+        
+        if use_joint_sampling:
+            # Filter: Keep indices < n_candidates for final export
+            DIRECT_selected_indices = [idx for idx in selected_indices_raw if idx < n_candidates]
+            self.logger.info(f"DIRECT selected {len(selected_indices_raw)} total samples. "
+                             f"After filtering training samples, {len(DIRECT_selected_indices)} candidates remain.")
+            
+            # For Visualization: Use Joint Features and Joint Selection
+            # This ensures coverage plots reflect the Joint Space
+            all_features_viz = all_pca_features / explained_variance[:selected_PC_dim]
+            viz_selected_indices = selected_indices_raw
+            
+        else:
+            DIRECT_selected_indices = selected_indices_raw
+            all_features_viz = all_pca_features / explained_variance[:selected_PC_dim]
+            viz_selected_indices = DIRECT_selected_indices
         
         df_final = df_candidate.iloc[DIRECT_selected_indices]
         
@@ -428,11 +547,16 @@ class CollectionWorkflow:
         self.logger.info(f"Visualization of DIRECT results compared with Random")
         
         # Random Simulation
+        # In Joint mode, we compare DIRECT (on Joint) vs Random (on Joint)
         np.random.seed(42)
-        manual_selection_index = np.random.choice(len(all_features), self.num_selection, replace=False)
+        if len(all_features_viz) >= self.num_selection:
+             manual_selection_index = np.random.choice(len(all_features_viz), self.num_selection, replace=False)
+        else:
+             manual_selection_index = np.arange(len(all_features_viz))
         
         # Coverage Scores
         def calculate_feature_coverage_score(all_features, selected_indices, n_bins=100):
+            if len(selected_indices) == 0: return 0
             selected_features = all_features[selected_indices]
             # Use fixed bins based on min/max of ALL features
             bins = np.linspace(min(all_features), max(all_features), n_bins)
@@ -444,29 +568,59 @@ class CollectionWorkflow:
             return [calculate_feature_coverage_score(all_features[:, i], selected_indices) 
                     for i in range(all_features.shape[1])]
 
-        scores_DIRECT = calculate_all_FCS(all_features, DIRECT_selection["selected_indices"])
-        scores_MS = calculate_all_FCS(all_features, manual_selection_index)
+        # Use viz_selected_indices (Joint Selection) for Coverage Calculation
+        scores_DIRECT = calculate_all_FCS(all_features_viz, viz_selected_indices)
+        scores_MS = calculate_all_FCS(all_features_viz, manual_selection_index)
         
         self.logger.info(f"Visualization of final selection results in PCA space")
         
         # Add uq_identity to df_uq_desc for visualizer usage
         df_uq_desc = uq_filter.get_identity_labels(df_uq_desc, df_candidate, df_accurate)
         
-        PCs_df = vis.plot_pca_analysis(explained_variance, selected_PC_dim, all_features, 
-                                      DIRECT_selected_indices, manual_selection_index,
-                                      scores_DIRECT, scores_MS, 
-                                      df_uq_desc, df_final.index)
+        # Ensure df_candidate has identity label for visualization
+        df_candidate = df_candidate.copy()
+        df_candidate["uq_identity"] = "candidate"
         
-        # Save Final PCA Data
-        df_alldataPC_visual = pd.concat([df_uq, PCs_df], axis=1)
-        df_alldataPC_visual.to_csv(f"{self.df_savedir}/final_df.csv", index=True)
+        # Pass n_candidates to visualizer to distinguish Candidate/Training in plots
+        # Note: We pass df_candidate instead of df_uq_desc because in Joint mode, 
+        # PCA is performed on [Candidates; Training], not the full UQ set.
+        # Passing df_candidate ensures length alignment with all_features_viz[:n_candidates].
+        PCs_df = vis.plot_pca_analysis(explained_variance, selected_PC_dim, all_features_viz, 
+                                      viz_selected_indices, manual_selection_index,
+                                      scores_DIRECT, scores_MS, 
+                                      df_candidate, df_final.index,
+                                      n_candidates=n_candidates if use_joint_sampling else None)
+        
+        # Save Final PCA Data (Candidates Only)
+        # Note: PCs_df returned by plot_pca_analysis might be Joint size if we are not careful.
+        # Ideally we want PCs for the df_uq dataframe.
+        # But all_features_viz is Joint.
+        # Let's extract candidate PCs from all_features_viz for saving to final_df.csv (which corresponds to df_uq)
+        
+        if use_joint_sampling:
+            # First n_candidates rows correspond to df_uq (candidates)
+            # Re-scale back or just use viz features? 
+            # Usually we save the features used for visualization.
+            candidate_pcs = all_features_viz[:n_candidates, :2] # Save first 2 PCs
+        else:
+            candidate_pcs = all_features_viz[:, :2]
+            
+        df_pcs = pd.DataFrame(candidate_pcs, columns=['PC1', 'PC2'])
+        
+        # Ensure length matches
+        if len(df_pcs) == len(df_uq):
+            df_alldataPC_visual = pd.concat([df_uq.reset_index(drop=True), df_pcs.reset_index(drop=True)], axis=1)
+            df_alldataPC_visual.to_csv(f"{self.df_savedir}/final_df.csv", index=True)
+        else:
+            self.logger.warning(f"Skipping final_df.csv: Length mismatch df_uq={len(df_uq)} vs PCs={len(df_pcs)}")
+
         
         # 6. Export dpdata
         self.logger.info(f"Sampling dpdata based on selected indices")
         sampled_datanames = df_final['dataname'].to_list()
         
         self.logger.info(f"Loading the target testing data from {self.testdata_dir}")
-        # Custom robust loading
+        
         test_data = [] 
         # Check if testdata_dir has subdirectories
         found_dirs = sorted(glob.glob(os.path.join(self.testdata_dir, "*")))
@@ -488,22 +642,8 @@ class CollectionWorkflow:
         other_dpdata = dpdata.MultiSystems()
         
         for sys in test_data:
-            # sys might be a System or LabeledSystem. 
-            # In uq-post-view-2.py, it appended to test_data list.
-            # Here we iterate. sys is ONE system (corresponding to one directory).
-            # But wait, dpdata.MultiSystems.from_dir usually returns a MultiSystems object where each element is a LabeledSystem.
-            # If we load manually, we have a list of Systems.
-            # We need to match datanames.
-            
-            # The dataname logic in uq-post-view-2.py relies on knowing the index in the list.
-            # dataname is "keyname-index". 
-            # keyname comes from directory name (short_name).
-            # index comes from frame index.
-            
-            # Iterate frames in sys
+            # Match frames based on dataname (keyname-index)
             sys_name = sys.short_name
-            # If sys.short_name is empty or not matching directory, we should use directory name.
-            # But dpdata usually sets short_name to directory basename.
             
             for i in range(len(sys)):
                 dataname_sys = f"{sys_name}-{i}"

@@ -33,7 +33,8 @@ def main():
         "desc_filename": "desc.npy",
         "testdata_dir": "./other_dpdata_test",
         "testdata_fmt": "deepmd/npy",
-        "testdata_string": "*",
+        
+        "training_data_dir": "sampled_dpdata",
         "fig_dpi": 300,
         "root_savedir": "dpeva_uq_post",
         "uq_trust_mode": "auto",
