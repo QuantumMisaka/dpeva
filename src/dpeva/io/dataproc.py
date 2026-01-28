@@ -188,22 +188,31 @@ class TestResultParser:
         Extract system names and frame counts from the comment lines of the output file.
         """
         datanames_indice_dict = {}
+        with open(filename, 'r') as f:
+            lines = f.readlines()
+            for i, line in enumerate(lines):
+                if line.startswith('#'):
+                    parts = line.split(':')
+                    if len(parts) >= 2:
+                        raw_path = parts[0].strip().lstrip('#').strip()
+                        # Use heuristic to extract Pool/System if available to avoid name collision
+                        path_clean = os.path.normpath(raw_path)
+                        path_parts = path_clean.split(os.sep)
+                        # Filter out dot but keep .. to handle relative paths correctly
+                        path_parts = [p for p in path_parts if p and p != '.']
+                        
+                        if len(path_parts) >= 2 and path_parts[-2] != '..':
+                            # Likely Pool/System structure (e.g. pool/sys or ../pool/sys)
+                            dataname = f"{path_parts[-2]}/{path_parts[-1]}"
+                        else:
+                            # Fallback to basename (e.g. sys or ../sys)
+                            dataname = path_parts[-1]
+                            
+                        datanames_indice_dict[dataname] = i
+        
         datanames_nframe_list = []
         datanames_nframe_dict = {}
         
-        with open(filename, 'r') as f:
-            lines = f.readlines()
-            
-        # Parse indices
-        for i, line in enumerate(lines):
-            if line.startswith("# "):
-                parts = line.strip().split(" ")
-                if len(parts) >= 2:
-                    dirname = parts[1]
-                    # Strip trailing colon if present (common in some dp test outputs)
-                    dataname = os.path.basename(dirname.strip().rstrip(':').rstrip('/'))
-                    datanames_indice_dict[dataname] = i
-
         full_index = len(lines)
         sorted_indices = sorted(datanames_indice_dict.items(), key=lambda x: x[1])
         

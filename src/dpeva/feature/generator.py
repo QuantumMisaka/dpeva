@@ -177,14 +177,7 @@ export OMP_NUM_THREADS={self.omp_threads}
     def run_python_generation(self, data_path, output_dir, data_format="deepmd/npy", output_mode="atomic"):
         """
         Run descriptor generation in 'python' mode.
-        If backend is 'local', runs directly.
-        If backend is 'slurm', submits a job.
-        
-        Args:
-            data_path (str): Path to the dataset.
-            output_dir (str): Directory to save descriptors.
-            data_format (str): Data format.
-            output_mode (str): Output mode ('atomic' or 'structural').
+        Recursively handles multi-level directory structures.
         """
         abs_data_path = os.path.abspath(data_path)
         abs_output_dir = os.path.abspath(output_dir)
@@ -193,32 +186,88 @@ export OMP_NUM_THREADS={self.omp_threads}
         if self.backend == "local":
             self.logger.info("Running python descriptor generation locally...")
             
-            # Check if data_path contains sub-systems (simple heuristic: if it has subdirectories)
-            # This matches typical dpdata usage where data_path is a pool of systems.
-            # If data_path itself is a system, this loop might need adjustment.
-            # We use the same logic as in FeatureWorkflow before:
-            subdirs = [os.path.join(abs_data_path, d) for d in os.listdir(abs_data_path) 
-                       if os.path.isdir(os.path.join(abs_data_path, d))]
-            
-            if not subdirs:
-                # Treat as single system
-                subdirs = [abs_data_path]
-            
-            total = len(subdirs)
-            for i, sys_path in enumerate(subdirs):
-                sys_name = os.path.basename(sys_path)
-                # self.logger.info(f"Processing {sys_name} ({i+1}/{total})")
-                
-                try:
-                    desc = self.compute_descriptors_python(
-                        data_path=sys_path,
-                        data_format=data_format,
-                        output_mode=output_mode
-                    )
-                    out_file = os.path.join(abs_output_dir, f"{sys_name}.npy")
+            # Recursive function to handle nested structures
+            def process_recursive(current_path, current_output_dir):
+                # Check if leaf system
+                is_leaf = os.path.exists(os.path.join(current_path, "type.raw")) or \
+                          os.path.exists(os.path.join(current_path, "set.000"))
+                          
+                if is_leaf:
+                    sys_name = os.path.basename(current_path)
+                    try:
+                        desc = self.compute_descriptors_python(
+                            data_path=current_path,
+                            data_format=data_format,
+                            output_mode=output_mode
+                        )
+                        # For leaf, we save as sys_name.npy in the PARENT's output dir?
+                        # No, usually output_dir/sys_name.npy
+                        # But if we recursed, current_output_dir is already specific?
+                        # Let's see how run_cli logic works: process_dir(src, out/dirname)
+                        # So for leaf src/A, output is out/A.
+                        # dp eval-desc -o out/A -> creates out/A.npy or out/A/desc.npy?
+                        # dp eval-desc -o outdir -> outdir/system.npy
+                        
+                        # So here we should save to current_output_dir/sys_name.npy?
+                        # If current_path is passed as 'data_path', we expect output in 'output_dir'.
+                        # The recursion passes 'out_dir/dirname'.
+                        # So if we are at leaf, we are at 'Dataset/System'.
+                        # The output dir is 'Output/Dataset/System'.
+                        # But we want 'Output/Dataset/System.npy'.
+                        
+                        # Let's adjust recursion logic to match CLI script logic
+                        pass 
+                    except Exception as e:
+                        self.logger.error(f"Failed to process {sys_name}: {e}")
+                        return
+
+                    # Actually, we should just call compute and save.
+                    # Wait, compute_descriptors_python takes path and returns array.
+                    # We need to decide where to save.
+                    # If we are strictly following "Root -> Dataset -> System"
+                    # We want "Output/Dataset/System.npy"
+                    
+                    # Logic:
+                    # If we are at Root. List Datasets.
+                    # For each Dataset, create Output/Dataset.
+                    # For each System in Dataset, save Output/Dataset/System.npy.
+                    
+                    # But what if structure is just Root -> System?
+                    # Then Output/System.npy.
+                    
+                    # So:
+                    out_file = current_output_dir + ".npy"
+                    # But wait, current_output_dir is a directory path.
+                    # We want to save a file.
                     np.save(out_file, desc)
-                except Exception as e:
-                    self.logger.error(f"Failed to process {sys_name}: {e}")
+                    return
+
+                # If not leaf, iterate
+                subdirs = [d for d in os.listdir(current_path) if os.path.isdir(os.path.join(current_path, d))]
+                for d in subdirs:
+                    process_recursive(os.path.join(current_path, d), os.path.join(current_output_dir, d))
+
+            # Trigger recursion
+            # But handle the initial call carefully.
+            # If data_path is leaf, save to output_dir/basename.npy?
+            # Or output_dir.npy?
+            
+            if os.path.exists(os.path.join(abs_data_path, "type.raw")) or \
+               os.path.exists(os.path.join(abs_data_path, "set.000")):
+                # Single system
+                desc = self.compute_descriptors_python(abs_data_path, data_format, output_mode)
+                np.save(os.path.join(abs_output_dir, os.path.basename(abs_data_path) + ".npy"), desc)
+            else:
+                # Iterate subdirectories
+                subdirs = [d for d in os.listdir(abs_data_path) if os.path.isdir(os.path.join(abs_data_path, d))]
+                for d in subdirs:
+                    # Create corresponding output dir if it's a folder-of-folders
+                    # We don't know yet if 'd' is leaf.
+                    # Let process_recursive decide.
+                    # If 'd' is leaf (System), we want output_dir/d.npy
+                    # If 'd' is Dataset, we want output_dir/d/System.npy
+                    
+                    process_recursive(os.path.join(abs_data_path, d), os.path.join(abs_output_dir, d))
                     
         elif self.backend == "slurm":
             self.logger.info("Preparing to submit python descriptor generation job via Slurm...")

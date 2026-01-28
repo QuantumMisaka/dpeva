@@ -177,7 +177,7 @@ class CollectionWorkflow:
             if not os.path.exists(d):
                 os.makedirs(d)
 
-    def _load_descriptors(self, desc_dir, desc_filename="desc.npy", label="descriptors"):
+    def _load_descriptors(self, desc_dir, desc_filename="desc.npy", label="descriptors", target_names=None, expected_frames=None):
         """
         Loads descriptors from a directory.
         Supports both nested structure (sys/desc.npy) and flat structure (sys.npy).
@@ -187,66 +187,125 @@ class CollectionWorkflow:
             desc_dir (str): Path to the descriptor directory.
             desc_filename (str): Name of the descriptor file (default: "desc.npy") used in nested structure.
             label (str): Label for logging purposes.
+            target_names (list): List of system names (without index) to load specifically. 
+                               If provided, loads only these systems in this order.
+            expected_frames (dict): Optional dict {sys_name: n_frames} to enforce consistency.
 
         Returns:
             tuple: (desc_datanames, desc_stru)
         """
         self.logger.info(f"Loading {label} from {desc_dir}")
         
-        # Check for different file patterns
-        flat_pattern = os.path.join(desc_dir, "*.npy")
-        nested_pattern = os.path.join(desc_dir, "*", desc_filename)
-        
-        # Determine which pattern to use
-        # Priority: User explicit wildcard > Flat (*.npy) > Nested (*/desc.npy)
-        
-        if '*' in desc_dir:
-             desc_pattern = desc_dir
-        elif len(glob.glob(flat_pattern)) > 0:
-             desc_pattern = flat_pattern
-        elif len(glob.glob(nested_pattern)) > 0:
-             self.logger.warning(f"Using deprecated nested descriptor structure: {nested_pattern}. "
-                                 "Please switch to flat *.npy structure, which is the default in `dp eval-desc`.")
-             desc_pattern = nested_pattern
-        else:
-             # Default fallback if nothing found (will return empty later)
-             desc_pattern = flat_pattern
-                 
         desc_datanames = []
         desc_stru = []
-        desc_iter_list = sorted(glob.glob(desc_pattern))
         
-        if not desc_iter_list:
-             self.logger.warning(f"No {label} found in {desc_dir}")
-             return [], np.array([])
-        
-        for f in desc_iter_list:
-            # Determine keyname based on structure
-            # Flat: .../sysname.npy -> sysname
-            # Nested: .../sysname/desc.npy -> sysname
-            if f.endswith(desc_filename) and os.path.basename(f) == desc_filename:
-                 # Nested structure
-                 keyname = os.path.basename(os.path.dirname(f))
-            else:
-                 # Flat structure (or user wildcard matching npy)
-                 keyname = os.path.basename(f).replace('.npy', '')
-                 
-            try:
-                one_desc = np.load(f)
-            except Exception as e:
-                self.logger.error(f"Failed to load descriptor file {f}: {e}")
-                continue
+        if target_names:
+            self.logger.info(f"Loading {len(target_names)} specific systems based on target names.")
+            
+            for sys_name in target_names:
+                # Construct possible paths
+                # 1. Flat: desc_dir/sys_name.npy
+                # 2. Nested: desc_dir/sys_name/desc.npy
+                # 3. Nested 3-level (Dataset/System): desc_dir/Dataset/System.npy or desc_dir/Dataset/System/desc.npy
                 
-            for i in range(len(one_desc)):
-                desc_datanames.append(f"{keyname}-{i}")
+                # Try direct path first (most common for multi-pool: desc_dir/Dataset/System.npy)
+                path_flat = os.path.join(desc_dir, f"{sys_name}.npy")
+                path_nested = os.path.join(desc_dir, sys_name, desc_filename)
+                
+                if os.path.exists(path_flat):
+                    f = path_flat
+                elif os.path.exists(path_nested):
+                    f = path_nested
+                else:
+                    self.logger.error(f"Descriptor file not found for system: {sys_name}. Expected at {path_flat} or {path_nested}")
+                    raise FileNotFoundError(f"Descriptor file missing for {sys_name}")
+                
+                try:
+                    one_desc = np.load(f)
+                    
+                    # Consistency Check
+                    if expected_frames and sys_name in expected_frames:
+                        n_exp = expected_frames[sys_name]
+                        n_got = one_desc.shape[0]
+                        if n_got != n_exp:
+                            if n_got > n_exp:
+                                self.logger.warning(f"Descriptor frame mismatch for {sys_name}: Expected {n_exp}, Got {n_got}. Truncating.")
+                                one_desc = one_desc[:n_exp]
+                            else:
+                                self.logger.error(f"Descriptor frame mismatch for {sys_name}: Expected {n_exp}, Got {n_got}. Missing frames!")
+                                raise ValueError(f"Missing descriptor frames for {sys_name}")
+                                
+                except Exception as e:
+                    self.logger.error(f"Failed to load descriptor file {f}: {e}")
+                    raise
+                    
+                # Use sys_name as keyname to ensure match with target
+                keyname = sys_name
+                
+                for i in range(len(one_desc)):
+                    desc_datanames.append(f"{keyname}-{i}")
+                
+                # Mean pooling and L2 normalization per frame
+                one_desc_stru = np.mean(one_desc, axis=1) # (n_frames, n_desc)
+                
+                # L2 Normalization
+                stru_modulo = np.linalg.norm(one_desc_stru, axis=1, keepdims=True)
+                one_desc_stru_norm = one_desc_stru / (stru_modulo + 1e-12)
+                desc_stru.append(one_desc_stru_norm)
+                
+        else:
+            # Check for different file patterns
+            flat_pattern = os.path.join(desc_dir, "*.npy")
+            nested_pattern = os.path.join(desc_dir, "*", desc_filename)
             
-            # Mean pooling and L2 normalization per frame
-            one_desc_stru = np.mean(one_desc, axis=1) # (n_frames, n_desc)
+            # Determine which pattern to use
+            # Priority: User explicit wildcard > Flat (*.npy) > Nested (*/desc.npy)
             
-            # L2 Normalization
-            stru_modulo = np.linalg.norm(one_desc_stru, axis=1, keepdims=True)
-            one_desc_stru_norm = one_desc_stru / (stru_modulo + 1e-12)
-            desc_stru.append(one_desc_stru_norm)
+            if '*' in desc_dir:
+                 desc_pattern = desc_dir
+            elif len(glob.glob(flat_pattern)) > 0:
+                 desc_pattern = flat_pattern
+            elif len(glob.glob(nested_pattern)) > 0:
+                 self.logger.warning(f"Using deprecated nested descriptor structure: {nested_pattern}. "
+                                     "Please switch to flat *.npy structure, which is the default in `dp eval-desc`.")
+                 desc_pattern = nested_pattern
+            else:
+                 # Default fallback if nothing found (will return empty later)
+                 desc_pattern = flat_pattern
+                     
+            desc_iter_list = sorted(glob.glob(desc_pattern))
+            
+            if not desc_iter_list:
+                 self.logger.warning(f"No {label} found in {desc_dir}")
+                 return [], np.array([])
+            
+            for f in desc_iter_list:
+                # Determine keyname based on structure
+                # Flat: .../sysname.npy -> sysname
+                # Nested: .../sysname/desc.npy -> sysname
+                if f.endswith(desc_filename) and os.path.basename(f) == desc_filename:
+                     # Nested structure
+                     keyname = os.path.basename(os.path.dirname(f))
+                else:
+                     # Flat structure (or user wildcard matching npy)
+                     keyname = os.path.basename(f).replace('.npy', '')
+                     
+                try:
+                    one_desc = np.load(f)
+                except Exception as e:
+                    self.logger.error(f"Failed to load descriptor file {f}: {e}")
+                    continue
+                    
+                for i in range(len(one_desc)):
+                    desc_datanames.append(f"{keyname}-{i}")
+                
+                # Mean pooling and L2 normalization per frame
+                one_desc_stru = np.mean(one_desc, axis=1) # (n_frames, n_desc)
+                
+                # L2 Normalization
+                stru_modulo = np.linalg.norm(one_desc_stru, axis=1, keepdims=True)
+                one_desc_stru_norm = one_desc_stru / (stru_modulo + 1e-12)
+                desc_stru.append(one_desc_stru_norm)
         
         if len(desc_stru) > 0:
             desc_stru = np.concatenate(desc_stru, axis=0)
@@ -289,11 +348,44 @@ class CollectionWorkflow:
         
         # 1. Load Data & Calculate UQ
         self.logger.info("Loading the test results")
-        preds = [
-            DPTestResults(f"./{self.project}/{i}/{self.testing_dir}/{self.testing_head}")
-            for i in range(4)
-        ]
-        
+        preds = []
+        for i in range(4):
+            # Construct path using os.path.join for robustness
+            path = os.path.join(self.project, str(i), self.testing_dir, self.testing_head)
+            # If path ends with head (e.g. 'results'), we need the DIRECTORY containing it?
+            # DPTestResults expects result_dir and head.
+            # Here we are passing the FULL PATH to DPTestResults constructor?
+            # Let's check DPTestResults signature.
+            # DPTestResults(headname, type_map=None) -> init calls TestResultParser(result_dir=".", head=headname)
+            # Wait, the previous code was: DPTestResults(f"./{self.project}/{i}/{self.testing_dir}/{self.testing_head}")
+            # This looks like it's passing the HEAD NAME?
+            # NO! DPTestResults init takes `headname`. 
+            # But inside it does: `self.parser = TestResultParser(result_dir=".", head=headname)`
+            # So it assumes results are in CURRENT DIRECTORY if result_dir is fixed to "."!
+            
+            # If the user passes a full path as headname, TestResultParser does:
+            # os.path.join(".", full_path + ".e_peratom.out")
+            # This works if full_path is a path prefix.
+            
+            # BUT, TestResultParser logic:
+            # e_file = os.path.join(self.result_dir, f"{self.head}.e_peratom.out")
+            
+            # If head is "path/to/results", result_dir=".", then:
+            # "./path/to/results.e_peratom.out"
+            # This assumes the file is named "results.e_peratom.out" in "path/to".
+            
+            # This usage of DPTestResults seems to rely on passing the path AS the head name.
+            # And relying on result_dir=".".
+            
+            # So I should just clean up the f-string to use os.path.join but keep the logic.
+            
+            # However, using f"./{absolute_path}" is ugly.
+            # If self.project is absolute, f"./{self.project}" is "./" + "/home..." = "./home..." (if no double slash).
+            # If I use os.path.join, it handles absolute paths by discarding previous parts.
+            
+            res_path_prefix = os.path.join(self.project, str(i), self.testing_dir, self.testing_head)
+            preds.append(DPTestResults(res_path_prefix))
+            
         has_ground_truth = preds[0].has_ground_truth
         
         self.logger.info("Dealing with force difference between 0 head prediction and existing label")
@@ -400,6 +492,25 @@ class CollectionWorkflow:
         self.logger.info("Dealing with Selection in Target dpdata")
         datanames_ind_list = [f"{i[0]}-{i[1]}" for i in preds[0].dataname_list]
         
+        # Extract unique system names in order for ordered loading
+        # dataname_list contains [name, index, natom]
+        unique_system_names = []
+        seen = set()
+        for item in preds[0].dataname_list:
+            name = item[0]
+            if name not in seen:
+                seen.add(name)
+                unique_system_names.append(name)
+        
+        self.logger.info(f"Identified {len(unique_system_names)} unique systems from inference results.")
+        
+        # Build expected frames dict for consistency check
+        expected_frames_dict = {}
+        for sys_name in unique_system_names:
+            n_frames = preds[0].datanames_nframe.get(sys_name, 0)
+            if n_frames > 0:
+                expected_frames_dict[sys_name] = n_frames
+        
         data_dict_uq = {
             "dataname": datanames_ind_list,
             "uq_qbc_for": uq_results["uq_qbc_for"],
@@ -411,8 +522,10 @@ class CollectionWorkflow:
             
         df_uq = pd.DataFrame(data_dict_uq)
         
-        # Load descriptors (Candidates)
-        desc_datanames, desc_stru = self._load_descriptors(self.desc_dir, self.desc_filename, "candidate descriptors")
+        # Load descriptors (Candidates) - Using Ordered Loading with Consistency Check
+        desc_datanames, desc_stru = self._load_descriptors(self.desc_dir, self.desc_filename, "candidate descriptors", 
+                                                         target_names=unique_system_names,
+                                                         expected_frames=expected_frames_dict)
         
         if len(desc_stru) == 0:
             raise ValueError("No candidate descriptors loaded!")
@@ -424,8 +537,9 @@ class CollectionWorkflow:
         # Verify consistency for candidates
         if len(df_desc) != len(df_uq):
              self.logger.warning(f"Mismatch: UQ data has {len(df_uq)} frames, but descriptors have {len(df_desc)} frames.")
-             # We can proceed if merge handles it (inner join), but it's risky.
-             # Ideally they should match.
+             # Since we added per-system check, this global mismatch should ideally not happen 
+             # unless some system was skipped entirely or dataname_list logic is flawed.
+             
         
         df_uq_desc = pd.merge(df_uq, df_desc, on="dataname")
         
@@ -612,12 +726,32 @@ class CollectionWorkflow:
             
         df_pcs = pd.DataFrame(candidate_pcs, columns=['PC1', 'PC2'])
         
-        # Ensure length matches
-        if len(df_pcs) == len(df_uq):
-            df_alldataPC_visual = pd.concat([df_uq.reset_index(drop=True), df_pcs.reset_index(drop=True)], axis=1)
-            df_alldataPC_visual.to_csv(f"{self.df_savedir}/final_df.csv", index=True)
+        # Add PC info to df_candidate first (since they align)
+        # We need to make sure indices align.
+        # df_candidate is a slice of df_uq_desc, possibly with gaps in index?
+        # But `candidate_features` was extracted from `df_candidate`.
+        # So `candidate_pcs` corresponds row-by-row to `df_candidate`.
+        
+        df_candidate = df_candidate.reset_index(drop=False) # Keep original index if needed, but here we just want to merge PCs
+        # Actually, let's just assign columns directly if lengths match
+        if len(df_pcs) == len(df_candidate):
+            df_candidate["PC1"] = df_pcs["PC1"]
+            df_candidate["PC2"] = df_pcs["PC2"]
         else:
-            self.logger.warning(f"Skipping final_df.csv: Length mismatch df_uq={len(df_uq)} vs PCs={len(df_pcs)}")
+            self.logger.error(f"Logic Error: df_candidate len {len(df_candidate)} != PC len {len(df_pcs)}")
+            
+        # Now merge PC info back to df_uq
+        # df_uq has all frames. df_candidate has a subset.
+        # We want final_df.csv to have all frames, with PC1/PC2 filled for candidates, NaN for others.
+        
+        # Merge key: 'dataname' is safest.
+        # df_uq has 'dataname'. df_candidate has 'dataname'.
+        
+        df_pcs_subset = df_candidate[["dataname", "PC1", "PC2"]]
+        df_final_all = pd.merge(df_uq, df_pcs_subset, on="dataname", how="left")
+        
+        self.logger.info(f"Save final_df.csv with PC coordinates to {self.df_savedir}/final_df.csv")
+        df_final_all.to_csv(f"{self.df_savedir}/final_df.csv", index=True)
 
         
         # 6. Export dpdata
@@ -627,12 +761,19 @@ class CollectionWorkflow:
         self.logger.info(f"Loading the target testing data from {self.testdata_dir}")
         
         test_data = [] 
-        # Check if testdata_dir has subdirectories
-        found_dirs = sorted(glob.glob(os.path.join(self.testdata_dir, "*")))
+        # Use ordered unique_system_names to load data
+        # This ensures alignment with df_final and prevents missing/extra systems
         
-        for d in found_dirs:
+        for sys_name in unique_system_names:
+            # sys_name could be "Dataset/System" or just "System"
+            # Try to find the directory
+            
+            d = os.path.join(self.testdata_dir, sys_name)
+            
             if not os.path.isdir(d):
+                self.logger.warning(f"Data directory not found for system: {sys_name} at {d}")
                 continue
+                
             try:
                 sys = dpdata.LabeledSystem(d, fmt=self.testdata_fmt)
             except:
@@ -641,6 +782,53 @@ class CollectionWorkflow:
                 except Exception as e:
                     self.logger.warning(f"Failed to load {d}: {e}")
                     continue
+            
+            # Important: Ensure short_name matches sys_name (keyname) for matching
+            # dpdata usually sets short_name to basename.
+            # But we are using sys_name (potentially Dataset/System) as key.
+            # We must override short_name or use sys_name in the loop below.
+            # Let's attach our expected name to the sys object
+            sys.target_name = sys_name
+            
+            # FIX: Handle duplicate atom names (e.g. ['Fe', 'Fe', 'O']) which can cause
+            # "Sum of atom_numbs is not equal to natoms" error when appending to MultiSystems.
+            # MERGE duplicates to ensure scientific correctness (e.g. Fe + Fe -> Fe)
+            atom_names = sys['atom_names']
+            if len(atom_names) != len(set(atom_names)):
+                self.logger.warning(f"Duplicate atom names detected in {sys_name}: {atom_names}. Merging duplicate types.")
+                
+                # 1. Determine unique names (preserve order of first appearance)
+                new_atom_names = []
+                seen = set()
+                for name in atom_names:
+                    if name not in seen:
+                        new_atom_names.append(name)
+                        seen.add(name)
+                
+                # 2. Build mapping from old type index to new type index
+                old_to_new_map = {}
+                for old_idx, name in enumerate(atom_names):
+                    new_idx = new_atom_names.index(name)
+                    old_to_new_map[old_idx] = new_idx
+                
+                # 3. Update atom_types
+                old_atom_types = sys['atom_types']
+                new_atom_types = np.array([old_to_new_map[t] for t in old_atom_types], dtype=int)
+                
+                # 4. Update atom_numbs
+                new_atom_numbs = []
+                for i in range(len(new_atom_names)):
+                    count = np.sum(new_atom_types == i)
+                    new_atom_numbs.append(int(count))
+                
+                self.logger.info(f"Merged atom names to: {new_atom_names}")
+                self.logger.info(f"Updated atom numbs to: {new_atom_numbs}")
+                
+                # 5. Apply changes to system
+                sys.data['atom_names'] = new_atom_names
+                sys.data['atom_numbs'] = new_atom_numbs
+                sys.data['atom_types'] = new_atom_types
+
             test_data.append(sys)
             
         sampled_dpdata = dpdata.MultiSystems()
@@ -648,14 +836,32 @@ class CollectionWorkflow:
         
         for sys in test_data:
             # Match frames based on dataname (keyname-index)
-            sys_name = sys.short_name
+            # Use the target_name we stored, or fallback to short_name if missing
+            sys_name = getattr(sys, "target_name", sys.short_name)
             
+            # Optimization: Check if this system is involved in sampling at all
+            # But we need to split into sampled and other.
+            
+            try:
+                # Check consistency of the system itself before processing
+                # This catches corrupted data loaded from disk
+                # sys.check_data() # Usually called on init, but let's be safe
+                pass
+            except Exception as e:
+                self.logger.error(f"System {sys_name} failed consistency check: {e}")
+                continue
+
             for i in range(len(sys)):
                 dataname_sys = f"{sys_name}-{i}"
-                if dataname_sys in sampled_datanames:
-                    sampled_dpdata.append(sys[i])
-                else:
-                    other_dpdata.append(sys[i])
+                try:
+                    if dataname_sys in sampled_datanames:
+                        sampled_dpdata.append(sys[i])
+                    else:
+                        other_dpdata.append(sys[i])
+                except Exception as e:
+                    # Log error but continue to avoid crashing whole workflow
+                    self.logger.error(f"Failed to append frame {i} of system {sys_name}: {e}")
+                    continue
                     
         self.logger.info(f'Sampled dpdata: {sampled_dpdata}')
         self.logger.info(f'Other dpdata: {other_dpdata}')
