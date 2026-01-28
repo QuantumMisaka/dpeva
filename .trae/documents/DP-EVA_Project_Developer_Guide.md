@@ -1,8 +1,8 @@
 # DP-EVA 项目开发文档
 
-**版本**: 2.0.0
-**生成日期**: 2026-01-27
-**作者**: Quantum Misaka with Trae SOLO
+* **版本**: 2.1.0
+* **生成日期**: 2026-01-28
+* **作者**: Quantum Misaka with Trae SOLO
 
 ---
 
@@ -13,9 +13,10 @@ DP-EVA (Deep Potential EVolution Accelerator) 是一个面向 DPA3 (Deep Potenti
 
 ### 1.2 核心哲学 (The Zen of DP-EVA)
 本项目遵循 Python 工程化最佳实践进行重构，强调：
-*   **显式配置**：拒绝环境变量魔法，使用清晰的 Config 字典/文件驱动。
-*   **模块解耦**：将复杂的科研脚本拆解为职责单一的原子模块 (Training, Inference, Uncertainty, Sampling)。
-*   **双模调度**：底层统一封装 JobManager，无缝支持 Local (Multiprocessing) 和 Slurm 集群环境。
+*   **显式配置 (Explicit Configuration)**：拒绝环境变量魔法，使用清晰的 Config 字典/文件驱动。
+*   **模块解耦 (Modular Design)**：将复杂的科研脚本拆解为职责单一的原子模块 (Training, Inference, Uncertainty, Sampling)。
+*   **双模调度 (Dual-Mode Scheduling)**：底层统一封装 `JobManager`，无缝支持 Local (Multiprocessing) 和 Slurm 集群环境。
+*   **日志规范 (Logging Discipline)**：库代码不干预全局日志配置，确保日志输出清晰、无冗余且易于追踪。
 
 ---
 
@@ -26,21 +27,26 @@ DP-EVA (Deep Potential EVolution Accelerator) 是一个面向 DPA3 (Deep Potenti
 
 ```text
 dpeva/
-├── runner/                 # 执行入口脚本 (CLI/Scripts)
+├── runner/                 # [用户接口] 执行入口脚本 (CLI/Scripts)
+│   ├── dpeva_train/        # 训练任务入口
+│   ├── dpeva_test/         # 推理任务入口
+│   ├── dpeva_collect/      # 采集任务入口
+│   └── ...
 ├── src/dpeva/
 │   ├── workflows/          # [核心] 业务流程编排层
-│   │   ├── train.py        # 训练工作流
-│   │   ├── infer.py        # 推理与分析工作流
-│   │   └── collect.py      # 数据采集工作流
+│   │   ├── train.py        # 训练工作流 (TrainingWorkflow)
+│   │   ├── infer.py        # 推理与分析工作流 (InferenceWorkflow)
+│   │   ├── collect.py      # 数据采集工作流 (CollectionWorkflow)
+│   │   └── feature.py      # 特征生成工作流 (FeatureWorkflow)
 │   ├── training/           # 训练模块 (ParallelTrainer)
-│   ├── inference/          # 推理模块 (ModelEvaluator, StatsCalculator)
-│   ├── uncertain/          # 不确定度模块 (Calculator, Filter, Visualization)
+│   ├── inference/          # 推理模块 (StatsCalculator, Visualizer)
+│   ├── uncertain/          # 不确定度模块 (UQCalculator, UQFilter, Visualizer)
 │   ├── sampling/           # 采样模块 (DIRECT, PCA, Clustering)
 │   ├── feature/            # 特征生成模块 (DescriptorGenerator)
-│   ├── submission/         # 任务提交抽象层 (JobManager, Slurm Templates)
+│   ├── submission/         # 任务提交抽象层 (JobManager, JobConfig, Templates)
 │   ├── io/                 # 数据读写辅助 (DPTestResults, DataProc)
-│   ├── utils/              # 通用工具
-└── test/                   # [开发专用] 开发验证与临时测试脚本，不随包发布
+│   └── utils/              # 通用工具
+└── test/                   # [开发专用] 单元测试与回归测试脚本
 ```
 
 ### 2.2 数据流图 (Data Flow)
@@ -51,8 +57,9 @@ graph TD
     
     subgraph Active_Learning_Loop
         Ensemble -->|Inference| Preds[Predictions]
-        Preds -->|Variance| UQ[UQ Calculator]
-        UQ -->|Filter| Candidates[Candidates]
+        Preds -->|Variance & Deviation| UQ[UQ Calculator]
+        UQ -->|Auto/Manual Threshold| Filter[UQ Filter]
+        Filter -->|Candidates| Candidates[Candidate Structures]
         
         Feature -->|Descriptor| Candidates
         Candidates -->|DIRECT Sampling| Selected[Selected Samples]
@@ -70,7 +77,7 @@ graph TD
 负责管理 DeepMD 模型的并行训练任务。
 *   **`ParallelTrainer`**: 核心类。支持 `init` (初始化) 和 `cont` (断点续训) 模式。
 *   **特性**:
-    *   自动目录隔离 (`0/`, `1/`, `2/`, `3/`)。
+    *   自动工作目录隔离 (`0/`, `1/`, `2/`, `3/`)。
     *   支持 `OMP_NUM_THREADS` 自动配置。
     *   内置随机种子循环机制，确保多模型多样性。
 
@@ -84,28 +91,43 @@ graph TD
 
 ### 3.3 Uncertainty & Sampling 模块 (`dpeva.uncertain`, `dpeva.sampling`)
 这是主动学习的大脑，负责从海量数据中“淘金”。
-*   **UQ 策略**: 
+*   **UQ 计算 (`UQCalculator`)**: 
     *   **QbC (Query by Committee)**: 计算多模型预测方差。
     *   **RND (Random Network Distillation)**: 计算当前模型与参考模型的偏差。
-    *   **对齐机制**: 使用 `RobustScaler` (Median/IQR) 将 RND 信号对齐到 QbC 尺度，增强鲁棒性。
-*   **筛选策略**: 支持 `strict`, `tangent`, `circle` 等多种 2D 边界筛选算法。
-*   **DIRECT 采样**: 
+    *   **自动阈值 (Auto-Threshold)**: 基于 KDE (核密度估计) 自动识别不确定度分布峰值，自适应确定 `trust_lo`。
+*   **筛选策略 (`UQFilter`)**: 支持 `strict`, `tangent`, `circle` 等多种 2D 边界筛选算法。
+*   **DIRECT 采样 (`DIRECTSampler`)**: 
     *   基于 DPA3 描述符进行 PCA 降维。
     *   使用 BIRCH 聚类 + 覆盖度最大化采样，确保样本在化学空间的多样性。
 
+### 3.4 Feature 模块 (`dpeva.feature`)
+负责生成原子结构的描述符。
+*   **`DescriptorGenerator`**:
+    *   **CLI 模式**: 调用 `dp eval-desc` 命令，支持 Slurm 提交。
+    *   **Python 模式**: 直接调用 `deepmd.infer` API，适合小规模或调试使用。
+    *   **日志优化**: 智能处理日志输出，避免在 Slurm 环境下产生冗余日志文件。
+
+### 3.5 Submission 模块 (`dpeva.submission`)
+统一的任务提交抽象层。
+*   **`JobManager`**: 屏蔽 Local/Slurm 差异。
+*   **`JobConfig`**: 强类型的作业配置类，支持 Partition, QoS, GPUs 等 Slurm 高级参数。
+*   **`TemplateEngine`**: 基于模板生成作业脚本，易于扩展和定制。
+
 ---
 
-## 4. 工作流与使用指南 (Workflows)
+## 4. 接口使用指南 (Runner Interface)
 
-### 4.1 训练工作流 (Train)
-用于启动多模型并行微调。
+所有用户入口脚本均位于 `runner/` 目录下，按功能分类。
 
-**配置示例 (`config_train.json`)**:
+### 4.1 训练 (Train)
+**路径**: `runner/dpeva_train/run_train.py`
+**配置**: `config.json`
+
 ```json
 {
     "work_dir": "./training_task",
     "num_models": 4,
-    "mode": "init",
+    "mode": "init",  // 或 "cont"
     "base_model_path": "/path/to/pretrained.pt",
     "input_json_path": "input.json",
     "training_data_path": "/path/to/data",
@@ -113,16 +135,11 @@ graph TD
     "omp_threads": 8
 }
 ```
-**运行方式**:
-```python
-from dpeva.workflows.train import TrainingWorkflow
-TrainingWorkflow(config).run()
-```
 
-### 4.2 推理与分析工作流 (Infer)
-用于批量测试模型性能并生成报表。
+### 4.2 推理与分析 (Test)
+**路径**: `runner/dpeva_test/run_inference.py`
+**配置**: `config.json`
 
-**配置示例 (`config_infer.json`)**:
 ```json
 {
     "output_basedir": "./training_task",
@@ -136,16 +153,29 @@ TrainingWorkflow(config).run()
     }
 }
 ```
-**运行方式**:
-```python
-from dpeva.workflows.infer import InferenceWorkflow
-InferenceWorkflow(config).run()
+
+### 4.3 描述符生成 (EvalDesc)
+**路径**: `runner/dpeva_evaldesc/run_evaldesc.py`
+**配置**: `config.json`
+
+```json
+{
+    "datadir": "./data_pool",
+    "modelpath": "/path/to/model.pt",
+    "savedir": "./descriptors",
+    "mode": "cli",
+    "submission": {
+        "backend": "slurm",
+        "slurm_config": { "partition": "cpu" }
+    }
+}
 ```
 
-### 4.3 数据采集工作流 (Collect)
-执行“不确定度计算 -> 筛选 -> 采样 -> 导出”全流程。
+### 4.4 数据采集 (Collect)
+**路径**: `runner/dpeva_collect/run_uq_collect.py`
+**配置**: `config.json`
 
-**配置示例 (`config_collect.json`)**:
+**新增 Auto-UQ 配置示例**:
 ```json
 {
     "project": "./training_task",
@@ -153,60 +183,53 @@ InferenceWorkflow(config).run()
     "testdata_dir": "./unlabeled_data",
     "uq_select_scheme": "tangent_lo",
     "num_selection": 100,
-    "root_savedir": "iteration_1_selected"
+    "root_savedir": "iteration_1_selected",
+    
+    "uq_trust_mode": "auto",      // 启用自动阈值
+    "uq_trust_ratio": 0.33,       // 峰值下降比率
+    "uq_trust_width": 0.25        // 信任区间宽度
 }
 ```
-**运行方式**:
-详见 `runner/run_uq_collect.py`。
 
 ---
 
-## 5. 项目现状与重构评估 (Status & Review)
+## 5. 开发与测试 (Development)
 
-### 5.1 代码质量评估
-*   **架构清晰度**: ⭐⭐⭐⭐⭐ (5/5) - 职责分离明确，不再有几千行的 God Script。
-*   **鲁棒性**: ⭐⭐⭐⭐ (4/5) - 关键路径（如数据加载、空值检查）已有防护，但在极端的 `dpdata` 格式兼容性上仍有提升空间。
-*   **扩展性**: ⭐⭐⭐⭐⭐ (5/5) - 新增 UQ 策略或采样算法只需继承基类即可。
+### 5.1 代码规范
+*   **日志**: 禁止在 `src/dpeva` 库文件中调用 `logging.basicConfig()`。仅在 `runner` 脚本中配置全局日志。
+*   **路径**: 所有文件操作应使用绝对路径 (`os.path.abspath`)。
+*   **异常**: 显式捕获并记录异常，避免静默失败。
 
-### 5.2 重构完成度
-相比于 `utils/uq/uq-post-view.py` 时代的旧代码，重构目标达成率如下：
+### 5.2 验证测试
+`test/` 目录包含开发阶段的验证脚本。
 
-| 目标 | 状态 | 说明 |
-| :--- | :--- | :--- |
-| **模块化拆分** | ✅ 完成 | 所有核心逻辑均已迁移至 `src/dpeva`。 |
-| **配置与逻辑分离** | ✅ 完成 | 彻底消除了硬编码路径。 |
-| **Inference 后处理** | ✅ 完成 | 实现了 `StatsCalculator` 和自动可视化，填补了之前的 Gap。 |
-| **本地/Slurm 双模** | ✅ 完成 | `JobManager` 表现稳定。 |
-| **集成测试** | 🔄 进行中 | 核心模块已验证，但全流程端到端自动化测试脚本尚待完善。 |
+*   **运行 Auto-UQ 测试**:
+    ```bash
+    cd test/verification_test_run
+    python run_auto_uq_test.py
+    ```
+    此脚本会验证 KDE 阈值计算逻辑及可视化图表的生成（含截断图和 Parity Plot）。
 
-### 5.3 已知问题与待办
-1.  **CLI 工具**: 目前仍依赖 `runner/` 下的 Python 脚本作为入口，建议封装统一的 `dpeva` 命令行工具 (e.g., `dpeva train -c config.json`)。
-2.  **dpdata 依赖**: Cohesive Energy 计算强依赖于 `dpdata` 对混合格式的解析能力，需注意数据格式规范。
-3.  **deepmd-kit 多后端支持**: 项目目前只支持 deepmd-kit 的 PyTorch 后端，不支持 TensorFlow 和 JAX。
-4.  **Slurm Backend 优化**：项目目前只支持提交 Slurm 任务，不支持监控任务状态并自动处理后续任务或异常。
+### 5.3 常见问题 (FAQ)
+
+**Q: 为什么生成的日志文件有 `eval_desc.log` 和 `eval_desc.out`？**
+A: 在旧版本中存在此冗余。新版 `DescriptorGenerator` 已修复此问题：Slurm 模式下仅生成 `eval_desc.log` (由 Slurm 输出重定向)，Local 模式下使用 `tee` 生成同名日志。
+
+**Q: 如何在没有真值 (Ground Truth) 的情况下运行采集流程？**
+A: `CollectionWorkflow` 已增强鲁棒性。当检测到无真值时，会自动跳过误差相关的 Parity Plot 绘制，但保留 UQ 分布图和采样逻辑，确保流程不中断。
+
+**Q: Auto-UQ 计算失败怎么办？**
+A: 如果数据分布极其异常导致 KDE 失败，系统会自动回退到 `config.json` 中配置的 `uq_qbc_trust_lo` 等手动参数，并输出警告日志。
 
 ---
 
-## 6. 开发与部署 (DevOps)
+## 6. 附录：审阅报告摘要 (Review Summary)
 
-### 6.1 环境要求
-*   Python >= 3.8
-*   DeepMD-kit (及 `dpdata`)
-*   NumPy, Pandas, Scikit-learn, Matplotlib, Seaborn
+*   **代码质量**: 核心模块职责分离清晰，符合 "Explicit is better than implicit" 原则。
+*   **日志系统**: 已完成全面清洗，消除了库代码对全局 Logging 的侵入，解决了文件冗余问题。
+*   **功能完备性**: 
+    *   Auto-UQ 算法已实装并经过测试。
+    *   可视化模块实现了与 Legacy 脚本的完全功能对齐（包括截断视图）。
+*   **接口一致性**: `runner` 层正确封装了底层 `Workflow`，配置项命名统一。
 
-### 6.2 安装方式
-```bash
-cd dpeva
-pip install -e .
-```
-
-### 6.3 验证测试 (开发环境)
-`test/` 目录下的内容仅用于开发阶段的临时验证，不作为项目发布的一部分。开发者在修改核心逻辑后，可使用该目录下的脚本进行快速回归测试。
-
-运行验证脚本以确保环境正常：
-```bash
-# 注意：test 文件夹内容仅用于开发测试，不会打包发布
-cd test/verification_test_run
-python run_refactored_workflow.py
-```
-若运行成功且无报错，并在 `dpeva_uq_post_refactored` 目录下生成了图表和数据，则说明开发环境下的核心功能正常。对于生产环境验证，请参考 `runner/` 下的示例脚本。
+**建议**: 后续版本可考虑将 `runner/` 下的脚本封装为统一的 `dpeva` 命令行工具 (CLI Tool)，进一步简化用户体验。
