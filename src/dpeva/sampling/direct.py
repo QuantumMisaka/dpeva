@@ -13,8 +13,8 @@ from .stratified_sampling import SelectKFromClusters
 class DIRECTSampler(Pipeline):
     """
     DImensionality REduction-Clustering-sTratified (DIRECT)
-    sampling Pipeline. For more details, please refer to our
-    manuscript: https://arxiv.org/abs/2307.13710.
+    sampling Pipeline. For more details, please refer to DIRECT paper: 
+    https://www.nature.com/articles/s41524-024-01227-4
     """
 
     def __init__(
@@ -27,18 +27,20 @@ class DIRECTSampler(Pipeline):
         select_k_from_clusters="select_k_from_clusters",
     ):
         """
+        Initialize DIRECTSampler pipeline.
+
         Args:
-        structure_encoder: Structure featurizer. It can be any encoder
-            that takes in a list of N structures and returns a 2-D array
-            of N*D features, where D is the fixed dimensionality of the
-            feature vector. By default, the M3GNet formation energy model
-            is used. Set this to False to skip the encoding step when needed.
-        scaler: StandardScaler to perform normalization before PCA.
-        pca: PCA for dimensionality reduction.
-        weighting_PCs: Whether to weight PC with their explained variance.
-        clustering: Clustering method to clustering based on PCs.
-        select_k_from_clusters: Straitified sampling of k structures from
-            each cluster.
+            structure_encoder: Structure featurizer. It can be any encoder
+                that takes in a list of N structures and returns a 2-D array
+                of N*D features, where D is the fixed dimensionality of the
+                feature vector. By default, the M3GNet formation energy model
+                is used. Set this to False to skip the encoding step when needed.
+            scaler: StandardScaler to perform normalization before PCA.
+            pca: PCA for dimensionality reduction.
+            weighting_PCs: Whether to weight PC with their explained variance.
+            clustering: Clustering method to clustering based on PCs.
+            select_k_from_clusters: Straitified sampling of k structures from
+                each cluster.
         """
         self.structure_encoder = structure_encoder
         self.scaler = StandardScaler() if scaler == "StandardScaler" else scaler

@@ -99,8 +99,12 @@ export OMP_NUM_THREADS={self.omp_threads}
             f"-m {self.model_path} "
             f"-o {abs_output_dir} "
             f"--head {self.head} "
-            f"2>&1 | tee eval_desc.log"
         )
+        
+        # Only use tee for local backend to avoid redundant logs in Slurm mode
+        # In Slurm mode, output is captured via #SBATCH -o (output_log)
+        if self.backend == "local":
+            cmd += f"2>&1 | tee eval_desc.log"
         
         # Create JobConfig
         job_name = f"dpa_evaldesc_{os.path.basename(abs_data_path)}"
@@ -114,7 +118,7 @@ export OMP_NUM_THREADS={self.omp_threads}
             job_name=job_name,
             command=cmd,
             env_setup=self.env_setup,
-            output_log="eval_desc.out",
+            output_log="eval_desc.log", # Unified log name
             error_log="eval_desc.err",
             **task_slurm_config
         )
@@ -272,7 +276,7 @@ if __name__ == "__main__":
                 job_name=job_name,
                 command=cmd,
                 env_setup=self.env_setup,
-                output_log="eval_desc_py.out",
+                output_log="eval_desc_py.log",
                 error_log="eval_desc_py.err",
                 **task_slurm_config
             )

@@ -40,11 +40,6 @@ class FeatureWorkflow:
         self.slurm_config = self.submission_config.get("slurm_config", {})
 
     def _setup_logger(self):
-        logging.basicConfig(
-            level=logging.INFO,
-            format='%(asctime)s - %(levelname)s - %(message)s',
-            datefmt='%Y-%m-%d %H:%M:%S'
-        )
         self.logger = logging.getLogger(__name__)
 
     def run(self):

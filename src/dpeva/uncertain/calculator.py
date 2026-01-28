@@ -5,6 +5,7 @@ class UQCalculator:
     """Calculates Uncertainty Quantification (UQ) metrics from model predictions."""
 
     def __init__(self):
+        """Initializes the UQCalculator."""
         pass
 
     def compute_qbc_rnd(self, predictions_0, predictions_1, predictions_2, predictions_3):
@@ -111,3 +112,57 @@ class UQCalculator:
         
         uq_rnd_rescaled = scaler_qbc.inverse_transform(uq_rnd_scaled.reshape(-1, 1)).flatten()
         return uq_rnd_rescaled
+
+    def calculate_trust_lo(self, data, ratio=0.5, grid_size=1000, bound=(0, 2.0)):
+        """
+        Automatically determines the lower bound of the trust region based on KDE.
+        Finds the x-value on the right side of the peak where density drops to ratio * peak_density.
+        
+        Args:
+            data: The uncertainty data (1D array).
+            ratio: The ratio of peak density to define the cutoff (default 0.5).
+            grid_size: Number of points for KDE evaluation grid.
+            bound: Tuple of (min, max) for the grid range.
+            
+        Returns:
+            float: The calculated uq_trust_lo value.
+        """
+        from scipy.stats import gaussian_kde
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        # Filter valid data within bounds for KDE
+        valid_mask = (data >= bound[0]) & (data <= bound[1])
+        clean_data = data[valid_mask]
+        
+        if len(clean_data) < 2:
+            return None # Return None to signal fallback
+            
+        try:
+            kde = gaussian_kde(clean_data)
+            x_grid = np.linspace(bound[0], bound[1], grid_size)
+            y_grid = kde(x_grid)
+            
+            # Find peak
+            peak_idx = np.argmax(y_grid)
+            peak_density = y_grid[peak_idx]
+            target_density = peak_density * ratio
+            
+            # Search to the right of the peak
+            right_side = y_grid[peak_idx:]
+            
+            # Find indices where density is below target
+            below_target = np.where(right_side < target_density)[0]
+            
+            if len(below_target) > 0:
+                # The first point on the right
+                idx_offset = below_target[0]
+                final_idx = peak_idx + idx_offset
+                return float(x_grid[final_idx])
+            else:
+                # If never drops below target within bound, return the bound
+                return float(bound[1])
+        except Exception as e:
+            # Fallback in case of KDE failure (e.g. singular matrix)
+            logger.warning(f"KDE calculation failed ({e}).")
+            return None

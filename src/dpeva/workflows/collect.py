@@ -20,6 +20,23 @@ class CollectionWorkflow:
     """
 
     def __init__(self, config):
+        """
+        Initialize the Collection Workflow.
+
+        Args:
+            config (dict): Configuration dictionary containing:
+                - project: Project name/directory.
+                - uq_select_scheme: UQ filtering scheme (e.g., 'tangent_lo').
+                - testing_dir/head: Path components for test results.
+                - desc_dir/filename: Path components for descriptors.
+                - testdata_dir: Path to test data (ground truth/structures).
+                - uq_trust_mode: 'manual' or 'auto'.
+                - uq_trust_ratio/width: Global UQ parameters.
+                - uq_qbc_trust_lo/hi/ratio/width: QbC specific parameters.
+                - uq_rnd_rescaled_trust_lo/hi/ratio/width: RND specific parameters.
+                - num_selection: Total number of structures to select.
+                - direct_k: Number of clusters for DIRECT sampling.
+        """
         self.config = config
         self._setup_logger()
         self._validate_config()
@@ -45,44 +62,122 @@ class CollectionWorkflow:
         self._ensure_dirs()
         
         # UQ Parameters
-        self.uq_qbc_trust_lo = config.get("uq_qbc_trust_lo", 0.12)
-        self.uq_qbc_trust_hi = config.get("uq_qbc_trust_hi", 0.22)
-        self.uq_rnd_trust_lo = config.get("uq_rnd_rescaled_trust_lo", self.uq_qbc_trust_lo)
-        self.uq_rnd_trust_hi = config.get("uq_rnd_rescaled_trust_hi", self.uq_qbc_trust_hi)
+        self.uq_trust_mode = config.get("uq_trust_mode", "manual")
+        
+        # 1. Resolve Global Defaults
+        self.global_trust_ratio = config.get("uq_trust_ratio", 0.33)
+        self.global_trust_width = config.get("uq_trust_width", 0.25)
+        
+        # 2. Resolve QbC Parameters
+        self.uq_qbc_params = {
+            "ratio": config.get("uq_qbc_trust_ratio", self.global_trust_ratio),
+            "width": config.get("uq_qbc_trust_width", self.global_trust_width),
+            "lo": config.get("uq_qbc_trust_lo"),
+            "hi": config.get("uq_qbc_trust_hi")
+        }
+        if self.uq_qbc_params["lo"] is None:
+             self.uq_qbc_params["lo"] = 0.12
+             
+        self._validate_and_fill_trust_params(self.uq_qbc_params, "uq_qbc")
+        
+        # Map back to instance variables for compatibility
+        self.uq_qbc_trust_lo = self.uq_qbc_params["lo"]
+        self.uq_qbc_trust_hi = self.uq_qbc_params["hi"]
+        
+        # 3. Resolve RND Parameters
+        rnd_lo_default = config.get("uq_rnd_rescaled_trust_lo")
+        if rnd_lo_default is None:
+            rnd_lo_default = self.uq_qbc_trust_lo
+            
+        self.uq_rnd_params = {
+            "ratio": config.get("uq_rnd_rescaled_trust_ratio", self.global_trust_ratio),
+            "width": config.get("uq_rnd_rescaled_trust_width", self.global_trust_width),
+            "lo": rnd_lo_default,
+            "hi": config.get("uq_rnd_rescaled_trust_hi")
+        }
+        
+        self._validate_and_fill_trust_params(self.uq_rnd_params, "uq_rnd")
+        
+        self.uq_rnd_trust_lo = self.uq_rnd_params["lo"]
+        self.uq_rnd_trust_hi = self.uq_rnd_params["hi"]
         
         # Sampling Parameters
         self.num_selection = config.get("num_selection", 100)
         self.direct_k = config.get("direct_k", 1)
         self.direct_thr_init = config.get("direct_thr_init", 0.5)
 
-    def _setup_logger(self):
-        # Force reconfiguration of logging
-        root = logging.getLogger()
-        if root.handlers:
-            for handler in root.handlers[:]:
-                root.removeHandler(handler)
+    def _validate_and_fill_trust_params(self, params, name):
+        """
+        Validates consistency between lo, hi, and width.
+        Fills missing values if possible.
+
+        Args:
+            params (dict): Dictionary with keys 'lo', 'hi', 'width'.
+            name (str): Name of the parameter set (for logging).
+        """
+        lo = params.get("lo")
+        hi = params.get("hi")
+        width = params.get("width")
+        
+        if lo is not None and hi is not None:
+            # Both Lo and Hi specified -> Check width consistency
+            calculated_width = hi - lo
+            if width is not None:
+                if abs(calculated_width - width) > 1e-5:
+                     explicit_width_key = f"{name}_trust_width"
+                     global_width_key = "uq_trust_width"
+                     
+                     has_explicit_width = (explicit_width_key in self.config) or (global_width_key in self.config)
+                     
+                     if has_explicit_width:
+                         self.logger.error(f"Configuration Conflict in {name}: lo={lo}, hi={hi} implies width={calculated_width:.4f}, "
+                                           f"but width is set to {width:.4f}")
+                         raise ValueError(f"Configuration Conflict in {name}: lo + width != hi")
+                     else:
+                         # No explicit width, so we update the derived width
+                         params["width"] = calculated_width
+                         self.logger.info(f"{name}: Derived width {calculated_width:.4f} from lo={lo}, hi={hi}")
+
+        elif lo is not None and hi is None:
+            # Lo specified, Hi missing -> Use width to calculate Hi
+            if width is not None:
+                params["hi"] = lo + width
+                self.logger.info(f"{name}: Calculated hi={params['hi']:.4f} from lo={lo}, width={width}")
+            else:
+                pass
                 
-        logging.basicConfig(
-            level=logging.INFO,
-            format='%(asctime)s - %(levelname)s - %(message)s',
-            datefmt='%Y-%m-%d %H:%M:%S',
-            filemode='w',
-            filename=self.config.get("log_filename", "UQ-DIRECT-selection.log"),
-        )
+        elif lo is None and hi is not None:
+             # Hi specified, Lo missing -> Use width to calculate Lo
+             if width is not None:
+                 params["lo"] = hi - width
+                 self.logger.info(f"{name}: Calculated lo={params['lo']:.4f} from hi={hi}, width={width}")
+        
+    def _setup_logger(self):
+        """Sets up the logging configuration."""
         self.logger = logging.getLogger(__name__)
 
     def _validate_config(self):
+        """Validates that necessary configuration paths exist."""
         # Basic validation
         if not os.path.exists(self.config["project"]):
             self.logger.error(f"Project directory {self.config['project']} not found!")
             raise ValueError(f"Project directory {self.config['project']} not found!")
 
     def _ensure_dirs(self):
+        """Creates necessary output directories if they don't exist."""
         for d in [self.view_savedir, self.dpdata_savedir, self.df_savedir]:
             if not os.path.exists(d):
                 os.makedirs(d)
 
     def run(self):
+        """
+        Executes the main collection workflow:
+        1. Load prediction results and calculate UQ.
+        2. Filter data based on UQ thresholds (manual or auto).
+        3. Visualize UQ distributions and filtering results.
+        4. Perform DIRECT sampling on candidate structures.
+        5. Export sampled structures as dpdata.
+        """
         self.logger.info(f"Initializing selection in {self.project} ---")
         
         # 1. Load Data & Calculate UQ
@@ -105,6 +200,40 @@ class CollectionWorkflow:
         
         self.logger.info("Aligning UQ-RND to UQ-QbC by RobustScaler (Median/IQR alignment)")
         uq_rnd_rescaled = calculator.align_scales(uq_results["uq_qbc_for"], uq_results["uq_rnd_for"])
+        
+        # Auto-calculate thresholds if mode is auto
+        if self.uq_trust_mode == "auto":
+            self.logger.info(f"UQ Trust Mode is AUTO.")
+            
+            # Calculate for QbC
+            _qbc_ratio = self.uq_qbc_params["ratio"]
+            _qbc_width = self.uq_qbc_params["width"]
+            
+            self.logger.info(f"Calculating QbC thresholds with ratio={_qbc_ratio} and width={_qbc_width}")
+            calc_lo_qbc = calculator.calculate_trust_lo(uq_results["uq_qbc_for"], ratio=_qbc_ratio)
+            if calc_lo_qbc is not None:
+                self.uq_qbc_trust_lo = calc_lo_qbc
+                self.logger.info(f"Auto-calculated QbC Trust Lo: {self.uq_qbc_trust_lo:.4f}")
+            else:
+                self.logger.warning(f"Auto-calculation for QbC failed. Fallback to manual Trust Lo: {self.uq_qbc_trust_lo:.4f}")
+                
+            self.uq_qbc_trust_hi = self.uq_qbc_trust_lo + _qbc_width
+            self.logger.info(f"Final QbC Trust Range: [{self.uq_qbc_trust_lo:.4f}, {self.uq_qbc_trust_hi:.4f}]")
+            
+            # Calculate for RND Rescaled
+            _rnd_ratio = self.uq_rnd_params["ratio"]
+            _rnd_width = self.uq_rnd_params["width"]
+            
+            self.logger.info(f"Calculating RND thresholds with ratio={_rnd_ratio} and width={_rnd_width}")
+            calc_lo_rnd = calculator.calculate_trust_lo(uq_rnd_rescaled, ratio=_rnd_ratio)
+            if calc_lo_rnd is not None:
+                self.uq_rnd_trust_lo = calc_lo_rnd
+                self.logger.info(f"Auto-calculated RND-rescaled Trust Lo: {self.uq_rnd_trust_lo:.4f}")
+            else:
+                self.logger.warning(f"Auto-calculation for RND-rescaled failed. Fallback to manual Trust Lo: {self.uq_rnd_trust_lo:.4f}")
+                
+            self.uq_rnd_trust_hi = self.uq_rnd_trust_lo + _rnd_width
+            self.logger.info(f"Final RND-rescaled Trust Range: [{self.uq_rnd_trust_lo:.4f}, {self.uq_rnd_trust_hi:.4f}]")
         
         # Stats for UQ variables
         self.logger.info("Calculating statistics for UQ variables (QbC, RND, RND_rescaled)")
@@ -143,26 +272,22 @@ class CollectionWorkflow:
             self.logger.info("Plotting and saving the figures of UQ-force-rescaled vs force diff")
             vis.plot_uq_vs_error(uq_results["uq_qbc_for"], uq_rnd_rescaled, uq_results["diff_maxf_0_frame"], rescaled=True)
             
-            self.logger.info("Calculating the difference between UQ-qbc and UQ-rnd-rescaled")
-            self.logger.info("Plotting and saving the figures of UQ-diff")
-            vis.plot_uq_diff_parity(uq_results["uq_qbc_for"], uq_rnd_rescaled, uq_results["diff_maxf_0_frame"])
+        self.logger.info("Calculating the difference between UQ-qbc and UQ-rnd-rescaled")
+        self.logger.info("Plotting and saving the figures of UQ-diff")
+        vis.plot_uq_diff_parity(uq_results["uq_qbc_for"], uq_rnd_rescaled, 
+                                diff_maxf=uq_results["diff_maxf_0_frame"] if has_ground_truth else None)
         
-        self.logger.info("Plotting and saving the figures of UQ-qbc-force and UQ-rnd-force-rescaled vs force diff")
-        # Creating temp df for visualization
-        df_temp = pd.DataFrame({
-            "uq_qbc_for": uq_results["uq_qbc_for"],
-            "uq_rnd_for_rescaled": uq_rnd_rescaled,
-            "uq_rnd_for": uq_results["uq_rnd_for"],
-        })
         if has_ground_truth:
-            df_temp["diff_maxf_0_frame"] = uq_results["diff_maxf_0_frame"]
-        else:
-            # Add dummy column for hue if no ground truth
-            df_temp["diff_maxf_0_frame"] = np.zeros(len(df_temp))
-            
-        vis.plot_2d_uq_scatter(df_temp, self.uq_scheme, 
-                              self.uq_qbc_trust_lo, self.uq_qbc_trust_hi, 
-                              self.uq_rnd_trust_lo, self.uq_rnd_trust_hi)
+            self.logger.info("Plotting and saving the figures of UQ-qbc-force and UQ-rnd-force-rescaled vs force diff")
+            # Creating temp df for visualization
+            df_temp = pd.DataFrame({
+                "uq_qbc_for": uq_results["uq_qbc_for"],
+                "uq_rnd_for_rescaled": uq_rnd_rescaled,
+                "diff_maxf_0_frame": uq_results["diff_maxf_0_frame"]
+            })
+            vis.plot_uq_fdiff_scatter(df_temp, self.uq_scheme, 
+                                  self.uq_qbc_trust_lo, self.uq_qbc_trust_hi, 
+                                  self.uq_rnd_trust_lo, self.uq_rnd_trust_hi)
 
         # 3. Data Preparation & Filtering
         self.logger.info("Dealing with Selection in Target dpdata")
@@ -262,7 +387,7 @@ class CollectionWorkflow:
         
         # Visualize Selection
         self.logger.info("Plotting and saving the figure of UQ-identity in QbC-RND 2D space")
-        vis.plot_2d_uq_scatter(df_uq, self.uq_scheme, 
+        vis.plot_uq_identity_scatter(df_uq, self.uq_scheme, 
                               self.uq_qbc_trust_lo, self.uq_qbc_trust_hi, 
                               self.uq_rnd_trust_lo, self.uq_rnd_trust_hi)
                               

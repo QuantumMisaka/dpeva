@@ -59,11 +59,6 @@ class TrainingWorkflow:
         self.training_data_path = config.get("training_data_path")
 
     def _setup_logger(self):
-        logging.basicConfig(
-            level=logging.INFO,
-            format='%(asctime)s - %(levelname)s - %(message)s',
-            datefmt='%Y-%m-%d %H:%M:%S'
-        )
         self.logger = logging.getLogger(__name__)
 
     def _determine_finetune_heads(self):

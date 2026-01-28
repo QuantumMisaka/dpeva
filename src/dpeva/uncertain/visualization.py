@@ -10,6 +10,13 @@ class UQVisualizer:
     """Handles visualization of Uncertainty Quantification (UQ) and sampling results."""
 
     def __init__(self, save_dir, dpi=150):
+        """
+        Initializes the UQVisualizer.
+
+        Args:
+            save_dir (str): Directory to save plots.
+            dpi (int): DPI for saved figures (default 150).
+        """
         self.save_dir = save_dir
         self.dpi = dpi
         
@@ -115,7 +122,7 @@ class UQVisualizer:
         plt.savefig(f"{self.save_dir}/{filename}", dpi=self.dpi)
         plt.close()
 
-    def plot_uq_diff_parity(self, uq_qbc, uq_rnd_rescaled, diff_maxf, rescaled=False):
+    def plot_uq_diff_parity(self, uq_qbc, uq_rnd_rescaled, diff_maxf=None):
         """Plots difference between QbC and RND vs Error."""
         uq_diff = np.abs(uq_rnd_rescaled - uq_qbc)
         
@@ -132,59 +139,99 @@ class UQVisualizer:
         plt.close()
 
         # UQ Diff vs Force Diff
-        plt.figure(figsize=(8, 6))
-        plt.scatter(uq_diff, diff_maxf, color="blue", label="UQ-diff-force", s=20)
-        plt.title("UQ-diff vs Force Diff")
-        plt.xlabel("UQ-diff Value")
-        plt.ylabel("True Max Force Diff")
-        plt.legend()
-        plt.grid(True)
-        plt.savefig(f"{self.save_dir}/UQ-diff-fdiff-parity.png", dpi=self.dpi)
-        plt.close()
+        if diff_maxf is not None:
+            plt.figure(figsize=(8, 6))
+            plt.scatter(uq_diff, diff_maxf, color="blue", label="UQ-diff-force", s=20)
+            plt.title("UQ-diff vs Force Diff")
+            plt.xlabel("UQ-diff Value")
+            plt.ylabel("True Max Force Diff")
+            plt.legend()
+            plt.grid(True)
+            plt.savefig(f"{self.save_dir}/UQ-diff-fdiff-parity.png", dpi=self.dpi)
+            plt.close()
 
-    def plot_2d_uq_scatter(self, df_uq, scheme, trust_lo, trust_hi, rnd_trust_lo, rnd_trust_hi):
-        """Plots 2D scatter of QbC vs RND with filtering boundaries."""
-        # 1. Scatter with Max Force Diff as hue
+    def plot_uq_fdiff_scatter(self, df_uq, scheme, trust_lo, trust_hi, rnd_trust_lo, rnd_trust_hi):
+        """Plots 2D scatter of QbC vs RND with Max Force Diff as hue."""
+        if "diff_maxf_0_frame" not in df_uq.columns:
+            logging.getLogger(__name__).warning("diff_maxf_0_frame not in dataframe, skipping UQ-force-qbc-rnd-fdiff-scatter.png")
+            return
+
         plt.figure(figsize=(8, 6))
-        
-        hue_col = "diff_maxf_0_frame"
-        if hue_col not in df_uq.columns:
-            hue_col = None
-            
         sns.scatterplot(data=df_uq, 
                         x="uq_qbc_for", 
                         y="uq_rnd_for_rescaled", 
-                        hue=hue_col, 
-                        palette="Reds" if hue_col else None,
+                        hue="diff_maxf_0_frame", 
+                        palette="Reds",
                         alpha=0.8,
                         s=60)
-        title = "UQ-QbC and UQ-RND"
-        if hue_col:
-            title += " vs Max Force Diff"
-        plt.title(title, fontsize=14)
+        
+        plt.title("UQ-QbC and UQ-RND vs Max Force Diff", fontsize=14)
         self._setup_2d_plot_axes(trust_lo, trust_hi, rnd_trust_lo, rnd_trust_hi)
         self._draw_boundary(scheme, trust_lo, trust_hi, rnd_trust_lo, rnd_trust_hi)
-        if hue_col:
-            plt.legend(title="Max Force Diff", fontsize=10)
+        plt.legend(title="Max Force Diff", fontsize=10)
         plt.savefig(f"{self.save_dir}/UQ-force-qbc-rnd-fdiff-scatter.png", dpi=self.dpi)
         plt.close()
 
-        # 2. Scatter with Identity as hue
+    def plot_uq_identity_scatter(self, df_uq, scheme, trust_lo, trust_hi, rnd_trust_lo, rnd_trust_hi):
+        """Plots 2D scatter of QbC vs RND with Identity as hue."""
+        if "uq_identity" not in df_uq.columns:
+            logging.getLogger(__name__).warning("uq_identity not in dataframe, skipping UQ-force-qbc-rnd-identity-scatter.png")
+            return
+
+        # Full plot
+        plt.figure(figsize=(8, 6))
+        sns.scatterplot(data=df_uq, 
+                        x="uq_qbc_for", 
+                        y="uq_rnd_for_rescaled", 
+                        hue="uq_identity", 
+                        palette={"candidate": "orange", "accurate": "green", "failed": "red"},
+                        alpha=0.5,
+                        s=60)
+        plt.title("UQ QbC+RND Selection View", fontsize=14)
+        self._setup_2d_plot_axes(trust_lo, trust_hi, rnd_trust_lo, rnd_trust_hi)
+        self._draw_boundary(scheme, trust_lo, trust_hi, rnd_trust_lo, rnd_trust_hi)
+        plt.legend(title="Identity", fontsize=10)
+        plt.savefig(f"{self.save_dir}/UQ-force-qbc-rnd-identity-scatter.png", dpi=self.dpi)
+        plt.close()
+        
+        # Truncated plot [0, 2]
+        df_uq_trunc = df_uq[(df_uq["uq_qbc_for"] >= 0) & (df_uq["uq_qbc_for"] <= 2) & 
+                            (df_uq["uq_rnd_for_rescaled"] >= 0) & (df_uq["uq_rnd_for_rescaled"] <= 2)]
+        if len(df_uq_trunc) < len(df_uq):
+            logging.getLogger(__name__).warning(f"UQ-identity-scatter: Truncating {len(df_uq) - len(df_uq_trunc)} structures outside [0, 2] for visualization.")
+        
+        plt.figure(figsize=(8, 6))
+        sns.scatterplot(data=df_uq_trunc, 
+                        x="uq_qbc_for", 
+                        y="uq_rnd_for_rescaled", 
+                        hue="uq_identity", 
+                        palette={"candidate": "orange", "accurate": "green", "failed": "red"},
+                        alpha=0.5,
+                        s=60)
+        plt.title("UQ QbC+RND Selection View (Truncated [0, 2])", fontsize=14)
+        
+        plt.xlabel("UQ-QbC Value", fontsize=12)
+        plt.ylabel("UQ-RND-rescaled Value", fontsize=12)
+        plt.grid(True)
+        ax = plt.gca()
+        # Adaptive locator for truncated view
+        x_major_locator = mtick.MultipleLocator(0.1)
+        y_major_locator = mtick.MultipleLocator(0.1)
+        ax.xaxis.set_major_locator(x_major_locator)
+        ax.yaxis.set_major_locator(y_major_locator)
+        
+        self._draw_boundary(scheme, trust_lo, trust_hi, rnd_trust_lo, rnd_trust_hi)
+        plt.legend(title="Identity", fontsize=10)
+        plt.savefig(f"{self.save_dir}/UQ-force-qbc-rnd-identity-scatter-truncated.png", dpi=self.dpi)
+        plt.close()
+
+    def plot_2d_uq_scatter(self, df_uq, scheme, trust_lo, trust_hi, rnd_trust_lo, rnd_trust_hi):
+        """Deprecated: Use plot_uq_fdiff_scatter and plot_uq_identity_scatter instead."""
+        if "diff_maxf_0_frame" in df_uq.columns:
+            self.plot_uq_fdiff_scatter(df_uq, scheme, trust_lo, trust_hi, rnd_trust_lo, rnd_trust_hi)
+        
         if "uq_identity" in df_uq.columns:
-            plt.figure(figsize=(8, 6))
-            sns.scatterplot(data=df_uq, 
-                            x="uq_qbc_for", 
-                            y="uq_rnd_for_rescaled", 
-                            hue="uq_identity", 
-                            palette={"candidate": "orange", "accurate": "green", "failed": "red"},
-                            alpha=0.5,
-                            s=60)
-            plt.title("UQ QbC+RND Selection View", fontsize=14)
-            self._setup_2d_plot_axes(trust_lo, trust_hi, rnd_trust_lo, rnd_trust_hi)
-            self._draw_boundary(scheme, trust_lo, trust_hi, rnd_trust_lo, rnd_trust_hi)
-            plt.legend(title="Identity", fontsize=10)
-            plt.savefig(f"{self.save_dir}/UQ-force-qbc-rnd-identity-scatter.png", dpi=self.dpi)
-            plt.close()
+            self.plot_uq_identity_scatter(df_uq, scheme, trust_lo, trust_hi, rnd_trust_lo, rnd_trust_hi)
 
     def plot_candidate_vs_error(self, df_uq, df_candidate):
         """Plots Candidate UQ vs Error."""

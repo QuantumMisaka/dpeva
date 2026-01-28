@@ -7,11 +7,7 @@ import logging
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.cluster import Birch
 
-logging.basicConfig(
-    format='%(asctime)s - %(levelname)s - %(message)s',
-)
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
 
 
 class BirchClustering(BaseEstimator, TransformerMixin):

@@ -57,11 +57,6 @@ class InferenceWorkflow:
         self.omp_threads = config.get("omp_threads", 2)
         
     def _setup_logger(self):
-        logging.basicConfig(
-            level=logging.INFO,
-            format='%(asctime)s - %(levelname)s - %(message)s',
-            datefmt='%Y-%m-%d %H:%M:%S'
-        )
         self.logger = logging.getLogger(__name__)
 
     def _get_default_env_setup(self):
@@ -118,8 +113,10 @@ export OMP_NUM_THREADS={self.omp_threads}
                 f"-m {abs_model_path} "
                 f"-d results "
                 f"--head {self.head} "
-                f"2>&1 | tee test.log"
             )
+            
+            if self.backend == "local":
+                cmd += f"2>&1 | tee test.log"
             
             # Create JobConfig
             job_name = f"dp_test_{i}"
@@ -127,7 +124,7 @@ export OMP_NUM_THREADS={self.omp_threads}
                 job_name=job_name,
                 command=cmd,
                 env_setup=final_env_setup,
-                output_log="test_job.out",
+                output_log="test_job.log",
                 error_log="test_job.err",
                 # Slurm specific params from config
                 partition=self.slurm_config.get("partition", "partition"),

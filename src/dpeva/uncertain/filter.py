@@ -5,6 +5,19 @@ class UQFilter:
 
     def __init__(self, scheme="tangent_lo", trust_lo=0.12, trust_hi=0.22, 
                  rnd_trust_lo=None, rnd_trust_hi=None):
+        """
+        Initializes the UQFilter.
+
+        Args:
+            scheme (str): Filtering scheme name (e.g., "tangent_lo", "strict").
+            trust_lo (float): Lower bound for QbC trust region.
+            trust_hi (float): Upper bound for QbC trust region.
+            rnd_trust_lo (float, optional): Lower bound for RND trust region. Defaults to trust_lo.
+            rnd_trust_hi (float, optional): Upper bound for RND trust region. Defaults to trust_hi.
+
+        Raises:
+            ValueError: If scheme is not supported or trust bounds are invalid.
+        """
         self.scheme = scheme
         self.trust_lo = trust_lo
         self.trust_hi = trust_hi
