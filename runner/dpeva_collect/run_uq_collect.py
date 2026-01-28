@@ -34,14 +34,11 @@ def main():
         "testdata_dir": "./other_dpdata_test",
         "testdata_fmt": "deepmd/npy",
         "testdata_string": "*",
-        "fig_dpi": 150,
+        "fig_dpi": 300,
         "root_savedir": "dpeva_uq_post",
-        
-        # UQ Thresholds
-        "uq_qbc_trust_lo": 0.15,
-        "uq_qbc_trust_hi": 0.40,
-        "uq_rnd_rescaled_trust_lo": 0.15,
-        "uq_rnd_rescaled_trust_hi": 0.40,
+        "uq_trust_mode": "auto",
+        "uq_trust_ratio": 0.33,
+        "uq_trust_width": 0.25,
         
         # Sampling
         "num_selection": 100,
