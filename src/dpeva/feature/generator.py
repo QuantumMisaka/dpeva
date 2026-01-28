@@ -320,14 +320,17 @@ if __name__ == "__main__":
             
         desc_list = []
         if data_format == "deepmd/npy/mixed":
+            self.logger.warning(f"mixed format descriptor calculation is wrong in python mode")
             for onesys in onedata:
                 nopbc = onesys.data.get('nopbc', False)
                 one_desc_list = self._get_desc_by_batch(onesys, nopbc)
                 desc_list.extend(one_desc_list)
-        else:
+        elif data_format == "deepmd/npy":
             nopbc = onedata.data.get('nopbc', False)
             desc_list = self._get_desc_by_batch(onedata, nopbc)
-            
+        else:
+            raise ValueError(f"Unknown data format: {data_format}, supported: 'deepmd/npy', 'deepmd/npy/mixed'")
+        
         desc = np.concatenate(desc_list, axis=0)
         
         if output_mode == "structural":
