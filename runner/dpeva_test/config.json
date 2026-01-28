@@ -1,5 +1,5 @@
 {
-    "test_data_path": "./other_dpdata_test",
+    "data_path": "./other_dpdata_test",
     "output_basedir": "./",
     "task_name": "test_val",
     "head": "Hybrid_Perovskite",

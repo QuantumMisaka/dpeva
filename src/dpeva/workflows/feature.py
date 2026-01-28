@@ -14,12 +14,12 @@ class FeatureWorkflow:
         self.config = config
         self._setup_logger()
         
-        self.datadir = config.get("datadir")
+        self.data_path = config.get("data_path")
         self.modelpath = config.get("modelpath")
         self.format = config.get("format", "deepmd/npy")
         self.output_mode = config.get("output_mode", "atomic") # 'atomic' or 'structural'
         
-        self.savedir = config.get("savedir", f"desc-{os.path.basename(self.modelpath).split('.')[0]}-{os.path.basename(self.datadir)}")
+        self.savedir = config.get("savedir", f"desc-{os.path.basename(self.modelpath).split('.')[0]}-{os.path.basename(self.data_path)}")
         
         self.head = config.get("head", "OC20M")
         self.batch_size = config.get("batch_size", 1000)
@@ -46,8 +46,8 @@ class FeatureWorkflow:
         """Execute the feature generation workflow."""
         self.logger.info("Initializing Feature Generation Workflow")
         
-        if not os.path.exists(self.datadir):
-            self.logger.error(f"Data directory not found: {self.datadir}")
+        if not os.path.exists(self.data_path):
+            self.logger.error(f"Data directory not found: {self.data_path}")
             return
             
         # Initialize Generator
@@ -85,13 +85,13 @@ class FeatureWorkflow:
         if self.mode == "cli":
             self.logger.info(f"Running in CLI mode with backend: {self.backend}")
             # Submit single job for the whole directory
-            generator.run_cli_generation(self.datadir, self.savedir)
+            generator.run_cli_generation(self.data_path, self.savedir)
             self.logger.info(f"Job submitted. Output directory: {self.savedir}")
             
         elif self.mode == "python": # Python Native mode
             self.logger.info(f"Running in Python Native mode (backend: {self.backend})")
             generator.run_python_generation(
-                data_path=self.datadir,
+                data_path=self.data_path,
                 output_dir=self.savedir,
                 data_format=self.format,
                 output_mode=self.output_mode

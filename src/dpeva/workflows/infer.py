@@ -21,7 +21,7 @@ class InferenceWorkflow:
         self._setup_logger()
         
         # Data and Model Configuration
-        self.test_data_path = config.get("test_data_path")
+        self.data_path = config.get("data_path")
         self.output_basedir = config.get("output_basedir", "./")
         
         # Auto-infer models_paths from output_basedir structure
@@ -68,8 +68,8 @@ export OMP_NUM_THREADS={self.omp_threads}
     def run(self):
         self.logger.info(f"Initializing Inference Workflow (Backend: {self.backend})")
         
-        if not self.test_data_path or not os.path.exists(self.test_data_path):
-            self.logger.error(f"Test data path not found: {self.test_data_path}")
+        if not self.data_path or not os.path.exists(self.data_path):
+            self.logger.error(f"Test data path not found: {self.data_path}")
             return
 
         if not self.models_paths:
@@ -102,7 +102,7 @@ export OMP_NUM_THREADS={self.omp_threads}
             os.makedirs(work_dir, exist_ok=True)
             
             # Construct Command
-            abs_data_path = os.path.abspath(self.test_data_path)
+            abs_data_path = os.path.abspath(self.data_path)
             abs_model_path = os.path.abspath(model_path)
             
             # Command: dp --pt test ...

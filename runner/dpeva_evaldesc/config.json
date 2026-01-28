@@ -1,5 +1,5 @@
 {
-    "datadir": "other_dpdata_test",
+    "data_path": "other_dpdata_test",
     "modelpath": "DPA-3.1-3M.pt",
     "savedir": "desc_pool",
     "head": "Hybrid_Perovskite",

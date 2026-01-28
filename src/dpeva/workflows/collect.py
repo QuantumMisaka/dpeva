@@ -5,7 +5,6 @@ import logging
 import numpy as np
 import pandas as pd
 import dpdata
-from copy import deepcopy
 
 from dpeva.io.dataproc import DPTestResults
 from dpeva.sampling.direct import BirchClustering, DIRECTSampler, SelectKFromClusters
@@ -162,9 +161,15 @@ class CollectionWorkflow:
     def _validate_config(self):
         """Validates that necessary configuration paths exist."""
         # Basic validation
-        if not os.path.exists(self.config["project"]):
-            self.logger.error(f"Project directory {self.config['project']} not found!")
-            raise ValueError(f"Project directory {self.config['project']} not found!")
+        if not os.path.exists(self.config.get("project", ".")):
+            self.logger.error(f"Project directory {self.config.get('project')} not found!")
+            raise ValueError(f"Project directory {self.config.get('project')} not found!")
+            
+        required_keys = ["desc_dir", "testdata_dir"]
+        for key in required_keys:
+            if not self.config.get(key):
+                self.logger.error(f"Missing required configuration: {key}")
+                raise ValueError(f"Missing required configuration: {key}")
 
     def _ensure_dirs(self):
         """Creates necessary output directories if they don't exist."""

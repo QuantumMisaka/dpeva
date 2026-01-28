@@ -39,10 +39,8 @@ class TrainingWorkflow:
         
         # Base model configuration
         self.base_model_path = config.get("base_model_path")
-        if config.get("base_models_paths"):
-             self.logger.warning("base_models_paths is deprecated. Use base_model_path (str) instead.")
-             if not self.base_model_path:
-                 self.base_model_path = config.get("base_models_paths")[0]
+        if not self.base_model_path:
+             raise ValueError("base_model_path must be provided in config")
         
         # OMP Settings
         self.omp_threads = config.get("omp_threads", 12)

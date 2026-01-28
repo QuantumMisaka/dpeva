@@ -30,7 +30,6 @@ def main():
         "testing_dir": "test_val",
         "testing_head": "results",
         "desc_dir": "./desc_pool",
-        "desc_filename": "desc.npy",
         "testdata_dir": "./other_dpdata_test",
         "testdata_fmt": "deepmd/npy",
         
@@ -44,10 +43,7 @@ def main():
         # Sampling
         "num_selection": 100,
         "direct_k": 1,
-        "direct_thr_init": 0.5,
-        
-        # Logging
-        "log_filename": "UQ-DIRECT-selection.log"
+        "direct_thr_init": 0.5
     }
 
     if args.config:
