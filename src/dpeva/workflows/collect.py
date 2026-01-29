@@ -2,6 +2,7 @@ import os
 import shutil
 import glob
 import logging
+import sys
 import numpy as np
 import pandas as pd
 import dpdata
@@ -11,6 +12,8 @@ from dpeva.sampling.direct import BirchClustering, DIRECTSampler, SelectKFromClu
 from dpeva.uncertain.calculator import UQCalculator
 from dpeva.uncertain.filter import UQFilter
 from dpeva.uncertain.visualization import UQVisualizer
+from dpeva.submission.manager import JobManager
+from dpeva.submission.templates import JobConfig
 
 class CollectionWorkflow:
     """
@@ -35,6 +38,8 @@ class CollectionWorkflow:
                 - uq_rnd_rescaled_trust_lo/hi/ratio/width: RND specific parameters.
                 - num_selection: Total number of structures to select.
                 - direct_k: Number of clusters for DIRECT sampling.
+                - backend: 'local' or 'slurm' (default: 'local').
+                - slurm_config: Dict containing Slurm parameters (partition, qos, etc.).
         """
         self.config = config
         self._setup_logger()
@@ -42,6 +47,10 @@ class CollectionWorkflow:
         
         self.project = config.get("project", "stage9-2")
         self.uq_scheme = config.get("uq_select_scheme", "tangent_lo")
+        
+        # Backend Configuration
+        self.backend = config.get("backend", "local")
+        self.slurm_config = config.get("slurm_config", {})
         
         # Paths
         self.testing_dir = config.get("testing_dir", "test-val-npy")
@@ -64,7 +73,7 @@ class CollectionWorkflow:
         self._ensure_dirs()
         
         # UQ Parameters
-        self.uq_trust_mode = config.get("uq_trust_mode", "manual")
+        self.uq_trust_mode = config.get("uq_trust_mode")
         
         # 1. Resolve Global Defaults
         self.global_trust_ratio = config.get("uq_trust_ratio", 0.33)
@@ -335,6 +344,97 @@ class CollectionWorkflow:
                 pass
         return total_frames
 
+    def _submit_to_slurm(self):
+        """
+        Submits the workflow to Slurm backend.
+        Generates a frozen config, a python runner, and an sbatch script.
+        """
+        self.logger.info("Backend is set to 'slurm'. Preparing submission...")
+        
+        # 1. Prepare Frozen Config
+        # Force backend to local to prevent infinite recursion
+        job_config_dict = self.config.copy()
+        job_config_dict["backend"] = "local"
+        
+        config_filename = "collect_config_frozen.json"
+        # Use absolute path for safety
+        project_abs = os.path.abspath(self.project)
+        config_path = os.path.join(project_abs, config_filename)
+        
+        if not os.path.exists(project_abs):
+            os.makedirs(project_abs)
+            
+        with open(config_path, "w") as f:
+            import json
+            json.dump(job_config_dict, f, indent=4)
+        self.logger.info(f"Saved frozen configuration to {config_path}")
+        
+        # 2. Generate Python Runner Script
+        runner_script_name = "run_collect_slurm.py"
+        runner_script_path = os.path.join(project_abs, runner_script_name)
+        
+        runner_content = f'''import json
+import os
+import sys
+import logging
+from dpeva.workflows.collect import CollectionWorkflow
+
+# Setup logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
+def main():
+    config_path = "{config_path}"
+    print(f"Loading config from {{config_path}}")
+    
+    with open(config_path, "r") as f:
+        config = json.load(f)
+    
+    # Ensure backend is local
+    config["backend"] = "local"
+    
+    wf = CollectionWorkflow(config)
+    wf.run()
+
+if __name__ == "__main__":
+    main()
+'''
+        with open(runner_script_path, "w") as f:
+            f.write(runner_content)
+            
+        # 3. Generate Slurm Script via JobManager
+        # Defaults based on user request
+        partition = self.slurm_config.get("partition", "CPU-MISC")
+        ntasks = self.slurm_config.get("ntasks", 4)
+        qos = self.slurm_config.get("qos", "rush-cpu")
+        job_name = self.slurm_config.get("job_name", "dpeva_collect")
+        
+        # Construct command using current python executable to be safe
+        # Add -u for unbuffered output to see logs in real-time
+        command = f"{sys.executable} -u {runner_script_path}"
+        
+        job_conf = JobConfig(
+            command=command,
+            job_name=job_name,
+            partition=partition,
+            ntasks=ntasks,
+            qos=qos,
+            output_log=os.path.join(project_abs, "collect_slurm.out"),
+            error_log=os.path.join(project_abs, "collect_slurm.err"),
+            nodes=1 # Default
+        )
+        
+        # Add cpus_per_task if specified (though user asked for ntasks=4)
+        # We can add it if it's in slurm_config, defaulting to None/1
+        if "cpus_per_task" in self.slurm_config:
+            job_conf.custom_headers += f"\\n#SBATCH --cpus-per-task={self.slurm_config['cpus_per_task']}"
+            
+        manager = JobManager(mode="slurm")
+        sbatch_path = os.path.join(project_abs, "submit_collect.sbatch")
+        manager.generate_script(job_conf, sbatch_path)
+        
+        self.logger.info(f"Submitting job from {project_abs}")
+        manager.submit(sbatch_path, working_dir=project_abs)
+
     def run(self):
         """
         Executes the main collection workflow:
@@ -344,6 +444,10 @@ class CollectionWorkflow:
         4. Perform DIRECT sampling on candidate structures.
         5. Export sampled structures as dpdata.
         """
+        if self.backend == "slurm":
+            self._submit_to_slurm()
+            return
+
         self.logger.info(f"Initializing selection in {self.project} ---")
         
         # 1. Load Data & Calculate UQ
@@ -657,6 +761,26 @@ class CollectionWorkflow:
             all_features_viz = all_pca_features / explained_variance[:selected_PC_dim]
             viz_selected_indices = DIRECT_selected_indices
         
+        # Calculate PCA for ALL data (df_uq_desc) for visualization background
+        # Note: We must use the same PCA projection and scaling as all_features_viz
+        try:
+            self.logger.info("Projecting all data onto PCA space for visualization...")
+            all_desc_features = df_uq_desc[[col for col in df_desc.columns if col.startswith("desc_stru_")]].values
+            
+            # Use the fitted PCA from DIRECT_sampler
+            full_pca_features = DIRECT_sampler.pca.transform(all_desc_features)
+            
+            # Ensure dimension matches selected_PC_dim
+            if full_pca_features.shape[1] > selected_PC_dim:
+                full_pca_features = full_pca_features[:, :selected_PC_dim]
+                
+            # Apply the same scaling
+            full_features_viz = full_pca_features / explained_variance[:selected_PC_dim]
+            
+        except Exception as e:
+            self.logger.warning(f"Failed to project all data for visualization: {e}. Skipping background plot.")
+            full_features_viz = None
+
         df_final = df_candidate.iloc[DIRECT_selected_indices]
         
         self.logger.info(f"Saving df_uq_desc_selected_final dataframe to {self.df_savedir}/df_uq_desc_sampled-final.csv")
@@ -708,7 +832,9 @@ class CollectionWorkflow:
                                       viz_selected_indices, manual_selection_index,
                                       scores_DIRECT, scores_MS, 
                                       df_candidate, df_final.index,
-                                      n_candidates=n_candidates if use_joint_sampling else None)
+                                      n_candidates=n_candidates if use_joint_sampling else None,
+                                      full_features=full_features_viz)
+
         
         # Save Final PCA Data (Candidates Only)
         # Note: PCs_df returned by plot_pca_analysis might be Joint size if we are not careful.

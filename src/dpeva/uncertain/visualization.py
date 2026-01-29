@@ -256,7 +256,7 @@ class UQVisualizer:
         plt.close()
 
     def plot_pca_analysis(self, explained_variance, selected_PC_dim, all_features, direct_indices, random_indices,
-                          scores_direct, scores_random, df_uq, final_indices, n_candidates=None):
+                          scores_direct, scores_random, df_uq, final_indices, n_candidates=None, full_features=None):
         """
         Plots all PCA and DIRECT related figures.
         
@@ -270,6 +270,8 @@ class UQVisualizer:
             final_indices (list): Indices of finally selected candidates (relative to df_uq if n_candidates is None).
             n_candidates (int, optional): Number of candidate samples. If provided, assumes all_features 
                                           contains [Candidates; Training]. Used to distinguish markers.
+            full_features (np.ndarray, optional): PCA features for the entire dataset (including filtered out ones).
+                                                  If provided, plotted as background.
         """
         # 1. Explained Variance
         plt.figure(figsize=(8, 6))
@@ -297,7 +299,7 @@ class UQVisualizer:
         plt.yticks(np.linspace(0, 1.0, 6), size=12)
         plt.ylabel("Coverage score", size=14)
         plt.grid(True, axis='y', linestyle='-', alpha=0.6)
-        plt.legend(shadow=True, loc="lower right", fontsize=12)
+        plt.legend(shadow=True, loc="best", fontsize=12)
         plt.title("Coverage Score Analysis (Joint Space)", fontsize=16)
         plt.savefig(f"{self.save_dir}/coverage_score.png", dpi=self.dpi)
         plt.close()
@@ -306,54 +308,48 @@ class UQVisualizer:
         plt.figure(figsize=(12, 10))
         
         # Define consistent styles
-        style_train = {"color": "#C0C0C0", "alpha": 0.4, "s": 15, "marker": "."} # Increased alpha from 0.3
-        style_cand = {"color": "#4169E1", "alpha": 0.6, "s": 25, "marker": "*"}  # RoyalBlue
+        style_all = {"color": "#D3D3D3", "alpha": 0.3, "s": 15, "marker": "."} # Gray background for All Data
+        style_cand = {"color": "#4169E1", "alpha": 0.6, "s": 25, "marker": "*"}  # RoyalBlue for Candidate
         style_sel_new = {"color": "red", "edgecolors": "black", "linewidth": 0.8, "s": 100, "marker": "*"}
         
+        # Plot Full Background first if available
+        if full_features is not None:
+             plt.scatter(full_features[:, 0], full_features[:, 1], 
+                        label=f"All Data in Pool {len(full_features):,}", **style_all, zorder=0)
+
         if n_candidates is not None:
-            # Joint Mode Visualization
+            # Joint Mode Visualization: Simplify to show only Candidates and New Selection
             PCs_alldata = all_features
             
-            # Plot Training (Background)
-            training_pcs = PCs_alldata[n_candidates:]
-            if len(training_pcs) > 0:
-                plt.scatter(training_pcs[:, 0], training_pcs[:, 1], 
-                           label=f"Training {len(training_pcs):,}", **style_train)
-            
-            # Plot Candidates (Middle ground)
-            cand_mask = (df_uq["uq_identity"] == "candidate").values
-            acc_mask = (df_uq["uq_identity"] == "accurate").values
-            fail_mask = (df_uq["uq_identity"] == "failed").values
-            
+            # Plot Candidates Only (First n_candidates rows)
             pcs_cand = PCs_alldata[:n_candidates]
             
-            # Plot specific statuses if needed, or just general candidate pool
-            # For this summary view, we prioritize showing the pool structure
-            if np.any(cand_mask):
-                plt.scatter(pcs_cand[cand_mask, 0], pcs_cand[cand_mask, 1], 
-                           label=f"Candidate Pool {np.sum(cand_mask):,}", **style_cand)
+            if len(pcs_cand) > 0:
+                plt.scatter(pcs_cand[:, 0], pcs_cand[:, 1], 
+                           label=f"Candidate {len(pcs_cand):,}", **style_cand, zorder=2)
             
-            # Identify new candidates selected
+            # Identify new candidates selected (exclude training selection)
             new_cand_indices = [idx for idx in direct_indices if idx < n_candidates]
             
             if len(new_cand_indices) > 0:
                 plt.scatter(PCs_alldata[new_cand_indices, 0], PCs_alldata[new_cand_indices, 1], 
-                           label=f"Selected New {len(new_cand_indices)}", **style_sel_new, zorder=10)
+                           label=f"Final Selected {len(new_cand_indices)}", **style_sel_new, zorder=10)
 
         else:
-            # Legacy Mode (Candidate Only)
+            # Normal Mode (Candidate Only)
             PCs_alldata = all_features
+            
             plt.scatter(PCs_alldata[:, 0], PCs_alldata[:, 1], 
-                       label=f"All {len(df_uq):,}", **style_train) # Use train style for background
+                       label=f"Candidate {len(df_uq):,}", **style_cand, zorder=2) 
             
             plt.scatter(PCs_alldata[direct_indices, 0], PCs_alldata[direct_indices, 1], 
-                       label=f"Selected {len(direct_indices)}", **style_sel_new)
+                       label=f"Final Selected {len(direct_indices)}", **style_sel_new, zorder=10)
 
         plt.title(f"PCA of UQ-DIRECT sampling", fontsize=16)
         plt.xlabel("PC1", size=14)
         plt.ylabel("PC2", size=14)
         plt.grid(True, linestyle='-', alpha=0.6)
-        plt.legend(frameon=True, fontsize=12, loc='upper left')
+        plt.legend(frameon=True, fontsize=12, loc='best')
         plt.savefig(f"{self.save_dir}/Final_sampled_PCAview.png", dpi=self.dpi)
         plt.close()
         
@@ -390,7 +386,7 @@ class UQVisualizer:
             plt.plot(all_features[:, 0], all_features[:, 1], "*", color="gray", alpha=0.5, label=f"All {len(all_features):,} structures")
             plt.plot(selected_features[:, 0], selected_features[:, 1], "*", color="#FF8C00", alpha=0.8, label=f"{method} sampled {len(selected_features):,}")
             
-        plt.legend(frameon=True, fontsize=12)
+        plt.legend(frameon=True, fontsize=12, loc='best')
         plt.ylabel("PC 2", size=14)
         plt.xlabel("PC 1", size=14)
         plt.title(f"{method} Coverage Analysis", fontsize=16)
