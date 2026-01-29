@@ -634,6 +634,33 @@ if __name__ == "__main__":
         if len(desc_stru) == 0:
             raise ValueError("No candidate descriptors loaded!")
         
+        # --- Enhanced Logging: Initial Data Stats ---
+        self.logger.info("="*40)
+        self.logger.info("       INITIAL DATA STATISTICS")
+        self.logger.info("="*40)
+        
+        # Helper to parse sys_name from dataname (assumes format "sysname-index")
+        def get_sys_name(dataname):
+            return dataname.rsplit("-", 1)[0]
+        
+        # Helper to get pool name (dirname of sys_name)
+        def get_pool_name(sys_name):
+            d = os.path.dirname(sys_name)
+            return d if d else "root"
+
+        # Create a temporary DF for stats
+        df_stats_init = pd.DataFrame({"dataname": desc_datanames})
+        df_stats_init["sys_name"] = df_stats_init["dataname"].apply(get_sys_name)
+        df_stats_init["pool_name"] = df_stats_init["sys_name"].apply(get_pool_name)
+        
+        stats_init = df_stats_init.groupby("pool_name").agg(
+            num_systems=("sys_name", "nunique"),
+            num_frames=("dataname", "count")
+        )
+        self.logger.info(f"\n{stats_init}")
+        self.logger.info("="*40)
+        # --------------------------------------------
+
         self.logger.info(f"Collecting data to dataframe and do UQ selection")
         df_desc = pd.DataFrame(desc_stru, columns=[f"desc_stru_{i}" for i in range(desc_stru.shape[1])])
         df_desc["dataname"] = desc_datanames
@@ -785,6 +812,81 @@ if __name__ == "__main__":
         
         self.logger.info(f"Saving df_uq_desc_selected_final dataframe to {self.df_savedir}/df_uq_desc_sampled-final.csv")
         df_final.to_csv(f"{self.df_savedir}/df_uq_desc_sampled-final.csv", index=True)
+
+        # --- Enhanced Logging: Sampling Stats & Consistency Check ---
+        self.logger.info("="*40)
+        self.logger.info("       SAMPLING STATISTICS")
+        self.logger.info("="*40)
+        
+        # 1. Sampled Stats
+        df_final_stats = df_final.copy()
+        df_final_stats["sys_name"] = df_final_stats["dataname"].apply(get_sys_name)
+        df_final_stats["pool_name"] = df_final_stats["sys_name"].apply(get_pool_name)
+        
+        stats_sampled = df_final_stats.groupby("pool_name").agg(
+            sampled_frames=("dataname", "count")
+        )
+        
+        # 2. Remaining Stats
+        # Merge sampled counts into init stats
+        # Note: stats_init includes "ALL" row, but stats_sampled does not yet.
+        
+        stats_merged = stats_init.join(stats_sampled).fillna(0)
+        # "ALL" row in stats_sampled will be NaN after join, need to compute sum
+        
+        stats_merged["sampled_frames"] = stats_merged["sampled_frames"].astype(int)
+        
+        # Re-calculate ALL row for sampled_frames
+        total_sampled = stats_merged.loc[stats_merged.index != "ALL", "sampled_frames"].sum()
+        stats_merged.loc["ALL", "sampled_frames"] = total_sampled
+        
+        # Re-populate ALL row for num_systems and num_frames (in case they were NaN'd or zeroed by join logic if index didn't match perfectly, though join on index should be fine)
+        # Actually stats_init already had ALL. The join keeps it.
+        # But let's ensure it's correct.
+        total_systems = stats_merged.loc[stats_merged.index != "ALL", "num_systems"].sum()
+        total_frames = stats_merged.loc[stats_merged.index != "ALL", "num_frames"].sum()
+        stats_merged.loc["ALL", "num_systems"] = total_systems
+        stats_merged.loc["ALL", "num_frames"] = total_frames
+
+        stats_merged["remaining_frames"] = stats_merged["num_frames"] - stats_merged["sampled_frames"]
+        
+        # Calculate remaining systems (Systems that have not been FULLY sampled? Or just systems present in remaining?)
+        # "Remaining System Number": If we interpret as "Systems that have at least 1 frame remaining".
+        
+        # Get set of sampled datanames
+        sampled_datanames_set = set(df_final["dataname"])
+        
+        # Filter df_stats_init to find remaining rows
+        df_remaining = df_stats_init[~df_stats_init["dataname"].isin(sampled_datanames_set)]
+        
+        stats_remaining_sys = df_remaining.groupby("pool_name").agg(
+            remaining_systems=("sys_name", "nunique")
+        )
+        
+        # Calculate ALL for remaining systems
+        total_remaining_sys = stats_remaining_sys["remaining_systems"].sum()
+        
+        stats_merged = stats_merged.join(stats_remaining_sys).fillna(0)
+        stats_merged["remaining_systems"] = stats_merged["remaining_systems"].astype(int)
+        
+        stats_merged.loc["ALL", "remaining_systems"] = total_remaining_sys
+        
+        self.logger.info(f"\n{stats_merged[['num_systems', 'num_frames', 'sampled_frames', 'remaining_systems', 'remaining_frames']]}")
+        
+        # 3. Consistency Check
+        # Use .loc["ALL"] to get totals
+        total_init_frames = stats_merged.loc["ALL", "num_frames"]
+        total_sampled_frames = stats_merged.loc["ALL", "sampled_frames"]
+        total_remaining_frames = stats_merged.loc["ALL", "remaining_frames"]
+        
+        if abs(total_init_frames - (total_sampled_frames + total_remaining_frames)) > 1e-5: # Use tolerance for float check, though these are ints
+             self.logger.error(f"Consistency Check FAILED: {total_init_frames} != {total_sampled_frames} + {total_remaining_frames}")
+             raise ValueError("Frame consistency check failed after sampling!")
+        else:
+             self.logger.info(f"Consistency Check PASSED: Total({int(total_init_frames)}) == Sampled({int(total_sampled_frames)}) + Remaining({int(total_remaining_frames)})")
+             
+        self.logger.info("="*40)
+        # ------------------------------------------------------------
         
         # 5. Visualization (Sampling)
         self.logger.info(f"Visualization of DIRECT results compared with Random")
