@@ -26,7 +26,12 @@ def setup_logger(output_dir):
 
 def main():
     # Load config
-    config_path = os.path.join(current_dir, "config.json")
+    config_path = os.path.abspath(os.path.join(current_dir, "config.json"))
+    
+    # Allow overriding config via command line arg if provided
+    if len(sys.argv) > 1:
+        config_path = os.path.abspath(sys.argv[1])
+
     if not os.path.exists(config_path):
         print(f"Config file not found: {config_path}")
         return
@@ -34,9 +39,19 @@ def main():
     with open(config_path, 'r') as f:
         config = json.load(f)
 
-    # Resolve paths
-    result_dir = os.path.abspath(os.path.join(current_dir, config.get("result_dir", ".")))
-    output_dir = os.path.abspath(os.path.join(current_dir, config.get("output_dir", "analysis")))
+    # Resolve paths relative to config file location
+    config_dir = os.path.dirname(config_path)
+    
+    # Helper to resolve paths
+    def resolve(path, default):
+        if not path:
+            path = default
+        if os.path.isabs(path):
+            return path
+        return os.path.abspath(os.path.join(config_dir, path))
+
+    result_dir = resolve(config.get("result_dir"), ".")
+    output_dir = resolve(config.get("output_dir"), "analysis")
     
     if os.path.exists(output_dir):
         shutil.rmtree(output_dir)

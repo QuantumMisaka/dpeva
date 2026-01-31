@@ -221,10 +221,18 @@ class CollectionWorkflow:
                 path_flat = os.path.join(desc_dir, f"{sys_name}.npy")
                 path_nested = os.path.join(desc_dir, sys_name, desc_filename)
                 
+                # Fallback: Check for flat basename match (e.g. desc_dir/System.npy even if sys_name is Dataset/System)
+                path_flat_base = os.path.join(desc_dir, f"{os.path.basename(sys_name)}.npy")
+                
                 if os.path.exists(path_flat):
                     f = path_flat
                 elif os.path.exists(path_nested):
                     f = path_nested
+                elif os.path.exists(path_flat_base):
+                    # In Single Data Pool mode, sys_name might be 'pool/sys' but desc is just 'sys.npy'
+                    # This is a valid compatibility match, not a warning condition.
+                    self.logger.info(f"Matched descriptor via basename (Single-Pool Compatible): {path_flat_base} for system {sys_name}")
+                    f = path_flat_base
                 else:
                     self.logger.error(f"Descriptor file not found for system: {sys_name}. Expected at {path_flat} or {path_nested}")
                     raise FileNotFoundError(f"Descriptor file missing for {sys_name}")
@@ -775,8 +783,12 @@ if __name__ == "__main__":
         if use_joint_sampling:
             # Filter: Keep indices < n_candidates for final export
             DIRECT_selected_indices = [idx for idx in selected_indices_raw if idx < n_candidates]
-            self.logger.info(f"DIRECT selected {len(selected_indices_raw)} total samples. "
-                             f"After filtering training samples, {len(DIRECT_selected_indices)} candidates remain.")
+            n_from_training = len(selected_indices_raw) - len(DIRECT_selected_indices)
+            self.logger.info(f"DIRECT Selection Result (Joint Mode):")
+            self.logger.info(f"  - Target Total Representatives (num_selection): {self.num_selection}")
+            self.logger.info(f"  - Actually Found Representatives: {len(selected_indices_raw)}")
+            self.logger.info(f"  - Selected from Training Set (Ignored): {n_from_training}")
+            self.logger.info(f"  - Selected from Candidate Set (New Samples): {len(DIRECT_selected_indices)}")
             
             # For Visualization: Use Joint Features and Joint Selection
             # This ensures coverage plots reflect the Joint Space
@@ -785,6 +797,10 @@ if __name__ == "__main__":
             
         else:
             DIRECT_selected_indices = selected_indices_raw
+            self.logger.info(f"DIRECT Selection Result (Normal Mode):")
+            self.logger.info(f"  - Target New Samples (num_selection): {self.num_selection}")
+            self.logger.info(f"  - Actually Selected Samples: {len(DIRECT_selected_indices)}")
+            
             all_features_viz = all_pca_features / explained_variance[:selected_PC_dim]
             viz_selected_indices = DIRECT_selected_indices
         
@@ -1067,29 +1083,31 @@ if __name__ == "__main__":
             # Use the target_name we stored, or fallback to short_name if missing
             sys_name = getattr(sys, "target_name", sys.short_name)
             
-            # Optimization: Check if this system is involved in sampling at all
-            # But we need to split into sampled and other.
-            
-            try:
-                # Check consistency of the system itself before processing
-                # This catches corrupted data loaded from disk
-                # sys.check_data() # Usually called on init, but let's be safe
-                pass
-            except Exception as e:
-                self.logger.error(f"System {sys_name} failed consistency check: {e}")
-                continue
+            sampled_indices = []
+            other_indices = []
 
             for i in range(len(sys)):
                 dataname_sys = f"{sys_name}-{i}"
+                if dataname_sys in sampled_datanames:
+                    sampled_indices.append(i)
+                else:
+                    other_indices.append(i)
+            
+            # Batch process sampled frames
+            if sampled_indices:
                 try:
-                    if dataname_sys in sampled_datanames:
-                        sampled_dpdata.append(sys[i])
-                    else:
-                        other_dpdata.append(sys[i])
+                    sys_sampled = sys.sub_system(sampled_indices)
+                    sampled_dpdata.append(sys_sampled)
                 except Exception as e:
-                    # Log error but continue to avoid crashing whole workflow
-                    self.logger.error(f"Failed to append frame {i} of system {sys_name}: {e}")
-                    continue
+                    self.logger.error(f"Failed to append sampled frames for {sys_name}: {e}")
+
+            # Batch process other frames
+            if other_indices:
+                try:
+                    sys_other = sys.sub_system(other_indices)
+                    other_dpdata.append(sys_other)
+                except Exception as e:
+                    self.logger.error(f"Failed to append other frames for {sys_name}: {e}")
                     
         self.logger.info(f'Sampled dpdata: {sampled_dpdata}')
         self.logger.info(f'Other dpdata: {other_dpdata}')

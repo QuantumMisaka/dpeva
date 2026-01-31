@@ -1,0 +1,21 @@
+{
+    "project": "./",
+    "uq_select_scheme": "tangent_lo",
+    "testing_dir": "test_val",
+    "testing_head": "results",
+    "desc_dir": "./desc_pool",
+    "testdata_dir": "./other_dpdata_all",
+    "testdata_fmt": "deepmd/npy",
+    
+    "fig_dpi": 300,
+    "root_savedir": "dpeva_uq_post_multi_normal",
+    "log_filename": "UQ-DIRECT-multi-normal.log",
+
+    "uq_trust_mode": "auto",
+    "uq_trust_ratio": 0.50,
+    "uq_trust_width": 0.15,
+    
+    "num_selection": 1000,
+    "direct_k": 1,
+    "direct_thr_init": 0.1
+}

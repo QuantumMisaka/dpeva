@@ -1,7 +1,7 @@
 # DP-EVA 项目开发文档
 
-* **版本**: 2.1.0
-* **生成日期**: 2026-01-28
+* **版本**: 2.2.0
+* **生成日期**: 2026-01-30
 * **作者**: Quantum Misaka with Trae SOLO
 
 ---
@@ -97,15 +97,15 @@ graph TD
     *   **自动阈值 (Auto-Threshold)**: 基于 KDE (核密度估计) 自动识别不确定度分布峰值，自适应确定 `trust_lo`。
 *   **筛选策略 (`UQFilter`)**: 支持 `strict`, `tangent`, `circle` 等多种 2D 边界筛选算法。
 *   **DIRECT 采样 (`DIRECTSampler`)**: 
-    *   基于 DPA3 描述符进行 PCA 降维。
-    *   使用 BIRCH 聚类 + 覆盖度最大化采样，确保样本在化学空间的多样性。
+    *   **联合采样 (Joint Sampling)**: 支持同时加载训练集和候选集，在联合特征空间中进行覆盖度最大化采样，避免新样本与旧样本重复。
+    *   **基于聚类**: 使用 BIRCH 聚类算法在 PCA 降维后的空间中寻找最具代表性的样本点。
 
 ### 3.4 Feature 模块 (`dpeva.feature`)
 负责生成原子结构的描述符。
 *   **`DescriptorGenerator`**:
     *   **CLI 模式**: 调用 `dp eval-desc` 命令，支持 Slurm 提交。
     *   **Python 模式**: 直接调用 `deepmd.infer` API，适合小规模或调试使用。
-    *   **日志优化**: 智能处理日志输出，避免在 Slurm 环境下产生冗余日志文件。
+    *   **单数据池兼容**: 智能识别 `desc_dir/System.npy` 格式的描述符文件，兼容单数据池模式下的平铺结构。
 
 ### 3.5 Submission 模块 (`dpeva.submission`)
 统一的任务提交抽象层。
@@ -175,19 +175,25 @@ graph TD
 **路径**: `runner/dpeva_collect/run_uq_collect.py`
 **配置**: `config.json`
 
-**新增 Auto-UQ 配置示例**:
+**联合采样与 Auto-UQ 配置示例**:
 ```json
 {
     "project": "./training_task",
     "desc_dir": "./descriptors",
     "testdata_dir": "./unlabeled_data",
+    
+    // 联合采样配置 (Joint Sampling)
+    "training_desc_dir": "./training_descriptors", // [可选] 训练集描述符路径
+    "training_data_dir": "./training_data",        // [可选] 训练集结构路径
+    
     "uq_select_scheme": "tangent_lo",
-    "num_selection": 100,
+    "num_selection": 1000,        // [注意] 联合模式下表示覆盖集总数 (Target Cluster Count)
+    
     "root_savedir": "iteration_1_selected",
     
     "uq_trust_mode": "auto",      // 启用自动阈值
-    "uq_trust_ratio": 0.33,       // 峰值下降比率
-    "uq_trust_width": 0.25        // 信任区间宽度
+    "uq_trust_ratio": 0.50,       // 峰值下降比率
+    "uq_trust_width": 0.15        // 信任区间宽度
 }
 ```
 
@@ -200,9 +206,10 @@ graph TD
 | **Manual** | `"manual"` (默认) | 直接使用 `uq_qbc_trust_lo` 等固定参数值。 | 精细微调阶段，对体系有明确经验值（如明确 >0.12 为不可信）。 |
 | **Auto** | `"auto"` | 基于 KDE 自动寻找分布峰值，根据 `ratio` 计算阈值。若失败则自动回退到 Manual 值。 | 早期探索阶段，模型不确定度分布变化剧烈，需要自适应调整。 |
 
-**Auto 模式参数详解**:
-*   `uq_trust_ratio`: 寻找峰值右侧密度下降到峰值高度该比例处作为 `lo` (默认 0.33)。
-*   `uq_trust_width`: 信任区间宽度，`hi = lo + width`。
+#### 4.4.2 `num_selection` 参数说明
+
+*   **普通模式**: 表示从候选集中新采样的样本数量。
+*   **联合模式 (Joint Mode)**: 表示在联合空间（候选集+训练集）中期望达到的**总覆盖簇数 (Target Cluster Count)**。实际导出的新样本数通常小于此值（因为部分簇已被训练集覆盖）。
 
 ---
 
@@ -216,33 +223,35 @@ graph TD
 ### 5.2 验证测试
 `test/` 目录包含开发阶段的验证脚本。
 
+*   **运行兼容性测试 (Compatibility Test)**:
+    ```bash
+    cd test
+    python run_compat_test.py
+    ```
+    此脚本会自动验证单数据池 (Single Pool) 和多数据池 (Multi Pool) 在普通模式与联合模式下的运行正确性。
+
 *   **运行 Auto-UQ 测试**:
     ```bash
     cd test/verification_test_run
     python run_auto_uq_test.py
     ```
-    此脚本会验证 KDE 阈值计算逻辑及可视化图表的生成（含截断图和 Parity Plot）。
+    验证 KDE 阈值计算逻辑及可视化图表。
 
 ### 5.3 常见问题 (FAQ)
 
-**Q: 为什么生成的日志文件有 `eval_desc.log` 和 `eval_desc.out`？**
-A: 在旧版本中存在此冗余。新版 `DescriptorGenerator` 已修复此问题：Slurm 模式下仅生成 `eval_desc.log` (由 Slurm 输出重定向)，Local 模式下使用 `tee` 生成同名日志。
+**Q: 单数据池模式下提示 "Found descriptor via basename fallback" 是什么意思？**
+A: 旧版本会产生此 Warning，**新版本 (v2.2.0)** 已将其优化为 Info 级别的兼容性提示。这表示系统自动通过 `System.npy` 文件名匹配到了嵌套在 `Dataset/System` 路径下的结构数据，属于正常行为。
 
-**Q: 如何在没有真值 (Ground Truth) 的情况下运行采集流程？**
-A: `CollectionWorkflow` 已增强鲁棒性。当检测到无真值时，会自动跳过误差相关的 Parity Plot 绘制，但保留 UQ 分布图和采样逻辑，确保流程不中断。
-
-**Q: Auto-UQ 计算失败怎么办？**
-A: 如果数据分布极其异常导致 KDE 失败，系统会自动回退到 `config.json` 中配置的 `uq_qbc_trust_lo` 等手动参数，并输出警告日志。
+**Q: 为什么联合采样导出的样本数少于 `num_selection`？**
+A: 这是预期行为。在联合模式下，`num_selection` 定义的是特征空间的总覆盖目标。如果某些区域已经被现有训练集覆盖，DIRECT 算法就不会再重复采样，从而节省标注成本。
 
 ---
 
-## 6. 附录：审阅报告摘要 (Review Summary)
+## 6. 版本修订记录 (Revision History)
 
-*   **代码质量**: 核心模块职责分离清晰，符合 "Explicit is better than implicit" 原则。
-*   **日志系统**: 已完成全面清洗，消除了库代码对全局 Logging 的侵入，解决了文件冗余问题。
-*   **功能完备性**: 
-    *   Auto-UQ 算法已实装并经过测试。
-    *   可视化模块实现了与 Legacy 脚本的完全功能对齐（包括截断视图）。
-*   **接口一致性**: `runner` 层正确封装了底层 `Workflow`，配置项命名统一。
-
-**建议**: 后续版本可考虑将 `runner/` 下的脚本封装为统一的 `dpeva` 命令行工具 (CLI Tool)，进一步简化用户体验。
+*   **v2.1.0** (2026-01-28): 初始重构版本，引入 Auto-UQ 和模块化架构。
+*   **v2.2.0** (2026-01-30): 
+    *   **[新增]** 联合采样 (Joint Sampling) 功能支持，允许同时加载训练集进行去重采样。
+    *   **[优化]** 单数据池描述符加载逻辑，消除 Fallback Warning，提升为兼容模式。
+    *   **[文档]** 明确 `num_selection` 在联合模式下的定义；补充兼容性测试说明。
+    *   **[修复]** 修复了多数据池导出时的路径冲突风险和效率问题。

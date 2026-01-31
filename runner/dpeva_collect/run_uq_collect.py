@@ -4,9 +4,13 @@ import argparse
 import json
 import logging
 
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
 # Add src to path if not installed
 current_dir = os.path.dirname(os.path.abspath(__file__))
-project_root = os.path.dirname(current_dir)
+# dpeva/runner/dpeva_collect -> dpeva/runner -> dpeva
+project_root = os.path.dirname(os.path.dirname(current_dir))
 src_path = os.path.join(project_root, "src")
 if src_path not in sys.path:
     sys.path.append(src_path)
@@ -19,32 +23,13 @@ def load_config(config_path):
 
 def main():
     parser = argparse.ArgumentParser(description="DP-EVA UQ Collection Workflow Runner")
-    parser.add_argument("--config", type=str, help="Path to JSON configuration file")
-    parser.add_argument("--project", type=str, default=".", help="Project root directory")
+    parser.add_argument("--config", type=str, required=True, help="Path to JSON configuration file")
     args = parser.parse_args()
 
-    # Default Configuration Template (matches verification test defaults)
-    config = {
-        "project": args.project,
-        "uq_select_scheme": "tangent_lo",
-        "testing_dir": "test_val",
-        "testing_head": "results",
-        "desc_dir": "./desc_pool",
-        "testdata_dir": "./other_dpdata_test",
-        "testdata_fmt": "deepmd/npy",
-        
-        "training_data_dir": "sampled_dpdata",
-        "fig_dpi": 300,
-        "root_savedir": "dpeva_uq_post",
-        "uq_trust_mode": "auto",
-        "uq_trust_ratio": 0.33,
-        "uq_trust_width": 0.25,
-        
-        # Sampling
-        "num_selection": 100,
-        "direct_k": 1,
-        "direct_thr_init": 0.5
-    }
+    # Explicit Configuration: Rely solely on user config
+    # Removed default config template to ensure explicit behavior
+    
+    config = {}
 
     if args.config:
         if os.path.exists(args.config):
@@ -54,6 +39,23 @@ def main():
         else:
             print(f"Error: Config file {args.config} not found.")
             sys.exit(1)
+    else:
+        print("Error: No configuration file provided. Use --config <path>")
+        sys.exit(1)
+
+    # Resolve relative paths in config based on config file location
+    config_dir = os.path.dirname(os.path.abspath(args.config))
+    
+    # List of keys that are paths and need resolution
+    path_keys = [
+        "project", "desc_dir", "testdata_dir", "training_data_dir", "training_desc_dir", "root_savedir"
+    ]
+    
+    for key in path_keys:
+        if key in config and isinstance(config[key], str):
+             # If path is not absolute, make it absolute relative to config file
+            if not os.path.isabs(config[key]):
+                config[key] = os.path.abspath(os.path.join(config_dir, config[key]))
 
     # Initialize and run workflow
     try:
