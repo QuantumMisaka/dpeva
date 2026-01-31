@@ -8,7 +8,7 @@ import logging
 import numpy as np
 import os
 
-class TestResultParser:
+class DPTestResultParser:
     """
     Parses the output results from `dp test` command.
     Handles both energy, force, and virial outputs, and detects if ground truth is available.
@@ -250,72 +250,3 @@ class TestResultParser:
             return natom if natom > 0 else 1 # Fallback
         except:
             return 1 # Fallback
-
-
-class DPTestResults:
-    """
-    Legacy wrapper class to load and manage DeepMD test results.
-    Maintained for backward compatibility. Uses TestResultParser internally.
-    """
-    
-    def __init__(self, headname, type_map=None):
-        self.type_map = type_map if type_map else ["H","C","O","Fe"]
-        # Assuming current directory as original code did
-        self.parser = TestResultParser(result_dir=".", head=headname, type_map=self.type_map)
-        
-        try:
-            self.results = self.parser.parse()
-            self._map_results()
-        except Exception as e:
-            logging.error(f"Failed to initialize DPTestResults: {e}")
-            raise
-
-    def _map_results(self):
-        """Map parsed results to legacy attributes."""
-        # Map Energy
-        self.data_e = self.results["energy"]
-        if self.data_e is not None:
-             # Rename fields for compatibility: data_e/pred_e -> data_Energy/pred_Energy
-             # Check current dtypes first to avoid errors
-             current_dtypes = self.data_e.dtype.descr
-             new_dtypes = []
-             for name, dtype in current_dtypes:
-                 if name == 'data_e':
-                     new_dtypes.append(('data_Energy', dtype))
-                 elif name == 'pred_e':
-                     new_dtypes.append(('pred_Energy', dtype))
-                 else:
-                     new_dtypes.append((name, dtype))
-             
-             self.data_e = self.data_e.astype(new_dtypes)
-
-        # Map Forces
-        self.data_f = self.results["force"]
-        
-        self.dataname_list = self.results["dataname_list"]
-        self.datanames_nframe = self.results["datanames_nframe"]
-        self.has_ground_truth = self.results["has_ground_truth"]
-        
-        if self.has_ground_truth and self.data_e is not None and self.data_f is not None:
-            # Calculate diffs using new field names
-            self.diff_e = self.data_e['pred_Energy'] - self.data_e['data_Energy']
-            self.diff_fx = self.data_f['pred_fx'] - self.data_f['data_fx']
-            self.diff_fy = self.data_f['pred_fy'] - self.data_f['data_fy']
-            self.diff_fz = self.data_f['pred_fz'] - self.data_f['data_fz']
-        else:
-            self.diff_e = None
-            self.diff_fx = None
-            self.diff_fy = None
-            self.diff_fz = None
-            
-    def get_natom(self, dataname):
-        """Proxy to parser's method."""
-        return self.parser._get_natom_from_name(dataname)
-    
-    def get_dataname(self, filename):
-        """Legacy method proxy."""
-        return self.dataname_list, self.datanames_nframe
-
-    def get_dptest_detail(self, headname):
-        """Legacy method, no-op as work is done in init."""
-        pass

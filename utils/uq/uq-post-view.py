@@ -54,7 +54,7 @@ from copy import deepcopy
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 from dpeva.sampling.direct import BirchClustering, DIRECTSampler, SelectKFromClusters
-from dpeva.io.dataproc import DPTestResults
+from dpeva.io.dataproc import DPTestResultParser
 
 plt.rcParams['xtick.direction'] = 'in'  # set the direction of xticks inside
 plt.rcParams['ytick.direction'] = 'in'  # set the direction of yticks inside
@@ -384,7 +384,7 @@ plt.close()
 
 # deal with specific selection
 logger.info("Dealing with Selection in Target dpdata")
-datanames_ind_list = [f"{i[0]}-{i[1]}" for i in dp_test_results_0.dataname_list]
+datanames_ind_list = [f"{i[0]}-{i[1]}" for i in res_0['dataname_list']]
 data_dict_uq = {"dataname": datanames_ind_list, 
              "uq_qbc_for": uq_qbc_for, 
              "uq_rnd_for_rescaled": uq_rnd_for_rescaled,

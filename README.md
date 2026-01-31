@@ -1,46 +1,81 @@
-# DP-EVA
-Deep Potential EVolution Accelerator
+# DP-EVA (Deep Potential EVolution Accelerator)
 
-## Target:
-Data-efficient concurrent learning method to accelerate the evolution of DPA LAM and other Deep Potential.
+[![License](https://img.shields.io/badge/License-LGPL_v3-blue.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/Python-3.8%2B-blue)](https://www.python.org/)
+[![Code Style](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
-Methods used in this project:
-- Data sampling based on encoder space:
-- - DIRECT (from [maml](https://github.com/materialsvirtuallab/maml) package)
-- - 2-DIRECT and atomic-DIECT (usage in notebook)
-- Uncertainty estimation on atomic force evaluation in double variables:
-- - Query-by-committee uncertainty estimation
-- - Random-Network-Distillation-like uncertainty estimation
+**DP-EVA** is a high-efficiency active learning framework designed for the **Deep Potential (DPA3)** ecosystem. It automates the "Finetune-Explore-Label" loop by identifying the most valuable atomic configurations from massive datasets using advanced uncertainty quantification and representativeness sampling.
 
-## Installation:
+## 🚀 Vision
+To minimize the data annotation cost for developing general-purpose machine learning potentials while maximizing model robustness across diverse chemical spaces.
 
-Note: the src libraries only maturely implemented DIRECT method now.
-And the uncertainty estimation methods need more improvements.
+## ✨ Core Features
+- **Auto-UQ**: Adaptive uncertainty thresholding based on KDE (Kernel Density Estimation) to handle shifting model distributions.
+- **2-dimension of UQ**: Using UQ-QbC and UQ-RND to construct a 2-dimension uncertainty space.
+- **Joint Sampling**: **DIRECT** (Dimensionality Reduction and Clustering) sampling that considers existing training data to avoid redundancy.
+- **Dual-Mode Scheduling**: Seamless switching between Local (Multiprocessing) and Slurm Cluster environments.
+- **Modular Design**: Decoupled modules for Training, Inference, Uncertainty, and Sampling.
 
-Install the package via pip:
+## 📦 Installation
+
+### Prerequisites
+- Python >= 3.8
+- DeePMD-kit (installed via their official guides), PyTorch backend is most needed.
+
+### Install from Source
 ```bash
-pip install git+https://github.com/quantummisaka/dpeva.git
-```
-
-Or clone the repository and install the package:
-```bash
-git clone https://github.com/quantummisaka/dpeva.git
+git clone https://github.com/QuantumMisaka/dpeva.git
 cd dpeva
 pip install -e .
 ```
 
-## Usage
 
-### Basic Workflow
+## ⚡ Quick Start (30 Seconds)
 
-All basic functions for a basic workflow are in utils.
+### 1. Prepare Configuration
+Create a `config.json` for the collection task:
 
-- Parallel encoder-fixed fine-tuning: utils/dptrain
-- Prediction test results in all dataset from fine-tuned models: utils/dptest
-- Descriptor (encoder) generation in all dataset from fine-tuned models: utils/dpdesc
-- UQ post-analysis and view based on dptest and dpdesc: utils/uq/uq-post-view.py
-- Use first-principle calculation to label the new dataset: utils/fp (not used if the dataset is already labeled)
+```json
+{
+    "project": "./my_project",
+    "desc_dir": "./descriptors",
+    "testdata_dir": "./unlabeled_data",
+    "uq_select_scheme": "tangent_lo",
+    "num_selection": 100,
+    "uq_trust_mode": "auto"
+}
+```
 
-## License
+### 2. Run Collection
+Execute the runner script:
 
-This project is licensed under the LGPL-v3 License - see the LICENSE file for details.
+```bash
+python runner/dpeva_collect/run_uq_collect.py --config config.json
+```
+
+### 3. Check Results
+Selected structures will be exported to `my_project/dpeva_uq_post/dpdata`.
+
+## 🛠️ Usage Guide
+
+### Training
+```bash
+python runner/dpeva_train/run_train.py config_train.json
+```
+
+### Inference & Analysis
+```bash
+python runner/dpeva_test/run_inference.py config_test.json
+```
+
+## 🤝 Contribution
+We welcome contributions! Please follow these steps:
+1.  **Fork** the repository.
+2.  **Create a branch** for your feature/fix.
+3.  **Install dev dependencies**: `pip install -e ".[dev]"`
+4.  **Run tests**: `pytest test/`
+5.  **Submit a PR**.
+
+## 📄 License
+This project is licensed under the **LGPL-v3 License**. See [LICENSE](LICENSE) for details.

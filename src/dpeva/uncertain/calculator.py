@@ -1,14 +1,31 @@
+from __future__ import annotations
+
+import logging
+from typing import TYPE_CHECKING, Dict, List, Optional, Tuple, Any
+
 import numpy as np
-from sklearn.preprocessing import StandardScaler
+from scipy.stats import gaussian_kde
+from sklearn.preprocessing import RobustScaler
+
+if TYPE_CHECKING:
+    from dpeva.io.types import PredictionData
+
+logger = logging.getLogger(__name__)
 
 class UQCalculator:
     """Calculates Uncertainty Quantification (UQ) metrics from model predictions."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initializes the UQCalculator."""
         pass
 
-    def compute_qbc_rnd(self, predictions_0, predictions_1, predictions_2, predictions_3):
+    def compute_qbc_rnd(
+        self,
+        predictions_0: PredictionData,
+        predictions_1: PredictionData,
+        predictions_2: PredictionData,
+        predictions_3: PredictionData
+    ) -> Dict[str, np.ndarray]:
         """
         Computes QbC and RND uncertainty metrics.
 
@@ -27,12 +44,16 @@ class UQCalculator:
                 - fx_expt, fy_expt, fz_expt: Ensemble mean forces.
         """
         # Unpack predictions
-        # Model 0
-        fx_0, fy_0, fz_0 = predictions_0.data_f['pred_fx'], predictions_0.data_f['pred_fy'], predictions_0.data_f['pred_fz']
-        # Ensemble models
-        fx_1, fy_1, fz_1 = predictions_1.data_f['pred_fx'], predictions_1.data_f['pred_fy'], predictions_1.data_f['pred_fz']
-        fx_2, fy_2, fz_2 = predictions_2.data_f['pred_fx'], predictions_2.data_f['pred_fy'], predictions_2.data_f['pred_fz']
-        fx_3, fy_3, fz_3 = predictions_3.data_f['pred_fx'], predictions_3.data_f['pred_fy'], predictions_3.data_f['pred_fz']
+        # Helper to extract force components
+        def get_forces(pred: PredictionData):
+            if pred.force is not None:
+                return pred.force['pred_fx'], pred.force['pred_fy'], pred.force['pred_fz']
+            return None, None, None
+
+        fx_0, fy_0, fz_0 = get_forces(predictions_0)
+        fx_1, fy_1, fz_1 = get_forces(predictions_1)
+        fx_2, fy_2, fz_2 = get_forces(predictions_2)
+        fx_3, fy_3, fz_3 = get_forces(predictions_3)
 
         # Calculate ensemble mean (pseudo-experimental)
         fx_expt = np.mean((fx_1, fx_2, fx_3), axis=0)
@@ -43,13 +64,20 @@ class UQCalculator:
         fx_qbc_sq_diff = np.mean(((fx_1 - fx_expt)**2, (fx_2 - fx_expt)**2, (fx_3 - fx_expt)**2), axis=0)
         fy_qbc_sq_diff = np.mean(((fy_1 - fy_expt)**2, (fy_2 - fy_expt)**2, (fy_3 - fy_expt)**2), axis=0)
         fz_qbc_sq_diff = np.mean(((fz_1 - fz_expt)**2, (fz_2 - fz_expt)**2, (fz_3 - fz_expt)**2), axis=0)
-        f_qbc_stddiff = np.sqrt(fx_qbc_sq_diff + fy_qbc_sq_diff + fz_qbc_sq_diff)
+        
+        # Clamp sum of squares to 0 to prevent negative values from float precision errors
+        sum_qbc_sq = np.maximum(fx_qbc_sq_diff + fy_qbc_sq_diff + fz_qbc_sq_diff, 0.0)
+        f_qbc_stddiff = np.sqrt(sum_qbc_sq)
 
         # 2. RND Force UQ (Deviation of committee members from main model 0)
         fx_rnd_sq_diff = np.mean(((fx_1 - fx_0)**2, (fx_2 - fx_0)**2, (fx_3 - fx_0)**2), axis=0)
         fy_rnd_sq_diff = np.mean(((fy_1 - fy_0)**2, (fy_2 - fy_0)**2, (fy_3 - fy_0)**2), axis=0)
         fz_rnd_sq_diff = np.mean(((fz_1 - fz_0)**2, (fz_2 - fz_0)**2, (fz_3 - fz_0)**2), axis=0)
-        f_rnd_stddiff = np.sqrt(fx_rnd_sq_diff + fy_rnd_sq_diff + fz_rnd_sq_diff)
+        
+        # Clamp sum of squares to 0
+        sum_rnd_sq = np.maximum(fx_rnd_sq_diff + fy_rnd_sq_diff + fz_rnd_sq_diff, 0.0)
+        f_rnd_stddiff = np.sqrt(sum_rnd_sq)
+
 
         # Aggregate per structure (max atomic UQ)
         uq_qbc_for_list = []
@@ -57,8 +85,13 @@ class UQCalculator:
         
         # Calculate force difference for model 0 if labels exist (for visualization)
         diff_f_0 = None
-        if getattr(predictions_0, 'has_ground_truth', True) and predictions_0.diff_fx is not None:
-             diff_f_0 = np.sqrt(predictions_0.diff_fx**2 + predictions_0.diff_fy**2 + predictions_0.diff_fz**2)
+        
+        # Calculate diff manually from raw data if present, instead of relying on .diff_fx attribute
+        if predictions_0.has_ground_truth and predictions_0.force is not None:
+             dfx = predictions_0.force['pred_fx'] - predictions_0.force['data_fx']
+             dfy = predictions_0.force['pred_fy'] - predictions_0.force['data_fy']
+             dfz = predictions_0.force['pred_fz'] - predictions_0.force['data_fz']
+             diff_f_0 = np.sqrt(dfx**2 + dfy**2 + dfz**2)
              
         diff_maxf_0_frame = []
         diff_rmsf_0_frame = []
@@ -81,19 +114,32 @@ class UQCalculator:
             
             index += natom
 
+        # Convert to numpy arrays and replace NaNs with 0.0 (Clean step)
+        uq_qbc_for = np.array(uq_qbc_for_list)
+        uq_rnd_for = np.array(uq_rnd_for_list)
+        diff_maxf_0 = np.array(diff_maxf_0_frame)
+        diff_rmsf_0 = np.array(diff_rmsf_0_frame)
+        
+        # Check for NaNs and log warning if found
+        if np.isnan(uq_qbc_for).any() or np.isnan(uq_rnd_for).any():
+             logger.warning("NaNs detected in UQ calculation. Replacing with Infinity (High Uncertainty).")
+             uq_qbc_for = np.nan_to_num(uq_qbc_for, nan=np.inf)
+             uq_rnd_for = np.nan_to_num(uq_rnd_for, nan=np.inf)
+        
         return {
-            "uq_qbc_for": np.array(uq_qbc_for_list),
-            "uq_rnd_for": np.array(uq_rnd_for_list),
-            "diff_maxf_0_frame": np.array(diff_maxf_0_frame),
-            "diff_rmsf_0_frame": np.array(diff_rmsf_0_frame),
+            "uq_qbc_for": uq_qbc_for,
+            "uq_rnd_for": uq_rnd_for,
+            "diff_maxf_0_frame": diff_maxf_0,
+            "diff_rmsf_0_frame": diff_rmsf_0,
             "fx_expt": fx_expt,
             "fy_expt": fy_expt, 
             "fz_expt": fz_expt
         }
 
-    def align_scales(self, uq_qbc, uq_rnd):
+    def align_scales(self, uq_qbc: np.ndarray, uq_rnd: np.ndarray) -> np.ndarray:
         """
-        Aligns RND UQ scale to QbC UQ scale using RobustScaler (Median/IQR).
+        Aligns RND UQ scale to QbC UQ scale using RobustScaler logic (Median/IQR).
+        Manually implemented to handle Infinity values robustly.
         
         Args:
             uq_qbc: QbC uncertainty values.
@@ -102,18 +148,41 @@ class UQCalculator:
         Returns:
             uq_rnd_rescaled: RND values rescaled to match QbC distribution.
         """
-        from sklearn.preprocessing import RobustScaler
+        def get_robust_stats(data: np.ndarray) -> Tuple[float, float]:
+            """Calculates median and IQR, ignoring non-finite values."""
+            valid_mask = np.isfinite(data)
+            if not np.any(valid_mask):
+                return 0.0, 1.0 # Fallback for all-inf/nan data
+            
+            clean_data = data[valid_mask]
+            q25, median, q75 = np.percentile(clean_data, [25, 50, 75])
+            iqr = q75 - q25
+            
+            # Prevent division by zero if IQR is 0 (e.g. constant data)
+            if iqr == 0:
+                iqr = 1.0
+                
+            return median, iqr
+
+        med_qbc, iqr_qbc = get_robust_stats(uq_qbc)
+        med_rnd, iqr_rnd = get_robust_stats(uq_rnd)
         
-        scaler_qbc = RobustScaler()
-        scaler_rnd = RobustScaler()
+        # Transform RND to standard scale: (x - med) / iqr
+        # Then inverse transform to QbC scale: y * iqr_new + med_new
+        # Combined: result = (rnd - med_rnd) / iqr_rnd * iqr_qbc + med_qbc
         
-        uq_qbc_scaled = scaler_qbc.fit_transform(uq_qbc.reshape(-1, 1)).flatten()
-        uq_rnd_scaled = scaler_rnd.fit_transform(uq_rnd.reshape(-1, 1)).flatten()
+        # Operations with Inf will correctly result in Inf (or NaN if Inf/Inf, but iqr is finite)
+        uq_rnd_rescaled = (uq_rnd - med_rnd) / iqr_rnd * iqr_qbc + med_qbc
         
-        uq_rnd_rescaled = scaler_qbc.inverse_transform(uq_rnd_scaled.reshape(-1, 1)).flatten()
         return uq_rnd_rescaled
 
-    def calculate_trust_lo(self, data, ratio=0.5, grid_size=1000, bound=(0, 2.0)):
+    def calculate_trust_lo(
+        self,
+        data: np.ndarray,
+        ratio: float = 0.5,
+        grid_size: int = 1000,
+        bound: Tuple[float, float] = (0, 2.0)
+    ) -> Optional[float]:
         """
         Automatically determines the lower bound of the trust region based on KDE.
         Finds the x-value on the right side of the peak where density drops to ratio * peak_density.
@@ -125,12 +194,8 @@ class UQCalculator:
             bound: Tuple of (min, max) for the grid range.
             
         Returns:
-            float: The calculated uq_trust_lo value.
+            float: The calculated uq_trust_lo value, or None if calculation fails.
         """
-        from scipy.stats import gaussian_kde
-        import logging
-        logger = logging.getLogger(__name__)
-        
         # Filter valid data within bounds for KDE
         valid_mask = (data >= bound[0]) & (data <= bound[1])
         clean_data = data[valid_mask]

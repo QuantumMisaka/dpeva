@@ -1,4 +1,5 @@
 import os
+import glob
 import logging
 import json
 import numpy as np
@@ -6,8 +7,9 @@ import pandas as pd
 import dpdata
 from collections import Counter
 from dpeva.submission import JobManager, JobConfig
-from dpeva.io import TestResultParser
-from dpeva.inference import StatsCalculator, InferenceVisualizer
+from dpeva.io.dataproc import DPTestResultParser
+from dpeva.inference.stats import StatsCalculator
+from dpeva.inference.visualizer import InferenceVisualizer
 
 class InferenceWorkflow:
     """
@@ -172,14 +174,14 @@ export OMP_NUM_THREADS={self.omp_threads}
         atom_counts_list = None
         atom_num_list = None
         
-        if self.test_data_path and os.path.exists(self.test_data_path):
+        if self.data_path and os.path.exists(self.data_path):
             try:
-                self.logger.info(f"Loading system composition from {self.test_data_path} using dpdata...")
+                self.logger.info(f"Loading system composition from {self.data_path} using dpdata...")
                 # Try common formats
                 try:
-                    ms = dpdata.MultiSystems.from_file(self.test_data_path, fmt="deepmd/npy/mixed")
+                    ms = dpdata.MultiSystems.from_file(self.data_path, fmt="deepmd/npy/mixed")
                 except Exception:
-                    ms = dpdata.MultiSystems.from_file(self.test_data_path, fmt="deepmd/npy")
+                    ms = dpdata.MultiSystems.from_file(self.data_path, fmt="deepmd/npy")
                     
                 atom_counts_list = []
                 atom_num_list = []
@@ -223,7 +225,7 @@ export OMP_NUM_THREADS={self.omp_threads}
             
             try:
                 # 1. Parse Results
-                parser = TestResultParser(work_dir, head="results") 
+                parser = DPTestResultParser(work_dir, head="results")
                 data = parser.parse()
                 
                 # Check consistency between loaded composition and parsed data

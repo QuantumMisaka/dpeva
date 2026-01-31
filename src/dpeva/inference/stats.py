@@ -47,6 +47,18 @@ class StatsCalculator:
         self.ref_energies = ref_energies
         
         self.logger = logging.getLogger(__name__)
+
+        # Pre-calculate diffs if truth is available
+        self.e_diff = None
+        self.f_diff = None
+        self.v_diff = None
+        
+        if self.has_truth:
+            self.e_diff = self.e_pred - self.e_true
+            if self.f_pred is not None and self.f_true is not None:
+                self.f_diff = self.f_pred - self.f_true
+            if self.v_pred is not None and self.v_true is not None:
+                self.v_diff = self.v_pred - self.v_true
         
     def compute_metrics(self) -> Dict[str, float]:
         """
@@ -58,20 +70,18 @@ class StatsCalculator:
         metrics = {}
         
         # Energy
-        e_diff = self.e_pred - self.e_true
-        metrics["e_mae"] = np.mean(np.abs(e_diff))
-        metrics["e_rmse"] = np.sqrt(np.mean(e_diff**2))
+        metrics["e_mae"] = np.mean(np.abs(self.e_diff))
+        metrics["e_rmse"] = np.sqrt(np.mean(self.e_diff**2))
         
         # Force
-        f_diff = self.f_pred - self.f_true
-        metrics["f_mae"] = np.mean(np.abs(f_diff))
-        metrics["f_rmse"] = np.sqrt(np.mean(f_diff**2))
+        if self.f_diff is not None:
+            metrics["f_mae"] = np.mean(np.abs(self.f_diff))
+            metrics["f_rmse"] = np.sqrt(np.mean(self.f_diff**2))
         
         # Virial
-        if self.v_pred is not None and self.v_true is not None:
-            v_diff = self.v_pred - self.v_true
-            metrics["v_mae"] = np.mean(np.abs(v_diff))
-            metrics["v_rmse"] = np.sqrt(np.mean(v_diff**2))
+        if self.v_diff is not None:
+            metrics["v_mae"] = np.mean(np.abs(self.v_diff))
+            metrics["v_rmse"] = np.sqrt(np.mean(self.v_diff**2))
             
         return metrics
 

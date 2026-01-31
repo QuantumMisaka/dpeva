@@ -1,7 +1,7 @@
 # DP-EVA 项目开发文档
 
-* **版本**: 2.2.0
-* **生成日期**: 2026-01-30
+* **版本**: 2.3.0
+* **生成日期**: 2026-01-31
 * **作者**: Quantum Misaka with Trae SOLO
 
 ---
@@ -15,6 +15,7 @@ DP-EVA (Deep Potential EVolution Accelerator) 是一个面向 DPA3 (Deep Potenti
 本项目遵循 Python 工程化最佳实践进行重构，强调：
 *   **显式配置 (Explicit Configuration)**：拒绝环境变量魔法，使用清晰的 Config 字典/文件驱动。
 *   **模块解耦 (Modular Design)**：将复杂的科研脚本拆解为职责单一的原子模块 (Training, Inference, Uncertainty, Sampling)。
+*   **数据标准化 (Data Standardization)**：引入标准化的 `PredictionData` 接口，替代不透明的遗留对象。
 *   **双模调度 (Dual-Mode Scheduling)**：底层统一封装 `JobManager`，无缝支持 Local (Multiprocessing) 和 Slurm 集群环境。
 *   **日志规范 (Logging Discipline)**：库代码不干预全局日志配置，确保日志输出清晰、无冗余且易于追踪。
 
@@ -44,7 +45,7 @@ dpeva/
 │   ├── sampling/           # 采样模块 (DIRECT, PCA, Clustering)
 │   ├── feature/            # 特征生成模块 (DescriptorGenerator)
 │   ├── submission/         # 任务提交抽象层 (JobManager, JobConfig, Templates)
-│   ├── io/                 # 数据读写辅助 (DPTestResults, DataProc)
+│   ├── io/                 # 数据读写辅助 (DPTestResultParser, PredictionData, types)
 │   └── utils/              # 通用工具
 └── test/                   # [开发专用] 单元测试与回归测试脚本
 ```
@@ -56,7 +57,7 @@ graph TD
     BaseModel[Base Model] -->|Fine-tune| Ensemble[Ensemble Models]
     
     subgraph Active_Learning_Loop
-        Ensemble -->|Inference| Preds[Predictions]
+        Ensemble -->|Inference| Preds[PredictionData]
         Preds -->|Variance & Deviation| UQ[UQ Calculator]
         UQ -->|Auto/Manual Threshold| Filter[UQ Filter]
         Filter -->|Candidates| Candidates[Candidate Structures]
@@ -91,9 +92,16 @@ graph TD
 
 ### 3.3 Uncertainty & Sampling 模块 (`dpeva.uncertain`, `dpeva.sampling`)
 这是主动学习的大脑，负责从海量数据中“淘金”。
+*   **数据标准化 (`io.types.PredictionData`)**: 
+    *   取代了旧版的 `DPTestResults` 遗留类。
+    *   统一使用 `PredictionData` (Dataclass) 作为数据容器，包含 `energy`, `force`, `virial` 等标准字段。
 *   **UQ 计算 (`UQCalculator`)**: 
-    *   **QbC (Query by Committee)**: 计算多模型预测方差。
-    *   **RND (Random Network Distillation)**: 计算当前模型与参考模型的偏差。
+    *   **QbC (Query by Committee)**: 计算多模型预测方差。公式：$\sigma_{QbC} = \sqrt{\sum_{i=x,y,z} Var(F_i)}$。
+    *   **RND (Random Network Distillation)**: 计算当前模型与参考模型的偏差。公式：$\sigma_{RND} = \sqrt{\sum_{i=x,y,z} Mean((F_i^{pred} - F_i^{base})^2)}$。
+    *   **数值稳定性 (Robustness)**: 实现了 **"Clamp-and-Clean"** 策略：
+        *   **Clamp**: 强制方差计算结果非负 (`np.maximum(var, 0.0)`)，消除浮点误差导致的 RuntimeWarning。
+        *   **Clean**: 自动检测 `NaN` 输出并将其替换为 `Infinity`（最大不确定度），确保异常模型预测会被标记为 `Failed` 而非被忽略。
+        *   **Robust Scaling**: 手动实现了抗 Inf 的 Robust Scaling 算法，仅基于有限值计算统计量，保留 `Inf` 的极端属性。
     *   **自动阈值 (Auto-Threshold)**: 基于 KDE (核密度估计) 自动识别不确定度分布峰值，自适应确定 `trust_lo`。
 *   **筛选策略 (`UQFilter`)**: 支持 `strict`, `tangent`, `circle` 等多种 2D 边界筛选算法。
 *   **DIRECT 采样 (`DIRECTSampler`)**: 
@@ -219,9 +227,20 @@ graph TD
 *   **日志**: 禁止在 `src/dpeva` 库文件中调用 `logging.basicConfig()`。仅在 `runner` 脚本中配置全局日志。
 *   **路径**: 所有文件操作应使用绝对路径 (`os.path.abspath`)。
 *   **异常**: 显式捕获并记录异常，避免静默失败。
+*   **数据接口**: 使用 `dpeva.io.types.PredictionData` 传递预测结果，禁止传递裸字典。
 
 ### 5.2 验证测试
 `test/` 目录包含开发阶段的验证脚本。
+
+*   **运行单元测试 (Unit Tests)**:
+    ```bash
+    pytest tests/unit --cov=dpeva.uncertain --cov-report=term-missing
+    ```
+    *   **覆盖范围**: 核心算法 (UQCalculator, UQFilter, DIRECTSampler) 的逻辑验证。
+    *   **测试策略**: 
+        *   **Golden Value**: 与 NumPy 手算结果比对，误差容忍度 < 1e-5。
+        *   **边界测试**: 覆盖 NaN, Inf, 空数据, 单点数据等极端场景。
+        *   **覆盖率要求**: 核心模块行覆盖率需达到 100%。
 
 *   **运行兼容性测试 (Compatibility Test)**:
     ```bash
@@ -253,5 +272,7 @@ A: 这是预期行为。在联合模式下，`num_selection` 定义的是特征�
 *   **v2.2.0** (2026-01-30): 
     *   **[新增]** 联合采样 (Joint Sampling) 功能支持，允许同时加载训练集进行去重采样。
     *   **[优化]** 单数据池描述符加载逻辑，消除 Fallback Warning，提升为兼容模式。
-    *   **[文档]** 明确 `num_selection` 在联合模式下的定义；补充兼容性测试说明。
-    *   **[修复]** 修复了多数据池导出时的路径冲突风险和效率问题。
+*   **v2.3.0** (2026-01-31):
+    *   **[重构]** 废弃并移除 `DPTestResults` 遗留类，引入标准化的 `PredictionData` 接口。
+    *   **[架构]** 实现了 `UQCalculator` 与特定数据格式的解耦，提升了系统的可维护性和扩展性。
+    *   **[清理]** 移除了所有 deprecated 警告，修复了辅助工具脚本 (`utils/uq/`) 的兼容性问题。

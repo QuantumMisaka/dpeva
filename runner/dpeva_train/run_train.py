@@ -2,17 +2,35 @@ import json
 import argparse
 import os
 import sys
+import logging
 
-# Add src to sys.path so we can import dpeva modules even if not installed
-# This assumes the script is running from dpeva/runner/dpeva_train/
-# Adjust relative path as needed if directory structure changes
-current_dir = os.path.dirname(os.path.abspath(__file__))
-project_root = os.path.dirname(os.path.dirname(current_dir)) # Up from runner/dpeva_train to dpeva root
-src_path = os.path.join(project_root, "src")
-if src_path not in sys.path:
-    sys.path.append(src_path)
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger("dpeva.runner.train")
 
-from dpeva.workflows.train import TrainingWorkflow
+# Try importing dpeva, fallback to src injection if not installed
+try:
+    import dpeva
+except ImportError:
+    # Add src to sys.path so we can import dpeva modules even if not installed
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.dirname(os.path.dirname(current_dir)) # Up from runner/dpeva_train to dpeva root
+    src_path = os.path.join(project_root, "src")
+    if src_path not in sys.path:
+        sys.path.append(src_path)
+    logger.warning(f"dpeva package not found in python path. Added {src_path} to sys.path. Please consider installing via 'pip install -e .'")
+
+try:
+    from dpeva.workflows.train import TrainingWorkflow
+except ImportError as e:
+    logger.error(f"Failed to import TrainingWorkflow: {e}")
+    sys.exit(1)
+
+def resolve_path(path, base_dir):
+    """Resolves a path relative to a base directory."""
+    if not path or not isinstance(path, str):
+        return path
+    return os.path.abspath(os.path.join(base_dir, path))
 
 def main():
     parser = argparse.ArgumentParser(description="Run DPEVA Training Workflow from Config")
@@ -21,8 +39,8 @@ def main():
     
     config_path = args.config
     if not os.path.exists(config_path):
-        print(f"Error: Configuration file not found at {config_path}")
-        return
+        logger.error(f"Configuration file not found at {config_path}")
+        sys.exit(1)
 
     try:
         with open(config_path, "r") as f:
@@ -31,25 +49,10 @@ def main():
         # Resolve relative paths relative to the config file location
         config_dir = os.path.dirname(os.path.abspath(config_path))
         
-        def resolve_path(path):
-            if not path or not isinstance(path, str):
-                return path
-            # If path is absolute, join(base, path) returns path
-            # If path is relative, join(base, path) returns base/path
-            return os.path.abspath(os.path.join(config_dir, path))
-
         # Resolve paths in config
-        if "work_dir" in config:
-            config["work_dir"] = resolve_path(config["work_dir"])
-            
-        if "input_json_path" in config:
-            config["input_json_path"] = resolve_path(config["input_json_path"])
-            
-        if "base_model_path" in config:
-            config["base_model_path"] = resolve_path(config["base_model_path"])
-            
-        if "training_data_path" in config:
-            config["training_data_path"] = resolve_path(config["training_data_path"])
+        for key in ["work_dir", "input_json_path", "base_model_path", "training_data_path"]:
+            if key in config:
+                config[key] = resolve_path(config[key], config_dir)
             
         # Handle env_setup in slurm_config: support list of strings -> join to string
         if "slurm_config" in config and "env_setup" in config["slurm_config"]:
@@ -58,16 +61,22 @@ def main():
                 config["slurm_config"]["env_setup"] = "\n".join(env_setup)
 
     except json.JSONDecodeError as e:
-        print(f"Error: Failed to parse JSON config: {e}")
-        return
+        logger.error(f"Failed to parse JSON config: {e}")
+        sys.exit(1)
+    except Exception as e:
+        logger.error(f"Unexpected error during config loading: {e}")
+        sys.exit(1)
 
-    print("🚀 Starting DPEVA Training Workflow...")
-    print(f"📄 Configuration: {config_path}")
+    logger.info("🚀 Starting DPEVA Training Workflow...")
+    logger.info(f"📄 Configuration: {config_path}")
     
-    workflow = TrainingWorkflow(config)
-    workflow.run()
-    
-    print("✅ Workflow Completed.")
+    try:
+        workflow = TrainingWorkflow(config)
+        workflow.run()
+        logger.info("✅ Workflow Completed.")
+    except Exception as e:
+        logger.error(f"Workflow execution failed: {e}", exc_info=True)
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()

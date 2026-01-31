@@ -7,7 +7,8 @@ import numpy as np
 import pandas as pd
 import dpdata
 
-from dpeva.io.dataproc import DPTestResults
+from dpeva.io.dataproc import DPTestResultParser
+from dpeva.io.types import PredictionData
 from dpeva.sampling.direct import BirchClustering, DIRECTSampler, SelectKFromClusters
 from dpeva.uncertain.calculator import UQCalculator
 from dpeva.uncertain.filter import UQFilter
@@ -468,18 +469,18 @@ if __name__ == "__main__":
             # DPTestResults expects result_dir and head.
             # Here we are passing the FULL PATH to DPTestResults constructor?
             # Let's check DPTestResults signature.
-            # DPTestResults(headname, type_map=None) -> init calls TestResultParser(result_dir=".", head=headname)
+            # DPTestResults(headname, type_map=None) -> init calls DPTestResultParser(result_dir=".", head=headname)
             # Wait, the previous code was: DPTestResults(f"./{self.project}/{i}/{self.testing_dir}/{self.testing_head}")
             # This looks like it's passing the HEAD NAME?
             # NO! DPTestResults init takes `headname`. 
-            # But inside it does: `self.parser = TestResultParser(result_dir=".", head=headname)`
+            # But inside it does: `self.parser = DPTestResultParser(result_dir=".", head=headname)`
             # So it assumes results are in CURRENT DIRECTORY if result_dir is fixed to "."!
             
-            # If the user passes a full path as headname, TestResultParser does:
+            # If the user passes a full path as headname, DPTestResultParser does:
             # os.path.join(".", full_path + ".e_peratom.out")
             # This works if full_path is a path prefix.
             
-            # BUT, TestResultParser logic:
+            # BUT, DPTestResultParser logic:
             # e_file = os.path.join(self.result_dir, f"{self.head}.e_peratom.out")
             
             # If head is "path/to/results", result_dir=".", then:
@@ -496,7 +497,25 @@ if __name__ == "__main__":
             # If I use os.path.join, it handles absolute paths by discarding previous parts.
             
             res_path_prefix = os.path.join(self.project, str(i), self.testing_dir, self.testing_head)
-            preds.append(DPTestResults(res_path_prefix))
+            
+            # REFACTOR: Use Parser + PredictionData instead of DPTestResults
+            # DPTestResultParser expects result_dir and head. 
+            # The previous logic relied on passing the full path prefix as head to a parser running in "."
+            # To maintain exact behavior:
+            # result_dir=".", head=res_path_prefix
+            
+            parser = DPTestResultParser(result_dir=".", head=res_path_prefix)
+            parsed_dict = parser.parse()
+            
+            pred_data = PredictionData(
+                energy=parsed_dict["energy"],
+                force=parsed_dict["force"],
+                virial=parsed_dict["virial"],
+                has_ground_truth=parsed_dict["has_ground_truth"],
+                dataname_list=parsed_dict["dataname_list"],
+                datanames_nframe=parsed_dict["datanames_nframe"]
+            )
+            preds.append(pred_data)
             
         has_ground_truth = preds[0].has_ground_truth
         

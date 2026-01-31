@@ -11,7 +11,7 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.dirname(os.path.dirname(current_dir))
 sys.path.append(os.path.join(project_root, "src"))
 
-from dpeva.inference import TestResultParser, StatsCalculator, InferenceVisualizer
+from dpeva.inference import DPTestResultParser, StatsCalculator, InferenceVisualizer
 
 def setup_logger(output_dir):
     logging.basicConfig(
@@ -64,7 +64,7 @@ def main():
     try:
         # 1. Parse Results
         type_map = config.get("type_map", ["Fe", "C", "O", "H"])
-        parser = TestResultParser(result_dir=result_dir, head="results", type_map=type_map)
+        parser = DPTestResultParser(result_dir=result_dir, head="results", type_map=type_map)
         data = parser.parse()
         
         # 2. Get Composition Info

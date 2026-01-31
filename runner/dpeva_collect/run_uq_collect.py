@@ -6,16 +6,25 @@ import logging
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger("dpeva.runner.collect")
 
-# Add src to path if not installed
-current_dir = os.path.dirname(os.path.abspath(__file__))
-# dpeva/runner/dpeva_collect -> dpeva/runner -> dpeva
-project_root = os.path.dirname(os.path.dirname(current_dir))
-src_path = os.path.join(project_root, "src")
-if src_path not in sys.path:
-    sys.path.append(src_path)
+# Try importing dpeva, fallback to src injection if not installed
+try:
+    import dpeva
+except ImportError:
+    # Add src to sys.path so we can import dpeva modules even if not installed
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.dirname(os.path.dirname(current_dir))
+    src_path = os.path.join(project_root, "src")
+    if src_path not in sys.path:
+        sys.path.append(src_path)
+    logger.warning(f"dpeva package not found in python path. Added {src_path} to sys.path. Please consider installing via 'pip install -e .'")
 
-from dpeva.workflows.collect import CollectionWorkflow
+try:
+    from dpeva.workflows.collect import CollectionWorkflow
+except ImportError as e:
+    logger.error(f"Failed to import CollectionWorkflow: {e}")
+    sys.exit(1)
 
 def load_config(config_path):
     with open(config_path, 'r') as f:
@@ -26,21 +35,18 @@ def main():
     parser.add_argument("--config", type=str, required=True, help="Path to JSON configuration file")
     args = parser.parse_args()
 
-    # Explicit Configuration: Rely solely on user config
-    # Removed default config template to ensure explicit behavior
-    
-    config = {}
+    if not os.path.exists(args.config):
+        logger.error(f"Config file {args.config} not found.")
+        sys.exit(1)
 
-    if args.config:
-        if os.path.exists(args.config):
-            user_config = load_config(args.config)
-            config.update(user_config)
-            print(f"Loaded configuration from {args.config}")
-        else:
-            print(f"Error: Config file {args.config} not found.")
-            sys.exit(1)
-    else:
-        print("Error: No configuration file provided. Use --config <path>")
+    try:
+        config = load_config(args.config)
+        logger.info(f"Loaded configuration from {args.config}")
+    except json.JSONDecodeError as e:
+        logger.error(f"Failed to parse JSON config: {e}")
+        sys.exit(1)
+    except Exception as e:
+        logger.error(f"Unexpected error loading config: {e}")
         sys.exit(1)
 
     # Resolve relative paths in config based on config file location
@@ -61,9 +67,10 @@ def main():
     try:
         workflow = CollectionWorkflow(config)
         workflow.run()
+        logger.info("✅ Collection Workflow Completed.")
     except Exception as e:
-        logging.error(f"Workflow execution failed: {e}")
-        raise
+        logger.error(f"Workflow execution failed: {e}", exc_info=True)
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()
