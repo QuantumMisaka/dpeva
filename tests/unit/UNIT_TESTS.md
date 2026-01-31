@@ -13,78 +13,78 @@ dpeva/tests/
 │   ├── test_filter_uq.py       # UQFilter 筛选策略全覆盖测试
 │   ├── test_parser.py          # I/O 解析器测试 (基于临时文件)
 │   ├── test_sampling.py        # DIRECT 采样器逻辑测试
-│   └── UQ_TEST_REPORT.md       # 本文档
+│   ├── feature/                # 特征生成模块测试 [新增]
+│   │   └── test_generator.py   # DescriptorGenerator 逻辑测试 (CLI/Python模式)
+│   ├── submission/             # 任务提交模块测试 [新增]
+│   │   └── test_job_manager.py # JobManager 与 TemplateEngine 测试
+│   ├── workflows/              # 工作流执行测试
+│   │   ├── test_infer_workflow_exec.py      # 推理工作流 (启动/解析)
+│   │   ├── test_train_workflow_init.py      # 训练工作流 (多模型/Slurm)
+│   │   ├── test_collect_workflow_routing.py # 采集工作流 (单/多池路由)
+│   │   └── test_feature_workflow_env.py     # 特征工作流 (环境注入)
+│   └── UNIT_TESTS.md           # 本文档
 └── ...
 ```
 
 ### 1.2 职责划分
 *   **unit**: 关注函数/类级别的逻辑正确性。不依赖真实的大型模型文件或外部数据库，所有输入均通过 Mock 或合成数据生成，追求毫秒级响应。
-*   **conftest.py**: 集中管理测试数据生成器（如 `mock_predictions_factory`），避免测试代码重复，并统一管理随机种子。
+*   **unit/workflows**: 关注业务流程编排的正确性。验证配置解析、路径路由、命令构建及外部组件（如 Slurm）的调用参数，但不实际执行耗时任务。
+*   **conftest.py**: 集中管理测试数据生成器（如 `mock_predictions_factory`）及环境模拟器（`mock_job_manager`, `real_config_loader`），避免测试代码重复，并统一管理随机种子。
 
 ## 2. 源码映射与测试范围 (Mapping & Scope)
 
-| 被测源码文件 (`src/dpeva/...`) | 测试文件 (`tests/unit/...`) | 测试核心范围 | 关键业务上下文 |
+| 领域 | 被测源码文件 (`src/dpeva/...`) | 测试文件 (`tests/unit/...`) | 测试核心范围 |
 | :--- | :--- | :--- | :--- |
-| `uncertain/calculator.py` | `test_calculator_uq.py` | QbC/RND 公式精度、Auto-UQ (KDE)、数值稳定性 (NaN/Inf) | 主动学习中的不确定度量化计算，直接决定样本筛选质量。 |
-| `uncertain/filter.py` | `test_filter_uq.py` | 5种筛选策略 (`strict`, `tangent`...), 几何边界判定 | 决定哪些样本被视为“高价值”候选点。 |
-| `io/dataproc.py` | `test_parser.py` | `dp test` 输出文件解析、无标签数据兼容性 | 处理 DeepMD 产生的异构数据格式。 |
-| `sampling/direct.py` | `test_sampling.py` | 聚类+分层采样流程、维度一致性 | 在高维特征空间中进行多样性采样。 |
+| **不确定度** | `uncertain/calculator.py` | `test_calculator_uq.py` | QbC/RND 公式精度、Auto-UQ (KDE)、数值稳定性 (NaN/Inf) |
+| **筛选** | `uncertain/filter.py` | `test_filter_uq.py` | 5种筛选策略 (`strict`, `tangent`...), 几何边界判定 |
+| **I/O** | `io/dataproc.py` | `test_parser.py` | `dp test` 输出文件解析、无标签数据兼容性 |
+| **采样** | `sampling/direct.py` | `test_sampling.py` | 聚类+分层采样流程、维度一致性 |
+| **特征生成** | `feature/generator.py` | `feature/test_generator.py` | **混合模式生成逻辑**、递归目录处理、CLI 命令构建 |
+| **任务提交** | `submission/manager.py` | `submission/test_job_manager.py` | **Template 渲染**、Slurm/Local 提交命令封装 |
+| **推理流** | `workflows/infer.py` | `workflows/test_infer_workflow_exec.py` | 模型自动发现、命令构建、JobManager 调用、异常处理 |
+| **训练流** | `workflows/train.py` | `workflows/test_train_workflow_init.py` | 多模型目录隔离、配置继承、Trainer 初始化 |
+| **采集流** | `workflows/collect.py` | `workflows/test_collect_workflow_routing.py` | 单/多数据池路径解析、迭代参数传递 |
+| **特征流** | `workflows/feature.py` | `workflows/test_feature_workflow_env.py` | Slurm 环境注入、CLI 参数透传 |
 
 ## 3. 测试用例详解 (Test Cases)
 
-### 3.1 不确定度计算 (`test_calculator_uq.py`)
-*   **`test_compute_qbc_rnd_golden_value`**
-    *   **目的**: 验证 QbC/RND 计算公式的数学精确性。
-    *   **策略**: 使用 `numpy` 手算“黄金值”与 `UQCalculator` 输出比对。
-    *   **断言**: 相对误差 < 1e-5。
-*   **`test_compute_qbc_rnd_robustness_nan`**
-    *   **目的**: 验证 **"Clamp-and-Clean"** 策略对异常模型的防御能力。
-    *   **输入**: 包含 `NaN` 的预测力矩阵。
-    *   **预期**: 系统记录 Warning 日志，并将结果替换为 `Infinity`（最大不确定度），而非崩溃或输出 0。
-*   **`test_calculate_trust_lo_gaussian`**
-    *   **目的**: 验证 Auto-UQ (KDE) 算法对标准分布的响应。
-    *   **输入**: 均值 0.5、方差 0.1 的高斯分布数据。
-    *   **预期**: 计算出的 `trust_lo` 阈值应落在理论峰值右侧下降点附近 (约 0.617)。
+### 3.1 核心算法测试
+*   **不确定度计算 (`test_calculator_uq.py`)**: 验证 QbC/RND/Auto-UQ 算法的数学精确性及对 NaN/Inf 的鲁棒性。
+*   **筛选策略 (`test_filter_uq.py`)**: 全面覆盖 `strict`, `tangent_lo` 等筛选边界逻辑。
+*   **I/O 解析 (`test_parser.py`)**: 验证 DeepMD 输出解析及无标签数据的处理。
+*   **采样逻辑 (`test_sampling.py`)**: 验证 DIRECT 采样流程的维度一致性。
 
-### 3.2 筛选策略 (`test_filter_uq.py`)
-*   **`test_filter_counts_sanity`** (参数化)
-    *   **目的**: 验证所有筛选 Scheme (`strict`, `tangent_lo` 等) 的分类逻辑完备性。
-    *   **策略**: 在 `[0, 0.3]` 区间构造 31x31 的密集网格点，统计 Candidate/Accurate/Failed 分区数量。
-*   **`test_filter_tangent_lo_boundary`**
-    *   **目的**: 精确测试切线筛选边界。
-    *   **输入**: 恰好落在 $x+y = 2 \cdot lo$ 线上的点。
-    *   **断言**: 验证不等号方向是否符合预期（Candidate 包含边界）。
+### 3.2 模块功能测试 (Modules) **[新增]**
+*   **特征生成 (`feature/test_generator.py`)**:
+    *   `test_cli_generation_command_construction`: 验证 `dp eval-desc` 命令参数构建（含 `-s`, `-m`, `--head`）。
+    *   `test_python_generation_recursion`: 验证 Python 模式下对嵌套目录结构（Root -> Group -> System）的递归处理能力。
+*   **任务提交 (`submission/test_job_manager.py`)**:
+    *   `test_generate_script_slurm`: 验证 SBATCH 指令生成（`-J`, `-p`, `--gpus-per-node`）。
+    *   `test_submit_slurm`: 验证 `sbatch` 命令调用。
 
-### 3.3 I/O 解析 (`test_parser.py`)
-*   **`test_parser_basic`**
-    *   **目的**: 验证标准 `.e.out` / `.f.out` 文件解析。
-    *   **Mock**: 使用 `pytest.tmp_path` 创建包含注释和数据的临时文件。
-*   **`test_parser_no_ground_truth`**
-    *   **目的**: 验证无标签数据（全 0 占位）场景下的解析与标识位设置。
+### 3.3 工作流执行测试 (Workflows)
+*   **推理工作流 (`test_infer_workflow_exec.py`)**:
+    *   `test_init_model_discovery`: 验证能否自动识别嵌套目录下的 `model.ckpt.pt`。
+    *   `test_run_command_generation`: 验证生成的 `dp test` 命令参数是否正确。
+*   **训练工作流 (`test_train_workflow_init.py`)**:
+    *   `test_training_workflow_init_multi_model`: 验证多模型训练时的目录创建及配置参数继承。
+*   **采集工作流 (`test_collect_workflow_routing.py`)**:
+    *   `test_collect_single_pool_routing`: 验证单数据池模式下的路径解析。
+    *   `test_collect_multi_pool_routing`: 验证多数据池（联合采样）模式下的参数分离。
 
 ## 4. 测试数据与 Mock 策略
 
 ### 4.1 动态数据工厂 (`mock_predictions_factory`)
 位于 `conftest.py`，用于动态生成 `MockDPTestResults` 对象。
 *   **优势**: 允许测试按需指定原子数、帧数、预测值和 Ground Truth，无需依赖外部文件。
-*   **示例**:
-    ```python
-    # 生成一个包含 5 个原子，且带有 NaN 异常的预测结果
-    f0 = np.zeros((5, 3)); f0[0,0] = np.nan
-    p0 = mock_predictions_factory(f0, [5])
-    ```
 
-### 4.2 文件系统 Mock
-使用 PyTest 内置的 `tmp_path` fixture。
-*   **策略**: 在内存/临时目录中动态创建测试文件，测试结束后自动清理。
-*   **应用**: `test_parser.py` 中用于模拟 DeepMD 的输出目录结构。
+### 4.2 真实配置加载器 (`real_config_loader`)
+位于 `conftest.py`，用于加载项目中的真实配置文件，并动态替换其中的绝对路径为测试临时路径。
+*   **优势**: 确保单元测试使用的配置结构与真实生产环境一致，避免配置漂移。
 
-### 4.3 随机性控制
-所有涉及随机生成的测试（如采样、分布模拟）均显式设置随机种子：
-```python
-np.random.seed(42)
-```
-确保测试结果在任何环境下具备**可重复性 (Reproducibility)**。
+### 4.3 作业管理器 Mock (`mock_job_manager`)
+位于 `conftest.py`，通过 `unittest.mock.patch` 拦截 `JobManager` 的提交动作。
+*   **优势**: 允许在无 Slurm 环境下验证作业提交逻辑和脚本生成内容。
 
 ## 5. 运行与调试指南
 
@@ -93,27 +93,16 @@ np.random.seed(42)
 # 运行所有单元测试
 pytest tests/unit
 
-# 运行特定测试文件
-pytest tests/unit/test_calculator_uq.py
-
-# 运行特定用例 (支持模糊匹配)
-pytest -k "robustness"
+# 运行特定模块
+pytest tests/unit/feature
+pytest tests/unit/submission
 ```
 
 ### 5.2 覆盖率检查
 ```bash
 # 生成覆盖率报告 (终端显示)
-pytest tests/unit --cov=dpeva.uncertain --cov=dpeva.sampling --cov-report=term-missing
-
-# 生成 HTML 详细报告
-pytest tests/unit --cov=dpeva --cov-report=html
-# 打开 htmlcov/index.html 查看
+pytest tests/unit --cov=dpeva --cov-report=term-missing
 ```
-
-### 5.3 调试模式
-*   `-s`: 显示标准输出 (print/logging)，用于调试日志逻辑。
-*   `-v`: 详细模式，显示每个 Passed/Failed 的用例名。
-*   `--pdb`: 测试失败时自动进入 Python 调试器。
 
 ## 6. 覆盖率阈值与质量门禁
 
@@ -122,31 +111,20 @@ pytest tests/unit --cov=dpeva --cov-report=html
 | 模块 | 最低行覆盖率 (Line Cov) | 失败策略 |
 | :--- | :--- | :--- |
 | `dpeva.uncertain` | **100%** | CI 阻断 (Block Merge) |
+| `dpeva.workflows` | **85%** | CI 警告 |
 | `dpeva.sampling` | **90%** | CI 警告 |
 | `dpeva.io` | **85%** | CI 警告 |
-
-**CI 配置片段 (.github/workflows/ci.yml)**:
-```yaml
-- name: Enforce Coverage
-  run: |
-    pytest tests/unit --cov=dpeva.uncertain --cov-fail-under=100
-```
+| `dpeva.feature` | **90%** | CI 警告 |
+| `dpeva.submission` | **95%** | CI 警告 |
 
 ## 7. 维护规范
 
 1.  **命名约定**:
-    *   测试文件: `test_<module_name>.py` 或 `test_<feature>_uq.py`
-    *   测试类: `Test<ClassName>`
-    *   测试函数: `test_<function_name>_<condition>`
+    *   测试文件: `test_<module_name>.py`
+    *   工作流测试: `workflows/test_<workflow>_<feature>.py`
 2.  **变更流程**:
     *   修改业务逻辑前，先运行现有测试确保通过。
     *   新增功能必须同步添加对应的单元测试。
-    *   修复 Bug 时，必须先编写一个**复现该 Bug 的失败测试**（TDD 思想），再修复代码。
-3.  **废弃策略**:
-    *   随着重构（如 `test_calculator.py` 被 `test_calculator_uq.py` 取代），应及时删除旧测试文件或标记为 `@pytest.mark.skip`。
-
-## 8. 附录：依赖与环境
-
-*   **测试框架**: `pytest >= 7.0`
-*   **插件**: `pytest-cov`, `pytest-mock` (可选)
-*   **核心依赖**: `numpy`, `pandas`, `scipy`, `sklearn`
+3.  **Mock 原则**:
+    *   对于文件 I/O，使用 `tmp_path`。
+    *   对于外部耗时调用（如 `dp test`, `sbatch`），必须使用 Mock。
