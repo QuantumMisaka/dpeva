@@ -73,6 +73,7 @@ class CollectionWorkflow:
         self.df_savedir = os.path.join(self.project, self.root_savedir, "dataframe")
         
         self._ensure_dirs()
+        self._configure_file_logging()
         
         # UQ Parameters
         self.uq_trust_mode = config.get("uq_trust_mode")
@@ -169,6 +170,22 @@ class CollectionWorkflow:
         """Sets up the logging configuration."""
         self.logger = logging.getLogger(__name__)
 
+    def _configure_file_logging(self):
+        """Configures file logging to the output directory."""
+        log_file = os.path.join(self.project, self.root_savedir, "collection.log")
+        
+        # Check if handler already exists to avoid duplicates
+        for h in self.logger.handlers:
+            if isinstance(h, logging.FileHandler) and h.baseFilename == os.path.abspath(log_file):
+                return
+
+        file_handler = logging.FileHandler(log_file, mode='w')
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        file_handler.setFormatter(formatter)
+        file_handler.setLevel(logging.INFO)
+        self.logger.addHandler(file_handler)
+        self.logger.info(f"Logging configured to file: {log_file}")
+
     def _validate_config(self):
         """Validates that necessary configuration paths exist."""
         # Basic validation
@@ -261,8 +278,8 @@ class CollectionWorkflow:
                 # Use sys_name as keyname to ensure match with target
                 keyname = sys_name
                 
-                for i in range(len(one_desc)):
-                    desc_datanames.append(f"{keyname}-{i}")
+                # Optimized: List comprehension for faster string generation
+                desc_datanames.extend([f"{keyname}-{i}" for i in range(len(one_desc))])
                 
                 # Mean pooling and L2 normalization per frame
                 one_desc_stru = np.mean(one_desc, axis=1) # (n_frames, n_desc)
@@ -315,8 +332,8 @@ class CollectionWorkflow:
                     self.logger.error(f"Failed to load descriptor file {f}: {e}")
                     continue
                     
-                for i in range(len(one_desc)):
-                    desc_datanames.append(f"{keyname}-{i}")
+                # Optimized: List comprehension for faster string generation
+                desc_datanames.extend([f"{keyname}-{i}" for i in range(len(one_desc))])
                 
                 # Mean pooling and L2 normalization per frame
                 one_desc_stru = np.mean(one_desc, axis=1) # (n_frames, n_desc)
@@ -691,8 +708,15 @@ if __name__ == "__main__":
              # Since we added per-system check, this global mismatch should ideally not happen 
              # unless some system was skipped entirely or dataname_list logic is flawed.
              
-        
-        df_uq_desc = pd.merge(df_uq, df_desc, on="dataname")
+        # Optimized: Use concat if aligned (much faster), else merge
+        if len(df_uq) == len(df_desc) and np.array_equal(df_uq["dataname"].values, df_desc["dataname"].values):
+            self.logger.info("Dataframes are aligned. Using optimized concat.")
+            # Drop duplicate dataname col from df_desc
+            df_desc_vals = df_desc.drop(columns=["dataname"])
+            df_uq_desc = pd.concat([df_uq, df_desc_vals], axis=1)
+        else:
+            self.logger.info("Dataframes not aligned. Falling back to merge.")
+            df_uq_desc = pd.merge(df_uq, df_desc, on="dataname")
         
         self.logger.info(f"Save df_uq_desc dataframe to {self.df_savedir}/df_uq_desc.csv")
         df_uq_desc.to_csv(f"{self.df_savedir}/df_uq_desc.csv", index=True)
@@ -1012,8 +1036,21 @@ if __name__ == "__main__":
         
         # 6. Export dpdata
         self.logger.info(f"Sampling dpdata based on selected indices")
-        sampled_datanames = df_final['dataname'].to_list()
         
+        # Optimized: Pre-calculate sampled indices map for O(1) lookup
+        # df_final['dataname'] format: "sys_name-index"
+        sampled_indices_map = {}
+        for dataname in df_final['dataname']:
+            # Use rsplit to handle potential dashes in sys_name (though dataname format is fixed)
+            sys_name, idx_str = dataname.rsplit('-', 1)
+            try:
+                idx = int(idx_str)
+                if sys_name not in sampled_indices_map:
+                    sampled_indices_map[sys_name] = set()
+                sampled_indices_map[sys_name].add(idx)
+            except ValueError:
+                self.logger.warning(f"Failed to parse dataname: {dataname}")
+
         self.logger.info(f"Loading the target testing data from {self.testdata_dir}")
         
         # Use ordered unique_system_names to load data
@@ -1021,51 +1058,67 @@ if __name__ == "__main__":
         # Use fmt="auto" to automatically detect if it's mixed or npy
         test_data = load_systems(self.testdata_dir, fmt="auto", target_systems=unique_system_names)
             
-        sampled_dpdata = dpdata.MultiSystems()
-        other_dpdata = dpdata.MultiSystems()
+        self.logger.info(f"Dumping sampled and other dpdata to {self.dpdata_savedir}")
         
+        # Clean up existing directories
+        if os.path.exists(f"{self.dpdata_savedir}/sampled_dpdata"):
+            shutil.rmtree(f"{self.dpdata_savedir}/sampled_dpdata")
+        if os.path.exists(f"{self.dpdata_savedir}/other_dpdata"):
+            shutil.rmtree(f"{self.dpdata_savedir}/other_dpdata")
+        
+        os.makedirs(f"{self.dpdata_savedir}/sampled_dpdata")
+        os.makedirs(f"{self.dpdata_savedir}/other_dpdata")
+
+        count_sampled_sys = 0
+        count_other_sys = 0
+
         for sys in test_data:
             # Match frames based on dataname (keyname-index)
             # Use the target_name we stored, or fallback to short_name if missing
             sys_name = getattr(sys, "target_name", sys.short_name)
             
-            sampled_indices = []
-            other_indices = []
-
-            for i in range(len(sys)):
-                dataname_sys = f"{sys_name}-{i}"
-                if dataname_sys in sampled_datanames:
-                    sampled_indices.append(i)
-                else:
-                    other_indices.append(i)
+            # Optimized: O(1) Lookup instead of O(N*M) loop
+            sampled_set = sampled_indices_map.get(sys_name, set())
             
-            # Batch process sampled frames
+            # Since sys indices are 0..len(sys)-1
+            # We filter sampled_set to ensure it's within range (safety)
+            n_frames = len(sys)
+            valid_sampled = {i for i in sampled_set if i < n_frames}
+            
+            # Convert to sorted list for dpdata
+            sampled_indices = sorted(list(valid_sampled))
+            
+            # Other indices are the complement
+            # Using set difference is faster than iterating
+            all_indices = set(range(n_frames))
+            other_indices = sorted(list(all_indices - valid_sampled))
+            
+            # Save Sampled
             if sampled_indices:
                 try:
                     sys_sampled = sys.sub_system(sampled_indices)
-                    sampled_dpdata.append(sys_sampled)
+                    # Construct path: sampled_dpdata/sys_name (sys_name might be Pool/System)
+                    save_path = os.path.join(self.dpdata_savedir, "sampled_dpdata", sys_name)
+                    # Ensure parent dir exists (for nested sys_name)
+                    os.makedirs(os.path.dirname(save_path), exist_ok=True)
+                    # to_deepmd_npy creates the target directory
+                    sys_sampled.to_deepmd_npy(save_path)
+                    count_sampled_sys += 1
                 except Exception as e:
-                    self.logger.error(f"Failed to append sampled frames for {sys_name}: {e}")
+                    self.logger.error(f"Failed to save sampled frames for {sys_name}: {e}")
 
-            # Batch process other frames
+            # Save Other
             if other_indices:
                 try:
                     sys_other = sys.sub_system(other_indices)
-                    other_dpdata.append(sys_other)
+                    save_path = os.path.join(self.dpdata_savedir, "other_dpdata", sys_name)
+                    os.makedirs(os.path.dirname(save_path), exist_ok=True)
+                    sys_other.to_deepmd_npy(save_path)
+                    count_other_sys += 1
                 except Exception as e:
-                    self.logger.error(f"Failed to append other frames for {sys_name}: {e}")
+                    self.logger.error(f"Failed to save other frames for {sys_name}: {e}")
                     
-        self.logger.info(f'Sampled dpdata: {sampled_dpdata}')
-        self.logger.info(f'Other dpdata: {other_dpdata}')
-        
-        self.logger.info(f"Dumping sampled and other dpdata to {self.dpdata_savedir}")
-        
-        if os.path.exists(f"{self.dpdata_savedir}/sampled_dpdata"):
-            shutil.rmtree(f"{self.dpdata_savedir}/sampled_dpdata")
-        if os.path.exists(f"{self.dpdata_savedir}/other_dpdata"):
-            shutil.rmtree(f"{self.dpdata_savedir}/other_dpdata")
-            
-        sampled_dpdata.to_deepmd_npy(f"{self.dpdata_savedir}/sampled_dpdata")
-        other_dpdata.to_deepmd_npy(f"{self.dpdata_savedir}/other_dpdata")
+        self.logger.info(f"Saved {count_sampled_sys} systems to sampled_dpdata")
+        self.logger.info(f"Saved {count_other_sys} systems to other_dpdata")
         
         self.logger.info("All Done!")
