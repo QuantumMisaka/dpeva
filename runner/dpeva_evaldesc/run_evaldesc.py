@@ -5,7 +5,6 @@ import sys
 
 # Try importing dpeva
 try:
-    import dpeva
     from dpeva.workflows.feature import FeatureWorkflow
 except ImportError:
     print("Error: The 'dpeva' package is not installed in the current Python environment.")

@@ -5,7 +5,6 @@
     "testing_head": "results",
     "desc_dir": "./desc_pool",
     "testdata_dir": "./other_dpdata",
-    "testdata_fmt": "deepmd/npy",
     
     "training_data_dir": "./sampled_dpdata",
     "training_desc_dir": "./desc_train",

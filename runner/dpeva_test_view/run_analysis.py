@@ -8,7 +8,6 @@ import shutil
 
 # Try importing dpeva
 try:
-    import dpeva
     from dpeva.inference import DPTestResultParser, StatsCalculator, InferenceVisualizer
 except ImportError:
     print("Error: The 'dpeva' package is not installed in the current Python environment.")

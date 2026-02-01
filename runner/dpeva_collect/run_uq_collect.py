@@ -10,7 +10,6 @@ logger = logging.getLogger("dpeva.runner.collect")
 
 # Try importing dpeva
 try:
-    import dpeva
     from dpeva.workflows.collect import CollectionWorkflow
 except ImportError:
     logger.error("The 'dpeva' package is not installed in the current Python environment.")

@@ -10,7 +10,6 @@ logger = logging.getLogger("dpeva.runner.train")
 
 # Try importing dpeva
 try:
-    import dpeva
     from dpeva.workflows.train import TrainingWorkflow
 except ImportError:
     logger.error("The 'dpeva' package is not installed in the current Python environment.")

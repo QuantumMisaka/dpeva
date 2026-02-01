@@ -60,7 +60,7 @@ class CollectionWorkflow:
         self.desc_dir = config.get("desc_dir")
         self.desc_filename = config.get("desc_filename", "desc.npy")
         self.testdata_dir = config.get("testdata_dir")
-        self.testdata_fmt = config.get("testdata_fmt", "deepmd/npy")
+        # testdata_fmt is no longer needed as we use auto-detection
         
         # Training Set Paths (used in joint DIRECT for diversity maximization)
         self.training_data_dir = config.get("training_data_dir")
@@ -333,26 +333,16 @@ class CollectionWorkflow:
             
         return desc_datanames, desc_stru
 
-    def _count_frames_in_data(self, data_dir, fmt="deepmd/npy"):
+    def _count_frames_in_data(self, data_dir, fmt="auto"):
         """Counts total frames in dataset to verify consistency."""
-        total_frames = 0
-        found_dirs = sorted(glob.glob(os.path.join(data_dir, "*")))
-        for d in found_dirs:
-            if not os.path.isdir(d):
-                continue
-            try:
-                # Use dpdata to count frames quickly if possible, or just load
-                # Loading might be slow for huge datasets, but necessary for consistency check
-                # A lightweight check is to look at set.000/box.npy
-                # But let's use dpdata for robustness
-                try:
-                    sys = dpdata.LabeledSystem(d, fmt=fmt)
-                except:
-                    sys = dpdata.System(d, fmt=fmt)
-                total_frames += len(sys)
-            except Exception:
-                pass
-        return total_frames
+        try:
+            # Use load_systems for robust loading and auto-detection
+            systems = load_systems(data_dir, fmt=fmt)
+            total_frames = sum(len(sys) for sys in systems)
+            return total_frames
+        except Exception as e:
+            self.logger.warning(f"Failed to count frames in {data_dir}: {e}")
+            return 0
 
     def _submit_to_slurm(self):
         """
@@ -434,6 +424,53 @@ if __name__ == "__main__":
         self.logger.info(f"Submitting job from {project_abs}")
         
         manager.submit_python_script(runner_content, runner_script_name, job_conf, working_dir=project_abs)
+
+    def _prepare_features_for_direct(self, df_candidate, df_desc):
+        """
+        Prepares features for DIRECT sampling, handling joint sampling logic if training data is provided.
+        
+        Returns:
+            tuple: (features_for_direct, use_joint_sampling, n_candidates)
+        """
+        use_joint_sampling = False
+        train_desc_stru = np.array([])
+        
+        if self.training_desc_dir:
+            self.logger.info(f"Training descriptors provided at {self.training_desc_dir}. Attempting joint sampling.")
+            _, train_desc_stru = self._load_descriptors(self.training_desc_dir, self.desc_filename, "training descriptors")
+            
+            if len(train_desc_stru) > 0:
+                # Consistency Check
+                if self.training_data_dir:
+                    self.logger.info(f"Verifying training data consistency from {self.training_data_dir}")
+                    n_train_frames = self._count_frames_in_data(self.training_data_dir)
+                    if n_train_frames != len(train_desc_stru):
+                        self.logger.error(f"Training set mismatch: Found {n_train_frames} frames in data but {len(train_desc_stru)} frames in descriptors.")
+                        raise ValueError("Training data frame count mismatch with descriptors!")
+                    else:
+                        self.logger.info(f"Training set verified: {n_train_frames} frames.")
+                else:
+                    self.logger.warning("Training descriptors provided but training data path not specified. "
+                                        "Consistency check skipped. Proceeding with joint sampling.")
+                
+                use_joint_sampling = True
+                self.logger.info(f"Joint sampling enabled: {len(df_candidate)} candidates + {len(train_desc_stru)} training samples.")
+            else:
+                self.logger.warning("Training descriptors provided but empty or failed to load. Falling back to candidate-only sampling.")
+        
+        # Prepare Features for DIRECT
+        candidate_features = df_candidate[[col for col in df_desc.columns if col.startswith("desc_stru_")]].values
+        n_candidates = len(candidate_features)
+        
+        if use_joint_sampling:
+            # Combine [Candidate; Training]
+            combined_features = np.vstack([candidate_features, train_desc_stru])
+            self.logger.info(f"Combined feature shape: {combined_features.shape}")
+            features_for_direct = combined_features
+        else:
+            features_for_direct = candidate_features
+            
+        return features_for_direct, use_joint_sampling, n_candidates
 
     def run(self):
         """
@@ -981,7 +1018,8 @@ if __name__ == "__main__":
         
         # Use ordered unique_system_names to load data
         # This ensures alignment with df_final and prevents missing/extra systems
-        test_data = load_systems(self.testdata_dir, fmt=self.testdata_fmt, target_systems=unique_system_names)
+        # Use fmt="auto" to automatically detect if it's mixed or npy
+        test_data = load_systems(self.testdata_dir, fmt="auto", target_systems=unique_system_names)
             
         sampled_dpdata = dpdata.MultiSystems()
         other_dpdata = dpdata.MultiSystems()

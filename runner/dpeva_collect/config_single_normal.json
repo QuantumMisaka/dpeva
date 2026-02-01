@@ -5,7 +5,6 @@
     "testing_head": "results",
     "desc_dir": "./desc_pool",
     "testdata_dir": "./other_dpdata",
-    "testdata_fmt": "deepmd/npy",
     
     "fig_dpi": 300,
     "root_savedir": "dpeva_uq_post_single_normal",

@@ -4,7 +4,6 @@ import os
 import sys
 
 try:
-    import dpeva
     from dpeva.workflows.infer import InferenceWorkflow
 except ImportError:
     print("Error: The 'dpeva' package is not installed in the current Python environment.")
