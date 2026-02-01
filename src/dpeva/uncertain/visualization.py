@@ -225,10 +225,6 @@ class UQVisualizer:
         plt.savefig(f"{self.save_dir}/UQ-force-qbc-rnd-identity-scatter-truncated.png", dpi=self.dpi)
         plt.close()
 
-    def plot_2d_uq_scatter(self, df_uq, scheme, trust_lo, trust_hi, rnd_trust_lo, rnd_trust_hi):
-        """Deprecated: Use plot_uq_fdiff_scatter and plot_uq_identity_scatter instead."""
-        pass
-
     def plot_candidate_vs_error(self, df_uq, df_candidate):
         """Plots Candidate UQ vs Error."""
         # QbC

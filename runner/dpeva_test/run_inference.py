@@ -3,11 +3,13 @@ import argparse
 import os
 import sys
 
-# Ensure dpeva is in path (assuming this script is run from runner/dpeva_test)
-# Adjust the path to point to src correctly
-sys.path.append(os.path.abspath("../../src"))
-
-from dpeva.workflows.infer import InferenceWorkflow
+try:
+    import dpeva
+    from dpeva.workflows.infer import InferenceWorkflow
+except ImportError:
+    print("Error: The 'dpeva' package is not installed in the current Python environment.")
+    print("Please install it using: pip install -e .")
+    sys.exit(1)
 
 def main():
     parser = argparse.ArgumentParser(description="Run DPEVA Inference Workflow from Config")

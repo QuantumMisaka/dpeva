@@ -6,12 +6,14 @@ import numpy as np
 import pandas as pd
 import shutil
 
-# Add src to path
-current_dir = os.path.dirname(os.path.abspath(__file__))
-project_root = os.path.dirname(os.path.dirname(current_dir))
-sys.path.append(os.path.join(project_root, "src"))
-
-from dpeva.inference import DPTestResultParser, StatsCalculator, InferenceVisualizer
+# Try importing dpeva
+try:
+    import dpeva
+    from dpeva.inference import DPTestResultParser, StatsCalculator, InferenceVisualizer
+except ImportError:
+    print("Error: The 'dpeva' package is not installed in the current Python environment.")
+    print("Please install it using: pip install -e .")
+    sys.exit(1)
 
 def setup_logger(output_dir):
     logging.basicConfig(

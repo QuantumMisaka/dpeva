@@ -135,10 +135,19 @@ class TestDescriptorGenerator:
         output_dir = tmp_path / "output"
         generator.run_python_generation("data", str(output_dir))
         
-        # Verify worker script creation
-        worker_script = output_dir / "run_desc_worker.py"
-        assert worker_script.exists()
-        content = worker_script.read_text()
+        # Verify JobManager interaction
+        manager_instance = mock_job_manager.return_value
+        assert manager_instance.submit_python_script.called
+        
+        # Check arguments passed to submit_python_script
+        # signature: (script_content, script_name, job_config, working_dir=...)
+        call_args = manager_instance.submit_python_script.call_args
+        args, kwargs = call_args
+        
+        content = args[0]
+        script_name = args[1]
+        
+        assert script_name == "run_desc_worker.py"
         assert "from dpeva.feature.generator import DescriptorGenerator" in content
         assert 'mode="python"' in content
         assert 'backend="local"' in content # The worker runs locally on the node

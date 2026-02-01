@@ -200,47 +200,14 @@ export OMP_NUM_THREADS={self.omp_threads}
                             data_format=data_format,
                             output_mode=output_mode
                         )
-                        # For leaf, we save as sys_name.npy in the PARENT's output dir?
-                        # No, usually output_dir/sys_name.npy
-                        # But if we recursed, current_output_dir is already specific?
-                        # Let's see how run_cli logic works: process_dir(src, out/dirname)
-                        # So for leaf src/A, output is out/A.
-                        # dp eval-desc -o out/A -> creates out/A.npy or out/A/desc.npy?
-                        # dp eval-desc -o outdir -> outdir/system.npy
-                        
-                        # So here we should save to current_output_dir/sys_name.npy?
-                        # If current_path is passed as 'data_path', we expect output in 'output_dir'.
-                        # The recursion passes 'out_dir/dirname'.
-                        # So if we are at leaf, we are at 'Dataset/System'.
-                        # The output dir is 'Output/Dataset/System'.
-                        # But we want 'Output/Dataset/System.npy'.
-                        
-                        # Let's adjust recursion logic to match CLI script logic
-                        pass 
+                        # Save to current_output_dir.npy (assuming parent dir structure)
+                        # Logic matches CLI behavior: Output/Dataset/System.npy
+                        out_file = current_output_dir + ".npy"
+                        np.save(out_file, desc)
+                        return
                     except Exception as e:
                         self.logger.error(f"Failed to process {sys_name}: {e}")
                         return
-
-                    # Actually, we should just call compute and save.
-                    # Wait, compute_descriptors_python takes path and returns array.
-                    # We need to decide where to save.
-                    # If we are strictly following "Root -> Dataset -> System"
-                    # We want "Output/Dataset/System.npy"
-                    
-                    # Logic:
-                    # If we are at Root. List Datasets.
-                    # For each Dataset, create Output/Dataset.
-                    # For each System in Dataset, save Output/Dataset/System.npy.
-                    
-                    # But what if structure is just Root -> System?
-                    # Then Output/System.npy.
-                    
-                    # So:
-                    out_file = current_output_dir + ".npy"
-                    # But wait, current_output_dir is a directory path.
-                    # We want to save a file.
-                    np.save(out_file, desc)
-                    return
 
                 # If not leaf, iterate
                 subdirs = [d for d in os.listdir(current_path) if os.path.isdir(os.path.join(current_path, d))]
@@ -272,7 +239,7 @@ export OMP_NUM_THREADS={self.omp_threads}
         elif self.backend == "slurm":
             self.logger.info("Preparing to submit python descriptor generation job via Slurm...")
             
-            # 1. Generate Worker Script
+            # 1. Generate Worker Script Content
             worker_script_content = f"""
 import os
 import sys
@@ -303,11 +270,8 @@ def main():
 if __name__ == "__main__":
     main()
 """
-            worker_script_path = os.path.join(abs_output_dir, "run_desc_worker.py")
-            with open(worker_script_path, "w") as f:
-                f.write(worker_script_content.strip())
             
-            # 2. Generate Slurm Script
+            # 2. Prepare Job Config
             job_name = f"dpeva_py_desc_{os.path.basename(abs_data_path)}"
             
             # Filter slurm config
@@ -319,25 +283,23 @@ if __name__ == "__main__":
             if not self.env_setup:
                 self.env_setup = f"export OMP_NUM_THREADS={self.omp_threads}"
                 
-            cmd = f"python3 {worker_script_path}"
-            
             job_config = JobConfig(
                 job_name=job_name,
-                command=cmd,
+                command="", # Will be set by submit_python_script
                 env_setup=self.env_setup,
                 output_log="eval_desc_py.log",
                 error_log="eval_desc_py.err",
                 **task_slurm_config
             )
             
-            script_name = "run_evaldesc_py.slurm"
-            script_path = os.path.join(abs_output_dir, script_name)
-            
-            self.job_manager.generate_script(job_config, script_path)
-            
             # 3. Submit
             self.logger.info(f"Submitting python mode job for {data_path}")
-            self.job_manager.submit(script_path, working_dir=abs_output_dir)
+            self.job_manager.submit_python_script(
+                worker_script_content, 
+                "run_desc_worker.py", 
+                job_config, 
+                working_dir=abs_output_dir
+            )
 
     def compute_descriptors_python(self, data_path, data_format="deepmd/npy", output_mode="atomic"):
         """

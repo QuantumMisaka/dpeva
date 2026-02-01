@@ -2,8 +2,7 @@
 
 import re
 from collections import Counter
-from copy import deepcopy
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple
 import logging
 import numpy as np
 import os

@@ -11,8 +11,6 @@ DP-EVA (Deep Potential EVolution Accelerator)，中文称“深度势能进化�
 
 **1. 明确与简洁（Explicit & Simple）**
 
-> “Explicit is better than implicit. Simple is better than complex.”
-
 * 优先写出清晰直观的实现，而不是隐晦的技巧。
 * 简单胜于复杂，复杂胜于晦涩。
 

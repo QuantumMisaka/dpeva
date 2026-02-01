@@ -177,18 +177,13 @@ export OMP_NUM_THREADS={self.omp_threads}
         if self.data_path and os.path.exists(self.data_path):
             try:
                 self.logger.info(f"Loading system composition from {self.data_path} using dpdata...")
-                # Try common formats
-                try:
-                    ms = dpdata.MultiSystems.from_file(self.data_path, fmt="deepmd/npy/mixed")
-                except Exception:
-                    ms = dpdata.MultiSystems.from_file(self.data_path, fmt="deepmd/npy")
+                loaded_systems = load_systems(self.data_path)
                     
                 atom_counts_list = []
                 atom_num_list = []
                 
                 # Iterate in the same order as dp test usually does (assumed alphabetical/system order)
-                # Note: dpdata.MultiSystems loads directories in sorted order typically.
-                for s in ms:
+                for s in loaded_systems:
                     atom_names = s["atom_names"]
                     atom_types = s["atom_types"]
                     elements = [atom_names[t] for t in atom_types]

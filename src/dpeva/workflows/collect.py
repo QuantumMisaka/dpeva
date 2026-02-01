@@ -9,6 +9,7 @@ import dpdata
 
 from dpeva.io.dataproc import DPTestResultParser
 from dpeva.io.types import PredictionData
+from dpeva.io.dataset import load_systems
 from dpeva.sampling.direct import BirchClustering, DIRECTSampler, SelectKFromClusters
 from dpeva.uncertain.calculator import UQCalculator
 from dpeva.uncertain.filter import UQFilter
@@ -378,9 +379,8 @@ class CollectionWorkflow:
             json.dump(job_config_dict, f, indent=4)
         self.logger.info(f"Saved frozen configuration to {config_path}")
         
-        # 2. Generate Python Runner Script
+        # 2. Generate Python Runner Script Content
         runner_script_name = "run_collect_slurm.py"
-        runner_script_path = os.path.join(project_abs, runner_script_name)
         
         runner_content = f'''import json
 import os
@@ -407,8 +407,6 @@ def main():
 if __name__ == "__main__":
     main()
 '''
-        with open(runner_script_path, "w") as f:
-            f.write(runner_content)
             
         # 3. Generate Slurm Script via JobManager
         # Defaults based on user request
@@ -417,12 +415,8 @@ if __name__ == "__main__":
         qos = self.slurm_config.get("qos", "rush-cpu")
         job_name = self.slurm_config.get("job_name", "dpeva_collect")
         
-        # Construct command using current python executable to be safe
-        # Add -u for unbuffered output to see logs in real-time
-        command = f"{sys.executable} -u {runner_script_path}"
-        
         job_conf = JobConfig(
-            command=command,
+            command="", # Will be set by submit_python_script
             job_name=job_name,
             partition=partition,
             ntasks=ntasks,
@@ -432,17 +426,14 @@ if __name__ == "__main__":
             nodes=1 # Default
         )
         
-        # Add cpus_per_task if specified (though user asked for ntasks=4)
-        # We can add it if it's in slurm_config, defaulting to None/1
+        # Add cpus_per_task if specified
         if "cpus_per_task" in self.slurm_config:
             job_conf.custom_headers += f"\\n#SBATCH --cpus-per-task={self.slurm_config['cpus_per_task']}"
             
         manager = JobManager(mode="slurm")
-        sbatch_path = os.path.join(project_abs, "submit_collect.sbatch")
-        manager.generate_script(job_conf, sbatch_path)
-        
         self.logger.info(f"Submitting job from {project_abs}")
-        manager.submit(sbatch_path, working_dir=project_abs)
+        
+        manager.submit_python_script(runner_content, runner_script_name, job_conf, working_dir=project_abs)
 
     def run(self):
         """
@@ -464,46 +455,11 @@ if __name__ == "__main__":
         preds = []
         for i in range(4):
             # Construct path using os.path.join for robustness
-            path = os.path.join(self.project, str(i), self.testing_dir, self.testing_head)
-            # If path ends with head (e.g. 'results'), we need the DIRECTORY containing it?
-            # DPTestResults expects result_dir and head.
-            # Here we are passing the FULL PATH to DPTestResults constructor?
-            # Let's check DPTestResults signature.
-            # DPTestResults(headname, type_map=None) -> init calls DPTestResultParser(result_dir=".", head=headname)
-            # Wait, the previous code was: DPTestResults(f"./{self.project}/{i}/{self.testing_dir}/{self.testing_head}")
-            # This looks like it's passing the HEAD NAME?
-            # NO! DPTestResults init takes `headname`. 
-            # But inside it does: `self.parser = DPTestResultParser(result_dir=".", head=headname)`
-            # So it assumes results are in CURRENT DIRECTORY if result_dir is fixed to "."!
-            
-            # If the user passes a full path as headname, DPTestResultParser does:
-            # os.path.join(".", full_path + ".e_peratom.out")
-            # This works if full_path is a path prefix.
-            
-            # BUT, DPTestResultParser logic:
-            # e_file = os.path.join(self.result_dir, f"{self.head}.e_peratom.out")
-            
-            # If head is "path/to/results", result_dir=".", then:
-            # "./path/to/results.e_peratom.out"
-            # This assumes the file is named "results.e_peratom.out" in "path/to".
-            
-            # This usage of DPTestResults seems to rely on passing the path AS the head name.
-            # And relying on result_dir=".".
-            
-            # So I should just clean up the f-string to use os.path.join but keep the logic.
-            
-            # However, using f"./{absolute_path}" is ugly.
-            # If self.project is absolute, f"./{self.project}" is "./" + "/home..." = "./home..." (if no double slash).
-            # If I use os.path.join, it handles absolute paths by discarding previous parts.
-            
             res_path_prefix = os.path.join(self.project, str(i), self.testing_dir, self.testing_head)
             
-            # REFACTOR: Use Parser + PredictionData instead of DPTestResults
-            # DPTestResultParser expects result_dir and head. 
-            # The previous logic relied on passing the full path prefix as head to a parser running in "."
-            # To maintain exact behavior:
-            # result_dir=".", head=res_path_prefix
-            
+            # DPTestResultParser expects result_dir and head.
+            # To maintain compatibility with existing structure where res_path_prefix 
+            # might include the file prefix, we pass "." as result_dir and the full prefix as head.
             parser = DPTestResultParser(result_dir=".", head=res_path_prefix)
             parsed_dict = parser.parse()
             
@@ -1023,76 +979,9 @@ if __name__ == "__main__":
         
         self.logger.info(f"Loading the target testing data from {self.testdata_dir}")
         
-        test_data = [] 
         # Use ordered unique_system_names to load data
         # This ensures alignment with df_final and prevents missing/extra systems
-        
-        for sys_name in unique_system_names:
-            # sys_name could be "Dataset/System" or just "System"
-            # Try to find the directory
-            
-            d = os.path.join(self.testdata_dir, sys_name)
-            
-            if not os.path.isdir(d):
-                self.logger.warning(f"Data directory not found for system: {sys_name} at {d}")
-                continue
-                
-            try:
-                sys = dpdata.LabeledSystem(d, fmt=self.testdata_fmt)
-            except:
-                try:
-                    sys = dpdata.System(d, fmt=self.testdata_fmt)
-                except Exception as e:
-                    self.logger.warning(f"Failed to load {d}: {e}")
-                    continue
-            
-            # Important: Ensure short_name matches sys_name (keyname) for matching
-            # dpdata usually sets short_name to basename.
-            # But we are using sys_name (potentially Dataset/System) as key.
-            # We must override short_name or use sys_name in the loop below.
-            # Let's attach our expected name to the sys object
-            sys.target_name = sys_name
-            
-            # FIX: Handle duplicate atom names (e.g. ['Fe', 'Fe', 'O']) which can cause
-            # "Sum of atom_numbs is not equal to natoms" error when appending to MultiSystems.
-            # MERGE duplicates to ensure scientific correctness (e.g. Fe + Fe -> Fe)
-            atom_names = sys['atom_names']
-            if len(atom_names) != len(set(atom_names)):
-                self.logger.warning(f"Duplicate atom names detected in {sys_name}: {atom_names}. Merging duplicate types.")
-                
-                # 1. Determine unique names (preserve order of first appearance)
-                new_atom_names = []
-                seen = set()
-                for name in atom_names:
-                    if name not in seen:
-                        new_atom_names.append(name)
-                        seen.add(name)
-                
-                # 2. Build mapping from old type index to new type index
-                old_to_new_map = {}
-                for old_idx, name in enumerate(atom_names):
-                    new_idx = new_atom_names.index(name)
-                    old_to_new_map[old_idx] = new_idx
-                
-                # 3. Update atom_types
-                old_atom_types = sys['atom_types']
-                new_atom_types = np.array([old_to_new_map[t] for t in old_atom_types], dtype=int)
-                
-                # 4. Update atom_numbs
-                new_atom_numbs = []
-                for i in range(len(new_atom_names)):
-                    count = np.sum(new_atom_types == i)
-                    new_atom_numbs.append(int(count))
-                
-                self.logger.info(f"Merged atom names to: {new_atom_names}")
-                self.logger.info(f"Updated atom numbs to: {new_atom_numbs}")
-                
-                # 5. Apply changes to system
-                sys.data['atom_names'] = new_atom_names
-                sys.data['atom_numbs'] = new_atom_numbs
-                sys.data['atom_types'] = new_atom_types
-
-            test_data.append(sys)
+        test_data = load_systems(self.testdata_dir, fmt=self.testdata_fmt, target_systems=unique_system_names)
             
         sampled_dpdata = dpdata.MultiSystems()
         other_dpdata = dpdata.MultiSystems()

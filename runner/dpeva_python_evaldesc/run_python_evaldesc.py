@@ -3,14 +3,14 @@ import argparse
 import os
 import sys
 
-# Add src to sys.path
-current_dir = os.path.dirname(os.path.abspath(__file__))
-project_root = os.path.dirname(os.path.dirname(current_dir)) # Up from runner/dpeva_python_evaldesc to dpeva root
-src_path = os.path.join(project_root, "src")
-if src_path not in sys.path:
-    sys.path.append(src_path)
-
-from dpeva.workflows.feature import FeatureWorkflow
+# Try importing dpeva
+try:
+    import dpeva
+    from dpeva.workflows.feature import FeatureWorkflow
+except ImportError:
+    print("Error: The 'dpeva' package is not installed in the current Python environment.")
+    print("Please install it using: pip install -e .")
+    sys.exit(1)
 
 def main():
     parser = argparse.ArgumentParser(description="Run DPEVA Feature Generation Workflow (Python Mode)")

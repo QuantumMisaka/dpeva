@@ -71,3 +71,44 @@ class JobManager:
         except subprocess.CalledProcessError as e:
             logger.error(f"Submission failed: {e.stderr}")
             raise e
+
+    def submit_python_script(self, script_content: str, script_name: str, job_config: JobConfig, working_dir: str = ".") -> str:
+        """
+        Helper to write a python script and submit it as a job.
+        
+        Args:
+            script_content (str): The Python code to run.
+            script_name (str): Name of the python file (e.g. "run_task.py").
+            job_config (JobConfig): Configuration for the job. 
+                                    The 'command' field will be overridden to run the python script.
+            working_dir (str): Directory to write script and submit job.
+            
+        Returns:
+            str: Submission result.
+        """
+        import sys
+        
+        # Ensure working dir exists
+        os.makedirs(working_dir, exist_ok=True)
+        
+        script_path = os.path.join(working_dir, script_name)
+        with open(script_path, "w") as f:
+            f.write(script_content)
+            
+        # Update command to run the python script
+        # Use sys.executable for safety and -u for unbuffered output
+        cmd = f"{sys.executable} -u {os.path.abspath(script_path)}"
+        job_config.command = cmd
+        
+        # Generate submission script (bash/slurm)
+        submit_script_name = "submit_" + os.path.splitext(script_name)[0]
+        if self.mode == "slurm":
+            submit_script_name += ".slurm"
+        else:
+            submit_script_name += ".sh"
+            
+        submit_script_path = os.path.join(working_dir, submit_script_name)
+        
+        self.generate_script(job_config, submit_script_path)
+        
+        return self.submit(submit_script_path, working_dir=working_dir)

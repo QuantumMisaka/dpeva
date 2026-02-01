@@ -8,22 +8,13 @@ import logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger("dpeva.runner.collect")
 
-# Try importing dpeva, fallback to src injection if not installed
+# Try importing dpeva
 try:
     import dpeva
-except ImportError:
-    # Add src to sys.path so we can import dpeva modules even if not installed
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    project_root = os.path.dirname(os.path.dirname(current_dir))
-    src_path = os.path.join(project_root, "src")
-    if src_path not in sys.path:
-        sys.path.append(src_path)
-    logger.warning(f"dpeva package not found in python path. Added {src_path} to sys.path. Please consider installing via 'pip install -e .'")
-
-try:
     from dpeva.workflows.collect import CollectionWorkflow
-except ImportError as e:
-    logger.error(f"Failed to import CollectionWorkflow: {e}")
+except ImportError:
+    logger.error("The 'dpeva' package is not installed in the current Python environment.")
+    logger.error("Please install it using: pip install -e .")
     sys.exit(1)
 
 def load_config(config_path):
