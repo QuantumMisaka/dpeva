@@ -16,6 +16,7 @@ import numpy as np
 
 treat_stru = True
 project_dir = "sampled_dpdata_nolabel"
+inputs_save_dir = "abacus-inputs"
 dataset_names = [
     "./alex-2d-1d-FeCOH/",
     "./alex-3d-FeCOH/",
@@ -56,7 +57,7 @@ cubic_symprec_decimal = 0 # decimal for symprec in cubic_cluster
 cubic_min_length = 9.8 # Ang, the minimum length of cubic_cluster cell
 cubic_tol = 6.3 # if lattice length > cubic_min_length + cubic_tol, then the stru should be cubic_cluster even without vaccum
 
-lib_dir = "/mnt/sg001/home/fz_pku_jh/PP_ORB/abacus"
+lib_dir = "/data/home/jiangh/PP_ORB"
 pseudo_dir = f"{lib_dir}/PP-2025"
 basis_dir = f"{lib_dir}/ORB-2025"
 kpts = [1,1,1]
@@ -155,7 +156,12 @@ def set_kpoints(atoms, criteria=25, vaccum_status=[False,False,False], cluster=F
         if vaccum_status[dim]:
             kpoints[dim] = 1
         else:
-            kpoints[dim] = int(criteria / atoms.cell.cellpar()[dim]) + 1
+            cell_length = atoms.cell.cellpar()[dim]
+            if cell_length < 1e-3:
+                # Handle near-zero cell length to avoid division by zero
+                kpoints[dim] = 1
+            else:
+                kpoints[dim] = int(criteria / cell_length) + 1
     return kpoints
 
 def write_abacus_kpts(filename='KPT', kpoints=[1,1,1]):
@@ -205,9 +211,9 @@ def sampled_dpdata_to_abacus(dataset_name, project_dir, vaccum=6.3, kpt_criteria
         merge_traj: if True, merge traj to one file
     '''
     # read all stru in dpdata/npy format as System in MultiSystems
-    target_dpdata_dir = f"./{dataset_name}/sampled_dpdata/"
+    target_dpdata_dir = f"{project_dir}/{dataset_name}"
     target_dpdata = dpdata.MultiSystems()
-    stru_root_name = f"{project_dir}/{dataset_name}/"
+    stru_root_name = f"{inputs_save_dir}/{dataset_name}/"
     for item in sorted(glob.glob(f'{target_dpdata_dir}/*')):
         target_dpdata.append(dpdata.System(item, fmt='deepmd/npy'))
 
