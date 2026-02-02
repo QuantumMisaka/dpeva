@@ -959,7 +959,12 @@ class CollectionWorkflow:
         
         stats_merged.loc["ALL", "remaining_systems"] = total_remaining_sys
         
-        self.logger.info(f"\n{stats_merged[['num_systems', 'num_frames', 'sampled_frames', 'remaining_systems', 'remaining_frames']]}")
+        # Ensure integer display by explicitly converting to int
+        cols_to_print = ['num_systems', 'num_frames', 'sampled_frames', 'remaining_systems', 'remaining_frames']
+        # Convert to int to remove decimals, then to string for logging
+        # Using to_string() avoids the global float_format setting if dtypes are int
+        stats_display = stats_merged[cols_to_print].astype(int)
+        self.logger.info(f"\n{stats_display}")
         
         # 3. Consistency Check
         # Use .loc["ALL"] to get totals

@@ -23,8 +23,8 @@ def set_visual_style(font_size: int = 12, context: str = "paper", style: str = "
         'legend.fontsize': font_size,
         'xtick.direction': 'out',
         'ytick.direction': 'out',
-        'xtick.top': True,
-        'ytick.right': True,
+        'xtick.top': False,
+        'ytick.right': False,
         'lines.linewidth': 1.5,
         # Ensure fonts are editable in PDFs
         'pdf.fonttype': 42,
