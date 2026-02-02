@@ -190,40 +190,53 @@ class UQVisualizer:
         plt.title("UQ QbC+RND Selection View", fontsize=14)
         self._setup_2d_plot_axes(trust_lo, trust_hi, rnd_trust_lo, rnd_trust_hi)
         self._draw_boundary(scheme, trust_lo, trust_hi, rnd_trust_lo, rnd_trust_hi)
+        plt.xlim(left=0)
+        plt.ylim(bottom=0)
         plt.legend(title="Identity", fontsize=10)
         plt.savefig(f"{self.save_dir}/UQ-force-qbc-rnd-identity-scatter.png", dpi=self.dpi)
         plt.close()
         
         # Truncated plot [0, 2]
-        df_uq_trunc = df_uq[(df_uq["uq_qbc_for"] >= 0) & (df_uq["uq_qbc_for"] <= 2) & 
-                            (df_uq["uq_rnd_for_rescaled"] >= 0) & (df_uq["uq_rnd_for_rescaled"] <= 2)]
-        if len(df_uq_trunc) < len(df_uq):
-            logging.getLogger(__name__).warning(f"UQ-identity-scatter: Truncating {len(df_uq) - len(df_uq_trunc)} structures outside [0, 2] for visualization.")
+        # Only generate if data exceeds [0, 2] range
+        max_qbc = df_uq["uq_qbc_for"].max()
+        max_rnd = df_uq["uq_rnd_for_rescaled"].max()
         
-        plt.figure(figsize=(8, 6))
-        sns.scatterplot(data=df_uq_trunc, 
-                        x="uq_qbc_for", 
-                        y="uq_rnd_for_rescaled", 
-                        hue="uq_identity", 
-                        palette={"candidate": "orange", "accurate": "green", "failed": "red"},
-                        alpha=0.5,
-                        s=60)
-        plt.title("UQ QbC+RND Selection View (Truncated [0, 2])", fontsize=14)
-        
-        plt.xlabel("UQ-QbC Value", fontsize=12)
-        plt.ylabel("UQ-RND-rescaled Value", fontsize=12)
-        plt.grid(True)
-        ax = plt.gca()
-        # Adaptive locator for truncated view
-        x_major_locator = mtick.MultipleLocator(0.1)
-        y_major_locator = mtick.MultipleLocator(0.1)
-        ax.xaxis.set_major_locator(x_major_locator)
-        ax.yaxis.set_major_locator(y_major_locator)
-        
-        self._draw_boundary(scheme, trust_lo, trust_hi, rnd_trust_lo, rnd_trust_hi)
-        plt.legend(title="Identity", fontsize=10)
-        plt.savefig(f"{self.save_dir}/UQ-force-qbc-rnd-identity-scatter-truncated.png", dpi=self.dpi)
-        plt.close()
+        if max_qbc > 2.0 or max_rnd > 2.0:
+            logging.getLogger(__name__).warning(f"UQ-identity-scatter: Data exceeds [0, 2] range, truncating for visualization.")
+            df_uq_trunc = df_uq[(df_uq["uq_qbc_for"] >= 0) & (df_uq["uq_qbc_for"] <= 2) & 
+                                (df_uq["uq_rnd_for_rescaled"] >= 0) & (df_uq["uq_rnd_for_rescaled"] <= 2)]
+            
+            if len(df_uq_trunc) < len(df_uq):
+                logging.getLogger(__name__).warning(f"UQ-identity-scatter: Truncating {len(df_uq) - len(df_uq_trunc)} structures outside [0, 2] for visualization.")
+            
+            plt.figure(figsize=(8, 6))
+            sns.scatterplot(data=df_uq_trunc, 
+                            x="uq_qbc_for", 
+                            y="uq_rnd_for_rescaled", 
+                            hue="uq_identity", 
+                            palette={"candidate": "orange", "accurate": "green", "failed": "red"},
+                            alpha=0.5,
+                            s=60)
+            plt.title("UQ QbC+RND Selection View (Truncated [0, 2])", fontsize=14)
+            
+            plt.xlabel("UQ-QbC Value", fontsize=12)
+            plt.ylabel("UQ-RND-rescaled Value", fontsize=12)
+            plt.grid(True)
+            ax = plt.gca()
+            # Adaptive locator for truncated view
+            x_major_locator = mtick.MultipleLocator(0.1)
+            y_major_locator = mtick.MultipleLocator(0.1)
+            ax.xaxis.set_major_locator(x_major_locator)
+            ax.yaxis.set_major_locator(y_major_locator)
+            
+            self._draw_boundary(scheme, trust_lo, trust_hi, rnd_trust_lo, rnd_trust_hi)
+            plt.xlim(left=0)
+            plt.ylim(bottom=0)
+            plt.legend(title="Identity", fontsize=10)
+            plt.savefig(f"{self.save_dir}/UQ-force-qbc-rnd-identity-scatter-truncated.png", dpi=self.dpi)
+            plt.close()
+        else:
+            logging.getLogger(__name__).info("UQ data within [0, 2], skipping truncated plot.")
 
     def plot_candidate_vs_error(self, df_uq, df_candidate):
         """Plots Candidate UQ vs Error."""

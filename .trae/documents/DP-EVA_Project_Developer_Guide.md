@@ -141,7 +141,7 @@ graph TD
     "input_json_path": "input.json",
     "training_data_path": "/path/to/data",
     "backend": "local",
-    "omp_threads": 8
+    "omp_threads": 2
 }
 ```
 
@@ -214,7 +214,7 @@ graph TD
 
 | 模式 | 配置值 (`uq_trust_mode`) | 说明 | 适用场景 |
 | :--- | :--- | :--- | :--- |
-| **Manual** | `"manual"` (默认) | 直接使用 `uq_qbc_trust_lo` 等固定参数值。 | 精细微调阶段，对体系有明确经验值（如明确 >0.12 为不可信）。 |
+| **Manual** | `"manual"` (默认) | 直接使用 `uq_qbc_trust_lo` 等固定参数值。 | 精细微调阶段，对体系有明确经验值（如明确 > 0.30 为不可信）。 |
 | **Auto** | `"auto"` | 基于 KDE 自动寻找分布峰值，根据 `ratio` 计算阈值。若失败则自动回退到 Manual 值。 | 早期探索阶段，模型不确定度分布变化剧烈，需要自适应调整。 |
 
 #### 4.4.2 Auto-UQ 边界控制 (`uq_auto_bounds`)
@@ -224,8 +224,8 @@ graph TD
 ```json
 "uq_auto_bounds": {
     "qbc": {
-        "lo_min": 0.05,  // 下限截断
-        "lo_max": 0.25   // 上限截断
+        "lo_min": 0.05,
+        "lo_max": 0.40 
     },
     "rnd": {
         "lo_min": 0.05,

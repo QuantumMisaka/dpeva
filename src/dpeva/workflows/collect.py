@@ -99,31 +99,35 @@ class CollectionWorkflow:
             "lo": config.get("uq_qbc_trust_lo"),
             "hi": config.get("uq_qbc_trust_hi")
         }
-        if self.uq_qbc_params["lo"] is None:
-             self.uq_qbc_params["lo"] = 0.12
-             
-        self._validate_and_fill_trust_params(self.uq_qbc_params, "uq_qbc")
-        
-        # Map back to instance variables for compatibility
-        self.uq_qbc_trust_lo = self.uq_qbc_params["lo"]
-        self.uq_qbc_trust_hi = self.uq_qbc_params["hi"]
         
         # 3. Resolve RND Parameters
-        rnd_lo_default = config.get("uq_rnd_rescaled_trust_lo")
-        if rnd_lo_default is None:
-            rnd_lo_default = self.uq_qbc_trust_lo
-            
         self.uq_rnd_params = {
             "ratio": config.get("uq_rnd_rescaled_trust_ratio", self.global_trust_ratio),
             "width": config.get("uq_rnd_rescaled_trust_width", self.global_trust_width),
-            "lo": rnd_lo_default,
+            "lo": config.get("uq_rnd_rescaled_trust_lo"),
             "hi": config.get("uq_rnd_rescaled_trust_hi")
         }
         
-        self._validate_and_fill_trust_params(self.uq_rnd_params, "uq_rnd")
-        
-        self.uq_rnd_trust_lo = self.uq_rnd_params["lo"]
-        self.uq_rnd_trust_hi = self.uq_rnd_params["hi"]
+        # Validate Parameters based on Mode
+        if self.uq_trust_mode == "manual":
+            self._validate_manual_params(self.uq_qbc_params, "uq_qbc")
+            self._validate_manual_params(self.uq_rnd_params, "uq_rnd")
+        elif self.uq_trust_mode == "auto":
+            pass
+        else:
+            if not self.uq_trust_mode:
+                self.logger.info("uq_trust_mode not set. Defaulting to 'manual'.")
+                self.uq_trust_mode = "manual"
+                self._validate_manual_params(self.uq_qbc_params, "uq_qbc")
+                self._validate_manual_params(self.uq_rnd_params, "uq_rnd")
+            else:
+                raise ValueError(f"Unknown uq_trust_mode: {self.uq_trust_mode}")
+
+        # Map back to instance variables
+        self.uq_qbc_trust_lo = self.uq_qbc_params.get("lo")
+        self.uq_qbc_trust_hi = self.uq_qbc_params.get("hi")
+        self.uq_rnd_trust_lo = self.uq_rnd_params.get("lo")
+        self.uq_rnd_trust_hi = self.uq_rnd_params.get("hi")
         
         # UQ Auto Bounds
         self.uq_auto_bounds = config.get("uq_auto_bounds", {})
@@ -133,51 +137,35 @@ class CollectionWorkflow:
         self.direct_k = config.get("direct_k", 1)
         self.direct_thr_init = config.get("direct_thr_init", 0.5)
 
-    def _validate_and_fill_trust_params(self, params, name):
+    def _validate_manual_params(self, params, name):
         """
-        Validates consistency between lo, hi, and width.
-        Fills missing values if possible.
-
-        Args:
-            params (dict): Dictionary with keys 'lo', 'hi', 'width'.
-            name (str): Name of the parameter set (for logging).
+        Validates and fills parameters for Manual mode.
+        Requires 'lo' to be present.
+        Calculates 'hi' from 'width' if needed.
         """
         lo = params.get("lo")
         hi = params.get("hi")
         width = params.get("width")
         
-        if lo is not None and hi is not None:
-            # Both Lo and Hi specified -> Check width consistency
-            calculated_width = hi - lo
-            if width is not None:
-                if abs(calculated_width - width) > 1e-5:
-                     explicit_width_key = f"{name}_trust_width"
-                     global_width_key = "uq_trust_width"
-                     
-                     has_explicit_width = (explicit_width_key in self.config) or (global_width_key in self.config)
-                     
-                     if has_explicit_width:
-                         self.logger.error(f"Configuration Conflict in {name}: lo={lo}, hi={hi} implies width={calculated_width:.4f}, "
-                                           f"but width is set to {width:.4f}")
-                         raise ValueError(f"Configuration Conflict in {name}: lo + width != hi")
-                     else:
-                         # No explicit width, so we update the derived width
-                         params["width"] = calculated_width
-                         self.logger.info(f"{name}: Derived width {calculated_width:.4f} from lo={lo}, hi={hi}")
-
-        elif lo is not None and hi is None:
-            # Lo specified, Hi missing -> Use width to calculate Hi
+        if lo is None:
+            raise ValueError(f"[{name}] 'lo' value must be specified in 'manual' mode!")
+            
+        if hi is None:
             if width is not None:
                 params["hi"] = lo + width
                 self.logger.info(f"{name}: Calculated hi={params['hi']:.4f} from lo={lo}, width={width}")
             else:
-                pass
-                
-        elif lo is None and hi is not None:
-             # Hi specified, Lo missing -> Use width to calculate Lo
-             if width is not None:
-                 params["lo"] = hi - width
-                 self.logger.info(f"{name}: Calculated lo={params['lo']:.4f} from hi={hi}, width={width}")
+                raise ValueError(f"[{name}] Either 'hi' or 'width' must be specified with 'lo'!")
+        else:
+            # Check consistency
+            if width is not None:
+                calc_width = hi - lo
+                if abs(calc_width - width) > 1e-5:
+                     self.logger.error(f"[{name}] Configuration Conflict: lo={lo}, hi={hi} implies width={calc_width:.4f}, but width is set to {width:.4f}")
+                     raise ValueError(f"[{name}] Configuration Conflict: lo + width != hi")
+            else:
+                params["width"] = hi - lo
+                self.logger.info(f"{name}: Derived width {params['width']:.4f} from lo={lo}, hi={hi}")
 
     def _clamp_trust_lo(self, value, bounds, name="UQ"):
         """
@@ -435,10 +423,9 @@ class CollectionWorkflow:
             env_setup = "export DPEVA_INTERNAL_BACKEND=local\n"
             
         else:
-            # Fallback to old behavior (Frozen Config + Wrapper) if config_path is missing
-            self.logger.warning("config_path not provided. Falling back to legacy frozen config mode.")
-            self._submit_to_slurm_legacy()
-            return
+            # Require config_path for Slurm mode
+            self.logger.error("config_path is required for Slurm submission!")
+            raise ValueError("config_path is missing. Cannot submit to Slurm.")
 
         # 2. Generate Slurm Script via JobManager
         # Defaults based on user request
@@ -470,82 +457,6 @@ class CollectionWorkflow:
         
         manager.generate_script(job_conf, script_path)
         manager.submit(script_path, working_dir=project_abs)
-
-    def _submit_to_slurm_legacy(self):
-        """
-        Legacy submission method (Frozen Config + Wrapper).
-        Kept for backward compatibility if config_path is not available.
-        """
-        # 1. Prepare Frozen Config
-        # Force backend to local to prevent infinite recursion
-        job_config_dict = self.config.copy()
-        job_config_dict["backend"] = "local"
-        
-        config_filename = "collect_config_frozen.json"
-        # Use absolute path for safety
-        project_abs = os.path.abspath(self.project)
-        config_path = os.path.join(project_abs, config_filename)
-        
-        if not os.path.exists(project_abs):
-            os.makedirs(project_abs)
-            
-        with open(config_path, "w") as f:
-            import json
-            json.dump(job_config_dict, f, indent=4)
-        self.logger.info(f"Saved frozen configuration to {config_path}")
-        
-        # 2. Generate Python Runner Script Content
-        runner_script_name = "run_collect_slurm.py"
-        
-        runner_content = f'''import json
-import os
-import sys
-import logging
-from dpeva.workflows.collect import CollectionWorkflow
-
-# Setup logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-
-def main():
-    config_path = "{config_path}"
-    print(f"Loading config from {{config_path}}")
-    
-    with open(config_path, "r") as f:
-        config = json.load(f)
-    
-    # Ensure backend is local
-    config["backend"] = "local"
-    
-    wf = CollectionWorkflow(config)
-    wf.run()
-
-if __name__ == "__main__":
-    main()
-'''
-            
-        # 3. Generate Slurm Script via JobManager
-        # Defaults based on user request
-        partition = self.slurm_config.get("partition", "CPU-MISC")
-        ntasks = self.slurm_config.get("ntasks", 4)
-        qos = self.slurm_config.get("qos", "rush-cpu")
-        job_name = self.slurm_config.get("job_name", "dpeva_collect")
-        
-        job_conf = JobConfig(
-            command="", # Will be set by submit_python_script
-            job_name=job_name,
-            partition=partition,
-            ntasks=ntasks,
-            cpus_per_task=self.slurm_config.get("cpus_per_task", 1),
-            qos=qos,
-            output_log=os.path.join(project_abs, "collect_slurm.out"),
-            error_log=os.path.join(project_abs, "collect_slurm.err"),
-            nodes=1 # Default
-        )
-        
-        manager = JobManager(mode="slurm")
-        self.logger.info(f"Submitting job from {project_abs}")
-        
-        manager.submit_python_script(runner_content, runner_script_name, job_conf, working_dir=project_abs)
 
     def _prepare_features_for_direct(self, df_candidate, df_desc):
         """
@@ -653,19 +564,24 @@ if __name__ == "__main__":
             # Calculate for QbC
             _qbc_ratio = self.uq_qbc_params["ratio"]
             _qbc_width = self.uq_qbc_params["width"]
+            qbc_bounds = self.uq_auto_bounds.get("qbc", {})
             
-            self.logger.info(f"Calculating QbC thresholds with ratio={_qbc_ratio} and width={_qbc_width}")
+            self.logger.info(f"Calculating QbC thresholds with ratio={_qbc_ratio}, width={_qbc_width}")
+            if qbc_bounds:
+                self.logger.info(f"  - Using Bounds: {qbc_bounds}")
+            
             calc_lo_qbc = calculator.calculate_trust_lo(uq_results["uq_qbc_for"], ratio=_qbc_ratio)
             
             # Apply Bounds
-            qbc_bounds = self.uq_auto_bounds.get("qbc", {})
             calc_lo_qbc = self._clamp_trust_lo(calc_lo_qbc, qbc_bounds, "QbC Trust Lo")
             
             if calc_lo_qbc is not None:
                 self.uq_qbc_trust_lo = calc_lo_qbc
                 self.logger.info(f"Auto-calculated QbC Trust Lo: {self.uq_qbc_trust_lo:.4f}")
             else:
-                self.logger.warning(f"Auto-calculation for QbC failed. Fallback to manual Trust Lo: {self.uq_qbc_trust_lo:.4f}")
+                self.logger.warning(f"Auto-calculation for QbC failed. Fallback to manual Trust Lo: {self.uq_qbc_trust_lo}")
+                if self.uq_qbc_trust_lo is None:
+                    raise ValueError("Auto-UQ failed and no fallback 'lo' provided for QbC!")
                 
             self.uq_qbc_trust_hi = self.uq_qbc_trust_lo + _qbc_width
             self.logger.info(f"Final QbC Trust Range: [{self.uq_qbc_trust_lo:.4f}, {self.uq_qbc_trust_hi:.4f}]")
@@ -673,19 +589,24 @@ if __name__ == "__main__":
             # Calculate for RND Rescaled
             _rnd_ratio = self.uq_rnd_params["ratio"]
             _rnd_width = self.uq_rnd_params["width"]
+            rnd_bounds = self.uq_auto_bounds.get("rnd", {})
             
-            self.logger.info(f"Calculating RND thresholds with ratio={_rnd_ratio} and width={_rnd_width}")
+            self.logger.info(f"Calculating RND thresholds with ratio={_rnd_ratio}, width={_rnd_width}")
+            if rnd_bounds:
+                self.logger.info(f"  - Using Bounds: {rnd_bounds}")
+                
             calc_lo_rnd = calculator.calculate_trust_lo(uq_rnd_rescaled, ratio=_rnd_ratio)
             
             # Apply Bounds
-            rnd_bounds = self.uq_auto_bounds.get("rnd", {})
             calc_lo_rnd = self._clamp_trust_lo(calc_lo_rnd, rnd_bounds, "RND Trust Lo")
             
             if calc_lo_rnd is not None:
                 self.uq_rnd_trust_lo = calc_lo_rnd
                 self.logger.info(f"Auto-calculated RND-rescaled Trust Lo: {self.uq_rnd_trust_lo:.4f}")
             else:
-                self.logger.warning(f"Auto-calculation for RND-rescaled failed. Fallback to manual Trust Lo: {self.uq_rnd_trust_lo:.4f}")
+                self.logger.warning(f"Auto-calculation for RND-rescaled failed. Fallback to manual Trust Lo: {self.uq_rnd_trust_lo}")
+                if self.uq_rnd_trust_lo is None:
+                    raise ValueError("Auto-UQ failed and no fallback 'lo' provided for RND!")
                 
             self.uq_rnd_trust_hi = self.uq_rnd_trust_lo + _rnd_width
             self.logger.info(f"Final RND-rescaled Trust Range: [{self.uq_rnd_trust_lo:.4f}, {self.uq_rnd_trust_hi:.4f}]")
