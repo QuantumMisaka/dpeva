@@ -137,6 +137,7 @@ torchrun --nproc_per_node=$((SLURM_NTASKS*SLURM_GPUS_ON_NODE)) \\
     --no-python --rdzv_backend=c10d --rdzv_endpoint=localhost:0 \\
     dp --pt train input.json --skip-neighbor-stat --finetune {base_model_name} 2>&1 | tee train.log
 dp --pt freeze
+echo "DPEVA_TAG: WORKFLOW_FINISHED"
 """
             else:
                 # Standard single GPU/CPU command
@@ -146,6 +147,7 @@ export DP_INTER_OP_PARALLELISM_THREADS={omp_threads // 2}
 export DP_INTRA_OP_PARALLELISM_THREADS={omp_threads}
 dp --pt train input.json --finetune {base_model_name} 2>&1 | tee train.log
 dp --pt freeze
+echo "DPEVA_TAG: WORKFLOW_FINISHED"
 """
             # Create JobConfig
             task_slurm_config = self.slurm_config.copy()

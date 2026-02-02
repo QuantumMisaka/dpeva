@@ -56,6 +56,7 @@ class JobConfig:
     
     # Advanced Slurm Options (适配不同集群环境)
     gpus_per_node: int = 0      # 对应 #SBATCH --gpus-per-node
+    cpus_per_task: int = 1      # 对应 #SBATCH --cpus-per-task
     qos: Optional[str] = None   # 对应 #SBATCH --qos
     nodelist: Optional[str] = None # 对应 #SBATCH -w
     
@@ -80,6 +81,9 @@ class JobConfig:
         # 动态生成 Slurm 参数行
         if self.gpus_per_node > 0:
             optional_params.append(f"#SBATCH --gpus-per-node={self.gpus_per_node}")
+
+        if self.cpus_per_task > 1:
+            optional_params.append(f"#SBATCH --cpus-per-task={self.cpus_per_task}")
 
         if self.qos:
             optional_params.append(f"#SBATCH --qos={self.qos}")

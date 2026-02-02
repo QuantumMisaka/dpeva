@@ -217,7 +217,25 @@ graph TD
 | **Manual** | `"manual"` (默认) | 直接使用 `uq_qbc_trust_lo` 等固定参数值。 | 精细微调阶段，对体系有明确经验值（如明确 >0.12 为不可信）。 |
 | **Auto** | `"auto"` | 基于 KDE 自动寻找分布峰值，根据 `ratio` 计算阈值。若失败则自动回退到 Manual 值。 | 早期探索阶段，模型不确定度分布变化剧烈，需要自适应调整。 |
 
-#### 4.4.2 `num_selection` 参数说明
+#### 4.4.2 Auto-UQ 边界控制 (`uq_auto_bounds`)
+
+当启用 `"auto"` 模式时，可以通过 `uq_auto_bounds` 参数为自动计算出的阈值设置安全范围（Clamp）。这对于防止因数据稀疏或异常分布导致的极端阈值至关重要。
+
+```json
+"uq_auto_bounds": {
+    "qbc": {
+        "lo_min": 0.05,  // 下限截断
+        "lo_max": 0.25   // 上限截断
+    },
+    "rnd": {
+        "lo_min": 0.05,
+        "lo_max": 0.40
+    }
+}
+```
+*   **机制**: 如果 `Auto-Calculated Value < lo_min`，则取 `lo_min`；如果 `> lo_max`，则取 `lo_max`。系统会记录 Warning 日志提示发生了 Clamping。
+
+#### 4.4.3 `num_selection` 参数说明
 
 *   **普通模式**: 表示从候选集中新采样的样本数量。
 *   **联合模式 (Joint Mode)**: 表示在联合空间（候选集+训练集）中期望达到的**总覆盖簇数 (Target Cluster Count)**。实际导出的新样本数通常小于此值（因为部分簇已被训练集覆盖）。
@@ -269,6 +287,18 @@ A: 旧版本会产生此 Warning，**新版本 (v2.2.0)** 已将其优化为 Inf
 **Q: 为什么联合采样导出的样本数少于 `num_selection`？**
 A: 这是预期行为。在联合模式下，`num_selection` 定义的是特征空间的总覆盖目标。如果某些区域已经被现有训练集覆盖，DIRECT 算法就不会再重复采样，从而节省标注成本。
 
+### 5.4 工作流监控标准 (Workflow Monitoring)
+
+为了支持自动化工作流编排（如使用 Airflow 或自定义 Scheduler），本项目统一了任务完成的日志标记。所有核心 Workflow 在成功执行完毕后，均会在标准输出或日志文件末尾打印以下 Tag：
+
+```text
+DPEVA_TAG: WORKFLOW_FINISHED
+```
+
+**监控建议**:
+*   外部调度系统应通过 `grep` 或正则表达式持续监控任务的 Log 文件（如 `train.log`, `collection.log`, `eval_desc.log` 或 Slurm `.out` 文件）。
+*   一旦检测到该 Tag，即可判定当前步骤已从应用层逻辑上成功结束，可以安全触发后续任务。
+
 ---
 
 ## 6. 版本修订记录 (Revision History)
@@ -287,3 +317,8 @@ A: 这是预期行为。在联合模式下，`num_selection` 定义的是特征�
     *   **[功能]** 增强数据导出逻辑，现在能精确保持原始的多数据池目录结构 (`Pool/System`)，而不再强制合并。
     *   **[日志]** 引入 `_configure_file_logging`，确保 `CollectionWorkflow` 在标准 stderr 输出外，自动生成独立的 `collection.log` 运行日志。
     *   **[配置]** 移除了 redundant `testdata_fmt` 配置项，全面启用格式自动检测。
+*   **v2.4.1** (2026-02-02):
+    *   **[功能]** 引入 UQ Auto-Threshold 上下限控制 (`uq_auto_bounds`)。为 KDE 自动阈值算法增加了用户可配置的物理边界（Clamp机制），有效防止极端数据分布下产生过低或过高的不可信阈值，增强了主动学习流程的鲁棒性。
+    *   **[机制]** 实现了 "Self-Invocation" (自调用) 模式的 Slurm 提交机制，彻底移除临时冻结配置文件 (`collect_config_frozen.json`) 和包装脚本的生成，提交逻辑更加优雅且易于维护。
+*   **v2.4.2** (2026-02-02):
+    *   **[规范]** 统一了四大核心 Workflow (Train, Infer, Collect, Feature) 的任务完成日志标识。无论 Backend 是 Local 还是 Slurm，所有 Worker 任务在成功结束时均会输出标准化的 `DPEVA_TAG: WORKFLOW_FINISHED` 标记，为自动化工作流监控和任务链编排提供了可靠的锚点。

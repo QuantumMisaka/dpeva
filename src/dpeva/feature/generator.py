@@ -106,6 +106,9 @@ export OMP_NUM_THREADS={self.omp_threads}
         if self.backend == "local":
             cmd += f"2>&1 | tee eval_desc.log"
         
+        # Append completion marker
+        cmd += f"\necho \"DPEVA_TAG: WORKFLOW_FINISHED\""
+        
         # Create JobConfig
         job_name = f"dpa_evaldesc_{os.path.basename(abs_data_path)}"
         
@@ -235,6 +238,8 @@ export OMP_NUM_THREADS={self.omp_threads}
                     # If 'd' is Dataset, we want output_dir/d/System.npy
                     
                     process_recursive(os.path.join(abs_data_path, d), os.path.join(abs_output_dir, d))
+            
+            self.logger.info("DPEVA_TAG: WORKFLOW_FINISHED")
                     
         elif self.backend == "slurm":
             self.logger.info("Preparing to submit python descriptor generation job via Slurm...")
@@ -266,6 +271,8 @@ def main():
         data_format="{data_format}",
         output_mode="{output_mode}"
     )
+    
+    print("DPEVA_TAG: WORKFLOW_FINISHED")
 
 if __name__ == "__main__":
     main()

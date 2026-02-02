@@ -55,7 +55,8 @@ def main():
 
     # Initialize and run workflow
     try:
-        workflow = CollectionWorkflow(config)
+        # Pass config_path to allow self-submission in Slurm mode
+        workflow = CollectionWorkflow(config, config_path=os.path.abspath(args.config))
         workflow.run()
         logger.info("✅ Collection Workflow Completed.")
     except Exception as e:

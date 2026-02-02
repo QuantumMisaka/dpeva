@@ -23,7 +23,7 @@ class CollectionWorkflow:
     Data Loading -> UQ Calculation -> Filtering -> DIRECT Sampling -> Visualization -> Export
     """
 
-    def __init__(self, config):
+    def __init__(self, config, config_path=None):
         """
         Initialize the Collection Workflow.
 
@@ -42,8 +42,11 @@ class CollectionWorkflow:
                 - direct_k: Number of clusters for DIRECT sampling.
                 - backend: 'local' or 'slurm' (default: 'local').
                 - slurm_config: Dict containing Slurm parameters (partition, qos, etc.).
+            config_path (str, optional): Path to the configuration file. 
+                                         Used for optimized Slurm self-submission.
         """
         self.config = config
+        self.config_path = config_path
         self._setup_logger()
         self._validate_config()
         
@@ -51,7 +54,14 @@ class CollectionWorkflow:
         self.uq_scheme = config.get("uq_select_scheme", "tangent_lo")
         
         # Backend Configuration
-        self.backend = config.get("backend", "local")
+        # Allow environment override for internal recursion prevention (Slurm Worker Mode)
+        env_backend = os.environ.get("DPEVA_INTERNAL_BACKEND")
+        if env_backend:
+            self.logger.info(f"Overriding backend to '{env_backend}' via DPEVA_INTERNAL_BACKEND environment variable.")
+            self.backend = env_backend
+        else:
+            self.backend = config.get("backend", "local")
+            
         self.slurm_config = config.get("slurm_config", {})
         
         # Paths
@@ -115,6 +125,9 @@ class CollectionWorkflow:
         self.uq_rnd_trust_lo = self.uq_rnd_params["lo"]
         self.uq_rnd_trust_hi = self.uq_rnd_params["hi"]
         
+        # UQ Auto Bounds
+        self.uq_auto_bounds = config.get("uq_auto_bounds", {})
+        
         # Sampling Parameters
         self.num_selection = config.get("num_selection", 100)
         self.direct_k = config.get("direct_k", 1)
@@ -165,6 +178,36 @@ class CollectionWorkflow:
              if width is not None:
                  params["lo"] = hi - width
                  self.logger.info(f"{name}: Calculated lo={params['lo']:.4f} from hi={hi}, width={width}")
+
+    def _clamp_trust_lo(self, value, bounds, name="UQ"):
+        """
+        Clamps the auto-calculated trust_lo value within specified bounds.
+        
+        Args:
+            value (float): The auto-calculated value.
+            bounds (dict): Dictionary containing 'lo_min' and/or 'lo_max'.
+            name (str): Name of the parameter for logging.
+            
+        Returns:
+            float: The clamped value.
+        """
+        if value is None:
+            return None
+            
+        lo_min = bounds.get("lo_min")
+        lo_max = bounds.get("lo_max")
+        
+        clamped_value = value
+        
+        if lo_min is not None and clamped_value < lo_min:
+            self.logger.warning(f"{name}: Auto-calculated value {value:.4f} is lower than min bound {lo_min}. Clamping to {lo_min}.")
+            clamped_value = lo_min
+            
+        if lo_max is not None and clamped_value > lo_max:
+            self.logger.warning(f"{name}: Auto-calculated value {value:.4f} is higher than max bound {lo_max}. Clamping to {lo_max}.")
+            clamped_value = lo_max
+            
+        return clamped_value
         
     def _setup_logger(self):
         """Sets up the logging configuration."""
@@ -364,10 +407,75 @@ class CollectionWorkflow:
     def _submit_to_slurm(self):
         """
         Submits the workflow to Slurm backend.
-        Generates a frozen config, a python runner, and an sbatch script.
+        Optimized to use self-invocation pattern to avoid generating redundant files.
         """
         self.logger.info("Backend is set to 'slurm'. Preparing submission...")
         
+        project_abs = os.path.abspath(self.project)
+        if not os.path.exists(project_abs):
+            os.makedirs(project_abs)
+
+        # 1. Identify Runner and Config
+        # If config_path is provided (e.g. from run_uq_collect.py), use it.
+        if self.config_path:
+            config_abs_path = os.path.abspath(self.config_path)
+            # Use sys.argv[0] as the runner script path if it's a python script
+            runner_script = os.path.abspath(sys.argv[0])
+            
+            self.logger.info(f"Using Self-Invocation Mode:")
+            self.logger.info(f"  - Runner: {runner_script}")
+            self.logger.info(f"  - Config: {config_abs_path}")
+            
+            # Construct command to re-run the same script
+            # We add DPEVA_INTERNAL_BACKEND=local to prevent infinite recursion
+            python_exe = sys.executable
+            cmd = f"{python_exe} -u {runner_script} --config {config_abs_path}"
+            
+            # Set environment variable for the job
+            env_setup = "export DPEVA_INTERNAL_BACKEND=local\n"
+            
+        else:
+            # Fallback to old behavior (Frozen Config + Wrapper) if config_path is missing
+            self.logger.warning("config_path not provided. Falling back to legacy frozen config mode.")
+            self._submit_to_slurm_legacy()
+            return
+
+        # 2. Generate Slurm Script via JobManager
+        # Defaults based on user request
+        partition = self.slurm_config.get("partition", "CPU-MISC")
+        ntasks = self.slurm_config.get("ntasks", 4)
+        qos = self.slurm_config.get("qos", "rush-cpu")
+        job_name = self.slurm_config.get("job_name", "dpeva_collect")
+        
+        job_conf = JobConfig(
+            command=cmd,
+            job_name=job_name,
+            partition=partition,
+            ntasks=ntasks,
+            cpus_per_task=self.slurm_config.get("cpus_per_task", 1),
+            qos=qos,
+            output_log=os.path.join(project_abs, "collect_slurm.out"),
+            error_log=os.path.join(project_abs, "collect_slurm.err"),
+            nodes=1, # Default
+            env_setup=env_setup
+        )
+        
+        manager = JobManager(mode="slurm")
+        
+        # Use a consistent script name
+        script_name = "submit_collect.slurm"
+        script_path = os.path.join(project_abs, script_name)
+        
+        self.logger.info(f"Submitting job from {project_abs}")
+        
+        manager.generate_script(job_conf, script_path)
+        manager.submit(script_path, working_dir=project_abs)
+
+    def _submit_to_slurm_legacy(self):
+        """
+        Legacy submission method (Frozen Config + Wrapper).
+        Kept for backward compatibility if config_path is not available.
+        """
         # 1. Prepare Frozen Config
         # Force backend to local to prevent infinite recursion
         job_config_dict = self.config.copy()
@@ -427,16 +535,13 @@ if __name__ == "__main__":
             job_name=job_name,
             partition=partition,
             ntasks=ntasks,
+            cpus_per_task=self.slurm_config.get("cpus_per_task", 1),
             qos=qos,
             output_log=os.path.join(project_abs, "collect_slurm.out"),
             error_log=os.path.join(project_abs, "collect_slurm.err"),
             nodes=1 # Default
         )
         
-        # Add cpus_per_task if specified
-        if "cpus_per_task" in self.slurm_config:
-            job_conf.custom_headers += f"\\n#SBATCH --cpus-per-task={self.slurm_config['cpus_per_task']}"
-            
         manager = JobManager(mode="slurm")
         self.logger.info(f"Submitting job from {project_abs}")
         
@@ -551,6 +656,11 @@ if __name__ == "__main__":
             
             self.logger.info(f"Calculating QbC thresholds with ratio={_qbc_ratio} and width={_qbc_width}")
             calc_lo_qbc = calculator.calculate_trust_lo(uq_results["uq_qbc_for"], ratio=_qbc_ratio)
+            
+            # Apply Bounds
+            qbc_bounds = self.uq_auto_bounds.get("qbc", {})
+            calc_lo_qbc = self._clamp_trust_lo(calc_lo_qbc, qbc_bounds, "QbC Trust Lo")
+            
             if calc_lo_qbc is not None:
                 self.uq_qbc_trust_lo = calc_lo_qbc
                 self.logger.info(f"Auto-calculated QbC Trust Lo: {self.uq_qbc_trust_lo:.4f}")
@@ -566,6 +676,11 @@ if __name__ == "__main__":
             
             self.logger.info(f"Calculating RND thresholds with ratio={_rnd_ratio} and width={_rnd_width}")
             calc_lo_rnd = calculator.calculate_trust_lo(uq_rnd_rescaled, ratio=_rnd_ratio)
+            
+            # Apply Bounds
+            rnd_bounds = self.uq_auto_bounds.get("rnd", {})
+            calc_lo_rnd = self._clamp_trust_lo(calc_lo_rnd, rnd_bounds, "RND Trust Lo")
+            
             if calc_lo_rnd is not None:
                 self.uq_rnd_trust_lo = calc_lo_rnd
                 self.logger.info(f"Auto-calculated RND-rescaled Trust Lo: {self.uq_rnd_trust_lo:.4f}")
@@ -1121,4 +1236,4 @@ if __name__ == "__main__":
         self.logger.info(f"Saved {count_sampled_sys} systems to sampled_dpdata")
         self.logger.info(f"Saved {count_other_sys} systems to other_dpdata")
         
-        self.logger.info("All Done!")
+        self.logger.info("DPEVA_TAG: WORKFLOW_FINISHED")

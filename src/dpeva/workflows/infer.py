@@ -120,6 +120,9 @@ export OMP_NUM_THREADS={self.omp_threads}
             if self.backend == "local":
                 cmd += f"2>&1 | tee test.log"
             
+            # Append completion marker
+            cmd += f"\necho \"DPEVA_TAG: WORKFLOW_FINISHED\""
+            
             # Create JobConfig
             job_name = f"dp_test_{i}"
             job_config = JobConfig(
