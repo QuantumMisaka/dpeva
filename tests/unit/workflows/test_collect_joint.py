@@ -15,8 +15,11 @@ class TestCollectionWorkflowJoint:
             "desc_dir": str(tmp_path / "desc_dir"), # Required key
             "training_desc_dir": str(tmp_path / "training_desc"), # Triggers joint sampling
             "backend": "local",
-            "uq_trust_lo": 0.1,
-            "uq_trust_hi": 0.3,
+            "uq_qbc_trust_lo": 0.1,
+            "uq_qbc_trust_hi": 0.3,
+            "uq_rnd_rescaled_trust_lo": 0.1,
+            "uq_rnd_rescaled_trust_hi": 0.3,
+            "uq_trust_width": 0.2,
             "uq_trust_mode": "manual",
             "select_n": 10
         }
