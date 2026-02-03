@@ -1,8 +1,8 @@
 {
     "data_path": "./other_dpdata_test",
-    "output_basedir": "./",
+    "work_dir": "./",
     "task_name": "test_val",
-    "head": "Hybrid_Perovskite",
+    "model_head": "Hybrid_Perovskite",
     "submission": {
         "backend": "slurm",
         "env_setup": [

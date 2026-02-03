@@ -38,11 +38,11 @@ def main():
             return os.path.abspath(os.path.join(config_dir, path))
 
         # Resolve paths in config
-        if "datadir" in config:
-            config["datadir"] = resolve_path(config["datadir"])
+        if "data_path" in config:
+            config["data_path"] = resolve_path(config["data_path"])
             
-        if "modelpath" in config:
-            config["modelpath"] = resolve_path(config["modelpath"])
+        if "model_path" in config:
+            config["model_path"] = resolve_path(config["model_path"])
             
         if "savedir" in config:
             config["savedir"] = resolve_path(config["savedir"])

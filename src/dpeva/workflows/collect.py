@@ -3,6 +3,7 @@ import shutil
 import glob
 import logging
 import sys
+from typing import Union, Dict
 import numpy as np
 import pandas as pd
 import dpdata
@@ -10,6 +11,7 @@ import dpdata
 from dpeva.io.dataproc import DPTestResultParser
 from dpeva.io.types import PredictionData
 from dpeva.io.dataset import load_systems
+from dpeva.config import CollectionConfig
 from dpeva.sampling.direct import BirchClustering, DIRECTSampler, SelectKFromClusters
 from dpeva.uncertain.calculator import UQCalculator
 from dpeva.uncertain.filter import UQFilter
@@ -23,114 +25,94 @@ class CollectionWorkflow:
     Data Loading -> UQ Calculation -> Filtering -> DIRECT Sampling -> Visualization -> Export
     """
 
-    def __init__(self, config, config_path=None):
+    def __init__(self, config: Union[Dict, CollectionConfig], config_path=None):
         """
         Initialize the Collection Workflow.
 
         Args:
-            config (dict): Configuration dictionary containing:
-                - project (str): Project name/directory (default: "stage9-2").
-                - uq_select_scheme (str): UQ filtering scheme (default: "tangent_lo").
-                - testing_dir (str): Subdir for test results (default: "test-val-npy").
-                - testing_head (str): Head name for test results (default: "results").
-                - desc_dir (str): Path to descriptor directory (Required).
-                - desc_filename (str): Descriptor filename (default: "desc.npy").
-                - testdata_dir (str): Path to test data directory (Required).
-                - training_data_dir (str): Path to training data (Optional, for joint sampling).
-                - training_desc_dir (str): Path to training descriptors (Optional).
-                - root_savedir (str): Root directory for outputs (default: "dpeva_uq_post").
-                - uq_trust_mode (str): 'manual' or 'auto'.
-                - uq_trust_ratio (float): Global UQ trust ratio (default: 0.33).
-                - uq_trust_width (float): Global UQ trust width (default: 0.25).
-                - uq_qbc_trust_lo/hi/ratio/width: QbC specific parameters.
-                - uq_rnd_rescaled_trust_lo/hi/ratio/width: RND specific parameters.
-                - uq_auto_bounds (dict): Bounds for auto-UQ ('qbc', 'rnd').
-                - num_selection (int): Total number of structures to select (default: 100).
-                - direct_k (int): Number of clusters for DIRECT sampling (default: 1).
-                - direct_thr_init (float): Initial threshold for DIRECT clustering (default: 0.5).
-                - backend (str): 'local' or 'slurm' (default: 'local').
-                - slurm_config (dict): Dict containing Slurm parameters.
+            config (Union[dict, CollectionConfig]): Configuration object or dictionary.
             config_path (str, optional): Path to the configuration file. 
-                                         Used for optimized Slurm self-submission.
         """
-        self.config = config
-        self.config_path = config_path
         self._setup_logger()
-        self._validate_config()
         
-        self.project = config.get("project", "stage9-2")
-        self.uq_scheme = config.get("uq_select_scheme", "tangent_lo")
+        # 1. Configuration Loading
+        if isinstance(config, dict):
+            # Inject config_path if present
+            if config_path and "config_path" not in config:
+                config["config_path"] = config_path
+            self.config = CollectionConfig(**config)
+        else:
+            self.config = config
+            if config_path and self.config.config_path is None:
+                 try:
+                     self.config.config_path = config_path
+                 except Exception:
+                     pass
+
+        self.config_path = str(self.config.config_path) if self.config.config_path else None
         
-        # Backend Configuration
-        # Allow environment override for internal recursion prevention (Slurm Worker Mode)
+        # 2. Basic Attributes
+        self.project = self.config.project
+        self.uq_scheme = self.config.uq_select_scheme
+        
+        # Backend
+        # Allow environment override for internal recursion prevention
         env_backend = os.environ.get("DPEVA_INTERNAL_BACKEND")
         if env_backend:
             self.logger.info(f"Overriding backend to '{env_backend}' via DPEVA_INTERNAL_BACKEND environment variable.")
             self.backend = env_backend
         else:
-            self.backend = config.get("backend", "local")
+            self.backend = self.config.submission.backend
             
-        self.slurm_config = config.get("slurm_config", {})
+        self.slurm_config = self.config.submission.slurm_config
         
         # Paths
-        self.testing_dir = config.get("testing_dir", "test-val-npy")
-        self.testing_head = config.get("testing_head", "results")
-        self.desc_dir = config.get("desc_dir")
-        self.desc_filename = config.get("desc_filename", "desc.npy")
-        self.testdata_dir = config.get("testdata_dir")
-        # testdata_fmt is no longer needed as we use auto-detection
+        self.testing_dir = self.config.testing_dir
+        self.testing_head = self.config.results_prefix
+        self.desc_dir = str(self.config.desc_dir)
+        self.testdata_dir = str(self.config.testdata_dir)
         
-        # Training Set Paths (used in joint DIRECT for diversity maximization)
-        self.training_data_dir = config.get("training_data_dir")
-        self.training_desc_dir = config.get("training_desc_dir")
+        self.training_data_dir = str(self.config.training_data_dir) if self.config.training_data_dir else None
+        self.training_desc_dir = str(self.config.training_desc_dir) if self.config.training_desc_dir else None
         
-        # Save Dirs
-        self.root_savedir = config.get("root_savedir", "dpeva_uq_post")
+        self.root_savedir = str(self.config.root_savedir)
         self.view_savedir = os.path.join(self.project, self.root_savedir, "view")
         self.dpdata_savedir = os.path.join(self.project, self.root_savedir, "dpdata")
         self.df_savedir = os.path.join(self.project, self.root_savedir, "dataframe")
         
+        # 3. Validation & Setup
+        self._validate_config()
         self._ensure_dirs()
         self._configure_file_logging()
         
         # UQ Parameters
-        self.uq_trust_mode = config.get("uq_trust_mode")
+        self.uq_trust_mode = self.config.uq_trust_mode
+        self.global_trust_ratio = self.config.uq_trust_ratio
+        self.global_trust_width = self.config.uq_trust_width
         
-        # 1. Resolve Global Defaults
-        self.global_trust_ratio = config.get("uq_trust_ratio", 0.33)
-        self.global_trust_width = config.get("uq_trust_width", 0.25)
-        
-        # 2. Resolve QbC Parameters
+        # Resolve QbC Parameters
         self.uq_qbc_params = {
-            "ratio": config.get("uq_qbc_trust_ratio", self.global_trust_ratio),
-            "width": config.get("uq_qbc_trust_width", self.global_trust_width),
-            "lo": config.get("uq_qbc_trust_lo"),
-            "hi": config.get("uq_qbc_trust_hi")
+            "ratio": self.config.uq_qbc_trust_ratio if self.config.uq_qbc_trust_ratio is not None else self.global_trust_ratio,
+            "width": self.config.uq_qbc_trust_width if self.config.uq_qbc_trust_width is not None else self.global_trust_width,
+            "lo": self.config.uq_qbc_trust_lo,
+            "hi": self.config.uq_qbc_trust_hi
         }
         
-        # 3. Resolve RND Parameters
+        # Resolve RND Parameters
         self.uq_rnd_params = {
-            "ratio": config.get("uq_rnd_rescaled_trust_ratio", self.global_trust_ratio),
-            "width": config.get("uq_rnd_rescaled_trust_width", self.global_trust_width),
-            "lo": config.get("uq_rnd_rescaled_trust_lo"),
-            "hi": config.get("uq_rnd_rescaled_trust_hi")
+            "ratio": self.config.uq_rnd_rescaled_trust_ratio if self.config.uq_rnd_rescaled_trust_ratio is not None else self.global_trust_ratio,
+            "width": self.config.uq_rnd_rescaled_trust_width if self.config.uq_rnd_rescaled_trust_width is not None else self.global_trust_width,
+            "lo": self.config.uq_rnd_rescaled_trust_lo,
+            "hi": self.config.uq_rnd_rescaled_trust_hi
         }
-        
+
         # Validate Parameters based on Mode
         if self.uq_trust_mode == "manual":
             self._validate_manual_params(self.uq_qbc_params, "uq_qbc")
             self._validate_manual_params(self.uq_rnd_params, "uq_rnd")
         elif self.uq_trust_mode == "auto":
             pass
-        else:
-            if not self.uq_trust_mode:
-                self.logger.info("uq_trust_mode not set. Defaulting to 'manual'.")
-                self.uq_trust_mode = "manual"
-                self._validate_manual_params(self.uq_qbc_params, "uq_qbc")
-                self._validate_manual_params(self.uq_rnd_params, "uq_rnd")
-            else:
-                raise ValueError(f"Unknown uq_trust_mode: {self.uq_trust_mode}")
-
+        
         # Map back to instance variables
         self.uq_qbc_trust_lo = self.uq_qbc_params.get("lo")
         self.uq_qbc_trust_hi = self.uq_qbc_params.get("hi")
@@ -138,12 +120,12 @@ class CollectionWorkflow:
         self.uq_rnd_trust_hi = self.uq_rnd_params.get("hi")
         
         # UQ Auto Bounds
-        self.uq_auto_bounds = config.get("uq_auto_bounds", {})
+        self.uq_auto_bounds = self.config.uq_auto_bounds
         
         # Sampling Parameters
-        self.num_selection = config.get("num_selection", 100)
-        self.direct_k = config.get("direct_k", 1)
-        self.direct_thr_init = config.get("direct_thr_init", 0.5)
+        self.num_selection = self.config.num_selection
+        self.direct_k = self.config.direct_k
+        self.direct_thr_init = self.config.direct_thr_init
 
     def _validate_manual_params(self, params, name):
         """
@@ -228,15 +210,18 @@ class CollectionWorkflow:
     def _validate_config(self):
         """Validates that necessary configuration paths exist."""
         # Basic validation
-        if not os.path.exists(self.config.get("project", ".")):
-            self.logger.error(f"Project directory {self.config.get('project')} not found!")
-            raise ValueError(f"Project directory {self.config.get('project')} not found!")
+        if not os.path.exists(self.project):
+            self.logger.error(f"Project directory {self.project} not found!")
+            raise ValueError(f"Project directory {self.project} not found!")
             
-        required_keys = ["desc_dir", "testdata_dir"]
-        for key in required_keys:
-            if not self.config.get(key):
-                self.logger.error(f"Missing required configuration: {key}")
-                raise ValueError(f"Missing required configuration: {key}")
+        # Pydantic ensures keys exist, but we still check path existence
+        if not os.path.exists(self.desc_dir):
+             self.logger.error(f"Descriptor directory not found: {self.desc_dir}")
+             raise ValueError(f"Descriptor directory not found: {self.desc_dir}")
+             
+        if not os.path.exists(self.testdata_dir):
+             self.logger.error(f"Test data directory not found: {self.testdata_dir}")
+             raise ValueError(f"Test data directory not found: {self.testdata_dir}")
 
     def _ensure_dirs(self):
         """Creates necessary output directories if they don't exist."""
@@ -244,15 +229,13 @@ class CollectionWorkflow:
             if not os.path.exists(d):
                 os.makedirs(d)
 
-    def _load_descriptors(self, desc_dir, desc_filename="desc.npy", label="descriptors", target_names=None, expected_frames=None):
+    def _load_descriptors(self, desc_dir, label="descriptors", target_names=None, expected_frames=None):
         """
         Loads descriptors from a directory.
-        Supports both nested structure (sys/desc.npy) and flat structure (sys.npy).
-        Prioritizes flat structure (*.npy) over nested structure (*/desc.npy).
+        Only supports flat structure (*.npy) as nested structure is deprecated.
         
         Args:
             desc_dir (str): Path to the descriptor directory.
-            desc_filename (str): Name of the descriptor file (default: "desc.npy") used in nested structure.
             label (str): Label for logging purposes.
             target_names (list): List of system names (without index) to load specifically. 
                                If provided, loads only these systems in this order.
@@ -272,27 +255,22 @@ class CollectionWorkflow:
             for sys_name in target_names:
                 # Construct possible paths
                 # 1. Flat: desc_dir/sys_name.npy
-                # 2. Nested: desc_dir/sys_name/desc.npy
-                # 3. Nested 3-level (Dataset/System): desc_dir/Dataset/System.npy or desc_dir/Dataset/System/desc.npy
                 
                 # Try direct path first (most common for multi-pool: desc_dir/Dataset/System.npy)
                 path_flat = os.path.join(desc_dir, f"{sys_name}.npy")
-                path_nested = os.path.join(desc_dir, sys_name, desc_filename)
                 
                 # Fallback: Check for flat basename match (e.g. desc_dir/System.npy even if sys_name is Dataset/System)
                 path_flat_base = os.path.join(desc_dir, f"{os.path.basename(sys_name)}.npy")
                 
                 if os.path.exists(path_flat):
                     f = path_flat
-                elif os.path.exists(path_nested):
-                    f = path_nested
                 elif os.path.exists(path_flat_base):
                     # In Single Data Pool mode, sys_name might be 'pool/sys' but desc is just 'sys.npy'
                     # This is a valid compatibility match, not a warning condition.
                     self.logger.info(f"Matched descriptor via basename (Single-Pool Compatible): {path_flat_base} for system {sys_name}")
                     f = path_flat_base
                 else:
-                    self.logger.error(f"Descriptor file not found for system: {sys_name}. Expected at {path_flat} or {path_nested}")
+                    self.logger.error(f"Descriptor file not found for system: {sys_name}. Expected at {path_flat}")
                     raise FileNotFoundError(f"Descriptor file missing for {sys_name}")
                 
                 try:
@@ -331,21 +309,13 @@ class CollectionWorkflow:
         else:
             # Check for different file patterns
             flat_pattern = os.path.join(desc_dir, "*.npy")
-            nested_pattern = os.path.join(desc_dir, "*", desc_filename)
             
             # Determine which pattern to use
-            # Priority: User explicit wildcard > Flat (*.npy) > Nested (*/desc.npy)
+            # Priority: User explicit wildcard > Flat (*.npy)
             
             if '*' in desc_dir:
                  desc_pattern = desc_dir
-            elif len(glob.glob(flat_pattern)) > 0:
-                 desc_pattern = flat_pattern
-            elif len(glob.glob(nested_pattern)) > 0:
-                 self.logger.warning(f"Using deprecated nested descriptor structure: {nested_pattern}. "
-                                     "Please switch to flat *.npy structure, which is the default in `dp eval-desc`.")
-                 desc_pattern = nested_pattern
             else:
-                 # Default fallback if nothing found (will return empty later)
                  desc_pattern = flat_pattern
                      
             desc_iter_list = sorted(glob.glob(desc_pattern))
@@ -357,13 +327,8 @@ class CollectionWorkflow:
             for f in desc_iter_list:
                 # Determine keyname based on structure
                 # Flat: .../sysname.npy -> sysname
-                # Nested: .../sysname/desc.npy -> sysname
-                if f.endswith(desc_filename) and os.path.basename(f) == desc_filename:
-                     # Nested structure
-                     keyname = os.path.basename(os.path.dirname(f))
-                else:
-                     # Flat structure (or user wildcard matching npy)
-                     keyname = os.path.basename(f).replace('.npy', '')
+                # Flat structure (or user wildcard matching npy)
+                keyname = os.path.basename(f).replace('.npy', '')
                      
                 try:
                     one_desc = np.load(f)
@@ -478,7 +443,7 @@ class CollectionWorkflow:
         
         if self.training_desc_dir:
             self.logger.info(f"Training descriptors provided at {self.training_desc_dir}. Attempting joint sampling.")
-            _, train_desc_stru = self._load_descriptors(self.training_desc_dir, self.desc_filename, "training descriptors")
+            _, train_desc_stru = self._load_descriptors(self.training_desc_dir, "training descriptors")
             
             if len(train_desc_stru) > 0:
                 # Consistency Check
@@ -633,7 +598,7 @@ class CollectionWorkflow:
         self.logger.info(f"UQ Statistics:\n{stats_desc}")
 
         # 2. Visualization (UQ Distributions)
-        vis = UQVisualizer(self.view_savedir, dpi=self.config.get("fig_dpi", 150))
+        vis = UQVisualizer(self.view_savedir, dpi=self.config.fig_dpi)
         
         self.logger.info("Plotting and saving the figures of UQ-force")
         vis.plot_uq_distribution(uq_results["uq_qbc_for"], uq_results["uq_rnd_for"])
@@ -708,7 +673,7 @@ class CollectionWorkflow:
         df_uq = pd.DataFrame(data_dict_uq)
         
         # Load descriptors (Candidates) - Using Ordered Loading with Consistency Check
-        desc_datanames, desc_stru = self._load_descriptors(self.desc_dir, self.desc_filename, "candidate descriptors", 
+        desc_datanames, desc_stru = self._load_descriptors(self.desc_dir, "candidate descriptors", 
                                                          target_names=unique_system_names,
                                                          expected_frames=expected_frames_dict)
         
@@ -811,7 +776,7 @@ class CollectionWorkflow:
         
         if self.training_desc_dir:
             self.logger.info(f"Training descriptors provided at {self.training_desc_dir}. Attempting joint sampling.")
-            _, train_desc_stru = self._load_descriptors(self.training_desc_dir, self.desc_filename, "training descriptors")
+            _, train_desc_stru = self._load_descriptors(self.training_desc_dir, "training descriptors")
             
             if len(train_desc_stru) > 0:
                 # Consistency Check

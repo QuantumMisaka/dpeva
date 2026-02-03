@@ -2,13 +2,12 @@
     "project": "./",
     "uq_select_scheme": "tangent_lo",
     "testing_dir": "test_val",
-    "testing_head": "results",
+    "results_prefix": "results",
     "desc_dir": "./desc_pool",
     "testdata_dir": "./other_dpdata",
     
     "fig_dpi": 300,
     "root_savedir": "dpeva_uq_post_single_normal",
-    "log_filename": "UQ-DIRECT-single-normal.log",
 
     "uq_trust_mode": "auto",
     "uq_trust_ratio": 0.50,

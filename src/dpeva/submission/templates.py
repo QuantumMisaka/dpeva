@@ -1,6 +1,6 @@
 import string
 import os
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, Union, List
 from dataclasses import dataclass, asdict
 
 # ==========================================
@@ -9,12 +9,9 @@ from dataclasses import dataclass, asdict
 
 DEFAULT_SLURM_TEMPLATE = """#!/bin/bash
 #SBATCH -J ${job_name}
-#SBATCH -p ${partition}
 #SBATCH -N ${nodes}
 #SBATCH -n ${ntasks}
 #SBATCH -t ${walltime}
-#SBATCH -o ${output_log}
-#SBATCH -e ${error_log}
 ${optional_slurm_params}
 ${custom_headers}
 
@@ -40,6 +37,18 @@ ${command}
 # 模板配置数据类 (Config Dataclass)
 # ==========================================
 
+from dpeva.constants import (
+    DEFAULT_SLURM_PARTITION, 
+    DEFAULT_WALLTIME,
+    DEFAULT_SLURM_GPUS_PER_NODE,
+    DEFAULT_SLURM_CPUS_PER_TASK,
+    DEFAULT_SLURM_QOS,
+    DEFAULT_SLURM_NODELIST,
+    DEFAULT_SLURM_NODES,
+    DEFAULT_SLURM_NTASKS,
+    DEFAULT_SLURM_CUSTOM_HEADERS
+)
+
 @dataclass
 class JobConfig:
     """
@@ -50,39 +59,59 @@ class JobConfig:
     job_name: str = "dpeva_job"
     
     # Slurm Specific
-    partition: str = "partition"
-    nodes: int = 1
-    ntasks: int = 1
+    partition: Optional[str] = DEFAULT_SLURM_PARTITION
+    nodes: int = DEFAULT_SLURM_NODES
+    ntasks: int = DEFAULT_SLURM_NTASKS
     
     # Advanced Slurm Options (适配不同集群环境)
-    gpus_per_node: int = 0      # 对应 #SBATCH --gpus-per-node
-    cpus_per_task: int = 1      # 对应 #SBATCH --cpus-per-task
-    qos: Optional[str] = None   # 对应 #SBATCH --qos
-    nodelist: Optional[str] = None # 对应 #SBATCH -w
+    gpus_per_node: Optional[int] = DEFAULT_SLURM_GPUS_PER_NODE      # 对应 #SBATCH --gpus-per-node
+    cpus_per_task: Optional[int] = DEFAULT_SLURM_CPUS_PER_TASK      # 对应 #SBATCH --cpus-per-task
+    qos: Optional[str] = DEFAULT_SLURM_QOS   # 对应 #SBATCH --qos
+    nodelist: Optional[str] = DEFAULT_SLURM_NODELIST # 对应 #SBATCH -w
     
-    walltime: str = "24:00:00"
-    output_log: str = "job.out"
-    error_log: str = "job.err"
-    custom_headers: str = ""
+    walltime: str = DEFAULT_WALLTIME
+    output_log: Optional[str] = None
+    error_log: Optional[str] = None
+    custom_headers: Union[str, List[str]] = DEFAULT_SLURM_CUSTOM_HEADERS
     
     # Common
-    env_setup: str = ""
+    env_setup: Union[str, List[str]] = ""
 
     def to_dict(self) -> Dict[str, Any]:
         """
         Convert dataclass to dictionary with all values as strings.
         处理可选字段的格式化，保持模板简洁。
         """
-        d = {k: str(v) for k, v in asdict(self).items()}
+        # Manual conversion to ensure lists (like custom_headers) are joined correctly
+        d = {}
+        for k, v in asdict(self).items():
+            # 专门处理列表类型的 custom_headers
+            if k == "custom_headers" and isinstance(v, list):
+                d[k] = "\n".join(v)
+            elif k == "env_setup" and isinstance(v, list):
+                d[k] = "\n".join(v)
+            elif v is None:
+                d[k] = ""
+            else:
+                d[k] = str(v)
         
         # 聚合可选的 Slurm 参数，保持模板整洁
         optional_params = []
         
         # 动态生成 Slurm 参数行
-        if self.gpus_per_node > 0:
+        if self.partition:
+            optional_params.append(f"#SBATCH -p {self.partition}")
+
+        if self.output_log:
+            optional_params.append(f"#SBATCH -o {self.output_log}")
+
+        if self.error_log:
+            optional_params.append(f"#SBATCH -e {self.error_log}")
+
+        if self.gpus_per_node:
             optional_params.append(f"#SBATCH --gpus-per-node={self.gpus_per_node}")
 
-        if self.cpus_per_task > 1:
+        if self.cpus_per_task:
             optional_params.append(f"#SBATCH --cpus-per-task={self.cpus_per_task}")
 
         if self.qos:

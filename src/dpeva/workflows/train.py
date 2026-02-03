@@ -8,39 +8,39 @@ class TrainingWorkflow:
     Supports both local multiprocessing and Slurm submission.
     """
     
-    def __init__(self, config):
+from typing import Union, Dict
+from dpeva.config import TrainingConfig
+
+class TrainingWorkflow:
+    """
+    Workflow for parallel fine-tuning of DeepMD models.
+    Supports both local multiprocessing and Slurm submission.
+    """
+    
+    def __init__(self, config: Union[Dict, TrainingConfig]):
         """
         Initialize the Training Workflow.
 
         Args:
-            config (dict): Configuration dictionary containing:
-                - work_dir (str): Working directory (default: CWD).
-                - input_json_path (str): Path to base input.json (default: "input.json").
-                - num_models (int): Number of models (default: 4).
-                - mode (str): 'init' or 'cont' (default: 'cont').
-                - seeds (list[int]): Seeds for model initialization.
-                - training_seeds (list[int]): Seeds for training.
-                - base_model_path (str): Path to base model (Required).
-                - omp_threads (int): OpenMP threads per task (default: 12).
-                - backend (str): 'local' or 'slurm' (default: 'local').
-                - slurm_config (dict): Slurm submission options.
-                - template_path (str): Custom template path.
-                - finetune_head_name (str): Name of head to finetune (default: "Hybrid_Perovskite").
-                - training_data_path (str): Override path for training data.
+            config (Union[Dict, TrainingConfig]): Configuration object or dictionary.
         """
-        self.config = config
+        if isinstance(config, dict):
+            self.config = TrainingConfig(**config)
+        else:
+            self.config = config
+            
         self._setup_logger()
         
-        self.work_dir = config.get("work_dir", os.getcwd())
-        self.input_json_path = config.get("input_json_path", "input.json")
-        self.num_models = config.get("num_models", 4)
-        self.mode = config.get("mode", "cont") # 'init' or 'cont'
+        self.work_dir = str(self.config.work_dir)
+        self.input_json_path = str(self.config.input_json_path)
+        self.num_models = self.config.num_models
+        self.mode = self.config.training_mode
         
         # Seeds configuration
         default_seeds = [19090, 42, 10032, 2933]
         
-        if "seeds" in config:
-            self.seeds = config["seeds"]
+        if self.config.seeds:
+            self.seeds = self.config.seeds
         else:
              if self.num_models > len(default_seeds):
                  self.logger.warning(f"num_models ({self.num_models}) > default seeds length. Cycling default seeds.")
@@ -48,8 +48,8 @@ class TrainingWorkflow:
              else:
                  self.seeds = default_seeds[:self.num_models]
 
-        if "training_seeds" in config:
-            self.training_seeds = config["training_seeds"]
+        if self.config.training_seeds:
+            self.training_seeds = self.config.training_seeds
         else:
              if self.num_models > len(default_seeds):
                  self.training_seeds = (default_seeds * (self.num_models // len(default_seeds) + 1))[:self.num_models]
@@ -57,23 +57,21 @@ class TrainingWorkflow:
                  self.training_seeds = default_seeds[:self.num_models]
         
         # Base model configuration
-        self.base_model_path = config.get("base_model_path")
-        if not self.base_model_path:
-             raise ValueError("base_model_path must be provided in config")
+        self.base_model_path = str(self.config.base_model_path)
         
         # OMP Settings
-        self.omp_threads = config.get("omp_threads", 12)
+        self.omp_threads = self.config.omp_threads
         
         # Submission Configuration
-        self.backend = config.get("backend", "local") # 'local' or 'slurm'
-        self.slurm_config = config.get("slurm_config", {})
-        self.template_path = config.get("template_path")
+        self.backend = self.config.submission.backend
+        self.slurm_config = self.config.submission.slurm_config
+        self.template_path = str(self.config.template_path) if self.config.template_path else None
         
         # Finetune head name configuration
-        self.finetune_head_name = config.get("finetune_head_name", "Hybrid_Perovskite")
+        self.finetune_head_name = self.config.model_head
         
         # Override training data path if provided in config
-        self.training_data_path = config.get("training_data_path")
+        self.training_data_path = str(self.config.training_data_path) if self.config.training_data_path else None
 
     def _setup_logger(self):
         self.logger = logging.getLogger(__name__)
@@ -96,12 +94,7 @@ class TrainingWorkflow:
         if not self.base_model_path:
              raise ValueError("base_model_path must be provided")
              
-        if self.mode == "init":
-            return [self.base_model_path] * self.num_models
-        else:
-            # For 'cont' mode, currently using the same base model path.
-            # Future extensions may require template string support for distinct models per task.
-            return [self.base_model_path] * self.num_models
+        return [self.base_model_path] * self.num_models
 
     def run(self):
         self.logger.info(f"Initializing Training Workflow in {self.work_dir}")

@@ -1,8 +1,8 @@
 {
     "data_path": "other_dpdata_test",
-    "modelpath": "DPA-3.1-3M.pt",
+    "model_path": "DPA-3.1-3M.pt",
     "savedir": "desc_pool",
-    "head": "Hybrid_Perovskite",
+    "model_head": "Hybrid_Perovskite",
     "mode": "cli",
     "submission": {
         "backend": "slurm",

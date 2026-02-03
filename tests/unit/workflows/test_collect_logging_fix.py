@@ -1,15 +1,24 @@
 
 import pytest
 import logging
+import os
+from pydantic import ValidationError
 from dpeva.workflows.collect import CollectionWorkflow
 
 # Mock config for testing
 @pytest.fixture
-def base_config():
+def base_config(tmp_path):
+    desc_dir = tmp_path / "desc_dir"
+    desc_dir.mkdir()
+    testdata_dir = tmp_path / "testdata"
+    testdata_dir.mkdir()
+    project_dir = tmp_path / "project"
+    project_dir.mkdir()
+    
     return {
-        "project": ".",
-        "desc_dir": "dummy_desc",
-        "testdata_dir": "dummy_data",
+        "project": str(project_dir),
+        "desc_dir": str(desc_dir),
+        "testdata_dir": str(testdata_dir),
         "uq_select_scheme": "tangent_lo",
         "backend": "local"
     }
@@ -20,8 +29,9 @@ def test_manual_mode_missing_lo(base_config):
     config["uq_trust_mode"] = "manual"
     # Missing lo
     
-    with pytest.raises(ValueError, match="'lo' value must be specified in 'manual' mode"):
+    with pytest.raises(ValidationError) as excinfo:
         CollectionWorkflow(config)
+    assert "uq_qbc_trust_lo must be provided" in str(excinfo.value)
 
 def test_manual_mode_valid(base_config):
     """Test that manual mode works with 'lo' and 'width'."""
@@ -53,17 +63,12 @@ def test_auto_mode_valid(base_config):
     assert wf.uq_qbc_params["width"] == 0.2
 
 def test_default_mode_fallback(base_config):
-    """Test fallback to manual if mode is missing (legacy behavior but stricter)."""
+    """Test default mode is now auto (Pydantic default)."""
     config = base_config.copy()
-    # No uq_trust_mode
-    config["uq_qbc_trust_lo"] = 0.1
-    config["uq_qbc_trust_width"] = 0.1
-    config["uq_rnd_rescaled_trust_lo"] = 0.1
-    config["uq_rnd_rescaled_trust_width"] = 0.1
+    # No uq_trust_mode provided, should default to auto
     
     wf = CollectionWorkflow(config)
-    assert wf.uq_trust_mode == "manual"
-    assert wf.uq_qbc_trust_lo == 0.1
+    assert wf.uq_trust_mode == "auto"
 
 def test_slurm_missing_config_path(base_config):
     """Test that Slurm backend requires config_path."""

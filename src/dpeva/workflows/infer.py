@@ -1,15 +1,18 @@
 import os
 import glob
+import time
 import logging
 import json
 import numpy as np
 import pandas as pd
 import dpdata
+from typing import Union, Dict
 from collections import Counter
 from dpeva.submission import JobManager, JobConfig
 from dpeva.io.dataproc import DPTestResultParser
 from dpeva.inference.stats import StatsCalculator
 from dpeva.inference.visualizer import InferenceVisualizer
+from dpeva.config import InferenceConfig
 
 class InferenceWorkflow:
     """
@@ -18,57 +21,48 @@ class InferenceWorkflow:
     Also handles result parsing and visualization.
     """
     
-    def __init__(self, config):
+    def __init__(self, config: Union[Dict, InferenceConfig]):
         """
         Initialize the Inference Workflow.
 
         Args:
-            config (dict): Configuration dictionary containing:
-                - data_path (str): Path to test data (Required).
-                - output_basedir (str): Base directory for outputs (default: "./").
-                - task_name (str): Task subdirectory name (default: "test").
-                - head (str): Model head name (default: "Hybrid_Perovskite").
-                - submission (dict): Submission config (backend, slurm_config, env_setup).
-                - omp_threads (int): OpenMP threads (default: 1).
+            config (Union[Dict, InferenceConfig]): Configuration object or dictionary.
         """
-        self.config = config
+        if isinstance(config, dict):
+            self.config = InferenceConfig(**config)
+        else:
+            self.config = config
+
         self._setup_logger()
         
         # Data and Model Configuration
-        self.data_path = config.get("data_path")
-        self.output_basedir = config.get("output_basedir", "./")
+        self.data_path = str(self.config.data_path)
+        self.work_dir = str(self.config.work_dir)
         
-        # Auto-infer models_paths from output_basedir structure
-        # Assumes structure: output_basedir/[0,1,2,3...]/model.ckpt.pt
+        # Auto-infer models_paths from work_dir structure
+        # Assumes structure: work_dir/[0,1,2,3...]/model.ckpt.pt
         self.models_paths = []
-        if os.path.exists(self.output_basedir):
+        if os.path.exists(self.work_dir):
             i = 0
             while True:
-                possible_model = os.path.join(self.output_basedir, str(i), "model.ckpt.pt")
+                possible_model = os.path.join(self.work_dir, str(i), "model.ckpt.pt")
                 if os.path.exists(possible_model):
                     self.models_paths.append(possible_model)
                     i += 1
                 else:
                     break
         
-        self.task_name = config.get("task_name", "test")
-        self.head = config.get("head", "Hybrid_Perovskite")
+        self.task_name = self.config.task_name
+        self.head = self.config.model_head
+        self.results_prefix = self.config.results_prefix
         
         # Submission Configuration
-        self.submission_config = config.get("submission", {})
-        self.backend = self.submission_config.get("backend", "local")
-        
-        # Handle env_setup: support string or list of strings
-        raw_env_setup = self.submission_config.get("env_setup", "")
-        if isinstance(raw_env_setup, list):
-            self.env_setup = "\n".join(raw_env_setup)
-        else:
-            self.env_setup = raw_env_setup
-            
-        self.slurm_config = self.submission_config.get("slurm_config", {})
+        self.backend = self.config.submission.backend
+        self.slurm_config = self.config.submission.slurm_config
+        self.env_setup = self.config.submission.env_setup
         
         # Parallelism (for OMP settings if not in env_setup)
-        self.omp_threads = config.get("omp_threads", 1)
+        self.omp_threads = self.config.omp_threads
         
     def _setup_logger(self):
         self.logger = logging.getLogger(__name__)
@@ -107,27 +101,29 @@ export OMP_NUM_THREADS={self.omp_threads}
                 self.logger.warning(f"Model file not found: {model_path}, skipping.")
                 continue
                 
-            # Define output directory structure: output_basedir/i/task_name
+            # Define output directory structure: work_dir/i/task_name
             if self.task_name:
-                work_dir = os.path.join(self.output_basedir, str(i), self.task_name)
+                job_work_dir = os.path.join(self.work_dir, str(i), self.task_name)
             else:
-                work_dir = os.path.join(self.output_basedir, str(i))
+                job_work_dir = os.path.join(self.work_dir, str(i))
                 
-            os.makedirs(work_dir, exist_ok=True)
+            os.makedirs(job_work_dir, exist_ok=True)
             
             # Construct Command
             abs_data_path = os.path.abspath(self.data_path)
             abs_model_path = os.path.abspath(model_path)
             
             # Command: dp --pt test ...
-            # -d results means output prefix is "results"
+            # -d specifies output prefix
             cmd = (
                 f"dp --pt test "
                 f"-s {abs_data_path} "
                 f"-m {abs_model_path} "
-                f"-d results "
-                f"--head {self.head} "
+                f"-d {self.results_prefix} "
             )
+            
+            if self.head:
+                cmd += f"--head {self.head} "
             
             if self.backend == "local":
                 cmd += f"2>&1 | tee test.log"
@@ -155,12 +151,12 @@ export OMP_NUM_THREADS={self.omp_threads}
             
             # Generate Script
             script_name = "run_test.slurm" if self.backend == "slurm" else "run_test.sh"
-            script_path = os.path.join(work_dir, script_name)
+            script_path = os.path.join(job_work_dir, script_name)
             
             manager.generate_script(job_config, script_path)
             
             # Submit Job
-            manager.submit(script_path, working_dir=work_dir)
+            manager.submit(script_path, working_dir=job_work_dir)
             
         self.logger.info("Inference Workflow Submission Completed.")
         
@@ -221,21 +217,21 @@ export OMP_NUM_THREADS={self.omp_threads}
         for i, model_path in enumerate(self.models_paths):
             # Resolve work_dir same as run()
             if self.task_name:
-                work_dir = os.path.join(self.output_basedir, str(i), self.task_name)
+                job_work_dir = os.path.join(self.work_dir, str(i), self.task_name)
             else:
-                work_dir = os.path.join(self.output_basedir, str(i))
+                job_work_dir = os.path.join(self.work_dir, str(i))
                 
-            if not os.path.exists(work_dir):
-                self.logger.warning(f"Work dir not found: {work_dir}, skipping analysis for model {i}")
+            if not os.path.exists(job_work_dir):
+                self.logger.warning(f"Work dir not found: {job_work_dir}, skipping analysis for model {i}")
                 continue
                 
             # Create analysis output dir inside work_dir
-            analysis_dir = os.path.join(work_dir, output_dir_suffix)
+            analysis_dir = os.path.join(job_work_dir, output_dir_suffix)
             os.makedirs(analysis_dir, exist_ok=True)
             
             try:
                 # 1. Parse Results
-                parser = DPTestResultParser(work_dir, head="results")
+                parser = DPTestResultParser(job_work_dir, head=self.results_prefix)
                 data = parser.parse()
                 
                 # Check consistency between loaded composition and parsed data
@@ -267,8 +263,10 @@ export OMP_NUM_THREADS={self.omp_threads}
                             data["force"]["data_fz"]
                         )).flatten()
                 
-                # Try to load ref_energies from config
-                ref_energies = self.config.get("ref_energies")
+                # Try to load ref_energies from config (Optional, not in schema yet)
+                # We can access config dict via model_dump() or getattr if added to schema
+                # For now assume None as it wasn't in Pydantic schema
+                ref_energies = getattr(self.config, "ref_energies", None)
 
                 stats_calc = StatsCalculator(
                     energy_per_atom=data["energy"]["pred_e"],
@@ -370,6 +368,6 @@ export OMP_NUM_THREADS={self.omp_threads}
                 
         # Save Global Summary
         if summary_metrics:
-            summary_path = os.path.join(self.output_basedir, "inference_summary.csv")
+            summary_path = os.path.join(self.work_dir, "inference_summary.csv")
             pd.DataFrame(summary_metrics).to_csv(summary_path, index=False)
             self.logger.info(f"Analysis completed. Summary saved to {summary_path}")

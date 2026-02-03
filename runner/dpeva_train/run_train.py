@@ -44,12 +44,6 @@ def main():
             if key in config:
                 config[key] = resolve_path(config[key], config_dir)
             
-        # Handle env_setup in slurm_config: support list of strings -> join to string
-        if "slurm_config" in config and "env_setup" in config["slurm_config"]:
-            env_setup = config["slurm_config"]["env_setup"]
-            if isinstance(env_setup, list):
-                config["slurm_config"]["env_setup"] = "\n".join(env_setup)
-
     except json.JSONDecodeError as e:
         logger.error(f"Failed to parse JSON config: {e}")
         sys.exit(1)

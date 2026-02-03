@@ -121,7 +121,7 @@
             "Ts",
             "Og"
         ],
-	"finetune_head": "Hybrid_Perovskite",
+	    "finetune_head": "Hybrid_Perovskite",
         "descriptor": {
             "type": "dpa3",
             "repflow": {
@@ -151,7 +151,7 @@
             },
             "activation_function": "silut:3.0",
             "use_tebd_bias": false,
-	    "trainable": false,
+	        "trainable": false,
             "precision": "float32",
             "concat_output_tebd": false
         },

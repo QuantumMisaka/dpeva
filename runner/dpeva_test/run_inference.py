@@ -35,8 +35,8 @@ def main():
             return os.path.abspath(os.path.join(config_dir, path))
 
         # Resolve paths in config
-        if "test_data_path" in config:
-            config["test_data_path"] = resolve_path(config["test_data_path"])
+        if "data_path" in config:
+            config["data_path"] = resolve_path(config["data_path"])
             
         if "output_basedir" in config:
             config["output_basedir"] = resolve_path(config["output_basedir"])

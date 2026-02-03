@@ -83,6 +83,33 @@ class TestJobManager:
         assert cmd[0] == "sbatch"
         assert cmd[1] == str(script_path)
 
+    def test_env_setup_handling(self, tmp_path):
+        """Verify env_setup is correctly inserted."""
+        # Test List format
+        config_list = JobConfig(
+            command="echo hi", 
+            env_setup=["module load python", "export VAR=1"]
+        )
+        
+        manager = JobManager(mode="local")
+        out_list = tmp_path / "env_list.sh"
+        manager.generate_script(config_list, str(out_list))
+        
+        content = out_list.read_text()
+        assert "module load python" in content
+        assert "export VAR=1" in content
+        
+        # Test String format (backward compatibility)
+        config_str = JobConfig(
+            command="echo hi",
+            env_setup="source activate myenv"
+        )
+        out_str = tmp_path / "env_str.sh"
+        manager.generate_script(config_str, str(out_str))
+        
+        content = out_str.read_text()
+        assert "source activate myenv" in content
+
     def test_custom_template_error(self):
         """Verify error when custom template missing."""
         with pytest.raises(FileNotFoundError):

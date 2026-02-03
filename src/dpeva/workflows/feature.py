@@ -3,6 +3,8 @@ import glob
 import time
 import logging
 import numpy as np
+from typing import Union, Dict
+from dpeva.config import FeatureConfig
 from dpeva.feature.generator import DescriptorGenerator
 
 class FeatureWorkflow:
@@ -10,51 +12,41 @@ class FeatureWorkflow:
     Workflow for generating descriptors for a dataset using a pre-trained model.
     """
     
-    def __init__(self, config):
+    def __init__(self, config: Union[Dict, FeatureConfig]):
         """
         Initialize the Feature Generation Workflow.
 
         Args:
-            config (dict): Configuration dictionary containing:
-                - data_path (str): Path to dataset (Required).
-                - modelpath (str): Path to model file (Required).
-                - format (str): Data format (default: "deepmd/npy").
-                - output_mode (str): 'atomic' or 'structural' (default: "atomic"). 
-                                     Note: Only effective in 'python' mode. 'cli' mode always outputs atomic descriptors.
-                - savedir (str): Output directory (default: auto-generated).
-                - head (str): Model head (default: "OC20M").
-                - batch_size (int): Batch size (default: 1000).
-                - omp_threads (int): OpenMP threads (default: 1).
-                - mode (str): 'cli' or 'python' (default: "cli").
-                - submission (dict): Submission config.
+            config (Union[Dict, FeatureConfig]): Configuration object or dictionary.
         """
-        self.config = config
+        if isinstance(config, dict):
+            self.config = FeatureConfig(**config)
+        else:
+            self.config = config
+            
         self._setup_logger()
         
-        self.data_path = config.get("data_path")
-        self.modelpath = config.get("modelpath")
-        self.format = config.get("format", "deepmd/npy")
-        self.output_mode = config.get("output_mode", "atomic") # 'atomic' or 'structural'
+        self.data_path = str(self.config.data_path)
+        self.modelpath = str(self.config.model_path)
+        self.format = self.config.format
+        self.output_mode = self.config.output_mode # 'atomic' or 'structural'
         
-        self.savedir = config.get("savedir", f"desc-{os.path.basename(self.modelpath).split('.')[0]}-{os.path.basename(self.data_path)}")
+        # savedir is auto-populated by Pydantic if None
+        self.savedir = str(self.config.savedir)
         
-        self.head = config.get("head", "OC20M")
-        self.batch_size = config.get("batch_size", 1000)
-        self.omp_threads = config.get("omp_threads", 1)
+        self.head = self.config.model_head
+        self.batch_size = self.config.batch_size
+        self.omp_threads = self.config.omp_threads
         
         # New configurations for CLI/Slurm support
-        self.mode = config.get("mode", "cli") # Default to CLI mode as requested
-        self.submission_config = config.get("submission", {})
-        self.backend = self.submission_config.get("backend", "local")
+        self.mode = self.config.mode 
+        self.submission_config = self.config.submission
+        self.backend = self.submission_config.backend
         
-        # Handle env_setup: support string or list of strings
-        raw_env_setup = self.submission_config.get("env_setup", "")
-        if isinstance(raw_env_setup, list):
-            self.env_setup = "\n".join(raw_env_setup)
-        else:
-            self.env_setup = raw_env_setup
+        # Handle env_setup: Pydantic handles validation/conversion to string
+        self.env_setup = self.submission_config.env_setup
             
-        self.slurm_config = self.submission_config.get("slurm_config", {})
+        self.slurm_config = self.submission_config.slurm_config
 
     def _setup_logger(self):
         self.logger = logging.getLogger(__name__)

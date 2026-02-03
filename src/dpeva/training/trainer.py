@@ -145,16 +145,22 @@ class ParallelTrainer:
             with open(os.path.join(folder_name, "input.json"), "w") as f:
                 json.dump(self.configs[i], f, indent=4)
             
-            # Copy base model
+            # Copy base model if provided
             base_model_path = base_models[i]
-            if not os.path.exists(base_model_path):
-                raise FileNotFoundError(f"Base model {base_model_path} not found")
+            base_model_name = None
             
-            shutil.copy(base_model_path, folder_name)
-            base_model_name = os.path.basename(base_model_path)
+            if base_model_path:
+                if not os.path.exists(base_model_path):
+                    raise FileNotFoundError(f"Base model {base_model_path} not found")
+                
+                shutil.copy(base_model_path, folder_name)
+                base_model_name = os.path.basename(base_model_path)
             
             # Construct Command
             gpus_per_node = self.slurm_config.get("gpus_per_node", 0)
+            
+            # Determine finetune flag
+            finetune_flag = f"--finetune {base_model_name}" if base_model_name else ""
             
             if gpus_per_node > 1:
                 # Use torchrun for multi-GPU
@@ -163,7 +169,7 @@ export OMP_NUM_THREADS={omp_threads}
 # torchrun command adapted from gpu_DPAtrain-multigpu.sbatch
 torchrun --nproc_per_node=$((SLURM_NTASKS*SLURM_GPUS_ON_NODE)) \\
     --no-python --rdzv_backend=c10d --rdzv_endpoint=localhost:0 \\
-    dp --pt train input.json --skip-neighbor-stat --finetune {base_model_name} 2>&1 | tee train.log
+    dp --pt train input.json --skip-neighbor-stat {finetune_flag} 2>&1 | tee train.log
 dp --pt freeze
 echo "DPEVA_TAG: WORKFLOW_FINISHED"
 """
@@ -173,7 +179,7 @@ echo "DPEVA_TAG: WORKFLOW_FINISHED"
 export OMP_NUM_THREADS={omp_threads}
 export DP_INTER_OP_PARALLELISM_THREADS={omp_threads // 2}
 export DP_INTRA_OP_PARALLELISM_THREADS={omp_threads}
-dp --pt train input.json --finetune {base_model_name} 2>&1 | tee train.log
+dp --pt train input.json {finetune_flag} 2>&1 | tee train.log
 dp --pt freeze
 echo "DPEVA_TAG: WORKFLOW_FINISHED"
 """

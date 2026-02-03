@@ -52,6 +52,8 @@ class TestCollectionWorkflowJoint:
         """
         # Ensure project dir exists for validation
         os.makedirs(mock_config["project"], exist_ok=True)
+        os.makedirs(mock_config["desc_dir"], exist_ok=True)
+        os.makedirs(mock_config["testdata_dir"], exist_ok=True)
         
         # Mock loading training descriptors (second call to _load_descriptors usually, or specific call)
         # _load_descriptors returns (names, data)
@@ -108,6 +110,8 @@ class TestCollectionWorkflowJoint:
         """
         # Ensure project dir exists
         os.makedirs(mock_config["project"], exist_ok=True)
+        os.makedirs(mock_config["desc_dir"], exist_ok=True)
+        os.makedirs(mock_config["testdata_dir"], exist_ok=True)
         
         mock_config.pop("training_desc_dir")
         wf = CollectionWorkflow(mock_config)
