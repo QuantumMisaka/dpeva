@@ -21,7 +21,7 @@ class DescriptorGenerator:
     2. 'python' (Native): Uses `deepmd.infer` Python API directly.
     """
     
-    def __init__(self, model_path, head="OC20M", batch_size=1000, omp_threads=24, 
+    def __init__(self, model_path, head="OC20M", batch_size=1000, omp_threads=1, 
                  mode="cli", backend="local", slurm_config=None, env_setup=None):
         """
         Initialize the DescriptorGenerator.
@@ -30,7 +30,8 @@ class DescriptorGenerator:
             model_path (str): Path to the frozen DeepMD model file.
             head (str): Head type for multi-head models (default: "OC20M").
             batch_size (int): Batch size for inference (default: 1000). Ignored in 'cli' mode.
-            omp_threads (int): Number of OMP threads (default: 24).
+            omp_threads (int): Number of OMP threads (default: 1). 
+                WARNING: Setting this too high on shared resources may degrade performance.
             mode (str): 'cli' or 'python'. 'cli' uses `dp eval-desc`.
             backend (str): 'local' or 'slurm'. Only used in 'cli' mode.
             slurm_config (dict): Configuration for Slurm submission.
@@ -181,6 +182,12 @@ export OMP_NUM_THREADS={self.omp_threads}
         """
         Run descriptor generation in 'python' mode.
         Recursively handles multi-level directory structures.
+
+        Args:
+            data_path (str): Path to the dataset.
+            output_dir (str): Directory to save descriptors.
+            data_format (str, optional): Format of the data (e.g., "deepmd/npy"). Defaults to "deepmd/npy".
+            output_mode (str, optional): "atomic" or "structural". Defaults to "atomic".
         """
         abs_data_path = os.path.abspath(data_path)
         abs_output_dir = os.path.abspath(output_dir)

@@ -104,15 +104,42 @@ class TemplateEngine:
     负责加载和渲染模板。
     """
     def __init__(self, template_content: str):
+        """
+        Initialize the TemplateEngine.
+
+        Args:
+            template_content (str): The raw template string.
+        """
         self.template = string.Template(template_content)
 
     @classmethod
     def from_file(cls, filepath: str) -> 'TemplateEngine':
+        """
+        Create a TemplateEngine from a file.
+
+        Args:
+            filepath (str): Path to the template file.
+
+        Returns:
+            TemplateEngine: Initialized engine.
+        """
         with open(filepath, 'r') as f:
             return cls(f.read())
 
     @classmethod
     def from_default(cls, mode: str) -> 'TemplateEngine':
+        """
+        Create a TemplateEngine from default templates.
+
+        Args:
+            mode (str): "slurm" or "local".
+
+        Returns:
+            TemplateEngine: Initialized engine.
+        
+        Raises:
+            ValueError: If mode is unknown.
+        """
         if mode == "slurm":
             return cls(DEFAULT_SLURM_TEMPLATE)
         elif mode == "local":
@@ -121,6 +148,15 @@ class TemplateEngine:
             raise ValueError(f"Unknown mode: {mode}. Use 'slurm' or 'local'.")
 
     def render(self, config: JobConfig) -> str:
+        """
+        Render the template with configuration values.
+
+        Args:
+            config (JobConfig): Configuration object.
+
+        Returns:
+            str: Rendered script content.
+        """
         # safe_substitute 允许模板中存在 config 中未定义的变量而不报错
         # 但为了 Explicit，建议 config 覆盖所有需要的变量
         return self.template.safe_substitute(config.to_dict())

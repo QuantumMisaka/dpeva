@@ -63,6 +63,9 @@ class StatsCalculator:
     def compute_metrics(self) -> Dict[str, float]:
         """
         Compute RMSE and MAE for Energy, Force, and Virial.
+
+        Returns:
+            Dict[str, float]: Dictionary containing MAE and RMSE metrics (e.g. "e_mae", "e_rmse").
         """
         if not self.has_truth:
             return {}
@@ -113,7 +116,12 @@ class StatsCalculator:
         Compute relative energy (Cohesive Energy).
         If atom composition is available, use Least Squares to fit atomic energies E0,
         then subtract sum(N_i * E0_i).
-        Otherwise, returns None
+
+        Args:
+            energy (np.ndarray): Energy per atom.
+
+        Returns:
+            Optional[np.ndarray]: Cohesive energy per atom, or None if calculation fails.
         """
         if self.atom_counts_list is None or self.atom_num_list is None:
             self.logger.warning("No atom counts info provided. Skipping relative energy calculation.")

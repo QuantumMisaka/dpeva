@@ -107,7 +107,18 @@ class UQFilter:
         return df_candidate, df_accurate, df_failed
 
     def get_identity_labels(self, df_uq, df_candidate, df_accurate):
-        """Adds a column 'uq_identity' to the DataFrame."""
+        """
+        Adds a column 'uq_identity' to the DataFrame.
+
+        Args:
+            df_uq (pd.DataFrame): The original dataframe containing all data.
+            df_candidate (pd.DataFrame): Dataframe of candidate structures.
+            df_accurate (pd.DataFrame): Dataframe of accurate structures.
+
+        Returns:
+            pd.DataFrame: The df_uq dataframe with an added 'uq_identity' column 
+                          ('candidate', 'accurate', or 'failed').
+        """
         df_uq['uq_identity'] = np.where(df_uq['dataname'].isin(df_candidate['dataname']), 'candidate',
                                       np.where(df_uq['dataname'].isin(df_accurate['dataname']), 'accurate', 'failed'))
         return df_uq

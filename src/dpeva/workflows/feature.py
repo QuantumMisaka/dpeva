@@ -11,6 +11,22 @@ class FeatureWorkflow:
     """
     
     def __init__(self, config):
+        """
+        Initialize the Feature Generation Workflow.
+
+        Args:
+            config (dict): Configuration dictionary containing:
+                - data_path (str): Path to dataset (Required).
+                - modelpath (str): Path to model file (Required).
+                - format (str): Data format (default: "deepmd/npy").
+                - output_mode (str): 'atomic' or 'structural' (default: "atomic").
+                - savedir (str): Output directory (default: auto-generated).
+                - head (str): Model head (default: "OC20M").
+                - batch_size (int): Batch size (default: 1000).
+                - omp_threads (int): OpenMP threads (default: 1).
+                - mode (str): 'cli' or 'python' (default: "cli").
+                - submission (dict): Submission config.
+        """
         self.config = config
         self._setup_logger()
         
@@ -23,7 +39,7 @@ class FeatureWorkflow:
         
         self.head = config.get("head", "OC20M")
         self.batch_size = config.get("batch_size", 1000)
-        self.omp_threads = config.get("omp_threads", 24)
+        self.omp_threads = config.get("omp_threads", 1)
         
         # New configurations for CLI/Slurm support
         self.mode = config.get("mode", "cli") # Default to CLI mode as requested

@@ -28,7 +28,16 @@ class UQVisualizer:
             os.makedirs(save_dir)
 
     def _filter_uq(self, data, name="UQ"):
-        """Filter UQ data to be within [0, 2] and warn if truncation occurs."""
+        """
+        Filter UQ data to be within [0, 2] and warn if truncation occurs.
+
+        Args:
+            data (np.ndarray): The UQ data array to filter.
+            name (str, optional): Name of the data for logging. Defaults to "UQ".
+
+        Returns:
+            tuple: (filtered_data, valid_mask)
+        """
         mask = (data >= 0) & (data <= 2.0)
         truncated_count = len(data) - np.sum(mask)
         if truncated_count > 0:
@@ -36,7 +45,14 @@ class UQVisualizer:
         return data[mask], mask
 
     def plot_uq_distribution(self, uq_qbc, uq_rnd, uq_rnd_rescaled=None):
-        """Plots KDE distribution of UQ metrics."""
+        """
+        Plots KDE distribution of UQ metrics.
+
+        Args:
+            uq_qbc (np.ndarray): QbC uncertainty values.
+            uq_rnd (np.ndarray): RND uncertainty values.
+            uq_rnd_rescaled (np.ndarray, optional): Rescaled RND uncertainty values. Defaults to None.
+        """
         # Filter data
         uq_qbc_viz, _ = self._filter_uq(uq_qbc, "UQ-QbC")
         uq_rnd_viz, _ = self._filter_uq(uq_rnd, "UQ-RND")
@@ -73,7 +89,16 @@ class UQVisualizer:
             plt.close()
 
     def plot_uq_with_trust_range(self, uq_data, label, filename, trust_lo, trust_hi):
-        """Plots UQ distribution with trust range highlights."""
+        """
+        Plots UQ distribution with trust range highlights.
+
+        Args:
+            uq_data (np.ndarray): UQ data to plot.
+            label (str): Label for the data.
+            filename (str): Output filename.
+            trust_lo (float): Lower trust bound.
+            trust_hi (float): Upper trust bound.
+        """
         uq_data_viz, _ = self._filter_uq(uq_data, label)
         
         plt.figure(figsize=(8, 6))
@@ -100,7 +125,15 @@ class UQVisualizer:
         plt.close()
 
     def plot_uq_vs_error(self, uq_qbc, uq_rnd, diff_maxf, rescaled=False):
-        """Plots Parity plot of UQ vs True Error."""
+        """
+        Plots Parity plot of UQ vs True Error.
+
+        Args:
+            uq_qbc (np.ndarray): QbC uncertainty values.
+            uq_rnd (np.ndarray): RND uncertainty values.
+            diff_maxf (np.ndarray): Maximum force difference (true error).
+            rescaled (bool, optional): Whether RND is rescaled. Defaults to False.
+        """
         label_rnd = "RND-rescaled" if rescaled else "RND"
         filename = "UQ-force-rescaled-fdiff-parity.png" if rescaled else "UQ-force-fdiff-parity.png"
         
@@ -123,7 +156,14 @@ class UQVisualizer:
         plt.close()
 
     def plot_uq_diff_parity(self, uq_qbc, uq_rnd_rescaled, diff_maxf=None):
-        """Plots difference between QbC and RND vs Error."""
+        """
+        Plots difference between QbC and RND vs Error.
+
+        Args:
+            uq_qbc (np.ndarray): QbC uncertainty values.
+            uq_rnd_rescaled (np.ndarray): Rescaled RND uncertainty values.
+            diff_maxf (np.ndarray, optional): Maximum force difference (true error). Defaults to None.
+        """
         uq_diff = np.abs(uq_rnd_rescaled - uq_qbc)
         
         # UQ Diff vs UQ
@@ -239,7 +279,13 @@ class UQVisualizer:
             logging.getLogger(__name__).info("UQ data within [0, 2], skipping truncated plot.")
 
     def plot_candidate_vs_error(self, df_uq, df_candidate):
-        """Plots Candidate UQ vs Error."""
+        """
+        Plots Candidate UQ vs Error.
+
+        Args:
+            df_uq (pd.DataFrame): Dataframe containing all UQ metrics.
+            df_candidate (pd.DataFrame): Dataframe containing candidate UQ metrics.
+        """
         # QbC
         plt.figure(figsize=(8, 6))
         plt.scatter(df_uq["uq_qbc_for"], df_uq["diff_maxf_0_frame"], color="blue", label="UQ-QbC", s=20)

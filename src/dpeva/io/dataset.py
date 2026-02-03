@@ -94,6 +94,10 @@ def _fix_duplicate_atom_names(sys: dpdata.System, sys_name: str = "Unknown"):
     """
     Detects and merges duplicate atom names in a dpdata System.
     Modifies the system in-place.
+
+    Args:
+        sys (dpdata.System): The dpdata System object to fix.
+        sys_name (str, optional): Name of the system for logging. Defaults to "Unknown".
     """
     atom_names = sys['atom_names']
     if len(atom_names) != len(set(atom_names)):

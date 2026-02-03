@@ -9,6 +9,25 @@ class TrainingWorkflow:
     """
     
     def __init__(self, config):
+        """
+        Initialize the Training Workflow.
+
+        Args:
+            config (dict): Configuration dictionary containing:
+                - work_dir (str): Working directory (default: CWD).
+                - input_json_path (str): Path to base input.json (default: "input.json").
+                - num_models (int): Number of models (default: 4).
+                - mode (str): 'init' or 'cont' (default: 'cont').
+                - seeds (list[int]): Seeds for model initialization.
+                - training_seeds (list[int]): Seeds for training.
+                - base_model_path (str): Path to base model (Required).
+                - omp_threads (int): OpenMP threads per task (default: 12).
+                - backend (str): 'local' or 'slurm' (default: 'local').
+                - slurm_config (dict): Slurm submission options.
+                - template_path (str): Custom template path.
+                - finetune_head_name (str): Name of head to finetune (default: "Hybrid_Perovskite").
+                - training_data_path (str): Override path for training data.
+        """
         self.config = config
         self._setup_logger()
         

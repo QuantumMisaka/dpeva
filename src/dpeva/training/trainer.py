@@ -17,6 +17,17 @@ class ParallelTrainer:
                  training_data_path=None):
         """
         Initialize the ParallelTrainer.
+
+        Args:
+            base_config_path (str): Path to the base training configuration file (JSON).
+            work_dir (str): Directory where training artifacts and logs will be saved.
+            num_models (int, optional): Number of models to train in the ensemble. Defaults to 4.
+                Must be at least 2 for UQ calculation.
+            backend (str, optional): Execution backend ('local' or 'slurm'). Defaults to "local".
+            template_path (str, optional): Path to a custom submission script template. Defaults to None.
+            slurm_config (dict, optional): Configuration dictionary for Slurm submission (e.g., partition, nodes).
+                Defaults to None.
+            training_data_path (str, optional): Override path for training data systems. Defaults to None.
         """
         self.base_config_path = base_config_path
         self.work_dir = os.path.abspath(work_dir)
@@ -41,6 +52,14 @@ class ParallelTrainer:
     def prepare_configs(self, seeds, training_seeds, finetune_heads):
         """
         Prepare configuration files for each model.
+
+        Args:
+            seeds (list[int]): List of random seeds for the model fitting net.
+            training_seeds (list[int]): List of random seeds for the training process.
+            finetune_heads (list[str]): List of head names to finetune for each model.
+        
+        Raises:
+            ValueError: If the length of seeds/heads does not match num_models.
         """
         if len(seeds) != self.num_models or \
            len(training_seeds) != self.num_models or \
@@ -98,9 +117,18 @@ class ParallelTrainer:
             config["model"]["finetune_head"] = finetune_heads[i]
             self.configs.append(config)
             
-    def setup_workdirs(self, base_models, omp_threads=12):
+    def setup_workdirs(self, base_models, omp_threads=1):
         """
         Create working directories and scripts for each model.
+
+        Args:
+            base_models (list[str]): List of paths to the base model files (e.g., *.pt).
+            omp_threads (int, optional): Number of OpenMP threads to use for training. Defaults to 1.
+                Setting this too high on shared resources may degrade performance.
+        
+        Raises:
+            ValueError: If the length of base_models does not match num_models.
+            FileNotFoundError: If a base model file is not found.
         """
         if len(base_models) != self.num_models:
              raise ValueError(f"Length of base_models must match num_models ({self.num_models})")

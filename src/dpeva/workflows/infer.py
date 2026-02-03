@@ -19,6 +19,18 @@ class InferenceWorkflow:
     """
     
     def __init__(self, config):
+        """
+        Initialize the Inference Workflow.
+
+        Args:
+            config (dict): Configuration dictionary containing:
+                - data_path (str): Path to test data (Required).
+                - output_basedir (str): Base directory for outputs (default: "./").
+                - task_name (str): Task subdirectory name (default: "test").
+                - head (str): Model head name (default: "Hybrid_Perovskite").
+                - submission (dict): Submission config (backend, slurm_config, env_setup).
+                - omp_threads (int): OpenMP threads (default: 1).
+        """
         self.config = config
         self._setup_logger()
         
@@ -56,7 +68,7 @@ class InferenceWorkflow:
         self.slurm_config = self.submission_config.get("slurm_config", {})
         
         # Parallelism (for OMP settings if not in env_setup)
-        self.omp_threads = config.get("omp_threads", 2)
+        self.omp_threads = config.get("omp_threads", 1)
         
     def _setup_logger(self):
         self.logger = logging.getLogger(__name__)

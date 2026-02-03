@@ -10,6 +10,13 @@ class InferenceVisualizer:
     """
     
     def __init__(self, output_dir: str, dpi: int = 150):
+        """
+        Initialize the InferenceVisualizer.
+
+        Args:
+            output_dir (str): Directory to save plots.
+            dpi (int, optional): Resolution for saved images. Defaults to 150.
+        """
         self.output_dir = output_dir
         self.dpi = dpi
         
@@ -24,6 +31,13 @@ class InferenceVisualizer:
                    label: str, unit: str, title: str = None):
         """
         Plot Parity (Diagonal) plot: Predicted vs Ground Truth.
+
+        Args:
+            y_true (np.ndarray): Ground truth values.
+            y_pred (np.ndarray): Predicted values.
+            label (str): Label for the quantity (e.g. "Energy").
+            unit (str): Unit string (e.g. "eV/atom").
+            title (str, optional): Custom title. Defaults to None.
         """
         plt.figure(figsize=(6, 6))
         
@@ -62,6 +76,15 @@ class InferenceVisualizer:
                           highlight_outliers: bool = False, outlier_mask: Optional[np.ndarray] = None):
         """
         Plot KDE distribution of data.
+
+        Args:
+            data (np.ndarray): Data to plot.
+            label (str): Label for the quantity.
+            unit (str): Unit string.
+            color (str, optional): Plot color. Defaults to 'blue'.
+            title (str, optional): Custom title. Defaults to None.
+            highlight_outliers (bool, optional): Whether to highlight outliers. Defaults to False.
+            outlier_mask (np.ndarray, optional): Boolean mask for outliers. Defaults to None.
         """
         plt.figure(figsize=(8, 6))
         
@@ -92,6 +115,11 @@ class InferenceVisualizer:
     def plot_error_distribution(self, error: np.ndarray, label: str, unit: str):
         """
         Plot error distribution (Predicted - True).
+
+        Args:
+            error (np.ndarray): Error values.
+            label (str): Label for the quantity.
+            unit (str): Unit string.
         """
         plt.figure(figsize=(8, 6))
         

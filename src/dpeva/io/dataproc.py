@@ -165,6 +165,7 @@ class DPTestResultParser:
     def _check_ground_truth(self):
         """
         Check if the data columns contain actual ground truth or are just placeholders (zeros).
+        Updates self.has_ground_truth based on heuristic check of zero-values.
         """
         # Heuristic: If all energy and force data are exactly zero, likely no ground truth.
         is_e_zero = np.all(np.abs(self.data_e['data_e']) < 1e-12)
@@ -185,6 +186,14 @@ class DPTestResultParser:
     def _get_dataname_info(self, filename: str) -> Tuple[List, Dict]:
         """
         Extract system names and frame counts from the comment lines of the output file.
+
+        Args:
+            filename (str): Path to the output file (e.g., .e_peratom.out).
+
+        Returns:
+            Tuple[List, Dict]: 
+                - datanames_nframe_list: List of [dataname, frame_idx, natom].
+                - datanames_nframe_dict: Dict mapping dataname to number of frames.
         """
         datanames_indice_dict = {}
         with open(filename, 'r') as f:
@@ -234,6 +243,12 @@ class DPTestResultParser:
     def _get_natom_from_name(self, dataname: str) -> int:
         """
         Estimate number of atoms from dataname string (heuristic).
+
+        Args:
+            dataname (str): The system name string (e.g. "H2O1").
+
+        Returns:
+            int: Estimated number of atoms. Returns 1 if parsing fails.
         """
         try:
             natom = 0

@@ -13,6 +13,13 @@ class JobManager:
     def __init__(self, 
                  mode: Literal["local", "slurm"] = "local", 
                  custom_template_path: Optional[str] = None):
+        """
+        Initialize the JobManager.
+
+        Args:
+            mode (Literal["local", "slurm"], optional): Submission mode. Defaults to "local".
+            custom_template_path (str, optional): Path to a custom template file. Defaults to None.
+        """
         self.mode = mode
         
         # 初始化模板引擎
@@ -25,7 +32,16 @@ class JobManager:
             self.engine = TemplateEngine.from_default(mode)
 
     def generate_script(self, config: JobConfig, output_path: str) -> str:
-        """生成作业脚本并写入文件"""
+        """
+        Generate a job script from configuration and write it to a file.
+
+        Args:
+            config (JobConfig): The job configuration object.
+            output_path (str): The path to save the generated script.
+
+        Returns:
+            str: The absolute path to the generated script.
+        """
         content = self.engine.render(config)
         
         # 确保目录存在
@@ -42,9 +58,17 @@ class JobManager:
 
     def submit(self, script_path: str, working_dir: str = ".") -> str:
         """
-        提交作业。
-        Local 模式下直接运行 (bash)。
-        Slurm 模式下使用 sbatch 提交。
+        Submit the job script.
+        
+        Args:
+            script_path (str): Path to the submission script.
+            working_dir (str, optional): Directory to execute the submission from. Defaults to ".".
+
+        Returns:
+            str: Output from the submission command (e.g. job ID).
+        
+        Raises:
+            subprocess.CalledProcessError: If submission fails.
         """
         script_path = os.path.abspath(script_path)
         

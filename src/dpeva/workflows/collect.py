@@ -29,19 +29,27 @@ class CollectionWorkflow:
 
         Args:
             config (dict): Configuration dictionary containing:
-                - project: Project name/directory.
-                - uq_select_scheme: UQ filtering scheme (e.g., 'tangent_lo').
-                - testing_dir/head: Path components for test results.
-                - desc_dir/filename: Path components for descriptors.
-                - testdata_dir: Path to test data (ground truth/structures).
-                - uq_trust_mode: 'manual' or 'auto'.
-                - uq_trust_ratio/width: Global UQ parameters.
+                - project (str): Project name/directory (default: "stage9-2").
+                - uq_select_scheme (str): UQ filtering scheme (default: "tangent_lo").
+                - testing_dir (str): Subdir for test results (default: "test-val-npy").
+                - testing_head (str): Head name for test results (default: "results").
+                - desc_dir (str): Path to descriptor directory (Required).
+                - desc_filename (str): Descriptor filename (default: "desc.npy").
+                - testdata_dir (str): Path to test data directory (Required).
+                - training_data_dir (str): Path to training data (Optional, for joint sampling).
+                - training_desc_dir (str): Path to training descriptors (Optional).
+                - root_savedir (str): Root directory for outputs (default: "dpeva_uq_post").
+                - uq_trust_mode (str): 'manual' or 'auto'.
+                - uq_trust_ratio (float): Global UQ trust ratio (default: 0.33).
+                - uq_trust_width (float): Global UQ trust width (default: 0.25).
                 - uq_qbc_trust_lo/hi/ratio/width: QbC specific parameters.
                 - uq_rnd_rescaled_trust_lo/hi/ratio/width: RND specific parameters.
-                - num_selection: Total number of structures to select.
-                - direct_k: Number of clusters for DIRECT sampling.
-                - backend: 'local' or 'slurm' (default: 'local').
-                - slurm_config: Dict containing Slurm parameters (partition, qos, etc.).
+                - uq_auto_bounds (dict): Bounds for auto-UQ ('qbc', 'rnd').
+                - num_selection (int): Total number of structures to select (default: 100).
+                - direct_k (int): Number of clusters for DIRECT sampling (default: 1).
+                - direct_thr_init (float): Initial threshold for DIRECT clustering (default: 0.5).
+                - backend (str): 'local' or 'slurm' (default: 'local').
+                - slurm_config (dict): Dict containing Slurm parameters.
             config_path (str, optional): Path to the configuration file. 
                                          Used for optimized Slurm self-submission.
         """
