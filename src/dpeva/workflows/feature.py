@@ -19,7 +19,8 @@ class FeatureWorkflow:
                 - data_path (str): Path to dataset (Required).
                 - modelpath (str): Path to model file (Required).
                 - format (str): Data format (default: "deepmd/npy").
-                - output_mode (str): 'atomic' or 'structural' (default: "atomic").
+                - output_mode (str): 'atomic' or 'structural' (default: "atomic"). 
+                                     Note: Only effective in 'python' mode. 'cli' mode always outputs atomic descriptors.
                 - savedir (str): Output directory (default: auto-generated).
                 - head (str): Model head (default: "OC20M").
                 - batch_size (int): Batch size (default: 1000).

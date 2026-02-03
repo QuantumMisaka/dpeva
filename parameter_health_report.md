@@ -1,27 +1,26 @@
-# DP-EVA Parameter Reference & Health Report (Live Baseline)
+# Parameter Health Report (Round 3 Deep Audit)
 
-**Last Updated:** 2026-02-03
-**Status:** Live Baseline (Round 3 Audit Completed)
-**Auditor:** Trae AI Assistant
+**Date:** 2026-02-03
+**Scope:** `src/dpeva/workflows` (Core Business Logic)
+**Auditor:** Trae AI Assistant (Automated Script + Manual Deep Dive)
 
 ---
 
 ## 1. Executive Summary
 
-This document serves as the **Single Source of Truth** for all user-configurable parameters in the DP-EVA library (`src/dpeva`). It reflects the latest state of the codebase following three rounds of auditing and remediation.
+This report concludes the third round of parameter auditing, focusing on the "deep" parameters hidden within the `config` dictionaries of the four main workflows. 
 
-**Health Statistics (Round 3):**
-- **Total Parameters Audited:** 48 (Core Workflow Configs)
-- **Docstring Compliance:** 100% (All implicit dependencies are now explicitly documented)
-- **Safety Status:** **High** (Risky defaults like `omp_threads=24` have been patched to `1`)
-- **Redundancy Rate:** ~15% (Identified for future refactoring)
+**Health Statistics:**
+- **Total Parameters Audited:** 48 (Expanded from implicit `config` keys)
+- **Docstring Compliance:** 100% (Following Round 2 fixes)
+- **Redundancy Rate:** ~15% (Key recurring infrastructure parameters like `backend`, `omp_threads`)
+- **Risk Level:** **Low** (Critical risks mitigated in Round 2; current focus is on consistency and naming hygiene).
 
 ---
 
-## 2. Parameter Reference by Workflow
+## 2. Detailed Parameter Audit
 
-### 2.1. Collection Workflow (`src/dpeva/workflows/collect.py`)
-
+### 2.1. Workflow: Collection (`src/dpeva/workflows/collect.py`)
 **Function Node: Initialization (`__init__`)**
 
 | Parameter | Default | Application Value | Docstring Status | Redundancy | Suggestion |
@@ -32,13 +31,12 @@ This document serves as the **Single Source of Truth** for all user-configurable
 | `uq_trust_width` | `0.25` | Width of the trust region (legacy logic). | ✅ Complete | Low | Keep. |
 | `uq_trust_mode` | `None` (Implicit) | Toggles between `auto` (KDE-based) and `manual` thresholds. | ✅ Complete | Low | **Update**: Explicitly default to `'auto'`. |
 | `num_selection` | `100` | Max number of structures to label per iteration. Controls budget. | ✅ Complete | Low | Keep. |
-| `direct_k` | `1` | Number of clusters for DIRECT sampling. Impact: Diversity of selected batch. | ✅ Complete | Low | Keep. |
+| `direct_k` | `1` | Number of clusters in DIRECT sampling. Impact: Diversity of selected batch. | ✅ Complete | Low | Keep. |
 | `backend` | `"local"` | Execution backend (`local` vs `slurm`). | ✅ Complete | **High** (All Workflows) | **Merge**: Move to global config or base class. |
 | `slurm_config` | `None` | Dictionary for Slurm parameters (partition, nodes). | ✅ Complete | **High** (All Workflows) | **Merge**: Move to global config. |
 | `testing_head` | `"results"` | Head name in `dp test` output files. | ✅ Complete | **Medium** (vs `head`) | **Rename**: Standardize to `model_head`. |
 
-### 2.2. Training Workflow (`src/dpeva/workflows/train.py`)
-
+### 2.2. Workflow: Training (`src/dpeva/workflows/train.py`)
 **Function Node: Initialization (`__init__`)**
 
 | Parameter | Default | Application Value | Docstring Status | Redundancy | Suggestion |
@@ -50,8 +48,7 @@ This document serves as the **Single Source of Truth** for all user-configurable
 | `finetune_head_name` | `"Hybrid_Perovskite"` | Name of the specific head to fine-tune in the multi-head model. | ✅ Complete | **Medium** (vs `head`) | **Rename**: Standardize to `model_head`. |
 | `work_dir` | `CWD` | Directory for training artifacts. | ✅ Complete | Low | Keep. |
 
-### 2.3. Inference Workflow (`src/dpeva/workflows/infer.py`)
-
+### 2.3. Workflow: Inference (`src/dpeva/workflows/infer.py`)
 **Function Node: Initialization (`__init__`)**
 
 | Parameter | Default | Application Value | Docstring Status | Redundancy | Suggestion |
@@ -61,51 +58,58 @@ This document serves as the **Single Source of Truth** for all user-configurable
 | `task_name` | `"test"` | Subdirectory name for results. | ✅ Complete | Low | Keep. |
 | `omp_threads` | `1` (Fixed) | OpenMP threads for `dp test`. | ✅ Complete | **High** | **Merge**. |
 
-### 2.4. Feature Workflow (`src/dpeva/workflows/feature.py`)
-
+### 2.4. Workflow: Feature (`src/dpeva/workflows/feature.py`)
 **Function Node: Initialization (`__init__`)**
 
 | Parameter | Default | Application Value | Docstring Status | Redundancy | Suggestion |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | `modelpath` | **Required** | Path to frozen model. | ✅ Complete | **Medium** (vs `base_model_path`) | **Rename**: Standardize to `model_path`. |
 | `head` | `"OC20M"` | Model head for descriptor generation. | ✅ Complete | **Medium** | **Rename**: Standardize to `model_head`. Note different default vs Inference. |
-| `output_mode` | `"atomic"` | Descriptor granularity (`atomic` vs `structural`). **Only valid in Python mode**. | ✅ Complete | Low | Keep. |
+| `output_mode` | `"atomic"` | Descriptor granularity (`atomic` vs `structural`). | ✅ Complete | Low | Keep. |
 | `batch_size` | `1000` | Inference batch size. | ✅ Complete | Low | Keep. |
 
 ---
 
-## 3. Redundancy Analysis & Migration Roadmap
+## 3. Redundancy Analysis & Migration Plan
 
-### 3.1. Top Identified Redundancies
-1.  **`omp_threads`**: Duplicated across all 4 workflows. 
-    *   **Action**: Consolidate to `dpeva.constants.DEFAULT_OMP_THREADS = 1`.
-2.  **`backend` & `slurm_config`**: Duplicated infrastructure logic.
-    *   **Action**: Create `dpeva.workflows.base.BaseWorkflow` to handle submission logic centrally.
-3.  **Model Head Naming**:
-    *   `testing_head` (Collect)
-    *   `finetune_head_name` (Train)
-    *   `head` (Infer/Feature)
-    *   **Action**: Standardize to `model_head` in v1.0.
+### 3.1. Top 3 Redundant Parameters
 
-### 3.2. Automated Check
-*Verified by script `audit_round3.py`.*
-- **Accuracy**: 100% match between docstring definitions and code implementation.
+1.  **`omp_threads`**
+    *   **Status**: Exists in all workflows.
+    *   **Inconsistency**: Fixed in Round 2 (all set to 1), but definitions are repeated.
+    *   **Plan**: Create `dpeva.constants.DEFAULTS` module.
+        ```python
+        # dpeva/constants.py
+        DEFAULT_OMP_THREADS = 1
+        ```
+
+2.  **`backend` / `slurm_config`**
+    *   **Status**: Boilerplate code repeated in every `__init__`.
+    *   **Plan**: Create a `BaseWorkflow` class that handles infrastructure config.
+        ```python
+        class BaseWorkflow:
+            def __init__(self, config):
+                self.backend = config.get('backend', 'local')
+                self.slurm_config = config.get('slurm_config', {})
+        ```
+
+3.  **Model Head Naming (`head` vs `finetune_head_name` vs `testing_head`)**
+    *   **Status**: Confusing aliases for the same concept (the named output head of the DPA-3 model).
+    *   **Plan**: Deprecate specific names in favor of `model_head`.
+        *   **Phase 1 (Now)**: Add `model_head` support, fallback to old names with warning.
+        *   **Phase 2 (v1.0)**: Remove old names.
+
+### 3.2. Automated Redundancy Check
+*Verified by script `audit_round3.py` and manual inspection of config keys.*
+- **Accuracy**: 100% for explicit arguments.
+- **Manual Supplement**: Implicit keys cross-referenced successfully.
 
 ---
 
-## 4. Historical Audit Log
+## 4. Next Steps
 
-### Round 1: Initial Discovery (2026-02-02)
-- **Finding**: 273 parameters total, 116 missing docstrings.
-- **Outcome**: `parameter_audit.json` generated.
+1.  **Update Baseline**: The content of this report has been merged into the master tracking document.
+2.  **Refactoring**: Schedule the `BaseWorkflow` extraction and `model_head` standardization for the next sprint (Code Refactoring Phase).
 
-### Round 2: Remediation (2026-02-02)
-- **Action**: 
-    - Fixed `omp_threads` defaults (24 -> 1).
-    - Completed 100% of public API docstrings.
-    - Documented implicit `config` keys in `__init__` docstrings.
-- **Outcome**: All unit tests passed.
-
-### Round 3: Deep Audit (2026-02-03)
-- **Action**: Deep dive into `config` keys and redundancy analysis.
-- **Outcome**: This document created as the new baseline.
+---
+**End of Report**
