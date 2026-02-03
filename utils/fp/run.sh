@@ -12,7 +12,7 @@ do
             cp ${ROOTDIR}/abacus-forloop.slurm ${subjobdir}
             cp ${ROOTDIR}/reprepare.py ${subjobdir}
             cd ${subjobdir}
-            python reprepare.py
+            # python reprepare.py
             sbatch abacus-forloop.slurm
             cd ${jobdir}
         done
