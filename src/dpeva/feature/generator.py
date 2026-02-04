@@ -3,7 +3,10 @@ import logging
 import numpy as np
 import dpdata
 import subprocess
+from dpeva.constants import WORKFLOW_FINISHED_TAG
 from dpeva.submission import JobManager, JobConfig
+from dpeva.utils.command import DPCommandBuilder
+from dpeva.io.dataset import load_systems
 
 # Optional import for direct inference mode
 try:
@@ -12,6 +15,8 @@ try:
     _DEEPMD_AVAILABLE = True
 except ImportError:
     _DEEPMD_AVAILABLE = False
+    def empty_cache():
+        pass
 
 class DescriptorGenerator:
     """
@@ -22,7 +27,7 @@ class DescriptorGenerator:
     """
     
     def __init__(self, model_path, head="OC20M", batch_size=1000, omp_threads=1, 
-                 mode="cli", backend="local", slurm_config=None, env_setup=None):
+                 mode="cli", backend="local", slurm_config=None, env_setup=None, dp_backend="--pt"):
         """
         Initialize the DescriptorGenerator.
         
@@ -36,6 +41,7 @@ class DescriptorGenerator:
             backend (str): 'local' or 'slurm'. Only used in 'cli' mode.
             slurm_config (dict): Configuration for Slurm submission.
             env_setup (str): Environment setup script for job execution.
+            dp_backend (str): DeepMD-kit backend flag (e.g. '--pt', '--tf'). Defaults to "--pt".
         """
         self.model_path = os.path.abspath(model_path)
         self.head = head
@@ -45,6 +51,10 @@ class DescriptorGenerator:
         self.backend = backend
         self.slurm_config = slurm_config or {}
         self.env_setup = env_setup or ""
+        self.dp_backend = dp_backend
+        
+        # Set backend
+        DPCommandBuilder.set_backend(self.dp_backend)
         
         self.logger = logging.getLogger(__name__)
         
@@ -93,22 +103,18 @@ export OMP_NUM_THREADS={self.omp_threads}
 """
 
         # Construct Command
-        # dp --pt eval-desc -s data -m model -o output --head head
-        cmd = (
-            f"dp --pt eval-desc "
-            f"-s {abs_data_path} "
-            f"-m {self.model_path} "
-            f"-o {abs_output_dir} "
-            f"--head {self.head} "
+        log_file = "eval_desc.log" if self.backend == "local" else None
+        
+        cmd = DPCommandBuilder.eval_desc(
+            model=self.model_path,
+            system=abs_data_path,
+            output=abs_output_dir,
+            head=self.head,
+            log_file=log_file
         )
         
-        # Only use tee for local backend to avoid redundant logs in Slurm mode
-        # In Slurm mode, output is captured via #SBATCH -o (output_log)
-        if self.backend == "local":
-            cmd += f"2>&1 | tee eval_desc.log"
-        
         # Append completion marker
-        cmd += f"\necho \"DPEVA_TAG: WORKFLOW_FINISHED\""
+        cmd += f"\necho \"{WORKFLOW_FINISHED_TAG}\""
         
         # Create JobConfig
         job_name = f"dpa_evaldesc_{os.path.basename(abs_data_path)}"
@@ -178,7 +184,7 @@ export OMP_NUM_THREADS={self.omp_threads}
             desc_list.append(desc_batch)
         return desc_list
 
-    def run_python_generation(self, data_path, output_dir, data_format="deepmd/npy", output_mode="atomic"):
+    def run_python_generation(self, data_path, output_dir, data_format="auto", output_mode="atomic"):
         """
         Run descriptor generation in 'python' mode.
         Recursively handles multi-level directory structures.
@@ -186,7 +192,7 @@ export OMP_NUM_THREADS={self.omp_threads}
         Args:
             data_path (str): Path to the dataset.
             output_dir (str): Directory to save descriptors.
-            data_format (str, optional): Format of the data (e.g., "deepmd/npy"). Defaults to "deepmd/npy".
+            data_format (str, optional): Format of the data (e.g., "auto", "deepmd/npy"). Defaults to "auto".
             output_mode (str, optional): "atomic" or "structural". Defaults to "atomic".
         """
         abs_data_path = os.path.abspath(data_path)
@@ -246,7 +252,7 @@ export OMP_NUM_THREADS={self.omp_threads}
                     
                     process_recursive(os.path.join(abs_data_path, d), os.path.join(abs_output_dir, d))
             
-            self.logger.info("DPEVA_TAG: WORKFLOW_FINISHED")
+            self.logger.info(WORKFLOW_FINISHED_TAG)
                     
         elif self.backend == "slurm":
             self.logger.info("Preparing to submit python descriptor generation job via Slurm...")
@@ -279,7 +285,7 @@ def main():
         output_mode="{output_mode}"
     )
     
-    print("DPEVA_TAG: WORKFLOW_FINISHED")
+    print("{WORKFLOW_FINISHED_TAG}")
 
 if __name__ == "__main__":
     main()
@@ -315,13 +321,13 @@ if __name__ == "__main__":
                 working_dir=abs_output_dir
             )
 
-    def compute_descriptors_python(self, data_path, data_format="deepmd/npy", output_mode="atomic"):
+    def compute_descriptors_python(self, data_path, data_format="auto", output_mode="atomic"):
         """
         Compute descriptors for a given dataset using native Python API.
         
         Args:
             data_path (str): Path to the dataset (system directory).
-            data_format (str): Format of the dataset (default: "deepmd/npy").
+            data_format (str): Format of the dataset (default: "auto").
             output_mode (str): "atomic" (per atom) or "structural" (per frame, mean pooled).
             
         Returns:
@@ -333,14 +339,16 @@ if __name__ == "__main__":
         if output_mode != "atomic":
             self.logger.warning(f"Output mode is '{output_mode}'. Note that only 'atomic' mode is consistent with 'dp eval-desc' CLI output.")
             
-        # self.logger.info(f"Loading data from {data_path} with format {data_format}")
+        # Use dpeva.io.dataset.load_systems for unified data loading (supports auto-detection)
+        systems = load_systems(data_path, fmt=data_format)
         
-        if data_format == "deepmd/npy/mixed":
-            onedata = dpdata.MultiSystems.from_file(data_path, fmt=data_format)
-        else:
-            onedata = dpdata.System(data_path, fmt=data_format)
+        if not systems:
+            # If load_systems fails to find anything, it returns empty list (if it doesn't raise).
+            # But load_systems logs errors.
+            # We should raise here if truly nothing.
+            raise ValueError(f"No valid systems found in {data_path} with format {data_format}")
             
-        n_frames = len(onedata)
+        n_frames = sum(len(s) for s in systems)
         self.logger.info(f"# -----------------------------------")
         self.logger.info(f"# -------output of python mode-------")
         self.logger.info(f"# processing system : {sys_name}")
@@ -348,17 +356,12 @@ if __name__ == "__main__":
         self.logger.info(f"# output mode: {output_mode}")
             
         desc_list = []
-        if data_format == "deepmd/npy/mixed":
-            self.logger.warning(f"mixed format descriptor calculation is wrong in python mode")
-            for onesys in onedata:
-                nopbc = onesys.data.get('nopbc', False)
-                one_desc_list = self._get_desc_by_batch(onesys, nopbc)
-                desc_list.extend(one_desc_list)
-        elif data_format == "deepmd/npy":
-            nopbc = onedata.data.get('nopbc', False)
-            desc_list = self._get_desc_by_batch(onedata, nopbc)
-        else:
-            raise ValueError(f"Unknown data format: {data_format}, supported: 'deepmd/npy', 'deepmd/npy/mixed'")
+        for s in systems:
+            nopbc = s.data.get('nopbc', False)
+            desc_list.extend(self._get_desc_by_batch(s, nopbc))
+        
+        if not desc_list:
+            return np.array([])
         
         desc = np.concatenate(desc_list, axis=0)
         
@@ -369,7 +372,7 @@ if __name__ == "__main__":
         self.logger.info(f"# -----------------------------------")
             
         # Clear memory
-        del onedata
+        del systems
         empty_cache()
         
         return desc

@@ -72,6 +72,9 @@ class TrainingWorkflow:
         
         # Override training data path if provided in config
         self.training_data_path = str(self.config.training_data_path) if self.config.training_data_path else None
+        
+        # DeepMD backend
+        self.dp_backend = self.config.dp_backend
 
     def _setup_logger(self):
         self.logger = logging.getLogger(__name__)
@@ -107,7 +110,8 @@ class TrainingWorkflow:
             backend=self.backend,
             template_path=self.template_path,
             slurm_config=self.slurm_config,
-            training_data_path=self.training_data_path # Pass the override path
+            training_data_path=self.training_data_path, # Pass the override path
+            dp_backend=self.dp_backend
         )
         
         finetune_heads = self._determine_finetune_heads()

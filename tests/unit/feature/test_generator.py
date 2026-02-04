@@ -1,5 +1,6 @@
 import pytest
 import os
+import numpy as np
 from unittest.mock import MagicMock, patch, call
 from dpeva.feature.generator import DescriptorGenerator
 from dpeva.submission import JobConfig
@@ -151,3 +152,40 @@ class TestDescriptorGenerator:
         assert "from dpeva.feature.generator import DescriptorGenerator" in content
         assert 'mode="python"' in content
         assert 'backend="local"' in content # The worker runs locally on the node
+
+    @patch("dpeva.feature.generator.load_systems")
+    @patch("dpeva.feature.generator._DEEPMD_AVAILABLE", True)
+    def test_compute_descriptors_python_auto(self, mock_load_systems, mock_deep_pot, tmp_path):
+        """Verify compute_descriptors_python uses load_systems and handles list."""
+        generator = DescriptorGenerator(
+            model_path="model.pt",
+            mode="python",
+            backend="local"
+        )
+        generator.model = MagicMock()
+        
+        # Mock load_systems return
+        mock_sys1 = MagicMock()
+        mock_sys1.data = {'nopbc': False}
+        mock_sys1.__len__.return_value = 10
+        
+        mock_sys2 = MagicMock()
+        mock_sys2.data = {'nopbc': False}
+        mock_sys2.__len__.return_value = 5
+        
+        mock_load_systems.return_value = [mock_sys1, mock_sys2]
+        
+        # Mock _get_desc_by_batch
+        with patch.object(generator, "_get_desc_by_batch") as mock_get_batch:
+            # Return list of arrays
+            mock_get_batch.side_effect = [
+                [np.zeros((10, 32))], # sys1
+                [np.zeros((5, 32))]   # sys2
+            ]
+            
+            result = generator.compute_descriptors_python("dummy_path", data_format="auto")
+            
+            # Verification
+            mock_load_systems.assert_called_with("dummy_path", fmt="auto")
+            assert mock_get_batch.call_count == 2
+            assert result.shape == (15, 32)

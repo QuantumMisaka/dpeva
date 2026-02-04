@@ -15,7 +15,7 @@ def test_init_model_discovery(tmp_path):
     create_mock_models(tmp_path, num_models=3)
     
     config = {
-        "output_basedir": str(tmp_path),
+        "work_dir": str(tmp_path),
         "data_path": str(tmp_path / "data"), # Dummy
         "task_name": "test_task"
     }
@@ -33,7 +33,7 @@ def test_run_command_generation(tmp_path, mock_job_manager):
     data_path.mkdir()
     
     config = {
-        "output_basedir": str(tmp_path),
+        "work_dir": str(tmp_path),
         "data_path": str(data_path),
         "task_name": "test_val",
         "head": "MyHead",
@@ -63,7 +63,7 @@ def test_no_models_found(tmp_path, caplog):
     data_path.mkdir(exist_ok=True)
     
     config = {
-        "output_basedir": str(tmp_path),
+        "work_dir": str(tmp_path),
         "data_path": str(data_path)
     }
     

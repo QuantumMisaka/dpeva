@@ -3,10 +3,10 @@
     "work_dir": "./",
     "task_name": "test_val",
     "model_head": "Hybrid_Perovskite",
+    "omp_threads": 2,
     "submission": {
         "backend": "slurm",
         "env_setup": [
-            "export OMP_NUM_THREADS=2",
             "nvidia-smi dmon -s pucvmte -o T > nvdmon_job-${SLURM_JOB_ID}.log &",
             "source /opt/envs/deepmd3.1.2.env",
             "export DP_INTERFACE_PREC=high"

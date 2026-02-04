@@ -4,7 +4,9 @@ import shutil
 import logging
 import multiprocessing
 from copy import deepcopy
+from dpeva.constants import WORKFLOW_FINISHED_TAG
 from dpeva.submission import JobManager, JobConfig
+from dpeva.utils.command import DPCommandBuilder
 
 class ParallelTrainer:
     """
@@ -14,7 +16,7 @@ class ParallelTrainer:
     
     def __init__(self, base_config_path, work_dir, num_models=4, 
                  backend="local", template_path=None, slurm_config=None,
-                 training_data_path=None):
+                 training_data_path=None, dp_backend="--pt"):
         """
         Initialize the ParallelTrainer.
 
@@ -28,6 +30,7 @@ class ParallelTrainer:
             slurm_config (dict, optional): Configuration dictionary for Slurm submission (e.g., partition, nodes).
                 Defaults to None.
             training_data_path (str, optional): Override path for training data systems. Defaults to None.
+            dp_backend (str, optional): DeepMD-kit backend flag (e.g. '--pt', '--tf'). Defaults to "--pt".
         """
         self.base_config_path = base_config_path
         self.work_dir = os.path.abspath(work_dir)
@@ -35,6 +38,10 @@ class ParallelTrainer:
         self.backend = backend
         self.slurm_config = slurm_config or {}
         self.training_data_path = training_data_path
+        self.dp_backend = dp_backend
+        
+        # Set backend for command builder
+        DPCommandBuilder.set_backend(self.dp_backend)
         
         self.logger = logging.getLogger(__name__)
         
@@ -159,29 +166,49 @@ class ParallelTrainer:
             # Construct Command
             gpus_per_node = self.slurm_config.get("gpus_per_node", 0)
             
-            # Determine finetune flag
-            finetune_flag = f"--finetune {base_model_name}" if base_model_name else ""
+            # Prepare DP Commands
+            # Note: finetune path is just base_model_name because we copied it to the folder
+            
+            dp_freeze_cmd = DPCommandBuilder.freeze()
             
             if gpus_per_node > 1:
-                # Use torchrun for multi-GPU
+                # Multi-GPU Mode (torchrun)
+                # Hardcoded skip_neighbor_stat=True for multi-gpu as per original code
+                dp_train_cmd = DPCommandBuilder.train(
+                    "input.json", 
+                    finetune_path=base_model_name,
+                    skip_neighbor_stat=True,
+                    log_file="train.log"
+                )
+                
                 cmd = f"""
 export OMP_NUM_THREADS={omp_threads}
 # torchrun command adapted from gpu_DPAtrain-multigpu.sbatch
 torchrun --nproc_per_node=$((SLURM_NTASKS*SLURM_GPUS_ON_NODE)) \\
     --no-python --rdzv_backend=c10d --rdzv_endpoint=localhost:0 \\
-    dp --pt train input.json --skip-neighbor-stat {finetune_flag} 2>&1 | tee train.log
-dp --pt freeze
-echo "DPEVA_TAG: WORKFLOW_FINISHED"
+    {dp_train_cmd}
+{dp_freeze_cmd}
+echo "{WORKFLOW_FINISHED_TAG}"
 """
             else:
                 # Standard single GPU/CPU command
+                # Original code used skip_neighbor_stat=False (implied) for single GPU?
+                # Actually original code: `dp --pt train input.json {finetune_flag} ...`
+                # So skip_neighbor_stat defaults to False.
+                
+                dp_train_cmd = DPCommandBuilder.train(
+                    "input.json", 
+                    finetune_path=base_model_name,
+                    log_file="train.log"
+                )
+                
                 cmd = f"""
 export OMP_NUM_THREADS={omp_threads}
 export DP_INTER_OP_PARALLELISM_THREADS={omp_threads // 2}
 export DP_INTRA_OP_PARALLELISM_THREADS={omp_threads}
-dp --pt train input.json {finetune_flag} 2>&1 | tee train.log
-dp --pt freeze
-echo "DPEVA_TAG: WORKFLOW_FINISHED"
+{dp_train_cmd}
+{dp_freeze_cmd}
+echo "{WORKFLOW_FINISHED_TAG}"
 """
             # Create JobConfig
             task_slurm_config = self.slurm_config.copy()

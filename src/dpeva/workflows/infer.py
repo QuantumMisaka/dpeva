@@ -12,7 +12,10 @@ from dpeva.submission import JobManager, JobConfig
 from dpeva.io.dataproc import DPTestResultParser
 from dpeva.inference.stats import StatsCalculator
 from dpeva.inference.visualizer import InferenceVisualizer
+from dpeva.io.dataset import load_systems
 from dpeva.config import InferenceConfig
+from dpeva.constants import WORKFLOW_FINISHED_TAG, FILENAME_STATS_JSON, FILENAME_SUMMARY_CSV
+from dpeva.utils.command import DPCommandBuilder
 
 class InferenceWorkflow:
     """
@@ -64,6 +67,9 @@ class InferenceWorkflow:
         # Parallelism (for OMP settings if not in env_setup)
         self.omp_threads = self.config.omp_threads
         
+        # DeepMD Backend
+        self.dp_backend = self.config.dp_backend
+        
     def _setup_logger(self):
         self.logger = logging.getLogger(__name__)
 
@@ -75,6 +81,9 @@ export OMP_NUM_THREADS={self.omp_threads}
 
     def run(self):
         self.logger.info(f"Initializing Inference Workflow (Backend: {self.backend})")
+        
+        # Set backend
+        DPCommandBuilder.set_backend(self.dp_backend)
         
         if not self.data_path or not os.path.exists(self.data_path):
             self.logger.error(f"Test data path not found: {self.data_path}")
@@ -113,23 +122,18 @@ export OMP_NUM_THREADS={self.omp_threads}
             abs_data_path = os.path.abspath(self.data_path)
             abs_model_path = os.path.abspath(model_path)
             
-            # Command: dp --pt test ...
-            # -d specifies output prefix
-            cmd = (
-                f"dp --pt test "
-                f"-s {abs_data_path} "
-                f"-m {abs_model_path} "
-                f"-d {self.results_prefix} "
+            log_file = "test.log" if self.backend == "local" else None
+            
+            cmd = DPCommandBuilder.test(
+                model=abs_model_path,
+                system=abs_data_path,
+                prefix=self.results_prefix,
+                head=self.head,
+                log_file=log_file
             )
             
-            if self.head:
-                cmd += f"--head {self.head} "
-            
-            if self.backend == "local":
-                cmd += f"2>&1 | tee test.log"
-            
             # Append completion marker
-            cmd += f"\necho \"DPEVA_TAG: WORKFLOW_FINISHED\""
+            cmd += f"\necho \"{WORKFLOW_FINISHED_TAG}\""
             
             # Create JobConfig
             job_name = f"dp_test_{i}"
@@ -360,7 +364,7 @@ export OMP_NUM_THREADS={self.omp_threads}
                     if isinstance(o, np.ndarray): return o.tolist()
                     return str(o)
                     
-                with open(os.path.join(analysis_dir, "statistics.json"), "w") as f:
+                with open(os.path.join(analysis_dir, FILENAME_STATS_JSON), "w") as f:
                     json.dump(stats_export, f, indent=4, default=default)
 
             except Exception as e:

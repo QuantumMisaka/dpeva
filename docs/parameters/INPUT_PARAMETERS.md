@@ -10,6 +10,7 @@
 | :--- | :--- | :--- | :--- | :--- |
 | `work_dir` | Path | `CWD` (当前目录) | 工作目录，用于存放运行时生成的临时文件和日志。 | 必须是有效路径。 |
 | `omp_threads` | int \| "auto" | `4` | OpenMP 并行线程数。`auto` 自动使用所有核心。 | `>= 1` (若为 int) |
+| `dp_backend` | string | `"pt"` | DeepMD-kit 命令的后端参数。 | 枚举: `["pt", "tf", "jax", "pd"]` |
 | `submission` | Object | (见下文) | 任务提交配置，包含后端选择和资源调度参数。 | - |
 
 ### 2.1 任务提交配置 (SubmissionConfig)
@@ -47,8 +48,8 @@
 | :--- | :--- | :--- | :--- | :--- |
 | `base_model_path` | Path | **必填** | 基础模型/预训练模型路径。 | - |
 | `num_models` | int | `4` | 训练的模型数量 (Ensemble Size)。 | `>= 3` (UQ要求) |
-| `mode` | string | `"cont"` | 训练模式。`init` (从头初始化) 或 `cont` (继续训练)。 | 枚举: `["init", "cont"]` (Alias: `training_mode`) |
-| `model_head` | string | **必填** | 微调的 Model Head 名称。 | (Alias: `finetune_head_name`) |
+| `training_mode` | string | `"cont"` | 训练模式。`init` (从头初始化) 或 `cont` (继续训练)。 | 枚举: `["init", "cont"]` |
+| `model_head` | string | **必填** | 微调的 Model Head 名称。 | - |
 | `input_json_path` | Path | `"input.json"` | DeepMD-kit 训练输入参数文件路径。 | - |
 | `training_data_path` | Path | `None` | 训练数据根目录。 | - |
 | `seeds` | list[int] | `None` | 全局随机种子列表。 | - |
@@ -62,7 +63,7 @@
 | 参数名 | 类型 | 默认值 | 说明 | 约束/验证 |
 | :--- | :--- | :--- | :--- | :--- |
 | `data_path` | Path | **必填** | 待推理的测试数据集路径。 | 必须存在。 |
-| `model_head` | string | `None` | 使用的模型 Head 名称。若为 Frozen Model 可选。 | (Alias: `head`) |
+| `model_head` | string | `None` | 使用的模型 Head 名称。若为 Frozen Model 可选。 | - |
 | `results_prefix` | string | `"results"` | 输出结果文件的前缀 (如 `results.e.out`)。 | - |
 | `task_name` | string | `"test"` | 任务子目录名称。 | - |
 
@@ -74,9 +75,8 @@
 | 参数名 | 类型 | 默认值 | 说明 | 约束/验证 |
 | :--- | :--- | :--- | :--- | :--- |
 | `data_path` | Path | **必填** | 输入数据集路径。 | 必须存在。 |
-| `model_path` | Path | **必填** | 模型文件路径。 | (Alias: `modelpath`) |
-| `model_head` | string | **必填** | 模型 Head 名称。 | (Alias: `head`) |
-| `format` | string | `"deepmd/npy"` | 数据格式。 | - |
+| `model_path` | Path | **必填** | 模型文件路径。 | - |
+| `model_head` | string | **必填** | 模型 Head 名称。 | - |
 | `output_mode` | string | `"atomic"` | 输出模式。`atomic` (原子级) 或 `structural` (结构级)。 | 枚举: `["atomic", "structural"]` |
 | `batch_size` | int | `32` | 推理批次大小。 | `> 0` |
 | `savedir` | Path | `None` | 结果保存目录。 | 若未指定，自动根据模型和数据名生成。 |
@@ -121,5 +121,5 @@
 | `direct_k` | int | `1` | DIRECT 算法的 K 值参数。 | `>= 1` |
 | `direct_thr_init` | float | `0.5` | DIRECT 算法的初始阈值。 | `>= 0.0` |
 | `testing_dir` | string | `"test_results"` | 测试集子目录名称。 | - |
-| `results_prefix` | string | `"results"` | 测试集结果文件名前缀 (Alias: `testing_head`)。 | - |
+| `results_prefix` | string | `"results"` | 测试集结果文件名前缀。 | - |
 | `fig_dpi` | int | `300` | 可视化图片的 DPI 分辨率。 | - |

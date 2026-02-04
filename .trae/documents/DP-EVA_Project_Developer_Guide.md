@@ -113,6 +113,7 @@ graph TD
 *   **`DescriptorGenerator`**:
     *   **CLI 模式**: 调用 `dp eval-desc` 命令，支持 Slurm 提交。
     *   **Python 模式**: 直接调用 `deepmd.infer` API，适合小规模或调试使用。
+    *   **数据一致性**: 统一使用 `dpeva.io.dataset.load_systems` 加载数据，确保在 `mixed` 格式下与 CLI 模式行为一致。
     *   **单数据池兼容**: 智能识别 `desc_dir/System.npy` 格式的描述符文件，兼容单数据池模式下的平铺结构。
     *   **多数据池支持**: 递归支持 `Dataset/System` 3层结构，通过增强的路径解析逻辑确保描述符与数据一一对应。
 
@@ -322,3 +323,8 @@ DPEVA_TAG: WORKFLOW_FINISHED
     *   **[机制]** 实现了 "Self-Invocation" (自调用) 模式的 Slurm 提交机制，彻底移除临时冻结配置文件 (`collect_config_frozen.json`) 和包装脚本的生成，提交逻辑更加优雅且易于维护。
 *   **v2.4.2** (2026-02-02):
     *   **[规范]** 统一了四大核心 Workflow (Train, Infer, Collect, Feature) 的任务完成日志标识。无论 Backend 是 Local 还是 Slurm，所有 Worker 任务在成功结束时均会输出标准化的 `DPEVA_TAG: WORKFLOW_FINISHED` 标记，为自动化工作流监控和任务链编排提供了可靠的锚点。
+*   **v2.5.0** (2026-02-04):
+    *   **[重构]** 统一使用 `dpeva.io.dataset.load_systems` 函数加载结构数据，该函数内置了 `deepmd/npy/mixed` 优先的 Auto 格式检测策略，并自动修复 `dpdata` 加载时可能出现的原子名称重复问题。
+    *   **[修复]** 解决了 Python Native 模式下计算 Mixed 格式描述符与 CLI 模式结果不一致的问题。通过 `load_systems` 将复杂的 MultiSystems 结构扁平化为独立的 System 列表，确保了与 CLI 模式一致的数据处理粒度。
+    *   **[验证]** 在 Slurm 环境下对 CLI 模式和 Python 模式进行了严格的一致性验证，在 GPU 计算浮点误差范围内（Max Diff < 8e-4, Mean Diff ~ 1e-7），两者结果完全一致。
+    *   **[配置]** `FeatureConfig` 移除了 `format` (或 `data_format`) 字段，系统现已全面统一为自动检测数据格式（`auto` 模式），极大简化了用户配置。旧配置文件中的该字段将被静默忽略，不影响兼容性。

@@ -28,7 +28,6 @@ class FeatureWorkflow:
         
         self.data_path = str(self.config.data_path)
         self.modelpath = str(self.config.model_path)
-        self.format = self.config.format
         self.output_mode = self.config.output_mode # 'atomic' or 'structural'
         
         # savedir is auto-populated by Pydantic if None
@@ -42,6 +41,9 @@ class FeatureWorkflow:
         self.mode = self.config.mode 
         self.submission_config = self.config.submission
         self.backend = self.submission_config.backend
+        
+        # DeepMD Backend
+        self.dp_backend = self.config.dp_backend
         
         # Handle env_setup: Pydantic handles validation/conversion to string
         self.env_setup = self.submission_config.env_setup
@@ -70,7 +72,8 @@ class FeatureWorkflow:
                 mode=self.mode,
                 backend=self.backend,
                 slurm_config=self.slurm_config,
-                env_setup=self.env_setup
+                env_setup=self.env_setup,
+                dp_backend=self.dp_backend
             )
         except (ImportError, ValueError) as e:
             self.logger.error(f"Failed to initialize DescriptorGenerator: {e}")
@@ -102,7 +105,7 @@ class FeatureWorkflow:
             generator.run_python_generation(
                 data_path=self.data_path,
                 output_dir=self.savedir,
-                data_format=self.format,
+                data_format="auto",
                 output_mode=self.output_mode
             )
         else:

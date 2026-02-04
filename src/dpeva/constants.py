@@ -18,11 +18,13 @@ DEFAULT_SLURM_CUSTOM_HEADERS: Final[str] = ""
 
 # Model Defaults
 DEFAULT_NUM_MODELS: Final[int] = 4
+DEFAULT_DP_BACKEND: Final[str] = "pt"
+VALID_DP_BACKENDS: Final[list] = ["pt", "tf", "jax", "pd"]
+MIN_DEEPMD_VERSION: Final[str] = "3.1.2"
 
 # Feature/Descriptor Defaults
 DEFAULT_FEATURE_MODE: Final[str] = "cli"
 DEFAULT_DESC_BATCH_SIZE: Final[int] = 1000
-DEFAULT_DESC_FORMAT: Final[str] = "deepmd/npy"
 DEFAULT_DESC_OUTPUT_MODE: Final[str] = "atomic"
 
 # Inference/Training Defaults
@@ -45,3 +47,15 @@ DEFAULT_UQ_TRUST_WIDTH: Final[float] = 0.25
 DEFAULT_NUM_SELECTION: Final[int] = 100
 DEFAULT_DIRECT_K: Final[int] = 1
 DEFAULT_DIRECT_THR_INIT: Final[float] = 0.5
+
+# Workflow Tags
+WORKFLOW_FINISHED_TAG: Final[str] = "DPEVA_TAG: WORKFLOW_FINISHED"
+
+# Filenames
+FILENAME_STATS_JSON: Final[str] = "statistics.json"
+FILENAME_SUMMARY_CSV: Final[str] = "inference_summary.csv"
+
+# Column Names
+COL_DESC_PREFIX: Final[str] = "desc_stru_"
+COL_UQ_QBC: Final[str] = "uq_qbc_for"
+COL_UQ_RND: Final[str] = "uq_rnd_for"

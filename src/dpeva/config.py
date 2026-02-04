@@ -14,8 +14,9 @@ from dpeva.constants import (
     DEFAULT_OMP_THREADS,
     DEFAULT_BACKEND,
     DEFAULT_NUM_MODELS,
+    DEFAULT_DP_BACKEND,
+    VALID_DP_BACKENDS,
     DEFAULT_DESC_BATCH_SIZE,
-    DEFAULT_DESC_FORMAT,
     DEFAULT_DESC_OUTPUT_MODE,
     DEFAULT_FEATURE_MODE,
     DEFAULT_INFER_TASK_NAME,
@@ -67,10 +68,21 @@ class BaseWorkflowConfig(BaseModel):
         default=DEFAULT_OMP_THREADS, 
         description="OpenMP threads (set to 'auto' to use all cores)."
     )
+    dp_backend: str = Field(
+        default=DEFAULT_DP_BACKEND,
+        description="DeepMD-kit backend (e.g. 'pt', 'tf', 'jax', 'pd')."
+    )
     submission: SubmissionConfig = Field(
         default_factory=SubmissionConfig, 
         description="Submission configuration."
     )
+    
+    @field_validator("dp_backend")
+    @classmethod
+    def validate_dp_backend(cls, v):
+        if v not in VALID_DP_BACKENDS:
+            raise ValueError(f"Invalid dp_backend '{v}'. Valid options: {VALID_DP_BACKENDS}")
+        return v
 
     @field_validator("omp_threads")
     @classmethod
@@ -107,10 +119,9 @@ class BaseWorkflowConfig(BaseModel):
 class FeatureConfig(BaseWorkflowConfig):
     """Configuration for Feature Generation Workflow."""
     data_path: Path = Field(..., description="Path to dataset.")
-    model_path: Path = Field(..., alias="modelpath", description="Path to model file.")
-    model_head: str = Field(..., alias="head", description="Model head name.")
+    model_path: Path = Field(..., description="Path to model file.")
+    model_head: str = Field(..., description="Model head name.")
     
-    format: str = DEFAULT_DESC_FORMAT
     output_mode: Literal["atomic", "structural"] = DEFAULT_DESC_OUTPUT_MODE
     batch_size: int = Field(DEFAULT_DESC_BATCH_SIZE, gt=0)
     mode: Literal["cli", "python"] = DEFAULT_FEATURE_MODE
@@ -128,7 +139,7 @@ class FeatureConfig(BaseWorkflowConfig):
 class InferenceConfig(BaseWorkflowConfig):
     """Configuration for Inference Workflow."""
     data_path: Path = Field(..., description="Path to test dataset.")
-    model_head: Optional[str] = Field(None, alias="head", description="Model head name (optional for frozen models).")
+    model_head: Optional[str] = Field(None, description="Model head name (optional for frozen models).")
     results_prefix: str = Field(DEFAULT_RESULTS_PREFIX, description="Output file prefix.")
     task_name: str = DEFAULT_INFER_TASK_NAME
 
@@ -136,8 +147,8 @@ class TrainingConfig(BaseWorkflowConfig):
     """Configuration for Training Workflow."""
     base_model_path: Path = Field(..., description="Path to base model.")
     num_models: int = Field(DEFAULT_NUM_MODELS, ge=3, description="Number of models (>=3 for UQ).")
-    training_mode: Literal["init", "cont"] = Field("init", alias="mode")
-    model_head: str = Field(..., alias="finetune_head_name")
+    training_mode: Literal["init", "cont"] = Field("init")
+    model_head: str = Field(..., description="Model head name.")
     
     input_json_path: Path = Path(DEFAULT_INPUT_JSON)
     seeds: Optional[List[int]] = None
@@ -161,7 +172,7 @@ class CollectionConfig(BaseWorkflowConfig):
     
     # Testing
     testing_dir: str = DEFAULT_TESTING_DIR
-    results_prefix: str = Field(DEFAULT_RESULTS_PREFIX, alias="testing_head")
+    results_prefix: str = Field(DEFAULT_RESULTS_PREFIX, description="Output file prefix.")
     fig_dpi: int = Field(FIG_DPI, description="DPI for visualization figures.")
     
     # UQ Parameters

@@ -12,6 +12,7 @@ from dpeva.io.dataproc import DPTestResultParser
 from dpeva.io.types import PredictionData
 from dpeva.io.dataset import load_systems
 from dpeva.config import CollectionConfig
+from dpeva.constants import WORKFLOW_FINISHED_TAG, COL_DESC_PREFIX, COL_UQ_QBC, COL_UQ_RND
 from dpeva.sampling.direct import BirchClustering, DIRECTSampler, SelectKFromClusters
 from dpeva.uncertain.calculator import UQCalculator
 from dpeva.uncertain.filter import UQFilter
@@ -465,7 +466,7 @@ class CollectionWorkflow:
                 self.logger.warning("Training descriptors provided but empty or failed to load. Falling back to candidate-only sampling.")
         
         # Prepare Features for DIRECT
-        candidate_features = df_candidate[[col for col in df_desc.columns if col.startswith("desc_stru_")]].values
+        candidate_features = df_candidate[[col for col in df_desc.columns if col.startswith(COL_DESC_PREFIX)]].values
         n_candidates = len(candidate_features)
         
         if use_joint_sampling:
@@ -528,7 +529,7 @@ class CollectionWorkflow:
         uq_results = calculator.compute_qbc_rnd(preds[0], preds[1], preds[2], preds[3])
         
         self.logger.info("Aligning UQ-RND to UQ-QbC by RobustScaler (Median/IQR alignment)")
-        uq_rnd_rescaled = calculator.align_scales(uq_results["uq_qbc_for"], uq_results["uq_rnd_for"])
+        uq_rnd_rescaled = calculator.align_scales(uq_results[COL_UQ_QBC], uq_results[COL_UQ_RND])
         
         # Auto-calculate thresholds if mode is auto
         if self.uq_trust_mode == "auto":
@@ -543,7 +544,7 @@ class CollectionWorkflow:
             if qbc_bounds:
                 self.logger.info(f"  - Using Bounds: {qbc_bounds}")
             
-            calc_lo_qbc = calculator.calculate_trust_lo(uq_results["uq_qbc_for"], ratio=_qbc_ratio)
+            calc_lo_qbc = calculator.calculate_trust_lo(uq_results[COL_UQ_QBC], ratio=_qbc_ratio)
             
             # Apply Bounds
             calc_lo_qbc = self._clamp_trust_lo(calc_lo_qbc, qbc_bounds, "QbC Trust Lo")
@@ -587,8 +588,8 @@ class CollectionWorkflow:
         # Stats for UQ variables
         self.logger.info("Calculating statistics for UQ variables (QbC, RND, RND_rescaled)")
         df_uq_stats = pd.DataFrame({
-            "UQ_QbC": uq_results["uq_qbc_for"],
-            "UQ_RND": uq_results["uq_rnd_for"],
+            "UQ_QbC": uq_results[COL_UQ_QBC],
+            "UQ_RND": uq_results[COL_UQ_RND],
             "UQ_RND_rescaled": uq_rnd_rescaled
         })
         pd.set_option('display.max_columns', None)
@@ -601,13 +602,13 @@ class CollectionWorkflow:
         vis = UQVisualizer(self.view_savedir, dpi=self.config.fig_dpi)
         
         self.logger.info("Plotting and saving the figures of UQ-force")
-        vis.plot_uq_distribution(uq_results["uq_qbc_for"], uq_results["uq_rnd_for"])
+        vis.plot_uq_distribution(uq_results[COL_UQ_QBC], uq_results[COL_UQ_RND])
         
         self.logger.info("Plotting and saving the figures of UQ-force rescaled")
-        vis.plot_uq_distribution(uq_results["uq_qbc_for"], uq_results["uq_rnd_for"], uq_rnd_rescaled)
+        vis.plot_uq_distribution(uq_results[COL_UQ_QBC], uq_results[COL_UQ_RND], uq_rnd_rescaled)
         
         self.logger.info("Plotting and saving the figures of UQ-QbC-force with UQ trust range")
-        vis.plot_uq_with_trust_range(uq_results["uq_qbc_for"], "UQ-QbC-force", "UQ-QbC-force.png", 
+        vis.plot_uq_with_trust_range(uq_results[COL_UQ_QBC], "UQ-QbC-force", "UQ-QbC-force.png", 
                                      self.uq_qbc_trust_lo, self.uq_qbc_trust_hi)
         
         self.logger.info("Plotting and saving the figures of UQ-RND-force-rescaled with UQ trust range")
@@ -616,21 +617,21 @@ class CollectionWorkflow:
         
         if has_ground_truth:
             self.logger.info("Plotting and saving the figures of UQ-force vs force diff")
-            vis.plot_uq_vs_error(uq_results["uq_qbc_for"], uq_results["uq_rnd_for"], uq_results["diff_maxf_0_frame"])
+            vis.plot_uq_vs_error(uq_results[COL_UQ_QBC], uq_results[COL_UQ_RND], uq_results["diff_maxf_0_frame"])
             
             self.logger.info("Plotting and saving the figures of UQ-force-rescaled vs force diff")
-            vis.plot_uq_vs_error(uq_results["uq_qbc_for"], uq_rnd_rescaled, uq_results["diff_maxf_0_frame"], rescaled=True)
+            vis.plot_uq_vs_error(uq_results[COL_UQ_QBC], uq_rnd_rescaled, uq_results["diff_maxf_0_frame"], rescaled=True)
             
         self.logger.info("Calculating the difference between UQ-qbc and UQ-rnd-rescaled")
         self.logger.info("Plotting and saving the figures of UQ-diff")
-        vis.plot_uq_diff_parity(uq_results["uq_qbc_for"], uq_rnd_rescaled, 
+        vis.plot_uq_diff_parity(uq_results[COL_UQ_QBC], uq_rnd_rescaled, 
                                 diff_maxf=uq_results["diff_maxf_0_frame"] if has_ground_truth else None)
         
         if has_ground_truth:
             self.logger.info("Plotting and saving the figures of UQ-qbc-force and UQ-rnd-force-rescaled vs force diff")
             # Creating temp df for visualization
             df_temp = pd.DataFrame({
-                "uq_qbc_for": uq_results["uq_qbc_for"],
+                COL_UQ_QBC: uq_results[COL_UQ_QBC],
                 "uq_rnd_for_rescaled": uq_rnd_rescaled,
                 "diff_maxf_0_frame": uq_results["diff_maxf_0_frame"]
             })
@@ -663,9 +664,9 @@ class CollectionWorkflow:
         
         data_dict_uq = {
             "dataname": datanames_ind_list,
-            "uq_qbc_for": uq_results["uq_qbc_for"],
+            COL_UQ_QBC: uq_results[COL_UQ_QBC],
             "uq_rnd_for_rescaled": uq_rnd_rescaled,
-            "uq_rnd_for": uq_results["uq_rnd_for"],
+            COL_UQ_RND: uq_results[COL_UQ_RND],
         }
         if has_ground_truth:
             data_dict_uq["diff_maxf_0_frame"] = uq_results["diff_maxf_0_frame"]
@@ -708,7 +709,7 @@ class CollectionWorkflow:
         # --------------------------------------------
 
         self.logger.info(f"Collecting data to dataframe and do UQ selection")
-        df_desc = pd.DataFrame(desc_stru, columns=[f"desc_stru_{i}" for i in range(desc_stru.shape[1])])
+        df_desc = pd.DataFrame(desc_stru, columns=[f"{COL_DESC_PREFIX}{i}" for i in range(desc_stru.shape[1])])
         df_desc["dataname"] = desc_datanames
         
         # Verify consistency for candidates
@@ -798,7 +799,8 @@ class CollectionWorkflow:
                 self.logger.warning("Training descriptors provided but empty or failed to load. Falling back to candidate-only sampling.")
         
         # Prepare Features for DIRECT
-        candidate_features = df_candidate[[col for col in df_desc.columns if col.startswith("desc_stru_")]].values
+        candidate_features = df_candidate[[col for col in df_desc.columns if col.startswith(COL_DESC_PREFIX)]].values
+        n_candidates = len(candidate_features)
         
         if use_joint_sampling:
             # Combine [Candidate; Training]
@@ -853,7 +855,7 @@ class CollectionWorkflow:
         # Note: We must use the same PCA projection and scaling as all_features_viz
         try:
             self.logger.info("Projecting all data onto PCA space for visualization...")
-            all_desc_features = df_uq_desc[[col for col in df_desc.columns if col.startswith("desc_stru_")]].values
+            all_desc_features = df_uq_desc[[col for col in df_desc.columns if col.startswith(COL_DESC_PREFIX)]].values
             
             # Use the fitted PCA from DIRECT_sampler
             full_pca_features = DIRECT_sampler.pca.transform(all_desc_features)
@@ -1135,4 +1137,4 @@ class CollectionWorkflow:
         self.logger.info(f"Saved {count_sampled_sys} systems to sampled_dpdata")
         self.logger.info(f"Saved {count_other_sys} systems to other_dpdata")
         
-        self.logger.info("DPEVA_TAG: WORKFLOW_FINISHED")
+        self.logger.info(WORKFLOW_FINISHED_TAG)
