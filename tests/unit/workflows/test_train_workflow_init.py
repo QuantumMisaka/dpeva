@@ -21,16 +21,22 @@ def test_training_workflow_init_multi_model(real_config_loader, tmp_path):
         json.dump({"training": {"numb_steps": 100}, "model": {"type_map": ["O", "H"]}}, f)
         
     config = real_config_loader(
-        "test-v2-7/config.json", 
+        "test-v2-7/config.json",
         mock_data_mapping={
             "training_data_path": "sampled_dpdata"
         }
     )
-    
+
     # Manually fix input_json_path which is relative in config
     config["input_json_path"] = str(input_json_path)
     config["work_dir"] = str(tmp_path)
     
+    # Fix missing/renamed fields due to alias removal
+    if "finetune_head_name" in config:
+        config["model_head"] = config.pop("finetune_head_name")
+    if "mode" in config:
+        config["training_mode"] = config.pop("mode")
+
     # Initialize Workflow
     workflow = TrainingWorkflow(config)
     

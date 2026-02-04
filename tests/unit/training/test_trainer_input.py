@@ -56,21 +56,22 @@ def test_prepare_input_from_real_file(real_config_loader, tmp_path, mock_job_man
         "work_dir": str(tmp_path),
         "input_json_path": str(input_template_path.resolve()), # Absolute path
         "num_models": 2,
-        "base_model_path": "model.pt", 
+        "base_model_path": "model.pt",
         "training_data_path": str(tmp_path / "data"),
         "backend": "slurm",
         "seeds": [111, 222]
     }
-    
+
     # Mock data existence
     (tmp_path / "data").mkdir()
-    
+
     trainer = ParallelTrainer(
         base_config_path=config["input_json_path"],
         work_dir=config["work_dir"],
         num_models=config["num_models"],
         backend=config["backend"],
-        training_data_path=config.get("training_data_path")
+        training_data_path=config.get("training_data_path"),
+        dp_backend="pt"
     )
     
     # 3. Test prepare_configs and setup_workdirs
@@ -124,13 +125,14 @@ def test_submit_script_content(tmp_path, mock_job_manager_train):
     
     # Let's create dirs manually or let setup_workdirs do it
     # We need to run setup_workdirs to populate script_paths
-    
+
     trainer = ParallelTrainer(
         base_config_path=config["input_json_path"],
         work_dir=config["work_dir"],
         num_models=config["num_models"],
         backend=config["backend"],
-        slurm_config=config.get("slurm_config")
+        slurm_config=config.get("slurm_config"),
+        dp_backend="pt"
     )
     
     # Prepare

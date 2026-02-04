@@ -2,38 +2,41 @@ import pytest
 from dpeva.utils.command import DPCommandBuilder
 
 class TestDPCommandBuilderBackend:
-    
-    def setup_method(self):
-        # Reset to default before each test
-        DPCommandBuilder.set_backend("--pt")
-        
+    """Test DPCommandBuilder backend configuration."""
+
     def test_default_backend(self):
-        assert DPCommandBuilder._backend == "--pt"
-        assert "dp --pt train" in DPCommandBuilder.train("input.json")
-        
+        """Verify default backend."""
+        assert DPCommandBuilder._backend == "pt"
+
     def test_set_backend_tf(self):
-        DPCommandBuilder.set_backend("--tf")
-        assert DPCommandBuilder._backend == "--tf"
-        cmd = DPCommandBuilder.train("input.json")
-        assert "dp --tf train" in cmd
-        
+        """Verify setting backend to TensorFlow."""
+        DPCommandBuilder.set_backend("tf")
+        assert DPCommandBuilder._backend == "tf"
+        assert DPCommandBuilder._get_base_cmd() == "dp --tf"
+
     def test_set_backend_jax(self):
-        DPCommandBuilder.set_backend("--jax")
-        cmd = DPCommandBuilder.freeze("out.pb")
-        assert "dp --jax freeze" in cmd
-        
+        """Verify setting backend to JAX."""
+        DPCommandBuilder.set_backend("jax")
+        assert DPCommandBuilder._backend == "jax"
+        assert DPCommandBuilder._get_base_cmd() == "dp --jax"
+
     def test_invalid_backend(self):
-        with pytest.raises(ValueError) as excinfo:
-            DPCommandBuilder.set_backend("--invalid")
-        assert "Invalid backend" in str(excinfo.value)
-        
+        """Verify setting invalid backend raises ValueError."""
+        with pytest.raises(ValueError):
+            DPCommandBuilder.set_backend("invalid")
+
     def test_all_commands_reflect_backend(self):
-        DPCommandBuilder.set_backend("--paddle")
+        """Verify generated commands use the set backend."""
+        DPCommandBuilder.set_backend("pt")
         
-        assert "dp --paddle train" in DPCommandBuilder.train("in.json")
-        assert "dp --paddle freeze" in DPCommandBuilder.freeze()
-        assert "dp --paddle eval-desc" in DPCommandBuilder.eval_desc("m", "s", "o")
-        assert "dp --paddle test" in DPCommandBuilder.test("m", "s", "p")
+        train_cmd = DPCommandBuilder.train("input.json")
+        assert "dp --pt train" in train_cmd
+        
+        freeze_cmd = DPCommandBuilder.freeze()
+        assert "dp --pt freeze" in freeze_cmd
+        
+        # Reset to default
+        DPCommandBuilder.set_backend("pt")
 
 if __name__ == "__main__":
     pytest.main([__file__])

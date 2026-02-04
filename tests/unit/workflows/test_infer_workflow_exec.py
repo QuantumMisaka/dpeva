@@ -36,7 +36,7 @@ def test_run_command_generation(tmp_path, mock_job_manager):
         "work_dir": str(tmp_path),
         "data_path": str(data_path),
         "task_name": "test_val",
-        "head": "MyHead",
+        "model_head": "MyHead",
         "submission": {"backend": "slurm"}
     }
     
@@ -55,6 +55,7 @@ def test_run_command_generation(tmp_path, mock_job_manager):
     assert str(data_path) in job_config.command
     assert str(tmp_path / "0" / "model.ckpt.pt") in job_config.command
     assert "--head MyHead" in job_config.command
+    
     assert "-d results" in job_config.command
 
 def test_no_models_found(tmp_path, caplog):

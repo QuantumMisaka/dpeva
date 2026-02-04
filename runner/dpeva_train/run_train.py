@@ -11,16 +11,11 @@ logger = logging.getLogger("dpeva.runner.train")
 # Try importing dpeva
 try:
     from dpeva.workflows.train import TrainingWorkflow
+    from dpeva.utils.config import resolve_config_paths
 except ImportError:
     logger.error("The 'dpeva' package is not installed in the current Python environment.")
     logger.error("Please install it using: pip install -e .")
     sys.exit(1)
-
-def resolve_path(path, base_dir):
-    """Resolves a path relative to a base directory."""
-    if not path or not isinstance(path, str):
-        return path
-    return os.path.abspath(os.path.join(base_dir, path))
 
 def main():
     parser = argparse.ArgumentParser(description="Run DPEVA Training Workflow from Config")
@@ -36,13 +31,8 @@ def main():
         with open(config_path, "r") as f:
             config = json.load(f)
             
-        # Resolve relative paths relative to the config file location
-        config_dir = os.path.dirname(os.path.abspath(config_path))
-        
-        # Resolve paths in config
-        for key in ["work_dir", "input_json_path", "base_model_path", "training_data_path"]:
-            if key in config:
-                config[key] = resolve_path(config[key], config_dir)
+        # Resolve paths using utility
+        config = resolve_config_paths(config, config_path)
             
     except json.JSONDecodeError as e:
         logger.error(f"Failed to parse JSON config: {e}")

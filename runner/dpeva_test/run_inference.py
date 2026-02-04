@@ -5,6 +5,7 @@ import sys
 
 try:
     from dpeva.workflows.infer import InferenceWorkflow
+    from dpeva.utils.config import resolve_config_paths
 except ImportError:
     print("Error: The 'dpeva' package is not installed in the current Python environment.")
     print("Please install it using: pip install -e .")
@@ -24,22 +25,8 @@ def main():
         with open(config_path, "r") as f:
             config = json.load(f)
             
-        # Resolve relative paths relative to the config file location
-        config_dir = os.path.dirname(os.path.abspath(config_path))
-        
-        def resolve_path(path):
-            if not path:
-                return path
-            # If path is absolute, join(base, path) returns path
-            # If path is relative, join(base, path) returns base/path
-            return os.path.abspath(os.path.join(config_dir, path))
-
-        # Resolve paths in config
-        if "data_path" in config:
-            config["data_path"] = resolve_path(config["data_path"])
-            
-        if "output_basedir" in config:
-            config["output_basedir"] = resolve_path(config["output_basedir"])
+        # Resolve paths using utility
+        config = resolve_config_paths(config, config_path)
             
     except json.JSONDecodeError as e:
         print(f"Error: Failed to parse JSON config: {e}")

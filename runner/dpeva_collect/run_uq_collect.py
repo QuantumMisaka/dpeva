@@ -11,6 +11,7 @@ logger = logging.getLogger("dpeva.runner.collect")
 # Try importing dpeva
 try:
     from dpeva.workflows.collect import CollectionWorkflow
+    from dpeva.utils.config import resolve_config_paths
 except ImportError:
     logger.error("The 'dpeva' package is not installed in the current Python environment.")
     logger.error("Please install it using: pip install -e .")
@@ -32,26 +33,16 @@ def main():
     try:
         config = load_config(args.config)
         logger.info(f"Loaded configuration from {args.config}")
+        
+        # Resolve paths using utility
+        config = resolve_config_paths(config, args.config)
+        
     except json.JSONDecodeError as e:
         logger.error(f"Failed to parse JSON config: {e}")
         sys.exit(1)
     except Exception as e:
         logger.error(f"Unexpected error loading config: {e}")
         sys.exit(1)
-
-    # Resolve relative paths in config based on config file location
-    config_dir = os.path.dirname(os.path.abspath(args.config))
-    
-    # List of keys that are paths and need resolution
-    path_keys = [
-        "project", "desc_dir", "testdata_dir", "training_data_dir", "training_desc_dir", "root_savedir"
-    ]
-    
-    for key in path_keys:
-        if key in config and isinstance(config[key], str):
-             # If path is not absolute, make it absolute relative to config file
-            if not os.path.isabs(config[key]):
-                config[key] = os.path.abspath(os.path.join(config_dir, config[key]))
 
     # Initialize and run workflow
     try:

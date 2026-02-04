@@ -69,7 +69,19 @@
 
 ---
 
-## 5. 特征生成工作流 (Feature Workflow)
+## 5. 分析工作流 (Analysis Workflow)
+对应配置类: `AnalysisConfig`
+
+| 参数名 | 类型 | 默认值 | 说明 | 约束/验证 |
+| :--- | :--- | :--- | :--- | :--- |
+| `result_dir` | Path | **必填** | DP 测试结果所在的目录。 | 必须存在。 |
+| `output_dir` | Path | `"analysis"` | 分析结果输出目录。 | - |
+| `type_map` | list[str] | **必填** | 原子类型映射列表 (如 `["Fe", "C"]`)。 | - |
+| `ref_energies` | dict[str, float] | `{}` | 元素参考能量 (用于结合能计算)。 | 键为元素符号，值为能量。 |
+
+---
+
+## 6. 特征生成工作流 (Feature Workflow)
 对应配置类: `FeatureConfig`
 
 | 参数名 | 类型 | 默认值 | 说明 | 约束/验证 |
@@ -83,10 +95,10 @@
 
 ---
 
-## 6. 采集工作流 (Collection Workflow)
+## 7. 采集工作流 (Collection Workflow)
 对应配置类: `CollectionConfig`
 
-### 6.1 基础路径与项目信息
+### 7.1 基础路径与项目信息
 | 参数名 | 类型 | 默认值 | 说明 | 约束/验证 |
 | :--- | :--- | :--- | :--- | :--- |
 | `project` | string | `"./"` (当前目录) | 项目名称/标识符。 | - |
@@ -96,7 +108,7 @@
 | `training_desc_dir` | Path | `None` | (可选) 训练数据描述符目录。 | - |
 | `root_savedir` | Path | `"dpeva_uq_post"` | 结果保存的根目录。 | - |
 
-### 6.2 UQ (不确定性量化) 参数
+### 7.2 UQ (不确定性量化) 参数
 | 参数名 | 类型 | 默认值 | 说明 | 约束/验证 |
 | :--- | :--- | :--- | :--- | :--- |
 | `uq_select_scheme` | string | `"tangent_lo"` | UQ 选择策略/方案。 | 枚举: `["tangent_lo", "strict", "circle_lo", "crossline_lo", "loose"]` |
@@ -114,7 +126,7 @@
 | `uq_rnd_rescaled_trust_lo` | float | `None` | RND (Random Network Distillation) 信任区域下界。 | Manual 模式下必填。 |
 | `uq_rnd_rescaled_trust_hi` | float | `None` | RND 信任区域上界。 | 若未填，由 `lo + width` 自动计算。 |
 
-### 6.3 采样与测试参数
+### 7.3 采样与测试参数
 | 参数名 | 类型 | 默认值 | 说明 | 约束/验证 |
 | :--- | :--- | :--- | :--- | :--- |
 | `num_selection` | int | `100` | 每一轮采集的样本数量。 | `> 0` |

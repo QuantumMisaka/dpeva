@@ -20,7 +20,7 @@ class TestDescriptorGenerator:
     
     def test_init_invalid_mode(self):
         with pytest.raises(ValueError, match="Unknown mode"):
-            DescriptorGenerator(model_path="model.pt", mode="invalid")
+            DescriptorGenerator(model_path="model.pt", mode="invalid", dp_backend="pt")
 
     def test_cli_generation_command_construction(self, mock_job_manager, tmp_path):
         """Verify CLI command construction and job submission."""
@@ -28,14 +28,15 @@ class TestDescriptorGenerator:
         model_path = tmp_path / "model.pt"
         data_path = tmp_path / "data"
         output_dir = tmp_path / "output"
-        
+    
         # Initialize generator
         generator = DescriptorGenerator(
             model_path=str(model_path),
             head="MyHead",
             mode="cli",
             backend="slurm",
-            slurm_config={"partition": "gpu"}
+            slurm_config={"partition": "gpu"},
+            dp_backend="pt" # Set explicit valid backend
         )
         
         # Run generation
@@ -70,21 +71,22 @@ class TestDescriptorGenerator:
         #   group1/
         #     sys2/ (leaf)
         #       type.raw
-        
+    
         data_root = tmp_path / "data"
         (data_root / "sys1").mkdir(parents=True)
         (data_root / "sys1" / "type.raw").touch()
-        
+    
         (data_root / "group1" / "sys2").mkdir(parents=True)
         (data_root / "group1" / "sys2" / "type.raw").touch()
-        
+    
         output_root = tmp_path / "output"
-        
+    
         # Initialize generator (Python mode)
         generator = DescriptorGenerator(
             model_path="model.pt",
             mode="python",
-            backend="local"
+            backend="local",
+            dp_backend="pt"
         )
         
         # Mock actual computation to avoid DP dependency and file writing
@@ -130,7 +132,8 @@ class TestDescriptorGenerator:
         generator = DescriptorGenerator(
             model_path="model.pt",
             mode="python",
-            backend="slurm"
+            backend="slurm",
+            dp_backend="pt"
         )
         
         output_dir = tmp_path / "output"
@@ -160,7 +163,8 @@ class TestDescriptorGenerator:
         generator = DescriptorGenerator(
             model_path="model.pt",
             mode="python",
-            backend="local"
+            backend="local",
+            dp_backend="pt"
         )
         generator.model = MagicMock()
         

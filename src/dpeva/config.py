@@ -136,6 +136,15 @@ class FeatureConfig(BaseWorkflowConfig):
             self.savedir = Path(f"desc-{model_name}-{data_name}")
         return self
 
+class AnalysisConfig(BaseModel):
+    """Configuration for Analysis Workflow (Post-processing)."""
+    model_config = ConfigDict(extra='ignore', populate_by_name=True)
+    
+    result_dir: Path = Field(..., description="Path to DP test results directory.")
+    output_dir: Path = Field(Path("analysis"), description="Output directory for analysis results.")
+    type_map: List[str] = Field(..., description="Atom type map (e.g. ['Fe', 'C']).")
+    ref_energies: Dict[str, float] = Field(default_factory=dict, description="Reference energies per element for cohesive energy calculation.")
+
 class InferenceConfig(BaseWorkflowConfig):
     """Configuration for Inference Workflow."""
     data_path: Path = Field(..., description="Path to test dataset.")

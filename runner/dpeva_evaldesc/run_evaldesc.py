@@ -6,6 +6,7 @@ import sys
 # Try importing dpeva
 try:
     from dpeva.workflows.feature import FeatureWorkflow
+    from dpeva.utils.config import resolve_config_paths
 except ImportError:
     print("Error: The 'dpeva' package is not installed in the current Python environment.")
     print("Please install it using: pip install -e .")
@@ -25,34 +26,15 @@ def main():
         with open(config_path, "r") as f:
             config = json.load(f)
             
-        # Resolve relative paths relative to the config file location
-        config_dir = os.path.dirname(os.path.abspath(config_path))
-        
-        def resolve_path(path):
-            if not path or not isinstance(path, str):
-                return path
-            return os.path.abspath(os.path.join(config_dir, path))
-
-        # Resolve paths in config
-        if "data_path" in config:
-            config["data_path"] = resolve_path(config["data_path"])
+        # Resolve paths using utility
+        config = resolve_config_paths(config, config_path)
             
-        # Support both model_path and legacy modelpath
-        if "model_path" in config:
-            config["model_path"] = resolve_path(config["model_path"])
-            
-        if "savedir" in config:
-            config["savedir"] = resolve_path(config["savedir"])
-            
-        # Handle env_setup in slurm_config: support list of strings -> join to string
-        # Actually logic is handled in Workflow class now, but good to be consistent
-        pass
-
     except json.JSONDecodeError as e:
         print(f"Error: Failed to parse JSON config: {e}")
         return
 
-    print("🚀 Starting DPEVA Feature Generation Workflow...")
+    mode = config.get("mode", "cli")
+    print(f"🚀 Starting DPEVA Feature Generation Workflow (Mode: {mode})...")
     print(f"📄 Configuration: {config_path}")
     
     workflow = FeatureWorkflow(config)

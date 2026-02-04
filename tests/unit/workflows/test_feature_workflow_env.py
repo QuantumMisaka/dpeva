@@ -16,9 +16,15 @@ def test_feature_workflow_cli_env(real_config_loader, tmp_path, mock_job_manager
             "savedir": "savedir"
         }
     )
-    
+
     # Polyfill data_path which FeatureWorkflow expects
     config["data_path"] = config["datadir"]
+    
+    # Fix aliases
+    if "modelpath" in config:
+        config["model_path"] = config.pop("modelpath")
+    if "head" in config:
+        config["model_head"] = config.pop("head")
     
     # Mock data dir and model
     # (tmp_path / "data").mkdir(exist_ok=True) # Handled by loader
@@ -61,8 +67,8 @@ def test_feature_workflow_python_mode_data_format(tmp_path):
     """Test Python mode passes data_format correctly."""
     config_dict = {
         "data_path": str(tmp_path / "data"),
-        "modelpath": str(tmp_path / "model.pt"),
-        "head": "OC20M",
+        "model_path": str(tmp_path / "model.pt"),
+        "model_head": "OC20M",
         "mode": "python",
         "savedir": str(tmp_path / "savedir")
     }
