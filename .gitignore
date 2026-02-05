@@ -5,3 +5,4 @@ examples/uncertain/models
 develop
 .vscode
 test
+.pytest_cache

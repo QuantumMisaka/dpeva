@@ -1,7 +1,7 @@
 # DP-EVA 项目开发文档
 
-* **版本**: 2.3.0
-* **生成日期**: 2026-01-31
+* **版本**: 2.7.0
+* **生成日期**: 2026-02-05
 * **作者**: Quantum Misaka with Trae SOLO
 
 ---
@@ -28,12 +28,13 @@ DP-EVA (Deep Potential EVolution Accelerator) 是一个面向 DPA3 (Deep Potenti
 
 ```text
 dpeva/
-├── runner/                 # [用户接口] 执行入口脚本 (CLI/Scripts)
-│   ├── dpeva_train/        # 训练任务入口
-│   ├── dpeva_test/         # 推理任务入口
-│   ├── dpeva_collect/      # 采集任务入口
+├── examples/recipes/       # [API范例] Python 调用示例 (Recipes)
+│   ├── training/           # 训练脚本范例
+│   ├── inference/          # 推理脚本范例
+│   ├── collection/         # 采集脚本范例
 │   └── ...
 ├── src/dpeva/
+│   ├── cli.py              # [用户接口] 统一命令行入口 (dpeva)
 │   ├── workflows/          # [核心] 业务流程编排层
 │   │   ├── train.py        # 训练工作流 (TrainingWorkflow)
 │   │   ├── infer.py        # 推理与分析工作流 (InferenceWorkflow)
@@ -107,6 +108,9 @@ graph TD
 *   **DIRECT 采样 (`DIRECTSampler`)**: 
     *   **联合采样 (Joint Sampling)**: 支持同时加载训练集和候选集，在联合特征空间中进行覆盖度最大化采样，避免新样本与旧样本重复。
     *   **基于聚类**: 使用 BIRCH 聚类算法在 PCA 降维后的空间中寻找最具代表性的样本点。
+*   **2-DIRECT 采样 (`TwoStepDIRECTSampler`)**:
+    *   **两步策略**: 先基于结构描述符进行粗粒度聚类 (Step 1)，再对每个结构簇内的原子环境进行细粒度聚类 (Step 2)。
+    *   **原子级筛选**: 在 Step 2 中支持基于原子数量 (`smallest`) 等策略选择最具代表性的结构，有效降低标注成本。
 
 ### 3.4 Feature 模块 (`dpeva.feature`)
 负责生成原子结构的描述符。
@@ -125,67 +129,75 @@ graph TD
 
 ---
 
-## 4. 接口使用指南 (Runner Interface)
+## 4. 接口使用指南 (Interface Guide)
 
-所有用户入口脚本均位于 `runner/` 目录下，按功能分类。
+本项目提供两种使用方式：**统一命令行 (CLI)**（推荐）和 **Python API**（高级定制）。
 
-### 4.1 训练 (Train)
-**路径**: `runner/dpeva_train/run_train.py`
-**配置**: `config.json`
+### 4.1 统一命令行 (CLI)
+自 v2.6.0 起，项目引入统一的 `dpeva` 命令，支持子命令模式。
 
-```json
-{
-    "work_dir": "./training_task",
-    "num_models": 4,
-    "mode": "init",  // 或 "cont"
-    "base_model_path": "/path/to/pretrained.pt",
-    "input_json_path": "input.json",
-    "training_data_path": "/path/to/data",
-    "backend": "local",
-    "omp_threads": 2
-}
+**安装**:
+```bash
+pip install -e .
+# 验证安装
+dpeva --help
 ```
 
-### 4.2 推理与分析 (Test)
-**路径**: `runner/dpeva_test/run_inference.py`
-**配置**: `config.json`
-
-```json
-{
-    "output_basedir": "./training_task",
-    "data_path": "/path/to/test_data", // [v2.3.0 更新] 统一命名为 data_path
-    "backend": "slurm",
-    "submission": {
-        "slurm_config": {
-            "partition": "gpu",
-            "gpus_per_node": 1
-        }
-    }
-}
+**通用用法**:
+```bash
+dpeva <subcommand> <config_path>
 ```
 
-### 4.3 描述符生成 (EvalDesc)
-**路径**: `runner/dpeva_evaldesc/run_evaldesc.py`
-**配置**: `config.json`
-
-```json
-{
-    "data_path": "./data_pool", // [v2.3.0 更新] 统一命名为 data_path
-    "modelpath": "/path/to/model.pt",
-    "savedir": "./descriptors",
-    "mode": "cli",
-    "submission": {
-        "backend": "slurm",
-        "slurm_config": { "partition": "cpu" }
-    }
-}
+#### 4.1.1 训练 (Train)
+```bash
+dpeva train config_train.json
 ```
 
-### 4.4 数据采集 (Collect)
-**路径**: `runner/dpeva_collect/run_uq_collect.py`
-**配置**: `config.json`
+#### 4.1.2 推理与分析 (Infer)
+```bash
+dpeva infer config_test.json
+```
 
-**联合采样与 Auto-UQ 配置示例**:
+#### 4.1.3 数据采集 (Collect)
+```bash
+dpeva collect config_collect.json
+```
+
+#### 4.1.4 特征生成 (Feature)
+```bash
+dpeva feature config_feature.json
+```
+
+#### 4.1.5 分析 (Analysis)
+```bash
+dpeva analysis config_analysis.json
+```
+
+### 4.2 Python API (Recipes)
+对于需要动态生成配置或集成到复杂 Python 流程中的场景，可以直接调用 `dpeva.workflows` 中的 Workflow 类。
+示例脚本位于 `examples/recipes/` 目录下。
+
+**示例 (Training)**:
+```python
+from dpeva.workflows.train import TrainingWorkflow
+from dpeva.utils.config import resolve_config_paths
+import json
+
+# 1. 加载配置
+with open("config.json") as f:
+    config = json.load(f)
+config = resolve_config_paths(config, "config.json")
+
+# 2. 初始化并运行
+workflow = TrainingWorkflow(config)
+workflow.run()
+```
+
+### 4.3 配置参数说明
+以下各节展示标准 JSON 配置文件结构。
+
+#### 4.3.1 训练配置 (Train Config)
+**参考文件**: `examples/recipes/training/config_train.json`
 ```json
 {
     "project": "./training_task",
@@ -197,7 +209,7 @@ graph TD
     "training_data_dir": "./training_data",        // [可选] 训练集结构路径
     
     "uq_select_scheme": "tangent_lo",
-    "num_selection": 1000,        // [注意] 联合模式下表示覆盖集总数 (Target Cluster Count)
+    "direct_n_clusters": 1000,        // [注意] 联合模式下表示覆盖集总数 (Target Cluster Count)
     
     "root_savedir": "iteration_1_selected",
     
@@ -236,10 +248,21 @@ graph TD
 ```
 *   **机制**: 如果 `Auto-Calculated Value < lo_min`，则取 `lo_min`；如果 `> lo_max`，则取 `lo_max`。系统会记录 Warning 日志提示发生了 Clamping。
 
-#### 4.4.3 `num_selection` 参数说明
+#### 4.4.3 采样参数说明 (Sampling)
+自 v2.7.0 起，项目支持两种采样策略，并通过显式参数控制。
 
-*   **普通模式**: 表示从候选集中新采样的样本数量。
-*   **联合模式 (Joint Mode)**: 表示在联合空间（候选集+训练集）中期望达到的**总覆盖簇数 (Target Cluster Count)**。实际导出的新样本数通常小于此值（因为部分簇已被训练集覆盖）。
+*   **`sampler_type`**: 采样策略选择，可选 `"direct"` (默认) 或 `"2-direct"`。
+
+**策略 A: 标准 DIRECT (`"direct"`)**
+*   **`direct_n_clusters`**: (推荐) 显式指定期望的聚类/采样数量。
+*   **动态模式**: 若上述参数未设置，系统将根据 `direct_thr_init` 阈值自动决定聚类数量（Advanced Mode）。
+
+**策略 B: 2-DIRECT (`"2-direct"`)**
+专为降低标注成本设计，包含两步聚类：
+*   **`step1_n_clusters`**: 第一步（结构级）聚类数。若为 `None` (默认)，基于 `step1_threshold` 动态聚类。
+*   **`step2_n_clusters`**: 第二步（原子级）聚类数。若为 `None` (默认)，基于 `step2_threshold` 动态聚类。
+*   **`step2_k`**: 每个原子簇选取的结构数。
+*   **`step2_selection`**: 筛选标准，默认为 `"smallest"` (原子数最少)，亦支持 `"center"`, `"random"`。
 
 ---
 
@@ -285,8 +308,8 @@ graph TD
 **Q: 单数据池模式下提示 "Found descriptor via basename fallback" 是什么意思？**
 A: 旧版本会产生此 Warning，**新版本 (v2.2.0)** 已将其优化为 Info 级别的兼容性提示。这表示系统自动通过 `System.npy` 文件名匹配到了嵌套在 `Dataset/System` 路径下的结构数据，属于正常行为。
 
-**Q: 为什么联合采样导出的样本数少于 `num_selection`？**
-A: 这是预期行为。在联合模式下，`num_selection` 定义的是特征空间的总覆盖目标。如果某些区域已经被现有训练集覆盖，DIRECT 算法就不会再重复采样，从而节省标注成本。
+**Q: 为什么联合采样导出的样本数少于 `direct_n_clusters`？**
+A: 这是预期行为。在联合模式下，`direct_n_clusters` 定义的是特征空间的总覆盖目标。如果某些区域已经被现有训练集覆盖，DIRECT 算法就不会再重复采样，从而节省标注成本。
 
 ### 5.4 工作流监控标准 (Workflow Monitoring)
 
@@ -328,3 +351,16 @@ DPEVA_TAG: WORKFLOW_FINISHED
     *   **[修复]** 解决了 Python Native 模式下计算 Mixed 格式描述符与 CLI 模式结果不一致的问题。通过 `load_systems` 将复杂的 MultiSystems 结构扁平化为独立的 System 列表，确保了与 CLI 模式一致的数据处理粒度。
     *   **[验证]** 在 Slurm 环境下对 CLI 模式和 Python 模式进行了严格的一致性验证，在 GPU 计算浮点误差范围内（Max Diff < 8e-4, Mean Diff ~ 1e-7），两者结果完全一致。
     *   **[配置]** `FeatureConfig` 移除了 `format` (或 `data_format`) 字段，系统现已全面统一为自动检测数据格式（`auto` 模式），极大简化了用户配置。旧配置文件中的该字段将被静默忽略，不影响兼容性。
+*   **v2.6.0** (2026-02-04):
+    *   **[架构]** 全面重构用户接口层，引入统一的 `dpeva` 命令行工具 (CLI)。
+    *   **[重构]** 移除旧版 `runner/` 目录，将其重组为 `examples/recipes/`，提供纯 Python API 调用范例，实现核心逻辑与调用脚本的彻底解耦。
+    *   **[功能]** 新增 `dpeva.cli` 模块，支持 `train`, `infer`, `collect`, `feature`, `analysis` 子命令。
+    *   **[机制]** 优化 `CollectionWorkflow` 的自提交机制，现在通过 `python -m dpeva.cli collect` 触发 Slurm 作业，消除了对外部脚本路径的依赖。
+*   **v2.7.0** (2026-02-05):
+    *   **[功能]** 集成 **2-DIRECT** 采样策略，支持基于原子环境的两步聚类筛选，大幅降低标注成本。
+    *   **[重构]** 彻底重构 DIRECT 采样参数体系：
+        *   引入 `direct_n_clusters` 作为原生控制参数。
+        *   移除 `num_selection` 参数。
+        *   支持基于阈值的动态聚类模式（Advanced Mode）。
+    *   **[配置]** 更新所有 Example Recipe 以适配新的参数标准。
+

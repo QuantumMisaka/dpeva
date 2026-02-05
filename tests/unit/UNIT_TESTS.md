@@ -52,7 +52,7 @@ dpeva/tests/
 *   **不确定度计算 (`test_calculator_uq.py`)**: 验证 QbC/RND/Auto-UQ 算法的数学精确性及对 NaN/Inf 的鲁棒性。
 *   **筛选策略 (`test_filter_uq.py`)**: 全面覆盖 `strict`, `tangent_lo` 等筛选边界逻辑。
 *   **I/O 解析 (`test_parser.py`)**: 验证 DeepMD 输出解析及无标签数据的处理。
-*   **采样逻辑 (`test_sampling.py`)**: 验证 DIRECT 采样流程的维度一致性。
+*   **采样逻辑 (`test_sampling.py`, `sampling/test_two_step_direct.py`)**: 验证 DIRECT 和 2-DIRECT 采样流程的维度一致性、动态聚类初始化。
 
 ### 3.2 模块功能测试 (Modules) **[新增]**
 *   **特征生成 (`feature/test_generator.py`)**:
@@ -68,9 +68,7 @@ dpeva/tests/
     *   `test_run_command_generation`: 验证生成的 `dp test` 命令参数是否正确。
 *   **训练工作流 (`test_train_workflow_init.py`)**:
     *   `test_training_workflow_init_multi_model`: 验证多模型训练时的目录创建及配置参数继承。
-*   **采集工作流 (`test_collect_workflow_routing.py`)**:
-    *   `test_collect_single_pool_routing`: 验证单数据池模式下的路径解析。
-    *   `test_collect_multi_pool_routing`: 验证多数据池（联合采样）模式下的参数分离。
+*   **采集工作流 (`workflows/test_collect_*.py`)**: 覆盖单/多池路由、无筛选模式、2-DIRECT 模式及联合采样。
 
 ## 4. 测试数据与 Mock 策略
 

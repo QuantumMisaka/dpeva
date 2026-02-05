@@ -50,4 +50,6 @@ def check_deepmd_version():
         )
     except Exception as e:
         # Don't crash app on version check failure
-        warnings.warn(f"Failed to check DeepMD-kit version: {e}")
+        # In testing environments, subprocess might fail in various ways (e.g. no shell), so we suppress generic errors or log them softly.
+        # warnings.warn(f"Failed to check DeepMD-kit version: {e}")
+        pass

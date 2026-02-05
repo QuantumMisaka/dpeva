@@ -28,9 +28,14 @@ from dpeva.constants import (
     DEFAULT_UQ_SCHEME,
     DEFAULT_UQ_TRUST_RATIO,
     DEFAULT_UQ_TRUST_WIDTH,
-    DEFAULT_NUM_SELECTION,
     DEFAULT_DIRECT_K,
     DEFAULT_DIRECT_THR_INIT,
+    DEFAULT_STEP1_N_CLUSTERS,
+    DEFAULT_STEP1_THRESHOLD,
+    DEFAULT_STEP2_N_CLUSTERS,
+    DEFAULT_STEP2_THRESHOLD,
+    DEFAULT_STEP2_K,
+    DEFAULT_STEP2_SELECTION,
     FIG_DPI,
 )
 
@@ -186,7 +191,7 @@ class CollectionConfig(BaseWorkflowConfig):
     
     # UQ Parameters
     uq_select_scheme: Literal["tangent_lo", "strict", "circle_lo", "crossline_lo", "loose"] = DEFAULT_UQ_SCHEME
-    uq_trust_mode: Literal["auto", "manual"] = "auto"
+    uq_trust_mode: Literal["auto", "manual", "no_filter"] = "auto"
     uq_trust_ratio: float = Field(DEFAULT_UQ_TRUST_RATIO, ge=0.0, le=1.0)
     uq_trust_width: float = Field(DEFAULT_UQ_TRUST_WIDTH, gt=0.0)
     
@@ -206,9 +211,24 @@ class CollectionConfig(BaseWorkflowConfig):
     uq_auto_bounds: Dict[str, Dict[str, float]] = Field(default_factory=dict)
     
     # Sampling
-    num_selection: int = Field(DEFAULT_NUM_SELECTION, gt=0)
+    sampler_type: Literal["direct", "2-direct"] = "direct"
+    
+    # Standard DIRECT Parameters
+    direct_n_clusters: Optional[int] = Field(None, gt=0, description="Target number of clusters for Standard DIRECT.")
+    
     direct_k: int = Field(DEFAULT_DIRECT_K, ge=1)
     direct_thr_init: float = Field(DEFAULT_DIRECT_THR_INIT, ge=0.0)
+    
+    # 2-DIRECT Parameters
+    step1_n_clusters: Optional[int] = Field(DEFAULT_STEP1_N_CLUSTERS, gt=1, description="Number of clusters for Step 1. If None, dynamic clustering based on threshold.")
+    step1_threshold: float = Field(DEFAULT_STEP1_THRESHOLD, gt=0.0, description="Threshold for Step 1 Birch clustering.")
+    step2_n_clusters: Optional[int] = Field(DEFAULT_STEP2_N_CLUSTERS, gt=1, description="Number of clusters for Step 2. If None, dynamic clustering based on threshold.")
+    step2_threshold: float = Field(DEFAULT_STEP2_THRESHOLD, gt=0.0, description="Threshold for Step 2 Birch clustering.")
+    step2_k: int = Field(DEFAULT_STEP2_K, ge=1, description="Number of samples per atomic cluster in Step 2.")
+    step2_selection: Literal["smallest", "center", "random"] = Field(
+        DEFAULT_STEP2_SELECTION, 
+        description="Selection criteria for Step 2. 'smallest': fewest atoms; 'center': closest to cluster centroid; 'random': random sampling."
+    )
     
     # Config File Path (for self-submission)
     config_path: Optional[Path] = None

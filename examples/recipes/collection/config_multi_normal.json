@@ -13,7 +13,16 @@
     "uq_trust_ratio": 0.50,
     "uq_trust_width": 0.15,
     
-    "num_selection": 1000,
+    "direct_n_clusters": 1000,
     "direct_k": 1,
-    "direct_thr_init": 0.1
+    "direct_thr_init": 0.1,
+
+    "backend": "slurm",
+    "slurm_config": {
+        "partition": "CPU-MISC",
+        "qos": "rush-cpu",
+        "ntasks": 1,
+        "cpus_per_task": 4,
+        "job_name": "DPEVA-collect"
+    }
 }

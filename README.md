@@ -48,10 +48,10 @@ Create a `config.json` for the collection task:
 ```
 
 ### 2. Run Collection
-Execute the runner script:
+Execute the CLI command:
 
 ```bash
-python runner/dpeva_collect/run_uq_collect.py --config config.json
+dpeva collect config.json
 ```
 
 ### 3. Check Results
@@ -61,12 +61,26 @@ Selected structures will be exported to `my_project/dpeva_uq_post/dpdata`.
 
 ### Training
 ```bash
-python runner/dpeva_train/run_train.py config_train.json
+dpeva train config_train.json
 ```
 
 ### Inference & Analysis
 ```bash
-python runner/dpeva_test/run_inference.py config_test.json
+dpeva infer config_test.json
+```
+
+## 🧪 Advanced Usage (Python API)
+
+For complex workflows requiring dynamic configuration or custom logic, you can use the Python API directly.
+See `examples/recipes/` for template scripts.
+
+Example:
+```python
+from dpeva.workflows.train import TrainingWorkflow
+# Load or generate config dict
+config = {...} 
+workflow = TrainingWorkflow(config)
+workflow.run()
 ```
 
 ## 🤝 Contribution

@@ -54,6 +54,9 @@ docs = [
 [project.urls]
 Homepage = "https://github.com/QuantumMisaka/dpeva"
 
+[project.scripts]
+dpeva = "dpeva.cli:main"
+
 [tool.setuptools.packages.find]
 where = ["src"]
 

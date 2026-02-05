@@ -126,12 +126,31 @@
 | `uq_rnd_rescaled_trust_lo` | float | `None` | RND (Random Network Distillation) 信任区域下界。 | Manual 模式下必填。 |
 | `uq_rnd_rescaled_trust_hi` | float | `None` | RND 信任区域上界。 | 若未填，由 `lo + width` 自动计算。 |
 
-### 7.3 采样与测试参数
+### 7.3 采样参数 (Sampling Configuration)
 | 参数名 | 类型 | 默认值 | 说明 | 约束/验证 |
 | :--- | :--- | :--- | :--- | :--- |
-| `num_selection` | int | `100` | 每一轮采集的样本数量。 | `> 0` |
-| `direct_k` | int | `1` | DIRECT 算法的 K 值参数。 | `>= 1` |
-| `direct_thr_init` | float | `0.5` | DIRECT 算法的初始阈值。 | `>= 0.0` |
+| `sampler_type` | string | `"direct"` | 采样策略。 | 枚举: `["direct", "2-direct"]` |
+
+#### 7.3.1 标准 DIRECT 参数 (`sampler_type="direct"`)
+| 参数名 | 类型 | 默认值 | 说明 | 约束/验证 |
+| :--- | :--- | :--- | :--- | :--- |
+| `direct_n_clusters` | int | `None` | (推荐) 目标聚类数量。若不设置则根据阈值动态决定。 | `> 0` |
+| `direct_k` | int | `1` | 每个簇抽取的样本数。 | `>= 1` |
+| `direct_thr_init` | float | `0.5` | 初始聚类阈值。用于动态模式或辅助聚类。 | `>= 0.0` |
+
+#### 7.3.2 2-DIRECT 参数 (`sampler_type="2-direct"`)
+| 参数名 | 类型 | 默认值 | 说明 | 约束/验证 |
+| :--- | :--- | :--- | :--- | :--- |
+| `step1_n_clusters` | int | `None` | 第一步（结构级）聚类数。若为 `None`，基于 `step1_threshold` 动态聚类。 | `> 1` |
+| `step1_threshold` | float | `0.5` | 第一步 BIRCH 阈值。 | `> 0.0` |
+| `step2_n_clusters` | int | `None` | 第二步（原子级）聚类数。若为 `None`，基于 `step2_threshold` 动态聚类。 | `> 1` |
+| `step2_threshold` | float | `0.1` | 第二步 BIRCH 阈值。 | `> 0.0` |
+| `step2_k` | int | `5` | 每个原子簇选取的结构数。 | `>= 1` |
+| `step2_selection` | string | `"smallest"` | 第二步筛选策略。 | 枚举: `["smallest", "center", "random"]` |
+
+### 7.4 其他参数
+| 参数名 | 类型 | 默认值 | 说明 | 约束/验证 |
+| :--- | :--- | :--- | :--- | :--- |
 | `testing_dir` | string | `"test_results"` | 测试集子目录名称。 | - |
 | `results_prefix` | string | `"results"` | 测试集结果文件名前缀。 | - |
 | `fig_dpi` | int | `300` | 可视化图片的 DPI 分辨率。 | - |

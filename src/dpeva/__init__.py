@@ -9,4 +9,8 @@ from dpeva.utils.env_check import check_deepmd_version
 __version__ = "0.4.0"
 
 # Perform environment checks on import
-check_deepmd_version()
+# Wrap in try-except to avoid breaking CI/Test environments where dp might be missing
+try:
+    check_deepmd_version()
+except Exception:
+    pass

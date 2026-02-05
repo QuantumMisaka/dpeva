@@ -44,9 +44,16 @@ FIG_DPI: Final[int] = 300
 DEFAULT_UQ_SCHEME: Final[str] = "tangent_lo"
 DEFAULT_UQ_TRUST_RATIO: Final[float] = 0.33
 DEFAULT_UQ_TRUST_WIDTH: Final[float] = 0.25
-DEFAULT_NUM_SELECTION: Final[int] = 100
 DEFAULT_DIRECT_K: Final[int] = 1
 DEFAULT_DIRECT_THR_INIT: Final[float] = 0.5
+
+# 2-DIRECT Defaults
+DEFAULT_STEP1_N_CLUSTERS: Final[Optional[int]] = None
+DEFAULT_STEP1_THRESHOLD: Final[float] = 0.5
+DEFAULT_STEP2_N_CLUSTERS: Final[Optional[int]] = None
+DEFAULT_STEP2_THRESHOLD: Final[float] = 0.1
+DEFAULT_STEP2_K: Final[int] = 5
+DEFAULT_STEP2_SELECTION: Final[str] = "smallest"
 
 # Workflow Tags
 WORKFLOW_FINISHED_TAG: Final[str] = "DPEVA_TAG: WORKFLOW_FINISHED"

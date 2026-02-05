@@ -110,11 +110,16 @@ def mock_dptest_output_dir(tmp_path):
         if src_file.exists():
             with open(src_file, "r") as f_in, open(dest_dir / fname, "w") as f_out:
                 # Header + 200 lines to ensure enough data
+                # Optimized loop
+                lines = []
                 try:
-                    head = [next(f_in) for _ in range(201)]
-                    f_out.writelines(head)
-                except StopIteration:
-                    pass # End of file
+                    for _ in range(201):
+                        line = f_in.readline()
+                        if not line: break
+                        lines.append(line)
+                except Exception:
+                    pass
+                f_out.writelines(lines)
                 
     return dest_dir
 

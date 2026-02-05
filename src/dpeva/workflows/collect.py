@@ -14,11 +14,20 @@ from dpeva.io.dataset import load_systems
 from dpeva.config import CollectionConfig
 from dpeva.constants import WORKFLOW_FINISHED_TAG, COL_DESC_PREFIX, COL_UQ_QBC, COL_UQ_RND
 from dpeva.sampling.direct import BirchClustering, DIRECTSampler, SelectKFromClusters
+from dpeva.sampling.two_step_direct import TwoStepDIRECTSampler
 from dpeva.uncertain.calculator import UQCalculator
 from dpeva.uncertain.filter import UQFilter
 from dpeva.uncertain.visualization import UQVisualizer
 from dpeva.submission.manager import JobManager
 from dpeva.submission.templates import JobConfig
+
+# Helpers
+def get_sys_name(dataname):
+    return dataname.rsplit("-", 1)[0]
+
+def get_pool_name(sys_name):
+    d = os.path.dirname(sys_name)
+    return d if d else "root"
 
 class CollectionWorkflow:
     """
@@ -113,6 +122,8 @@ class CollectionWorkflow:
             self._validate_manual_params(self.uq_rnd_params, "uq_rnd")
         elif self.uq_trust_mode == "auto":
             pass
+        elif self.uq_trust_mode == "no_filter":
+            pass
         
         # Map back to instance variables
         self.uq_qbc_trust_lo = self.uq_qbc_params.get("lo")
@@ -124,7 +135,6 @@ class CollectionWorkflow:
         self.uq_auto_bounds = self.config.uq_auto_bounds
         
         # Sampling Parameters
-        self.num_selection = self.config.num_selection
         self.direct_k = self.config.direct_k
         self.direct_thr_init = self.config.direct_thr_init
 
@@ -381,17 +391,15 @@ class CollectionWorkflow:
         # If config_path is provided (e.g. from run_uq_collect.py), use it.
         if self.config_path:
             config_abs_path = os.path.abspath(self.config_path)
-            # Use sys.argv[0] as the runner script path if it's a python script
-            runner_script = os.path.abspath(sys.argv[0])
             
-            self.logger.info(f"Using Self-Invocation Mode:")
-            self.logger.info(f"  - Runner: {runner_script}")
+            self.logger.info(f"Using Self-Invocation Mode via CLI:")
             self.logger.info(f"  - Config: {config_abs_path}")
             
-            # Construct command to re-run the same script
-            # We add DPEVA_INTERNAL_BACKEND=local to prevent infinite recursion
+            # Construct command to re-run using the standard CLI module
+            # We use 'python -m dpeva.cli collect' to ensure we use the installed package
+            # and avoid depending on sys.argv[0] (which might be a random script)
             python_exe = sys.executable
-            cmd = f"{python_exe} -u {runner_script} --config {config_abs_path}"
+            cmd = f"{python_exe} -m dpeva.cli collect {config_abs_path}"
             
             # Set environment variable for the job
             env_setup = "export DPEVA_INTERNAL_BACKEND=local\n"
@@ -479,21 +487,27 @@ class CollectionWorkflow:
             
         return features_for_direct, use_joint_sampling, n_candidates
 
-    def run(self):
-        """
-        Executes the main collection workflow:
-        1. Load prediction results and calculate UQ.
-        2. Filter data based on UQ thresholds (manual or auto).
-        3. Visualize UQ distributions and filtering results.
-        4. Perform DIRECT sampling on candidate structures.
-        5. Export sampled structures as dpdata.
-        """
-        if self.backend == "slurm":
-            self._submit_to_slurm()
-            return
-
-        self.logger.info(f"Initializing selection in {self.project} ---")
+    def _log_initial_stats(self, desc_datanames):
+        """Logs initial data statistics."""
+        self.logger.info("="*40)
+        self.logger.info("       INITIAL DATA STATISTICS")
+        self.logger.info("="*40)
         
+        # Create a temporary DF for stats
+        df_stats_init = pd.DataFrame({"dataname": desc_datanames})
+        df_stats_init["sys_name"] = df_stats_init["dataname"].apply(get_sys_name)
+        df_stats_init["pool_name"] = df_stats_init["sys_name"].apply(get_pool_name)
+        
+        stats_init = df_stats_init.groupby("pool_name").agg(
+            num_systems=("sys_name", "nunique"),
+            num_frames=("dataname", "count")
+        )
+        self.logger.info(f"\n{stats_init}")
+        self.logger.info("="*40)
+        return stats_init
+
+    def _run_uq_analysis(self, vis):
+        """Executes UQ calculation and visualization."""
         # 1. Load Data & Calculate UQ
         self.logger.info("Loading the test results")
         preds = []
@@ -599,8 +613,6 @@ class CollectionWorkflow:
         self.logger.info(f"UQ Statistics:\n{stats_desc}")
 
         # 2. Visualization (UQ Distributions)
-        vis = UQVisualizer(self.view_savedir, dpi=self.config.fig_dpi)
-        
         self.logger.info("Plotting and saving the figures of UQ-force")
         vis.plot_uq_distribution(uq_results[COL_UQ_QBC], uq_results[COL_UQ_RND])
         
@@ -639,6 +651,10 @@ class CollectionWorkflow:
                                   self.uq_qbc_trust_lo, self.uq_qbc_trust_hi, 
                                   self.uq_rnd_trust_lo, self.uq_rnd_trust_hi)
 
+        return uq_results, uq_rnd_rescaled, preds, has_ground_truth
+
+    def _run_uq_filtering(self, uq_results, uq_rnd_rescaled, preds, has_ground_truth, vis):
+        """Executes filtering based on UQ results."""
         # 3. Data Preparation & Filtering
         self.logger.info("Dealing with Selection in Target dpdata")
         datanames_ind_list = [f"{i[0]}-{i[1]}" for i in preds[0].dataname_list]
@@ -681,32 +697,8 @@ class CollectionWorkflow:
         if len(desc_stru) == 0:
             raise ValueError("No candidate descriptors loaded!")
         
-        # --- Enhanced Logging: Initial Data Stats ---
-        self.logger.info("="*40)
-        self.logger.info("       INITIAL DATA STATISTICS")
-        self.logger.info("="*40)
-        
-        # Helper to parse sys_name from dataname (assumes format "sysname-index")
-        def get_sys_name(dataname):
-            return dataname.rsplit("-", 1)[0]
-        
-        # Helper to get pool name (dirname of sys_name)
-        def get_pool_name(sys_name):
-            d = os.path.dirname(sys_name)
-            return d if d else "root"
-
-        # Create a temporary DF for stats
-        df_stats_init = pd.DataFrame({"dataname": desc_datanames})
-        df_stats_init["sys_name"] = df_stats_init["dataname"].apply(get_sys_name)
-        df_stats_init["pool_name"] = df_stats_init["sys_name"].apply(get_pool_name)
-        
-        stats_init = df_stats_init.groupby("pool_name").agg(
-            num_systems=("sys_name", "nunique"),
-            num_frames=("dataname", "count")
-        )
-        self.logger.info(f"\n{stats_init}")
-        self.logger.info("="*40)
-        # --------------------------------------------
+        # Log Initial Stats
+        stats_init = self._log_initial_stats(desc_datanames)
 
         self.logger.info(f"Collecting data to dataframe and do UQ selection")
         df_desc = pd.DataFrame(desc_stru, columns=[f"{COL_DESC_PREFIX}{i}" for i in range(desc_stru.shape[1])])
@@ -715,8 +707,6 @@ class CollectionWorkflow:
         # Verify consistency for candidates
         if len(df_desc) != len(df_uq):
              self.logger.warning(f"Mismatch: UQ data has {len(df_uq)} frames, but descriptors have {len(df_desc)} frames.")
-             # Since we added per-system check, this global mismatch should ideally not happen 
-             # unless some system was skipped entirely or dataname_list logic is flawed.
              
         # Optimized: Use concat if aligned (much faster), else merge
         if len(df_uq) == len(df_desc) and np.array_equal(df_uq["dataname"].values, df_desc["dataname"].values):
@@ -763,108 +753,275 @@ class CollectionWorkflow:
         if has_ground_truth:
             self.logger.info("Plotting and saving the figure of UQ-Candidate vs Max Force Diff")
             vis.plot_candidate_vs_error(df_uq, df_candidate)
+
+        return df_candidate, df_uq, df_desc, unique_system_names, df_uq_desc, stats_init, uq_filter, df_accurate
+
+    def _run_nofilter_setup(self):
+        """Sets up data for 'no_filter' mode (skips UQ)."""
+        self.logger.info("UQ Trust Mode is 'no_filter'. Skipping UQ calculation and filtering.")
+        
+        # Load descriptors
+        desc_datanames, desc_stru = self._load_descriptors(self.desc_dir, "candidate descriptors")
+        
+        if len(desc_stru) == 0:
+            raise ValueError("No candidate descriptors loaded!")
+            
+        # Build df_desc
+        df_desc = pd.DataFrame(desc_stru, columns=[f"{COL_DESC_PREFIX}{i}" for i in range(desc_stru.shape[1])])
+        df_desc["dataname"] = desc_datanames
+        
+        # Initial Stats
+        stats_init = self._log_initial_stats(desc_datanames)
+        
+        # Setup df_uq (dummy) and df_candidate
+        df_uq = df_desc[["dataname"]].copy()
+        df_uq["uq_identity"] = "candidate"
+        
+        df_uq_desc = df_desc.copy()
+        df_candidate = df_desc.copy() # All are candidates
+        df_candidate["uq_identity"] = "candidate"
+        
+        # Derive unique_system_names for export
+        unique_system_names = sorted(list(set(get_sys_name(d) for d in desc_datanames)))
+        self.logger.info(f"Identified {len(unique_system_names)} unique systems from descriptors.")
+        
+        has_ground_truth = False # No preds loaded
+        
+        return df_candidate, df_uq, df_desc, unique_system_names, df_uq_desc, stats_init, has_ground_truth
+
+    def _load_atomic_features_for_candidates(self, df_candidate):
+        """
+        Loads atomic features only for the frames present in df_candidate.
+        
+        Args:
+            df_candidate (pd.DataFrame): DataFrame containing 'dataname' of candidates.
+            
+        Returns:
+            tuple: (X_atom_list, n_atoms_list)
+                   X_atom_list: List of (N_atoms, D) arrays.
+                   n_atoms_list: List of ints.
+        """
+        self.logger.info("Loading atomic features for 2-DIRECT sampling...")
+        
+        dataname_to_atom_features = {}
+        dataname_to_natoms = {}
+        
+        # Identify which systems are needed
+        candidate_datanames = set(df_candidate["dataname"])
+        
+        # Group needed frames by system to minimize file I/O
+        sys_to_frames = {}
+        for dn in candidate_datanames:
+            sys_name, idx = dn.rsplit("-", 1)
+            idx = int(idx)
+            if sys_name not in sys_to_frames:
+                sys_to_frames[sys_name] = set()
+            sys_to_frames[sys_name].add(idx)
+            
+        # Iterate over systems and load data
+        for sys_name in sys_to_frames:
+            # Construct path (reuse logic from _load_descriptors roughly)
+            path_flat = os.path.join(self.desc_dir, f"{sys_name}.npy")
+            path_flat_base = os.path.join(self.desc_dir, f"{os.path.basename(sys_name)}.npy")
+            
+            if os.path.exists(path_flat):
+                f = path_flat
+            elif os.path.exists(path_flat_base):
+                f = path_flat_base
+            else:
+                self.logger.warning(f"Could not find descriptor file for {sys_name} during atomic load.")
+                continue
+                
+            try:
+                # Use mmap_mode to avoid loading entire file into memory
+                one_desc = np.load(f, mmap_mode='r') 
+                
+                # Extract specific frames
+                needed_indices = sys_to_frames[sys_name]
+                
+                for idx in needed_indices:
+                    if idx < len(one_desc):
+                        # Force copy to memory
+                        feats = np.array(one_desc[idx]) 
+                        dn = f"{sys_name}-{idx}"
+                        dataname_to_atom_features[dn] = feats
+                        dataname_to_natoms[dn] = feats.shape[0]
+                    else:
+                        self.logger.warning(f"Frame index {idx} out of bounds for {sys_name}")
+                        
+            except Exception as e:
+                self.logger.error(f"Failed to load atomic features for {sys_name}: {e}")
+                
+        # Build ordered lists matching df_candidate
+        X_atom_list = []
+        n_atoms_list = []
+        
+        for dn in df_candidate["dataname"]:
+            if dn in dataname_to_atom_features:
+                X_atom_list.append(dataname_to_atom_features[dn])
+                n_atoms_list.append(dataname_to_natoms[dn])
+            else:
+                self.logger.error(f"Missing atomic features for candidate {dn}")
+                raise ValueError(f"Missing atomic features for {dn}")
+                
+        return X_atom_list, n_atoms_list
+
+    def run(self):
+        """
+        Executes the main collection workflow.
+        """
+        if self.backend == "slurm":
+            self._submit_to_slurm()
+            return
+
+        self.logger.info(f"Initializing selection in {self.project} ---")
+        
+        vis = UQVisualizer(self.view_savedir, dpi=self.config.fig_dpi)
+        uq_filter = None
+
+        if self.uq_trust_mode == "no_filter":
+             df_candidate, df_uq, df_desc, unique_system_names, df_uq_desc, stats_init, has_ground_truth = self._run_nofilter_setup()
+        else:
+             uq_results, uq_rnd_rescaled, preds, has_ground_truth = self._run_uq_analysis(vis)
+             df_candidate, df_uq, df_desc, unique_system_names, df_uq_desc, stats_init, uq_filter, df_accurate = self._run_uq_filtering(uq_results, uq_rnd_rescaled, preds, has_ground_truth, vis)
         
         # 4. DIRECT Sampling
         if len(df_candidate) == 0:
-            self.logger.warning("No structures selected by UQ scheme! Skipping DIRECT selection.")
+            self.logger.warning("No structures selected! Skipping DIRECT selection.")
             return
 
         self.logger.info(f"Doing DIRECT Selection on UQ-selected data")
         
         # --- Joint with Training Data Logic ---
-        use_joint_sampling = False
-        train_desc_stru = np.array([])
+        features_for_direct, use_joint_sampling, n_candidates = self._prepare_features_for_direct(df_candidate, df_desc)
         
-        if self.training_desc_dir:
-            self.logger.info(f"Training descriptors provided at {self.training_desc_dir}. Attempting joint sampling.")
-            _, train_desc_stru = self._load_descriptors(self.training_desc_dir, "training descriptors")
+        # --- Select Sampler Strategy ---
+        sampler_type = self.config.sampler_type
+        
+        # Initialize num_selection for logging (will be calculated if dynamic)
+        num_selection = 0
+        
+        if sampler_type == "2-direct":
+            self.logger.info("Using 2-DIRECT Sampling Strategy.")
             
-            if len(train_desc_stru) > 0:
-                # Consistency Check
-                if self.training_data_dir:
-                    self.logger.info(f"Verifying training data consistency from {self.training_data_dir}")
-                    n_train_frames = self._count_frames_in_data(self.training_data_dir)
-                    if n_train_frames != len(train_desc_stru):
-                        self.logger.error(f"Training set mismatch: Found {n_train_frames} frames in data but {len(train_desc_stru)} frames in descriptors.")
-                        raise ValueError("Training data frame count mismatch with descriptors!")
-                    else:
-                        self.logger.info(f"Training set verified: {n_train_frames} frames.")
-                else:
-                    self.logger.warning("Training descriptors provided but training data path not specified. "
-                                        "Consistency check skipped. Proceeding with joint sampling.")
+            # Dynamic Mode Warning for 2-DIRECT
+            if self.config.step1_n_clusters is None or self.config.step2_n_clusters is None:
+                missing_params = []
+                if self.config.step1_n_clusters is None: missing_params.append("step1_n_clusters")
+                if self.config.step2_n_clusters is None: missing_params.append("step2_n_clusters")
                 
-                use_joint_sampling = True
-                self.logger.info(f"Joint sampling enabled: {len(df_candidate)} candidates + {len(train_desc_stru)} training samples.")
-            else:
-                self.logger.warning("Training descriptors provided but empty or failed to load. Falling back to candidate-only sampling.")
-        
-        # Prepare Features for DIRECT
-        candidate_features = df_candidate[[col for col in df_desc.columns if col.startswith(COL_DESC_PREFIX)]].values
-        n_candidates = len(candidate_features)
-        
-        if use_joint_sampling:
-            # Combine [Candidate; Training]
-            combined_features = np.vstack([candidate_features, train_desc_stru])
-            self.logger.info(f"Combined feature shape: {combined_features.shape}")
-            features_for_direct = combined_features
-        else:
-            features_for_direct = candidate_features
+                self.logger.warning(
+                    f"2-DIRECT Dynamic Mode (ADVANCED): The following cluster counts are unset: {missing_params}. "
+                    f"Using thresholds (step1_thr={self.config.step1_threshold}, step2_thr={self.config.step2_threshold}) to determine counts dynamically. "
+                    "For predictable sampling budget, it is STRONGLY RECOMMENDED to set these parameters explicitly."
+                )
+                                    
+            if use_joint_sampling:
+                self.logger.warning("2-DIRECT currently DOES NOT support joint sampling with training data in the same way as DIRECT. "
+                                    "Training data will be ignored for 2-DIRECT step 2 (atomic sampling). "
+                                    "Only candidates will be processed.")
+                # Decision: Fallback to candidate-only features for 2-DIRECT to ensure stability.
+                features_for_direct = features_for_direct[:n_candidates]
+                use_joint_sampling = False 
+                self.logger.info("Disabled joint sampling for 2-DIRECT.")
+
+            # Load Atomic Features
+            X_atom_list, n_atoms_list = self._load_atomic_features_for_candidates(df_candidate)
             
-        # DIRECT Sampling
-        DIRECT_sampler = DIRECTSampler(
-            structure_encoder=None,
-            clustering=BirchClustering(n=self.num_selection // self.direct_k, threshold_init=self.direct_thr_init),
-            select_k_from_clusters=SelectKFromClusters(k=self.direct_k),
-        )
-        
-        DIRECT_selection = DIRECT_sampler.fit_transform(features_for_direct)
-        
-        selected_indices_raw = DIRECT_selection["selected_indices"]
-        all_pca_features = DIRECT_selection["PCAfeatures"]
-        explained_variance = DIRECT_sampler.pca.pca.explained_variance_
+            sampler = TwoStepDIRECTSampler(
+                step1_clustering=BirchClustering(n=self.config.step1_n_clusters, threshold_init=self.config.step1_threshold),
+                step2_clustering=BirchClustering(n=self.config.step2_n_clusters, threshold_init=self.config.step2_threshold),
+                step2_selection=SelectKFromClusters(k=self.config.step2_k, selection_criteria=self.config.step2_selection, n_sites=[1])
+            )
+            
+            # Run 2-DIRECT
+            # features_for_direct corresponds to X_stru (aligned with df_candidate)
+            sampling_result = sampler.fit_transform(features_for_direct, X_atom_list, n_atoms_list)
+            
+            DIRECT_selected_indices = sampling_result["selected_indices"]
+            all_pca_features = sampling_result["PCAfeatures"]
+            
+            # 2-DIRECT uses the PCA from Step 1 for visualization
+            explained_variance = sampler.step1_sampler.pca.pca.explained_variance_
+            
+        else:
+            # Standard DIRECT
+            self.logger.info("Using Standard DIRECT Sampling Strategy.")
+            
+            # Level 1: Explicit Control (Recommended)
+            if self.config.direct_n_clusters is not None:
+                n_clusters = self.config.direct_n_clusters
+                num_selection = n_clusters * self.direct_k
+                self.logger.info(f"Explicit cluster count set: {n_clusters}")
+                
+            # Level 3: Dynamic Clustering (Advanced)
+            else:
+                self.logger.warning(
+                    "Dynamic Clustering Mode (ADVANCED): `direct_n_clusters` is not set. "
+                    f"Cluster count will be determined dynamically by `direct_thr_init`={self.direct_thr_init}. "
+                    "For predictable sampling budget, it is STRONGLY RECOMMENDED to set `direct_n_clusters` explicitly."
+                )
+                n_clusters = None # BirchClustering supports n=None
+            
+            sampler = DIRECTSampler(
+                structure_encoder=None,
+                clustering=BirchClustering(n=n_clusters, threshold_init=self.direct_thr_init),
+                select_k_from_clusters=SelectKFromClusters(k=self.direct_k),
+            )
+            
+            sampling_result = sampler.fit_transform(features_for_direct)
+            
+            selected_indices_raw = sampling_result["selected_indices"]
+            all_pca_features = sampling_result["PCAfeatures"]
+            explained_variance = sampler.pca.pca.explained_variance_
+            
+            # Handle Joint Sampling Indices
+            if use_joint_sampling:
+                DIRECT_selected_indices = [idx for idx in selected_indices_raw if idx < n_candidates]
+            else:
+                DIRECT_selected_indices = selected_indices_raw
+
+        # --- Post-Sampling Common Logic ---
         selected_PC_dim = len([e for e in explained_variance if e > 1])
         
-        # Filter indices to keep only candidates for Export
-        n_candidates = len(candidate_features)
+        # Calculate num_selection for logging if it was 0 (2-direct)
+        if num_selection == 0:
+            num_selection = len(DIRECT_selected_indices)
         
         if use_joint_sampling:
-            # Filter: Keep indices < n_candidates for final export
-            DIRECT_selected_indices = [idx for idx in selected_indices_raw if idx < n_candidates]
-            n_from_training = len(selected_indices_raw) - len(DIRECT_selected_indices)
-            self.logger.info(f"DIRECT Selection Result (Joint Mode):")
-            self.logger.info(f"  - Target Total Representatives (num_selection): {self.num_selection}")
-            self.logger.info(f"  - Actually Found Representatives: {len(selected_indices_raw)}")
-            self.logger.info(f"  - Selected from Training Set (Ignored): {n_from_training}")
-            self.logger.info(f"  - Selected from Candidate Set (New Samples): {len(DIRECT_selected_indices)}")
-            
-            # For Visualization: Use Joint Features and Joint Selection
-            # This ensures coverage plots reflect the Joint Space
-            all_features_viz = all_pca_features / explained_variance[:selected_PC_dim]
-            viz_selected_indices = selected_indices_raw
-            
+             n_from_training = len(selected_indices_raw) - len(DIRECT_selected_indices)
+             self.logger.info(f"DIRECT Selection Result (Joint Mode):")
+             self.logger.info(f"  - Target Total Representatives (num_selection): {num_selection}")
+             self.logger.info(f"  - Actually Found Representatives: {len(selected_indices_raw)}")
+             self.logger.info(f"  - Selected from Training Set (Ignored): {n_from_training}")
+             self.logger.info(f"  - Selected from Candidate Set (New Samples): {len(DIRECT_selected_indices)}")
+             
+             all_features_viz = all_pca_features / explained_variance[:selected_PC_dim]
+             viz_selected_indices = selected_indices_raw
         else:
-            DIRECT_selected_indices = selected_indices_raw
-            self.logger.info(f"DIRECT Selection Result (Normal Mode):")
-            self.logger.info(f"  - Target New Samples (num_selection): {self.num_selection}")
-            self.logger.info(f"  - Actually Selected Samples: {len(DIRECT_selected_indices)}")
-            
-            all_features_viz = all_pca_features / explained_variance[:selected_PC_dim]
-            viz_selected_indices = DIRECT_selected_indices
+             self.logger.info(f"DIRECT Selection Result:")
+             self.logger.info(f"  - Strategy: {sampler_type}")
+             self.logger.info(f"  - Actually Selected Samples: {len(DIRECT_selected_indices)}")
+             
+             all_features_viz = all_pca_features / explained_variance[:selected_PC_dim]
+             viz_selected_indices = DIRECT_selected_indices
         
         # Calculate PCA for ALL data (df_uq_desc) for visualization background
-        # Note: We must use the same PCA projection and scaling as all_features_viz
         try:
             self.logger.info("Projecting all data onto PCA space for visualization...")
             all_desc_features = df_uq_desc[[col for col in df_desc.columns if col.startswith(COL_DESC_PREFIX)]].values
             
-            # Use the fitted PCA from DIRECT_sampler
-            full_pca_features = DIRECT_sampler.pca.transform(all_desc_features)
+            # Transform using the appropriate PCA model
+            if sampler_type == "2-direct":
+                pca_model = sampler.step1_sampler.pca
+            else:
+                pca_model = sampler.pca
+                
+            full_pca_features = pca_model.transform(all_desc_features)
             
-            # Ensure dimension matches selected_PC_dim
             if full_pca_features.shape[1] > selected_PC_dim:
                 full_pca_features = full_pca_features[:, :selected_PC_dim]
                 
-            # Apply the same scaling
             full_features_viz = full_pca_features / explained_variance[:selected_PC_dim]
             
         except Exception as e:
@@ -920,7 +1077,20 @@ class CollectionWorkflow:
         sampled_datanames_set = set(df_final["dataname"])
         
         # Filter df_stats_init to find remaining rows
-        df_remaining = df_stats_init[~df_stats_init["dataname"].isin(sampled_datanames_set)]
+        # We need to recreate df_stats_init here or reuse it from stats_init?
+        # stats_init is aggregated. We need the raw df to filter.
+        # It's better to reconstruct it locally as before since we didn't return the raw df.
+        
+        # Reconstruct df_stats_init for remaining calc
+        # Or better: return df_stats_init from _log_initial_stats? No, just recreate it, it's cheap.
+        # Actually I can't recreate it easily without desc_datanames.
+        # df_desc has dataname.
+        desc_datanames_for_stats = df_desc["dataname"]
+        df_stats_init_temp = pd.DataFrame({"dataname": desc_datanames_for_stats})
+        df_stats_init_temp["sys_name"] = df_stats_init_temp["dataname"].apply(get_sys_name)
+        df_stats_init_temp["pool_name"] = df_stats_init_temp["sys_name"].apply(get_pool_name)
+
+        df_remaining = df_stats_init_temp[~df_stats_init_temp["dataname"].isin(sampled_datanames_set)]
         
         stats_remaining_sys = df_remaining.groupby("pool_name").agg(
             remaining_systems=("sys_name", "nunique")
@@ -962,8 +1132,8 @@ class CollectionWorkflow:
         # Random Simulation
         # In Joint mode, we compare DIRECT (on Joint) vs Random (on Joint)
         np.random.seed(42)
-        if len(all_features_viz) >= self.num_selection:
-             manual_selection_index = np.random.choice(len(all_features_viz), self.num_selection, replace=False)
+        if len(all_features_viz) >= num_selection:
+             manual_selection_index = np.random.choice(len(all_features_viz), num_selection, replace=False)
         else:
              manual_selection_index = np.arange(len(all_features_viz))
         
@@ -988,7 +1158,11 @@ class CollectionWorkflow:
         self.logger.info(f"Visualization of final selection results in PCA space")
         
         # Add uq_identity to df_uq_desc for visualizer usage
-        df_uq_desc = uq_filter.get_identity_labels(df_uq_desc, df_candidate, df_accurate)
+        if uq_filter:
+            df_uq_desc = uq_filter.get_identity_labels(df_uq_desc, df_candidate, df_accurate)
+        else:
+            # For no_filter, we manually added uq_identity="candidate" earlier
+            pass
         
         # Ensure df_candidate has identity label for visualization
         df_candidate = df_candidate.copy()
