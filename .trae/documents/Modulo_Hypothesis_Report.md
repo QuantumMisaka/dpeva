@@ -57,7 +57,7 @@ $$ M^2 = \|\mathbf{D}_{struct}\|^2 = \frac{1}{N^2} \sum_{i,j} \mathbf{u}_i \cdot
 ## 4. 最终结论
 通过对实际数据的计算与分析，我们证实了这一理论推断：
 
-1.  **模长确实蕴含了物理意义**：它是衡量系统“原子环境一致性”或“结构单一性”的有效序参量。
+1.  **原子归一化之后的结构描述符模长确实蕴含了物理意义**：它是衡量系统“原子环境一致性”或“结构单一性”的有效序参量。
 2.  **$M \to 1$**：对应于原子环境高度均一的体系（如单质、简单对称分子、完美晶体）。
 3.  **$M \to 0$ (或显著降低)**：对应于原子环境高度多样化的体系（如多组分复杂系统、非晶、缺陷结构）。
 
@@ -100,7 +100,52 @@ $$ M^2 = \|\mathbf{D}_{struct}\|^2 = \frac{1}{N^2} \sum_{i,j} \mathbf{u}_i \cdot
 
 #### 结构和原子归一化
 
+[2026-01-27 14:35:52,255] DEEPMD INFO    # ----------weighted average of errors----------- 
+[2026-01-27 14:35:52,255] DEEPMD INFO    # number of systems : 553
+[2026-01-27 14:35:52,255] DEEPMD INFO    Energy MAE         : 1.278148e-01 eV
+[2026-01-27 14:35:52,255] DEEPMD INFO    Energy RMSE        : 1.791503e-01 eV
+[2026-01-27 14:35:52,255] DEEPMD INFO    Energy MAE/Natoms  : 3.163492e-03 eV
+[2026-01-27 14:35:52,255] DEEPMD INFO    Energy RMSE/Natoms : 4.357938e-03 eV
+[2026-01-27 14:35:52,255] DEEPMD INFO    Force  MAE         : 6.920388e-02 eV/Å
+[2026-01-27 14:35:52,255] DEEPMD INFO    Force  RMSE        : 9.925300e-02 eV/Å
+[2026-01-27 14:35:52,255] DEEPMD INFO    Virial MAE         : 4.733735e+00 eV
+[2026-01-27 14:35:52,255] DEEPMD INFO    Virial RMSE        : 2.000198e+01 eV
+[2026-01-27 14:35:52,255] DEEPMD INFO    Virial MAE/Natoms  : 7.772163e-02 eV
+[2026-01-27 14:35:52,255] DEEPMD INFO    Virial RMSE/Natoms : 2.830066e-01 eV
+[2026-01-27 14:35:52,255] DEEPMD INFO    # ----------------------------------------------- 
+
 #### 仅原子归一化+训练维里
 
-# 
+[2026-01-27 21:10:37,877] DEEPMD INFO    # ----------weighted average of errors----------- 
+[2026-01-27 21:10:37,877] DEEPMD INFO    # number of systems : 84
+[2026-01-27 21:10:37,877] DEEPMD INFO    Energy MAE         : 1.541345e-01 eV
+[2026-01-27 21:10:37,877] DEEPMD INFO    Energy RMSE        : 2.373806e-01 eV
+[2026-01-27 21:10:37,877] DEEPMD INFO    Energy MAE/Natoms  : 4.797508e-03 eV
+[2026-01-27 21:10:37,877] DEEPMD INFO    Energy RMSE/Natoms : 6.809762e-03 eV
+[2026-01-27 21:10:37,877] DEEPMD INFO    Force  MAE         : 7.031639e-02 eV/Å
+[2026-01-27 21:10:37,877] DEEPMD INFO    Force  RMSE        : 1.008380e-01 eV/Å
+[2026-01-27 21:10:37,877] DEEPMD INFO    Virial MAE         : 1.595986e+00 eV
+[2026-01-27 21:10:37,877] DEEPMD INFO    Virial RMSE        : 7.551394e+00 eV
+[2026-01-27 21:10:37,877] DEEPMD INFO    Virial MAE/Natoms  : 4.687023e-02 eV
+[2026-01-27 21:10:37,877] DEEPMD INFO    Virial RMSE/Natoms : 1.679125e-01 eV
+[2026-01-27 21:10:37,877] DEEPMD INFO    # -----------------------------------------------
+
+#### 仅结构归一化+训练维里
+
+[2026-01-27 23:44:56,275] DEEPMD INFO    # ----------weighted average of errors----------- 
+[2026-01-27 23:44:56,275] DEEPMD INFO    # number of systems : 80
+[2026-01-27 23:44:56,275] DEEPMD INFO    Energy MAE         : 1.526420e-01 eV
+[2026-01-27 23:44:56,275] DEEPMD INFO    Energy RMSE        : 2.313178e-01 eV
+[2026-01-27 23:44:56,275] DEEPMD INFO    Energy MAE/Natoms  : 4.483450e-03 eV
+[2026-01-27 23:44:56,275] DEEPMD INFO    Energy RMSE/Natoms : 6.297279e-03 eV
+[2026-01-27 23:44:56,275] DEEPMD INFO    Force  MAE         : 7.459181e-02 eV/Å
+[2026-01-27 23:44:56,275] DEEPMD INFO    Force  RMSE        : 1.089749e-01 eV/Å
+[2026-01-27 23:44:56,275] DEEPMD INFO    Virial MAE         : 1.746548e+00 eV
+[2026-01-27 23:44:56,275] DEEPMD INFO    Virial RMSE        : 7.555197e+00 eV
+[2026-01-27 23:44:56,275] DEEPMD INFO    Virial MAE/Natoms  : 4.830062e-02 eV
+[2026-01-27 23:44:56,275] DEEPMD INFO    Virial RMSE/Natoms : 1.586001e-01 eV
+[2026-01-27 23:44:56,275] DEEPMD INFO    # ----------------------------------------------- 
+
+#### 结构和原子归一化+训练维里
+
 
