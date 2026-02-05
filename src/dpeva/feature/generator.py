@@ -13,7 +13,9 @@ try:
     from deepmd.infer.deep_pot import DeepPot
     from torch.cuda import empty_cache
     _DEEPMD_AVAILABLE = True
-except ImportError:
+except ImportError as e:
+    import logging
+    logging.getLogger("dpeva.feature.generator").warning(f"DeepMD import failed: {e}")
     _DEEPMD_AVAILABLE = False
     def empty_cache():
         pass

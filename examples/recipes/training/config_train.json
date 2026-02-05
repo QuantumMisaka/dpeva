@@ -12,7 +12,6 @@
     "submission": {
         "backend": "slurm",
         "env_setup": [
-            "export BASE_MODEL=DPA-3.1-3M.pt",
             "nvidia-smi dmon -s pucvmte -o T > nvdmon_job-${SLURM_JOB_ID}.log &",
             "source /opt/envs/deepmd3.1.2.env",
             "export DP_INTERFACE_PREC=high"

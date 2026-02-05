@@ -20,12 +20,18 @@
     "direct_k": 1,
     "direct_thr_init": 0.1,
 
-    "backend": "slurm",
-    "slurm_config": {
-        "partition": "CPU-MISC",
-        "qos": "rush-cpu",
-        "ntasks": 1,
-        "cpus_per_task": 4,
-        "job_name": "DPEVA-collect"
+    "submission": {
+        "backend": "slurm",
+        "env_setup": [
+            "source /opt/envs/deepmd3.1.2.env",
+            "export DP_INTERFACE_PREC=high"
+        ],
+        "slurm_config": {
+            "partition": "CPU-MISC",
+            "qos": "rush-cpu",
+            "ntasks": 1,
+            "cpus_per_task": 4,
+            "job_name": "DPEVA-collect"
+        }
     }
 }
