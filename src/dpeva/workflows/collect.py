@@ -6,7 +6,6 @@ import sys
 from typing import Union, Dict
 import numpy as np
 import pandas as pd
-import dpdata
 
 from dpeva.io.dataproc import DPTestResultParser
 from dpeva.io.types import PredictionData
