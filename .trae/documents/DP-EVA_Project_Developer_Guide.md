@@ -367,4 +367,7 @@ DPEVA_TAG: WORKFLOW_FINISHED
         *   移除 `num_selection` 参数。
         *   支持基于阈值的动态聚类模式（Advanced Mode）。
     *   **[配置]** 更新所有 Example Recipe 以适配新的参数标准。
+*   **v2.7.1** (2026-02-05):
+    *   **[修复]** 修复了 `BirchClustering` 在极端阈值条件下可能导致无限循环或计算挂起的问题。
+    *   **[优化]** 为 Birch 聚类引入了 `max_iter` (默认 50) 和 `min_threshold` (默认 1e-3) 保护机制。当算法无法收敛到目标聚类数时，会优雅降级并输出 Warning，而不是无限等待，显著提升了采样流程的鲁棒性。
 
