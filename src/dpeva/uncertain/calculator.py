@@ -21,19 +21,18 @@ class UQCalculator:
 
     def compute_qbc_rnd(
         self,
-        predictions_0: PredictionData,
-        predictions_1: PredictionData,
-        predictions_2: PredictionData,
-        predictions_3: PredictionData
+        predictions: List[PredictionData]
     ) -> Dict[str, np.ndarray]:
         """
-        Computes QbC and RND uncertainty metrics.
+        Computes QbC and RND uncertainty metrics for N models (N >= 2).
+        
+        Model 0 (predictions[0]) is treated as the 'main' model or 'baseline'.
+        Models 1..N-1 are treated as the 'committee' or 'ensemble' members.
 
         Args:
-            predictions_0: Predictions from model 0 (main model).
-            predictions_1: Predictions from model 1.
-            predictions_2: Predictions from model 2.
-            predictions_3: Predictions from model 3.
+            predictions: List of PredictionData objects. Must contain at least 2 models.
+                         predictions[0] is the main model.
+                         predictions[1:] are the committee members.
 
         Returns:
             dict: Dictionary containing:
@@ -41,8 +40,11 @@ class UQCalculator:
                 - uq_rnd_for: RND force uncertainty (max per structure).
                 - diff_maxf_0_frame: Max force difference between model 0 and ground truth (if available).
                 - diff_rmsf_0_frame: RMS force difference between model 0 and ground truth (if available).
-                - fx_expt, fy_expt, fz_expt: Ensemble mean forces.
+                - fx_expt, fy_expt, fz_expt: Ensemble mean forces (of models 1..N-1).
         """
+        if len(predictions) < 2:
+            raise ValueError(f"Need at least 2 models for UQ (got {len(predictions)}).")
+
         # Unpack predictions
         # Helper to extract force components
         def get_forces(pred: PredictionData):
@@ -50,29 +52,45 @@ class UQCalculator:
                 return pred.force['pred_fx'], pred.force['pred_fy'], pred.force['pred_fz']
             return None, None, None
 
-        fx_0, fy_0, fz_0 = get_forces(predictions_0)
-        fx_1, fy_1, fz_1 = get_forces(predictions_1)
-        fx_2, fy_2, fz_2 = get_forces(predictions_2)
-        fx_3, fy_3, fz_3 = get_forces(predictions_3)
+        # Extract forces for all models
+        forces_list = [get_forces(p) for p in predictions]
+        
+        # Check if forces are present
+        if any(fx is None for fx, _, _ in forces_list):
+             raise ValueError("Some models do not have force predictions.")
 
-        # Calculate ensemble mean (pseudo-experimental)
-        fx_expt = np.mean((fx_1, fx_2, fx_3), axis=0)
-        fy_expt = np.mean((fy_1, fy_2, fy_3), axis=0)
-        fz_expt = np.mean((fz_1, fz_2, fz_3), axis=0)
+        # Model 0 (Baseline)
+        fx_0, fy_0, fz_0 = forces_list[0]
+        
+        # Committee Models (1..N-1)
+        committee_forces = forces_list[1:]
+        
+        # Stack for vectorized operations
+        # shape: (n_committee, n_atoms_total)
+        fx_comm = np.vstack([f[0] for f in committee_forces])
+        fy_comm = np.vstack([f[1] for f in committee_forces])
+        fz_comm = np.vstack([f[2] for f in committee_forces])
 
-        # 1. QbC Force UQ (Variance of committee members 1, 2, 3)
-        fx_qbc_sq_diff = np.mean(((fx_1 - fx_expt)**2, (fx_2 - fx_expt)**2, (fx_3 - fx_expt)**2), axis=0)
-        fy_qbc_sq_diff = np.mean(((fy_1 - fy_expt)**2, (fy_2 - fy_expt)**2, (fy_3 - fy_expt)**2), axis=0)
-        fz_qbc_sq_diff = np.mean(((fz_1 - fz_expt)**2, (fz_2 - fz_expt)**2, (fz_3 - fz_expt)**2), axis=0)
+        # Calculate ensemble mean (pseudo-experimental) - axis=0 implies averaging over committee members
+        fx_expt = np.mean(fx_comm, axis=0)
+        fy_expt = np.mean(fy_comm, axis=0)
+        fz_expt = np.mean(fz_comm, axis=0)
+
+        # 1. QbC Force UQ (Variance of committee members)
+        # Calculate squared differences from mean
+        fx_qbc_sq_diff = np.mean((fx_comm - fx_expt)**2, axis=0)
+        fy_qbc_sq_diff = np.mean((fy_comm - fy_expt)**2, axis=0)
+        fz_qbc_sq_diff = np.mean((fz_comm - fz_expt)**2, axis=0)
         
         # Clamp sum of squares to 0 to prevent negative values from float precision errors
         sum_qbc_sq = np.maximum(fx_qbc_sq_diff + fy_qbc_sq_diff + fz_qbc_sq_diff, 0.0)
         f_qbc_stddiff = np.sqrt(sum_qbc_sq)
 
         # 2. RND Force UQ (Deviation of committee members from main model 0)
-        fx_rnd_sq_diff = np.mean(((fx_1 - fx_0)**2, (fx_2 - fx_0)**2, (fx_3 - fx_0)**2), axis=0)
-        fy_rnd_sq_diff = np.mean(((fy_1 - fy_0)**2, (fy_2 - fy_0)**2, (fy_3 - fy_0)**2), axis=0)
-        fz_rnd_sq_diff = np.mean(((fz_1 - fz_0)**2, (fz_2 - fz_0)**2, (fz_3 - fz_0)**2), axis=0)
+        # Broadcast model 0 forces for subtraction
+        fx_rnd_sq_diff = np.mean((fx_comm - fx_0)**2, axis=0)
+        fy_rnd_sq_diff = np.mean((fy_comm - fy_0)**2, axis=0)
+        fz_rnd_sq_diff = np.mean((fz_comm - fz_0)**2, axis=0)
         
         # Clamp sum of squares to 0
         sum_rnd_sq = np.maximum(fx_rnd_sq_diff + fy_rnd_sq_diff + fz_rnd_sq_diff, 0.0)
@@ -84,6 +102,7 @@ class UQCalculator:
         uq_rnd_for_list = []
         
         # Calculate force difference for model 0 if labels exist (for visualization)
+        predictions_0 = predictions[0] # Alias for readability
         diff_f_0 = None
         
         # Calculate diff manually from raw data if present, instead of relying on .diff_fx attribute

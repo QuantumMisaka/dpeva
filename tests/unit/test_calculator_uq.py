@@ -73,7 +73,7 @@ class TestUQCalculator:
         p3 = mock_predictions_factory(f3, [n_atoms])
         
         calc = UQCalculator()
-        results = calc.compute_qbc_rnd(p0, p1, p2, p3)
+        results = calc.compute_qbc_rnd([p0, p1, p2, p3])
         
         # Golden Calculation
         f_ensemble = np.stack([f1, f2, f3])
@@ -104,7 +104,7 @@ class TestUQCalculator:
         p3 = mock_predictions_factory(f3, atom_counts)
         
         calc = UQCalculator()
-        results = calc.compute_qbc_rnd(p0, p1, p2, p3)
+        results = calc.compute_qbc_rnd([p0, p1, p2, p3])
         
         assert len(results["uq_qbc_for"]) == 2
         
@@ -127,7 +127,7 @@ class TestUQCalculator:
         p3 = mock_predictions_factory(f0, [n_atoms])
         
         calc = UQCalculator()
-        results = calc.compute_qbc_rnd(p0, p1, p2, p3)
+        results = calc.compute_qbc_rnd([p0, p1, p2, p3])
         
         # diff_maxf_0_frame: max(sqrt(fx^2+fy^2+fz^2))
         # diff = [-1, -1, -1] -> norm = sqrt(3)
@@ -150,7 +150,7 @@ class TestUQCalculator:
         p3 = mock_predictions_factory(f0, [n_atoms])
         
         calc = UQCalculator()
-        results = calc.compute_qbc_rnd(p0, p1, p2, p3)
+        results = calc.compute_qbc_rnd([p0, p1, p2, p3])
         
         assert results["diff_maxf_0_frame"][0] == 0.0
         assert results["diff_rmsf_0_frame"][0] == 0.0
@@ -231,7 +231,7 @@ class TestUQCalculator:
         
         # Should not crash
         with caplog.at_level(logging.WARNING):
-            results = calc.compute_qbc_rnd(p0, p1, p2, p3)
+            results = calc.compute_qbc_rnd([p0, p1, p2, p3])
             
         # Verify Warning
         assert "NaNs detected" in caplog.text
@@ -281,7 +281,7 @@ class TestUQCalculator:
         p3 = mock_predictions_factory(f3, [n_atoms])
         
         calc = UQCalculator()
-        results = calc.compute_qbc_rnd(p0, p1, p2, p3)
+        results = calc.compute_qbc_rnd([p0, p1, p2, p3])
         
         # Should be a very small number, not NaN
         assert not np.isnan(results["uq_qbc_for"][0])

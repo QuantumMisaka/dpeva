@@ -11,7 +11,7 @@ from dpeva.io.dataproc import DPTestResultParser
 from dpeva.io.types import PredictionData
 from dpeva.io.dataset import load_systems
 from dpeva.config import CollectionConfig
-from dpeva.constants import WORKFLOW_FINISHED_TAG, COL_DESC_PREFIX, COL_UQ_QBC, COL_UQ_RND
+from dpeva.constants import WORKFLOW_FINISHED_TAG, COL_DESC_PREFIX, COL_UQ_QBC, COL_UQ_RND, DEFAULT_LOG_FILE
 from dpeva.sampling.direct import BirchClustering, DIRECTSampler, SelectKFromClusters
 from dpeva.sampling.two_step_direct import TwoStepDIRECTSampler
 from dpeva.uncertain.calculator import UQCalculator
@@ -203,7 +203,7 @@ class CollectionWorkflow:
 
     def _configure_file_logging(self):
         """Configures file logging to the output directory."""
-        log_file = os.path.join(self.project, self.root_savedir, "collection.log")
+        log_file = os.path.join(self.project, self.root_savedir, DEFAULT_LOG_FILE)
         
         # Check if handler already exists to avoid duplicates
         for h in self.logger.handlers:
@@ -510,7 +510,8 @@ class CollectionWorkflow:
         # 1. Load Data & Calculate UQ
         self.logger.info("Loading the test results")
         preds = []
-        for i in range(4):
+        num_models = self.config.num_models
+        for i in range(num_models):
             # Construct path using os.path.join for robustness
             res_path_prefix = os.path.join(self.project, str(i), self.testing_dir, self.testing_head)
             
@@ -539,7 +540,7 @@ class CollectionWorkflow:
         self.logger.info("Dealing with RND-like force UQ")
         
         calculator = UQCalculator()
-        uq_results = calculator.compute_qbc_rnd(preds[0], preds[1], preds[2], preds[3])
+        uq_results = calculator.compute_qbc_rnd(preds)
         
         self.logger.info("Aligning UQ-RND to UQ-QbC by RobustScaler (Median/IQR alignment)")
         uq_rnd_rescaled = calculator.align_scales(uq_results[COL_UQ_QBC], uq_results[COL_UQ_RND])

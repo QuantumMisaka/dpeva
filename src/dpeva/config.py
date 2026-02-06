@@ -36,6 +36,7 @@ from dpeva.constants import (
     DEFAULT_STEP2_THRESHOLD,
     DEFAULT_STEP2_K,
     DEFAULT_STEP2_SELECTION,
+    DEFAULT_ANALYSIS_OUTPUT_DIR,
     FIG_DPI,
 )
 
@@ -146,7 +147,7 @@ class AnalysisConfig(BaseModel):
     model_config = ConfigDict(extra='ignore', populate_by_name=True)
     
     result_dir: Path = Field(..., description="Path to DP test results directory.")
-    output_dir: Path = Field(Path("analysis"), description="Output directory for analysis results.")
+    output_dir: Path = Field(Path(DEFAULT_ANALYSIS_OUTPUT_DIR), description="Output directory for analysis results.")
     type_map: List[str] = Field(..., description="Atom type map (e.g. ['Fe', 'C']).")
     ref_energies: Dict[str, float] = Field(default_factory=dict, description="Reference energies per element for cohesive energy calculation.")
 
@@ -190,6 +191,7 @@ class CollectionConfig(BaseWorkflowConfig):
     fig_dpi: int = Field(FIG_DPI, description="DPI for visualization figures.")
     
     # UQ Parameters
+    num_models: int = Field(DEFAULT_NUM_MODELS, ge=3, description="Number of models for UQ calculation.")
     uq_select_scheme: Literal["tangent_lo", "strict", "circle_lo", "crossline_lo", "loose"] = DEFAULT_UQ_SCHEME
     uq_trust_mode: Literal["auto", "manual", "no_filter"] = "auto"
     uq_trust_ratio: float = Field(DEFAULT_UQ_TRUST_RATIO, ge=0.0, le=1.0)

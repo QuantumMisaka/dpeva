@@ -91,6 +91,7 @@
 | `model_head` | string | **必填** | 模型 Head 名称。 | - |
 | `output_mode` | string | `"atomic"` | 输出模式。`atomic` (原子级) 或 `structural` (结构级)。 | 枚举: `["atomic", "structural"]` |
 | `batch_size` | int | `32` | 推理批次大小。 | `> 0` |
+| `mode` | string | `"cli"` | 执行模式。`cli` (命令行调用) 或 `python` (Python API 调用)。 | 枚举: `["cli", "python"]` |
 | `savedir` | Path | `None` | 结果保存目录。 | 若未指定，自动根据模型和数据名生成。 |
 
 ---
@@ -107,24 +108,31 @@
 | `training_data_dir` | Path | `None` | (可选) 训练数据目录，用于联合采样 (Joint Sampling)。 | 若启用 Joint 模式则必填。 |
 | `training_desc_dir` | Path | `None` | (可选) 训练数据描述符目录。 | - |
 | `root_savedir` | Path | `"dpeva_uq_post"` | 结果保存的根目录。 | - |
+| `config_path` | Path | `None` | (可选) 配置文件路径，用于 Slurm 自提交任务。 | 若启用 Slurm 后端则推荐提供。 |
 
 ### 7.2 UQ (不确定性量化) 参数
 | 参数名 | 类型 | 默认值 | 说明 | 约束/验证 |
 | :--- | :--- | :--- | :--- | :--- |
+| `num_models` | int | `4` | UQ 计算使用的模型数量。 | `>= 3` |
 | `uq_select_scheme` | string | `"tangent_lo"` | UQ 选择策略/方案。 | 枚举: `["tangent_lo", "strict", "circle_lo", "crossline_lo", "loose"]` |
 | `uq_trust_mode` | string | `"auto"` | 信任区域边界确定模式。`auto` 为自动计算，`manual` 为手动指定。 | 枚举: `["auto", "manual"]` |
 | `uq_trust_ratio` | float | `0.33` | 全局信任比例 (用于自动计算边界)。 | `0.0 <= x <= 1.0` |
 | `uq_trust_width` | float | `0.25` | 信任区域宽度 (用于自动计算或手动推导)。 | `> 0.0` |
+| `uq_auto_bounds` | dict | `{}` | 自动 UQ 边界限制字典 (如 `{"qbc": {"lo_min": 0.05}}`)。 | - |
 
 #### 手动模式专用参数 (Manual Mode Overrides)
-仅当 `uq_trust_mode="manual"` 时生效。
+仅当 `uq_trust_mode="manual"` 时生效。此外，以下参数也可用于覆盖全局设置：
 
 | 参数名 | 类型 | 默认值 | 说明 | 约束/验证 |
 | :--- | :--- | :--- | :--- | :--- |
 | `uq_qbc_trust_lo` | float | `None` | QbC (Query by Committee) 信任区域下界。 | Manual 模式下必填。 |
 | `uq_qbc_trust_hi` | float | `None` | QbC 信任区域上界。 | 若未填，由 `lo + width` 自动计算。 |
+| `uq_qbc_trust_ratio` | float | `None` | QbC 专用信任比例 (覆盖全局 `uq_trust_ratio`)。 | - |
+| `uq_qbc_trust_width` | float | `None` | QbC 专用信任宽度 (覆盖全局 `uq_trust_width`)。 | - |
 | `uq_rnd_rescaled_trust_lo` | float | `None` | RND (Random Network Distillation) 信任区域下界。 | Manual 模式下必填。 |
 | `uq_rnd_rescaled_trust_hi` | float | `None` | RND 信任区域上界。 | 若未填，由 `lo + width` 自动计算。 |
+| `uq_rnd_rescaled_trust_ratio` | float | `None` | RND 专用信任比例 (覆盖全局 `uq_trust_ratio`)。 | - |
+| `uq_rnd_rescaled_trust_width` | float | `None` | RND 专用信任宽度 (覆盖全局 `uq_trust_width`)。 | - |
 
 ### 7.3 采样参数 (Sampling Configuration)
 | 参数名 | 类型 | 默认值 | 说明 | 约束/验证 |

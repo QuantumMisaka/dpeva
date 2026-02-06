@@ -36,6 +36,8 @@ DEFAULT_INPUT_JSON: Final[str] = "input.json"
 DEFAULT_PROJECT_DIR: Final[str] = "./"
 DEFAULT_COLLECT_ROOT_DIR: Final[str] = "dpeva_uq_post"
 DEFAULT_TESTING_DIR: Final[str] = "test_results"
+DEFAULT_ANALYSIS_OUTPUT_DIR: Final[str] = "analysis"
+DEFAULT_LOG_FILE: Final[str] = "collection.log"
 
 # Visualization
 FIG_DPI: Final[int] = 300
