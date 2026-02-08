@@ -3,6 +3,7 @@ import sys
 import json
 import logging
 from dpeva.utils.config import resolve_config_paths
+from dpeva.utils.banner import show_banner
 
 # Lazy imports for workflows to improve CLI startup time
 # Workflows are imported inside handler functions
@@ -50,6 +51,8 @@ def handle_analysis(args):
 def main():
     setup_global_logging()
     parser = argparse.ArgumentParser(prog="dpeva", description="DP-EVA: Deep Potential Evolution Accelerator")
+    parser.add_argument("--no-banner", action="store_true", help="Skip the welcome banner")
+    
     subparsers = parser.add_subparsers(dest="command", required=True, help="Available Workflows")
 
     # Training Sub-command
@@ -78,6 +81,10 @@ def main():
     p_analysis.set_defaults(func=handle_analysis)
 
     args = parser.parse_args()
+    
+    if not args.no_banner:
+        show_banner()
+        
     try:
         args.func(args)
     except Exception as e:
