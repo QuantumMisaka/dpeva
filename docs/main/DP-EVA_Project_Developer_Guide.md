@@ -1,7 +1,7 @@
 # DP-EVA 项目开发文档
 
-* **版本**: 2.7.0
-* **生成日期**: 2026-02-05
+* **版本**: 2.8.0
+* **生成日期**: 2026-02-08
 * **作者**: Quantum Misaka with Trae SOLO
 
 ---
@@ -18,6 +18,7 @@ DP-EVA (Deep Potential EVolution Accelerator) 是一个面向 DPA3 (Deep Potenti
 *   **数据标准化 (Data Standardization)**：引入标准化的 `PredictionData` 接口，替代不透明的遗留对象。
 *   **双模调度 (Dual-Mode Scheduling)**：底层统一封装 `JobManager`，无缝支持 Local (Multiprocessing) 和 Slurm 集群环境。
 *   **日志规范 (Logging Discipline)**：库代码不干预全局日志配置，确保日志输出清晰、无冗余且易于追踪。
+*   **领域驱动设计 (Domain-Driven Design)**：v2.8.0 引入了领域驱动的架构模式，将核心工作流拆分为数据、UQ、采样等独立服务层，大幅降低了耦合度。
 
 ---
 
@@ -38,8 +39,12 @@ dpeva/
 │   ├── workflows/          # [核心] 业务流程编排层
 │   │   ├── train.py        # 训练工作流 (TrainingWorkflow)
 │   │   ├── infer.py        # 推理与分析工作流 (InferenceWorkflow)
-│   │   ├── collect.py      # 数据采集工作流 (CollectionWorkflow)
+│   │   ├── collect.py      # 数据采集工作流 (CollectionWorkflow) - 现已重构为编排器
 │   │   └── feature.py      # 特征生成工作流 (FeatureWorkflow)
+│   ├── services/           # [服务层] (概念上) 领域逻辑服务
+│   │   ├── io.collection   # 数据IO服务 (CollectionIOManager)
+│   │   ├── uncertain.manager # UQ编排服务 (UQManager)
+│   │   └── sampling.manager  # 采样编排服务 (SamplingManager)
 │   ├── training/           # 训练模块 (ParallelTrainer)
 │   ├── inference/          # 推理模块 (StatsCalculator, Visualizer)
 │   ├── uncertain/          # 不确定度模块 (UQCalculator, UQFilter, Visualizer)
@@ -370,4 +375,8 @@ DPEVA_TAG: WORKFLOW_FINISHED
 *   **v2.7.1** (2026-02-05):
     *   **[修复]** 修复了 `BirchClustering` 在极端阈值条件下可能导致无限循环或计算挂起的问题。
     *   **[优化]** 为 Birch 聚类引入了 `max_iter` (默认 50) 和 `min_threshold` (默认 1e-3) 保护机制。当算法无法收敛到目标聚类数时，会优雅降级并输出 Warning，而不是无限等待，显著提升了采样流程的鲁棒性。
+*   **v2.8.0** (2026-02-08):
+    *   **[架构]** 全面重构 `CollectionWorkflow`，引入领域驱动设计 (DDD) 思想。将数据 IO、UQ 计算、采样逻辑分别拆解为 `CollectionIOManager`, `UQManager`, `SamplingManager` 三个独立的服务类。
+    *   **[解耦]** `collect.py` 瘦身为轻量级编排器，代码行数减少 60%，不再包含具体的业务逻辑实现，极大提升了可读性和可测试性。
+    *   **[测试]** 为拆分出的 Manager 类补充了完整的单元测试，并确保集成测试（单/多数据池模式）在重构后行为一致。
 
