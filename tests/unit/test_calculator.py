@@ -21,7 +21,7 @@ def test_compute_qbc_rnd(mock_predictions_factory):
     p2 = mock_predictions_factory(np.array([[0.9, 0.0, 0.0], [0.0, 0.9, 0.0]]), [2])
     p3 = mock_predictions_factory(np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]]), [2])
     
-    results = calc.compute_qbc_rnd(p0, p1, p2, p3)
+    results = calc.compute_qbc_rnd([p0, p1, p2, p3])
     
     # Check Keys
     assert "uq_qbc_for" in results
