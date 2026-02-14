@@ -15,8 +15,8 @@ class ParallelTrainer:
     """
     
     def __init__(self, base_config_path, work_dir, num_models=4, 
-                 backend="local", template_path=None, slurm_config=None,
-                 training_data_path=None, dp_backend="--pt"):
+                 backend="local", template_path=None, slurm_config=None, env_setup=None,
+                 training_data_path=None, dp_backend="pt"):
         """
         Initialize the ParallelTrainer.
 
@@ -29,14 +29,16 @@ class ParallelTrainer:
             template_path (str, optional): Path to a custom submission script template. Defaults to None.
             slurm_config (dict, optional): Configuration dictionary for Slurm submission (e.g., partition, nodes).
                 Defaults to None.
+            env_setup (str or list[str], optional): Environment setup commands. Defaults to None.
             training_data_path (str, optional): Override path for training data systems. Defaults to None.
-            dp_backend (str, optional): DeepMD-kit backend flag (e.g. '--pt', '--tf'). Defaults to "--pt".
+            dp_backend (str, optional): DeepMD-kit backend flag (e.g. 'pt', 'tf'). Defaults to "pt".
         """
         self.base_config_path = base_config_path
         self.work_dir = os.path.abspath(work_dir)
         self.num_models = num_models
         self.backend = backend
         self.slurm_config = slurm_config or {}
+        self.env_setup = env_setup
         self.training_data_path = training_data_path
         self.dp_backend = dp_backend
         
@@ -221,6 +223,7 @@ echo "{WORKFLOW_FINISHED_TAG}"
                 command=cmd,
                 output_log="train.out",
                 error_log="train.err",
+                env_setup=self.env_setup,
                 **task_slurm_config # Inject partition, nodes, etc.
             )
             

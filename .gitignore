@@ -6,3 +6,4 @@ develop
 .vscode
 test
 .pytest_cache
+.coverage

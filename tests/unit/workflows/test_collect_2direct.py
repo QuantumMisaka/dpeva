@@ -22,58 +22,61 @@ class TestCollectionWorkflow2Direct:
             "num_selection": 5
         }
 
-    @patch("dpeva.workflows.collect.CollectionWorkflow._load_descriptors")
-    @patch("dpeva.workflows.collect.CollectionWorkflow._load_atomic_features_for_candidates")
-    @patch("dpeva.workflows.collect.TwoStepDIRECTSampler")
+    @patch("dpeva.workflows.collect.CollectionWorkflow._log_initial_stats")
+    @patch("dpeva.sampling.manager.SamplingManager.execute_sampling")
     @patch("dpeva.workflows.collect.UQVisualizer")
-    @patch("dpeva.workflows.collect.load_systems")
-    def test_run_2direct(self, mock_load_sys, mock_vis, mock_sampler_cls, mock_load_atomic, mock_load_desc, mock_config):
+    @patch("dpeva.io.collection.load_systems")
+    @patch("dpeva.io.collection.CollectionIOManager.load_atomic_features")
+    @patch("dpeva.uncertain.manager.UQManager.load_predictions")
+    def test_run_2direct(self, mock_load_preds, mock_load_atomic, mock_load_sys, mock_vis, mock_execute_sampling, mock_log_stats, mock_config):
+        """
+        Test the main run logic for 2-step DIRECT.
+        """
+        # Ensure config sets sampler_type to 2-direct
+        mock_config["sampler_type"] = "2-direct"
+        
+        # Setup mocks
         os.makedirs(mock_config["project"], exist_ok=True)
         os.makedirs(mock_config["desc_dir"], exist_ok=True)
         os.makedirs(mock_config["testdata_dir"], exist_ok=True)
         
-        # Mock _load_descriptors (Step 1 structural features)
-        # Returns: desc_datanames, desc_stru
-        n_frames = 10
-        desc_datanames = [f"sys-{i}" for i in range(n_frames)]
-        desc_stru = np.random.rand(n_frames, 10)
-        mock_load_desc.return_value = (desc_datanames, desc_stru)
+        # Mock load_predictions (return dummy predictions)
+        # We need at least 2 models for UQ
+        pred_data_1 = MagicMock()
+        pred_data_1.force = {'pred_fx': np.random.rand(10, 1), 'pred_fy': np.random.rand(10, 1), 'pred_fz': np.random.rand(10, 1)}
+        pred_data_1.dataname_list = [["s-0", 0, 10]]
+        pred_data_1.datanames_nframe = {"s-0": 1}
+        pred_data_1.has_ground_truth = False
         
-        # Mock _load_atomic_features_for_candidates
-        X_atom_list = [np.random.rand(3, 5) for _ in range(n_frames)]
-        n_atoms_list = [3] * n_frames
+        pred_data_2 = MagicMock()
+        pred_data_2.force = {'pred_fx': np.random.rand(10, 1), 'pred_fy': np.random.rand(10, 1), 'pred_fz': np.random.rand(10, 1)}
+        pred_data_2.dataname_list = [["s-0", 0, 10]]
+        pred_data_2.datanames_nframe = {"s-0": 1}
+        pred_data_2.has_ground_truth = False
+
+        mock_load_preds.return_value = ([pred_data_1, pred_data_2], False)
+        
+        # Mock load_atomic_features
+        n_frames = 10
+        datanames = [f"s-{i}" for i in range(n_frames)]
+        
+        X_atom_list = [np.random.rand(10, 5) for _ in range(n_frames)]
+        n_atoms_list = [10] * n_frames
         mock_load_atomic.return_value = (X_atom_list, n_atoms_list)
         
-        # Mock TwoStepDIRECTSampler instance
-        mock_sampler_instance = MagicMock()
-        mock_sampler_cls.return_value = mock_sampler_instance
-        
-        # fit_transform returns dict
-        mock_sampler_instance.fit_transform.return_value = {
-            "selected_indices": [0, 1],
-            "step1_labels": [0]*5 + [1]*5,
-            "PCAfeatures": np.random.rand(n_frames, 2)
-        }
-        
-        # Mock step1_sampler.pca.pca.explained_variance_ for visualization
-        mock_sampler_instance.step1_sampler.pca.pca.explained_variance_ = np.array([10, 5, 1])
-        
-        # Mock Visualizer
-        mock_vis_instance = MagicMock()
-        mock_vis.return_value = mock_vis_instance
-        mock_vis_instance.plot_pca_analysis.return_value = pd.DataFrame()
-        
-        # Mock load_systems
-        mock_load_sys.return_value = [] # Skip export logic
-        
-        wf = CollectionWorkflow(mock_config)
-        wf.run()
-        
-        # Assertions
-        mock_sampler_cls.assert_called_once()
-        mock_load_atomic.assert_called_once()
-        mock_sampler_instance.fit_transform.assert_called_once()
-        
-        # Check args to fit_transform
-        call_args = mock_sampler_instance.fit_transform.call_args
-        assert len(call_args[0]) == 3 # X_stru, X_atom_list, n_atoms_list
+        # Mock execute_sampling return
+        mock_execute_sampling.return_value = ([0], {"dataname": datanames}, np.random.rand(10, 2))
+
+        # Mock IO Manager's load_descriptors
+        with patch("dpeva.io.collection.CollectionIOManager.load_descriptors") as mock_load_desc:
+            mock_load_desc.return_value = (datanames, np.random.rand(n_frames, 10))
+            
+            wf = CollectionWorkflow(mock_config)
+            wf.run()
+            
+            # Verify that execute_sampling was called
+            # This implicitly confirms that the workflow reached the sampling stage
+            mock_execute_sampling.assert_called()
+            
+            # Optionally check if load_atomic_features was called, which is specific to 2-direct
+            mock_load_atomic.assert_called()

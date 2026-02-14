@@ -65,6 +65,7 @@ class TrainingWorkflow:
         # Submission Configuration
         self.backend = self.config.submission.backend
         self.slurm_config = self.config.submission.slurm_config
+        self.env_setup = self.config.submission.env_setup
         self.template_path = str(self.config.template_path) if self.config.template_path else None
         
         # Finetune head name configuration
@@ -110,6 +111,7 @@ class TrainingWorkflow:
             backend=self.backend,
             template_path=self.template_path,
             slurm_config=self.slurm_config,
+            env_setup=self.env_setup,
             training_data_path=self.training_data_path, # Pass the override path
             dp_backend=self.dp_backend
         )

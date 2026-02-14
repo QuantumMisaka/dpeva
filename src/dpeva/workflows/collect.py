@@ -262,7 +262,22 @@ class CollectionWorkflow:
         if not os.path.exists(project_abs): os.makedirs(project_abs)
         
         cmd = f"{sys.executable} -m dpeva.cli collect {os.path.abspath(self.config_path)}"
-        env_setup = "export DPEVA_INTERNAL_BACKEND=local\n"
+        
+        # Determine Environment Setup
+        # Prioritize config.submission.env_setup, fallback to "export DPEVA_INTERNAL_BACKEND=local" logic
+        # But actually, we need BOTH if we want env setup + backend override.
+        # User provided env_setup might contain conda activate etc.
+        
+        user_env_setup = self.config.submission.env_setup
+        if isinstance(user_env_setup, list):
+            user_env_setup = "\n".join(user_env_setup)
+        elif user_env_setup is None:
+            user_env_setup = ""
+            
+        # Ensure backend override is present
+        internal_backend_setup = "export DPEVA_INTERNAL_BACKEND=local"
+        
+        final_env_setup = f"{user_env_setup}\n{internal_backend_setup}"
         
         job_conf = JobConfig(
             command=cmd,
@@ -271,7 +286,7 @@ class CollectionWorkflow:
             ntasks=self.slurm_config.get("ntasks", 4),
             output_log=os.path.join(project_abs, "collect_slurm.out"),
             error_log=os.path.join(project_abs, "collect_slurm.err"),
-            env_setup=env_setup
+            env_setup=final_env_setup
         )
         
         manager = JobManager(mode="slurm")

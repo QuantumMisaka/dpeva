@@ -116,10 +116,10 @@ def test_submit_script_content(tmp_path, mock_job_manager_train):
         "input_json_path": str(input_path.resolve()),
         "num_models": 1,
         "backend": "slurm",
+        "env_setup": ["export TEST=1"],
         "slurm_config": {
             "partition": "test_part",
-            "qos": "test_qos",
-            "env_setup": ["export TEST=1"]
+            "qos": "test_qos"
         }
     }
     
@@ -132,6 +132,7 @@ def test_submit_script_content(tmp_path, mock_job_manager_train):
         num_models=config["num_models"],
         backend=config["backend"],
         slurm_config=config.get("slurm_config"),
+        env_setup=config.get("env_setup"),
         dp_backend="pt"
     )
     

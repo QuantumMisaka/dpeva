@@ -24,20 +24,17 @@ def test_collect_single_pool_routing(real_config_loader, tmp_path):
     # (tmp_path / "desc_pool").mkdir(exist_ok=True)
     
     # Init workflow
-    # We might need to mock UQCalculator if it does heavy lifting in __init__
-    with patch("dpeva.workflows.collect.UQCalculator") as MockUQ:
+    # We might need to mock UQManager if it does heavy lifting in __init__
+    with patch("dpeva.workflows.collect.UQManager") as MockUQ:
         workflow = CollectionWorkflow(config)
         
         # Verify Single Pool characteristics
-        assert workflow.uq_scheme == "tangent_lo"
-        assert workflow.uq_trust_mode == "auto"
+        # Config params are now in workflow.config
+        assert workflow.config.uq_select_scheme == "tangent_lo"
+        assert workflow.config.uq_trust_mode == "auto"
         
-        # Verify UQCalculator init args
-        # UQCalculator is initialized later in run(), not in __init__ in CollectionWorkflow
-        # Wait, reading code: uq_trust_mode is read. UQCalculator is instantiated in run().
-        # So checking MockUQ args here is invalid if it's not called in init.
-        # But we can check config attributes.
-        assert workflow.global_trust_ratio is not None
+        # Check config attributes (using uq_trust_ratio instead of removed global_trust_ratio)
+        assert workflow.config.uq_trust_ratio is not None
 
 def test_collect_multi_pool_routing(real_config_loader, tmp_path):
     """
@@ -59,10 +56,10 @@ def test_collect_multi_pool_routing(real_config_loader, tmp_path):
     # (tmp_path / "test_data").mkdir(exist_ok=True)
     # (tmp_path / "train_data").mkdir(exist_ok=True)
     
-    with patch("dpeva.workflows.collect.UQCalculator") as MockUQ:
+    with patch("dpeva.workflows.collect.UQManager") as MockUQ:
         workflow = CollectionWorkflow(config)
         
         # Verify separation
-        if hasattr(workflow, "training_data_dir"):
-            assert workflow.training_data_dir == config["training_data_dir"]
+        if workflow.config.training_data_dir:
+            assert str(workflow.config.training_data_dir) == config["training_data_dir"]
 

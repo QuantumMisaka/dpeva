@@ -45,64 +45,71 @@ class TestCollectionWorkflowJoint:
     
     # These logs come from `_perform_direct_selection` (or similar).
     
-    @patch("dpeva.workflows.collect.CollectionWorkflow._load_descriptors")
-    def test_joint_sampling_trigger(self, mock_load_desc, mock_config):
+    @patch("dpeva.workflows.collect.CollectionWorkflow._log_initial_stats")
+    @patch("dpeva.sampling.manager.SamplingManager.execute_sampling")
+    @patch("dpeva.workflows.collect.UQVisualizer")
+    @patch("dpeva.io.collection.load_systems")
+    @patch("dpeva.uncertain.manager.UQManager.load_predictions")
+    @patch("dpeva.uncertain.manager.UQManager.run_analysis")
+    @patch("dpeva.uncertain.manager.UQManager.run_filtering")
+    def test_joint_sampling_trigger(self, mock_filtering, mock_run_analysis, mock_load_preds, mock_load_sys, mock_vis, mock_execute_sampling, mock_log_stats, mock_config):
         """
-        Verify that joint sampling logic is triggered when training_desc_dir is present.
+        Verify that setting training_desc_dir triggers joint sampling mode.
         """
-        # Ensure project dir exists for validation
+        # Setup mocks
         os.makedirs(mock_config["project"], exist_ok=True)
         os.makedirs(mock_config["desc_dir"], exist_ok=True)
         os.makedirs(mock_config["testdata_dir"], exist_ok=True)
         
-        # Mock loading training descriptors (second call to _load_descriptors usually, or specific call)
-        # _load_descriptors returns (names, data)
-        # We need it to return something for training data
+        # Mock load_predictions
+        pred_obj = MagicMock()
+        pred_obj.dataname_list = [["c1-0", 10]]
+        pred_obj.datanames_nframe = {"c1-0": 1}
+        mock_load_preds.return_value = ([pred_obj], False)
         
-        def side_effect(desc_dir, *args, **kwargs):
-            if desc_dir == mock_config["training_desc_dir"]:
-                return [], np.random.rand(5, 128) # 5 training frames
-            return [], np.random.rand(10, 128) # default
-            
-        mock_load_desc.side_effect = side_effect
+        # Mock run_analysis
+        mock_run_analysis.return_value = ({
+            "uq_qbc_for": np.array([0.1]),
+            "uq_rnd_for": np.array([0.1])
+        }, np.array([0.1]))
         
-        # Initialize workflow
-        wf = CollectionWorkflow(mock_config)
-        
-        # Prepare inputs for _prepare_features_for_direct
-        # Create candidate dataframe with features efficiently to avoid PerformanceWarning
+        # Mock run_filtering to return non-empty candidate df WITH descriptor columns
+        # Prepare descriptor columns
         cols = [f"desc_stru_{i}" for i in range(128)]
-        
-        data = {"idx": range(2)}
-        # Add random features to data dict
+        data = {"dataname": ["c1-0"]}
         for c in cols:
-            data[c] = np.random.rand(2)
+            data[c] = np.random.rand(1)
+        
+        df_dummy_cand = pd.DataFrame(data)
+        mock_filtering.return_value = (df_dummy_cand, pd.DataFrame(), pd.DataFrame(), MagicMock())
+        
+        # Mock execute_sampling return
+        mock_execute_sampling.return_value = ([0], {"dataname": ["c1-0"]}, np.random.rand(1, 2))
+        
+        # Patch load_descriptors on IOManager
+        with patch("dpeva.io.collection.CollectionIOManager.load_descriptors") as mock_load:
+            # First call (candidate), Second call (training)
+            mock_load.side_effect = [
+                (["c1"], np.random.rand(1, 10)), # Candidate
+                (["t1"], np.random.rand(1, 10))  # Training
+            ]
             
-        df_candidate = pd.DataFrame(data)
-        
-        # Mock df_desc columns
-        df_desc = pd.DataFrame(columns=cols)
+            wf = CollectionWorkflow(mock_config)
+            wf.run()
             
-        # Run method
-        features, use_joint, n_cand = wf._prepare_features_for_direct(df_candidate, df_desc)
-        
-        # Assertions
-        assert use_joint is True
-        assert n_cand == 2
-        # Total features = 2 candidate + 5 training = 7
-        assert features.shape == (7, 128)
-        
-        # Verify _load_descriptors was called with training dir
-        # Check call args
-        calls = mock_load_desc.call_args_list
-        # Should be at least one call with training_desc_dir
-        training_call_found = False
-        for call in calls:
-            args, _ = call
-            if args[0] == mock_config["training_desc_dir"]:
-                training_call_found = True
-                break
-        assert training_call_found
+            # Verify execute_sampling was called with MERGED features
+            mock_execute_sampling.assert_called()
+            call_args = mock_execute_sampling.call_args
+            args = call_args.args
+            
+            # args[0] is features. 
+            # Candidate: 1 frame. Training: 1 frame.
+            # Merged should be 2 frames.
+            features = args[0]
+            assert features.shape[0] == 2, f"Expected 2 frames (1 cand + 1 train), got {features.shape[0]}"
+            
+            # Verify load_descriptors was called twice (once for candidate, once for training)
+            assert mock_load.call_count == 2
 
     def test_joint_sampling_no_training_data(self, mock_config):
         """
@@ -112,22 +119,54 @@ class TestCollectionWorkflowJoint:
         os.makedirs(mock_config["project"], exist_ok=True)
         os.makedirs(mock_config["desc_dir"], exist_ok=True)
         os.makedirs(mock_config["testdata_dir"], exist_ok=True)
-        
+    
         mock_config.pop("training_desc_dir")
-        wf = CollectionWorkflow(mock_config)
+        # Ensure we are not in joint mode config-wise
         
-        # Prepare inputs
-        cols = [f"desc_stru_{i}" for i in range(128)]
-        data = {"idx": range(2)}
-        for c in cols:
-            data[c] = np.random.rand(2)
-        
-        df_candidate = pd.DataFrame(data)
-        df_desc = pd.DataFrame(columns=cols)
+        # We need to mock _log_initial_stats, DIRECTSampler, UQVisualizer, load_systems, load_descriptors
+        with patch("dpeva.workflows.collect.CollectionWorkflow._log_initial_stats"), \
+             patch("dpeva.sampling.manager.DIRECTSampler") as mock_sampler, \
+             patch("dpeva.workflows.collect.UQVisualizer"), \
+             patch("dpeva.io.collection.load_systems"), \
+             patch("dpeva.uncertain.manager.UQManager.load_predictions") as mock_load_preds, \
+             patch("dpeva.uncertain.manager.UQManager.run_analysis") as mock_run_analysis, \
+             patch("dpeva.uncertain.manager.UQManager.run_filtering") as mock_filtering, \
+             patch("dpeva.io.collection.CollectionIOManager.load_descriptors") as mock_load_desc:
             
-        with patch("dpeva.workflows.collect.CollectionWorkflow._load_descriptors") as mock_load:
-            features, use_joint, n_cand = wf._prepare_features_for_direct(df_candidate, df_desc)
+            # Mock load_predictions
+            pred_obj = MagicMock()
+            pred_obj.dataname_list = [["c1-0", 10]]
+            pred_obj.datanames_nframe = {"c1-0": 1}
+            mock_load_preds.return_value = ([pred_obj], False)
             
-            assert use_joint is False
-            assert features.shape == (2, 128)
-            assert not mock_load.called
+            # Mock run_analysis
+            mock_run_analysis.return_value = ({
+                "uq_qbc_for": np.array([0.1]),
+                "uq_rnd_for": np.array([0.1])
+            }, np.array([0.1]))
+            
+            # Mock run_filtering to return non-empty candidate df WITH columns
+            cols = [f"desc_stru_{i}" for i in range(128)]
+            data = {"dataname": ["c1-0"]}
+            for c in cols:
+                data[c] = np.random.rand(1)
+            df_dummy_cand = pd.DataFrame(data)
+            
+            mock_filtering.return_value = (df_dummy_cand, pd.DataFrame(), pd.DataFrame(), MagicMock())
+            
+            mock_load_desc.return_value = (["c1"], np.random.rand(1, 10))
+            
+            mock_sampler_instance = MagicMock()
+            mock_sampler.return_value = mock_sampler_instance
+            mock_sampler_instance.fit_transform.return_value = {
+                "selected_indices": [0], 
+                "PCAfeatures": np.random.rand(1, 2)
+            }
+            mock_sampler_instance.pca.pca.explained_variance_ = np.array([10, 5])
+            
+            wf = CollectionWorkflow(mock_config)
+            wf.run()
+            
+            # Verify fit_transform (normal) called, not fit_transform_joint
+            mock_sampler_instance.fit_transform.assert_called()
+            mock_sampler_instance.fit_transform_joint.assert_not_called()

@@ -43,9 +43,10 @@ def test_manual_mode_valid(base_config):
     config["uq_rnd_rescaled_trust_width"] = 0.1
     
     wf = CollectionWorkflow(config)
-    assert wf.uq_qbc_trust_lo == 0.1
-    assert wf.uq_qbc_trust_hi == 0.2
-    assert wf.uq_rnd_trust_lo == 0.1
+    assert wf.uq_manager.qbc_params["lo"] == 0.1
+    assert wf.uq_manager.qbc_params["hi"] == 0.2
+    assert wf.uq_manager.rnd_params["lo"] == 0.1
+
 
 def test_auto_mode_valid(base_config):
     """Test that auto mode works without 'lo'."""
@@ -56,11 +57,11 @@ def test_auto_mode_valid(base_config):
     
     wf = CollectionWorkflow(config)
     # In auto mode, lo should be None initially
-    assert wf.uq_qbc_trust_lo is None
-    assert wf.uq_rnd_trust_lo is None
+    assert wf.uq_manager.qbc_params["lo"] is None
+    assert wf.uq_manager.rnd_params["lo"] is None
     # Params should be stored
-    assert wf.uq_qbc_params["ratio"] == 0.5
-    assert wf.uq_qbc_params["width"] == 0.2
+    assert wf.uq_manager.qbc_params["ratio"] == 0.5
+    assert wf.uq_manager.qbc_params["width"] == 0.2
 
 def test_default_mode_fallback(base_config):
     """Test default mode is now auto (Pydantic default)."""
@@ -68,7 +69,7 @@ def test_default_mode_fallback(base_config):
     # No uq_trust_mode provided, should default to auto
     
     wf = CollectionWorkflow(config)
-    assert wf.uq_trust_mode == "auto"
+    assert wf.config.uq_trust_mode == "auto"
 
 def test_slurm_missing_config_path(base_config):
     """Test that Slurm backend requires config_path."""
@@ -84,7 +85,7 @@ def test_slurm_missing_config_path(base_config):
     # The check is in run(), not init.
     wf = CollectionWorkflow(config)
     
-    with pytest.raises(ValueError, match="config_path is missing"):
+    with pytest.raises(ValueError, match="Config path required for Slurm"):
         wf.run()
 
 def test_slurm_valid_config_path(base_config):
