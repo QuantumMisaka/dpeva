@@ -1,20 +1,17 @@
 import os
 import logging
-from dpeva.training.trainer import ParallelTrainer
-
-class TrainingWorkflow:
-    """
-    Workflow for parallel fine-tuning of DeepMD models.
-    Supports both local multiprocessing and Slurm submission.
-    """
-    
+import json
 from typing import Union, Dict
+
 from dpeva.config import TrainingConfig
+from dpeva.io.training import TrainingIOManager
+from dpeva.training.managers import TrainingConfigManager, TrainingExecutionManager
 
 class TrainingWorkflow:
     """
     Workflow for parallel fine-tuning of DeepMD models.
     Supports both local multiprocessing and Slurm submission.
+    Refactored using DDD Managers.
     """
     
     def __init__(self, config: Union[Dict, TrainingConfig]):
@@ -36,7 +33,47 @@ class TrainingWorkflow:
         self.num_models = self.config.num_models
         self.mode = self.config.training_mode
         
-        # Seeds configuration
+        # 1. Initialize IO Manager
+        self.io_manager = TrainingIOManager(self.work_dir)
+        
+        # 2. Initialize Config Manager
+        if not os.path.exists(self.input_json_path):
+             raise FileNotFoundError(f"Config file not found: {self.input_json_path}")
+             
+        with open(self.input_json_path, 'r') as f:
+            base_config = json.load(f)
+            
+        self.config_manager = TrainingConfigManager(base_config, self.input_json_path)
+        
+        # 3. Initialize Execution Manager
+        self.execution_manager = TrainingExecutionManager(
+            backend=self.config.submission.backend,
+            slurm_config=self.config.submission.slurm_config,
+            env_setup=self.config.submission.env_setup,
+            dp_backend=self.config.dp_backend,
+            template_path=str(self.config.template_path) if self.config.template_path else None
+        )
+        
+        # Seeds logic (still kept here as it's workflow parameterization, but could move to ConfigManager if complex)
+        self._setup_seeds()
+        
+        # Base model configuration
+        self.base_model_path = str(self.config.base_model_path)
+        
+        # OMP Settings
+        self.omp_threads = self.config.omp_threads
+        
+        # Finetune head name configuration
+        self.finetune_head_name = self.config.model_head
+        
+        # Override training data path
+        self.training_data_path = str(self.config.training_data_path) if self.config.training_data_path else None
+
+
+    def _setup_logger(self):
+        self.logger = logging.getLogger(__name__)
+        
+    def _setup_seeds(self):
         default_seeds = [19090, 42, 10032, 2933]
         
         if self.config.seeds:
@@ -55,30 +92,6 @@ class TrainingWorkflow:
                  self.training_seeds = (default_seeds * (self.num_models // len(default_seeds) + 1))[:self.num_models]
              else:
                  self.training_seeds = default_seeds[:self.num_models]
-        
-        # Base model configuration
-        self.base_model_path = str(self.config.base_model_path)
-        
-        # OMP Settings
-        self.omp_threads = self.config.omp_threads
-        
-        # Submission Configuration
-        self.backend = self.config.submission.backend
-        self.slurm_config = self.config.submission.slurm_config
-        self.env_setup = self.config.submission.env_setup
-        self.template_path = str(self.config.template_path) if self.config.template_path else None
-        
-        # Finetune head name configuration
-        self.finetune_head_name = self.config.model_head
-        
-        # Override training data path if provided in config
-        self.training_data_path = str(self.config.training_data_path) if self.config.training_data_path else None
-        
-        # DeepMD backend
-        self.dp_backend = self.config.dp_backend
-
-    def _setup_logger(self):
-        self.logger = logging.getLogger(__name__)
 
     def _determine_finetune_heads(self):
         """Determine finetune heads based on mode."""
@@ -93,35 +106,44 @@ class TrainingWorkflow:
         else:
             raise ValueError(f"Unknown mode: {self.mode}. Must be 'init' or 'cont'.")
 
-    def _resolve_base_models(self):
-        """Resolve base model paths based on mode."""
-        if not self.base_model_path:
-             raise ValueError("base_model_path must be provided")
-             
-        return [self.base_model_path] * self.num_models
-
     def run(self):
         self.logger.info(f"Initializing Training Workflow in {self.work_dir}")
-        self.logger.info(f"Mode: {self.mode}, Backend: {self.backend}")
+        self.logger.info(f"Mode: {self.mode}, Backend: {self.config.submission.backend}")
         
-        trainer = ParallelTrainer(
-            base_config_path=self.input_json_path,
-            work_dir=self.work_dir,
-            num_models=self.num_models,
-            backend=self.backend,
-            template_path=self.template_path,
-            slurm_config=self.slurm_config,
-            env_setup=self.env_setup,
-            training_data_path=self.training_data_path, # Pass the override path
-            dp_backend=self.dp_backend
+        self.io_manager.configure_logging()
+        
+        # 1. Prepare Configs
+        finetune_heads = self._determine_finetune_heads()
+        task_configs = self.config_manager.prepare_task_configs(
+            self.num_models, self.seeds, self.training_seeds, finetune_heads, self.training_data_path
         )
         
-        finetune_heads = self._determine_finetune_heads()
-        trainer.prepare_configs(self.seeds, self.training_seeds, finetune_heads)
+        script_paths = []
+        task_dirs = []
         
-        base_models = self._resolve_base_models()
-        trainer.setup_workdirs(base_models, omp_threads=self.omp_threads)
-        
+        # 2. Setup Workspace & Tasks
+        for i in range(self.num_models):
+            task_dir = self.io_manager.create_task_dir(i)
+            task_dirs.append(task_dir)
+            
+            # Save Config
+            self.io_manager.save_task_config(task_dir, task_configs[i])
+            
+            # Copy Base Model
+            if not self.base_model_path:
+                 raise ValueError("base_model_path must be provided")
+            base_model_name = self.io_manager.copy_base_model(self.base_model_path, task_dir)
+            
+            # Generate Script
+            script_path = self.execution_manager.generate_script(
+                task_idx=i,
+                task_dir=task_dir,
+                base_model_name=base_model_name,
+                omp_threads=self.omp_threads
+            )
+            script_paths.append(script_path)
+            
+        # 3. Submit Jobs
         self.logger.info("Starting parallel training...")
-        trainer.train(blocking=True)
+        self.execution_manager.submit_jobs(script_paths, task_dirs, blocking=True)
         self.logger.info("Training Workflow Submission Completed.")

@@ -162,9 +162,3 @@ def mock_job_manager():
         manager_instance = mock_cls.return_value
         yield manager_instance
 
-@pytest.fixture
-def mock_job_manager_train():
-    """Mocks JobManager for training workflow."""
-    with patch("dpeva.training.trainer.JobManager") as mock_cls:
-        manager_instance = mock_cls.return_value
-        yield manager_instance

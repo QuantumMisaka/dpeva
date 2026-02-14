@@ -1,7 +1,7 @@
 # DP-EVA 项目开发文档
 
-* **版本**: 2.8.0
-* **生成日期**: 2026-02-08
+* **版本**: 0.4.1
+* **生成日期**: 2026-02-14
 * **作者**: Quantum Misaka with Trae SOLO
 
 ---
@@ -12,13 +12,28 @@
 DP-EVA (Deep Potential EVolution Accelerator) 是一个面向 DPA3 (Deep Potential v3) 高效微调的自动化主动学习框架。该项目旨在通过智能化的数据筛选策略，从海量无标签数据中识别出最具价值的样本（高模型不确定度 + 高结构代表性），从而以最小的数据标注成本实现模型性能的最大化提升。
 
 ### 1.2 核心哲学 (The Zen of DP-EVA)
-本项目遵循 Python 工程化最佳实践进行重构，强调：
-*   **显式配置 (Explicit Configuration)**：拒绝环境变量魔法，使用清晰的 Config 字典/文件驱动。
+本项目遵循 Python 工程化最佳实践及 **Zen of Python** 哲学进行重构与维护：
+
+#### 1.2.1 核心原则
+*   **明确与简洁 (Explicit & Simple)**：优先选择清晰直观的实现，拒绝隐晦的技巧与魔法（如环境变量隐式控制）。
+*   **可读性至上 (Readability Counts)**：代码首先是写给人看的。命名、缩进、结构需一目了然。
+*   **实用与优雅 (Practicality Beats Purity)**：在理想设计与现实需求冲突时，选择实用方案；优雅是指恰到好处的平衡。
+*   **一种最好 (There Should Be One Obvious Way to Do It)**：面对问题应有唯一明显的解决方案，避免提供多个功能重叠的接口。
+*   **宽容但不纵容 (Errors Should Never Pass Silently)**：错误必须被显式捕获和处理，允许失败但必须给出清晰的异常信息。
+
+#### 1.2.2 架构实践
 *   **模块解耦 (Modular Design)**：将复杂的科研脚本拆解为职责单一的原子模块 (Training, Inference, Uncertainty, Sampling)。
+*   **领域驱动设计 (Domain-Driven Design)**：v2.8.0+ 引入了领域驱动架构，将核心工作流拆分为 IO、Config、Execution 等独立服务层，大幅降低耦合度。
 *   **数据标准化 (Data Standardization)**：引入标准化的 `PredictionData` 接口，替代不透明的遗留对象。
 *   **双模调度 (Dual-Mode Scheduling)**：底层统一封装 `JobManager`，无缝支持 Local (Multiprocessing) 和 Slurm 集群环境。
 *   **日志规范 (Logging Discipline)**：库代码不干预全局日志配置，确保日志输出清晰、无冗余且易于追踪。
-*   **领域驱动设计 (Domain-Driven Design)**：v2.8.0 引入了领域驱动的架构模式，将核心工作流拆分为数据、UQ、采样等独立服务层，大幅降低了耦合度。
+
+### 1.3 优化方向与路线图 (Roadmap)
+基于 Code Review 的建议，项目后续将重点关注以下方向：
+1.  **全链路 DDD 重构**：目前 Training 和 Collection 模块已完成 DDD 改造，后续需将 Inference 和 Feature 模块迁移至相同架构 (IO/Config/Execution Managers)。
+2.  **统一配置管理**：进一步强化 Pydantic 在所有配置类中的应用，消除字典传递，确保类型安全。
+3.  **测试覆盖率**：提升集成测试的覆盖范围，特别是针对 Slurm 提交和异常处理的边界测试。
+4.  **遗留代码清理**：逐步移除标记为 Deprecated 的单体类 (`ParallelTrainer` 等)，保持代码库轻量化。
 
 ---
 
@@ -82,7 +97,11 @@ graph TD
 
 ### 3.1 Training 模块 (`dpeva.training`)
 负责管理 DeepMD 模型的并行训练任务。
-*   **`ParallelTrainer`**: 核心类。支持 `init` (初始化) 和 `cont` (断点续训) 模式。
+*   **`TrainingWorkflow`**: 核心编排类 (Orchestrator)。基于 DDD 模式重构，协调以下 Manager 完成任务：
+    *   **`TrainingIOManager`**: 负责工作空间管理与文件操作。
+    *   **`TrainingConfigManager`**: 负责配置解析与随机种子管理。
+    *   **`TrainingExecutionManager`**: 负责命令构建与作业提交。
+*   **`ParallelTrainer`**: (已过时/Deprecated) 遗留类，保留以维持向后兼容性。
 *   **特性**:
     *   自动工作目录隔离 (`0/`, `1/`, `2/`, `3/`)。
     *   支持 `OMP_NUM_THREADS` 自动配置。
@@ -379,4 +398,12 @@ DPEVA_TAG: WORKFLOW_FINISHED
     *   **[架构]** 全面重构 `CollectionWorkflow`，引入领域驱动设计 (DDD) 思想。将数据 IO、UQ 计算、采样逻辑分别拆解为 `CollectionIOManager`, `UQManager`, `SamplingManager` 三个独立的服务类。
     *   **[解耦]** `collect.py` 瘦身为轻量级编排器，代码行数减少 60%，不再包含具体的业务逻辑实现，极大提升了可读性和可测试性。
     *   **[测试]** 为拆分出的 Manager 类补充了完整的单元测试，并确保集成测试（单/多数据池模式）在重构后行为一致。
+*   **v2.9.0** (2026-02-14):
+    *   **[架构]** 重构 `TrainingWorkflow`，采用与 `CollectionWorkflow` 一致的领域驱动设计 (DDD)。
+    *   **[解耦]** 将训练逻辑拆分为 `TrainingIOManager`, `TrainingConfigManager`, `TrainingExecutionManager`，彻底移除了对单体类 `ParallelTrainer` 的依赖。
+    *   **[过时]** 标记 `ParallelTrainer` 为 Deprecated，将在未来版本中移除。
+*   **v0.4.1** (2026-02-14):
+    *   **[版本]** 版本号重置并统一为 0.4.1，与 PyPI/Package 版本保持一致。
+    *   **[修复]** 修复了启动 Banner 中 ASCII Art 字符画的对齐问题。
+    *   **[文档]** 更新开发者文档，补充了基于 Zen of Python 的项目哲学与优化路线图。
 
