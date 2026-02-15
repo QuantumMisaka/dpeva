@@ -1,4 +1,5 @@
 import os
+import glob
 import logging
 import numpy as np
 import dpdata
@@ -85,6 +86,7 @@ class DescriptorGenerator:
     def run_cli_generation(self, data_path, output_dir, blocking=True):
         """
         Run descriptor generation using `dp --pt eval-desc` via JobManager.
+        Supports multi-pool directory structures by iterating over sub-pools.
         
         Args:
             data_path (str): Path to the dataset.
@@ -95,25 +97,69 @@ class DescriptorGenerator:
         abs_output_dir = os.path.abspath(output_dir)
         
         # Ensure output directory exists (parent)
-        # Note: eval-desc creates the final directory itself if it doesn't exist
-        os.makedirs(os.path.dirname(abs_output_dir), exist_ok=True)
+        os.makedirs(abs_output_dir, exist_ok=True)
         
         # Default env setup if not provided
         if not self.env_setup:
-            self.env_setup = f"""
-export OMP_NUM_THREADS={self.omp_threads}
-"""
+            self.env_setup = f"export OMP_NUM_THREADS={self.omp_threads}"
 
+        # Detect Multi-Pool Structure
+        # A sub-pool is a directory that is NOT a system itself (no type.raw/set.*)
+        # but contains systems.
+        subdirs = [d for d in os.listdir(abs_data_path) 
+                   if os.path.isdir(os.path.join(abs_data_path, d))]
+        
+        sub_pools = []
+        for d in subdirs:
+            d_path = os.path.join(abs_data_path, d)
+            # Check if it is a system (simple check)
+            # Using basic heuristic: type.raw or set.* or type_map.raw
+            is_system = os.path.exists(os.path.join(d_path, "type.raw")) or \
+                        os.path.exists(os.path.join(d_path, "type_map.raw")) or \
+                        len(glob.glob(os.path.join(d_path, "set.*"))) > 0
+            
+            if not is_system:
+                sub_pools.append(d)
+        
         # Construct Command
         log_file = "eval_desc.log" if self.backend == "local" else None
         
-        cmd = DPCommandBuilder.eval_desc(
-            model=self.model_path,
-            system=abs_data_path,
-            output=abs_output_dir,
-            head=self.head,
-            log_file=log_file
-        )
+        if sub_pools:
+            self.logger.info(f"Detected multi-pool structure with {len(sub_pools)} pools. Generating iterative script.")
+            # Generate iterative commands
+            cmd = ""
+            for pool in sub_pools:
+                pool_in = os.path.join(abs_data_path, pool)
+                pool_out = os.path.join(abs_output_dir, pool)
+                
+                # Ensure sub-output dir exists
+                cmd += f"mkdir -p {pool_out}\n"
+                
+                # Generate dp command for this pool
+                # Note: We handle logging manually to avoid overwrite
+                pool_cmd = DPCommandBuilder.eval_desc(
+                    model=self.model_path,
+                    system=pool_in,
+                    output=pool_out,
+                    head=self.head,
+                    log_file=None 
+                )
+                
+                # Append to main log (if using local backend, slurm handles stdout/stderr via directives)
+                # For Slurm, output_log/error_log are handled by SBATCH, so we don't need explicit redirection unless we want merged log.
+                # Standard practice: just run command, let SBATCH capture it.
+                
+                cmd += f"echo 'Processing pool: {pool}'\n"
+                cmd += f"{pool_cmd}\n"
+        else:
+            # Standard single command (Root is a system or container of systems)
+            cmd = DPCommandBuilder.eval_desc(
+                model=self.model_path,
+                system=abs_data_path,
+                output=abs_output_dir,
+                head=self.head,
+                log_file=log_file
+            )
         
         # Append completion marker
         cmd += f"\necho \"{WORKFLOW_FINISHED_TAG}\""
@@ -137,13 +183,7 @@ export OMP_NUM_THREADS={self.omp_threads}
         
         # Generate Script
         script_name = "run_evaldesc.slurm" if self.backend == "slurm" else "run_evaldesc.sh"
-        # We place the script in the parent of output_dir to avoid cluttering results
-        # Or create a dedicated task directory?
-        # Let's put it in output_dir if possible, but output_dir might be overwritten by dp?
-        # dp eval-desc -o output_dir -> output_dir/data_name.npy
-        # If output_dir is the final destination, it's safe.
         
-        # Better: create a 'scripts' dir or put it alongside results.
         # Let's use output_dir as the working directory for the job.
         os.makedirs(abs_output_dir, exist_ok=True)
         script_path = os.path.join(abs_output_dir, script_name)
