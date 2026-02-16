@@ -1,9 +1,9 @@
 # Training Module Refactoring Report (v2.9.0)
 
-**日期**: 2026-02-14  
-**作者**: Trae AI Pair Programmer  
-**状态**: 已完成  
-**相关版本**: v2.9.0
+> **[DEPRECATED]** This report is for historical reference only.
+> **Date**: 2026-02-14
+> **Status**: Completed
+> **Version**: v2.9.0
 
 ## 1. 概述
 

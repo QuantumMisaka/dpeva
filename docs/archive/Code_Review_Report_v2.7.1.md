@@ -1,11 +1,8 @@
 # 代码审查详细报告 (Code Review Report)
 
-**审查对象**: DP-EVA 项目 (`dpeva`)
-**审查版本**: v2.7.1
-**审查日期**: 2026-02-06
-**审查员**: Trae AI Assistant
-
----
+> **[DEPRECATED]** This report is for historical reference only.
+> **Date**: 2026-02-06
+> **Version**: v2.7.1
 
 ## 1. 审查概况
 本次审查基于项目开发者指南的核心哲学，重点关注了代码的安全性、并发处理、资源性能以及测试覆盖率。审查范围涵盖了 `src/dpeva` 核心代码库以及 `tests/unit` 单元测试套件。

@@ -1,20 +1,21 @@
 import os
-import glob
-import time
 import logging
-import numpy as np
 from typing import Union, Dict
+
 from dpeva.config import FeatureConfig
+from dpeva.feature.managers import FeatureIOManager, FeatureExecutionManager
 from dpeva.feature.generator import DescriptorGenerator
+from dpeva.constants import WORKFLOW_FINISHED_TAG
 
 class FeatureWorkflow:
     """
-    Workflow for generating descriptors for a dataset using a pre-trained model.
+    Workflow for generating atomic/structural descriptors using DeepPot.
+    Refactored using DDD Managers.
     """
     
     def __init__(self, config: Union[Dict, FeatureConfig]):
         """
-        Initialize the Feature Generation Workflow.
+        Initialize the Feature Workflow.
 
         Args:
             config (Union[Dict, FeatureConfig]): Configuration object or dictionary.
@@ -23,92 +24,96 @@ class FeatureWorkflow:
             self.config = FeatureConfig(**config)
         else:
             self.config = config
-            
+
         self._setup_logger()
         
+        # Core Configurations
         self.data_path = str(self.config.data_path)
-        self.modelpath = str(self.config.model_path)
-        self.output_mode = self.config.output_mode # 'atomic' or 'structural'
-        
-        # savedir is auto-populated by Pydantic if None
-        self.savedir = str(self.config.savedir)
-        
+        self.model_path = str(self.config.model_path)
         self.head = self.config.model_head
+        self.output_mode = self.config.output_mode
         self.batch_size = self.config.batch_size
-        self.omp_threads = self.config.omp_threads
+        self.mode = self.config.mode
         
-        # New configurations for CLI/Slurm support
-        self.mode = self.config.mode 
-        self.submission_config = self.config.submission
-        self.backend = self.submission_config.backend
-        
-        # DeepMD Backend
-        self.dp_backend = self.config.dp_backend
-        
-        # Handle env_setup: Pydantic handles validation/conversion to string
-        self.env_setup = self.submission_config.env_setup
+        # Determine output directory
+        if self.config.savedir:
+            self.output_dir = str(self.config.savedir)
+        else:
+            # Auto-generate: desc-{model_stem}-{data_name}
+            model_stem = os.path.splitext(os.path.basename(self.model_path))[0]
+            data_name = os.path.basename(os.path.normpath(self.data_path))
+            self.output_dir = f"desc-{model_stem}-{data_name}"
             
-        self.slurm_config = self.submission_config.slurm_config
-
+        # 1. Initialize IO Manager
+        self.io_manager = FeatureIOManager()
+        
+        # 2. Initialize Execution Manager
+        self.execution_manager = FeatureExecutionManager(
+            backend=self.config.submission.backend,
+            slurm_config=self.config.submission.slurm_config,
+            env_setup=self.config.submission.env_setup,
+            dp_backend=self.config.dp_backend,
+            omp_threads=self.config.omp_threads
+        )
+        
     def _setup_logger(self):
         self.logger = logging.getLogger(__name__)
 
     def run(self):
-        """Execute the feature generation workflow."""
-        self.logger.info("Initializing Feature Generation Workflow")
+        self.logger.info(f"Initializing Feature Workflow (Mode: {self.mode}, Backend: {self.execution_manager.backend})")
         
         if not os.path.exists(self.data_path):
-            self.logger.error(f"Data directory not found: {self.data_path}")
+            self.logger.error(f"Data path not found: {self.data_path}")
             return
-            
-        # Initialize Generator
-        # Pass new parameters for CLI mode
-        try:
-            generator = DescriptorGenerator(
-                model_path=self.modelpath, 
-                head=self.head,
-                batch_size=self.batch_size,
-                omp_threads=self.omp_threads,
-                mode=self.mode,
-                backend=self.backend,
-                slurm_config=self.slurm_config,
-                env_setup=self.env_setup,
-                dp_backend=self.dp_backend
-            )
-        except (ImportError, ValueError) as e:
-            self.logger.error(f"Failed to initialize DescriptorGenerator: {e}")
-            return
-            
-        os.makedirs(self.savedir, exist_ok=True)
-        
-        # Identify sub-datasets (directories)
-        # We assume datadir contains subfolders, each being a dpdata system
-        # e.g. datadir/system1, datadir/system2...
-        # If datadir itself is a system, logic might differ, but dpdata.MultiSystems handles structure well.
-        
-        # For CLI mode (dp eval-desc), it can take a single directory or we loop over subdirectories.
-        # The prompt mentions:
-        # dp --pt eval-desc -s $POOLDATA -m $MODEL -o $SAVEDIR --head $HEAD
-        # This implies dp eval-desc can handle a directory of systems recursively or as a set.
-        # Let's check if we should loop or submit one job.
-        # The sbatch template shows: dp --pt eval-desc -s $POOLDATA ...
-        # So we submit ONE job for the entire POOLDATA directory.
-        
+
         if self.mode == "cli":
-            self.logger.info(f"Running in CLI mode with backend: {self.backend}")
-            # Submit single job for the whole directory
-            generator.run_cli_generation(self.data_path, self.savedir)
-            self.logger.info(f"Job submitted. Output directory: {self.savedir}")
+            # CLI Mode: Use dp eval-desc
+            # Detect multi-pool structure
+            sub_pools = self.io_manager.detect_multi_pool_structure(self.data_path)
             
-        elif self.mode == "python": # Python Native mode
-            self.logger.info(f"Running in Python Native mode (backend: {self.backend})")
-            generator.run_python_generation(
+            self.execution_manager.submit_cli_job(
                 data_path=self.data_path,
-                output_dir=self.savedir,
-                data_format="auto",
-                output_mode=self.output_mode
+                output_dir=self.output_dir,
+                model_path=self.model_path,
+                head=self.head,
+                sub_pools=sub_pools
             )
+            
+        elif self.mode == "python":
+            # Python Mode: Use DeepPot API
+            
+            if self.execution_manager.backend == "local":
+                # Local: Initialize Generator and run recursively
+                try:
+                    generator = DescriptorGenerator(
+                        model_path=self.model_path,
+                        head=self.head,
+                        batch_size=self.batch_size,
+                        omp_threads=self.config.omp_threads
+                    )
+                    
+                    self.execution_manager.run_local_python_recursion(
+                        generator,
+                        data_path=self.data_path,
+                        output_dir=self.output_dir,
+                        output_mode=self.output_mode
+                    )
+                    self.logger.info(WORKFLOW_FINISHED_TAG)
+                    
+                except ImportError:
+                    self.logger.error("DeepMD-kit not available for Python mode.")
+                except Exception as e:
+                    self.logger.error(f"Python mode execution failed: {e}", exc_info=True)
+                    
+            elif self.execution_manager.backend == "slurm":
+                # Slurm: Submit a python script
+                self.execution_manager.submit_python_slurm_job(
+                    data_path=self.data_path,
+                    output_dir=self.output_dir,
+                    model_path=self.model_path,
+                    head=self.head,
+                    batch_size=self.batch_size,
+                    output_mode=self.output_mode
+                )
         else:
             self.logger.error(f"Unknown mode: {self.mode}")
-
-        self.logger.info("Feature Generation Workflow Completed.")

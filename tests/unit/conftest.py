@@ -158,7 +158,7 @@ def real_config_loader(tmp_path):
 @pytest.fixture
 def mock_job_manager():
     """Mocks JobManager to prevent actual submission."""
-    with patch("dpeva.workflows.infer.JobManager") as mock_cls:
+    with patch("dpeva.inference.managers.JobManager") as mock_cls:
         manager_instance = mock_cls.return_value
         yield manager_instance
 

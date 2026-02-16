@@ -1,11 +1,8 @@
 # DP-EVA Labeling 模块功能点开发与迁移规划文档
 
-* **版本**: 1.0.0
-* **状态**: 规划中 (Planning)
-* **日期**: 2026-01-31
-* **关联模块**: `utils/fp`
-
----
+> **[DEPRECATED]** This report is for historical reference only.
+> **Version**: 1.0.0
+> **Date**: 2026-01-31
 
 ## 1. 概述 (Overview)
 

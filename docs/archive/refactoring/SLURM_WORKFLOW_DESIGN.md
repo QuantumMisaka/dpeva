@@ -1,5 +1,7 @@
 # DP-EVA Slurm Workflow Automation Design Document
 
+> **[DEPRECATED]** This report is for historical reference only.
+
 ## 1. Context and Problem Statement
 
 ### Current Status

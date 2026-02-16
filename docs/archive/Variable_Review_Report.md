@@ -1,4 +1,6 @@
-### 变量管理体系审查报告 (Variable Management System Review)
+# 变量管理体系审查报告 (Variable Management System Review)
+
+> **[DEPRECATED]** This report is for historical reference only.
 
 #### 1. 审计概览
 本次审查覆盖了 `config.py` (变量入口)、`constants.py` (常量定义)、`INPUT_PARAMETERS.md` (用户文档) 以及核心业务逻辑代码。整体上，项目采用了 Pydantic V2 进行强类型的配置管理，代码结构清晰，大部分默认值已通过 `constants.py` 集中管理。

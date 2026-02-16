@@ -4,6 +4,24 @@
 * **生成日期**: 2026-02-14
 * **作者**: Quantum Misaka with Trae SOLO
 
+### 1.4 开发流程标准 (Development Process Standard)
+为确保代码质量与知识沉淀，所有开发活动必须严格遵循以下标准流程：
+
+1.  **计划 (Plan)**: 
+    *   在开始编码前，必须基于现状进行需求分析与技术方案设计。
+    *   对于重大重构或新功能，需编写简要的 RFC (Request for Comments) 或 Design Doc。
+2.  **执行 (Execute)**:
+    *   代码编写应遵循 **Zen of Python** 原则。
+    *   优先使用领域驱动设计 (DDD) 模式，避免创建上帝类。
+    *   保持提交粒度适中，Commit Message 清晰。
+3.  **验证 (Verify)**:
+    *   **必须** 编写或更新单元测试，确保覆盖核心逻辑。
+    *   在提交前运行所有相关测试，确保无回归 (Regression)。
+4.  **文档化 (Document)**:
+    *   **强制要求**: 开发完成后，必须同步更新本文档 (`DP-EVA_Project_Developer_Guide.md`) 的相关章节（如架构图、接口变更）。
+    *   **技术细节**: 将详细的实现细节、配置参数字典、算法推导等内容沉淀至 `docs/api/` 或 `docs/guides/` 下的专项文档中。
+    *   **废弃清理**: 及时标记并清理过时的文档与代码。
+
 ---
 
 ## 1. 项目概述 (Overview)
@@ -30,7 +48,7 @@ DP-EVA (Deep Potential EVolution Accelerator) 是一个面向 DPA3 (Deep Potenti
 
 ### 1.3 优化方向与路线图 (Roadmap)
 基于 Code Review 的建议，项目后续将重点关注以下方向：
-1.  **全链路 DDD 重构**：目前 Training 和 Collection 模块已完成 DDD 改造，后续需将 Inference 和 Feature 模块迁移至相同架构 (IO/Config/Execution Managers)。
+1.33→1.  **全链路 DDD 重构**：目前 Training, Collection, Inference 模块已完成 DDD 改造，后续需将 Feature 模块迁移至相同架构 (IO/Config/Execution Managers)。
 2.  **统一配置管理**：进一步强化 Pydantic 在所有配置类中的应用，消除字典传递，确保类型安全。
 3.  **测试覆盖率**：提升集成测试的覆盖范围，特别是针对 Slurm 提交和异常处理的边界测试。
 4.  **遗留代码清理**：逐步移除标记为 Deprecated 的单体类 (`ParallelTrainer` 等)，保持代码库轻量化。
@@ -222,75 +240,33 @@ workflow.run()
 ```
 
 ### 4.3 配置参数说明
-以下各节展示标准 JSON 配置文件结构。
+详细的输入参数定义、类型约束及验证规则，请参阅 API 文档：
 
-#### 4.3.1 训练配置 (Train Config)
+*   **参数列表**: [INPUT_PARAMETERS.md](../api/INPUT_PARAMETERS.md)
+*   **验证规则**: [VALIDATION_RULES.md](../api/VALIDATION_RULES.md)
+
+以下仅展示标准 JSON 配置文件的基本结构概览。
+
+#### 4.3.1 训练配置 (Train Config)结构示例
 **参考文件**: `examples/recipes/training/config_train.json`
 ```json
 {
     "project": "./training_task",
-    "desc_dir": "./descriptors",
-    "testdata_dir": "./unlabeled_data",
-    
-    // 联合采样配置 (Joint Sampling)
-    "training_desc_dir": "./training_descriptors", // [可选] 训练集描述符路径
-    "training_data_dir": "./training_data",        // [可选] 训练集结构路径
-    
-    "uq_select_scheme": "tangent_lo",
-    "direct_n_clusters": 1000,        // [注意] 联合模式下表示覆盖集总数 (Target Cluster Count)
-    
-    "root_savedir": "iteration_1_selected",
-    
-    // UQ 参数配置 (支持全局或独立配置)
-    "uq_trust_mode": "auto",      
-    "uq_trust_ratio": 0.50,       // 全局比例
-    "uq_trust_width": 0.15,       // 全局宽度
-    // "uq_qbc_trust_ratio": 0.40 // [可选] 覆盖全局配置
-}
-```
-
-#### 4.4.1 `uq_trust_mode` 配置说明
-
-该参数决定了不确定度信任阈值 (`uq_trust_lo`) 的确定方式：
-
-| 模式 | 配置值 (`uq_trust_mode`) | 说明 | 适用场景 |
-| :--- | :--- | :--- | :--- |
-| **Manual** | `"manual"` (默认) | 直接使用 `uq_qbc_trust_lo` 等固定参数值。 | 精细微调阶段，对体系有明确经验值（如明确 > 0.30 为不可信）。 |
-| **Auto** | `"auto"` | 基于 KDE 自动寻找分布峰值，根据 `ratio` 计算阈值。若失败则自动回退到 Manual 值。 | 早期探索阶段，模型不确定度分布变化剧烈，需要自适应调整。 |
-
-#### 4.4.2 Auto-UQ 边界控制 (`uq_auto_bounds`)
-
-当启用 `"auto"` 模式时，可以通过 `uq_auto_bounds` 参数为自动计算出的阈值设置安全范围（Clamp）。这对于防止因数据稀疏或异常分布导致的极端阈值至关重要。
-
-```json
-"uq_auto_bounds": {
-    "qbc": {
-        "lo_min": 0.05,
-        "lo_max": 0.40 
-    },
-    "rnd": {
-        "lo_min": 0.05,
-        "lo_max": 0.40
+    "base_model_path": "frozen_model.pb",
+    "num_models": 4,
+    "training_mode": "cont",
+    "model_head": "ferro",
+    "input_json_path": "input.json",
+    "training_data_path": "data",
+    "submission": {
+        "backend": "local",
+        "omp_threads": 4
     }
 }
 ```
-*   **机制**: 如果 `Auto-Calculated Value < lo_min`，则取 `lo_min`；如果 `> lo_max`，则取 `lo_max`。系统会记录 Warning 日志提示发生了 Clamping。
 
-#### 4.4.3 采样参数说明 (Sampling)
-自 v2.7.0 起，项目支持两种采样策略，并通过显式参数控制。
-
-*   **`sampler_type`**: 采样策略选择，可选 `"direct"` (默认) 或 `"2-direct"`。
-
-**策略 A: 标准 DIRECT (`"direct"`)**
-*   **`direct_n_clusters`**: (推荐) 显式指定期望的聚类/采样数量。
-*   **动态模式**: 若上述参数未设置，系统将根据 `direct_thr_init` 阈值自动决定聚类数量（Advanced Mode）。
-
-**策略 B: 2-DIRECT (`"2-direct"`)**
-专为降低标注成本设计，包含两步聚类：
-*   **`step1_n_clusters`**: 第一步（结构级）聚类数。若为 `None` (默认)，基于 `step1_threshold` 动态聚类。
-*   **`step2_n_clusters`**: 第二步（原子级）聚类数。若为 `None` (默认)，基于 `step2_threshold` 动态聚类。
-*   **`step2_k`**: 每个原子簇选取的结构数。
-*   **`step2_selection`**: 筛选标准，默认为 `"smallest"` (原子数最少)，亦支持 `"center"`, `"random"`。
+#### 4.3.2 其他配置
+请参考 `examples/recipes/` 目录下的示例文件以及上述 API 文档。
 
 ---
 
@@ -304,7 +280,8 @@ workflow.run()
 *   **变量命名**: 统一输入数据路径变量名为 `data_path` (Feature/Inference Workflow)。
 
 ### 5.2 验证测试
-`test/` 目录包含开发阶段的验证脚本。
+
+开展测试时，确保 `dpeva` 命令在环境内。一般来说你可以通过`conda activate dpeva` 加载所需环境。 
 
 *   **运行单元测试 (Unit Tests)**:
     ```bash
@@ -406,4 +383,13 @@ DPEVA_TAG: WORKFLOW_FINISHED
     *   **[版本]** 版本号重置并统一为 0.4.1，与 PyPI/Package 版本保持一致。
     *   **[修复]** 修复了启动 Banner 中 ASCII Art 字符画的对齐问题。
     *   **[文档]** 更新开发者文档，补充了基于 Zen of Python 的项目哲学与优化路线图。
+*   **v0.4.2** (2026-02-16):
+    *   **[架构]** 重构 `InferenceWorkflow`，采用领域驱动设计 (DDD) 模式。将核心逻辑拆分为 `InferenceIOManager` (IO与解析), `InferenceExecutionManager` (作业提交), `InferenceAnalysisManager` (统计与绘图)。
+    *   **[解耦]** `infer.py` 瘦身为轻量级编排器，彻底解决了“上帝类”问题，提升了代码的可维护性和测试性。
+    *   **[测试]** 更新了推理工作流的单元测试，确保重构后的逻辑与 Mock 对象正确交互。
+*   **v0.4.3** (2026-02-16):
+    *   **[文档]** 全面重构文档结构，建立 `docs/main`, `docs/api`, `docs/archive` 层级。
+    *   **[规范]** 在开发者指南中正式确立了“开发流程标准”，强制要求文档同步更新。
+    *   **[迁移]** 将详细配置参数迁移至 `docs/api/INPUT_PARAMETERS.md`，保持核心文档简洁。
+    *   **[架构]** 重构 `FeatureWorkflow`，采用 DDD 模式拆分为 `FeatureIOManager` 和 `FeatureExecutionManager`。
 
