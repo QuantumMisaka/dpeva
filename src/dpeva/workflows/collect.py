@@ -108,7 +108,6 @@ class CollectionWorkflow:
         if self.backend == "slurm":
             self._submit_to_slurm()
             return
-
         self.logger.info(f"Initializing selection in {self.project} ---")
         vis = UQVisualizer(self.io_manager.view_savedir, dpi=self.config.fig_dpi)
 
@@ -215,6 +214,7 @@ class CollectionWorkflow:
         # ---------------------------------------------------------
         if len(df_candidate) == 0:
             self.logger.warning("No candidates selected. Skipping Sampling.")
+            self.logger.info(WORKFLOW_FINISHED_TAG)
             return
 
         # 2.1 Prepare Features (Joint Logic)
@@ -251,6 +251,7 @@ class CollectionWorkflow:
         # Phase 3: Export
         # ---------------------------------------------------------
         self.io_manager.export_dpdata(str(self.config.testdata_dir), df_final, unique_system_names)
+        self.logger.info(WORKFLOW_FINISHED_TAG)
 
 
     def _submit_to_slurm(self):

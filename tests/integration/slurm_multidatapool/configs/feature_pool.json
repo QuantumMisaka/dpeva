@@ -1,0 +1,22 @@
+{
+  "work_dir": "./",
+  "data_path": "./other_dpdata_all",
+  "model_path": "./DPA-3.1-3M.pt",
+  "savedir": "./desc_pool",
+  "model_head": "DPEVA_TEST",
+  "mode": "cli",
+  "omp_threads": 2,
+  "submission": {
+    "backend": "slurm",
+    "env_setup": [
+      "source /opt/envs/deepmd3.1.2.env",
+      "export DP_INTERFACE_PREC=high"
+    ],
+    "slurm_config": {
+      "nodes": 1,
+      "ntasks": 1,
+      "gpus_per_node": 1,
+      "walltime": "00:30:00"
+    }
+  }
+}
