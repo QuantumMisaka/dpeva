@@ -1,26 +1,15 @@
 # DP-EVA 项目开发文档
 
+- Status: active
+- Audience: Developers
+- Last-Updated: 2026-02-18
+- Related:
+  - 配置字段字典：/docs/reference/config-schema.md
+  - 校验规则补充：/docs/reference/validation.md
+
 * **版本**: 0.4.1
 * **生成日期**: 2026-02-14
 * **作者**: Quantum Misaka with Trae SOLO
-
-### 1.4 开发流程标准 (Development Process Standard)
-为确保代码质量与知识沉淀，所有开发活动必须严格遵循以下标准流程：
-
-1.  **计划 (Plan)**: 
-    *   在开始编码前，必须基于现状进行需求分析与技术方案设计。
-    *   对于重大重构或新功能，需编写简要的 RFC (Request for Comments) 或 Design Doc。
-2.  **执行 (Execute)**:
-    *   代码编写应遵循 **Zen of Python** 原则。
-    *   优先使用领域驱动设计 (DDD) 模式，避免创建上帝类。
-    *   保持提交粒度适中，Commit Message 清晰。
-3.  **验证 (Verify)**:
-    *   **必须** 编写或更新单元测试，确保覆盖核心逻辑。
-    *   在提交前运行所有相关测试，确保无回归 (Regression)。
-4.  **文档化 (Document)**:
-    *   **强制要求**: 开发完成后，必须同步更新本文档 (`DP-EVA_Project_Developer_Guide.md`) 的相关章节（如架构图、接口变更）。
-    *   **技术细节**: 将详细的实现细节、配置参数字典、算法推导等内容沉淀至 `docs/api/` 或 `docs/guides/` 下的专项文档中。
-    *   **废弃清理**: 及时标记并清理过时的文档与代码。
 
 ---
 
@@ -48,10 +37,29 @@ DP-EVA (Deep Potential EVolution Accelerator) 是一个面向 DPA3 (Deep Potenti
 
 ### 1.3 优化方向与路线图 (Roadmap)
 基于 Code Review 的建议，项目后续将重点关注以下方向：
-1.33→1.  **全链路 DDD 重构**：目前 Training, Collection, Inference 模块已完成 DDD 改造，后续需将 Feature 模块迁移至相同架构 (IO/Config/Execution Managers)。
+1.  **全链路 DDD 重构**：目前 Training, Collection, Inference 模块已完成 DDD 改造，后续需将 Feature 模块迁移至相同架构 (IO/Config/Execution Managers)。
 2.  **统一配置管理**：进一步强化 Pydantic 在所有配置类中的应用，消除字典传递，确保类型安全。
 3.  **测试覆盖率**：提升集成测试的覆盖范围，特别是针对 Slurm 提交和异常处理的边界测试。
 4.  **遗留代码清理**：逐步移除标记为 Deprecated 的单体类 (`ParallelTrainer` 等)，保持代码库轻量化。
+
+### 1.4 开发流程标准 (Development Process Standard)
+为确保代码质量与知识沉淀，所有开发活动必须严格遵循以下标准流程：
+
+1.  **计划 (Plan)**: 
+    *   在开始编码前，必须基于现状进行需求分析与技术方案设计。
+    *   对于重大重构或新功能，需编写简要的 RFC (Request for Comments) 或 Design Doc。
+2.  **执行 (Execute)**:
+    *   代码编写应遵循 **Zen of Python** 原则。
+    *   优先使用领域驱动设计 (DDD) 模式，避免创建上帝类。
+    *   保持提交粒度适中，Commit Message 清晰。
+3.  **验证 (Verify)**:
+    *   **必须** 编写或更新单元测试，确保覆盖核心逻辑。
+    *   在提交前运行所有相关测试，确保无回归 (Regression)。
+4.  **文档化 (Document)**:
+    *   **强制要求**: 开发完成后，必须同步更新本文档 (`developer-guide.md`) 的相关章节（如架构图、接口变更）。
+    *   **技术细节**: 将详细的实现细节、配置参数字典、算法推导等内容沉淀至 `docs/reference/` 或 `docs/guides/` 下的专项文档中。
+    *   **废弃清理**: 及时标记并清理过时的文档与代码。
+
 
 ---
 
@@ -242,12 +250,12 @@ workflow.run()
 ### 4.3 配置参数说明
 详细的输入参数定义、类型约束及验证规则，请参阅 API 文档：
 
-*   **参数列表**: [INPUT_PARAMETERS.md](../api/INPUT_PARAMETERS.md)
-*   **验证规则**: [VALIDATION_RULES.md](../api/VALIDATION_RULES.md)
+*   **参数列表**: [config-schema.md](/docs/reference/config-schema.md)
+*   **验证规则**: [validation.md](/docs/reference/validation.md)
 
 以下仅展示标准 JSON 配置文件的基本结构概览。
 
-#### 4.3.1 训练配置 (Train Config)结构示例
+#### 4.3.1 训练配置 (Train Config)
 **参考文件**: `examples/recipes/training/config_train.json`
 ```json
 {
@@ -269,6 +277,41 @@ workflow.run()
 请参考 `examples/recipes/` 目录下的示例文件以及上述 API 文档。
 
 ---
+
+### 4.4 UQ 与采样配置要点
+
+本节补充 UQ 与采样相关的关键配置语义；完整字段列表与约束以 `/docs/reference/*` 为准。
+
+#### 4.4.1 `uq_trust_mode` 配置说明
+
+- `auto`：自动计算信任区边界（推荐默认）
+- `manual`：手动指定信任区边界（需提供对应阈值参数）
+- `no_filter`：不启用信任区筛选
+
+参考：
+
+- `/docs/reference/config-schema.md`
+- `/docs/reference/validation.md`
+
+#### 4.4.2 Auto-UQ 边界控制 (`uq_auto_bounds`)
+
+Auto-UQ 用于根据数据分布自动确定筛选边界；具体的字段与约束以 Reference 文档为准，并在后续迭代中建议沉淀为独立章节以避免与算法实现脱节。
+
+参考：
+
+- `/docs/reference/config-schema.md`
+- `/docs/reference/validation.md`
+
+#### 4.4.3 采样参数说明 (Sampling)
+
+采样相关参数（DIRECT/2-direct/joint 等）属于收集工作流的核心可调维度，建议：
+
+- 只在 `/docs/reference/config-schema.md` 维护字段字典与默认值
+- 在指南中仅描述“如何选择参数组”的经验规则，并引用对应字段
+
+参考：
+
+- `/docs/reference/config-schema.md`
 
 ## 5. 开发与测试 (Development)
 
@@ -388,8 +431,7 @@ DPEVA_TAG: WORKFLOW_FINISHED
     *   **[解耦]** `infer.py` 瘦身为轻量级编排器，彻底解决了“上帝类”问题，提升了代码的可维护性和测试性。
     *   **[测试]** 更新了推理工作流的单元测试，确保重构后的逻辑与 Mock 对象正确交互。
 *   **v0.4.3** (2026-02-16):
-    *   **[文档]** 全面重构文档结构，建立 `docs/main`, `docs/api`, `docs/archive` 层级。
+    *   **[文档]** 全面重构文档结构，建立 `docs/guides`, `docs/reference`, `docs/archive` 等层级。
     *   **[规范]** 在开发者指南中正式确立了“开发流程标准”，强制要求文档同步更新。
-    *   **[迁移]** 将详细配置参数迁移至 `docs/api/INPUT_PARAMETERS.md`，保持核心文档简洁。
+    *   **[迁移]** 将详细配置参数迁移至 `docs/reference/config-schema.md`，保持核心文档简洁。
     *   **[架构]** 重构 `FeatureWorkflow`，采用 DDD 模式拆分为 `FeatureIOManager` 和 `FeatureExecutionManager`。
-

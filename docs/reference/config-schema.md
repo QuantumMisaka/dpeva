@@ -1,3 +1,13 @@
+# 配置字段字典（Config Schema）
+
+- Status: active
+- Audience: Developers
+- Last-Updated: 2026-02-18
+
+本文件用于作为配置字段的单一权威来源。
+
+---
+
 # DP-EVA 输入参数文档
 
 ## 1. 概述
@@ -48,12 +58,13 @@
 | :--- | :--- | :--- | :--- | :--- |
 | `base_model_path` | Path | **必填** | 基础模型/预训练模型路径。 | - |
 | `num_models` | int | `4` | 训练的模型数量 (Ensemble Size)。 | `>= 3` (UQ要求) |
-| `training_mode` | string | `"cont"` | 训练模式。`init` (从头初始化) 或 `cont` (继续训练)。 | 枚举: `["init", "cont"]` |
+| `training_mode` | string | `"init"` | 训练模式。`init` (从头初始化) 或 `cont` (继续训练)。 | 枚举: `["init", "cont"]` |
 | `model_head` | string | **必填** | 微调的 Model Head 名称。 | - |
 | `input_json_path` | Path | `"input.json"` | DeepMD-kit 训练输入参数文件路径。 | - |
 | `training_data_path` | Path | `None` | 训练数据根目录。 | - |
 | `seeds` | list[int] | `None` | 全局随机种子列表。 | - |
 | `training_seeds` | list[int] | `None` | 训练专用随机种子列表。 | - |
+| `template_path` | Path | `None` | （可选）训练/提交脚本模板路径。 | - |
 
 ---
 
@@ -115,7 +126,7 @@
 | :--- | :--- | :--- | :--- | :--- |
 | `num_models` | int | `4` | UQ 计算使用的模型数量。 | `>= 3` |
 | `uq_select_scheme` | string | `"tangent_lo"` | UQ 选择策略/方案。 | 枚举: `["tangent_lo", "strict", "circle_lo", "crossline_lo", "loose"]` |
-| `uq_trust_mode` | string | `"auto"` | 信任区域边界确定模式。`auto` 为自动计算，`manual` 为手动指定。 | 枚举: `["auto", "manual"]` |
+| `uq_trust_mode` | string | `"auto"` | 信任区域边界确定模式。`auto` 为自动计算，`manual` 为手动指定，`no_filter` 为不启用信任区筛选。 | 枚举: `["auto", "manual", "no_filter"]` |
 | `uq_trust_ratio` | float | `0.33` | 全局信任比例 (用于自动计算边界)。 | `0.0 <= x <= 1.0` |
 | `uq_trust_width` | float | `0.25` | 信任区域宽度 (用于自动计算或手动推导)。 | `> 0.0` |
 | `uq_auto_bounds` | dict | `{}` | 自动 UQ 边界限制字典 (如 `{"qbc": {"lo_min": 0.05}}`)。 | - |

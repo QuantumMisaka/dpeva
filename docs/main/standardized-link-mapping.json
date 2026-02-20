@@ -1,0 +1,42 @@
+{
+  "version": "2026-02-19",
+  "root_relative_rule": "All in-repo markdown links use root-relative paths (start with '/').",
+  "normalization_rules": [
+    {
+      "from": "../reference/<name>.md",
+      "to": "/docs/reference/<name>.md"
+    },
+    {
+      "from": "../guides/<name>.md",
+      "to": "/docs/guides/<name>.md"
+    },
+    {
+      "from": "../guides/testing/<name>.md",
+      "to": "/docs/guides/testing/<name>.md"
+    },
+    {
+      "from": "../../../tests/<path>",
+      "to": "/tests/<path>"
+    },
+    {
+      "from": "../../../src/<path>",
+      "to": "/src/<path>"
+    },
+    {
+      "from": "../../../examples/<path>",
+      "to": "/examples/<path>"
+    },
+    {
+      "from": "../../../test/<path>",
+      "to": "/test/<path>"
+    }
+  ],
+  "redirect_pages": {},
+  "legacy_link_patterns": [
+    {
+      "from_prefix": "file:///.../dpeva/",
+      "to_prefix": "/",
+      "note": "If historical docs contain file:///absolute links, strip repo-local prefix and replace with root-relative path."
+    }
+  ]
+}

@@ -42,8 +42,10 @@ Create a `config.json` for the collection task:
     "desc_dir": "./descriptors",
     "testdata_dir": "./unlabeled_data",
     "uq_select_scheme": "tangent_lo",
-    "num_selection": 100,
-    "uq_trust_mode": "auto"
+    "uq_trust_mode": "auto",
+    "sampler_type": "direct",
+    "direct_n_clusters": 100,
+    "direct_k": 1
 }
 ```
 
@@ -88,7 +90,7 @@ We welcome contributions! Please follow these steps:
 1.  **Fork** the repository.
 2.  **Create a branch** for your feature/fix.
 3.  **Install dev dependencies**: `pip install -e ".[dev]"`
-4.  **Run tests**: `pytest test/`
+4.  **Run unit tests**: `pytest tests/unit`
 5.  **Submit a PR**.
 
 ## 📄 License

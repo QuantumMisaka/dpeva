@@ -1,3 +1,13 @@
+# 参数校验与约束（Validation Rules）
+
+- Status: active
+- Audience: Developers
+- Last-Updated: 2026-02-18
+
+本文件用于作为参数校验规则的单一权威来源。
+
+---
+
 # 参数验证规则 (Validation Rules)
 
 本文档说明了 DP-EVA 系统中各参数的校验逻辑和约束条件，这些规则由 Pydantic 验证器在运行时强制执行。
@@ -14,7 +24,8 @@
 | `num_models` | `>= 3` | `2` (QbC UQ 至少需要 3 个模型) |
 | `uq_trust_ratio` | `0.0 <= x <= 1.0` | `1.5`, `-0.1` |
 | `uq_trust_width` | `> 0.0` | `0.0`, `-0.5` |
-| `num_selection` | `> 0` | `0` |
+| `direct_n_clusters` | `> 0` (若设置) | `0` |
+| `direct_k` | `>= 1` | `0` |
 
 ## 3. 逻辑依赖校验 (Cross-Field Validation)
 
@@ -22,6 +33,7 @@
 
 #### 3.1.1 UQ Trust Mode 依赖
 *   **规则**: 当 `uq_trust_mode` 为 `"manual"` 时，必须提供手动边界参数。
+*   **规则**: 当 `uq_trust_mode` 为 `"no_filter"` 时，不启用信任区筛选，手动边界参数将被忽略。
 *   **QbC 检查**:
     *   必须提供 `uq_qbc_trust_lo`。
     *   必须提供 `uq_qbc_trust_hi` **或者** `uq_qbc_trust_width` (此时 `hi = lo + width`)。
@@ -29,6 +41,12 @@
     *   必须提供 `uq_rnd_rescaled_trust_lo`。
     *   必须提供 `uq_rnd_rescaled_trust_hi` **或者** `uq_rnd_rescaled_trust_width`。
 *   **报错信息**: `ValueError: In 'manual' trust mode, uq_qbc_trust_lo must be provided.`
+
+#### 3.1.2 采样参数依赖
+*   **规则**: 采样策略由 `sampler_type` 控制：
+    *   `sampler_type="direct"`：使用 `direct_n_clusters/direct_k/direct_thr_init`。
+    *   `sampler_type="2-direct"`：使用 `step1_*` 与 `step2_*` 参数组。
+*   **规则**: 若 `direct_n_clusters` 显式给定，必须 `> 0`。
 
 ### 3.2 特征工作流 (FeatureConfig)
 

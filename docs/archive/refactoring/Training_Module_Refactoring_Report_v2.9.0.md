@@ -69,7 +69,7 @@
 | **删除** | `tests/unit/training/test_trainer_input.py` | 移除旧测试 |
 | **修改** | `tests/unit/conftest.py` | 清理旧 Fixture |
 | **修改** | `tests/unit/workflows/test_train_workflow_init.py` | 适配新测试 |
-| **文档** | `docs/main/DP-EVA_Project_Developer_Guide.md` | 更新 v2.9.0 变更记录 |
+| **文档** | `/docs/guides/developer-guide.md` | 更新 v2.9.0 变更记录 |
 
 ## 6. 总结
 

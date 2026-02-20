@@ -7,7 +7,7 @@
 ### 1.1 创建型模式 (Creational Patterns)
 
 #### **1. 建造者模式 (Builder Pattern)**
-*   **实现位置**: [`src/dpeva/utils/command.py`](file:///home/pku-jianghong/liuzhaoqing/WORK/FT2DP-DPEVA/dpeva/src/dpeva/utils/command.py) - `DPCommandBuilder` 类
+*   **实现位置**: [`src/dpeva/utils/command.py`](/src/dpeva/utils/command.py) - `DPCommandBuilder` 类
 *   **代码示例**:
     ```python
     class DPCommandBuilder:
@@ -20,13 +20,13 @@
 *   **解决场景**: DeepMD-kit 的命令行参数繁多且组合复杂（如 Backend 切换、Init Model、Freeze 选项）。Builder 模式将复杂的命令字符串构建过程封装，避免了在业务逻辑中到处拼接字符串，降低了拼写错误风险。
 
 #### **2. 配置对象/DTO 模式 (Configuration Object / DTO)**
-*   **实现位置**: [`src/dpeva/config.py`](file:///home/pku-jianghong/liuzhaoqing/WORK/FT2DP-DPEVA/dpeva/src/dpeva/config.py) - `BaseWorkflowConfig` 及其子类
+*   **实现位置**: [`src/dpeva/config.py`](/src/dpeva/config.py) - `BaseWorkflowConfig` 及其子类
 *   **解决场景**: 使用 Pydantic 模型作为数据传输对象（DTO），集中管理配置项的定义、默认值和类型校验。这避免了使用裸字典（Dict）传递参数导致的“参数黑洞”问题。
 
 ### 1.2 结构型模式 (Structural Patterns)
 
 #### **3. 管道模式 (Pipeline Pattern)**
-*   **实现位置**: [`src/dpeva/sampling/direct.py`](file:///home/pku-jianghong/liuzhaoqing/WORK/FT2DP-DPEVA/dpeva/src/dpeva/sampling/direct.py) - `DIRECTSampler` 继承自 `sklearn.pipeline.Pipeline`
+*   **实现位置**: [`src/dpeva/sampling/direct.py`](/src/dpeva/sampling/direct.py) - `DIRECTSampler` 继承自 `sklearn.pipeline.Pipeline`
 *   **代码示例**:
     ```python
     class DIRECTSampler(Pipeline):
@@ -43,7 +43,7 @@
 ### 1.3 行为型模式 (Behavioral Patterns)
 
 #### **5. 策略模式 (Strategy Pattern)**
-*   **实现位置**: [`src/dpeva/workflows/collect.py`](file:///home/pku-jianghong/liuzhaoqing/WORK/FT2DP-DPEVA/dpeva/src/dpeva/workflows/collect.py) - `UQFilter` 和 `DIRECTSampler` 的选择
+*   **实现位置**: [`src/dpeva/workflows/collect.py`](/src/dpeva/workflows/collect.py) - `UQFilter` 和 `DIRECTSampler` 的选择
 *   **解决场景**:
     *   **UQ 策略**: 根据 `uq_select_scheme` ("tangent_lo", "strict") 动态选择不同的过滤算法。
     *   **采样策略**: 根据 `sampler_type` 选择 `DIRECTSampler` 或 `TwoStepDIRECTSampler`。这允许在运行时根据配置动态切换算法实现。

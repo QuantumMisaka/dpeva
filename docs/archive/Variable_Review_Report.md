@@ -1,9 +1,9 @@
 # 变量管理体系审查报告 (Variable Management System Review)
 
-> **[DEPRECATED]** This report is for historical reference only.
+> **[ARCHIVED]** This report is for historical reference only.
 
 #### 1. 审计概览
-本次审查覆盖了 `config.py` (变量入口)、`constants.py` (常量定义)、`INPUT_PARAMETERS.md` (用户文档) 以及核心业务逻辑代码。整体上，项目采用了 Pydantic V2 进行强类型的配置管理，代码结构清晰，大部分默认值已通过 `constants.py` 集中管理。
+本次审查覆盖了 `config.py` (变量入口)、`constants.py` (常量定义)、`/docs/reference/config-schema.md`（字段字典）以及核心业务逻辑代码。整体上，项目采用了 Pydantic V2 进行强类型的配置管理，代码结构清晰，大部分默认值已通过 `constants.py` 集中管理。
 
 **主要发现：**
 - **严重缺陷 (CRITICAL)**：采集工作流 (`CollectionWorkflow`) 与 UQ 计算器 (`UQCalculator`) 存在严重的**硬编码耦合**，强制依赖 4 个模型，破坏了 `TrainingConfig` 中 `num_models` 的可配置性。
@@ -28,14 +28,14 @@
 ##### 🟠 MAJOR (重要)
 
 **2. 文档与代码不一致 (Documentation Gap)**
-- **位置**: `src/dpeva/config.py` vs `docs/parameters/INPUT_PARAMETERS.md`
+- **位置**: `src/dpeva/config.py` vs `/docs/reference/config-schema.md`
 - **问题描述**: 以下代码中存在的用户可配置参数未在文档中说明：
   - `CollectionConfig.config_path`: 用于 Slurm 自提交的路径参数。
   - `CollectionConfig.uq_qbc_trust_ratio` / `width`: 手动覆盖 QbC 特定参数。
   - `CollectionConfig.uq_rnd_rescaled_trust_ratio` / `width`: 手动覆盖 RND 特定参数。
   - `CollectionConfig.uq_auto_bounds`: 用于限制自动 UQ 边界的字典配置。
   - `FeatureConfig.mode`: (`cli` vs `python`) 缺失说明。
-- **修复建议**: 更新 `INPUT_PARAMETERS.md`，补全上述参数的说明表格。
+- **修复建议**: 更新 `/docs/reference/config-schema.md`，补全上述参数的说明表格。
 
 ##### 🟡 MINOR (次要)
 
@@ -74,7 +74,7 @@
 根据本次审查，建议您执行以下操作以完善变量管理体系：
 
 1.  **重构 UQ 模块** (Priority: High): 修复 `UQCalculator` 和 `CollectionWorkflow` 以支持动态模型数量（N models）。
-2.  **更新开发者文档** (Priority: Medium): 将缺失的参数补充到 `INPUT_PARAMETERS.md`。
+2.  **更新开发者文档** (Priority: Medium): 将缺失的参数补充到 `/docs/reference/config-schema.md`。
 3.  **常量提取** (Priority: Low): 将 `"analysis"` 等剩余字面量移入 `constants.py`。
 
 您是否希望我先**着手修复 Critical 级别的“模型数量硬编码”问题**，或者**先完成文档的补全工作**？
