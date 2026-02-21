@@ -8,7 +8,7 @@
 
 - 文档组织结构：已形成明确分层（Guides/Reference/Architecture/Policy/Reports/Archive），并通过 `/docs/README.md` 统一入口完成读者分流。
 - 链接与可移植性：项目内 Markdown 链接已统一为根相对路径（以 `/` 开头），且断链为 0。
-- 旧入口治理：已删除所有 deprecated 的旧入口文档，避免多入口导致内容分叉。
+- 多入口治理：已删除旧入口文档，避免多入口导致内容分叉。
 
 ## 2. 问题清单（按严重程度）
 
@@ -18,7 +18,7 @@
 
 ### P1（高优先级，需进入 Issue 队列）
 
-- 导入时警告：Pydantic `model_path/model_head` 与 protected namespace 冲突（建议创建 Issue 并处理，避免未来升级风险）。详见 `/docs/main/documentation-accuracy-audit.md`。
+- 导入时警告：Pydantic `model_path/model_head` 与 protected namespace 冲突（建议创建 Issue 并处理，避免未来升级风险）。详见 `/docs/governance/audits/2026-02-19-doc-accuracy-audit.md`。
 
 ### P2（中优先级，持续治理）
 
@@ -32,9 +32,10 @@
 
 ## 4. 相关交付物索引
 
-- 链接检测报告：`/docs/main/link-check-report.md`
-- 标准化链接映射表（JSON）：`/docs/main/standardized-link-mapping.json`
-- 最终文档集结构设计方案（含树状图 PNG）：`/docs/main/docs-structure-design.md`
-- 功能-文档双向追踪矩阵：`/docs/main/feature-doc-matrix.md`
-- 文档准确性审计报告：`/docs/main/documentation-accuracy-audit.md`
-- README 缺失与补齐清单：`/docs/main/readme-coverage-report.md`
+- 链接检测报告：`/docs/archive/governance/audits/2026-02-19-link-check.md`
+- 标准化链接映射表（JSON）：`/docs/governance/tools/link-normalization.json`
+- 最终文档集结构设计方案：`/docs/policy/docs-structure.md`
+- 功能-文档双向追踪矩阵：`/docs/governance/traceability/feature-doc-matrix.md`
+- 文档准确性审计报告：`/docs/governance/audits/2026-02-19-doc-accuracy-audit.md`
+- README 缺失与补齐清单：`/docs/archive/governance/2026-02-19-readme-coverage.md`
+

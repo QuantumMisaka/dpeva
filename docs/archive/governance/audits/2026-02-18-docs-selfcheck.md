@@ -1,7 +1,8 @@
 # 文档完整性自检报告（Self-Check）
 
-- Date: 2026-02-18
-- Scope: `docs/` 全量 Markdown
+- Status: archived
+- Audience: Maintainers
+- Last-Updated: 2026-02-18
 
 本报告记录对“文档格式、占位符、交叉引用”的自动化自检结果，并给出后续治理建议。
 
@@ -35,7 +36,7 @@
 建议：
 
 - 对 `docs/guides/*`、`docs/reference/*`、`docs/policy/*` 的所有 `active` 文档强制补齐元信息。
-- `docs/archive/*` 允许缺失元信息，但建议至少标注 `Status: archived/deprecated` 与适用版本。
+- `docs/archive/*` 允许缺失元信息，但建议至少标注 `Status: archived` 与适用版本。
 
 ### 2.2 设计类文档的“现状一致性”治理
 
@@ -54,3 +55,4 @@
 - 跳过 `http(s)`、`mailto`、`#anchor`
 - 对相对路径按文档所在目录解析并验证存在性
 - 禁止项目内使用文件系统绝对路径链接（例如 `file://...` 与 `/abs/path`）
+

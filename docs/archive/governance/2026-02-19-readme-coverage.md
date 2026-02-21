@@ -1,6 +1,6 @@
 # README 缺失与补齐清单
 
-- Status: active
+- Status: archived
 - Audience: Maintainers
 - Last-Updated: 2026-02-19
 
@@ -8,6 +8,6 @@
 
 | 目录 | 是否补齐 | README 标题 | 作者 | 合并 PR 号 |
 |---|---|---|---|---|
-| `/docs/main` | 是 | Main（规划、清单与审查交付物） | Quantum Misaka (Trae) | N/A |
+| `/docs/governance` | 是 | Governance（文档治理） | Quantum Misaka (Trae) | N/A |
 | `/docs/policy` | 是 | Policy（制度与规范） | Quantum Misaka (Trae) | N/A |
 | `/docs/design` | 是 | Design（设计分析与图片资产） | Quantum Misaka (Trae) | N/A |

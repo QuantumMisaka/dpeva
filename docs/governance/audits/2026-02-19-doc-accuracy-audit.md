@@ -53,4 +53,5 @@
 
 ## 6. 追踪矩阵
 
-- 功能-文档矩阵：/docs/main/feature-doc-matrix.md
+- 功能-文档矩阵：/docs/governance/traceability/feature-doc-matrix.md
+

@@ -1,6 +1,6 @@
 # 链接检测报告（Docs Link Check）
 
-- Status: active
+- Status: archived
 - Audience: Maintainers / Developers
 - Last-Updated: 2026-02-19
 
@@ -9,7 +9,7 @@
 - 范围：`/docs/**/*.md`
 - 允许的链接类型：
   - 项目内：以 `/` 开头的根相对路径（例如 `/docs/README.md`、`/src/dpeva/cli.py`）
-  - 外部链接：`http(s)://...`（当前文档集未使用）
+  - 外部链接：`http(s)://...`
   - 页面内锚点：`#...`
 - 禁止的链接类型：
   - 文件系统绝对路径（例如 `file://...`、`/abs/path`）
@@ -28,4 +28,5 @@
 
 - 统一将项目内 Markdown 链接标准化为根相对路径（以 `/` 开头）
 - 清理并替换历史 `file:///...` 绝对路径链接
-- 兼容旧入口统一采用“主文档唯一 URL + 跳转页（Deprecated）”策略
+- 删除旧入口文档，避免多入口导致内容分叉
+

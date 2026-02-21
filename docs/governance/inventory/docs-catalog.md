@@ -27,7 +27,7 @@
 |---|---|---|---|---|---|---|
 | [config-schema.md](/docs/reference/config-schema.md) | Reference | Developers | Medium | active | config\|pydantic\|schema | Workflow 配置字段字典（通用字段、Train/Infer/Feature/Collect/Analysis），包括类型/默认值/说明/约束。 |
 | [validation.md](/docs/reference/validation.md) | Reference | Developers | Medium | active | validation\|constraints | Pydantic 参数校验逻辑补充：范围约束、跨字段依赖、env_setup 格式化、路径存在性校验。 |
-| [reference/README.md](/docs/reference/README.md) | Policy | Developers | Medium | active | reference\|single-source | Reference 分层说明与迁移建议入口（未来承接 api/ 的权威查表）。 |
+| [reference/README.md](/docs/reference/README.md) | Policy | Developers | Medium | active | reference\|single-source | Reference 分层说明与迁移建议入口。 |
 
 ## 3. Guides（用户/开发者操作指南）
 
@@ -41,40 +41,29 @@
 | [guides/slurm.md](/docs/guides/slurm.md) | Guide | Users/Infra | High | active | slurm\|monitoring | Slurm submission 配置、日志命名、完成标记监控与常见故障排查。 |
 | [guides/troubleshooting.md](/docs/guides/troubleshooting.md) | Guide | Users/Developers | High | active | troubleshooting\|faq | 结构化排查顺序与环境/数据/作业/数值四类常见问题处理建议。 |
 
-## 4. Main（主线交付与专题）
+## 4. Governance（文档治理）
 
 | Document | Category | Audience | Cadence | Status | Tags | 摘要（关键信息点） |
 |---|---|---|---|---|---|---|
-| [developer-guide.md](/docs/guides/developer-guide.md) | Guide | Developers | High | active | architecture\|workflow\|cli\|testing | 项目概览、目录结构、模块详解（Train/Infer/UQ/Sampling/Feature/Submission）、CLI 使用、测试与工作流监控标记规范。 |
-| [integration-slurm-plan.md](/docs/guides/testing/integration-slurm-plan.md) | Guide | Developers | Medium | active | integration-test\|slurm | 集成测试里程碑与 DoD：基于生产目录反推 I/O，构建 Slurm 链式编排与最小化数据集。 |
-| [integration-slurm.md](/docs/guides/testing/integration-slurm.md) | Guide | Developers | Medium | active | integration-test\|deliverable | 集成测试交付索引：指向 tests/integration 编排器、裁剪脚本、模板与完成标记机制。 |
-| [integration-config-templates.md](/docs/guides/testing/integration-config-templates.md) | Guide | Developers | Medium | active | configs\|slurm | 集成测试最小配置模板说明：Feature/Train/Infer/Collect/Analysis 的输入输出约定与模板索引。 |
-| [multi-datapool-artifacts.md](/docs/guides/testing/multi-datapool-artifacts.md) | Report | Developers | Low | active | i/o-analysis\|multi-pool | 生产目录 I/O 拆解与 Workflow 配置映射（多数据池候选/训练集/描述符/模型与采样结果）。 |
-| [DP-EVA_Documentation_System_Planning_Report.md](/docs/main/DP-EVA_Documentation_System_Planning_Report.md) | Plan | Maintainers | Medium | active | docs\|planning\|raci | 文档体系规划：分类体系、缺失补充、模板、维护与质量标准、实施排期与责任分配。 |
+| [doc-system-planning.md](/docs/governance/plans/2026-02-18-doc-system-planning.md) | Plan | Maintainers | Medium | active | docs\|planning\|raci | 文档体系规划：分类体系、缺失补充、模板、维护与质量标准、实施排期与责任分配。 |
+| [feature-doc-matrix.md](/docs/governance/traceability/feature-doc-matrix.md) | Policy | Maintainers | High | active | traceability\|release | 功能-文档双向追踪矩阵（发布前核对）。 |
+| [doc-accuracy-audit.md](/docs/governance/audits/2026-02-19-doc-accuracy-audit.md) | Report | Maintainers | Medium | active | audit\|accuracy | 文档准确性审计：对照代码与对外接口，形成差异与风险项。 |
+| [docs-review-report.md](/docs/governance/audits/2026-02-19-docs-review-report.md) | Report | Maintainers | Medium | active | audit\|quality | 文档质量审查结论与问题清单。 |
+| [link-normalization.json](/docs/governance/tools/link-normalization.json) | Asset | Maintainers | Medium | active | tooling\|links | 链接规范化机器可读规则（用于工具/CI）。 |
 
 ## 5. Design（技术设计与科研分析）
 
 | Document | Category | Audience | Cadence | Status | Tags | 摘要（关键信息点） |
 |---|---|---|---|---|---|---|
-| [DP-EVA_Design_Report.md](/docs/design/DP-EVA_Design_Report.md) | Architecture | Developers | Medium | active | patterns\|ddd\|refactor | 设计模式识别、耦合分析与解耦策略；包含“已实施重构”的历史说明，需要通过状态/适用版本进一步澄清。 |
-| [2026-02-04-deepmd-dependency.md](/docs/architecture/decisions/2026-02-04-deepmd-dependency.md) | Decision | Maintainers | Low | active | adr\|deepmd\|dependency | DeepMD-kit 依赖管理决策：拒绝 submodule，采用外部环境依赖 + 版本约束 + 运行时检查。 |
-| [modulo-hypothesis.md](/docs/reports/modulo-hypothesis.md) | Report | Researchers | Low | active | descriptor\|modulo\|evidence | 结构描述符模长的物理意义假设与实证分析，包含统计与对比表格。 |
+| [DP-EVA_Design_Report.md](/docs/design/DP-EVA_Design_Report.md) | Architecture | Developers | Medium | active | patterns\|ddd\|refactor | 设计模式识别、耦合分析与解耦策略。 |
+| [2026-02-04-deepmd-dependency.md](/docs/architecture/decisions/2026-02-04-deepmd-dependency.md) | Decision | Maintainers | Low | active | adr\|deepmd\|dependency | DeepMD-kit 依赖管理决策。 |
+| [modulo-hypothesis.md](/docs/reports/modulo-hypothesis.md) | Report | Researchers | Low | active | descriptor\|modulo\|evidence | 结构描述符模长的物理意义假设与实证分析。 |
 
 ## 6. Archive（历史与弃用）
 
 | Document | Category | Audience | Cadence | Status | Tags | 摘要（关键信息点） |
 |---|---|---|---|---|---|---|
 | [archive/README.md](/docs/archive/README.md) | Policy | All | Low | active | archive\|policy | 归档策略：适用版本、落地状态、修订说明约定。 |
-| [Code_Review_Report_v2.7.1.md](/docs/archive/Code_Review_Report_v2.7.1.md) | Archive | Developers | Low | archived | code-review | 历史代码审查报告（性能/并发/测试等），仅供参考。 |
-| [Variable_Review_Report.md](/docs/archive/Variable_Review_Report.md) | Archive | Developers | Low | archived | config\|variables | 历史变量/配置体系审查，记录过往不一致与修复建议。 |
-| [SLURM_WORKFLOW_DESIGN.md](/docs/archive/refactoring/SLURM_WORKFLOW_DESIGN.md) | Archive | Developers | Low | archived | slurm\|workflow-chaining | 历史 Slurm 链式编排设计文档（当时缺少监控/等待机制的方案）。 |
-| [Training_Module_Refactoring_Report_v2.9.0.md](/docs/archive/refactoring/Training_Module_Refactoring_Report_v2.9.0.md) | Archive | Developers | Low | active | refactoring\|training | 训练模块重构报告（版本化历史记录）。 |
-| [Runner_Interface_Refractor_Plan.md](/docs/archive/refactoring/Runner_Interface_Refractor_Plan.md) | Archive | Developers | Low | active | refactoring\|cli | Runner 接口重构计划（历史）。 |
-| [DP-EVA_Labeling_Module_Plan.md](/docs/archive/refactoring/DP-EVA_Labeling_Module_Plan.md) | Archive | Developers | Low | active | plan\|labeling | 标注模块规划（历史/待实现方向）。 |
+| [Code_Review_Report_v2.7.1.md](/docs/archive/Code_Review_Report_v2.7.1.md) | Archive | Developers | Low | archived | code-review | 历史代码审查报告（性能/并发/测试等）。 |
+| [Variable_Review_Report.md](/docs/archive/Variable_Review_Report.md) | Archive | Developers | Low | archived | config\|variables | 历史变量/配置体系审查。 |
 
-## 7. Assets（图像）
-
-| Asset | Category | Audience | Cadence | Status | Tags | 摘要（关键信息点） |
-|---|---|---|---|---|---|---|
-| [dpeva-workflow.png](/docs/img/dpeva-workflow.png) | Asset | All | Low | active | diagram\|workflow | DP-EVA 工作流示意图（用于架构与指南插图）。 |
-| [modulo_distribution.png](/docs/design/modulo_distribution.png) | Asset | Researchers | Low | active | plot\|descriptor | 模长分布图（配套科研报告）。 |

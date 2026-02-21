@@ -1,7 +1,8 @@
 # 文档补全清单（Completion List）
 
-- Date: 2026-02-18
-- Scope: `docs/` 全量文档（含跳转入口）
+- Status: archived
+- Audience: Maintainers
+- Last-Updated: 2026-02-18
 
 本清单记录本轮对“未补全文档”的补全与重构结果，便于验收与后续持续改进。
 
@@ -30,4 +31,5 @@
 
 ## 3. 旧入口清理
 
-本轮已删除所有 deprecated 的旧路径入口文档，避免多入口导致内容分叉。
+本轮已删除旧入口文档，避免多入口导致内容分叉。
+
