@@ -49,22 +49,15 @@ class SamplingManager:
     def execute_sampling(self, features: np.ndarray, 
                         atom_features: Optional[List[np.ndarray]] = None,
                         atom_counts: Optional[List[int]] = None,
-                        background_features: Optional[np.ndarray] = None) -> Dict:
+                        background_features: Optional[np.ndarray] = None,
+                        n_candidates: Optional[int] = None) -> Dict:
         """
         Runs the sampler.
-        Returns: Dict containing:
-            - selected_indices
-            - pca_features
-            - explained_variance
-            - random_indices (for visualization baseline)
-            - scores_direct (coverage scores)
-            - scores_random (coverage scores baseline)
-            - full_pca_features (optional, if background_features provided)
         """
         if self.sampler_type == "2-direct":
             return self._run_2_direct(features, atom_features, atom_counts, background_features)
         else:
-            return self._run_direct(features, background_features)
+            return self._run_direct(features, background_features, n_candidates)
 
     def _calc_coverage(self, all_pca, selected_indices, n_bins=50):
         """Calculates grid-based coverage score for each PC dimension."""
@@ -88,7 +81,7 @@ class SamplingManager:
                 scores.append(n_occ_sel / n_occ_all)
         return np.array(scores)
 
-    def _run_direct(self, features, background_features=None):
+    def _run_direct(self, features, background_features=None, n_candidates=None):
         self.logger.info("Running Standard DIRECT...")
         n_clusters = self.config.get("direct_n_clusters")
         
@@ -98,7 +91,7 @@ class SamplingManager:
             select_k_from_clusters=SelectKFromClusters(k=self.direct_k)
         )
         
-        res = sampler.fit_transform(features)
+        res = sampler.fit_transform(features, n_candidates=n_candidates)
         
         # Calculate scores and random baseline for visualization
         selected_indices = res["selected_indices"]

@@ -65,7 +65,15 @@ class TestCollectionWorkflow2Direct:
         mock_load_atomic.return_value = (X_atom_list, n_atoms_list)
         
         # Mock execute_sampling return
-        mock_execute_sampling.return_value = ([0], {"dataname": datanames}, np.random.rand(10, 2))
+        mock_execute_sampling.return_value = {
+            "selected_indices": [0],
+            "pca_features": np.random.rand(10, 2),
+            "explained_variance": np.array([0.1]),
+            "random_indices": [0],
+            "scores_direct": np.array([0.5]),
+            "scores_random": np.array([0.1]),
+            "full_pca_features": np.random.rand(10, 2)
+        }
 
         # Mock IO Manager's load_descriptors
         with patch("dpeva.io.collection.CollectionIOManager.load_descriptors") as mock_load_desc:

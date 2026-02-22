@@ -60,6 +60,9 @@ def test_run_command_generation(tmp_path, mock_job_manager):
 
 def test_no_models_found(tmp_path, caplog):
     """Verify error logging when no models are found."""
+    import logging
+    caplog.set_level(logging.ERROR)
+
     data_path = tmp_path / "data"
     data_path.mkdir(exist_ok=True)
     
@@ -69,7 +72,8 @@ def test_no_models_found(tmp_path, caplog):
     }
     
     workflow = InferenceWorkflow(config)
-    # run() checks for models_paths
-    workflow.run()
     
-    assert "No models provided for inference" in caplog.text
+    # Use patch to verify logging call, avoiding caplog issues if propagation is disabled
+    with patch.object(workflow.logger, 'error') as mock_error:
+        workflow.run()
+        mock_error.assert_called_with("No models provided for inference.")

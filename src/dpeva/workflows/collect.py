@@ -252,7 +252,9 @@ class CollectionWorkflow:
         background_features = df_desc[[col for col in df_desc.columns if col.startswith(COL_DESC_PREFIX)]].values
 
         # 2.3 Execute Sampling
-        sampling_results = self.sampling_manager.execute_sampling(features, X_atom, n_atoms, background_features=background_features)
+        sampling_results = self.sampling_manager.execute_sampling(features, X_atom, n_atoms, 
+                                                                  background_features=background_features,
+                                                                  n_candidates=n_candidates if use_joint else None)
         
         selected_indices = sampling_results["selected_indices"]
         pca_features = sampling_results["pca_features"]

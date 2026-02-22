@@ -114,3 +114,38 @@ class TestJobManager:
         """Verify error when custom template missing."""
         with pytest.raises(FileNotFoundError):
             JobManager(custom_template_path="non_existent.jinja2")
+
+    @patch("subprocess.run")
+    def test_submit_error(self, mock_run, tmp_path):
+        """Verify submission error handling."""
+        manager = JobManager(mode="local")
+        script_path = tmp_path / "run.sh"
+        script_path.touch()
+        
+        # Mock failure
+        mock_run.side_effect = subprocess.CalledProcessError(1, "bash", stderr="Error message")
+        
+        with pytest.raises(subprocess.CalledProcessError):
+            manager.submit(str(script_path))
+
+    @patch("dpeva.submission.manager.JobManager.submit")
+    @patch("dpeva.submission.manager.JobManager.generate_script")
+    def test_submit_python_script(self, mock_gen, mock_submit, tmp_path):
+        """Verify python script submission helper."""
+        manager = JobManager(mode="local")
+        job_config = JobConfig(job_name="test", command="placeholder")
+        
+        manager.submit_python_script("print('hello')", "script.py", job_config, str(tmp_path))
+        
+        # Verify script creation
+        py_script = tmp_path / "script.py"
+        assert py_script.exists()
+        assert "print('hello')" in py_script.read_text()
+        
+        # Verify command update
+        assert "python" in job_config.command or "py" in job_config.command # sys.executable
+        assert "script.py" in job_config.command
+        
+        # Verify generate and submit called
+        mock_gen.assert_called()
+        mock_submit.assert_called()

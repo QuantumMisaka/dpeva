@@ -84,7 +84,15 @@ class TestCollectionWorkflowJoint:
         mock_filtering.return_value = (df_dummy_cand, pd.DataFrame(), pd.DataFrame(), MagicMock())
         
         # Mock execute_sampling return
-        mock_execute_sampling.return_value = ([0], {"dataname": ["c1-0"]}, np.random.rand(1, 2))
+        mock_execute_sampling.return_value = {
+            "selected_indices": [0],
+            "pca_features": np.random.rand(1, 2),
+            "explained_variance": np.array([0.1]),
+            "random_indices": [0],
+            "scores_direct": np.array([0.5]),
+            "scores_random": np.array([0.1]),
+            "full_pca_features": np.random.rand(1, 2)
+        }
         
         # Patch load_descriptors on IOManager
         with patch("dpeva.io.collection.CollectionIOManager.load_descriptors") as mock_load:
@@ -97,16 +105,21 @@ class TestCollectionWorkflowJoint:
             wf = CollectionWorkflow(mock_config)
             wf.run()
             
-            # Verify execute_sampling was called with MERGED features
+            # Verify execute_sampling was called with MERGED features and n_candidates
             mock_execute_sampling.assert_called()
             call_args = mock_execute_sampling.call_args
             args = call_args.args
+            kwargs = call_args.kwargs
             
             # args[0] is features. 
             # Candidate: 1 frame. Training: 1 frame.
             # Merged should be 2 frames.
             features = args[0]
             assert features.shape[0] == 2, f"Expected 2 frames (1 cand + 1 train), got {features.shape[0]}"
+            
+            # Verify n_candidates passed
+            assert "n_candidates" in kwargs
+            assert kwargs["n_candidates"] == 1
             
             # Verify load_descriptors was called twice (once for candidate, once for training)
             assert mock_load.call_count == 2

@@ -211,7 +211,7 @@ class TestUQCalculator:
         q3_r, q1_r = np.percentile(rnd_rescaled, [75, 25])
         assert np.isclose(q3_r - q1_r, q3_q - q1_q, atol=0.2)
 
-    def test_compute_qbc_rnd_robustness_nan(self, mock_predictions_factory, caplog):
+    def test_compute_qbc_rnd_robustness_nan(self, mock_predictions_factory):
         """
         Test 'Clamp-and-Clean' strategy:
         1. Clamp: Handles negative squares (simulated via manual hacking if needed, but here we check result).
@@ -221,21 +221,24 @@ class TestUQCalculator:
         # Model 0 has NaN
         f0 = np.zeros((n_atoms, 3))
         f0[0, 0] = np.nan
-        
+    
         p0 = mock_predictions_factory(f0, [n_atoms])
         p1 = mock_predictions_factory(np.zeros((n_atoms, 3)), [n_atoms])
         p2 = mock_predictions_factory(np.zeros((n_atoms, 3)), [n_atoms])
         p3 = mock_predictions_factory(np.zeros((n_atoms, 3)), [n_atoms])
-        
+    
         calc = UQCalculator()
-        
+    
         # Should not crash
-        with caplog.at_level(logging.WARNING):
+        from unittest.mock import patch
+        # Patch the module-level logger used in calculator.py
+        with patch("dpeva.uncertain.calculator.logger") as mock_logger:
             results = calc.compute_qbc_rnd([p0, p1, p2, p3])
             
-        # Verify Warning
-        assert "NaNs detected" in caplog.text
-        
+            # Verify Warning
+            mock_logger.warning.assert_called()
+            assert "NaNs detected" in mock_logger.warning.call_args[0][0]
+    
         # Verify Output is clean
         assert not np.isnan(results["uq_qbc_for"]).any()
         assert not np.isnan(results["uq_rnd_for"]).any()
