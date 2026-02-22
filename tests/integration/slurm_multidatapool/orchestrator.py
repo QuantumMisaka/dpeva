@@ -6,7 +6,8 @@ from typing import Mapping, Optional
 
 from dpeva.constants import WORKFLOW_FINISHED_TAG
 
-from .slurm_utils import submit_cli_and_capture_job_id, wait_for_text_in_file
+from .slurm_utils import submit_cli_and_capture_job_id
+from ..utils.logs import wait_for_text_in_file
 
 
 @dataclass(frozen=True)
@@ -63,4 +64,3 @@ class SlurmWorkflowOrchestrator:
         )
         target_log = log_path or (self.work_dir / "collect_slurm.out")
         wait_for_text_in_file(target_log, WORKFLOW_FINISHED_TAG, timeout_s=timeout_s)
-

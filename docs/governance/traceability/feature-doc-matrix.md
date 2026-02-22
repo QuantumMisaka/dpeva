@@ -43,3 +43,8 @@
 | 编排器与日志监控 | `/tests/integration/slurm_multidatapool/orchestrator.py` | `/docs/guides/testing/integration-slurm.md` |
 | 输入裁剪（降本） | `/tests/integration/slurm_multidatapool/data_minimizer.py` | `/docs/guides/testing/integration-slurm.md`、`/docs/guides/testing/integration-slurm-plan.md` |
 
+## 5. 工作流契约测试矩阵（维护用）
+
+| 功能点 | 代码实现 | 文档入口 |
+|---|---|---|
+| 工作流“产物 + 完成标记”契约 ↔ 可执行测试映射 | `/tests/unit`、`/tests/integration` | `/docs/governance/traceability/workflow-contract-test-matrix.md` |

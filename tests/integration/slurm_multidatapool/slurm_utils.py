@@ -6,6 +6,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional, Sequence, Mapping
 
+from ..utils.logs import wait_for_text_in_file
+
 
 @dataclass(frozen=True)
 class SlurmSubmission:
@@ -53,31 +55,6 @@ def _parse_job_id(text: str) -> Optional[str]:
     return m.group(1)
 
 
-def wait_for_text_in_file(
-    file_path: Path,
-    needle: str,
-    timeout_s: float,
-    poll_s: float = 5.0,
-    min_size: int = 1,
-) -> None:
-    start = time.time()
-    last_err: Optional[Exception] = None
-    while True:
-        if time.time() - start > timeout_s:
-            tail = _tail_text(file_path, max_lines=80)
-            raise TimeoutError(
-                f"Timeout waiting for '{needle}' in {file_path}\n\nLast lines:\n{tail}"
-            )
-        try:
-            if file_path.exists() and file_path.stat().st_size >= min_size:
-                content = file_path.read_text(errors="replace")
-                if needle in content:
-                    return
-        except Exception as e:
-            last_err = e
-        time.sleep(poll_s)
-
-
 def wait_for_job_gone_from_queue(
     job_id: str,
     timeout_s: float,
@@ -95,14 +72,3 @@ def wait_for_job_gone_from_queue(
         if not proc.stdout.strip():
             return
         time.sleep(poll_s)
-
-
-def _tail_text(file_path: Path, max_lines: int = 50) -> str:
-    try:
-        if not file_path.exists():
-            return "<log file not found>"
-        lines = file_path.read_text(errors="replace").splitlines()
-        return "\n".join(lines[-max_lines:])
-    except Exception as e:
-        return f"<failed to read log: {e}>"
-
