@@ -70,14 +70,14 @@ Collect 阶段也必须具备统一完成锚点。当前已在 [collect.py](/src
 2. Feature（训练集）→ `desc_train/<system>.npy`
 3. Train（3 模型）→ `0..2/model.ckpt.pt` + `train.out`（含完成标记）
 4. Infer（3 模型）→ `0..2/test_val/results.e.out` + `test_job.log`（含完成标记）
-5. Collect（CPU）→ `dpeva_uq_result/dataframe/df_uq_desc_sampled-final.csv` + `collect_slurm.out`（含完成标记）
+5. Collect（CPU）→ `dpeva_uq_result/dataframe/final_df.csv` + `collect_slurm.out`（含完成标记）
 
 核心断言（最小验收输出）：
 
 - 描述符文件存在（Feature 输出）
 - `model.ckpt.pt` 存在（Train 输出）
 - `results.e.out` 存在（Infer 输出）
-- `df_uq_desc_sampled-final.csv` 存在（Collect 输出）
+- `final_df.csv` 存在（Collect 输出）
 - 每一步日志出现 `DPEVA_TAG: WORKFLOW_FINISHED`（串联锚点）
 
 ### 5.2 后续扩展用例（模板已覆盖）

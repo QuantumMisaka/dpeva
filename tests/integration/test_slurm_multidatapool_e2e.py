@@ -149,5 +149,5 @@ def test_slurm_multidatapool_chain_smoke(tmp_path: Path):
         assert (work_dir / str(i) / task_name / "results.e.out").exists()
 
     orch.run_collect(config_path=work_dir / "collect.json", timeout_s=timeout_s)
-    assert (work_dir / "dpeva_uq_result" / "dataframe" / "df_uq_desc_sampled-final.csv").exists()
+    assert (work_dir / "dpeva_uq_result" / "dataframe" / "final_df.csv").exists()
 

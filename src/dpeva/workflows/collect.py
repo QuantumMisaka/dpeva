@@ -148,7 +148,7 @@ class CollectionWorkflow:
             self.uq_manager.run_auto_threshold(uq_results, uq_rnd_rescaled)
             
             # 1.4 Visualization (UQ Distributions)
-            vis.plot_uq_distribution(uq_results[COL_UQ_QBC], uq_results[COL_UQ_RND])
+            vis.plot_uq_distribution(uq_results[COL_UQ_QBC], uq_results[COL_UQ_RND], uq_rnd_rescaled)
             vis.plot_uq_with_trust_range(uq_results[COL_UQ_QBC], "UQ-QbC-force", "UQ-QbC-force.png",
                                         self.uq_manager.qbc_params["lo"], self.uq_manager.qbc_params["hi"])
             
@@ -205,6 +205,25 @@ class CollectionWorkflow:
             vis.plot_uq_identity_scatter(df_uq, self.config.uq_select_scheme,
                                         self.uq_manager.qbc_params["lo"], self.uq_manager.qbc_params["hi"],
                                         self.uq_manager.rnd_params["lo"], self.uq_manager.rnd_params["hi"])
+            
+            # 1.8 Error Analysis (if Ground Truth exists)
+            if has_gt:
+                self.logger.info("Ground Truth available. Plotting UQ vs Error...")
+                vis.plot_uq_vs_error(
+                    uq_results[COL_UQ_QBC], 
+                    uq_results[COL_UQ_RND], 
+                    uq_results["diff_maxf_0_frame"]
+                )
+                if uq_rnd_rescaled is not None:
+                    vis.plot_uq_vs_error(
+                        uq_results[COL_UQ_QBC], 
+                        uq_rnd_rescaled, 
+                        uq_results["diff_maxf_0_frame"],
+                        rescaled=True
+                    )
+                    
+                    diff_maxf = uq_results["diff_maxf_0_frame"]
+                    vis.plot_uq_diff_parity(uq_results[COL_UQ_QBC], uq_rnd_rescaled, diff_maxf)
 
             self._log_initial_stats(desc_datanames)
 
@@ -229,8 +248,19 @@ class CollectionWorkflow:
         if self.sampling_manager.sampler_type == "2-direct":
             X_atom, n_atoms = self.io_manager.load_atomic_features(str(self.config.desc_dir), df_candidate)
             
+        # Prepare background features (full pool) for visualization
+        background_features = df_desc[[col for col in df_desc.columns if col.startswith(COL_DESC_PREFIX)]].values
+
         # 2.3 Execute Sampling
-        selected_indices, pca_features, expl_var = self.sampling_manager.execute_sampling(features, X_atom, n_atoms)
+        sampling_results = self.sampling_manager.execute_sampling(features, X_atom, n_atoms, background_features=background_features)
+        
+        selected_indices = sampling_results["selected_indices"]
+        pca_features = sampling_results["pca_features"]
+        explained_var = sampling_results["explained_variance"]
+        random_indices = sampling_results["random_indices"]
+        scores_direct = sampling_results["scores_direct"]
+        scores_random = sampling_results["scores_random"]
+        full_pca_features = sampling_results.get("full_pca_features")
         
         # 2.4 Handle Joint Indices
         if use_joint:
@@ -239,13 +269,32 @@ class CollectionWorkflow:
             final_indices = selected_indices
             
         df_final = df_candidate.iloc[final_indices]
-        self.io_manager.save_dataframe(df_final, "df_uq_desc_sampled-final.csv")
+        self.io_manager.save_dataframe(df_final, "final_df.csv")
         
         # 2.5 Sampling Stats & Visualization
-        self._log_sampling_stats(df_final, desc_datanames)
+        self._log_sampling_stats(df_final)
         
-        # Visualization (Simplified call for brevity, fully implemented in original)
-        self.logger.info("Visualization of sampling results...")
+        self.logger.info("Visualizing Sampling Results (PCA & Coverage)...")
+        # For PCA visualization, we need the full PCA features
+        # If Joint Sampling was used, 'features' includes training data
+        # We need to distinguish candidates vs training in the plot
+        
+        # In Joint mode, 'n_candidates' is the split point
+        # For plot_pca_analysis, we pass 'features' as 'all_features'
+        
+        vis.plot_pca_analysis(
+            explained_variance=explained_var,
+            selected_PC_dim=pca_features.shape[1],
+            all_features=pca_features,  # This is PCA-transformed 'features'
+            direct_indices=selected_indices,
+            random_indices=random_indices,
+            scores_direct=scores_direct,
+            scores_random=scores_random,
+            df_uq=df_candidate, # df_candidate corresponds to the first n_candidates rows of features
+            final_indices=final_indices,
+            n_candidates=n_candidates if use_joint else None,
+            full_features=full_pca_features # We pass the full features for background plot
+        )
         
         # ---------------------------------------------------------
         # Phase 3: Export
@@ -304,7 +353,7 @@ class CollectionWorkflow:
         self.logger.info(f"Initial Stats:\n{stats}")
         return stats
 
-    def _log_sampling_stats(self, df_final, desc_datanames):
+    def _log_sampling_stats(self, df_final):
         """Logs sampling stats."""
         df_final["pool"] = df_final["dataname"].apply(lambda x: get_pool_name(get_sys_name(x)))
         stats_sampled = df_final.groupby("pool").agg(sampled_frames=("dataname", "count"))

@@ -38,8 +38,14 @@ class CollectionIOManager:
         """Configures file logging."""
         log_file = os.path.join(self.project_dir, self.root_savedir, DEFAULT_LOG_FILE)
         
+        # Get the 'dpeva' logger to capture logs from all modules
+        dpeva_logger = logging.getLogger("dpeva")
+        
+        # Prevent propagation to root logger to avoid stderr redundancy
+        dpeva_logger.propagate = False
+        
         # Check for duplicate handlers
-        for h in self.logger.handlers:
+        for h in dpeva_logger.handlers:
             if isinstance(h, logging.FileHandler) and h.baseFilename == os.path.abspath(log_file):
                 return
 
@@ -47,8 +53,8 @@ class CollectionIOManager:
         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         file_handler.setFormatter(formatter)
         file_handler.setLevel(logging.INFO)
-        self.logger.addHandler(file_handler)
-        self.logger.info(f"Logging configured to file: {log_file}")
+        dpeva_logger.addHandler(file_handler)
+        dpeva_logger.info(f"Logging configured to file: {log_file}")
 
     def count_frames(self, data_dir: str, fmt: str = "auto") -> int:
         """Counts total frames in dataset."""

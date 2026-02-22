@@ -48,17 +48,47 @@ class SamplingManager:
 
     def execute_sampling(self, features: np.ndarray, 
                         atom_features: Optional[List[np.ndarray]] = None,
-                        atom_counts: Optional[List[int]] = None) -> Tuple[List[int], np.ndarray, np.ndarray]:
+                        atom_counts: Optional[List[int]] = None,
+                        background_features: Optional[np.ndarray] = None) -> Dict:
         """
         Runs the sampler.
-        Returns: (selected_indices, pca_features, explained_variance)
+        Returns: Dict containing:
+            - selected_indices
+            - pca_features
+            - explained_variance
+            - random_indices (for visualization baseline)
+            - scores_direct (coverage scores)
+            - scores_random (coverage scores baseline)
+            - full_pca_features (optional, if background_features provided)
         """
         if self.sampler_type == "2-direct":
-            return self._run_2_direct(features, atom_features, atom_counts)
+            return self._run_2_direct(features, atom_features, atom_counts, background_features)
         else:
-            return self._run_direct(features)
+            return self._run_direct(features, background_features)
 
-    def _run_direct(self, features):
+    def _calc_coverage(self, all_pca, selected_indices, n_bins=50):
+        """Calculates grid-based coverage score for each PC dimension."""
+        n_dims = all_pca.shape[1]
+        scores = []
+        for d in range(n_dims):
+            vals_all = all_pca[:, d]
+            vals_sel = all_pca[selected_indices, d]
+            
+            # Use fixed number of bins based on full range
+            hist_all, edges = np.histogram(vals_all, bins=n_bins)
+            hist_sel, _ = np.histogram(vals_sel, bins=edges)
+            
+            # Count occupied bins
+            n_occ_all = np.sum(hist_all > 0)
+            n_occ_sel = np.sum(hist_sel > 0)
+            
+            if n_occ_all == 0:
+                scores.append(0.0)
+            else:
+                scores.append(n_occ_sel / n_occ_all)
+        return np.array(scores)
+
+    def _run_direct(self, features, background_features=None):
         self.logger.info("Running Standard DIRECT...")
         n_clusters = self.config.get("direct_n_clusters")
         
@@ -69,9 +99,43 @@ class SamplingManager:
         )
         
         res = sampler.fit_transform(features)
-        return res["selected_indices"], res["PCAfeatures"], sampler.pca.pca.explained_variance_
+        
+        # Calculate scores and random baseline for visualization
+        selected_indices = res["selected_indices"]
+        pca_features = res["PCAfeatures"]
+        
+        # Calculate random baseline
+        n_samples = len(selected_indices)
+        n_total = len(features)
+        if n_samples < n_total:
+            random_indices = np.random.choice(n_total, n_samples, replace=False)
+        else:
+            random_indices = np.arange(n_total)
+            
+        # Calculate Coverage Scores
+        scores_direct = self._calc_coverage(pca_features, selected_indices)
+        scores_random = self._calc_coverage(pca_features, random_indices)
+        
+        # Transform background features if provided
+        full_pca_features = None
+        if background_features is not None:
+            # DIRECTSampler.pca is the PCA step (usually a Pipeline or just PCA)
+            # Inspecting dpeva.sampling.direct: DIRECTSampler.pca is the first step
+            # Actually DIRECTSampler.fit_transform calls self.pca.fit_transform(X)
+            # So self.pca is the fitted transformer
+            full_pca_features = sampler.pca.transform(background_features)
+        
+        return {
+            "selected_indices": selected_indices,
+            "pca_features": pca_features,
+            "explained_variance": sampler.pca.pca.explained_variance_,
+            "random_indices": random_indices,
+            "scores_direct": scores_direct,
+            "scores_random": scores_random,
+            "full_pca_features": full_pca_features
+        }
 
-    def _run_2_direct(self, features, atom_features, atom_counts):
+    def _run_2_direct(self, features, atom_features, atom_counts, background_features=None):
         self.logger.info("Running 2-DIRECT...")
         if atom_features is None:
             raise ValueError("Atomic features required for 2-DIRECT")
@@ -95,4 +159,34 @@ class SamplingManager:
         res = sampler.fit_transform(features, atom_features, atom_counts)
         # 2-DIRECT uses Step 1 PCA for visualization usually
         expl_var = sampler.step1_sampler.pca.pca.explained_variance_
-        return res["selected_indices"], res["PCAfeatures"], expl_var
+        
+        selected_indices = res["selected_indices"]
+        pca_features = res["PCAfeatures"]
+        
+        # Random baseline
+        n_samples = len(selected_indices)
+        n_total = len(features)
+        if n_samples < n_total:
+            random_indices = np.random.choice(n_total, n_samples, replace=False)
+        else:
+            random_indices = np.arange(n_total)
+            
+        # Calculate Coverage Scores
+        scores_direct = self._calc_coverage(pca_features, selected_indices)
+        scores_random = self._calc_coverage(pca_features, random_indices)
+
+        # Transform background features if provided
+        # 2-DIRECT structure is complex, usually step1_sampler does PCA
+        full_pca_features = None
+        if background_features is not None:
+             full_pca_features = sampler.step1_sampler.pca.transform(background_features)
+            
+        return {
+            "selected_indices": selected_indices,
+            "pca_features": pca_features,
+            "explained_variance": expl_var,
+            "random_indices": random_indices,
+            "scores_direct": scores_direct,
+            "scores_random": scores_random,
+            "full_pca_features": full_pca_features
+        }
