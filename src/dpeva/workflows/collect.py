@@ -231,71 +231,74 @@ class CollectionWorkflow:
         # ---------------------------------------------------------
         # Phase 2: Sampling
         # ---------------------------------------------------------
+        df_final = pd.DataFrame()
+        
         if len(df_candidate) == 0:
             self.logger.warning("No candidates selected. Skipping Sampling.")
-            self.logger.info(WORKFLOW_FINISHED_TAG)
-            return
-
-        # 2.1 Prepare Features (Joint Logic)
-        train_desc_stru = np.array([])
-        if self.config.training_desc_dir:
-            _, train_desc_stru = self.io_manager.load_descriptors(str(self.config.training_desc_dir), "training descriptors")
+            # Create empty df_final with correct columns if possible
+            if not df_candidate.empty:
+                df_final = pd.DataFrame(columns=df_candidate.columns)
+            else:
+                df_final = pd.DataFrame(columns=["dataname"])
+                
+            self.io_manager.save_dataframe(df_final, "final_df.csv")
             
-        features, use_joint, n_candidates = self.sampling_manager.prepare_features(df_candidate, df_desc, train_desc_stru)
-        
-        # 2.2 Load Atomic Features if needed (2-DIRECT)
-        X_atom, n_atoms = None, None
-        if self.sampling_manager.sampler_type == "2-direct":
-            X_atom, n_atoms = self.io_manager.load_atomic_features(str(self.config.desc_dir), df_candidate)
-            
-        # Prepare background features (full pool) for visualization
-        background_features = df_desc[[col for col in df_desc.columns if col.startswith(COL_DESC_PREFIX)]].values
-
-        # 2.3 Execute Sampling
-        sampling_results = self.sampling_manager.execute_sampling(features, X_atom, n_atoms, 
-                                                                  background_features=background_features)
-        
-        selected_indices = sampling_results["selected_indices"]
-        pca_features = sampling_results["pca_features"]
-        explained_var = sampling_results["explained_variance"]
-        random_indices = sampling_results["random_indices"]
-        scores_direct = sampling_results["scores_direct"]
-        scores_random = sampling_results["scores_random"]
-        full_pca_features = sampling_results.get("full_pca_features")
-        
-        # 2.4 Handle Joint Indices
-        if use_joint:
-            final_indices = [idx for idx in selected_indices if idx < n_candidates]
         else:
-            final_indices = selected_indices
+            # 2.1 Prepare Features (Joint Logic)
+            train_desc_stru = np.array([])
+            if self.config.training_desc_dir:
+                _, train_desc_stru = self.io_manager.load_descriptors(str(self.config.training_desc_dir), "training descriptors")
+                
+            features, use_joint, n_candidates = self.sampling_manager.prepare_features(df_candidate, df_desc, train_desc_stru)
             
-        df_final = df_candidate.iloc[final_indices]
-        self.io_manager.save_dataframe(df_final, "final_df.csv")
-        
-        # 2.5 Sampling Stats & Visualization
-        self._log_sampling_stats(df_final)
-        
-        self.logger.info("Visualizing Sampling Results (PCA & Coverage)...")
-        # For PCA visualization, we need the full PCA features
-        # If Joint Sampling was used, 'features' includes training data
-        # We need to distinguish candidates vs training in the plot
-        
-        # In Joint mode, 'n_candidates' is the split point
-        # For plot_pca_analysis, we pass 'features' as 'all_features'
-        
-        vis.plot_pca_analysis(
-            explained_variance=explained_var,
-            selected_PC_dim=pca_features.shape[1],
-            all_features=pca_features,  # This is PCA-transformed 'features'
-            direct_indices=selected_indices,
-            random_indices=random_indices,
-            scores_direct=scores_direct,
-            scores_random=scores_random,
-            df_uq=df_candidate, # df_candidate corresponds to the first n_candidates rows of features
-            final_indices=final_indices,
-            n_candidates=n_candidates if use_joint else None,
-            full_features=full_pca_features # We pass the full features for background plot
-        )
+            # 2.2 Load Atomic Features if needed (2-DIRECT)
+            X_atom, n_atoms = None, None
+            if self.sampling_manager.sampler_type == "2-direct":
+                X_atom, n_atoms = self.io_manager.load_atomic_features(str(self.config.desc_dir), df_candidate)
+                
+            # Prepare background features (full pool) for visualization
+            background_features = df_desc[[col for col in df_desc.columns if col.startswith(COL_DESC_PREFIX)]].values
+    
+            # 2.3 Execute Sampling
+            sampling_results = self.sampling_manager.execute_sampling(features, X_atom, n_atoms, 
+                                                                      background_features=background_features,
+                                                                      n_candidates=n_candidates if use_joint else None)
+            
+            selected_indices = sampling_results["selected_indices"]
+            pca_features = sampling_results["pca_features"]
+            explained_var = sampling_results["explained_variance"]
+            random_indices = sampling_results["random_indices"]
+            scores_direct = sampling_results["scores_direct"]
+            scores_random = sampling_results["scores_random"]
+            full_pca_features = sampling_results.get("full_pca_features")
+            
+            # 2.4 Handle Joint Indices
+            if use_joint:
+                final_indices = [idx for idx in selected_indices if idx < n_candidates]
+            else:
+                final_indices = selected_indices
+                
+            df_final = df_candidate.iloc[final_indices]
+            self.io_manager.save_dataframe(df_final, "final_df.csv")
+            
+            # 2.5 Sampling Stats & Visualization
+            self._log_sampling_stats(df_final)
+            
+            self.logger.info("Visualizing Sampling Results (PCA & Coverage)...")
+            
+            vis.plot_pca_analysis(
+                explained_variance=explained_var,
+                selected_PC_dim=pca_features.shape[1],
+                all_features=pca_features,  # This is PCA-transformed 'features'
+                direct_indices=selected_indices,
+                random_indices=random_indices,
+                scores_direct=scores_direct,
+                scores_random=scores_random,
+                df_uq=df_candidate, # df_candidate corresponds to the first n_candidates rows of features
+                final_indices=final_indices,
+                n_candidates=n_candidates if use_joint else None,
+                full_features=full_pca_features # We pass the full features for background plot
+            )
         
         # ---------------------------------------------------------
         # Phase 3: Export
