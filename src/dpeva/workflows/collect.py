@@ -284,6 +284,7 @@ class CollectionWorkflow:
             command=cmd,
             job_name=self.slurm_config.get("job_name", "dpeva_collect"),
             partition=self.slurm_config.get("partition", "CPU-MISC"),
+            qos=self.slurm_config.get("qos"),
             ntasks=self.slurm_config.get("ntasks", 4),
             output_log=os.path.join(project_abs, "collect_slurm.out"),
             error_log=os.path.join(project_abs, "collect_slurm.err"),
