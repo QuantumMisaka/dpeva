@@ -32,6 +32,7 @@ def write_minimal_training_input(base_input_path: Path, out_path: Path, systems_
         training_data["batch_size"] = "auto:32"
     training["training_data"] = training_data
     training["numb_steps"] = 10
+    training["warmup_steps"] = 0 # Ensure warmup < numb_steps
     training["save_freq"] = 10
     training["disp_freq"] = 1
     cfg["training"] = training
@@ -39,9 +40,10 @@ def write_minimal_training_input(base_input_path: Path, out_path: Path, systems_
 
 
 def _copy_base_model(src_root: Path, dst_root: Path) -> None:
-    src = src_root / "0" / "DPA-3.1-3M.pt"
+    src = src_root / "DPA-3.1-3M.pt"
     if not src.exists():
-        src = src_root / "DPA-3.1-3M.pt"
+        # Fallback to old structure if needed, or error out
+        raise FileNotFoundError(f"Model file not found at {src}")
     shutil.copy2(src, dst_root / "DPA-3.1-3M.pt")
 
 

@@ -118,8 +118,11 @@ class TestCollectionWorkflowJoint:
             assert features.shape[0] == 2, f"Expected 2 frames (1 cand + 1 train), got {features.shape[0]}"
             
             # Verify n_candidates passed
-            assert "n_candidates" in kwargs
-            assert kwargs["n_candidates"] == 1
+            # n_candidates is no longer passed to execute_sampling
+            assert "n_candidates" not in kwargs
+            
+            # Verify n_candidates is set in manager
+            assert wf.sampling_manager.n_candidates == 1
             
             # Verify load_descriptors was called twice (once for candidate, once for training)
             assert mock_load.call_count == 2

@@ -65,7 +65,8 @@ def test_execute_sampling_joint():
         }
         mock_instance.pca.pca.explained_variance_ = np.array([1.0, 0.5])
         
-        res = manager.execute_sampling(features, background_features=background_features, n_candidates=10)
+        manager.n_candidates = 10
+        res = manager.execute_sampling(features, background_features=background_features)
         
         # Verify fit_transform called with n_candidates=10
         mock_instance.fit_transform.assert_called_once()

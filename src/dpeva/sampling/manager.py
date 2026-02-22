@@ -23,6 +23,9 @@ class SamplingManager:
         self.sampler_type = self.config.get("sampler_type", "direct")
         self.direct_k = self.config.get("direct_k", 1)
         self.direct_thr_init = self.config.get("direct_thr_init", 0.1)
+        
+        # Internal state
+        self.n_candidates: Optional[int] = None
 
     def prepare_features(self, df_candidate: pd.DataFrame, df_desc: pd.DataFrame, 
                         train_desc_stru: np.ndarray) -> Tuple[np.ndarray, bool, int]:
@@ -32,6 +35,7 @@ class SamplingManager:
         """
         candidate_features = df_candidate[[col for col in df_desc.columns if col.startswith(COL_DESC_PREFIX)]].values
         n_candidates = len(candidate_features)
+        self.n_candidates = n_candidates
         
         use_joint = False
         features = candidate_features
@@ -49,15 +53,14 @@ class SamplingManager:
     def execute_sampling(self, features: np.ndarray, 
                         atom_features: Optional[List[np.ndarray]] = None,
                         atom_counts: Optional[List[int]] = None,
-                        background_features: Optional[np.ndarray] = None,
-                        n_candidates: Optional[int] = None) -> Dict:
+                        background_features: Optional[np.ndarray] = None) -> Dict:
         """
         Runs the sampler.
         """
         if self.sampler_type == "2-direct":
             return self._run_2_direct(features, atom_features, atom_counts, background_features)
         else:
-            return self._run_direct(features, background_features, n_candidates)
+            return self._run_direct(features, background_features)
 
     def _calc_coverage(self, all_pca, selected_indices, n_bins=50):
         """Calculates grid-based coverage score for each PC dimension."""
@@ -81,7 +84,7 @@ class SamplingManager:
                 scores.append(n_occ_sel / n_occ_all)
         return np.array(scores)
 
-    def _run_direct(self, features, background_features=None, n_candidates=None):
+    def _run_direct(self, features, background_features=None):
         self.logger.info("Running Standard DIRECT...")
         n_clusters = self.config.get("direct_n_clusters")
         
@@ -91,7 +94,8 @@ class SamplingManager:
             select_k_from_clusters=SelectKFromClusters(k=self.direct_k)
         )
         
-        res = sampler.fit_transform(features, n_candidates=n_candidates)
+        # Use stored n_candidates if available (for Joint Sampling)
+        res = sampler.fit_transform(features, n_candidates=self.n_candidates)
         
         # Calculate scores and random baseline for visualization
         selected_indices = res["selected_indices"]

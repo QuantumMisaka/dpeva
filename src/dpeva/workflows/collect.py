@@ -253,8 +253,7 @@ class CollectionWorkflow:
 
         # 2.3 Execute Sampling
         sampling_results = self.sampling_manager.execute_sampling(features, X_atom, n_atoms, 
-                                                                  background_features=background_features,
-                                                                  n_candidates=n_candidates if use_joint else None)
+                                                                  background_features=background_features)
         
         selected_indices = sampling_results["selected_indices"]
         pca_features = sampling_results["pca_features"]

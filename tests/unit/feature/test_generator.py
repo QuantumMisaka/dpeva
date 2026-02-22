@@ -12,6 +12,32 @@ def mock_deep_pot():
 
 class TestDescriptorGenerator:
     
+    @pytest.fixture
+    def generator(self):
+        # Mock _DEEPMD_AVAILABLE to True for testing
+        with patch("dpeva.feature.generator._DEEPMD_AVAILABLE", True):
+            # Patch DeepPot on the module where it is used/imported
+            # In dpeva.feature.generator, DeepPot is imported inside the try-except block
+            # or at module level if available.
+            # We need to patch dpeva.feature.generator.DeepPot if it exists there, 
+            # or mock the import.
+            
+            # Since the code does `from deepmd.infer.deep_pot import DeepPot`,
+            # `DeepPot` becomes a name in `dpeva.feature.generator` namespace ONLY IF import succeeds.
+            # If import fails, it is not defined.
+            
+            # We can use `patch.dict` on sys.modules to mock `deepmd.infer.deep_pot`
+            # OR we can just set the attribute on the module manually if it's missing,
+            # but `patch` might complain if it doesn't exist.
+            
+            # Better approach: Mock the class where it is DEFINED if we can, 
+            # or use `create=True` in patch to create it if missing.
+            
+            with patch("dpeva.feature.generator.DeepPot", create=True) as mock_dp:
+                gen = DescriptorGenerator("model.pb")
+                gen.model = mock_dp.return_value
+                yield gen
+
     @patch("dpeva.feature.generator._DEEPMD_AVAILABLE", True)
     def test_init(self, mock_deep_pot):
         generator = DescriptorGenerator(
