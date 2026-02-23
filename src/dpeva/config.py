@@ -64,7 +64,7 @@ class SubmissionConfig(BaseModel):
 
 class BaseWorkflowConfig(BaseModel):
     """Base configuration for all workflows."""
-    model_config = ConfigDict(extra='ignore', populate_by_name=True)
+    model_config = ConfigDict(extra='ignore', populate_by_name=True, protected_namespaces=())
 
     work_dir: Path = Field(
         default_factory=Path.cwd, 

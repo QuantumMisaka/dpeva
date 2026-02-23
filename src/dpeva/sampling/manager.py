@@ -95,11 +95,20 @@ class SamplingManager:
         )
         
         # Use stored n_candidates if available (for Joint Sampling)
-        res = sampler.fit_transform(features, n_candidates=self.n_candidates)
+        res = sampler.fit_transform(features)
         
         # Calculate scores and random baseline for visualization
         selected_indices = res["selected_indices"]
         pca_features = res["PCAfeatures"]
+        
+        # Filter out training data (Joint Sampling post-processing)
+        if self.n_candidates is not None:
+            original_len = len(selected_indices)
+            # Training data is appended after candidates, so indices >= n_candidates are training data
+            selected_indices = [idx for idx in selected_indices if idx < self.n_candidates]
+            filtered_len = len(selected_indices)
+            if filtered_len < original_len:
+                self.logger.info(f"Joint Sampling: Filtered out {original_len - filtered_len} selections from training data.")
         
         # Calculate random baseline
         n_samples = len(selected_indices)

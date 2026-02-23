@@ -34,6 +34,7 @@ DP-EVA (Deep Potential EVolution Accelerator) 是一个面向 DPA3 (Deep Potenti
 *   **数据标准化 (Data Standardization)**：引入标准化的 `PredictionData` 接口，替代不透明的遗留对象。
 *   **双模调度 (Dual-Mode Scheduling)**：底层统一封装 `JobManager`，无缝支持 Local (Multiprocessing) 和 Slurm 集群环境。
 *   **日志规范 (Logging Discipline)**：库代码不干预全局日志配置，确保日志输出清晰、无冗余且易于追踪。
+*   **职责边界 (Boundary of Responsibility)**：上层业务逻辑（如 Joint Sampling 的数据切分）应收敛于 Manager/Service 层，严禁侵入式修改底层通用算法模块（如 `DIRECTSampler`）。保持底层模块的纯洁性与通用性（Ref: v0.4.2 n_candidates fix）。
 
 ### 1.3 优化方向与路线图 (Roadmap)
 基于 Code Review 的建议，项目后续将重点关注以下方向：
@@ -435,3 +436,8 @@ DPEVA_TAG: WORKFLOW_FINISHED
     *   **[规范]** 在开发者指南中正式确立了“开发流程标准”，强制要求文档同步更新。
     *   **[迁移]** 将详细配置参数迁移至 `docs/reference/config-schema.md`，保持核心文档简洁。
     *   **[架构]** 重构 `FeatureWorkflow`，采用 DDD 模式拆分为 `FeatureIOManager` 和 `FeatureExecutionManager`。
+*   **v0.4.2** (2026-02-23):
+    *   **[修复]** 修复了 `DIRECTSampler` 在 Joint Sampling 模式下因传递非法参数 `n_candidates` 导致的 `ValueError`。
+    *   **[重构]** 采用 **Post-Filtering（后处理过滤）** 策略，将采样过滤逻辑从底层 `DIRECTSampler` 移回 `SamplingManager`。
+    *   **[测试]** 全面优化测试套件，移除了硬编码路径和对临时目录的依赖，修复了 Pydantic 和 Pandas 的警告。
+    *   **[原则]** 此次修复严格遵循 **Separation of Concerns** 原则，撤销了对核心算法模块的侵入式修改，确保了 `sampling` 模块的通用性和纯洁性。

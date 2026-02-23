@@ -6,10 +6,19 @@ import numpy as np
 from pathlib import Path
 
 # Source and Destination Paths
-SRC_ROOT = Path("/home/pku-jianghong/liuzhaoqing/WORK/FT2DP-DPEVA/dpeva/test/test-for-multiple-datapool")
+# Try to find source relative to project root, fallback to None
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+SRC_ROOT_CANDIDATE = PROJECT_ROOT / "test" / "test-for-multiple-datapool"
+SRC_ROOT = SRC_ROOT_CANDIDATE if SRC_ROOT_CANDIDATE.exists() else None
+
 DST_ROOT = Path(__file__).parent / "data"
 
 def setup_integration_data():
+    if not SRC_ROOT:
+        print(f"Source data directory not found at {SRC_ROOT_CANDIDATE}. Skipping data setup.")
+        print("Ensure 'test/' directory exists or manually populate 'tests/integration/data'.")
+        return
+
     if DST_ROOT.exists():
         print(f"Cleaning existing data at {DST_ROOT}...")
         shutil.rmtree(DST_ROOT)

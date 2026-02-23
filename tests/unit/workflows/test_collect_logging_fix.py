@@ -71,6 +71,8 @@ def test_default_mode_fallback(base_config):
     wf = CollectionWorkflow(config)
     assert wf.config.uq_trust_mode == "auto"
 
+from unittest import mock
+
 def test_slurm_missing_config_path(base_config):
     """Test that Slurm backend requires config_path."""
     config = base_config.copy()
@@ -82,11 +84,16 @@ def test_slurm_missing_config_path(base_config):
     config["uq_rnd_rescaled_trust_lo"] = 0.1
     config["uq_rnd_rescaled_trust_width"] = 0.1
     
-    # The check is in run(), not init.
-    wf = CollectionWorkflow(config)
-    
-    with pytest.raises(ValueError, match="Config path required for Slurm"):
-        wf.run()
+    # Ensure backend override is cleared
+    with mock.patch.dict(os.environ):
+        if "DPEVA_INTERNAL_BACKEND" in os.environ:
+            del os.environ["DPEVA_INTERNAL_BACKEND"]
+            
+        # The check is in run(), not init.
+        wf = CollectionWorkflow(config)
+        
+        with pytest.raises(ValueError, match="Config path required for Slurm"):
+            wf.run()
 
 def test_slurm_valid_config_path(base_config):
     """Test that Slurm backend accepts config_path."""
@@ -99,9 +106,14 @@ def test_slurm_valid_config_path(base_config):
     config["uq_rnd_rescaled_trust_lo"] = 0.1
     config["uq_rnd_rescaled_trust_width"] = 0.1
     
-    # We just check init doesn't fail.
-    # We can't easily call run() because it tries to submit.
-    # But we can verify backend is set.
-    wf = CollectionWorkflow(config, config_path="dummy_config.json")
-    assert wf.backend == "slurm"
-    assert wf.config_path == "dummy_config.json"
+    # Ensure backend override is cleared
+    with mock.patch.dict(os.environ):
+        if "DPEVA_INTERNAL_BACKEND" in os.environ:
+            del os.environ["DPEVA_INTERNAL_BACKEND"]
+
+        # We just check init doesn't fail.
+        # We can't easily call run() because it tries to submit.
+        # But we can verify backend is set.
+        wf = CollectionWorkflow(config, config_path="dummy_config.json")
+        assert wf.backend == "slurm"
+        assert wf.config_path == "dummy_config.json"

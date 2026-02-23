@@ -4,11 +4,11 @@ import json
 from unittest.mock import patch, MagicMock
 from dpeva.workflows.train import TrainingWorkflow
 
-def test_training_workflow_init_multi_model(real_config_loader, tmp_path):
+def test_training_workflow_init_multi_model(tmp_path):
     """
-    Test initialization using real multi-model config from test/test-v2-7.
+    Test initialization using inline config (mocking real config).
     """
-    # Load config and remap paths to tmp_path
+    # Create directories
     data_dir = tmp_path / "sampled_dpdata"
     data_dir.mkdir()
     
@@ -17,22 +17,19 @@ def test_training_workflow_init_multi_model(real_config_loader, tmp_path):
     with open(input_json_path, "w") as f:
         json.dump({"training": {"numb_steps": 100}, "model": {"type_map": ["O", "H"]}}, f)
         
-    config = real_config_loader(
-        "test-v2-7/config.json",
-        mock_data_mapping={
-            "training_data_path": "sampled_dpdata"
+    # Define config inline
+    config = {
+        "base_model_path": str(tmp_path / "model.ckpt"),
+        "training_data_path": str(data_dir),
+        "input_json_path": str(input_json_path),
+        "work_dir": str(tmp_path),
+        "num_models": 4,
+        "model_head": "finetune_head",
+        "training_mode": "init",
+        "submission": {
+            "backend": "local"
         }
-    )
-
-    # Manually fix input_json_path which is relative in config
-    config["input_json_path"] = str(input_json_path)
-    config["work_dir"] = str(tmp_path)
-    
-    # Fix missing/renamed fields due to alias removal
-    if "finetune_head_name" in config:
-        config["model_head"] = config.pop("finetune_head_name")
-    if "mode" in config:
-        config["training_mode"] = config.pop("mode")
+    }
 
     # Patch Managers
     with patch("dpeva.workflows.train.TrainingConfigManager") as MockConfigManager, \

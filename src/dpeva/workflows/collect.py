@@ -94,7 +94,11 @@ class CollectionWorkflow:
         # 3. Setup Environment
         self._validate_config()
         self.io_manager.ensure_dirs()
-        self.io_manager.configure_logging()
+        
+        # Only configure file logging (which silences console output)
+        # when running actual computation (local or worker), not when submitting to Slurm.
+        if self.backend != "slurm":
+            self.io_manager.configure_logging()
         
     def _validate_config(self):
         if not os.path.exists(self.project):
@@ -261,8 +265,7 @@ class CollectionWorkflow:
     
             # 2.3 Execute Sampling
             sampling_results = self.sampling_manager.execute_sampling(features, X_atom, n_atoms, 
-                                                                      background_features=background_features,
-                                                                      n_candidates=n_candidates if use_joint else None)
+                                                                      background_features=background_features)
             
             selected_indices = sampling_results["selected_indices"]
             pca_features = sampling_results["pca_features"]
@@ -278,7 +281,7 @@ class CollectionWorkflow:
             else:
                 final_indices = selected_indices
                 
-            df_final = df_candidate.iloc[final_indices]
+            df_final = df_candidate.iloc[final_indices].copy()
             self.io_manager.save_dataframe(df_final, "final_df.csv")
             
             # 2.5 Sampling Stats & Visualization
@@ -348,6 +351,7 @@ class CollectionWorkflow:
         script_path = os.path.join(project_abs, "submit_collect.slurm")
         manager.generate_script(job_conf, script_path)
         manager.submit(script_path, working_dir=project_abs)
+        self.logger.info(f"CollectionWorkflow submitted successfully to Slurm. Job script: {script_path}")
 
     def _log_initial_stats(self, desc_datanames):
         """Logs initial stats."""

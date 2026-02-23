@@ -10,7 +10,6 @@ from unittest.mock import MagicMock, patch
 
 # Project Root Calculation
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
-TEST_DATA_ROOT = PROJECT_ROOT / "test"
 
 @dataclass
 class MockDPTestResults:
@@ -96,64 +95,50 @@ def mock_predictions_factory():
 @pytest.fixture
 def mock_dptest_output_dir(tmp_path):
     """
-    Copies a subset of real dp test results to a temp directory.
-    Source: test/dptest-results-labeled/results.*.out
+    Creates a temp directory with dummy dp test results.
+    Generates random data instead of copying from external source.
     """
-    source_dir = TEST_DATA_ROOT / "dptest-results-labeled"
     dest_dir = tmp_path / "dptest_results"
     dest_dir.mkdir(parents=True, exist_ok=True)
     
-    # Copy first N lines of output files to save time/space
-    for ext in ["e", "f", "v", "e_peratom", "v_peratom"]:
-        fname = f"results.{ext}.out"
-        src_file = source_dir / fname
-        if src_file.exists():
-            with open(src_file, "r") as f_in, open(dest_dir / fname, "w") as f_out:
-                # Header + 200 lines to ensure enough data
-                # Optimized loop
-                lines = []
-                try:
-                    for _ in range(201):
-                        line = f_in.readline()
-                        if not line: break
-                        lines.append(line)
-                except Exception:
-                    pass
-                f_out.writelines(lines)
-                
-    return dest_dir
+    n_frames = 10
+    n_atoms = 5
+    n_lines_peratom = n_frames * n_atoms
+    
+    # 1. Energy Per Atom (Used for loading data_e)
+    # 2 cols: data_e, pred_e
+    with open(dest_dir / "results.e_peratom.out", "w") as f:
+        # Add system info comment
+        f.write(f"# /mock/pool/sys: 0\n")
+        for _ in range(n_lines_peratom):
+            f.write(f"{np.random.rand():.4f} {np.random.rand():.4f}\n")
 
-@pytest.fixture
-def real_config_loader(tmp_path):
-    """
-    Loads a config file from test/ directory and resolves paths to point to 
-    either tmp_path or keeps them absolute if they exist.
-    """
-    def _load(rel_path, mock_data_mapping=None):
-        """
-        rel_path: path relative to dpeva/test/
-        mock_data_mapping: dict mapping 'config_key' -> 'tmp_path_subdir'
-        """
-        config_path = TEST_DATA_ROOT / rel_path
-        if not config_path.exists():
-            raise FileNotFoundError(f"Config not found at {config_path}")
-            
-        with open(config_path, "r") as f:
-            config = json.load(f)
-            
-        # Basic path resolution
-        if mock_data_mapping:
-            for key, sub_dir in mock_data_mapping.items():
-                if key in config:
-                    target_dir = tmp_path / sub_dir
-                    target_dir.mkdir(parents=True, exist_ok=True)
-                    config[key] = str(target_dir)
-        
-        # Also inject project root if needed
-        config["project_root"] = str(tmp_path)
-        
-        return config
-    return _load
+    # 2. Force (Used for loading data_f)
+    # 6 cols: data_fx, data_fy, data_fz, pred_fx, pred_fy, pred_fz
+    with open(dest_dir / "results.f.out", "w") as f:
+        f.write("# Mock Force\n")
+        for _ in range(n_lines_peratom): 
+            f.write(" ".join([f"{np.random.rand():.4f}" for _ in range(6)]) + "\n")
+
+    # 3. Virial Per Atom (Used for loading data_v if present)
+    # 18 cols: 9 data, 9 pred
+    with open(dest_dir / "results.v_peratom.out", "w") as f:
+         f.write("# Mock V Per Atom\n")
+         for _ in range(n_lines_peratom):
+             f.write(" ".join([f"{np.random.rand():.4f}" for _ in range(18)]) + "\n")
+
+    # Create other files just in case, though parser seems to prioritize above
+    with open(dest_dir / "results.e.out", "w") as f:
+        f.write("# Mock E Frame\n")
+        for _ in range(n_frames):
+            f.write(f"{np.random.rand():.4f} {np.random.rand():.4f}\n")
+
+    with open(dest_dir / "results.v.out", "w") as f:
+        f.write("# Mock V Frame\n")
+        for _ in range(n_frames):
+            f.write(" ".join([f"{np.random.rand():.4f}" for _ in range(18)]) + "\n")
+                 
+    return dest_dir
 
 @pytest.fixture
 def mock_job_manager():
