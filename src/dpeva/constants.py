@@ -34,7 +34,7 @@ DEFAULT_INPUT_JSON: Final[str] = "input.json"
 
 # Collection/Active Learning Defaults
 DEFAULT_PROJECT_DIR: Final[str] = "./"
-DEFAULT_COLLECT_ROOT_DIR: Final[str] = "dpeva_uq_post"
+DEFAULT_COLLECT_ROOT_DIR: Final[str] = "dpeva_uq_result"
 DEFAULT_TESTING_DIR: Final[str] = "test_results"
 DEFAULT_ANALYSIS_OUTPUT_DIR: Final[str] = "analysis"
 DEFAULT_LOG_FILE: Final[str] = "collection.log"

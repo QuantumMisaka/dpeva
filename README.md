@@ -57,7 +57,7 @@ dpeva collect config.json
 ```
 
 ### 3. Check Results
-Selected structures will be exported to `my_project/dpeva_uq_post/dpdata`.
+Selected structures will be exported to `my_project/dpeva_uq_result/dpdata`.
 
 ## 🛠️ Usage Guide
 

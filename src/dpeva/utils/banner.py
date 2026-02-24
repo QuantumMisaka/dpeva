@@ -14,9 +14,20 @@ PROJECT_URL = "https://github.com/QuantumMisaka/dpeva"
 BANNER_WIDTH = 74
 
 def get_terminal_size():
+    """Returns the current terminal size."""
     return shutil.get_terminal_size((80, 24))
 
 def center_text(text, width):
+    """
+    Centers text within a given width.
+
+    Args:
+        text (str): The text to center.
+        width (int): The total width.
+
+    Returns:
+        str: Centered text with padding.
+    """
     if len(text) >= width:
         return text
     pad = (width - len(text)) // 2
@@ -24,7 +35,10 @@ def center_text(text, width):
 
 def show_banner(no_delay=False):
     """
-    Displays the ASCII Art Banner for DP-EVA.
+    Display the ASCII Art Banner for DP-EVA.
+
+    Args:
+        no_delay (bool): If True, skips the sleep delay after printing.
     """
     term_w, term_h = get_terminal_size()
     

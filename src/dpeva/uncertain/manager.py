@@ -40,12 +40,20 @@ class UQManager:
         self.rnd_params = uq_config.get("rnd_params", {}).copy()
 
     def load_predictions(self) -> Tuple[List[PredictionData], bool]:
-        """Loads prediction results for all models."""
+        """
+        Load prediction results for all models.
+
+        Returns:
+            Tuple[List[PredictionData], bool]: List of parsed predictions and a boolean indicating if ground truth exists.
+        """
         self.logger.info(f"Loading test results for {self.num_models} models...")
         preds = []
         for i in range(self.num_models):
             path_prefix = os.path.join(self.project_dir, str(i), self.testing_dir, self.testing_head)
-            parser = DPTestResultParser(result_dir=".", head=path_prefix)
+            result_dir = os.path.dirname(path_prefix)
+            head_name = os.path.basename(path_prefix)
+            
+            parser = DPTestResultParser(result_dir=result_dir, head=head_name)
             parsed = parser.parse()
             preds.append(PredictionData(
                 energy=parsed["energy"],
@@ -59,7 +67,15 @@ class UQManager:
         return preds, preds[0].has_ground_truth
 
     def run_analysis(self, preds: List[PredictionData]) -> Tuple[Dict, np.ndarray]:
-        """Runs UQ calculation and scale alignment."""
+        """
+        Run UQ calculation and scale alignment.
+
+        Args:
+            preds (List[PredictionData]): List of prediction data objects.
+
+        Returns:
+            Tuple[Dict, np.ndarray]: UQ results dictionary and rescaled RND array.
+        """
         self.logger.info("Running UQ Calculation (QbC & RND)...")
         uq_results = self.calculator.compute_qbc_rnd(preds)
         
@@ -96,6 +112,17 @@ class UQManager:
             self.logger.info(f"Auto RND: [{self.rnd_params['lo']:.4f}, {self.rnd_params['hi']:.4f}]")
 
     def _clamp(self, value, bounds, name):
+        """
+        Clamp value within bounds.
+
+        Args:
+            value (float): Value to clamp.
+            bounds (Dict): Dictionary containing 'lo_min' and 'lo_max'.
+            name (str): Name of the value for logging.
+
+        Returns:
+            float: Clamped value.
+        """
         if value is None: return None
         lo_min, lo_max = bounds.get("lo_min"), bounds.get("lo_max")
         if lo_min is not None and value < lo_min:

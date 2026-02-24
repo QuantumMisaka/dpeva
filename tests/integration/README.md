@@ -4,7 +4,7 @@ This directory contains end-to-end integration tests for DP-EVA workflows.
 
 ## Prerequisites
 
-- **DeepMD-kit**: Must be installed and available in `PATH` (`dp` command).
+- **DeePMD-kit**: Must be installed and available in `PATH` (`dp` command).
 - **Slurm** (Optional): Required for `test_slurm_multidatapool_e2e.py` if running with `backend=slurm`.
 
 ## Data Setup

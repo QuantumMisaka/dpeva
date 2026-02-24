@@ -74,7 +74,7 @@ class SelectKFromClusters(BaseEstimator, TransformerMixin):
                 as the indices of DIRECT sampled structures.
         """
         if any(key not in clustering_data for key in ["labels", "PCAfeatures"]):
-            raise Exception(
+            raise ValueError(
                 "The data returned by clustering step should at least provide label and feature information."
             )
         if self.selection_criteria == "center" and "label_centers" not in clustering_data:

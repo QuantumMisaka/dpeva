@@ -16,7 +16,7 @@ This directory contains usage examples and recipes for DP-EVA workflows.
 ## Prerequisites
 
 1. **DeepMD-kit Environment**: Ensure `dp` command is available or the environment path in `env_setup` is correct.
-   - Example configs use `/opt/envs/deepmd3.1.2.env`. Update this path if your environment differs.
+   - Example configs use `/opt/envs/deepmd3.1.2.env` for S-A-I. Update this path if your environment differs.
 2. **Slurm (Optional)**: If using `backend: "slurm"`, ensure you have access to `sbatch`.
 3. **Data Preparation**:
    - The examples assume certain data directories exist relative to the config file or work directory.

@@ -52,8 +52,10 @@ from dpeva.constants import (
 @dataclass
 class JobConfig:
     """
-    统一的作业配置类，包含所有可能用到的字段。
-    遵循 'Explicit is better than implicit' 原则，核心 Slurm 参数应显式定义。
+    Unified Job Configuration Data Class.
+
+    Contains all possible fields for job submission.
+    Follows 'Explicit is better than implicit' principle; core Slurm parameters should be explicitly defined.
     """
     command: str
     job_name: str = "dpeva_job"
@@ -63,11 +65,11 @@ class JobConfig:
     nodes: int = DEFAULT_SLURM_NODES
     ntasks: int = DEFAULT_SLURM_NTASKS
     
-    # Advanced Slurm Options (适配不同集群环境)
-    gpus_per_node: Optional[int] = DEFAULT_SLURM_GPUS_PER_NODE      # 对应 #SBATCH --gpus-per-node
-    cpus_per_task: Optional[int] = DEFAULT_SLURM_CPUS_PER_TASK      # 对应 #SBATCH --cpus-per-task
-    qos: Optional[str] = DEFAULT_SLURM_QOS   # 对应 #SBATCH --qos
-    nodelist: Optional[str] = DEFAULT_SLURM_NODELIST # 对应 #SBATCH -w
+    # Advanced Slurm Options (Adapts to different cluster environments)
+    gpus_per_node: Optional[int] = DEFAULT_SLURM_GPUS_PER_NODE      # Maps to #SBATCH --gpus-per-node
+    cpus_per_task: Optional[int] = DEFAULT_SLURM_CPUS_PER_TASK      # Maps to #SBATCH --cpus-per-task
+    qos: Optional[str] = DEFAULT_SLURM_QOS   # Maps to #SBATCH --qos
+    nodelist: Optional[str] = DEFAULT_SLURM_NODELIST # Maps to #SBATCH -w
     
     walltime: str = DEFAULT_WALLTIME
     output_log: Optional[str] = None
@@ -80,12 +82,13 @@ class JobConfig:
     def to_dict(self) -> Dict[str, Any]:
         """
         Convert dataclass to dictionary with all values as strings.
-        处理可选字段的格式化，保持模板简洁。
+        
+        Handles optional fields formatting to keep the template clean.
         """
         # Manual conversion to ensure lists (like custom_headers) are joined correctly
         d = {}
         for k, v in asdict(self).items():
-            # 专门处理列表类型的 custom_headers
+            # Handle list types specifically
             if k == "custom_headers" and isinstance(v, list):
                 d[k] = "\n".join(v)
             elif k == "env_setup" and isinstance(v, list):
@@ -95,10 +98,10 @@ class JobConfig:
             else:
                 d[k] = str(v)
         
-        # 聚合可选的 Slurm 参数，保持模板整洁
+        # Aggregate optional Slurm parameters to keep the template clean
         optional_params = []
         
-        # 动态生成 Slurm 参数行
+        # Dynamically generate Slurm parameter lines
         if self.partition:
             optional_params.append(f"#SBATCH -p {self.partition}")
 
@@ -125,12 +128,12 @@ class JobConfig:
         return d
 
 # ==========================================
-# 模板引擎 (Template Engine)
+# Template Engine
 # ==========================================
 
 class TemplateEngine:
     """
-    负责加载和渲染模板。
+    Responsible for loading and rendering templates.
     """
     def __init__(self, template_content: str):
         """
@@ -186,6 +189,6 @@ class TemplateEngine:
         Returns:
             str: Rendered script content.
         """
-        # safe_substitute 允许模板中存在 config 中未定义的变量而不报错
-        # 但为了 Explicit，建议 config 覆盖所有需要的变量
+        # safe_substitute allows variables in template that are not in config without error
+        # But for Explicit, it is recommended that config covers all needed variables
         return self.template.safe_substitute(config.to_dict())

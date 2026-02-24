@@ -69,7 +69,23 @@ class CollectionIOManager:
                         target_names: Optional[List[str]] = None, 
                         expected_frames: Optional[Dict[str, int]] = None) -> Tuple[List[str], np.ndarray]:
         """
-        Loads descriptors from directory.
+        Load descriptors from a directory.
+
+        Supports loading specific systems by name or all .npy files in the directory.
+
+        Args:
+            desc_dir (str): Directory containing descriptor files (.npy).
+            label (str): Label for logging (e.g., "descriptors", "atomic features").
+            target_names (Optional[List[str]]): List of specific system names to load.
+            expected_frames (Optional[Dict[str, int]]): Dictionary mapping system names to expected frame counts for validation.
+
+        Returns:
+            Tuple[List[str], np.ndarray]:
+                - List of datanames (e.g., "sys_name-0", "sys_name-1").
+                - Concatenated array of structural descriptors (N_frames, N_features).
+        
+        Raises:
+            FileNotFoundError: If a target system's descriptor file is missing.
         """
         self.logger.info(f"Loading {label} from {desc_dir}")
         
@@ -116,7 +132,12 @@ class CollectionIOManager:
 
     def _load_single_descriptor(self, f_path: str, sys_name: str, expected_frames: Optional[Dict], 
                                desc_datanames: List, desc_stru: List):
-        """Helper to load and process a single descriptor file."""
+        """
+        Helper to load and process a single descriptor file.
+
+        Loads .npy, validates frame count, computes structural descriptor (mean pooling),
+        and normalizes it. Appends results to lists in-place.
+        """
         one_desc = np.load(f_path)
         
         # Consistency Check
@@ -139,7 +160,23 @@ class CollectionIOManager:
         desc_stru.append(one_desc_stru / (stru_modulo + 1e-12))
 
     def load_atomic_features(self, desc_dir: str, df_candidate: pd.DataFrame) -> Tuple[List[np.ndarray], List[int]]:
-        """Loads atomic features for 2-DIRECT sampling."""
+        """
+        Load atomic features for 2-DIRECT sampling.
+
+        Uses mmap to load only necessary frames from descriptor files.
+
+        Args:
+            desc_dir (str): Directory containing descriptor files.
+            df_candidate (pd.DataFrame): DataFrame containing candidate systems/frames.
+
+        Returns:
+            Tuple[List[np.ndarray], List[int]]:
+                - List of atomic feature arrays (N_atoms, N_features).
+                - List of atom counts for each frame.
+        
+        Raises:
+            ValueError: If atomic features are missing for a required system.
+        """
         self.logger.info("Loading atomic features...")
         dataname_to_feat = {}
         dataname_to_natoms = {}
@@ -184,13 +221,28 @@ class CollectionIOManager:
         return X_list, n_list
 
     def save_dataframe(self, df: pd.DataFrame, filename: str):
-        """Saves dataframe to CSV."""
+        """
+        Save dataframe to CSV.
+
+        Args:
+            df (pd.DataFrame): The DataFrame to save.
+            filename (str): The filename (relative to df_savedir).
+        """
         path = os.path.join(self.df_savedir, filename)
         self.logger.info(f"Saving dataframe to {path}")
         df.to_csv(path, index=True)
 
     def export_dpdata(self, testdata_dir: str, df_final: pd.DataFrame, unique_system_names: List[str]):
-        """Exports sampled and remaining systems to dpdata."""
+        """
+        Export sampled and remaining systems to dpdata format.
+
+        Splits the original dataset into 'sampled_dpdata' and 'other_dpdata' based on selected indices.
+
+        Args:
+            testdata_dir (str): Directory containing original test data (dpdata format).
+            df_final (pd.DataFrame): DataFrame containing selected frames.
+            unique_system_names (List[str]): List of unique system names to process.
+        """
         self.logger.info(f"Exporting dpdata from {testdata_dir}")
         
         # Map construction

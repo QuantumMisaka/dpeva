@@ -23,12 +23,23 @@ from dpeva.workflows.collect import CollectionWorkflow
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
+import argparse
+
 def main():
+    parser = argparse.ArgumentParser(description="Run DP-EVA Collection Workflow")
+    parser.add_argument("config", nargs="?", default="config_single_normal.json", 
+                        help="Path to the configuration JSON file (default: config_single_normal.json)")
+    args = parser.parse_args()
+
     # 1. Configuration
-    config_path = "config.json" # <--- Change this
+    config_path = args.config
     
     if not os.path.exists(config_path):
         print(f"Config file not found: {config_path}")
+        print("Available configs:")
+        for f in os.listdir("."):
+            if f.endswith(".json"):
+                print(f"  - {f}")
         return
 
     # 2. Load Config

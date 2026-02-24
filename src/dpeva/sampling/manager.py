@@ -30,8 +30,21 @@ class SamplingManager:
     def prepare_features(self, df_candidate: pd.DataFrame, df_desc: pd.DataFrame, 
                         train_desc_stru: np.ndarray) -> Tuple[np.ndarray, bool, int]:
         """
-        Prepares feature matrix, potentially merging with training data.
-        Returns: (features, use_joint, n_candidates)
+        Prepare the feature matrix for sampling.
+
+        If training data is provided and Joint Sampling is supported (DIRECT only),
+        it merges candidate and training features.
+
+        Args:
+            df_candidate (pd.DataFrame): DataFrame containing candidate descriptors.
+            df_desc (pd.DataFrame): Full descriptor DataFrame (used for column matching).
+            train_desc_stru (np.ndarray): Array of training set descriptors.
+
+        Returns:
+            Tuple[np.ndarray, bool, int]:
+                - features: The combined feature matrix (or just candidate features).
+                - use_joint: Boolean flag indicating if Joint Sampling is active.
+                - n_candidates: Number of candidate samples (before merging).
         """
         candidate_features = df_candidate[[col for col in df_desc.columns if col.startswith(COL_DESC_PREFIX)]].values
         n_candidates = len(candidate_features)
@@ -55,7 +68,23 @@ class SamplingManager:
                         atom_counts: Optional[List[int]] = None,
                         background_features: Optional[np.ndarray] = None) -> Dict:
         """
-        Runs the sampler.
+        Execute the selected sampling strategy.
+
+        Args:
+            features (np.ndarray): The feature matrix to sample from.
+            atom_features (Optional[List[np.ndarray]]): Atomic features (required for 2-DIRECT).
+            atom_counts (Optional[List[int]]): Atom counts per system (required for 2-DIRECT).
+            background_features (Optional[np.ndarray]): Background features for visualization context.
+
+        Returns:
+            Dict: Sampling results containing:
+                - selected_indices: Indices of selected samples.
+                - pca_features: PCA-transformed features.
+                - explained_variance: PCA explained variance ratio.
+                - random_indices: Indices for random baseline.
+                - scores_direct: Coverage scores for DIRECT.
+                - scores_random: Coverage scores for random baseline.
+                - full_pca_features: PCA-transformed background features (if provided).
         """
         if self.sampler_type == "2-direct":
             return self._run_2_direct(features, atom_features, atom_counts, background_features)
@@ -63,7 +92,17 @@ class SamplingManager:
             return self._run_direct(features, background_features)
 
     def _calc_coverage(self, all_pca, selected_indices, n_bins=50):
-        """Calculates grid-based coverage score for each PC dimension."""
+        """
+        Calculate grid-based coverage score for each PC dimension.
+
+        Args:
+            all_pca (np.ndarray): PCA coordinates of all samples.
+            selected_indices (List[int]): Indices of selected samples.
+            n_bins (int): Number of bins for histogram.
+
+        Returns:
+            np.ndarray: Array of coverage scores per dimension.
+        """
         n_dims = all_pca.shape[1]
         scores = []
         for d in range(n_dims):
@@ -85,6 +124,11 @@ class SamplingManager:
         return np.array(scores)
 
     def _run_direct(self, features, background_features=None):
+        """
+        Execute Standard DIRECT Sampling.
+
+        Handles clustering, selection, and post-filtering for Joint Sampling.
+        """
         self.logger.info("Running Standard DIRECT...")
         n_clusters = self.config.get("direct_n_clusters")
         
@@ -94,7 +138,7 @@ class SamplingManager:
             select_k_from_clusters=SelectKFromClusters(k=self.direct_k)
         )
         
-        # Use stored n_candidates if available (for Joint Sampling)
+        # Execute Pipeline
         res = sampler.fit_transform(features)
         
         # Calculate scores and random baseline for visualization
@@ -125,10 +169,7 @@ class SamplingManager:
         # Transform background features if provided
         full_pca_features = None
         if background_features is not None:
-            # DIRECTSampler.pca is the PCA step (usually a Pipeline or just PCA)
-            # Inspecting dpeva.sampling.direct: DIRECTSampler.pca is the first step
-            # Actually DIRECTSampler.fit_transform calls self.pca.fit_transform(X)
-            # So self.pca is the fitted transformer
+            # Transform background using the fitted PCA from the pipeline
             full_pca_features = sampler.pca.transform(background_features)
         
         return {
@@ -142,6 +183,9 @@ class SamplingManager:
         }
 
     def _run_2_direct(self, features, atom_features, atom_counts, background_features=None):
+        """
+        Execute 2-Step DIRECT Sampling (Atomic Cluster -> Structural Cluster).
+        """
         self.logger.info("Running 2-DIRECT...")
         if atom_features is None:
             raise ValueError("Atomic features required for 2-DIRECT")

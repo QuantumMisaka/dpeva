@@ -33,6 +33,13 @@ class CollectionWorkflow:
     """
 
     def __init__(self, config: Union[Dict, CollectionConfig], config_path=None):
+        """
+        Initialize the CollectionWorkflow.
+
+        Args:
+            config (Union[Dict, CollectionConfig]): The configuration object or dictionary.
+            config_path (str, optional): Path to the configuration file (required for Slurm submission).
+        """
         self.logger = logging.getLogger(__name__)
         
         # 1. Config Loading
@@ -101,6 +108,12 @@ class CollectionWorkflow:
             self.io_manager.configure_logging()
         
     def _validate_config(self):
+        """
+        Validate the configuration and existence of required directories.
+
+        Raises:
+            ValueError: If project, descriptor, or test data directories do not exist.
+        """
         if not os.path.exists(self.project):
             raise ValueError(f"Project directory {self.project} not found!")
         if not os.path.exists(self.config.desc_dir):
@@ -109,6 +122,12 @@ class CollectionWorkflow:
             raise ValueError(f"Test data directory not found: {self.config.testdata_dir}")
 
     def run(self):
+        """
+        Execute the Collection workflow.
+
+        Depending on the backend configuration, this method either submits a Slurm job
+        or runs the collection process locally (UQ analysis, filtering, sampling, and export).
+        """
         if self.backend == "slurm":
             self._submit_to_slurm()
             return
@@ -311,8 +330,12 @@ class CollectionWorkflow:
 
 
     def _submit_to_slurm(self):
-        """Delegates Slurm submission to JobManager (inline for now as it's simple)."""
-        # Logic kept similar to original but simplified
+        """
+        Submit the collection workflow to Slurm using JobManager.
+        
+        Generates a submission script and executes sbatch.
+        Requires `config_path` to be set.
+        """
         if not self.config_path: raise ValueError("Config path required for Slurm.")
         
         project_abs = os.path.abspath(self.project)
@@ -320,20 +343,14 @@ class CollectionWorkflow:
         
         cmd = f"{sys.executable} -m dpeva.cli collect {os.path.abspath(self.config_path)}"
         
-        # Determine Environment Setup
-        # Prioritize config.submission.env_setup, fallback to "export DPEVA_INTERNAL_BACKEND=local" logic
-        # But actually, we need BOTH if we want env setup + backend override.
-        # User provided env_setup might contain conda activate etc.
-        
+        # Environment Setup: Combine user setup with backend override
         user_env_setup = self.config.submission.env_setup
         if isinstance(user_env_setup, list):
             user_env_setup = "\n".join(user_env_setup)
         elif user_env_setup is None:
             user_env_setup = ""
             
-        # Ensure backend override is present
         internal_backend_setup = "export DPEVA_INTERNAL_BACKEND=local"
-        
         final_env_setup = f"{user_env_setup}\n{internal_backend_setup}"
         
         job_conf = JobConfig(
@@ -354,7 +371,15 @@ class CollectionWorkflow:
         self.logger.info(f"CollectionWorkflow submitted successfully to Slurm. Job script: {script_path}")
 
     def _log_initial_stats(self, desc_datanames):
-        """Logs initial stats."""
+        """
+        Log statistics about the candidate data pool.
+
+        Args:
+            desc_datanames (List[str]): List of data names.
+
+        Returns:
+            pd.DataFrame: Grouped statistics by pool.
+        """
         df = pd.DataFrame({"dataname": desc_datanames})
         df["pool"] = df["dataname"].apply(lambda x: get_pool_name(get_sys_name(x)))
         stats = df.groupby("pool").agg(num_systems=("dataname", lambda x: x.apply(get_sys_name).nunique()), num_frames=("dataname", "count"))
@@ -362,7 +387,12 @@ class CollectionWorkflow:
         return stats
 
     def _log_sampling_stats(self, df_final):
-        """Logs sampling stats."""
+        """
+        Log statistics about the sampled data.
+
+        Args:
+            df_final (pd.DataFrame): The final selected dataframe.
+        """
         df_final["pool"] = df_final["dataname"].apply(lambda x: get_pool_name(get_sys_name(x)))
         stats_sampled = df_final.groupby("pool").agg(sampled_frames=("dataname", "count"))
         self.logger.info(f"Sampled Stats:\n{stats_sampled}")

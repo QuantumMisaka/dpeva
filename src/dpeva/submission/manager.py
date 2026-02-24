@@ -8,7 +8,10 @@ logger = logging.getLogger(__name__)
 
 class JobManager:
     """
-    作业提交管理器。
+    Job Submission Manager.
+    
+    Handles the generation of submission scripts and execution of jobs
+    for both local and Slurm environments.
     """
     def __init__(self, 
                  mode: Literal["local", "slurm"] = "local", 
@@ -22,7 +25,7 @@ class JobManager:
         """
         self.mode = mode
         
-        # 初始化模板引擎
+        # Initialize Template Engine
         if custom_template_path:
             if os.path.exists(custom_template_path):
                 self.engine = TemplateEngine.from_file(custom_template_path)
@@ -44,13 +47,13 @@ class JobManager:
         """
         content = self.engine.render(config)
         
-        # 确保目录存在
+        # Ensure directory exists
         os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
         
         with open(output_path, 'w') as f:
             f.write(content)
         
-        # 赋予执行权限 (Readability counts: 显式设置权限)
+        # Grant execution permissions (Readability counts: Explicit permission setting)
         os.chmod(output_path, 0o755)
         
         logger.info(f"Generated job script: {output_path}")
@@ -75,8 +78,8 @@ class JobManager:
         if self.mode == "slurm":
             cmd = ["sbatch", script_path]
         else:
-            # Local mode: 使用 nohup 后台运行，或者直接运行
-            # 这里选择直接运行 bash，用户可以在 command 中决定是否 nohup
+            # Local mode: Run directly with bash
+            # User can decide whether to use nohup in the command itself if needed
             cmd = ["bash", script_path]
 
         try:
