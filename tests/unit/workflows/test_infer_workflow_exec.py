@@ -41,7 +41,10 @@ def test_run_command_generation(tmp_path, mock_job_manager):
     }
     
     workflow = InferenceWorkflow(config)
-    workflow.run()
+    
+    # Simulate running inside slurm to skip self-submission
+    with patch.dict(os.environ, {"DPEVA_INTERNAL_BACKEND": "slurm"}):
+        workflow.run()
     
     # Verify JobManager.submit was called
     assert mock_job_manager.generate_script.called

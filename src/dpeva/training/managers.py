@@ -60,6 +60,33 @@ class TrainingConfigManager:
                          else:
                              self.logger.warning(f"Task {task_idx}: Path '{current_systems_path}' is a directory but contains no subdirectories and no type.raw.")
 
+    def generate_seeds(self, num_models: int, user_seeds: Optional[List[int]] = None) -> List[int]:
+        """Generate seeds for training."""
+        default_seeds = [19090, 42, 10032, 2933]
+        
+        if user_seeds:
+            return user_seeds
+        
+        if num_models > len(default_seeds):
+            self.logger.warning(f"num_models ({num_models}) > default seeds length. Cycling default seeds.")
+            return (default_seeds * (num_models // len(default_seeds) + 1))[:num_models]
+        else:
+            return default_seeds[:num_models]
+
+    def get_finetune_heads(self, mode: str, head_name: str, num_models: int) -> List[str]:
+        """Determine finetune heads based on mode."""
+        if mode == "init":
+            # First model uses configured head name, others use RANDOM
+            heads = [head_name]
+            if num_models > 1:
+                heads.extend(["RANDOM"] * (num_models - 1))
+            return heads
+        elif mode == "cont":
+            return [head_name] * num_models
+        else:
+            raise ValueError(f"Unknown mode: {mode}. Must be 'init' or 'cont'.")
+
+
     def prepare_task_configs(self, num_models: int, seeds: List[int], training_seeds: List[int], 
                             finetune_heads: List[str], override_data_path: Optional[str] = None) -> List[Dict[str, Any]]:
         """Generates a list of config dicts for each task."""

@@ -24,8 +24,9 @@ def handle_train(args):
 
 def handle_infer(args):
     from dpeva.workflows.infer import InferenceWorkflow
+    import os
     config = load_and_resolve_config(args.config)
-    workflow = InferenceWorkflow(config)
+    workflow = InferenceWorkflow(config, config_path=os.path.abspath(args.config))
     workflow.run()
 
 def handle_feature(args):

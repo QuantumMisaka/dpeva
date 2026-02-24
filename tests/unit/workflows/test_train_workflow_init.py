@@ -52,7 +52,6 @@ def test_training_workflow_init_multi_model(tmp_path):
         
         # Assertions on workflow state
         assert workflow.num_models == 4
-        assert len(workflow.seeds) == 4
         assert workflow.mode == "init"
         
         # Run
@@ -60,6 +59,8 @@ def test_training_workflow_init_multi_model(tmp_path):
         
         # Verify Interactions
         assert mock_io_manager.configure_logging.called
+        assert mock_config_manager.generate_seeds.call_count == 2 # seeds and training_seeds
+        assert mock_config_manager.get_finetune_heads.called
         assert mock_config_manager.prepare_task_configs.called
         assert mock_io_manager.create_task_dir.call_count == 4
         assert mock_io_manager.save_task_config.call_count == 4

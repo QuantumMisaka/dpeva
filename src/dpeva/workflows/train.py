@@ -6,6 +6,7 @@ from typing import Union, Dict
 from dpeva.config import TrainingConfig
 from dpeva.io.training import TrainingIOManager
 from dpeva.training.managers import TrainingConfigManager, TrainingExecutionManager
+from dpeva.constants import WORKFLOW_FINISHED_TAG
 
 class TrainingWorkflow:
     """
@@ -54,9 +55,6 @@ class TrainingWorkflow:
             template_path=str(self.config.template_path) if self.config.template_path else None
         )
         
-        # Seeds logic (still kept here as it's workflow parameterization, but could move to ConfigManager if complex)
-        self._setup_seeds()
-        
         # Base model configuration
         self.base_model_path = str(self.config.base_model_path)
         
@@ -72,39 +70,6 @@ class TrainingWorkflow:
 
     def _setup_logger(self):
         self.logger = logging.getLogger(__name__)
-        
-    def _setup_seeds(self):
-        default_seeds = [19090, 42, 10032, 2933]
-        
-        if self.config.seeds:
-            self.seeds = self.config.seeds
-        else:
-             if self.num_models > len(default_seeds):
-                 self.logger.warning(f"num_models ({self.num_models}) > default seeds length. Cycling default seeds.")
-                 self.seeds = (default_seeds * (self.num_models // len(default_seeds) + 1))[:self.num_models]
-             else:
-                 self.seeds = default_seeds[:self.num_models]
-
-        if self.config.training_seeds:
-            self.training_seeds = self.config.training_seeds
-        else:
-             if self.num_models > len(default_seeds):
-                 self.training_seeds = (default_seeds * (self.num_models // len(default_seeds) + 1))[:self.num_models]
-             else:
-                 self.training_seeds = default_seeds[:self.num_models]
-
-    def _determine_finetune_heads(self):
-        """Determine finetune heads based on mode."""
-        if self.mode == "init":
-            # First model uses configured head name, others use RANDOM
-            heads = [self.finetune_head_name]
-            if self.num_models > 1:
-                heads.extend(["RANDOM"] * (self.num_models - 1))
-            return heads
-        elif self.mode == "cont":
-            return [self.finetune_head_name] * self.num_models
-        else:
-            raise ValueError(f"Unknown mode: {self.mode}. Must be 'init' or 'cont'.")
 
     def run(self):
         self.logger.info(f"Initializing Training Workflow in {self.work_dir}")
@@ -113,9 +78,12 @@ class TrainingWorkflow:
         self.io_manager.configure_logging()
         
         # 1. Prepare Configs
-        finetune_heads = self._determine_finetune_heads()
+        seeds = self.config_manager.generate_seeds(self.num_models, self.config.seeds)
+        training_seeds = self.config_manager.generate_seeds(self.num_models, self.config.training_seeds)
+        finetune_heads = self.config_manager.get_finetune_heads(self.mode, self.finetune_head_name, self.num_models)
+        
         task_configs = self.config_manager.prepare_task_configs(
-            self.num_models, self.seeds, self.training_seeds, finetune_heads, self.training_data_path
+            self.num_models, seeds, training_seeds, finetune_heads, self.training_data_path
         )
         
         script_paths = []
@@ -147,3 +115,4 @@ class TrainingWorkflow:
         self.logger.info("Starting parallel training...")
         self.execution_manager.submit_jobs(script_paths, task_dirs, blocking=True)
         self.logger.info("Training Workflow Submission Completed.")
+        self.logger.info(WORKFLOW_FINISHED_TAG)

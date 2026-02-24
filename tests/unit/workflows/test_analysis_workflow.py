@@ -1,4 +1,3 @@
-
 import os
 import shutil
 import pytest
@@ -6,6 +5,7 @@ from unittest.mock import MagicMock, patch
 import numpy as np
 from pathlib import Path
 from dpeva.workflows.analysis import AnalysisWorkflow
+from dpeva.analysis.managers import AnalysisIOManager, AnalysisManager
 
 class TestAnalysisWorkflow:
     
@@ -18,31 +18,25 @@ class TestAnalysisWorkflow:
             "ref_energies": {"O": -10.0, "H": -5.0}
         }
 
-    @patch("dpeva.workflows.analysis.DPTestResultParser")
-    @patch("dpeva.workflows.analysis.StatsCalculator")
-    @patch("dpeva.workflows.analysis.InferenceVisualizer")
-    def test_run_success(self, mock_vis, mock_calc, mock_parser, config, tmp_path):
+    @patch("dpeva.workflows.analysis.AnalysisManager")
+    @patch("dpeva.workflows.analysis.AnalysisIOManager")
+    def test_run_success(self, MockIOManager, MockManager, config):
         """Test successful execution of analysis workflow."""
         # Setup mocks
-        mock_parser_instance = mock_parser.return_value
-        mock_parser_instance.parse.return_value = {
-            "energy": {"pred_e": np.array([1.0]), "data_e": np.array([1.1])},
-            "force": {"pred_fx": np.array([0.1]), "pred_fy": np.array([0.1]), "pred_fz": np.array([0.1]),
-                      "data_fx": np.array([0.1]), "data_fy": np.array([0.1]), "data_fz": np.array([0.1])},
-            "virial": None,
-            "has_ground_truth": True
-        }
-        mock_parser_instance.get_composition_list.return_value = ([{"O": 1}], [1])
+        mock_io = MockIOManager.return_value
+        mock_manager = MockManager.return_value
         
-        mock_calc_instance = mock_calc.return_value
-        mock_calc_instance.compute_metrics.return_value = {"e_mae": 0.1, "e_rmse": 0.1}
-        mock_calc_instance.compute_relative_energy.return_value = np.array([-0.1])
-        mock_calc_instance.e_pred = np.array([1.0])
-        mock_calc_instance.e_true = np.array([1.1])
-        mock_calc_instance.f_pred = np.array([0.1, 0.1, 0.1])
-        mock_calc_instance.f_true = np.array([0.1, 0.1, 0.1])
-        mock_calc_instance.v_pred = None
-        mock_calc_instance.v_true = None
+        # Mock load_data return
+        mock_data = {"energy": {"pred_e": np.array([1.0])}}
+        mock_parser = MagicMock()
+        mock_io.load_data.return_value = (mock_data, mock_parser)
+        
+        # Mock compute_metrics return
+        mock_metrics = {"e_mae": 0.1}
+        mock_stats_calc = MagicMock()
+        mock_e_rel_pred = np.array([-0.1])
+        mock_e_rel_true = np.array([-0.11])
+        mock_manager.compute_metrics.return_value = (mock_metrics, mock_stats_calc, mock_e_rel_pred, mock_e_rel_true)
         
         # Initialize Workflow
         workflow = AnalysisWorkflow(config)
@@ -50,29 +44,28 @@ class TestAnalysisWorkflow:
         # Run
         workflow.run()
         
-        # Verify
-        mock_parser.assert_called_with(result_dir=config["result_dir"], head="results", type_map=config["type_map"])
-        mock_calc.assert_called()
-        mock_vis.assert_called_with(config["output_dir"])
+        # Verify Interactions
+        mock_io.configure_logging.assert_called_once()
+        mock_io.load_data.assert_called_with(config["result_dir"], config["type_map"])
         
-        # Verify Visualization Calls
-        mock_vis_instance = mock_vis.return_value
-        mock_vis_instance.plot_distribution.assert_called()
-        mock_vis_instance.plot_parity.assert_called()
+        mock_manager.compute_metrics.assert_called_with(mock_data, mock_parser)
+        mock_manager.visualize.assert_called_with(mock_stats_calc, mock_e_rel_pred, mock_e_rel_true, config["output_dir"])
         
-        # Verify File Creation (Metrics)
-        output_dir = Path(config["output_dir"])
-        assert (output_dir / "metrics.json").exists()
-        assert (output_dir / "metrics_summary.csv").exists()
-        assert (output_dir / "cohesive_energy_pred_stats.json").exists()
-        assert (output_dir / "analysis.log").exists()
+        mock_io.save_metrics.assert_called_with(mock_metrics)
+        mock_io.save_summary_csv.assert_called_with(mock_metrics)
+        mock_io.save_stats_desc.assert_called() # cohesive stats
+        
+        mock_io.close_logging.assert_called_once()
 
-    @patch("dpeva.workflows.analysis.DPTestResultParser")
-    def test_run_failure(self, mock_parser, config):
+    @patch("dpeva.workflows.analysis.AnalysisIOManager")
+    def test_run_failure(self, MockIOManager, config):
         """Test failure handling."""
-        mock_parser.side_effect = Exception("Parsing failed")
+        mock_io = MockIOManager.return_value
+        mock_io.load_data.side_effect = Exception("Parsing failed")
         
         workflow = AnalysisWorkflow(config)
         
         with pytest.raises(Exception, match="Parsing failed"):
             workflow.run()
+            
+        mock_io.close_logging.assert_called_once()
