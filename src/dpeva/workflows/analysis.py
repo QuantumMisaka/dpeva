@@ -44,6 +44,32 @@ class AnalysisWorkflow:
         
         try:
             # 1. Load Data
+            # Note: DPTestResultParser expects result_dir to contain .e.out/.f.out files directly.
+            # However, InferenceWorkflow creates subdirectories 0/task, 1/task etc.
+            # AnalysisWorkflow seems designed to analyze ONE specific result folder, 
+            # OR aggregate multiple if designed so. 
+            # Based on current implementation of DPTestResultParser, it looks for ONE set of files.
+            # But the integration test points result_dir to 'work_dir' which contains 0/, 1/ subdirs.
+            # This is a mismatch. 
+            # If AnalysisWorkflow is meant to analyze aggregated results, it should iterate.
+            # If it's meant to analyze a single model's test result, config should point to it.
+            # The integration test calls dpeva analysis with result_dir=work_dir.
+            # But work_dir contains folders 0, 1, 2.
+            # And InferenceWorkflow already does analysis for each model!
+            # The new 'AnalysisWorkflow' seems redundant if it just repeats what InferenceWorkflow.analyze_results does,
+            # UNLESS it is meant to aggregate?
+            # Looking at AnalysisWorkflow code: it calls DPTestResultParser(result_dir).
+            # DPTestResultParser looks for {head}.e_peratom.out in result_dir.
+            # So AnalysisWorkflow expects to run on a directory WITH results.
+            
+            # Integration test failure: FileNotFoundError: Energy file not found: .../work/results.e_peratom.out
+            # Because results are in work/0/test_val/results.e_peratom.out
+            
+            # FIX: We should probably analyze one of the sub-results in the integration test 
+            # to verify AnalysisWorkflow works on A result.
+            # Or AnalysisWorkflow should be smart enough to find results? 
+            # Current implementation is simple: analyze ONE directory.
+            
             data, parser = self.io_manager.load_data(result_dir, self.config.type_map)
             
             # 2. Compute Metrics

@@ -135,15 +135,6 @@ class WorkflowOrchestrator:
              with open(cli_log, "w") as f:
                  self._run_cli([sys.executable, "-m", "dpeva.cli", "collect", str(config_path)], stdout=f, stderr=f)
              
-             # But the main application log (where TAG is printed) is in collection.log
-             # We need to find where collection.log is.
-             # Based on config, it is in project_dir/root_savedir/collection.log
-             # We assume standard config structure here.
-             # Load config to find path? Or just search?
-             # For integration test, we know the structure: work_dir/dpeva_uq_result/collection.log
-             # But let's be more robust: search for collection.log in work_dir recursively?
-             # Or just check both.
-             
              target_log = self.work_dir / "dpeva_uq_result" / "collection.log"
              if not target_log.exists():
                  # Fallback to cli log if collection log not created (e.g. crash before logging setup)
@@ -152,5 +143,31 @@ class WorkflowOrchestrator:
              self._run_cli([sys.executable, "-m", "dpeva.cli", "collect", str(config_path)])
              target_log = log_path or (self.work_dir / "collect_slurm.out")
             
+        wait_for_text_in_file(target_log, WORKFLOW_FINISHED_TAG, timeout_s=timeout_s)
+
+    def run_analysis(self, config_path: Path, timeout_s: float) -> None:
+        """Runs the analysis workflow."""
+        if self.backend == "local":
+             # In local mode, capture stderr/stdout to cli log for debugging
+             cli_log = self.work_dir / "analysis_cli.log"
+             with open(cli_log, "w") as f:
+                 self._run_cli([sys.executable, "-m", "dpeva.cli", "analysis", str(config_path)], stdout=f, stderr=f)
+             
+             # The analysis log is inside the output directory (analysis/analysis.log)
+             # We assume output_dir is "analysis" relative to work_dir based on standard config
+             # But in test_slurm_multidatapool_e2e.py, output_dir is "analysis_results"
+             target_log = self.work_dir / "analysis_results" / "analysis.log"
+             if not target_log.exists():
+                 target_log = cli_log
+        else:
+             # In slurm mode, analysis runs locally (unless we implement self-submit for analysis too, which we haven't yet)
+             # So it behaves like local run essentially, but environment variable backend is slurm.
+             # AnalysisWorkflow doesn't use backend for submission (yet).
+             # So we treat it same as local.
+             cli_log = self.work_dir / "analysis_cli.log"
+             with open(cli_log, "w") as f:
+                 self._run_cli([sys.executable, "-m", "dpeva.cli", "analysis", str(config_path)], stdout=f, stderr=f)
+             target_log = self.work_dir / "analysis_results" / "analysis.log"
+        
         wait_for_text_in_file(target_log, WORKFLOW_FINISHED_TAG, timeout_s=timeout_s)
 
