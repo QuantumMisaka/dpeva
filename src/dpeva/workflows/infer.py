@@ -4,7 +4,8 @@ import logging
 from typing import Union, Dict, Optional
 
 from dpeva.config import InferenceConfig
-from dpeva.inference.managers import InferenceIOManager, InferenceExecutionManager, InferenceAnalysisManager
+from dpeva.inference.managers import InferenceIOManager, InferenceExecutionManager
+from dpeva.analysis.managers import UnifiedAnalysisManager
 from dpeva.utils.command import DPCommandBuilder
 from dpeva.constants import WORKFLOW_FINISHED_TAG
 from dpeva.submission import JobManager, JobConfig
@@ -33,19 +34,12 @@ class InferenceWorkflow:
         self._setup_logger()
         
         # Core Configurations
-        self.data_path = str(self.config.data_path)
         self.work_dir = str(self.config.work_dir)
-        self.task_name = self.config.task_name
-        self.head = self.config.model_head
+        self.data_path = str(self.config.data_path)
         self.results_prefix = self.config.results_prefix
         
-        # 1. Initialize IO Manager
+        # Managers
         self.io_manager = InferenceIOManager(self.work_dir)
-        
-        # Auto-infer models_paths from work_dir structure
-        self.models_paths = self.io_manager.discover_models()
-        
-        # 2. Initialize Execution Manager
         self.execution_manager = InferenceExecutionManager(
             backend=self.config.submission.backend,
             slurm_config=self.config.submission.slurm_config,
@@ -53,12 +47,16 @@ class InferenceWorkflow:
             dp_backend=self.config.dp_backend,
             omp_threads=self.config.omp_threads
         )
+        self.analysis_manager = UnifiedAnalysisManager(ref_energies=self.config.ref_energies)
         
-        # 3. Initialize Analysis Manager
-        # Try to load ref_energies from config (Optional)
-        ref_energies = getattr(self.config, "ref_energies", None)
-        self.analysis_manager = InferenceAnalysisManager(ref_energies=ref_energies)
+        # Models
+        self.task_name = self.config.task_name
+        self.head = self.config.model_head
         
+        # Model discovery
+        self.models_paths = self.io_manager.discover_models()
+        self.logger.info(f"Discovered {len(self.models_paths)} models in {self.work_dir}")
+
     def _setup_logger(self):
         self.logger = logging.getLogger(__name__)
 
@@ -141,49 +139,47 @@ class InferenceWorkflow:
         manager.submit(script_path, working_dir=work_dir_abs)
         self.logger.info(f"InferenceWorkflow submitted successfully to Slurm. Job script: {script_path}")
 
-
-    def analyze_results(self, output_dir_suffix="analysis"):
-        """
-        Parse results, compute metrics, and generate plots for all models.
-        """
+    def analyze_results(self):
+        """Analyze results for all models."""
         self.logger.info("Starting result analysis...")
         
-        # Pre-load atom counts if possible for cohesive energy calculation
+        # Load composition info once
         atom_counts_list, atom_num_list = self.io_manager.load_composition_info(self.data_path)
         
         summary_metrics = []
         
         for i, model_path in enumerate(self.models_paths):
-            # Resolve work_dir same as run()
             if self.task_name:
                 job_work_dir = os.path.join(self.work_dir, str(i), self.task_name)
             else:
                 job_work_dir = os.path.join(self.work_dir, str(i))
                 
+            # Check for results file (either prefix.e_peratom.out or just .out depending on prefix)
+            # DPTestResultParser handles prefix check.
+            # But we need to know if directory exists
             if not os.path.exists(job_work_dir):
-                self.logger.warning(f"Work dir not found: {job_work_dir}, skipping analysis for model {i}")
+                self.logger.warning(f"Job directory not found: {job_work_dir}")
                 continue
-            
+                
             try:
-                # 1. Parse Results
                 data = self.io_manager.parse_results(job_work_dir, self.results_prefix)
                 
-                # 2. Analyze
-                stats_export, metrics = self.analysis_manager.analyze_model(
-                    model_idx=i,
-                    job_work_dir=job_work_dir,
+                # Use UnifiedAnalysisManager
+                stats_export, metrics, _, _, _ = self.analysis_manager.analyze_model(
                     data=data,
+                    output_dir=os.path.join(job_work_dir, "analysis"),
                     atom_counts_list=atom_counts_list,
                     atom_num_list=atom_num_list,
-                    output_dir_suffix=output_dir_suffix
+                    model_idx=i
                 )
                 
                 if metrics:
                     summary_metrics.append(metrics)
                     
             except Exception as e:
-                self.logger.error(f"Analysis failed for model {i}: {e}", exc_info=True)
-                
+                self.logger.error(f"Analysis failed for model {i}: {e}")
+                continue
+        
         # Save Global Summary
         self.io_manager.save_summary(summary_metrics)
         self.logger.info(WORKFLOW_FINISHED_TAG)

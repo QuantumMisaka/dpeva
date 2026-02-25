@@ -123,6 +123,23 @@ class SamplingManager:
                 scores.append(n_occ_sel / n_occ_all)
         return np.array(scores)
 
+    def _calculate_sampling_stats(self, features: np.ndarray, pca_features: np.ndarray, selected_indices: List[int]):
+        """
+        Calculate random baseline and coverage scores.
+        """
+        n_samples = len(selected_indices)
+        n_total = len(features)
+        
+        if n_samples < n_total:
+            random_indices = np.random.choice(n_total, n_samples, replace=False)
+        else:
+            random_indices = np.arange(n_total)
+            
+        scores_direct = self._calc_coverage(pca_features, selected_indices)
+        scores_random = self._calc_coverage(pca_features, random_indices)
+        
+        return random_indices, scores_direct, scores_random
+
     def _run_direct(self, features, background_features=None):
         """
         Execute Standard DIRECT Sampling.
@@ -154,17 +171,10 @@ class SamplingManager:
             if filtered_len < original_len:
                 self.logger.info(f"Joint Sampling: Filtered out {original_len - filtered_len} selections from training data.")
         
-        # Calculate random baseline
-        n_samples = len(selected_indices)
-        n_total = len(features)
-        if n_samples < n_total:
-            random_indices = np.random.choice(n_total, n_samples, replace=False)
-        else:
-            random_indices = np.arange(n_total)
-            
-        # Calculate Coverage Scores
-        scores_direct = self._calc_coverage(pca_features, selected_indices)
-        scores_random = self._calc_coverage(pca_features, random_indices)
+        # Calculate random baseline and scores
+        random_indices, scores_direct, scores_random = self._calculate_sampling_stats(
+            features, pca_features, selected_indices
+        )
         
         # Transform background features if provided
         full_pca_features = None
@@ -213,17 +223,10 @@ class SamplingManager:
         selected_indices = res["selected_indices"]
         pca_features = res["PCAfeatures"]
         
-        # Random baseline
-        n_samples = len(selected_indices)
-        n_total = len(features)
-        if n_samples < n_total:
-            random_indices = np.random.choice(n_total, n_samples, replace=False)
-        else:
-            random_indices = np.arange(n_total)
-            
-        # Calculate Coverage Scores
-        scores_direct = self._calc_coverage(pca_features, selected_indices)
-        scores_random = self._calc_coverage(pca_features, random_indices)
+        # Calculate random baseline and scores
+        random_indices, scores_direct, scores_random = self._calculate_sampling_stats(
+            features, pca_features, selected_indices
+        )
 
         # Transform background features if provided
         # 2-DIRECT structure is complex, usually step1_sampler does PCA

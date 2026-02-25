@@ -152,20 +152,6 @@ class FeatureExecutionManager:
         os.makedirs(abs_output_dir, exist_ok=True)
         
         # Generate Worker Script Content
-        # We need to import FeatureWorkflow to run the local recursion logic inside the worker
-        # Or simpler: Instantiate Generator and use a recursion helper function.
-        # Ideally, we should reuse the logic in run_local_python_recursion.
-        # But for the worker script, we need a standalone entry point.
-        # Let's create a dedicated worker function in generator.py or here?
-        # To avoid circular imports, we can put the worker script logic to call FeatureWorkflow or similar.
-        # Actually, best practice is to make the worker script call a function that does the recursion.
-        # Since we are refactoring, let's make the worker script import FeatureExecutionManager and call run_local_python_recursion!
-        # But FeatureExecutionManager needs init args.
-        
-        # Alternative: The worker script instantiates DescriptorGenerator and does the recursion itself.
-        # But we moved recursion OUT of DescriptorGenerator.
-        # So we need a standalone function for recursion.
-        
         worker_script_content = f"""
 import os
 import sys
@@ -252,14 +238,6 @@ if __name__ == "__main__":
                     )
                     # Logic: If current_path matches data_path (root is system), save as basename.npy
                     # If current_path is subdir, save as subdir.npy in parent output
-                    
-                    # However, the recursion logic below passes `current_output_dir` as `parent_out/subdir`.
-                    # So if we are at `parent_out/subdir`, and it is a system, we want to save `parent_out/subdir.npy`.
-                    # But wait, `current_output_dir` is a directory path.
-                    # We should append `.npy` to it?
-                    
-                    # Let's align with the old logic:
-                    # Old logic: `out_file = current_output_dir + ".npy"`
                     out_file = current_output_dir + ".npy"
                     
                     # Ensure parent dir of out_file exists

@@ -7,8 +7,8 @@
   - 配置字段字典：/docs/reference/config-schema.md
   - 校验规则补充：/docs/reference/validation.md
 
-* **版本**: 0.4.1
-* **生成日期**: 2026-02-14
+* **版本**: 0.4.3
+* **生成日期**: 2026-02-25
 * **作者**: Quantum Misaka with Trae SOLO
 
 ---
@@ -423,21 +423,22 @@ DPEVA_TAG: WORKFLOW_FINISHED
     *   **[架构]** 重构 `TrainingWorkflow`，采用与 `CollectionWorkflow` 一致的领域驱动设计 (DDD)。
     *   **[解耦]** 将训练逻辑拆分为 `TrainingIOManager`, `TrainingConfigManager`, `TrainingExecutionManager`，彻底移除了对单体类 `ParallelTrainer` 的依赖。
     *   **[过时]** 标记 `ParallelTrainer` 为 Deprecated，将在未来版本中移除。
-*   **v0.4.1** (2026-02-14):
+*   **v0.4.1-1** (2026-02-14):
     *   **[版本]** 版本号重置并统一为 0.4.1，与 PyPI/Package 版本保持一致。
     *   **[修复]** 修复了启动 Banner 中 ASCII Art 字符画的对齐问题。
     *   **[文档]** 更新开发者文档，补充了基于 Zen of Python 的项目哲学与优化路线图。
-*   **v0.4.2** (2026-02-16):
+*   **v0.4.1-2** (2026-02-16):
     *   **[架构]** 重构 `InferenceWorkflow`，采用领域驱动设计 (DDD) 模式。将核心逻辑拆分为 `InferenceIOManager` (IO与解析), `InferenceExecutionManager` (作业提交), `InferenceAnalysisManager` (统计与绘图)。
     *   **[解耦]** `infer.py` 瘦身为轻量级编排器，彻底解决了“上帝类”问题，提升了代码的可维护性和测试性。
     *   **[测试]** 更新了推理工作流的单元测试，确保重构后的逻辑与 Mock 对象正确交互。
-*   **v0.4.3** (2026-02-16):
-    *   **[文档]** 全面重构文档结构，建立 `docs/guides`, `docs/reference`, `docs/archive` 等层级。
-    *   **[规范]** 在开发者指南中正式确立了“开发流程标准”，强制要求文档同步更新。
-    *   **[迁移]** 将详细配置参数迁移至 `docs/reference/config-schema.md`，保持核心文档简洁。
-    *   **[架构]** 重构 `FeatureWorkflow`，采用 DDD 模式拆分为 `FeatureIOManager` 和 `FeatureExecutionManager`。
 *   **v0.4.2** (2026-02-23):
     *   **[修复]** 修复了 `DIRECTSampler` 在 Joint Sampling 模式下因传递非法参数 `n_candidates` 导致的 `ValueError`。
     *   **[重构]** 采用 **Post-Filtering（后处理过滤）** 策略，将采样过滤逻辑从底层 `DIRECTSampler` 移回 `SamplingManager`。
     *   **[测试]** 全面优化测试套件，移除了硬编码路径和对临时目录的依赖，修复了 Pydantic 和 Pandas 的警告。
     *   **[原则]** 此次修复严格遵循 **Separation of Concerns** 原则，撤销了对核心算法模块的侵入式修改，确保了 `sampling` 模块的通用性和纯洁性。
+*   **v0.4.3** (2026-02-25):
+    *   **[架构]** 重构 `AnalysisWorkflow` 和 `CollectionWorkflow`，统一了底层分析逻辑。
+    *   **[重构]** 引入 `UnifiedAnalysisManager`，消除了单模型分析与推理分析之间的代码重复 (DRY)。
+    *   **[功能]** `AnalysisWorkflow` 现通过 `dpdata` 支持稳健的原子成分加载，修复了文件名解析脆弱的问题。
+    *   **[文档]** 明确了 Analysis (单模型) 与 Collect (系综) 的职责边界，并在 `docs/design` 中发布了详细的设计审查报告。
+    *   **[测试]** 完善了 Analysis 模块的单元测试与集成测试，确保了端到端的正确性。

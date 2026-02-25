@@ -134,63 +134,61 @@ class StatsCalculator:
             )))
             element_map = {e: i for i, e in enumerate(unique_elements)}
             
-            # 2. Build Matrix A and Vector b
-            # A: (N_frames, N_elements), b: Total Energy (N_frames,)
-            # Note: self.e_pred is energy per atom. We need Total Energy for fitting.
-            # Total Energy = e_per_atom * num_atoms
-            
             n_frames = len(energy)
             if n_frames != len(self.atom_counts_list):
                 self.logger.warning(f"Mismatch between energy length ({n_frames}) and atom counts length ({len(self.atom_counts_list)}). "
                                     f"Likely using training set for atom counts vs test set for inference. "
                                     f"Skipping relative energy calculation.")
                 return None
-                
+            
+            # 2. Build Matrix A and Vector b
+            # A: (N_frames, N_elements), b: Total Energy (N_frames,)
             A = np.zeros((n_frames, len(unique_elements)))
-            # energy is e_per_atom
-            b = energy * np.array(self.atom_num_list)
+            b = energy * np.array(self.atom_num_list) # Total energy for fitting
             
             for idx, counts in enumerate(self.atom_counts_list):
                 for elem, count in counts.items():
                     A[idx, element_map[elem]] = count
                     
             # 3. Determine E0
+            E0_dict = {}
             if self.ref_energies is not None:
-                # Check for missing elements
+                # Check coverage
                 missing = [e for e in unique_elements if e not in self.ref_energies]
-                if missing:
-                     self.logger.warning(f"Ref energies missing for elements: {missing}. Falling back to Least Squares fitting.")
-                     # Fallback to LS
-                     E0_values, residuals, rank, s_vals = lstsq(A, b)
-                     E0_dict = {elem: float(val) for elem, val in zip(unique_elements, E0_values)}
-                     self.logger.info(f"Fitted Atomic Energies (E0): {E0_dict}")
-                else:
+                if not missing:
                     E0_dict = self.ref_energies
                     self.logger.info(f"Using provided Atomic Energies (E0): {E0_dict}")
-            else:
-                # Solve Ax = b for E0
-                E0_values, residuals, rank, s_vals = lstsq(A, b)
-                E0_dict = {elem: float(val) for elem, val in zip(unique_elements, E0_values)}
-                self.logger.info(f"Fitted Atomic Energies (E0): {E0_dict}")
+                else:
+                    self.logger.warning(f"Ref energies missing for {missing}. Falling back to LS fitting.")
             
-            # 4. Compute Reference Energy for each frame
-            ref_energies = []
+            if not E0_dict:
+                 # Solve Ax = b for E0
+                 # lstsq returns: x, residuals, rank, s
+                 x, _, _, _ = lstsq(A, b)
+                 E0_dict = {elem: float(val) for elem, val in zip(unique_elements, x)}
+                 self.logger.info(f"Fitted Atomic Energies (E0): {E0_dict}")
+            
+            # 4. Compute Reference Energy for each frame (Total Energy)
+            ref_energies_total = []
             for counts in self.atom_counts_list:
-                ref_e = sum(count * E0_dict.get(e, 0.0) for e, count in counts.items())
-                ref_energies.append(ref_e)
-            ref_energies = np.array(ref_energies)
+                ref_e = sum(counts.get(e, 0) * E0_dict.get(e, 0.0) for e in unique_elements)
+                ref_energies_total.append(ref_e)
+            
+            ref_energies_total = np.array(ref_energies_total)
             
             # 5. Compute Cohesive Energy (per atom)
-            # E_coh_total = E_total - E_ref
-            # E_coh_per_atom = E_coh_total / num_atoms
-            #                = (E_per_atom * num_atoms - E_ref) / num_atoms
-            #                = E_per_atom - (E_ref / num_atoms)
+            # E_coh_per_atom = (E_total_pred - E_ref_total) / N_atoms
+            # Note: energy input is per_atom, so E_total_pred = energy * N_atoms
             
-            ref_energies_per_atom = ref_energies / np.array(self.atom_num_list)
+            # Correct formula: 
+            # E_coh_per_atom = (energy * N_atoms - ref_energies_total) / N_atoms
+            #                = energy - (ref_energies_total / N_atoms)
+            
+            ref_energies_per_atom = ref_energies_total / np.array(self.atom_num_list)
             cohesive_energy_per_atom = energy - ref_energies_per_atom
             
             return cohesive_energy_per_atom
             
         except Exception as e:
-            self.logger.error(f"Least Squares fitting failed: {e}. Skipping relative energy calculation.")
+            self.logger.error(f"Relative energy calculation failed: {e}", exc_info=True)
             return None

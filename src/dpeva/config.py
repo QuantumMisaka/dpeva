@@ -149,6 +149,7 @@ class AnalysisConfig(BaseModel):
     result_dir: Path = Field(..., description="Path to DP test results directory.")
     output_dir: Path = Field(Path(DEFAULT_ANALYSIS_OUTPUT_DIR), description="Output directory for analysis results.")
     type_map: List[str] = Field(..., description="Atom type map (e.g. ['Fe', 'C']).")
+    data_path: Optional[Path] = Field(None, description="Path to original dataset (for robust composition loading).")
     ref_energies: Dict[str, float] = Field(default_factory=dict, description="Reference energies per element for cohesive energy calculation.")
 
 class InferenceConfig(BaseWorkflowConfig):
@@ -157,6 +158,7 @@ class InferenceConfig(BaseWorkflowConfig):
     model_head: Optional[str] = Field(None, description="Model head name (optional for frozen models).")
     results_prefix: str = Field(DEFAULT_RESULTS_PREFIX, description="Output file prefix.")
     task_name: str = DEFAULT_INFER_TASK_NAME
+    ref_energies: Dict[str, float] = Field(default_factory=dict, description="Reference energies per element for cohesive energy calculation.")
 
 class TrainingConfig(BaseWorkflowConfig):
     """Configuration for Training Workflow."""
