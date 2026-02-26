@@ -1,5 +1,5 @@
 # read stru from dpdata/npy and transfer it to dir/abacus-input(INPUT, STRU, KPT)
-# update by JamesMisaka in 2025-0609
+# update by JamesMisaka in 2026-0226
 # initialize the abacus calc
 
 import numpy as np
@@ -15,7 +15,7 @@ from tqdm import tqdm
 import numpy as np
 
 treat_stru = True
-project_dir = "sampled_dpdata_nolabel"
+project_dir = "sampled_dpdata"
 inputs_save_dir = "abacus-inputs"
 dataset_names = [
     "./alex-2d-1d-FeCOH/",
@@ -93,9 +93,12 @@ basic_input = {
     'init_chg': 'atomic',
     'out_stru': 1,
     'out_chg': 0,
+    'out_mul': 1,
     'out_bandgap': 1,
     'onsite_radius': 3.0,
 }
+
+# we need to re-set mixing_beta 0.4 -> 0.1 -> 0.025 for convergence by editing INPUT generated and re-submit.
 
 ROOTDIR = os.getcwd()
 
