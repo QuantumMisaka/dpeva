@@ -24,7 +24,7 @@ class TestFeatureExecutionManager:
         
         manager.submit_cli_job(
             data_path="data",
-            output_dir="output",
+            output_dir=str(tmp_path / "output"),
             model_path="model.pt",
             head="OC20M",
             sub_pools=[]
@@ -52,7 +52,7 @@ class TestFeatureExecutionManager:
         
         manager.submit_cli_job(
             data_path="data",
-            output_dir="output",
+            output_dir=str(tmp_path / "output"),
             model_path="model.pt",
             head="OC20M",
             sub_pools=["pool1", "pool2"]
@@ -66,7 +66,7 @@ class TestFeatureExecutionManager:
         assert "Processing pool: pool2" in job_config.command
         assert "mkdir -p" in job_config.command
 
-    def test_submit_python_slurm_job(self, mock_job_manager):
+    def test_submit_python_slurm_job(self, mock_job_manager, tmp_path):
         """Test Python Slurm job submission."""
         manager = FeatureExecutionManager(
             backend="slurm",
@@ -78,7 +78,7 @@ class TestFeatureExecutionManager:
         
         manager.submit_python_slurm_job(
             data_path="data",
-            output_dir="output",
+            output_dir=str(tmp_path / "output"),
             model_path="model.pt",
             head="OC20M",
             batch_size=100,
