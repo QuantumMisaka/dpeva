@@ -78,11 +78,6 @@ class InferenceWorkflow:
             
         self.logger.info(f"Initializing Inference Workflow (Backend: {self.execution_manager.backend})")
         
-        # Self-submission to Slurm
-        if self.execution_manager.backend == "slurm" and not env_backend:
-            self._submit_to_slurm()
-            return
-            
         if not self.data_path or not os.path.exists(self.data_path):
             self.logger.error(f"Test data path not found: {self.data_path}")
             return
@@ -107,46 +102,6 @@ class InferenceWorkflow:
             self.analyze_results()
         else:
             self.logger.info("Slurm jobs submitted. Analysis must be run manually or wait for jobs to finish.")
-
-    def _submit_to_slurm(self):
-        """
-        Submit the inference workflow to Slurm using JobManager.
-        """
-        if not self.config_path: raise ValueError("Config path required for Slurm.")
-        
-        work_dir_abs = os.path.abspath(self.work_dir)
-        if not os.path.exists(work_dir_abs): os.makedirs(work_dir_abs)
-        
-        cmd = f"{sys.executable} -m dpeva.cli infer {os.path.abspath(self.config_path)}"
-        
-        # Environment Setup
-        user_env_setup = self.config.submission.env_setup
-        if isinstance(user_env_setup, list):
-            user_env_setup = "\n".join(user_env_setup)
-        elif user_env_setup is None:
-            user_env_setup = ""
-            
-        internal_backend_setup = "export DPEVA_INTERNAL_BACKEND=local"
-        final_env_setup = f"{user_env_setup}\n{internal_backend_setup}"
-        
-        slurm_config = self.config.submission.slurm_config or {}
-        
-        job_conf = JobConfig(
-            command=cmd,
-            job_name=slurm_config.get("job_name", "dpeva_infer"),
-            partition=slurm_config.get("partition", "CPU-MISC"),
-            qos=slurm_config.get("qos"),
-            ntasks=slurm_config.get("ntasks", 1),
-            output_log=os.path.join(work_dir_abs, "infer_slurm.out"),
-            error_log=os.path.join(work_dir_abs, "infer_slurm.err"),
-            env_setup=final_env_setup
-        )
-        
-        manager = JobManager(mode="slurm")
-        script_path = os.path.join(work_dir_abs, "submit_infer.slurm")
-        manager.generate_script(job_conf, script_path)
-        manager.submit(script_path, working_dir=work_dir_abs)
-        self.logger.info(f"InferenceWorkflow submitted successfully to Slurm. Job script: {script_path}")
 
     def analyze_results(self):
         """Analyze results for all models."""

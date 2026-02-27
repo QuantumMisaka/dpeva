@@ -128,6 +128,9 @@ class InferenceExecutionManager:
         
         self.logger.info(f"Submitting {len(models_paths)} inference jobs...")
         
+        script_paths = []
+        task_dirs = []
+
         for i, model_path in enumerate(models_paths):
             if not os.path.exists(model_path):
                 self.logger.warning(f"Model file not found: {model_path}, skipping.")
@@ -160,20 +163,22 @@ class InferenceExecutionManager:
             
             # Create JobConfig
             job_name = f"dp_test_{i}"
+            
+            # Use task-specific Slurm config if available, otherwise default
+            task_slurm_config = self.slurm_config.copy()
+            # Remove keys that shouldn't be passed via **kwargs if they are explicitly handled or invalid
+            task_slurm_config.pop("job_name", None)
+            task_slurm_config.pop("output_log", None)
+            task_slurm_config.pop("error_log", None)
+            
             job_config = JobConfig(
                 job_name=job_name,
                 command=cmd,
                 env_setup=final_env_setup,
-                output_log="test_job.log",
+                output_log="test_job.out", # Changed to .out for consistency
                 error_log="test_job.err",
-                # Slurm specific params from config
-                partition=self.slurm_config.get("partition", "partition"),
-                nodes=self.slurm_config.get("nodes", 1),
-                ntasks=self.slurm_config.get("ntasks", 1),
-                gpus_per_node=self.slurm_config.get("gpus_per_node", 0),
-                qos=self.slurm_config.get("qos"),
-                nodelist=self.slurm_config.get("nodelist"),
-                walltime=self.slurm_config.get("walltime", "24:00:00")
+                # Pass slurm config
+                **task_slurm_config
             )
             
             # Generate Script
@@ -182,7 +187,22 @@ class InferenceExecutionManager:
             
             self.job_manager.generate_script(job_config, script_path)
             
-            # Submit Job
-            self.job_manager.submit(script_path, working_dir=job_work_dir)
+            script_paths.append(script_path)
+            task_dirs.append(job_work_dir)
+            
+        # Submit Jobs
+        if self.backend == "slurm":
+            for script, task_dir in zip(script_paths, task_dirs):
+                self.job_manager.submit(script, working_dir=task_dir)
+            self.logger.info("All Slurm jobs submitted.")
+        else:
+            # For local backend, submit sequentially for now (subprocess)
+            # To align with TrainingExecutionManager (multiprocessing), we would need similar logic
+            # But to keep it simple and safe for now, sequential submission is fine for inference
+            # unless there are many models. 
+            # Given user asked for parallel SLURM submission, we focus on Slurm.
+            # Local submission remains sequential as per original implementation (JobManager.submit is blocking)
+            for script, task_dir in zip(script_paths, task_dirs):
+                self.job_manager.submit(script, working_dir=task_dir)
             
         self.logger.info("Inference Workflow Submission Completed.")
