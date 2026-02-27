@@ -7,8 +7,8 @@
   - 配置字段字典：/docs/reference/config-schema.md
   - 校验规则补充：/docs/reference/validation.md
 
-* **版本**: 0.4.3
-* **生成日期**: 2026-02-25
+* **版本**: 0.4.4
+* **生成日期**: 2026-02-27
 * **作者**: Quantum Misaka with Trae SOLO
 
 ---
@@ -325,12 +325,22 @@ Auto-UQ 用于根据数据分布自动确定筛选边界；具体的字段与约
 
 ### 5.2 验证测试
 
-开展测试时，确保 `dpeva` 命令在环境内。一般来说你可以通过`conda activate dpeva` 加载所需环境。 
+在开发阶段，你可以通过`conda activate dpeva-dev` 加载所需环境，并在项目目录下运行 `pip install --upgrade .` 更新开发依赖，确保测试环境与开发环境保持一致。
+
+用户自行开展单元测试时，需要自行配置好 Python 环境，确保 `dpeva` 命令在环境内并处于最新状态，且 `pytest` 已安装。
 
 *   **运行单元测试 (Unit Tests)**:
     ```bash
-    pytest tests/unit --cov=dpeva.uncertain --cov-report=term-missing
+    # 基础运行
+    pytest tests/unit
+    
+    # 带覆盖率报告的运行 (推荐)
+    pytest tests/unit --cov=dpeva --cov-report=term-missing
     ```
+    *   **规范**:
+        *   **Mock 外部依赖**: 所有对 `dp`, `dpdata`, `slurm` 的调用必须被 Mock，严禁在单元测试中产生实际的文件 I/O 或进程提交。
+        *   **日志验证**: 涉及日志输出的逻辑，需验证 `setup_workflow_logger` 是否被正确调用。
+        *   **异常覆盖**: 必须覆盖所有 `try-except` 分支，确保异常被正确捕获和记录。
     *   **覆盖范围**: 核心算法 (UQCalculator, UQFilter, DIRECTSampler) 的逻辑验证。
     *   **测试策略**: 
         *   **Golden Value**: 与 NumPy 手算结果比对，误差容忍度 < 1e-5。
@@ -442,3 +452,9 @@ DPEVA_TAG: WORKFLOW_FINISHED
     *   **[功能]** `AnalysisWorkflow` 现通过 `dpdata` 支持稳健的原子成分加载，修复了文件名解析脆弱的问题。
     *   **[文档]** 明确了 Analysis (单模型) 与 Collect (系综) 的职责边界，并在 `docs/design` 中发布了详细的设计审查报告。
     *   **[测试]** 完善了 Analysis 模块的单元测试与集成测试，确保了端到端的正确性。
+*   **v0.4.4** (2026-02-27):
+    *   **[日志]** 全面重构日志系统，引入标准化的 `setup_workflow_logger` 工具。
+    *   **[修复]** 修复了 `TrainingWorkflow` 误将日志写入 `collection.log` 且屏蔽 stdout 的严重缺陷。现在训练日志正确输出到 `training.log` 并保留控制台输出。
+    *   **[规范]** 为所有 Workflow (Train, Infer, Feature, Collect, Analysis) 定义了专属的日志文件名常量，消除了歧义。
+    *   **[功能]** 为 `Inference` 和 `Feature` 工作流补全了缺失的文件日志功能，增强了生产环境的可追溯性。
+    *   **[测试]** 更新了相关单元测试，确保新日志机制的正确性，并修复了训练初始化测试中的回归问题。

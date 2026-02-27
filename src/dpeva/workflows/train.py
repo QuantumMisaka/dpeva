@@ -6,7 +6,8 @@ from typing import Union, Dict
 from dpeva.config import TrainingConfig
 from dpeva.io.training import TrainingIOManager
 from dpeva.training.managers import TrainingConfigManager, TrainingExecutionManager
-from dpeva.constants import WORKFLOW_FINISHED_TAG
+from dpeva.constants import WORKFLOW_FINISHED_TAG, LOG_FILE_TRAIN
+from dpeva.utils.logs import setup_workflow_logger
 
 class TrainingWorkflow:
     """
@@ -72,10 +73,16 @@ class TrainingWorkflow:
         self.logger = logging.getLogger(__name__)
 
     def run(self):
+        # Configure logging: log to training.log, but DO NOT capture stdout (propagate=True)
+        setup_workflow_logger(
+            logger_name="dpeva",
+            work_dir=self.work_dir,
+            filename=LOG_FILE_TRAIN,
+            capture_stdout=False
+        )
+        
         self.logger.info(f"Initializing Training Workflow in {self.work_dir}")
         self.logger.info(f"Mode: {self.mode}, Backend: {self.config.submission.backend}")
-        
-        self.io_manager.configure_logging()
         
         # 1. Prepare Configs
         seeds = self.config_manager.generate_seeds(self.num_models, self.config.seeds)

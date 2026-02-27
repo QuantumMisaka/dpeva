@@ -34,7 +34,8 @@ def test_training_workflow_init_multi_model(tmp_path):
     # Patch Managers
     with patch("dpeva.workflows.train.TrainingConfigManager") as MockConfigManager, \
          patch("dpeva.workflows.train.TrainingExecutionManager") as MockExecutionManager, \
-         patch("dpeva.workflows.train.TrainingIOManager") as MockIOManager:
+         patch("dpeva.workflows.train.TrainingIOManager") as MockIOManager, \
+         patch("dpeva.workflows.train.setup_workflow_logger") as mock_setup_logger:
          
         # Setup Mocks
         mock_config_manager = MockConfigManager.return_value
@@ -58,7 +59,7 @@ def test_training_workflow_init_multi_model(tmp_path):
         workflow.run()
         
         # Verify Interactions
-        assert mock_io_manager.configure_logging.called
+        mock_setup_logger.assert_called_once()
         assert mock_config_manager.generate_seeds.call_count == 2 # seeds and training_seeds
         assert mock_config_manager.get_finetune_heads.called
         assert mock_config_manager.prepare_task_configs.called

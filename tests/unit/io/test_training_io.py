@@ -12,27 +12,6 @@ class TestTrainingIOManager:
     def manager(self, tmp_path):
         return TrainingIOManager(str(tmp_path))
 
-    def test_configure_logging(self, manager, tmp_path):
-        """Test logging configuration."""
-        manager.configure_logging()
-        
-        # TrainingIOManager uses DEFAULT_LOG_FILE which is "collection.log" currently
-        # This might be a bug in source (should be training.log?) but we test current behavior
-        log_file = tmp_path / "collection.log"
-        assert log_file.exists()
-        
-        logger = logging.getLogger("dpeva")
-        assert logger.propagate is False
-        
-        # Check if handler is added
-        handlers = [h for h in logger.handlers if isinstance(h, logging.FileHandler)]
-        assert len(handlers) > 0
-        assert handlers[0].baseFilename == str(log_file)
-        
-        # Cleanup to avoid side effects
-        logger.handlers = []
-        logger.propagate = True
-
     def test_create_task_dir(self, manager, tmp_path):
         """Test task directory creation."""
         task_dir = manager.create_task_dir(0)

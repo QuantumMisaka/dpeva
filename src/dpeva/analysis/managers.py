@@ -23,28 +23,6 @@ class AnalysisIOManager:
         self.output_dir = output_dir
         self.logger = logging.getLogger(__name__)
 
-    def configure_logging(self):
-        """Configure file logging for the analysis run."""
-        if os.path.exists(self.output_dir):
-            shutil.rmtree(self.output_dir)
-        os.makedirs(self.output_dir, exist_ok=True)
-        
-        fh = logging.FileHandler(os.path.join(self.output_dir, "analysis.log"))
-        fh.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
-        
-        # Attach to root logger or specific logger
-        # Here we attach to the module logger's parent to capture everything if needed, 
-        # or just the workflow logger. 
-        # The original code attached to self.logger (AnalysisWorkflow logger).
-        # We'll attach to the root 'dpeva' logger or similar to capture all events.
-        logging.getLogger("dpeva").addHandler(fh)
-        self.fh = fh # Keep reference to remove later
-
-    def close_logging(self):
-        """Remove file handler."""
-        if hasattr(self, 'fh'):
-            logging.getLogger("dpeva").removeHandler(self.fh)
-
     def load_data(self, result_dir: str, type_map: Optional[List[str]] = None) -> Dict[str, Any]:
         """Parse results using DPTestResultParser."""
         self.logger.info(f"Reading results from {result_dir}")

@@ -6,7 +6,8 @@ from typing import Optional, Dict, List, Any, Union
 
 from dpeva.config import AnalysisConfig
 from dpeva.analysis.managers import AnalysisIOManager, UnifiedAnalysisManager
-from dpeva.constants import WORKFLOW_FINISHED_TAG
+from dpeva.constants import WORKFLOW_FINISHED_TAG, LOG_FILE_ANALYSIS
+from dpeva.utils.logs import setup_workflow_logger, close_workflow_logger
 
 class AnalysisWorkflow:
     """
@@ -40,8 +41,17 @@ class AnalysisWorkflow:
         
         self.logger.info(f"Starting Analysis in {output_dir}")
         
-        # Configure logging via IO Manager
-        self.io_manager.configure_logging()
+        # Configure logging via setup_workflow_logger
+        # Note: Analysis previously cleaned the output dir, but logs.py just ensures it exists.
+        # If clean-up is needed, it should be done before setup_workflow_logger.
+        # However, setup_workflow_logger appends by default, which is safer.
+        # We capture_stdout=False because Analysis usually prints to console too.
+        setup_workflow_logger(
+            logger_name="dpeva",
+            work_dir=output_dir,
+            filename=LOG_FILE_ANALYSIS,
+            capture_stdout=False
+        )
         
         try:
             # 1. Load Data
@@ -84,4 +94,4 @@ class AnalysisWorkflow:
             self.logger.error(f"Analysis failed: {e}", exc_info=True)
             raise e
         finally:
-            self.io_manager.close_logging()
+            close_workflow_logger("dpeva", os.path.join(output_dir, LOG_FILE_ANALYSIS))

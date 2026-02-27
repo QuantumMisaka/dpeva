@@ -6,10 +6,11 @@ import pandas as pd
 import numpy as np
 
 from dpeva.config import CollectionConfig
-from dpeva.constants import WORKFLOW_FINISHED_TAG, COL_DESC_PREFIX, COL_UQ_QBC, COL_UQ_RND
+from dpeva.constants import WORKFLOW_FINISHED_TAG, COL_DESC_PREFIX, COL_UQ_QBC, COL_UQ_RND, LOG_FILE_COLLECT
 from dpeva.uncertain.visualization import UQVisualizer
 from dpeva.submission.manager import JobManager
 from dpeva.submission.templates import JobConfig
+from dpeva.utils.logs import setup_workflow_logger
 
 # New Managers
 from dpeva.io.collection import CollectionIOManager
@@ -105,7 +106,12 @@ class CollectionWorkflow:
         # Only configure file logging (which silences console output)
         # when running actual computation (local or worker), not when submitting to Slurm.
         if self.backend != "slurm":
-            self.io_manager.configure_logging()
+            setup_workflow_logger(
+                logger_name="dpeva",
+                work_dir=os.path.join(self.project, self.root_savedir),
+                filename=LOG_FILE_COLLECT,
+                capture_stdout=True # Maintain original behavior: silence stdout for collection
+            )
         
     def _validate_config(self):
         """

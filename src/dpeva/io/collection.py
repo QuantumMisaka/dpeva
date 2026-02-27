@@ -7,7 +7,6 @@ import pandas as pd
 from typing import List, Tuple, Dict, Optional, Set
 
 from dpeva.io.dataset import load_systems
-from dpeva.constants import DEFAULT_LOG_FILE
 
 class CollectionIOManager:
     """
@@ -33,28 +32,6 @@ class CollectionIOManager:
         for d in [self.view_savedir, self.dpdata_savedir, self.df_savedir]:
             if not os.path.exists(d):
                 os.makedirs(d)
-
-    def configure_logging(self):
-        """Configures file logging."""
-        log_file = os.path.join(self.project_dir, self.root_savedir, DEFAULT_LOG_FILE)
-        
-        # Get the 'dpeva' logger to capture logs from all modules
-        dpeva_logger = logging.getLogger("dpeva")
-        
-        # Prevent propagation to root logger to avoid stderr redundancy
-        dpeva_logger.propagate = False
-        
-        # Check for duplicate handlers
-        for h in dpeva_logger.handlers:
-            if isinstance(h, logging.FileHandler) and h.baseFilename == os.path.abspath(log_file):
-                return
-
-        file_handler = logging.FileHandler(log_file, mode='w')
-        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-        file_handler.setFormatter(formatter)
-        file_handler.setLevel(logging.INFO)
-        dpeva_logger.addHandler(file_handler)
-        dpeva_logger.info(f"Logging configured to file: {log_file}")
 
     def count_frames(self, data_dir: str, fmt: str = "auto") -> int:
         """Counts total frames in dataset."""

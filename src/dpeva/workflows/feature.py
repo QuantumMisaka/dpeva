@@ -5,7 +5,8 @@ from typing import Union, Dict
 from dpeva.config import FeatureConfig
 from dpeva.feature.managers import FeatureIOManager, FeatureExecutionManager
 from dpeva.feature.generator import DescriptorGenerator
-from dpeva.constants import WORKFLOW_FINISHED_TAG
+from dpeva.constants import WORKFLOW_FINISHED_TAG, LOG_FILE_FEATURE
+from dpeva.utils.logs import setup_workflow_logger
 
 class FeatureWorkflow:
     """
@@ -60,6 +61,14 @@ class FeatureWorkflow:
         self.logger = logging.getLogger(__name__)
 
     def run(self):
+        # Configure logging: log to feature.log, but DO NOT capture stdout (propagate=True)
+        setup_workflow_logger(
+            logger_name="dpeva",
+            work_dir=self.output_dir,
+            filename=LOG_FILE_FEATURE,
+            capture_stdout=False
+        )
+
         self.logger.info(f"Initializing Feature Workflow (Mode: {self.mode}, Backend: {self.execution_manager.backend})")
         
         if not os.path.exists(self.data_path):

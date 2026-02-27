@@ -20,7 +20,9 @@ class TestAnalysisWorkflow:
 
     @patch("dpeva.workflows.analysis.UnifiedAnalysisManager")
     @patch("dpeva.workflows.analysis.AnalysisIOManager")
-    def test_run_success(self, MockIOManager, MockManager, config):
+    @patch("dpeva.workflows.analysis.setup_workflow_logger")
+    @patch("dpeva.workflows.analysis.close_workflow_logger")
+    def test_run_success(self, mock_close_logger, mock_setup_logger, MockIOManager, MockManager, config):
         """Test successful execution of analysis workflow."""
         # Setup mocks
         mock_io = MockIOManager.return_value
@@ -53,7 +55,7 @@ class TestAnalysisWorkflow:
         workflow.run()
         
         # Verify Interactions
-        mock_io.configure_logging.assert_called_once()
+        mock_setup_logger.assert_called_once()
         mock_io.load_data.assert_called_with(config["result_dir"], config["type_map"])
         
         mock_manager.analyze_model.assert_called()
@@ -62,10 +64,12 @@ class TestAnalysisWorkflow:
         mock_io.save_summary_csv.assert_called_with(mock_metrics)
         mock_io.save_stats_desc.assert_called() # cohesive stats
         
-        mock_io.close_logging.assert_called_once()
+        mock_close_logger.assert_called_once()
 
     @patch("dpeva.workflows.analysis.AnalysisIOManager")
-    def test_run_failure(self, MockIOManager, config):
+    @patch("dpeva.workflows.analysis.setup_workflow_logger")
+    @patch("dpeva.workflows.analysis.close_workflow_logger")
+    def test_run_failure(self, mock_close_logger, mock_setup_logger, MockIOManager, config):
         """Test failure handling."""
         mock_io = MockIOManager.return_value
         mock_io.load_data.side_effect = Exception("Parsing failed")
@@ -75,4 +79,4 @@ class TestAnalysisWorkflow:
         with pytest.raises(Exception, match="Parsing failed"):
             workflow.run()
             
-        mock_io.close_logging.assert_called_once()
+        mock_close_logger.assert_called_once()

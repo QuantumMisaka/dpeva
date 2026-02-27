@@ -7,8 +7,9 @@ from dpeva.config import InferenceConfig
 from dpeva.inference.managers import InferenceIOManager, InferenceExecutionManager
 from dpeva.analysis.managers import UnifiedAnalysisManager
 from dpeva.utils.command import DPCommandBuilder
-from dpeva.constants import WORKFLOW_FINISHED_TAG
+from dpeva.constants import WORKFLOW_FINISHED_TAG, LOG_FILE_INFER
 from dpeva.submission import JobManager, JobConfig
+from dpeva.utils.logs import setup_workflow_logger
 
 class InferenceWorkflow:
     """
@@ -61,6 +62,14 @@ class InferenceWorkflow:
         self.logger = logging.getLogger(__name__)
 
     def run(self):
+        # Configure logging: log to inference.log, but DO NOT capture stdout (propagate=True)
+        setup_workflow_logger(
+            logger_name="dpeva",
+            work_dir=self.work_dir,
+            filename=LOG_FILE_INFER,
+            capture_stdout=False
+        )
+
         # Check backend override
         env_backend = os.environ.get("DPEVA_INTERNAL_BACKEND")
         if env_backend:

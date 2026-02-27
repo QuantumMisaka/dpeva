@@ -39,6 +39,13 @@ DEFAULT_TESTING_DIR: Final[str] = "test_results"
 DEFAULT_ANALYSIS_OUTPUT_DIR: Final[str] = "analysis"
 DEFAULT_LOG_FILE: Final[str] = "collection.log"
 
+# Workflow Log Files
+LOG_FILE_TRAIN: Final[str] = "training.log"
+LOG_FILE_COLLECT: Final[str] = "collection.log"
+LOG_FILE_INFER: Final[str] = "inference.log"
+LOG_FILE_FEATURE: Final[str] = "feature.log"
+LOG_FILE_ANALYSIS: Final[str] = "analysis.log"
+
 # Visualization
 FIG_DPI: Final[int] = 300
 
