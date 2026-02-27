@@ -7,7 +7,7 @@
   - 配置字段字典：/docs/reference/config-schema.md
   - 校验规则补充：/docs/reference/validation.md
 
-* **版本**: 0.4.4
+* **版本**: 0.4.5
 * **生成日期**: 2026-02-27
 * **作者**: Quantum Misaka with Trae SOLO
 
@@ -181,6 +181,17 @@ graph TD
 *   **`JobManager`**: 屏蔽 Local/Slurm 差异。
 *   **`JobConfig`**: 强类型的作业配置类，支持 Partition, QoS, GPUs 等 Slurm 高级参数。
 *   **`TemplateEngine`**: 基于模板生成作业脚本，易于扩展和定制。
+
+### 3.6 Slurm Backend 设计 (Slurm Architecture)
+
+DP-EVA 专为高性能计算 (HPC) 环境设计，其 Slurm 后端支持以下关键特性：
+
+*   **双模调度 (Dual-Mode)**: 通过 `JobManager` 统一封装，代码逻辑无缝切换 Local/Slurm 模式。
+*   **并行投作业 (Parallel Submission)**: 
+    *   **Training**: 训练阶段，每个模型（如 4 个 Ensemble 模型）会被分配独立的 Slurm 作业 (`train.slurm`)，从而在集群中并行训练，极大缩短总耗时。
+    *   **Inference**: 推理阶段 (v0.4.5+)，每个模型的测试任务 (`dp test`) 同样被封装为独立的 Slurm 作业 (`run_test.slurm`)，实现多模型并行推理。
+*   **一任务一作业 (One-Task-One-Job)**: 摒弃了将所有任务打包进单一作业的串行模式，确保每个子任务都能独占申请到的计算资源（如 GPU），避免资源争抢和效率瓶颈。
+*   **状态监控**: 所有 Slurm 作业在完成后会输出 `DPEVA_TAG: WORKFLOW_FINISHED` 标记，便于自动化工具监控任务状态。
 
 ---
 
@@ -458,3 +469,8 @@ DPEVA_TAG: WORKFLOW_FINISHED
     *   **[规范]** 为所有 Workflow (Train, Infer, Feature, Collect, Analysis) 定义了专属的日志文件名常量，消除了歧义。
     *   **[功能]** 为 `Inference` 和 `Feature` 工作流补全了缺失的文件日志功能，增强了生产环境的可追溯性。
     *   **[测试]** 更新了相关单元测试，确保新日志机制的正确性，并修复了训练初始化测试中的回归问题。
+*   **v0.4.5** (2026-02-27):
+    *   **[并行]** 修复了 `InferenceWorkflow` 在 Slurm 后端下的并行提交逻辑。
+    *   **[重构]** 移除了 `infer.py` 中的“自提交 (Self-Submission)”机制，改为由 `InferenceExecutionManager` 直接生成并提交多个并行的 `dp test` 任务脚本。
+    *   **[性能]** 显著提升了多模型推理在集群环境下的吞吐量，现在每个模型将独立占用 Slurm 资源（如 GPU）进行并行计算，而非挤在单一作业中串行执行。
+    *   **[测试]** 新增 `test_inference_parallel_submission.py` 集成测试，验证了 Slurm 任务脚本生成的独立性与参数正确性。

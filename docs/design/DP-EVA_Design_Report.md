@@ -150,3 +150,56 @@
 4.  **工作流层 (`dpeva.workflows.collect.CollectionWorkflow`)**:
     *   仅保留配置注入和高层流程控制。
     *   通过组合（Composition）方式调用上述 Manager，代码量减少约 60%，逻辑清晰度显著提升。
+
+---
+
+## 7. Slurm 后端架构与并行设计 (Slurm Backend Architecture)
+
+DP-EVA 专为高性能计算 (HPC) 环境设计，其核心设计目标之一是能够无缝地在本地单机 (Local) 和 Slurm 集群 (Slurm) 之间切换，且最大化集群资源的并行利用率。
+
+### 7.1 双模调度架构 (Dual-Mode Scheduling)
+
+系统通过 `JobManager` 实现了对底层计算资源的抽象：
+
+*   **Local Backend**: 
+    *   利用 `multiprocessing` 模块在本地并发执行任务。
+    *   适用于调试、小规模测试或单节点工作站。
+*   **Slurm Backend**:
+    *   利用 `sbatch` 命令提交作业到集群调度器。
+    *   支持 `partition`, `qos`, `nodes`, `gpus_per_node` 等高级 Slurm 参数。
+    *   **关键特性**: 生成独立的 `.slurm` 脚本文件，确保作业可追溯、可复现。
+
+### 7.2 并行投作业设计 (Parallel Submission Strategy)
+
+为了解决大规模主动学习任务中的吞吐量瓶颈，**TrainingWorkflow** 和 **InferenceWorkflow** (v0.4.5+) 均采用了 **"One-Task-One-Job" (一任务一作业)** 的并行策略，而非将所有任务打包进单一作业。
+
+#### **TrainingWorkflow 的并行设计**
+训练阶段通常涉及同时训练 4 个（或更多）模型以构建系综 (Ensemble)。
+*   **并行模式**: `TrainingExecutionManager` 会遍历所有模型任务，为每个模型生成一个独立的 `train.slurm` 脚本。
+*   **资源隔离**: 每个作业独立申请 GPU 资源（例如 4 个模型申请 4 个 GPU 卡），互不干扰。
+*   **提交逻辑**:
+    ```python
+    # 伪代码逻辑
+    for i in range(num_models):
+        script_path = generate_slurm_script(task_id=i, ...)
+        JobManager.submit(script_path) 
+    ```
+*   **优势**: 极大缩短了总训练时间（从 $T \times N$ 缩减为 $T$），且单个模型失败不会影响其他模型。
+
+#### **InferenceWorkflow 的并行设计 (v0.4.5 重构)**
+推理阶段需要对每个模型在测试集上进行预测。
+*   **旧版问题 (v0.4.4及之前)**: 采用 "Self-Submission" 模式，即提交一个 Slurm 作业，该作业内部再串行调用 `subprocess` 运行所有模型的推理。这导致 N 个模型的推理只能串行执行，无法利用集群并行能力。
+*   **新版设计 (v0.4.5+)**: 
+    *   **并行化**: `InferenceExecutionManager` 现已对齐 Training 的设计，直接为每个模型生成独立的 `run_test.slurm` 脚本并并行提交。
+    *   **命令构建**: 脚本内部直接调用 `dp test` (通过 `DPCommandBuilder`)，去除了中间层的 Python 包装，降低了开销。
+    *   **状态管理**: 由于是异步提交，分析步骤 (`Analysis`) 需在作业完成后手动触发或由外部工作流编排器（如 Airflow）管理。
+
+### 7.3 作业状态监控 (Job Monitoring)
+
+为了支持自动化工作流，所有 Slurm 作业在成功执行完核心逻辑后，都会向 stdout/日志输出标准化的结束标记：
+
+```text
+DPEVA_TAG: WORKFLOW_FINISHED
+```
+
+外部系统（或未来的 `MonitorWorkflow`）可以通过轮询日志文件检测此 Tag，从而精确判定任务是否完成，实现基于事件的自动化编排。
