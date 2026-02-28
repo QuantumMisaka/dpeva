@@ -132,3 +132,79 @@ class TestTrainingExecutionManager:
         job_config = mock_gen.call_args[0][0]
         assert "torchrun" in job_config.command
         assert "--nproc_per_node" in job_config.command
+
+    @patch("dpeva.submission.manager.JobManager")
+    def test_submit_jobs_slurm_parallel(self, mock_job_cls, manager, tmp_path):
+        """
+        Verify that Slurm backend submits jobs in parallel and sets up correct dp train command.
+        """
+        # Setup manager with slurm backend
+        manager.backend = "slurm"
+        # Since we patched JobManager class, we need to set manager.job_manager to the instance mock
+        manager.job_manager = mock_job_cls.return_value
+        
+        scripts = ["script1.slurm", "script2.slurm"]
+        task_dirs = ["dir1", "dir2"]
+        
+        manager.submit_jobs(scripts, task_dirs)
+        
+        # Verify submit was called 2 times (loop)
+        assert manager.job_manager.submit.call_count == 2
+        calls = manager.job_manager.submit.call_args_list
+        assert calls[0][0][0] == "script1.slurm"
+        assert calls[1][0][0] == "script2.slurm"
+
+    def test_generate_script_correct_dp_train_command(self, manager, tmp_path):
+        """
+        Verify that the generated script contains the correct 'dp train' command.
+        """
+        task_dir = str(tmp_path)
+        with patch("dpeva.submission.manager.JobManager.generate_script") as mock_gen:
+            manager.generate_script(0, task_dir, "base.ckpt", omp_threads=4)
+            
+            job_config = mock_gen.call_args[0][0]
+            # Verify command content
+            assert "dp --pt train" in job_config.command
+            assert "input.json" in job_config.command
+            assert "--finetune base.ckpt" in job_config.command
+            assert "--skip-neighbor-stat" not in job_config.command # Single GPU shouldn't skip neighbor stat by default unless specified or multi-gpu
+            # Wait, TrainingExecutionManager logic:
+            # Single GPU: skip_neighbor_stat=False (default in DPCommandBuilder.train)
+            # Multi GPU: skip_neighbor_stat=True
+
+    def test_generate_script_correct_dp_train_command_multi_gpu(self, manager, tmp_path):
+        """
+        Verify that the generated script contains the correct 'dp train' command for multi-GPU.
+        """
+        manager.slurm_config = {"gpus_per_node": 4}
+        task_dir = str(tmp_path)
+        with patch("dpeva.submission.manager.JobManager.generate_script") as mock_gen:
+            manager.generate_script(0, task_dir, "base.ckpt", omp_threads=4)
+            
+            job_config = mock_gen.call_args[0][0]
+            # Verify command content
+            assert "torchrun" in job_config.command
+            assert "dp --pt train" in job_config.command
+            assert "--skip-neighbor-stat" in job_config.command
+
+    @patch("dpeva.training.managers.multiprocessing.Process")
+    def test_submit_jobs_local_parallel_multiprocessing(self, mock_proc, manager, tmp_path):
+        """
+        Verify that Local backend uses multiprocessing for parallel execution.
+        """
+        # Setup manager with local backend
+        manager.backend = "local"
+        
+        scripts = ["script1.sh", "script2.sh"]
+        task_dirs = ["dir1", "dir2"]
+        
+        manager.submit_jobs(scripts, task_dirs, blocking=True)
+        
+        # Verify Process was instantiated 2 times
+        assert mock_proc.call_count == 2
+        
+        # Verify start() was called 2 times
+        assert mock_proc.return_value.start.call_count == 2
+        
+        # Verify join() was called 2 times (since blocking=True)
+        assert mock_proc.return_value.join.call_count == 2

@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Mapping, Optional, Sequence
 
-from dpeva.constants import WORKFLOW_FINISHED_TAG
+from dpeva.constants import WORKFLOW_FINISHED_TAG, LOG_FILE_FEATURE
 
 from .slurm_utils import submit_cli_and_capture_job_id
 from ..utils.logs import wait_for_text_in_file
@@ -58,7 +58,21 @@ class WorkflowOrchestrator:
         else:
             self._run_cli([sys.executable, "-m", "dpeva.cli", "feature", str(config_path)])
         
-        wait_for_text_in_file(savedir / "eval_desc.log", WORKFLOW_FINISHED_TAG, timeout_s=timeout_s)
+        # In Slurm mode, we wait for the job log "eval_desc.log" which contains the tag.
+        # In Local mode, we captured stdout to "eval_desc.log", but logs go to "feature.log".
+        # However, we should wait for the actual job completion marker.
+        # FeatureExecutionManager writes WORKFLOW_FINISHED_TAG to eval_desc.log (via echo in script).
+        # So eval_desc.log is correct for Slurm.
+        
+        # Debugging aid: if file not found after timeout, check feature.log
+        try:
+            wait_for_text_in_file(savedir / "eval_desc.log", WORKFLOW_FINISHED_TAG, timeout_s=timeout_s)
+        except TimeoutError:
+            # Try to read feature.log for debugging
+            feat_log = savedir / LOG_FILE_FEATURE
+            if feat_log.exists():
+                print(f"\n--- DEBUG: {LOG_FILE_FEATURE} content ---\n{feat_log.read_text()}")
+            raise
 
     def run_training(self, config_path: Path, num_models: int, timeout_s: float) -> None:
         # Training spawns multiple tasks. In local mode, dpeva.cli train submits them sequentially (or parallel?)
@@ -105,7 +119,7 @@ class WorkflowOrchestrator:
         for i in range(num_models):
             if self.backend == "slurm":
                 wait_for_text_in_file(
-                    self.work_dir / str(i) / task_name / "test_job.log",
+                    self.work_dir / str(i) / task_name / "test_job.out",
                     WORKFLOW_FINISHED_TAG,
                     timeout_s=timeout_s,
                 )
@@ -141,7 +155,10 @@ class WorkflowOrchestrator:
                  target_log = cli_log
         else:
              self._run_cli([sys.executable, "-m", "dpeva.cli", "collect", str(config_path)])
-             target_log = log_path or (self.work_dir / "collect_slurm.out")
+             # In Slurm mode, we should ALSO check collection.log because the job runs locally on the node.
+             # collect_slurm.out captures stdout, but logs go to collection.log.
+             # We unconditionally wait for collection.log, as wait_for_text_in_file handles waiting for creation.
+             target_log = self.work_dir / "dpeva_uq_result" / "collection.log"
             
         wait_for_text_in_file(target_log, WORKFLOW_FINISHED_TAG, timeout_s=timeout_s)
 

@@ -1,0 +1,45 @@
+2026-02-28 16:22:30 - dpeva - INFO - Log initialized: desc-model-data/feature.log (Rotation: 10.0MB x 5)
+2026-02-28 16:22:30 - dpeva.workflows.feature - INFO - Initializing Feature Workflow (Mode: cli, Backend: slurm)
+2026-02-28 16:22:30 - dpeva.feature.managers - INFO - Submitting eval-desc job for /home/pku-jianghong/liuzhaoqing/work/ft2dp-dpeva/dpeva/test_runs/pytest-of-liuzhaoqing/pytest-4/test_submit_cli_mode_slurm0/data
+2026-02-28 16:22:30 - dpeva.workflows.feature - INFO - Initializing Feature Workflow (Mode: python, Backend: slurm)
+2026-02-28 16:22:30 - dpeva.feature.managers - INFO - Submitting python mode job for /home/pku-jianghong/liuzhaoqing/work/ft2dp-dpeva/dpeva/test_runs/pytest-of-liuzhaoqing/pytest-4/test_submit_python_mode_slurm0/data
+2026-02-28 16:22:53 - dpeva - INFO - Log initialized: desc-model-data/feature.log (Rotation: 10.0MB x 5)
+2026-02-28 16:22:53 - dpeva.workflows.feature - INFO - Initializing Feature Workflow (Mode: cli, Backend: slurm)
+2026-02-28 16:22:53 - dpeva.feature.managers - INFO - Submitting eval-desc job for /home/pku-jianghong/liuzhaoqing/work/ft2dp-dpeva/dpeva/test_runs/pytest-of-liuzhaoqing/pytest-5/test_submit_cli_mode_slurm0/data
+2026-02-28 16:22:53 - dpeva.workflows.feature - INFO - Initializing Feature Workflow (Mode: python, Backend: slurm)
+2026-02-28 16:22:53 - dpeva.feature.managers - INFO - Submitting python mode job for /home/pku-jianghong/liuzhaoqing/work/ft2dp-dpeva/dpeva/test_runs/pytest-of-liuzhaoqing/pytest-5/test_submit_python_mode_slurm0/data
+2026-02-28 16:22:53 - dpeva.workflows.feature - INFO - Initializing Feature Workflow (Mode: python, Backend: local)
+2026-02-28 16:22:53 - dpeva.feature.generator - WARNING - DeepMD-kit not available. Python mode calculation will fail.
+2026-02-28 16:22:53 - dpeva.workflows.feature - INFO - DPEVA_TAG: WORKFLOW_FINISHED
+2026-02-28 16:23:31 - dpeva - INFO - Log initialized: desc-model-data/feature.log (Rotation: 10.0MB x 5)
+2026-02-28 16:23:31 - dpeva.workflows.feature - INFO - Initializing Feature Workflow (Mode: cli, Backend: slurm)
+2026-02-28 16:23:31 - dpeva.feature.managers - INFO - Submitting eval-desc job for /home/pku-jianghong/liuzhaoqing/work/ft2dp-dpeva/dpeva/test_runs/pytest-of-liuzhaoqing/pytest-6/test_submit_cli_mode_slurm0/data
+2026-02-28 16:23:31 - dpeva.workflows.feature - INFO - Initializing Feature Workflow (Mode: python, Backend: slurm)
+2026-02-28 16:23:31 - dpeva.feature.managers - INFO - Submitting python mode job for /home/pku-jianghong/liuzhaoqing/work/ft2dp-dpeva/dpeva/test_runs/pytest-of-liuzhaoqing/pytest-6/test_submit_python_mode_slurm0/data
+2026-02-28 16:23:31 - dpeva.workflows.feature - INFO - Initializing Feature Workflow (Mode: python, Backend: local)
+2026-02-28 16:23:31 - dpeva.feature.generator - WARNING - DeepMD-kit not available. Python mode calculation will fail.
+2026-02-28 16:23:31 - dpeva.workflows.feature - INFO - DPEVA_TAG: WORKFLOW_FINISHED
+2026-02-28 16:24:18 - dpeva - INFO - Log initialized: desc-model-data/feature.log (Rotation: 10.0MB x 5)
+2026-02-28 16:24:18 - dpeva.workflows.feature - INFO - Initializing Feature Workflow (Mode: cli, Backend: slurm)
+2026-02-28 16:24:18 - dpeva.feature.managers - INFO - Submitting eval-desc job for /home/pku-jianghong/liuzhaoqing/work/ft2dp-dpeva/dpeva/test_runs/pytest-of-liuzhaoqing/pytest-7/test_submit_cli_mode_slurm0/data
+2026-02-28 16:24:18 - dpeva.workflows.feature - INFO - Initializing Feature Workflow (Mode: python, Backend: slurm)
+2026-02-28 16:24:18 - dpeva.feature.managers - INFO - Submitting python mode job for /home/pku-jianghong/liuzhaoqing/work/ft2dp-dpeva/dpeva/test_runs/pytest-of-liuzhaoqing/pytest-7/test_submit_python_mode_slurm0/data
+2026-02-28 16:24:18 - dpeva.workflows.feature - INFO - Initializing Feature Workflow (Mode: python, Backend: local)
+2026-02-28 16:24:18 - dpeva.feature.generator - WARNING - DeepMD-kit not available. Python mode calculation will fail.
+2026-02-28 16:24:18 - dpeva.workflows.feature - INFO - DPEVA_TAG: WORKFLOW_FINISHED
+2026-02-28 16:24:38 - dpeva - INFO - Log initialized: desc-model-data/feature.log (Rotation: 10.0MB x 5)
+2026-02-28 16:24:38 - dpeva.workflows.feature - INFO - Initializing Feature Workflow (Mode: cli, Backend: slurm)
+2026-02-28 16:24:38 - dpeva.feature.managers - INFO - Submitting eval-desc job for /home/pku-jianghong/liuzhaoqing/work/ft2dp-dpeva/dpeva/test_runs/pytest-of-liuzhaoqing/pytest-8/test_submit_cli_mode_slurm0/data
+2026-02-28 16:24:38 - dpeva.workflows.feature - INFO - Initializing Feature Workflow (Mode: python, Backend: slurm)
+2026-02-28 16:24:38 - dpeva.feature.managers - INFO - Submitting python mode job for /home/pku-jianghong/liuzhaoqing/work/ft2dp-dpeva/dpeva/test_runs/pytest-of-liuzhaoqing/pytest-8/test_submit_python_mode_slurm0/data
+2026-02-28 16:24:38 - dpeva.workflows.feature - INFO - Initializing Feature Workflow (Mode: python, Backend: local)
+2026-02-28 16:24:38 - dpeva.feature.generator - WARNING - DeepMD-kit not available. Python mode calculation will fail.
+2026-02-28 16:24:38 - dpeva.workflows.feature - INFO - DPEVA_TAG: WORKFLOW_FINISHED
+2026-02-28 16:25:08 - dpeva - INFO - Log initialized: desc-model-data/feature.log (Rotation: 10.0MB x 5)
+2026-02-28 16:25:08 - dpeva.workflows.feature - INFO - Initializing Feature Workflow (Mode: cli, Backend: slurm)
+2026-02-28 16:25:08 - dpeva.feature.managers - INFO - Submitting eval-desc job for /home/pku-jianghong/liuzhaoqing/work/ft2dp-dpeva/dpeva/test_runs/pytest-of-liuzhaoqing/pytest-9/test_submit_cli_mode_slurm0/data
+2026-02-28 16:25:08 - dpeva.workflows.feature - INFO - Initializing Feature Workflow (Mode: python, Backend: slurm)
+2026-02-28 16:25:08 - dpeva.feature.managers - INFO - Submitting python mode job for /home/pku-jianghong/liuzhaoqing/work/ft2dp-dpeva/dpeva/test_runs/pytest-of-liuzhaoqing/pytest-9/test_submit_python_mode_slurm0/data
+2026-02-28 16:25:08 - dpeva.workflows.feature - INFO - Initializing Feature Workflow (Mode: python, Backend: local)
+2026-02-28 16:25:08 - dpeva.feature.generator - WARNING - DeepMD-kit not available. Python mode calculation will fail.
+2026-02-28 16:25:08 - dpeva.workflows.feature - INFO - DPEVA_TAG: WORKFLOW_FINISHED

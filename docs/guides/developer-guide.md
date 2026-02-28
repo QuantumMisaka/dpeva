@@ -474,3 +474,8 @@ DPEVA_TAG: WORKFLOW_FINISHED
     *   **[重构]** 移除了 `infer.py` 中的“自提交 (Self-Submission)”机制，改为由 `InferenceExecutionManager` 直接生成并提交多个并行的 `dp test` 任务脚本。
     *   **[性能]** 显著提升了多模型推理在集群环境下的吞吐量，现在每个模型将独立占用 Slurm 资源（如 GPU）进行并行计算，而非挤在单一作业中串行执行。
     *   **[测试]** 新增 `test_inference_parallel_submission.py` 集成测试，验证了 Slurm 任务脚本生成的独立性与参数正确性。
+*   **v0.4.6** (2026-02-28):
+    *   **[测试]** 新增 Slurm Backend 的端到端集成测试 (`tests/integration/slurm_multidatapool/orchestrator.py`)，在真实 Slurm 环境中验证了作业提交、运行和日志生成的完整闭环。
+    *   **[验证]** 强化了单元测试覆盖率，专门针对 Training 和 Inference 工作流的 "One-Job-Per-Model" 并行投作业逻辑增加了防退化测试，确保并行行为不被意外修改破坏。
+    *   **[修复]** 解决了集成测试在 Slurm 节点间的文件系统隔离问题 (Shared `test_runs` vs `/tmp`)，并优化了日志文件检测机制。
+    *   **[一致性]** 验证了 Feature (CLI/Python) 和 Collection (Self-Submission) 工作流在 Slurm 下的提交逻辑正确性。

@@ -73,10 +73,6 @@
 │   ├── quality.md
 │   ├── contributing.md
 │   └── docs-structure.md
-├── design
-│   ├── README.md
-│   ├── DP-EVA_Design_Report.md
-│   └── modulo_distribution.png
 ├── governance
 │   ├── README.md
 │   ├── plans

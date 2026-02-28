@@ -21,7 +21,7 @@
 
 ### 1.3 研究者（关注算法假设/设计权衡/实验结论）
 
-- 系统设计与模式分析：[DP-EVA_Design_Report.md](/docs/design/DP-EVA_Design_Report.md)
+- 系统设计与模式分析：[design-report.md](/docs/architecture/design-report.md)
 - DeepMD 依赖决策记录：[2026-02-04-deepmd-dependency.md](/docs/architecture/decisions/2026-02-04-deepmd-dependency.md)
 - 描述符模长假设与实验报告：[modulo-hypothesis.md](/docs/reports/modulo-hypothesis.md)
 
@@ -29,11 +29,10 @@
 
 - `docs/reference/`：权威“查表类”参考（字段列表、校验规则）。只在这里维护全量字段说明。
 - `docs/guides/`：主线操作指南（Quickstart/CLI/配置/Slurm/测试专题等）。遇到字段解释只链接到 `docs/reference/`。
-- `docs/architecture/`：架构与关键技术决策（ADR）。
+- `docs/architecture/`：架构与关键技术决策（ADR）以及设计报告。
 - `docs/governance/`：文档治理交付物（规划、审计、追踪矩阵、工具配置）。
 - `docs/reports/`：一次性分析/实验/评审结论（默认只追加）。
 - `docs/archive/`：历史与弃用文档（只读）。必须在文件头显式标注适用版本与是否已落地。
-- `docs/design/`：系统设计报告（默认只追加）。
 
 ## 3. 文档维护规则（建议作为团队约定）
 
