@@ -1,0 +1,30 @@
+{
+  "project": "./",
+  "uq_select_scheme": "tangent_lo",
+  "testing_dir": "test_val",
+  "results_prefix": "results",
+  "desc_dir": "./desc_pool",
+  "testdata_dir": "./other_dpdata_all",
+  "fig_dpi": 150,
+  "root_savedir": "dpeva_uq_result",
+  "uq_trust_mode": "auto",
+  "uq_trust_ratio": 0.5,
+  "uq_trust_width": 0.15,
+  "sampler_type": "direct",
+  "direct_n_clusters": 20,
+  "direct_k": 1,
+  "direct_thr_init": 0.1,
+  "submission": {
+    "backend": "slurm",
+    "env_setup": [
+      "source /opt/envs/deepmd3.1.2.env",
+      "export DP_INTERFACE_PREC=high"
+    ],
+    "slurm_config": {
+      "nodes": 1,
+      "ntasks": 1,
+      "cpus_per_task": 4,
+      "walltime": "00:30:00"
+    }
+  }
+}

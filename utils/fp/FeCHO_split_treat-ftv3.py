@@ -6,17 +6,16 @@ import numpy as np
 import os
 import sys
 from ase.io.abacus import write_input, write_abacus
-from ase import Atoms
+from ase import Atoms  #ase-abacus is needed
 from typing import List
 from copy import deepcopy
-from random import randint
 import dpdata
 import glob
 from tqdm import tqdm
 import numpy as np
 
 treat_stru = True
-project_dir = "input_dpdata"
+project_dir = "sampled_dpdata_nolabel"
 dataset_names = [
     "./alex-2d-1d-FeCOH/",
     "./alex-3d-FeCOH/",
@@ -48,6 +47,8 @@ basis = {
          'Fe': 'Fe_gga_7au_100Ry_4s2p2d1f.orb',
          }
 
+mag_ele = ["H", "C", "O", "Fe"]
+mag_num = [1, 1, 1, 5]
 # Judgement
 vaccum = 6.3 # Ang, the lowest vaccum thickness
 cubic_symprec_decimal = 0 # decimal for symprec in cubic_cluster
@@ -194,7 +195,7 @@ def swap_crystal_lattice(structure: Atoms, swap_indices: List[int] = [1, 2]) -> 
     return new_structure
 
 
-def sampled_dpdata_to_abacus(dataset_name, project_dir, vaccum=6.18, kpt_criteria=25, merge_traj=True):
+def sampled_dpdata_to_abacus(dataset_name, project_dir, vaccum=6.3, kpt_criteria=25, merge_traj=True):
     '''transfer sampled stru from dpdata/npy to abacus-input
     Args:
         dataset_name: name of dataset
@@ -206,6 +207,7 @@ def sampled_dpdata_to_abacus(dataset_name, project_dir, vaccum=6.18, kpt_criteri
     # read all stru in dpdata/npy format as System in MultiSystems
     target_dpdata_dir = f"./{dataset_name}/sampled_dpdata/"
     target_dpdata = dpdata.MultiSystems()
+    stru_root_name = f"{project_dir}/{dataset_name}/"
     for item in sorted(glob.glob(f'{target_dpdata_dir}/*')):
         target_dpdata.append(dpdata.System(item, fmt='deepmd/npy'))
 
@@ -233,7 +235,6 @@ def sampled_dpdata_to_abacus(dataset_name, project_dir, vaccum=6.18, kpt_criteri
                 stru.set_scaled_positions(scal_coords_now)
                 stru.center()
             
-            stru_root_name = f"{project_dir}/{dataset_name}/"
             vaccum_state = judge_vaccum(stru, vac=vaccum)
             input_parameters = deepcopy(basic_input)
             
@@ -264,19 +265,38 @@ def sampled_dpdata_to_abacus(dataset_name, project_dir, vaccum=6.18, kpt_criteri
                 stru_type = "bulk"
             elif sum(vaccum_state) == 2:
                 stru_type = "string"
+                # For 1D structure, move the extended direction (non-vacuum) to C-axis (Z-axis)
+                extend_dim = vaccum_state.index(False)
+                if extend_dim != 2:
+                    stru = swap_crystal_lattice(stru, [extend_dim, 2])
+                    vaccum_state[extend_dim], vaccum_state[2] = vaccum_state[2], vaccum_state[extend_dim]
+
             elif sum(vaccum_state) == 1:
                 stru_type = "layer"
+                # For 2D structure, move the longer in-plane vector to C-axis (Z-axis)
+                # 1. Identify vacuum dimension
+                vac_dim = vaccum_state.index(True)
+                # 2. Identify in-plane dimensions
+                plane_dims = [i for i in range(3) if i != vac_dim]
+                # 3. Find the longer dimension in plane
+                cell_lengths = stru.cell.cellpar()[:3]
+                if cell_lengths[plane_dims[0]] >= cell_lengths[plane_dims[1]]:
+                    long_dim = plane_dims[0]
+                else:
+                    long_dim = plane_dims[1]
+                
+                # 4. Swap long_dim to Z-axis if needed
+                if long_dim != 2:
+                    stru = swap_crystal_lattice(stru, [long_dim, 2])
+                    # Update vacuum state
+                    vaccum_state[long_dim], vaccum_state[2] = vaccum_state[2], vaccum_state[long_dim]
+                
+                # Recalculate vacuum dim for efield
+                vaccum_dim = vaccum_state.index(True)
+                
                 # set dipole correction only for layer
                 # for most cases not needed but can added
                 # but for Fe-O surface the dipole correction is needed
-                vaccum_dim = vaccum_state.index(True)
-                # added in 0729
-                if vaccum_dim == 2:
-                    # change Z-axis vacuum to Y-axis vacuum
-                    stru = swap_crystal_lattice(stru, [1, 2])
-                    vaccum_dim = 1
-                    vaccum_state[1] = True
-                    vaccum_state[2] = False
                 input_parameters.update(
                     {
                         'efield_flag': 1,
@@ -311,12 +331,7 @@ def sampled_dpdata_to_abacus(dataset_name, project_dir, vaccum=6.18, kpt_criteri
                     }
                 )
             if treat_stru:
-                if "Fe" in str(stru.symbols):
-                    if treat_stru:
-                        set_magmom_for_Atoms(stru, mag_ele=["H","C","O", "Fe"], mag_num=[1,1,1,5])
-                else:
-                    if treat_stru:
-                        set_magmom_for_Atoms(stru, mag_ele=["H","C","O"], mag_num=[1,1,1])
+                set_magmom_for_Atoms(stru, mag_ele=mag_ele, mag_num=mag_num)
                 write_input(open(f"{stru_dir_name}/INPUT", 'w'), parameters=input_parameters)
                 write_abacus(open(f"{stru_dir_name}/STRU", 'w'), stru, pp=input_parameters['pp'], basis=input_parameters['basis'])
                 with open(f"{stru_dir_name}/INPUT", "a") as fw:

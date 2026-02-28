@@ -1,0 +1,38 @@
+{
+    "project": "work_2direct",
+    "testdata_dir": "test/dptest_results",
+    "desc_dir": "test/descriptors",
+    "results_prefix": "results",
+    "testing_dir": "test_results",
+    
+    "root_savedir": "iteration_1_selected",
+    
+    "uq_trust_mode": "no_filter",
+    "uq_trust_ratio": 0.5,
+    "uq_trust_width": 0.05,
+    
+    "sampler_type": "2-direct",
+    
+    "step1_n_clusters": 10,
+    "step1_threshold": 0.5,
+    
+    "step2_n_clusters": 20,
+    "step2_threshold": 0.1,
+    "step2_k": 1,
+    "step2_selection": "smallest",
+    
+    "submission": {
+        "backend": "slurm",
+        "env_setup": [
+            "source /opt/envs/deepmd3.1.2.env",
+            "export DP_INTERFACE_PREC=high"
+        ],
+        "slurm_config": {
+            "partition": "CPU-MISC",
+            "qos": "rush-cpu",
+            "ntasks": 1,
+            "cpus_per_task": 4,
+            "job_name": "DPEVA-collect"
+        }
+    }
+}

@@ -8,11 +8,7 @@ import warnings
 import numpy as np
 from sklearn.base import BaseEstimator, TransformerMixin
 
-logging.basicConfig(
-    format='%(asctime)s - %(levelname)s - %(message)s',
-)
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
 
 
 class SelectKFromClusters(BaseEstimator, TransformerMixin):
@@ -78,7 +74,7 @@ class SelectKFromClusters(BaseEstimator, TransformerMixin):
                 as the indices of DIRECT sampled structures.
         """
         if any(key not in clustering_data for key in ["labels", "PCAfeatures"]):
-            raise Exception(
+            raise ValueError(
                 "The data returned by clustering step should at least provide label and feature information."
             )
         if self.selection_criteria == "center" and "label_centers" not in clustering_data:

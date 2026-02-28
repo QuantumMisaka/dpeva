@@ -1,0 +1,11 @@
+{
+    "result_dir": "0/test_val",
+    "output_dir": "analysis",
+    "type_map": ["Fe", "C", "O", "H"],
+    "ref_energies": {
+        "Fe": -3215.2791,
+        "C": -156.0795,
+        "O": -444.6670,
+        "H": -13.5410
+    }
+}

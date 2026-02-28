@@ -4,18 +4,13 @@ DPEVA: Deep Potential EVolution Accelerator
 """
 
 from __future__ import annotations
-from importlib.metadata import PackageNotFoundError, metadata # version
+from dpeva.utils.env_check import check_deepmd_version
 
-package_metadata = metadata("dpeva")
+__version__ = "0.4.6"
 
+# Perform environment checks on import
+# Wrap in try-except to avoid breaking CI/Test environments where dp might be missing
 try:
-    __version__ = package_metadata.get("version")
-except PackageNotFoundError:
-    __version__ = "0.2.0-alpha"
-
-__author__ = "James Misaka"
-
-# from .sampling import clustering, direct, pca, stratified_sampling
-# from .uncertain import rnd, rnd_models
-
-print(f"Initializing DP-EVA version {__version__}")
+    check_deepmd_version()
+except Exception:
+    pass

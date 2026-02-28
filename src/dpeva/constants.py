@@ -1,0 +1,99 @@
+"""
+Centralized constants and default values for DP-EVA.
+"""
+from typing import Final, Optional
+
+# Infrastructure Defaults
+DEFAULT_OMP_THREADS: Final[int] = 4
+DEFAULT_BACKEND: Final[str] = "local"
+DEFAULT_SLURM_PARTITION: Final[Optional[str]] = None
+DEFAULT_WALLTIME: Final[str] = "24:00:00"
+DEFAULT_SLURM_GPUS_PER_NODE: Final[Optional[int]] = None
+DEFAULT_SLURM_CPUS_PER_TASK: Final[Optional[int]] = None
+DEFAULT_SLURM_QOS: Final[Optional[str]] = None
+DEFAULT_SLURM_NODELIST: Final[Optional[str]] = None
+DEFAULT_SLURM_NODES: Final[int] = 1
+DEFAULT_SLURM_NTASKS: Final[int] = 1
+DEFAULT_SLURM_CUSTOM_HEADERS: Final[str] = ""
+
+# Model Defaults
+DEFAULT_NUM_MODELS: Final[int] = 4
+DEFAULT_DP_BACKEND: Final[str] = "pt"
+VALID_DP_BACKENDS: Final[list] = ["pt", "tf", "jax", "pd"]
+MIN_DEEPMD_VERSION: Final[str] = "3.1.2"
+
+# Feature/Descriptor Defaults
+DEFAULT_FEATURE_MODE: Final[str] = "cli"
+DEFAULT_DESC_BATCH_SIZE: Final[int] = 1000
+DEFAULT_DESC_OUTPUT_MODE: Final[str] = "atomic"
+
+# Inference/Training Defaults
+DEFAULT_INFER_TASK_NAME: Final[str] = "test"
+DEFAULT_RESULTS_PREFIX: Final[str] = "results"
+DEFAULT_INPUT_JSON: Final[str] = "input.json"
+
+# Collection/Active Learning Defaults
+DEFAULT_PROJECT_DIR: Final[str] = "./"
+DEFAULT_COLLECT_ROOT_DIR: Final[str] = "dpeva_uq_result"
+DEFAULT_TESTING_DIR: Final[str] = "test_results"
+DEFAULT_ANALYSIS_OUTPUT_DIR: Final[str] = "analysis"
+DEFAULT_LOG_FILE: Final[str] = "collection.log"
+
+# Workflow Log Files
+LOG_FILE_TRAIN: Final[str] = "training.log"
+LOG_FILE_COLLECT: Final[str] = "collection.log"
+LOG_FILE_INFER: Final[str] = "inference.log"
+LOG_FILE_FEATURE: Final[str] = "feature.log"
+LOG_FILE_ANALYSIS: Final[str] = "analysis.log"
+
+# Visualization
+FIG_DPI: Final[int] = 300
+
+# UQ Defaults
+DEFAULT_UQ_SCHEME: Final[str] = "tangent_lo"
+DEFAULT_UQ_TRUST_RATIO: Final[float] = 0.33
+DEFAULT_UQ_TRUST_WIDTH: Final[float] = 0.25
+DEFAULT_DIRECT_K: Final[int] = 1
+DEFAULT_DIRECT_THR_INIT: Final[float] = 0.5
+
+# Training Defaults
+DEFAULT_TRAINING_SEEDS: Final[list] = [19090, 42, 10032, 2933]
+
+# Units
+UNIT_ENERGY: Final[str] = "eV"
+UNIT_ENERGY_PER_ATOM: Final[str] = "eV/atom"
+UNIT_FORCE: Final[str] = "eV/A"
+
+# 2-DIRECT Defaults
+DEFAULT_STEP1_N_CLUSTERS: Final[Optional[int]] = None
+DEFAULT_STEP1_THRESHOLD: Final[float] = 0.5
+DEFAULT_STEP2_N_CLUSTERS: Final[Optional[int]] = None
+DEFAULT_STEP2_THRESHOLD: Final[float] = 0.1
+DEFAULT_STEP2_K: Final[int] = 5
+DEFAULT_STEP2_SELECTION: Final[str] = "smallest"
+
+# Workflow Tags
+WORKFLOW_FINISHED_TAG: Final[str] = "DPEVA_TAG: WORKFLOW_FINISHED"
+
+# Filenames
+FILENAME_STATS_JSON: Final[str] = "statistics.json"
+FILENAME_SUMMARY_CSV: Final[str] = "inference_summary.csv"
+
+# Visualization Filenames
+FILENAME_UQ_FORCE: Final[str] = "UQ-force.png"
+FILENAME_UQ_FORCE_RESCALED: Final[str] = "UQ-force-rescaled.png"
+FILENAME_UQ_DIFF_UQ_PARITY: Final[str] = "UQ-diff-UQ-parity.png"
+FILENAME_UQ_DIFF_FDIFF_PARITY: Final[str] = "UQ-diff-fdiff-parity.png"
+FILENAME_UQ_FORCE_QBC_RND_FDIFF_SCATTER: Final[str] = "UQ-force-qbc-rnd-fdiff-scatter.png"
+FILENAME_UQ_FORCE_QBC_RND_IDENTITY_SCATTER: Final[str] = "UQ-force-qbc-rnd-identity-scatter.png"
+FILENAME_UQ_FORCE_QBC_RND_IDENTITY_SCATTER_TRUNCATED: Final[str] = "UQ-force-qbc-rnd-identity-scatter-truncated.png"
+FILENAME_UQ_QBC_CANDIDATE_FDIFF_PARITY: Final[str] = "UQ-QbC-Candidate-fdiff-parity.png"
+FILENAME_UQ_RND_CANDIDATE_FDIFF_PARITY: Final[str] = "UQ-RND-Candidate-fdiff-parity.png"
+FILENAME_EXPLAINED_VARIANCE: Final[str] = "explained_variance.png"
+FILENAME_COVERAGE_SCORE: Final[str] = "coverage_score.png"
+FILENAME_FINAL_SAMPLED_PCAVIEW: Final[str] = "Final_sampled_PCAview.png"
+
+# Column Names
+COL_DESC_PREFIX: Final[str] = "desc_stru_"
+COL_UQ_QBC: Final[str] = "uq_qbc_for"
+COL_UQ_RND: Final[str] = "uq_rnd_for"

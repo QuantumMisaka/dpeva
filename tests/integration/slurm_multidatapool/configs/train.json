@@ -1,0 +1,25 @@
+{
+  "work_dir": "./",
+  "input_json_path": "input.json",
+  "num_models": 4,
+  "training_mode": "init",
+  "seeds": [19090, 42, 10032, 2933],
+  "training_seeds": [19090, 42, 10032, 2933],
+  "model_head": "DPEVA_TEST",
+  "base_model_path": "DPA-3.1-3M.pt",
+  "omp_threads": 2,
+  "training_data_path": "./sampled_dpdata",
+  "submission": {
+    "backend": "slurm",
+    "env_setup": [
+      "source /opt/envs/deepmd3.1.2.env",
+      "export DP_INTERFACE_PREC=high"
+    ],
+    "slurm_config": {
+      "nodes": 1,
+      "ntasks": 1,
+      "gpus_per_node": 1,
+      "walltime": "01:00:00"
+    }
+  }
+}

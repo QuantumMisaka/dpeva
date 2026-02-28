@@ -7,21 +7,12 @@ logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
     datefmt='%Y-%m-%d %H:%M:%S',
-    filemode='w',
-    filename="UQ-DIRECT-selection.log",
 )
 
 import numpy as np
 import os
 import sys
-from ase.io.abacus import write_input, write_abacus
-from copy import deepcopy
-from random import randint
-import dpdata
-import glob
-from tqdm import tqdm
 import numpy as np
-
 
 dataset_names = [
     "./alex-2d-1d-FeCOH/",
