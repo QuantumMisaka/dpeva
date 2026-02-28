@@ -4,6 +4,7 @@
 [![Python](https://img.shields.io/badge/Python-3.8%2B-blue)](https://www.python.org/)
 [![Code Style](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+[![Version](https://img.shields.io/badge/version-0.4.6-green)](https://github.com/QuantumMisaka/dpeva)
 
 **DP-EVA** is a high-efficiency active learning framework designed for the **Deep Potential (DPA3)** ecosystem. It automates the "Finetune-Explore-Label" loop by identifying the most valuable atomic configurations from massive datasets using advanced uncertainty quantification and representativeness sampling.
 

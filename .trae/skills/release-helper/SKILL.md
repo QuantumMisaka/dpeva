@@ -39,5 +39,6 @@ python tools/release_helper.py major
 ## Post-Execution Steps
 
 1.  Review the updated `CHANGELOG.md` and edit the content if necessary.
-2.  Commit the changes: `git commit -am "chore: release vX.Y.Z"`
-3.  Tag the release: `git tag vX.Y.Z`
+2.  **Update README Version**: Run `python scripts/update_version.py` to synchronize the version badge in `README.md`.
+3.  Commit the changes: `git commit -am "chore: release vX.Y.Z"`
+4.  Tag the release: `git tag vX.Y.Z`
