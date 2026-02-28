@@ -52,6 +52,7 @@ def test_feature_workflow_python_mode(tmp_path):
         "model_path": str(tmp_path / "model.pt"),
         "model_head": "OC20M",
         "mode": "python",
+        "savedir": str(tmp_path / "savedir"),
         "submission": {
             "backend": "local"
         }

@@ -15,6 +15,7 @@ class TestFeatureWorkflowSubmission:
             "data_path": str(tmp_path / "data"),
             "model_path": str(tmp_path / "model.pb"),
             "model_head": "head",
+            "savedir": str(tmp_path / "savedir"),
             "submission": {
                 "backend": "slurm",
                 "slurm_config": {"partition": "gpu"}
