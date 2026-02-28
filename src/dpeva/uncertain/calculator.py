@@ -48,6 +48,7 @@ class UQCalculator:
         # Unpack predictions
         # Helper to extract force components
         def get_forces(pred: PredictionData):
+            """Extracts force components from prediction data."""
             if pred.force is not None:
                 return pred.force['pred_fx'], pred.force['pred_fy'], pred.force['pred_fz']
             return None, None, None

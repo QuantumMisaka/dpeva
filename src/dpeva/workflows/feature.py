@@ -61,6 +61,14 @@ class FeatureWorkflow:
         self.logger = logging.getLogger(__name__)
 
     def run(self):
+        """
+        Executes the feature generation workflow.
+
+        1. Configures workflow logging.
+        2. Validates data paths.
+        3. Generates descriptors via CLI (dp eval-desc) or Python API (DeepPot).
+        4. Handles local or Slurm execution.
+        """
         # Configure logging: log to feature.log, but DO NOT capture stdout (propagate=True)
         setup_workflow_logger(
             logger_name="dpeva",

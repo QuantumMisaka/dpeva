@@ -1,3 +1,13 @@
+"""
+DP-EVA Command Line Interface (CLI).
+
+This module serves as the main entry point for the DP-EVA application.
+It parses command-line arguments and dispatches control to the appropriate
+workflow handlers (Training, Inference, Collection, Feature Generation, Analysis).
+
+Usage:
+    dpeva <command> <config_path> [options]
+"""
 import argparse
 import sys
 import json
@@ -9,20 +19,44 @@ from dpeva.utils.banner import show_banner
 # Workflows are imported inside handler functions
 
 def setup_global_logging():
+    """Configures the global logging format and level."""
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - DPEVA - %(levelname)s - %(message)s')
 
 def load_and_resolve_config(config_path):
+    """
+    Loads a JSON configuration file and resolves relative paths.
+
+    Args:
+        config_path (str): Path to the configuration file.
+
+    Returns:
+        dict: The configuration dictionary with resolved paths.
+    """
     with open(config_path, 'r') as f:
         config = json.load(f)
     return resolve_config_paths(config, config_path)
 
 def handle_train(args):
+    """
+    Handles the 'train' command.
+    Initializes and runs the TrainingWorkflow.
+
+    Args:
+        args (argparse.Namespace): Command-line arguments containing 'config'.
+    """
     from dpeva.workflows.train import TrainingWorkflow
     config = load_and_resolve_config(args.config)
     workflow = TrainingWorkflow(config)
     workflow.run()
 
 def handle_infer(args):
+    """
+    Handles the 'infer' command.
+    Initializes and runs the InferenceWorkflow.
+
+    Args:
+        args (argparse.Namespace): Command-line arguments containing 'config'.
+    """
     from dpeva.workflows.infer import InferenceWorkflow
     import os
     config = load_and_resolve_config(args.config)
@@ -30,12 +64,26 @@ def handle_infer(args):
     workflow.run()
 
 def handle_feature(args):
+    """
+    Handles the 'feature' command.
+    Initializes and runs the FeatureWorkflow.
+
+    Args:
+        args (argparse.Namespace): Command-line arguments containing 'config'.
+    """
     from dpeva.workflows.feature import FeatureWorkflow
     config = load_and_resolve_config(args.config)
     workflow = FeatureWorkflow(config)
     workflow.run()
 
 def handle_collect(args):
+    """
+    Handles the 'collect' command.
+    Initializes and runs the CollectionWorkflow.
+
+    Args:
+        args (argparse.Namespace): Command-line arguments containing 'config'.
+    """
     from dpeva.workflows.collect import CollectionWorkflow
     import os
     config = load_and_resolve_config(args.config)
@@ -44,12 +92,23 @@ def handle_collect(args):
     workflow.run()
 
 def handle_analysis(args):
+    """
+    Handles the 'analysis' command.
+    Initializes and runs the AnalysisWorkflow.
+
+    Args:
+        args (argparse.Namespace): Command-line arguments containing 'config'.
+    """
     from dpeva.workflows.analysis import AnalysisWorkflow
     config = load_and_resolve_config(args.config)
     workflow = AnalysisWorkflow(config)
     workflow.run()
 
 def main():
+    """
+    Main entry point for the CLI.
+    Parses arguments, displays banner, and executes the selected command.
+    """
     setup_global_logging()
     parser = argparse.ArgumentParser(prog="dpeva", description="DP-EVA: Deep Potential Evolution Accelerator")
     parser.add_argument("--no-banner", action="store_true", help="Skip the welcome banner")

@@ -56,6 +56,14 @@ DEFAULT_UQ_TRUST_WIDTH: Final[float] = 0.25
 DEFAULT_DIRECT_K: Final[int] = 1
 DEFAULT_DIRECT_THR_INIT: Final[float] = 0.5
 
+# Training Defaults
+DEFAULT_TRAINING_SEEDS: Final[list] = [19090, 42, 10032, 2933]
+
+# Units
+UNIT_ENERGY: Final[str] = "eV"
+UNIT_ENERGY_PER_ATOM: Final[str] = "eV/atom"
+UNIT_FORCE: Final[str] = "eV/A"
+
 # 2-DIRECT Defaults
 DEFAULT_STEP1_N_CLUSTERS: Final[Optional[int]] = None
 DEFAULT_STEP1_THRESHOLD: Final[float] = 0.5
@@ -70,6 +78,20 @@ WORKFLOW_FINISHED_TAG: Final[str] = "DPEVA_TAG: WORKFLOW_FINISHED"
 # Filenames
 FILENAME_STATS_JSON: Final[str] = "statistics.json"
 FILENAME_SUMMARY_CSV: Final[str] = "inference_summary.csv"
+
+# Visualization Filenames
+FILENAME_UQ_FORCE: Final[str] = "UQ-force.png"
+FILENAME_UQ_FORCE_RESCALED: Final[str] = "UQ-force-rescaled.png"
+FILENAME_UQ_DIFF_UQ_PARITY: Final[str] = "UQ-diff-UQ-parity.png"
+FILENAME_UQ_DIFF_FDIFF_PARITY: Final[str] = "UQ-diff-fdiff-parity.png"
+FILENAME_UQ_FORCE_QBC_RND_FDIFF_SCATTER: Final[str] = "UQ-force-qbc-rnd-fdiff-scatter.png"
+FILENAME_UQ_FORCE_QBC_RND_IDENTITY_SCATTER: Final[str] = "UQ-force-qbc-rnd-identity-scatter.png"
+FILENAME_UQ_FORCE_QBC_RND_IDENTITY_SCATTER_TRUNCATED: Final[str] = "UQ-force-qbc-rnd-identity-scatter-truncated.png"
+FILENAME_UQ_QBC_CANDIDATE_FDIFF_PARITY: Final[str] = "UQ-QbC-Candidate-fdiff-parity.png"
+FILENAME_UQ_RND_CANDIDATE_FDIFF_PARITY: Final[str] = "UQ-RND-Candidate-fdiff-parity.png"
+FILENAME_EXPLAINED_VARIANCE: Final[str] = "explained_variance.png"
+FILENAME_COVERAGE_SCORE: Final[str] = "coverage_score.png"
+FILENAME_FINAL_SAMPLED_PCAVIEW: Final[str] = "Final_sampled_PCAview.png"
 
 # Column Names
 COL_DESC_PREFIX: Final[str] = "desc_stru_"

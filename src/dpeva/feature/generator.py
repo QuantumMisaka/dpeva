@@ -13,6 +13,7 @@ except ImportError as e:
     logging.getLogger("dpeva.feature.generator").warning(f"DeepMD import failed: {e}")
     _DEEPMD_AVAILABLE = False
     def empty_cache():
+        """Dummy empty_cache function when torch is not available."""
         pass
 
 from dpeva.io.dataset import load_systems

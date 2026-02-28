@@ -5,6 +5,13 @@ import seaborn as sns
 import numpy as np
 import os
 import logging
+from dpeva.constants import (
+    FILENAME_UQ_FORCE, FILENAME_UQ_FORCE_RESCALED, FILENAME_UQ_DIFF_UQ_PARITY,
+    FILENAME_UQ_DIFF_FDIFF_PARITY, FILENAME_UQ_FORCE_QBC_RND_FDIFF_SCATTER,
+    FILENAME_UQ_FORCE_QBC_RND_IDENTITY_SCATTER, FILENAME_UQ_FORCE_QBC_RND_IDENTITY_SCATTER_TRUNCATED,
+    FILENAME_UQ_QBC_CANDIDATE_FDIFF_PARITY, FILENAME_UQ_RND_CANDIDATE_FDIFF_PARITY,
+    FILENAME_EXPLAINED_VARIANCE, FILENAME_COVERAGE_SCORE, FILENAME_FINAL_SAMPLED_PCAVIEW
+)
 
 class UQVisualizer:
     """Handles visualization of Uncertainty Quantification (UQ) and sampling results."""
@@ -68,7 +75,7 @@ class UQVisualizer:
         plt.ylabel("Density")
         plt.legend()
         plt.grid(True)
-        plt.savefig(f"{self.save_dir}/UQ-force.png", dpi=self.dpi)
+        plt.savefig(os.path.join(self.save_dir, FILENAME_UQ_FORCE), dpi=self.dpi)
         plt.close()
 
         # 2. Rescaled comparison
@@ -85,7 +92,7 @@ class UQVisualizer:
             plt.ylabel("Density")
             plt.legend()
             plt.grid(True)
-            plt.savefig(f"{self.save_dir}/UQ-force-rescaled.png", dpi=self.dpi)
+            plt.savefig(os.path.join(self.save_dir, FILENAME_UQ_FORCE_RESCALED), dpi=self.dpi)
             plt.close()
 
     def plot_uq_with_trust_range(self, uq_data, label, filename, trust_lo, trust_hi):
@@ -121,7 +128,7 @@ class UQVisualizer:
         plt.axvspan(trust_lo, trust_hi, alpha=0.1, color='yellow')
         plt.axvspan(trust_hi, viz_max, alpha=0.1, color='red')
         
-        plt.savefig(f"{self.save_dir}/{filename}", dpi=self.dpi)
+        plt.savefig(os.path.join(self.save_dir, filename), dpi=self.dpi)
         plt.close()
 
     def plot_uq_vs_error(self, uq_qbc, uq_rnd, diff_maxf, rescaled=False):
@@ -152,7 +159,7 @@ class UQVisualizer:
         plt.ylabel("True Max Force Diff")
         plt.legend()
         plt.grid(True)
-        plt.savefig(f"{self.save_dir}/{filename}", dpi=self.dpi)
+        plt.savefig(os.path.join(self.save_dir, filename), dpi=self.dpi)
         plt.close()
 
     def plot_uq_diff_parity(self, uq_qbc, uq_rnd_rescaled, diff_maxf=None):
@@ -175,7 +182,7 @@ class UQVisualizer:
         plt.ylabel("UQ Value")
         plt.legend()
         plt.grid(True)
-        plt.savefig(f"{self.save_dir}/UQ-diff-UQ-parity.png", dpi=self.dpi)
+        plt.savefig(os.path.join(self.save_dir, FILENAME_UQ_DIFF_UQ_PARITY), dpi=self.dpi)
         plt.close()
 
         # UQ Diff vs Force Diff
@@ -187,7 +194,7 @@ class UQVisualizer:
             plt.ylabel("True Max Force Diff")
             plt.legend()
             plt.grid(True)
-            plt.savefig(f"{self.save_dir}/UQ-diff-fdiff-parity.png", dpi=self.dpi)
+            plt.savefig(os.path.join(self.save_dir, FILENAME_UQ_DIFF_FDIFF_PARITY), dpi=self.dpi)
             plt.close()
 
     def plot_uq_fdiff_scatter(self, df_uq, scheme, trust_lo, trust_hi, rnd_trust_lo, rnd_trust_hi):
@@ -209,7 +216,7 @@ class UQVisualizer:
         self._setup_2d_plot_axes(trust_lo, trust_hi, rnd_trust_lo, rnd_trust_hi)
         self._draw_boundary(scheme, trust_lo, trust_hi, rnd_trust_lo, rnd_trust_hi)
         plt.legend(title="Max Force Diff", fontsize=10)
-        plt.savefig(f"{self.save_dir}/UQ-force-qbc-rnd-fdiff-scatter.png", dpi=self.dpi)
+        plt.savefig(os.path.join(self.save_dir, FILENAME_UQ_FORCE_QBC_RND_FDIFF_SCATTER), dpi=self.dpi)
         plt.close()
 
     def plot_uq_identity_scatter(self, df_uq, scheme, trust_lo, trust_hi, rnd_trust_lo, rnd_trust_hi):
@@ -233,7 +240,7 @@ class UQVisualizer:
         plt.xlim(left=0)
         plt.ylim(bottom=0)
         plt.legend(title="Identity", fontsize=10)
-        plt.savefig(f"{self.save_dir}/UQ-force-qbc-rnd-identity-scatter.png", dpi=self.dpi)
+        plt.savefig(os.path.join(self.save_dir, FILENAME_UQ_FORCE_QBC_RND_IDENTITY_SCATTER), dpi=self.dpi)
         plt.close()
         
         # Truncated plot [0, 2]
@@ -273,7 +280,7 @@ class UQVisualizer:
             plt.xlim(left=0)
             plt.ylim(bottom=0)
             plt.legend(title="Identity", fontsize=10)
-            plt.savefig(f"{self.save_dir}/UQ-force-qbc-rnd-identity-scatter-truncated.png", dpi=self.dpi)
+            plt.savefig(os.path.join(self.save_dir, FILENAME_UQ_FORCE_QBC_RND_IDENTITY_SCATTER_TRUNCATED), dpi=self.dpi)
             plt.close()
         else:
             logging.getLogger(__name__).info("UQ data within [0, 2], skipping truncated plot.")
@@ -295,7 +302,7 @@ class UQVisualizer:
         plt.ylabel("True Max Force Diff")
         plt.legend()
         plt.grid(True)
-        plt.savefig(f"{self.save_dir}/UQ-QbC-Candidate-fdiff-parity.png", dpi=self.dpi)
+        plt.savefig(os.path.join(self.save_dir, FILENAME_UQ_QBC_CANDIDATE_FDIFF_PARITY), dpi=self.dpi)
         plt.close()
         
         # RND
@@ -307,7 +314,7 @@ class UQVisualizer:
         plt.ylabel("True Max Force Diff")
         plt.legend()
         plt.grid(True)
-        plt.savefig(f"{self.save_dir}/UQ-RND-Candidate-fdiff-parity.png", dpi=self.dpi)
+        plt.savefig(os.path.join(self.save_dir, FILENAME_UQ_RND_CANDIDATE_FDIFF_PARITY), dpi=self.dpi)
         plt.close()
 
     def plot_pca_analysis(self, explained_variance, selected_PC_dim, all_features, direct_indices, random_indices,
@@ -336,7 +343,7 @@ class UQVisualizer:
         plt.gca().yaxis.set_major_formatter(mtick.PercentFormatter())
         plt.grid(True, linestyle='-', alpha=0.6)
         plt.title("Explained Variance Ratio", fontsize=16)
-        plt.savefig(f"{self.save_dir}/explained_variance.png", dpi=self.dpi)
+        plt.savefig(os.path.join(self.save_dir, FILENAME_EXPLAINED_VARIANCE), dpi=self.dpi)
         plt.close()
 
         # 2. PCA Feature Coverage (DIRECT vs Random)
@@ -356,7 +363,7 @@ class UQVisualizer:
         plt.grid(True, axis='y', linestyle='-', alpha=0.6)
         plt.legend(shadow=True, loc="best", fontsize=12)
         plt.title("Coverage Score Analysis (Joint Space)", fontsize=16)
-        plt.savefig(f"{self.save_dir}/coverage_score.png", dpi=self.dpi)
+        plt.savefig(os.path.join(self.save_dir, FILENAME_COVERAGE_SCORE), dpi=self.dpi)
         plt.close()
 
         # 4. Final Selection in PCA Space
@@ -405,7 +412,7 @@ class UQVisualizer:
         plt.ylabel("PC2", size=14)
         plt.grid(True, linestyle='-', alpha=0.6)
         plt.legend(frameon=True, fontsize=12, loc='best')
-        plt.savefig(f"{self.save_dir}/Final_sampled_PCAview.png", dpi=self.dpi)
+        plt.savefig(os.path.join(self.save_dir, FILENAME_FINAL_SAMPLED_PCAVIEW), dpi=self.dpi)
         plt.close()
         
         return pd.DataFrame(all_features[:, :2], columns=['PC1', 'PC2'])
@@ -446,7 +453,7 @@ class UQVisualizer:
         plt.xlabel("PC 1", size=14)
         plt.title(f"{method} Coverage Analysis", fontsize=16)
         plt.grid(True, linestyle='-', alpha=0.6)
-        plt.savefig(f"{self.save_dir}/{method}_PCA_feature_coverage.png", dpi=self.dpi)
+        plt.savefig(os.path.join(self.save_dir, f"{method}_PCA_feature_coverage.png"), dpi=self.dpi)
         plt.close()
 
     def _setup_2d_plot_axes(self, x_lo, x_hi, y_lo, y_hi):

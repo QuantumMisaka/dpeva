@@ -8,7 +8,7 @@ from typing import Dict, List, Tuple, Optional, Any
 
 from dpeva.inference import DPTestResultParser, StatsCalculator, InferenceVisualizer
 from dpeva.config import AnalysisConfig
-from dpeva.constants import FILENAME_STATS_JSON
+from dpeva.constants import FILENAME_STATS_JSON, UNIT_ENERGY, UNIT_ENERGY_PER_ATOM, UNIT_FORCE
 from dpeva.io.dataset import load_systems
 from collections import Counter
 
@@ -104,6 +104,7 @@ class AnalysisIOManager:
     def save_stats_desc(self, stats: Dict, filename: str):
         """Save statistics description to JSON."""
         def default(o):
+            """JSON serializer for NumPy types."""
             if isinstance(o, (np.integer, int)): return int(o)
             if isinstance(o, (np.floating, float)): return float(o)
             if isinstance(o, np.ndarray): return o.tolist()
@@ -208,19 +209,19 @@ class UnifiedAnalysisManager:
             formatted_metrics = {k: float(f"{v:.6f}") for k, v in metrics.items() if isinstance(v, (int, float))}
             self.logger.info(f"Computed Metrics:\n{json.dumps(formatted_metrics, indent=4)}")
 
-            viz.plot_parity(stats_calc.e_true, stats_calc.e_pred, "Energy", "eV/atom")
+            viz.plot_parity(stats_calc.e_true, stats_calc.e_pred, "Energy", UNIT_ENERGY_PER_ATOM)
             if stats_calc.f_true is not None:
-                viz.plot_parity(stats_calc.f_true, stats_calc.f_pred, "Force", "eV/A")
+                viz.plot_parity(stats_calc.f_true, stats_calc.f_pred, "Force", UNIT_FORCE)
                 
-            viz.plot_error_distribution(stats_calc.e_pred - stats_calc.e_true, "Energy", "eV/atom")
+            viz.plot_error_distribution(stats_calc.e_pred - stats_calc.e_true, "Energy", UNIT_ENERGY_PER_ATOM)
             if stats_calc.f_true is not None:
-                viz.plot_error_distribution(stats_calc.f_pred - stats_calc.f_true, "Force", "eV/A")
+                viz.plot_error_distribution(stats_calc.f_pred - stats_calc.f_true, "Force", UNIT_FORCE)
 
         # Distributions Analysis (No Outliers)
         # Energy
-        viz.plot_distribution(stats_calc.e_pred, "Predicted Energy", "eV/atom")
+        viz.plot_distribution(stats_calc.e_pred, "Predicted Energy", UNIT_ENERGY_PER_ATOM)
         if stats_calc.e_true is not None:
-            viz.plot_distribution(stats_calc.e_true, "True Energy", "eV/atom", color="green")
+            viz.plot_distribution(stats_calc.e_true, "True Energy", UNIT_ENERGY_PER_ATOM, color="green")
         
         # Relative Energy Distribution (Only if composition available)
         e_rel_pred = stats_calc.compute_relative_energy(stats_calc.e_pred)
@@ -228,36 +229,36 @@ class UnifiedAnalysisManager:
         
         if e_rel_pred is not None:
             label_rel = "Cohesive Energy"
-            viz.plot_distribution(e_rel_pred, label_rel, "eV/atom", color="purple")
+            viz.plot_distribution(e_rel_pred, label_rel, UNIT_ENERGY_PER_ATOM, color="purple")
             
             # If we have ground truth, plot parity for Cohesive Energy
             if stats_calc.e_true is not None:
                 e_rel_true = stats_calc.compute_relative_energy(stats_calc.e_true)
                 if e_rel_true is not None:
-                    viz.plot_parity(e_rel_true, e_rel_pred, "Cohesive Energy", "eV/atom")
-                    viz.plot_error_distribution(e_rel_pred - e_rel_true, "Cohesive Energy", "eV/atom")
+                    viz.plot_parity(e_rel_true, e_rel_pred, "Cohesive Energy", UNIT_ENERGY_PER_ATOM)
+                    viz.plot_error_distribution(e_rel_pred - e_rel_true, "Cohesive Energy", UNIT_ENERGY_PER_ATOM)
                     
                     if stats_calc.e_true is not None:
-                        viz.plot_distribution(e_rel_true, "True Cohesive Energy", "eV/atom", color="magenta")
+                        viz.plot_distribution(e_rel_true, "True Cohesive Energy", UNIT_ENERGY_PER_ATOM, color="magenta")
         
         # Force Magnitude
         f_pred_norm = None
         f_true_norm = None
         if stats_calc.f_pred is not None:
             f_pred_norm = stats_calc.compute_force_magnitude(stats_calc.f_pred)
-            viz.plot_distribution(f_pred_norm, "Predicted Force Magnitude", "eV/A", color="orange")
+            viz.plot_distribution(f_pred_norm, "Predicted Force Magnitude", UNIT_FORCE, color="orange")
             
             if stats_calc.f_true is not None:
                 f_true_norm = stats_calc.compute_force_magnitude(stats_calc.f_true)
-                viz.plot_distribution(f_true_norm, "True Force Magnitude", "eV/A", color="teal")
+                viz.plot_distribution(f_true_norm, "True Force Magnitude", UNIT_FORCE, color="teal")
 
         # Virial
         if stats_calc.v_pred is not None:
             # Plot flattened virial components
-            viz.plot_distribution(stats_calc.v_pred.flatten(), "Predicted Virial", "eV", color="red")
+            viz.plot_distribution(stats_calc.v_pred.flatten(), "Predicted Virial", UNIT_ENERGY, color="red")
             
             if stats_calc.v_true is not None:
-                viz.plot_distribution(stats_calc.v_true.flatten(), "True Virial", "eV", color="cyan")
+                viz.plot_distribution(stats_calc.v_true.flatten(), "True Virial", UNIT_ENERGY, color="cyan")
 
         # Save Statistics JSON
         stats_export = {
@@ -286,6 +287,7 @@ class UnifiedAnalysisManager:
     def save_statistics(self, analysis_dir: str, stats_data: Dict):
         """Save statistics to JSON."""
         def default(o):
+            """JSON serializer for NumPy types."""
             if isinstance(o, (np.integer, int)): return int(o)
             if isinstance(o, (np.floating, float)): return float(o)
             if isinstance(o, np.ndarray): return o.tolist()

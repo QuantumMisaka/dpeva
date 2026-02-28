@@ -73,6 +73,15 @@ class TrainingWorkflow:
         self.logger = logging.getLogger(__name__)
 
     def run(self):
+        """
+        Executes the training workflow.
+
+        1. Configures workflow logging.
+        2. Generates task-specific configurations and seeds.
+        3. Creates task directories and copies base models.
+        4. Generates submission scripts (Slurm or Local).
+        5. Submits jobs to the execution backend.
+        """
         # Configure logging: log to training.log, but DO NOT capture stdout (propagate=True)
         setup_workflow_logger(
             logger_name="dpeva",

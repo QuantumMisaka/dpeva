@@ -4,7 +4,7 @@ import multiprocessing
 from copy import deepcopy
 from typing import List, Dict, Any, Optional
 
-from dpeva.constants import WORKFLOW_FINISHED_TAG
+from dpeva.constants import WORKFLOW_FINISHED_TAG, DEFAULT_TRAINING_SEEDS
 from dpeva.submission import JobManager, JobConfig
 from dpeva.utils.command import DPCommandBuilder
 
@@ -62,7 +62,7 @@ class TrainingConfigManager:
 
     def generate_seeds(self, num_models: int, user_seeds: Optional[List[int]] = None) -> List[int]:
         """Generate seeds for training."""
-        default_seeds = [19090, 42, 10032, 2933]
+        default_seeds = DEFAULT_TRAINING_SEEDS
         
         if user_seeds:
             return user_seeds

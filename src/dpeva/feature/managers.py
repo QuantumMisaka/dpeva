@@ -228,6 +228,7 @@ if __name__ == "__main__":
         self.logger.info(f"Scanning {abs_data_path} for systems...")
         
         def process_recursive(current_path, current_output_dir):
+            """Recursively processes directories to generate descriptors."""
             # Check if leaf system
             if io_manager.is_leaf_system(current_path):
                 sys_name = os.path.basename(current_path)

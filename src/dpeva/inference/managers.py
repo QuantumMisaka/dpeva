@@ -84,6 +84,7 @@ class InferenceIOManager:
     def save_statistics(self, analysis_dir: str, stats_data: Dict):
         """Save statistics to JSON."""
         def default(o):
+            """JSON serializer for NumPy types."""
             if isinstance(o, (np.integer, int)): return int(o)
             if isinstance(o, (np.floating, float)): return float(o)
             if isinstance(o, np.ndarray): return o.tolist()

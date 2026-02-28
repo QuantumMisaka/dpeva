@@ -58,6 +58,7 @@ class SubmissionConfig(BaseModel):
     @field_validator("env_setup")
     @classmethod
     def validate_env_setup(cls, v):
+        """Converts list of commands to a newline-separated string."""
         if isinstance(v, list):
             return "\n".join(v)
         return v
@@ -86,6 +87,7 @@ class BaseWorkflowConfig(BaseModel):
     @field_validator("dp_backend")
     @classmethod
     def validate_dp_backend(cls, v):
+        """Validates that the DeepMD backend is supported."""
         if v not in VALID_DP_BACKENDS:
             raise ValueError(f"Invalid dp_backend '{v}'. Valid options: {VALID_DP_BACKENDS}")
         return v
@@ -93,6 +95,7 @@ class BaseWorkflowConfig(BaseModel):
     @field_validator("omp_threads")
     @classmethod
     def validate_omp_threads(cls, v):
+        """Validates OMP thread count and resolves 'auto'."""
         if v == "auto":
             return os.cpu_count() or 1
         if isinstance(v, int) and v < 1:
@@ -136,6 +139,7 @@ class FeatureConfig(BaseWorkflowConfig):
 
     @model_validator(mode='after')
     def set_default_savedir(self):
+        """Sets default savedir based on model and data names."""
         if self.savedir is None:
             model_name = self.model_path.stem
             data_name = self.data_path.name
@@ -239,6 +243,7 @@ class CollectionConfig(BaseWorkflowConfig):
 
     @model_validator(mode='after')
     def validate_manual_trust_bounds(self):
+        """Validates that manual trust bounds are properly set."""
         if self.uq_trust_mode == "manual":
             # QbC Validation & Calculation
             if self.uq_qbc_trust_lo is None:

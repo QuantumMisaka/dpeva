@@ -62,6 +62,14 @@ class InferenceWorkflow:
         self.logger = logging.getLogger(__name__)
 
     def run(self):
+        """
+        Executes the inference workflow.
+        
+        1. Configures workflow logging.
+        2. Discovers trained models.
+        3. Submits parallel inference jobs (dp test) via Slurm or Local backend.
+        4. If Local, automatically triggers analysis.
+        """
         # Configure logging: log to inference.log, but DO NOT capture stdout (propagate=True)
         setup_workflow_logger(
             logger_name="dpeva",

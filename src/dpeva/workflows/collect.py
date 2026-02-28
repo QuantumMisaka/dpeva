@@ -18,9 +18,11 @@ from dpeva.uncertain.manager import UQManager
 from dpeva.sampling.manager import SamplingManager
 
 def get_sys_name(dataname):
+    """Extracts system name from data name."""
     return dataname.rsplit("-", 1)[0]
 
 def get_pool_name(sys_name):
+    """Extracts pool name from system name."""
     d = os.path.dirname(sys_name)
     return d if d else "root"
 
