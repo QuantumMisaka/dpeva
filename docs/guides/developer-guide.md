@@ -7,7 +7,7 @@
   - 配置字段字典：/docs/reference/config-schema.md
   - 校验规则补充：/docs/reference/validation.md
 
-* **版本**: 0.4.5
+* **版本**: 0.4.6
 * **生成日期**: 2026-02-27
 * **作者**: Quantum Misaka with Trae SOLO
 
@@ -16,7 +16,7 @@
 ## 1. 项目概述 (Overview)
 
 ### 1.1 项目简介
-DP-EVA (Deep Potential EVolution Accelerator) 是一个面向 DPA3 (Deep Potential v3) 高效微调的自动化主动学习框架。该项目旨在通过智能化的数据筛选策略，从海量无标签数据中识别出最具价值的样本（高模型不确定度 + 高结构代表性），从而以最小的数据标注成本实现模型性能的最大化提升。
+DP-EVA (Deep Potential EVolution Accelerator, 深度势能演化加速器) 是一个面向 DPA3 (Deep Potential v3) 高效微调的自动化主动学习框架。该项目旨在通过智能化的数据筛选策略，从海量无标签数据中识别出最具价值的样本（高模型不确定度 + 高结构代表性），从而以最小的数据标注成本实现模型性能的最大化提升。
 
 ### 1.2 核心哲学 (The Zen of DP-EVA)
 本项目遵循 Python 工程化最佳实践及 **Zen of Python** 哲学进行重构与维护：
