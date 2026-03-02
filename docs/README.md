@@ -32,6 +32,8 @@
 - `docs/architecture/`：架构与关键技术决策（ADR）以及设计报告。
 - `docs/governance/`：文档治理交付物（规划、审计、追踪矩阵、工具配置）。
 - `docs/reports/`：一次性分析/实验/评审结论（默认只追加）。
+- `docs/logo_design/`：项目 logo 设计与相关文档。
+- `docs/plans/`：开发计划与修复方案。开发完成后，会归档到 `docs/archive/`。
 - `docs/archive/`：历史与弃用文档（只读）。必须在文件头显式标注适用版本与是否已落地。
 
 ## 3. 文档维护规则（建议作为团队约定）

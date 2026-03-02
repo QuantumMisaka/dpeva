@@ -67,6 +67,8 @@
 
 ### A. 代码审计报告 (Code Audit Report)
 
+> **Note**: The hardcoded paths and units issues mentioned in this report have been fixed in v0.4.6+.
+
 **审计概览**
 - **审计对象**: DP-EVA (v0.4.5)
 - **Commit SHA**: `6f991bcbe8f7818af74a07ac2ccdfa8cc69dd577`
