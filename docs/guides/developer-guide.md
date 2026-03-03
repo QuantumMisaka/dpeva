@@ -2,13 +2,13 @@
 
 - Status: active
 - Audience: Developers
-- Last-Updated: 2026-02-18
+- Last-Updated: 2026-03-03
 - Related:
   - 配置字段字典：/docs/reference/config-schema.md
   - 校验规则补充：/docs/reference/validation.md
 
-* **版本**: 0.4.7
-* **生成日期**: 2026-02-27
+* **版本**: 0.4.8
+* **生成日期**: 2026-03-03
 * **作者**: Quantum Misaka with Trae SOLO
 
 ---
@@ -479,3 +479,7 @@ DPEVA_TAG: WORKFLOW_FINISHED
     *   **[验证]** 强化了单元测试覆盖率，专门针对 Training 和 Inference 工作流的 "One-Job-Per-Model" 并行投作业逻辑增加了防退化测试，确保并行行为不被意外修改破坏。
     *   **[修复]** 解决了集成测试在 Slurm 节点间的文件系统隔离问题 (Shared `test_runs` vs `/tmp`)，并优化了日志文件检测机制。
     *   **[一致性]** 验证了 Feature (CLI/Python) 和 Collection (Self-Submission) 工作流在 Slurm 下的提交逻辑正确性。
+*   **v0.4.8** (2026-03-03):
+    *   **[重构]** 将描述符一致性工具拆分为 3 个单一职责脚本：结构-描述符映射校验、系统/帧统计、NPY 与 Mixed 结构一致性比较，降低了维护复杂度并提升了可组合性。
+    *   **[新增]** 引入 `tools/deepmd_verify_common.py` 公共模块，统一复用系统加载、`real_atom_types` 拼接和结构指纹逻辑，减少重复实现并保持行为一致。
+    *   **[文档]** 统一三个工具脚本的 `--help` 风格，并全部切换为英文说明，补充参数释义与快速示例，作为脚本内最小 README。

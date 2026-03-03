@@ -4,28 +4,26 @@
 Descriptor Consistency Verification Tool
 ========================================
 
-This script verifies the consistency of descriptors calculated from two different data formats:
-1. `deepmd/npy/mixed` (typically `sampled_dpdata`): A format where atom types can vary between frames, 
-   often using a `real_atom_types.npy` file to specify actual types per frame.
-2. `deepmd/npy` (typically `sampled_dpdata_npy`): The standard DeepMD-kit format.
+This script verifies the consistency between atomic structures (data) and their corresponding descriptors.
+It is particularly useful when converting between different data formats (e.g., `deepmd/npy/mixed` vs `deepmd/npy`)
+where atom orders might change, ensuring that the descriptors remain correctly aligned with the structures.
 
-Problem Statement:
-------------------
-When converting or sampling data, the order of atoms or the storage format might change. 
-Specifically, `mixed` format datasets might appear to have a single atom type (e.g., all 'H') in `type.raw` 
-while storing real element information in `set.XXX/real_atom_types.npy`. 
-Direct comparison of descriptors requires:
-1. Correctly interpreting the atom types for each frame.
-2. Matching structures between the two datasets, as they might be stored in different orders or folders.
-3. Handling atom permutation invariances by sorting atoms and coordinates to generate a unique structural fingerprint.
+Verification Logic:
+-------------------
+The script uses a "Cross-Check" approach:
+1. It indexes the "Mixed" dataset by generating a unique fingerprint for each frame (sorted atoms & coordinates).
+2. It iterates through the "NPY" dataset, generates fingerprints, and looks for matches in the Mixed index.
+3. For matched structures, it compares the descriptors (after canonical sorting).
+
+If the descriptors match (Diff < tolerance), it confirms that:
+- The structure conversion was correct (geometry preserved).
+- The descriptor calculation/transfer was consistent with the structure (permutation invariance holds).
+
+If they mismatch, it indicates that the descriptor no longer corresponds to the structure (e.g., atom order changed but descriptor didn't).
 
 Usage:
 ------
-    python verify_desc_consistency.py --mixed_dir <path> --npy_dir <path> --desc_mixed <path> --desc_npy <path>
-
-    # To run with default paths (reproduce verification test):
-    python verify_desc_consistency.py
-
+    python tools/verify_desc_consistency.py --mixed_dir <path> --npy_dir <path> --desc_mixed <path> --desc_npy <path>
 """
 
 import os
@@ -35,11 +33,11 @@ import dpdata
 from collections import defaultdict
 import sys
 
-# Default paths from the user's environment for easy reproduction
-DEFAULT_MIXED_DIR = "/home/pku-jianghong/liuzhaoqing/WORK/FT2DP-DPEVA/dpeva/test/desc-test/sampled_dpdata"
-DEFAULT_NPY_DIR = "/home/pku-jianghong/liuzhaoqing/WORK/FT2DP-DPEVA/dpeva/test/desc-test/sampled_dpdata_npy"
-DEFAULT_DESC_MIXED_DIR = "/home/pku-jianghong/liuzhaoqing/WORK/FT2DP-DPEVA/dpeva/test/desc-test/desc_train"
-DEFAULT_DESC_NPY_DIR = "/home/pku-jianghong/liuzhaoqing/WORK/FT2DP-DPEVA/dpeva/test/desc-test/desc_train_npy"
+# Default paths - Use relative paths or None to avoid hardcoding environment specific paths
+DEFAULT_MIXED_DIR = None
+DEFAULT_NPY_DIR = None
+DEFAULT_DESC_MIXED_DIR = None
+DEFAULT_DESC_NPY_DIR = None
 
 def get_sorted_info(ls, frame_idx, desc, real_types=None):
     """
@@ -161,12 +159,43 @@ def load_and_index_mixed(data_dir, desc_dir):
             ls = dpdata.LabeledSystem(sys_path, fmt='deepmd/npy')
             full_desc = np.load(desc_path)
             
-            # Crucial Step: Check for real_atom_types.npy in set.000
-            # This file defines the actual element types for each frame in mixed format
-            real_types = None
-            real_types_path = os.path.join(sys_path, "set.000", "real_atom_types.npy")
-            if os.path.exists(real_types_path):
-                real_types = np.load(real_types_path)
+            # Check for real_atom_types.npy in all sets
+            # For mixed format, each set might have its own real_atom_types
+            # We need to concatenate them in the same order as dpdata loads sets
+            real_types_list = []
+            
+            # dpdata loads sets in alphanumeric order usually (set.000, set.001...)
+            # Let's check which sets are actually loaded by dpdata or exist in the dir
+            set_dirs = sorted([d for d in os.listdir(sys_path) if d.startswith('set.') and os.path.isdir(os.path.join(sys_path, d))])
+            
+            real_types_list = []
+            has_real_types = False
+            
+            # Only proceed if we found sets
+            if set_dirs:
+                all_sets_have_types = True
+                for s_dir in set_dirs:
+                    rt_path = os.path.join(sys_path, s_dir, "real_atom_types.npy")
+                    if os.path.exists(rt_path):
+                        has_real_types = True
+                        real_types_list.append(np.load(rt_path))
+                    else:
+                        all_sets_have_types = False
+                
+                if has_real_types and all_sets_have_types:
+                     try:
+                         real_types = np.concatenate(real_types_list, axis=0)
+                     except ValueError as e:
+                         print(f"Error concatenating real_atom_types in {folder}: {e}")
+                         real_types = None
+                elif has_real_types and not all_sets_have_types:
+                    print(f"Warning: Incomplete real_atom_types in {folder}. Some sets are missing it.")
+                    real_types = None
+            else:
+                # No sets? Maybe only type.raw and coord.npy at root (unlikely for deepmd/npy)
+                pass
+
+            if real_types is not None:
                 if real_types.shape[0] != len(ls):
                     print(f"Warning: real_atom_types length {real_types.shape[0]} != system length {len(ls)} in {folder}. Ignoring real_types.")
                     real_types = None
@@ -291,20 +320,27 @@ def verify_npy(data_dir, desc_dir, mixed_db, tolerance=1e-5):
     print("="*40)
 
 def main():
+    """Main entry point for descriptor consistency verification."""
     parser = argparse.ArgumentParser(description="Verify descriptor consistency between Mixed and NPY DeepMD formats.")
     
     parser.add_argument("--mixed_dir", type=str, default=DEFAULT_MIXED_DIR,
-                        help=f"Directory containing Mixed format dpdata (default: {DEFAULT_MIXED_DIR})")
+                        help=f"Directory containing Mixed format dpdata")
     parser.add_argument("--npy_dir", type=str, default=DEFAULT_NPY_DIR,
-                        help=f"Directory containing NPY format dpdata (default: {DEFAULT_NPY_DIR})")
+                        help=f"Directory containing NPY format dpdata")
     parser.add_argument("--desc_mixed", type=str, default=DEFAULT_DESC_MIXED_DIR,
-                        help=f"Directory containing descriptors for Mixed data (default: {DEFAULT_DESC_MIXED_DIR})")
+                        help=f"Directory containing descriptors for Mixed data")
     parser.add_argument("--desc_npy", type=str, default=DEFAULT_DESC_NPY_DIR,
-                        help=f"Directory containing descriptors for NPY data (default: {DEFAULT_DESC_NPY_DIR})")
+                        help=f"Directory containing descriptors for NPY data")
     parser.add_argument("--tolerance", type=float, default=1e-5,
                         help="Tolerance for floating point comparison of descriptors (default: 1e-5)")
 
     args = parser.parse_args()
+
+    # Verify directories are provided
+    if not all([args.mixed_dir, args.npy_dir, args.desc_mixed, args.desc_npy]):
+        parser.print_help()
+        print("\nError: All directory arguments are required.")
+        sys.exit(1)
 
     # Verify directories exist
     for p in [args.mixed_dir, args.npy_dir, args.desc_mixed, args.desc_npy]:
