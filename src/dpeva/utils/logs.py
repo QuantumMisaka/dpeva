@@ -38,6 +38,7 @@ def setup_workflow_logger(logger_name: str, work_dir: str, filename: str, captur
     
     # Optional: Capture stdout/stderr (useful for Slurm jobs)
     if capture_stdout:
+        logger.propagate = False
         sys.stdout = StreamToLogger(logger, logging.INFO)
         sys.stderr = StreamToLogger(logger, logging.ERROR)
 
