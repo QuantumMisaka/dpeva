@@ -60,6 +60,7 @@ class DPTestResultParser:
         try:
             self.logger.info(f"Loading energy file: {e_file}")
             self.data_e = np.genfromtxt(e_file, names=["data_e", "pred_e"])
+            self.logger.info(f"Loaded energy from {e_file}")
         except Exception as e:
             self.logger.error(f"Failed to parse energy file: {e}")
             raise
@@ -70,6 +71,7 @@ class DPTestResultParser:
             try:
                 self.logger.info(f"Loading force file: {f_file}")
                 self.data_f = np.genfromtxt(f_file, names=["data_fx", "data_fy", "data_fz", "pred_fx", "pred_fy", "pred_fz"])
+                self.logger.info(f"Loaded force from {f_file}")
             except Exception as e:
                 self.logger.error(f"Failed to parse force file: {e}")
                 raise
