@@ -2,7 +2,7 @@
     "data_path": "other_dpdata_test",
     "model_path": "DPA-3.1-3M.pt",
     "savedir": "desc_pool",
-    "model_head": "Hybrid_Perovskite",
+    "model_head": "OC22",
     "mode": "cli",
     "omp_threads": 2,
     "submission": {
