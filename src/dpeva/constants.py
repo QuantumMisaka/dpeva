@@ -97,3 +97,15 @@ FILENAME_FINAL_SAMPLED_PCAVIEW: Final[str] = "Final_sampled_PCAview.png"
 COL_DESC_PREFIX: Final[str] = "desc_stru_"
 COL_UQ_QBC: Final[str] = "uq_qbc_for"
 COL_UQ_RND: Final[str] = "uq_rnd_for"
+
+# Logging
+DEFAULT_LOG_MAX_BYTES: Final[int] = 10 * 1024 * 1024  # 10 MB
+DEFAULT_LOG_BACKUP_COUNT: Final[int] = 5
+
+# CLI/Output
+BANNER_SEPARATOR_LEN: Final[int] = 60
+BANNER_WIDTH: Final[int] = 80
+BANNER_INDENT: Final[int] = 24
+
+# Data Processing
+DEFAULT_NUMEXPR_THREADS: Final[int] = 8

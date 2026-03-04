@@ -2,7 +2,7 @@ import subprocess
 import warnings
 import re
 from packaging import version
-from dpeva.constants import MIN_DEEPMD_VERSION
+from dpeva.constants import MIN_DEEPMD_VERSION, BANNER_SEPARATOR_LEN
 
 def check_deepmd_version():
     """
@@ -25,31 +25,29 @@ def check_deepmd_version():
             
             if current_ver < min_ver:
                 warnings.warn(
-                    f"\n{'='*60}\n"
+                    f"\n{'='*BANNER_SEPARATOR_LEN}\n"
                     f"WARNING: DeepMD-kit version {v_str} is older than the recommended version {MIN_DEEPMD_VERSION}.\n"
                     f"Some features may not work as expected.\n"
                     f"Please upgrade DeepMD-kit: pip install --upgrade deepmd-kit\n"
-                    f"{'='*60}",
+                    f"{'='*BANNER_SEPARATOR_LEN}",
                     UserWarning,
                     stacklevel=2
                 )
         else:
             # If output format is unexpected, just warn we couldn't parse it but don't fail
-            # warnings.warn(f"Could not parse DeepMD-kit version from output: '{out}'")
-            pass
+            warnings.warn(f"Could not parse DeepMD-kit version from output: '{out}'", UserWarning)
             
     except FileNotFoundError:
         warnings.warn(
-            f"\n{'='*60}\n"
+            f"\n{'='*BANNER_SEPARATOR_LEN}\n"
             f"WARNING: 'dp' command not found in PATH.\n"
             f"DeepMD-kit is required for most workflows.\n"
             f"Please ensure it is installed and added to PATH.\n"
-            f"{'='*60}",
+            f"{'='*BANNER_SEPARATOR_LEN}",
             UserWarning,
             stacklevel=2
         )
     except Exception as e:
         # Don't crash app on version check failure
         # In testing environments, subprocess might fail in various ways (e.g. no shell), so we suppress generic errors or log them softly.
-        # warnings.warn(f"Failed to check DeepMD-kit version: {e}")
-        pass
+        warnings.warn(f"Failed to check DeepMD-kit version: {e}", UserWarning)

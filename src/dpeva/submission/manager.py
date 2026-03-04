@@ -124,7 +124,9 @@ class JobManager:
             
         # Update command to run the python script
         # Use sys.executable for safety and -u for unbuffered output
-        cmd = f"{sys.executable} -u {os.path.abspath(script_path)}"
+        # Use shlex.quote for path safety
+        import shlex
+        cmd = f"{sys.executable} -u {shlex.quote(os.path.abspath(script_path))}"
         job_config.command = cmd
         
         # Generate submission script (bash/slurm)

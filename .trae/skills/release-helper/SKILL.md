@@ -15,25 +15,25 @@ This skill automates the release process by:
 To verify the release changes without modifying files (Dry Run):
 
 ```bash
-python tools/release_helper.py patch --dry-run
+python scripts/release_helper.py patch --dry-run
 ```
 
 To perform a **Patch Release** (e.g., 0.4.5 -> 0.4.6):
 
 ```bash
-python tools/release_helper.py patch
+python scripts/release_helper.py patch
 ```
 
 To perform a **Minor Release** (e.g., 0.4.5 -> 0.5.0):
 
 ```bash
-python tools/release_helper.py minor
+python scripts/release_helper.py minor
 ```
 
 To perform a **Major Release** (e.g., 0.4.5 -> 1.0.0):
 
 ```bash
-python tools/release_helper.py major
+python scripts/release_helper.py major
 ```
 
 ## Post-Execution Steps

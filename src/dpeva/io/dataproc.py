@@ -6,6 +6,7 @@ from typing import Dict, List, Optional, Tuple
 import logging
 import numpy as np
 import os
+from copy import deepcopy
 
 class DPTestResultParser:
     """
@@ -262,5 +263,6 @@ class DPTestResultParser:
                     if count:
                         natom += int(count)
             return natom if natom > 0 else 1 # Fallback
-        except:
+        except Exception as e:
+            self.logger.warning(f"Failed to estimate natom from name '{dataname}': {e}. Using fallback=1.")
             return 1 # Fallback

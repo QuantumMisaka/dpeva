@@ -2,7 +2,7 @@
 
 - Status: active
 - Audience: Maintainers / Developers
-- Last-Updated: 2026-02-19
+- Last-Updated: 2026-03-03
 
 本目录用于存放文档体系的治理交付物：规划、审计、追踪矩阵、库存清单与相关工具配置。
 
@@ -19,8 +19,8 @@
 ## 2. 快速开始
 
 - 文档总导航入口：/docs/README.md
+- 最新修复计划：/docs/governance/plans/2026-03-03-codebase-remediation-breakdown.md
 
 ## 3. 贡献指南
 
 - /CONTRIBUTING.md
-

@@ -7,6 +7,7 @@ import pandas as pd
 from typing import List, Tuple, Dict, Optional, Set
 
 from dpeva.io.dataset import load_systems
+from dpeva.utils.security import safe_join, normalize_sys_name
 
 class CollectionIOManager:
     """
@@ -253,6 +254,14 @@ class CollectionIOManager:
         
         for sys in test_data:
             sys_name = getattr(sys, "target_name", sys.short_name)
+            
+            # Sanitize sys_name
+            try:
+                sys_name_clean = normalize_sys_name(sys_name)
+            except ValueError as e:
+                self.logger.error(f"Skipping system with invalid name '{sys_name}': {e}")
+                continue
+                
             sampled_set = sampled_indices_map.get(sys_name, set())
             n_frames = len(sys)
             
@@ -261,9 +270,9 @@ class CollectionIOManager:
             
             if valid_sampled:
                 try:
-                    sys.sub_system(valid_sampled).to_deepmd_npy(
-                        os.path.join(self.dpdata_savedir, "sampled_dpdata", sys_name)
-                    )
+                    # Use safe_join for output path
+                    out_path = safe_join(self.dpdata_savedir, "sampled_dpdata", sys_name_clean)
+                    sys.sub_system(valid_sampled).to_deepmd_npy(out_path)
                     count_sampled_sys += 1
                     count_sampled_frames += len(valid_sampled)
                 except Exception as e:
@@ -271,9 +280,9 @@ class CollectionIOManager:
                     
             if other_indices:
                 try:
-                    sys.sub_system(other_indices).to_deepmd_npy(
-                        os.path.join(self.dpdata_savedir, "other_dpdata", sys_name)
-                    )
+                    # Use safe_join for output path
+                    out_path = safe_join(self.dpdata_savedir, "other_dpdata", sys_name_clean)
+                    sys.sub_system(other_indices).to_deepmd_npy(out_path)
                     count_other_sys += 1
                     count_other_frames += len(other_indices)
                 except Exception as e:

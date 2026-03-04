@@ -1,0 +1,9 @@
+2026-03-03 22:51:01 - dpeva - INFO - Log initialized: /home/pku-jianghong/liuzhaoqing/work/ft2dp-dpeva/dpeva/test_work_dir/inference.log (Rotation: 10.0MB x 5)
+2026-03-03 22:51:01 - dpeva.workflows.infer - INFO - Initializing Inference Workflow (Backend: local)
+2026-03-03 22:51:01 - dpeva.workflows.infer - ERROR - Test data path not found: /home/pku-jianghong/liuzhaoqing/work/ft2dp-dpeva/dpeva/non_existent_data
+2026-03-03 22:52:33 - dpeva - INFO - Log initialized: /home/pku-jianghong/liuzhaoqing/work/ft2dp-dpeva/dpeva/test_work_dir/inference.log (Rotation: 10.0MB x 5)
+2026-03-03 22:52:33 - dpeva.workflows.infer - INFO - Initializing Inference Workflow (Backend: local)
+2026-03-03 22:52:33 - dpeva.workflows.infer - ERROR - Test data path not found: /home/pku-jianghong/liuzhaoqing/work/ft2dp-dpeva/dpeva/non_existent_data
+2026-03-03 22:53:08 - dpeva - INFO - Log initialized: /home/pku-jianghong/liuzhaoqing/work/ft2dp-dpeva/dpeva/test_work_dir/inference.log (Rotation: 10.0MB x 5)
+2026-03-03 22:53:08 - dpeva.workflows.infer - INFO - Initializing Inference Workflow (Backend: local)
+2026-03-03 22:53:08 - dpeva.workflows.infer - ERROR - Test data path not found: /home/pku-jianghong/liuzhaoqing/work/ft2dp-dpeva/dpeva/non_existent_data

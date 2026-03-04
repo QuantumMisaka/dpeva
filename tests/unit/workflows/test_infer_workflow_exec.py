@@ -76,7 +76,10 @@ def test_no_models_found(tmp_path, caplog):
     
     workflow = InferenceWorkflow(config)
     
+    from dpeva.utils.exceptions import WorkflowError
+
     # Use patch to verify logging call, avoiding caplog issues if propagation is disabled
     with patch.object(workflow.logger, 'error') as mock_error:
-        workflow.run()
+        with pytest.raises(WorkflowError, match="No models provided"):
+            workflow.run()
         mock_error.assert_called_with("No models provided for inference.")
