@@ -3,7 +3,7 @@
 - Status: active
 - Audience: Users / Developers / Infra
 - Applies-To: `submission.backend="slurm"`
-- Last-Updated: 2026-02-18
+- Last-Updated: 2026-03-03
 
 ## 1. 目的与范围
 
@@ -59,7 +59,10 @@ DP-EVA 在成功结束时输出：
 DPEVA_TAG: WORKFLOW_FINISHED
 ```
 
-建议用该标记监控应用层完成状态，而不是仅依赖 `squeue`。
+- **语义变更 (2026-03)**：
+  - 仅当**所有**子任务（如并行推理的多个模型）均成功时，才会输出此标记。
+  - 若存在部分失败（例如 4 个模型中 1 个失败），**不会**输出完成标记，且 CLI 返回非零退出码。
+  - 建议用该标记监控应用层完成状态，而不是仅依赖 `squeue`。
 
 ### 4.2 常见日志文件名（用于监控）
 
@@ -144,4 +147,5 @@ tail -f 0/test_val/test_job.log | grep -F "DPEVA_TAG: WORKFLOW_FINISHED"
 
 ## 7. 变更记录
 
+- 2026-03-03：更新完成标记语义，明确“部分失败不输出完成标记”。
 - 2026-02-18：补齐 Slurm 配置结构、日志命名与完成标记监控建议，并纳入常见故障排查路径。

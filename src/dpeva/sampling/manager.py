@@ -5,7 +5,7 @@ from typing import Dict, Tuple, List, Optional
 
 from dpeva.sampling.direct import BirchClustering, DIRECTSampler, SelectKFromClusters
 from dpeva.sampling.two_step_direct import TwoStepDIRECTSampler
-from dpeva.constants import COL_DESC_PREFIX
+from dpeva.constants import COL_DESC_PREFIX, DEFAULT_DIRECT_THR_INIT
 
 class SamplingManager:
     """
@@ -22,7 +22,7 @@ class SamplingManager:
         # Unpack critical params
         self.sampler_type = self.config.get("sampler_type", "direct")
         self.direct_k = self.config.get("direct_k", 1)
-        self.direct_thr_init = self.config.get("direct_thr_init", 0.1)
+        self.direct_thr_init = self.config.get("direct_thr_init", DEFAULT_DIRECT_THR_INIT)
         
         # Internal state
         self.n_candidates: Optional[int] = None

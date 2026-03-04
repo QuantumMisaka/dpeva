@@ -7,6 +7,7 @@ from dpeva.feature.managers import FeatureIOManager, FeatureExecutionManager
 from dpeva.feature.generator import DescriptorGenerator
 from dpeva.constants import WORKFLOW_FINISHED_TAG, LOG_FILE_FEATURE
 from dpeva.utils.logs import setup_workflow_logger
+from dpeva.utils.exceptions import WorkflowError
 
 class FeatureWorkflow:
     """
@@ -81,7 +82,7 @@ class FeatureWorkflow:
         
         if not os.path.exists(self.data_path):
             self.logger.error(f"Data path not found: {self.data_path}")
-            return
+            raise WorkflowError(f"Data path not found: {self.data_path}")
 
         if self.mode == "cli":
             # CLI Mode: Use dp eval-desc
@@ -119,9 +120,11 @@ class FeatureWorkflow:
                     
                 except ImportError:
                     self.logger.error("DeepMD-kit not available for Python mode.")
+                    raise WorkflowError("DeepMD-kit not available for Python mode.")
                 except Exception as e:
                     self.logger.error(f"Python mode execution failed: {e}", exc_info=True)
-                    
+                    raise WorkflowError(f"Python mode execution failed: {e}")
+            
             elif self.execution_manager.backend == "slurm":
                 # Slurm: Submit a python script
                 self.execution_manager.submit_python_slurm_job(
@@ -134,3 +137,4 @@ class FeatureWorkflow:
                 )
         else:
             self.logger.error(f"Unknown mode: {self.mode}")
+            raise WorkflowError(f"Unknown mode: {self.mode}")

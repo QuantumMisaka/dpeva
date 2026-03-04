@@ -20,12 +20,13 @@ class UQManager:
     """
     
     def __init__(self, project_dir: str, testing_dir: str, testing_head: str, 
-                 uq_config: Dict, num_models: int):
+                 uq_config: Dict, num_models: int, testdata_dir: str = None):
         self.project_dir = project_dir
         self.testing_dir = testing_dir
         self.testing_head = testing_head
         self.uq_config = uq_config
         self.num_models = num_models
+        self.testdata_dir = testdata_dir
         self.logger = logging.getLogger(__name__)
         
         self.calculator = UQCalculator()
@@ -53,7 +54,7 @@ class UQManager:
             result_dir = os.path.dirname(path_prefix)
             head_name = os.path.basename(path_prefix)
             
-            parser = DPTestResultParser(result_dir=result_dir, head=head_name)
+            parser = DPTestResultParser(result_dir=result_dir, head=head_name, testdata_dir=self.testdata_dir)
             parsed = parser.parse()
             preds.append(PredictionData(
                 energy=parsed["energy"],
@@ -64,7 +65,68 @@ class UQManager:
                 datanames_nframe=parsed["datanames_nframe"]
             ))
             
+        # Optional: Cross-verify atom counts with testdata_dir
+        if self.testdata_dir and os.path.exists(self.testdata_dir) and len(preds) > 0:
+            self._verify_atom_counts_list(preds[0].dataname_list)
+            
         return preds, preds[0].has_ground_truth
+
+    def _verify_atom_counts_list(self, dataname_list: List[List]):
+        """
+        Verify parsed atom counts against actual systems in testdata_dir.
+        
+        Args:
+            dataname_list: List of [dataname, frame_idx, natom]
+        """
+        from dpeva.io.dataset import load_systems
+        
+        self.logger.info("Cross-verifying atom counts with original data...")
+        
+        # Extract unique systems and their parsed natoms
+        unique_systems = {}
+        for item in dataname_list:
+            name, _, natom = item
+            if name not in unique_systems:
+                unique_systems[name] = natom
+        
+        verified_count = 0
+        mismatch_count = 0
+        
+        for name, parsed_natom in unique_systems.items():
+            # Try to locate system in testdata_dir
+            sys_path = os.path.join(self.testdata_dir, name)
+            if not os.path.exists(sys_path):
+                # Try name as basename if not found (for single pool case)
+                basename = os.path.basename(name)
+                sys_path_base = os.path.join(self.testdata_dir, basename)
+                if os.path.exists(sys_path_base):
+                    sys_path = sys_path_base
+                else:
+                    self.logger.debug(f"Verification: System {name} not found in {self.testdata_dir}, skipping.")
+                    continue
+            
+            try:
+                # Load system
+                systems = load_systems(sys_path)
+                if not systems:
+                    continue
+                    
+                # Check the first system
+                real_natom = len(systems[0]["atom_types"])
+                
+                if parsed_natom != real_natom:
+                    self.logger.error(f"ATOM COUNT MISMATCH for {name}: Parsed={parsed_natom}, Actual={real_natom}!")
+                    mismatch_count += 1
+                else:
+                    verified_count += 1
+                    
+            except Exception as e:
+                self.logger.warning(f"Verification failed for {name}: {e}")
+        
+        if mismatch_count > 0:
+            self.logger.warning(f"Verification completed: {verified_count} matched, {mismatch_count} MISMATCHES.")
+        else:
+            self.logger.info(f"Verification completed: {verified_count} systems matched successfully.")
 
     def run_analysis(self, preds: List[PredictionData]) -> Tuple[Dict, np.ndarray]:
         """

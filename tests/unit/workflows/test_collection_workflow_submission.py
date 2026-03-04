@@ -82,7 +82,9 @@ class TestCollectionWorkflowSubmission:
             mock_io_instance = MockIO.return_value
             mock_io_instance.load_descriptors.return_value = (["data1"], np.array([[1.0]]))
             mock_io_instance.view_savedir = str(tmp_path) # Mock view_savedir to a real path
-    
+            # Fix: Mock export_dpdata return value to avoid unpacking error
+            mock_io_instance.export_dpdata.return_value = (1, 0, 10, 0)
+
             # Mock SamplingManager.prepare_features to return valid tuple
             mock_sampling_instance = MockSampling.return_value
             mock_sampling_instance.prepare_features.return_value = (None, False, 0)

@@ -2,7 +2,7 @@
     "data_path": "./other_dpdata_test",
     "work_dir": "./",
     "task_name": "test_val",
-    "model_head": "Hybrid_Perovskite",
+    "model_head": "OC22",
     "omp_threads": 2,
     "submission": {
         "backend": "slurm",

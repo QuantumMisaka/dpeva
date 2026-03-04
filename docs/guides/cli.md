@@ -3,7 +3,7 @@
 - Status: active
 - Audience: Users / Developers
 - Applies-To: CLI 模式（推荐）
-- Last-Updated: 2026-02-18
+- Last-Updated: 2026-03-03
 
 ## 1. 目的与范围
 
@@ -122,13 +122,15 @@ DPEVA_TAG: WORKFLOW_FINISHED
 
 ## 6. 异常处理与退出码
 
-- 退出码
-  - 正常执行：0
-  - 捕获异常退出：1（CLI 会打印堆栈）
+- **退出码契约**
+  - **正常执行**：0。
+  - **失败退出**：1。CLI 会打印错误摘要与堆栈。
+  - 注意：任何业务逻辑失败（如配置缺失、数据不存在、模型不兼容）均会触发退出码 1，**严禁静默失败**。
+
 - 常见异常类型
-  - 配置校验失败（字段缺失/类型不匹配/跨字段依赖不满足）
-  - 输入路径不存在（数据目录、模型文件等）
-  - 外部命令失败（`dp` 命令不可用、作业脚本执行失败）
+  - 配置校验失败（`ValidationError`）：字段缺失/类型不匹配。
+  - 路径/文件错误（`FileNotFoundError` / `WorkflowError`）：数据目录、模型文件未找到。
+  - 运行时错误（`RuntimeError` / `WorkflowError`）：DeepMD 版本不兼容、外部命令执行失败。
 
 排障入口：
 
@@ -136,4 +138,5 @@ DPEVA_TAG: WORKFLOW_FINISHED
 
 ## 7. 变更记录
 
+- 2026-03-03：更新退出码契约说明，明确 `WorkflowError` 会导致退出码 1。
 - 2026-02-18：补齐子命令 I/O、完成标记与退出码说明，并建立与 recipes/api 的权威链接。

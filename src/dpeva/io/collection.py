@@ -7,6 +7,7 @@ import pandas as pd
 from typing import List, Tuple, Dict, Optional, Set
 
 from dpeva.io.dataset import load_systems
+from dpeva.utils.security import safe_join, normalize_sys_name
 
 class CollectionIOManager:
     """
@@ -209,7 +210,7 @@ class CollectionIOManager:
         self.logger.info(f"Saving dataframe to {path}")
         df.to_csv(path, index=True)
 
-    def export_dpdata(self, testdata_dir: str, df_final: pd.DataFrame, unique_system_names: List[str]):
+    def export_dpdata(self, testdata_dir: str, df_final: pd.DataFrame, unique_system_names: List[str]) -> Tuple[int, int, int, int]:
         """
         Export sampled and remaining systems to dpdata format.
 
@@ -219,6 +220,13 @@ class CollectionIOManager:
             testdata_dir (str): Directory containing original test data (dpdata format).
             df_final (pd.DataFrame): DataFrame containing selected frames.
             unique_system_names (List[str]): List of unique system names to process.
+        
+        Returns:
+            Tuple[int, int, int, int]:
+                - count_sampled_sys: Number of systems with sampled frames.
+                - count_other_sys: Number of systems with remaining frames.
+                - count_sampled_frames: Total number of sampled frames exported.
+                - count_other_frames: Total number of remaining frames exported.
         """
         self.logger.info(f"Exporting dpdata from {testdata_dir}")
         
@@ -239,11 +247,21 @@ class CollectionIOManager:
             
         test_data = load_systems(testdata_dir, fmt="auto", target_systems=unique_system_names)
         
-        count_sampled = 0
-        count_other = 0
+        count_sampled_sys = 0
+        count_other_sys = 0
+        count_sampled_frames = 0
+        count_other_frames = 0
         
         for sys in test_data:
             sys_name = getattr(sys, "target_name", sys.short_name)
+            
+            # Sanitize sys_name
+            try:
+                sys_name_clean = normalize_sys_name(sys_name)
+            except ValueError as e:
+                self.logger.error(f"Skipping system with invalid name '{sys_name}': {e}")
+                continue
+                
             sampled_set = sampled_indices_map.get(sys_name, set())
             n_frames = len(sys)
             
@@ -252,20 +270,24 @@ class CollectionIOManager:
             
             if valid_sampled:
                 try:
-                    sys.sub_system(valid_sampled).to_deepmd_npy(
-                        os.path.join(self.dpdata_savedir, "sampled_dpdata", sys_name)
-                    )
-                    count_sampled += 1
+                    # Use safe_join for output path
+                    out_path = safe_join(self.dpdata_savedir, "sampled_dpdata", sys_name_clean)
+                    sys.sub_system(valid_sampled).to_deepmd_npy(out_path)
+                    count_sampled_sys += 1
+                    count_sampled_frames += len(valid_sampled)
                 except Exception as e:
                     self.logger.error(f"Failed to export sampled {sys_name}: {e}")
                     
             if other_indices:
                 try:
-                    sys.sub_system(other_indices).to_deepmd_npy(
-                        os.path.join(self.dpdata_savedir, "other_dpdata", sys_name)
-                    )
-                    count_other += 1
+                    # Use safe_join for output path
+                    out_path = safe_join(self.dpdata_savedir, "other_dpdata", sys_name_clean)
+                    sys.sub_system(other_indices).to_deepmd_npy(out_path)
+                    count_other_sys += 1
+                    count_other_frames += len(other_indices)
                 except Exception as e:
                     self.logger.error(f"Failed to export other {sys_name}: {e}")
                     
-        self.logger.info(f"Exported {count_sampled} sampled systems, {count_other} other systems.")
+        self.logger.info(f"Exported {count_sampled_sys} sampled systems ({count_sampled_frames} frames), "
+                         f"{count_other_sys} other systems ({count_other_frames} frames).")
+        return count_sampled_sys, count_other_sys, count_sampled_frames, count_other_frames

@@ -55,33 +55,76 @@ class TestDatasetLoader:
         systems = load_systems(str(data_dir / "nonexistent"), fmt="auto")
         assert len(systems) == 0
 
-    @patch("dpeva.io.dataset.dpdata.LabeledSystem")
-    @patch("dpeva.io.dataset.dpdata.System")
-    def test_load_systems_fallback(self, mock_system, mock_labeled, data_dir):
-        """Test fallback logic when LabeledSystem fails."""
-        # Mock LabeledSystem to raise exception
-        mock_labeled.side_effect = Exception("Not labeled")
+    def test_load_single_system_optimization(self, data_dir):
+        """Test the optimization path for loading a single system directory."""
+        # sys1 is a valid system directory (has type.raw)
+        sys1_path = data_dir / "sys1"
         
-        # Mock System to return a dummy
-        mock_sys_instance = MagicMock()
-        mock_sys_instance.__getitem__.return_value = ["Fe"] # atom_names
-        mock_sys_instance.data = {}
-        mock_system.return_value = mock_sys_instance
+        # When calling load_systems on sys1_path, it should detect it's a single system
+        # and return [sys] instead of scanning subdirs (like set.000)
         
-        systems = load_systems(str(data_dir / "sys1"), fmt="auto")
-        # Should try LabeledSystem -> Fail -> Try System -> Success
-        # Note: load_systems treats input as root dir containing systems.
-        # If we pass sys1 directly, it might look for subdirs inside sys1.
-        # But wait, logic is:
-        # 1. Try MultiSystems from root.
-        # 2. Fallback to scanning subdirs.
+        # We need to mock _load_single_path to verify it's called with the root dir
+        with patch("dpeva.io.dataset._load_single_path") as mock_load:
+            mock_sys = MagicMock()
+            mock_load.return_value = mock_sys
+            
+            systems = load_systems(str(sys1_path), fmt="auto")
+            
+            assert len(systems) == 1
+            assert systems[0] == mock_sys
+            
+            # Verify it was called with sys1_path, not sys1_path/set.000
+            mock_load.assert_called_once()
+            args, _ = mock_load.call_args
+            assert args[0] == str(sys1_path)
+
+    def test_load_systems_mixed_format(self, data_dir):
+        """Test loading mixed format via MultiSystems."""
+        # Mock dpdata.MultiSystems.from_file
+        with patch("dpeva.io.dataset.dpdata.MultiSystems.from_file") as mock_multi:
+            mock_ms = MagicMock()
+            mock_ms.__len__.return_value = 2
+            mock_ms.__iter__.return_value = [MagicMock(), MagicMock()]
+            mock_multi.return_value = mock_ms
+            
+            systems = load_systems(str(data_dir), fmt="auto")
+            
+            assert len(systems) == 2
+            # Should have tried deepmd/npy/mixed first
+            mock_multi.assert_any_call(str(data_dir), fmt="deepmd/npy/mixed")
+
+    def test_load_systems_fallback_filtering(self, data_dir):
+        """Test fallback scanning filters out set.* directories."""
+        # Add a set.000 dir to root data_dir (simulating a system dir treated as root)
+        (data_dir / "set.000").mkdir()
+        (data_dir / "set.000" / "coord.npy").touch() # dummy
         
-        # If we pass sys1, and it has set.000 inside (which is a dir),
-        # it might try to load set.000 as a system if MultiSystems fails.
-        # That's probably not what we want if sys1 IS the system.
+        # Also add a valid subdir "subsys"
+        (data_dir / "subsys").mkdir()
         
-        # Correct usage: load_systems(root)
-        pass 
+        # Mock _load_single_path to succeed for subsys and fail for others
+        def side_effect(path, name):
+            if "set.000" in path:
+                raise ValueError("Should not be called")
+            if "subsys" in path:
+                return MagicMock()
+            if "sys1" in path or "sys2" in path: # existing fixtures
+                return MagicMock()
+            raise ValueError(f"Unknown path {path}")
+            
+        with patch("dpeva.io.dataset._load_single_path", side_effect=side_effect) as mock_load:
+            # We also need to mock MultiSystems to fail so it goes to fallback
+            with patch("dpeva.io.dataset.dpdata.MultiSystems.from_file", side_effect=Exception("Fail")):
+                systems = load_systems(str(data_dir), fmt="auto")
+                
+                # Should contain sys1, sys2, subsys. Should NOT contain set.000
+                # load_systems scans dirs. sys1, sys2, subsys, set.000 are in data_dir.
+                # set.000 should be filtered out by the new logic.
+                
+                # Verify load was NOT called for set.000
+                for call in mock_load.call_args_list:
+                    assert "set.000" not in call[0][0], f"set.000 should be filtered but was called: {call[0][0]}"
+ 
 
     def test_fix_duplicate_atom_names(self):
         """Test duplicate atom name merging logic."""

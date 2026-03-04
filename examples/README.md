@@ -1,6 +1,8 @@
 # DP-EVA Examples
 
-This directory contains usage examples and recipes for DP-EVA workflows.
+> ⚠️ **Attention**: Before running any examples (especially with `dpeva` CLI or Slurm submission), you **MUST** update the `env_setup` field in `input.json` to match your actual cluster environment paths (e.g., DeepMD-kit environment path). The provided paths (like `/opt/envs/deepmd3.1.2.env`) are placeholders.
+
+This directory contains minimal reproducible examples (recipes) for DP-EVA workflows.
 
 ## Directory Structure
 

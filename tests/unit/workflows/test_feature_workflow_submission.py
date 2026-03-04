@@ -80,7 +80,7 @@ class TestFeatureWorkflowSubmission:
         assert "run_local_python_recursion" in worker_content
         assert script_name == "run_desc_worker.py"
 
-    @patch("dpeva.feature.generator.DescriptorGenerator")
+    @patch("dpeva.workflows.feature.DescriptorGenerator")
     def test_run_python_mode_local(self, MockGenerator, config, tmp_path):
         """
         Verify FeatureWorkflow Python mode local execution.
@@ -95,25 +95,8 @@ class TestFeatureWorkflowSubmission:
             workflow.run()
             
             mock_recursion.assert_called_once()
-            # Verify it was called with a generator instance
-            # The MockGenerator passed to the test is the CLASS mock.
-            # workflow.run() instantiates it: generator = DescriptorGenerator(...)
-            # So run_local_python_recursion is called with the INSTANCE.
-            # When we patch a class, the return value of the class call is the instance.
-            # However, if DescriptorGenerator is initialized multiple times or in complex ways, check strictly.
-            # In FeatureWorkflow.run(), it does: generator = DescriptorGenerator(...)
-            # So the arg passed to recursion IS MockGenerator.return_value.
-            # If assertion failed, maybe they are different objects?
-            # Let's relax check to isinstance-like or check specific attribute if needed.
-            # But `is` check failing implies it might not be the SAME mock instance.
-            # Maybe FeatureWorkflow imports DescriptorGenerator from elsewhere?
-            # We patched `dpeva.feature.generator.DescriptorGenerator`.
-            # FeatureWorkflow imports it from `dpeva.feature.generator`.
-            # Let's check if the patching target is correct.
-            # Yes, `dpeva.feature.managers.DescriptorGenerator` might be where it is used?
-            # No, `FeatureExecutionManager` is in `dpeva.feature.managers`.
-            # And it imports `DescriptorGenerator` from `dpeva.feature.generator`.
-            # So patching `dpeva.feature.generator.DescriptorGenerator` should work.
+            # The MockGenerator here is the patched object from dpeva.workflows.feature
+            # workflow.run calls DescriptorGenerator(...) which returns a Mock instance
+            # That instance is passed to run_local_python_recursion
             
-            # Let's just verify call_count for now to satisfy "run locally" requirement.
             assert mock_recursion.call_count == 1

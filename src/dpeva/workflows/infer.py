@@ -10,6 +10,7 @@ from dpeva.utils.command import DPCommandBuilder
 from dpeva.constants import WORKFLOW_FINISHED_TAG, LOG_FILE_INFER
 from dpeva.submission import JobManager, JobConfig
 from dpeva.utils.logs import setup_workflow_logger
+from dpeva.utils.exceptions import WorkflowError
 
 class InferenceWorkflow:
     """
@@ -88,11 +89,11 @@ class InferenceWorkflow:
         
         if not self.data_path or not os.path.exists(self.data_path):
             self.logger.error(f"Test data path not found: {self.data_path}")
-            return
+            raise WorkflowError(f"Test data path not found: {self.data_path}")
 
         if not self.models_paths:
             self.logger.error("No models provided for inference.")
-            return
+            raise WorkflowError("No models provided for inference.")
 
         # Submit Jobs
         self.execution_manager.submit_jobs(
@@ -119,6 +120,7 @@ class InferenceWorkflow:
         atom_counts_list, atom_num_list = self.io_manager.load_composition_info(self.data_path)
         
         summary_metrics = []
+        failed_count = 0
         
         for i, model_path in enumerate(self.models_paths):
             if self.task_name:
@@ -131,6 +133,7 @@ class InferenceWorkflow:
             # But we need to know if directory exists
             if not os.path.exists(job_work_dir):
                 self.logger.warning(f"Job directory not found: {job_work_dir}")
+                failed_count += 1
                 continue
                 
             try:
@@ -150,8 +153,16 @@ class InferenceWorkflow:
                     
             except Exception as e:
                 self.logger.error(f"Analysis failed for model {i}: {e}")
+                failed_count += 1
                 continue
         
         # Save Global Summary
         self.io_manager.save_summary(summary_metrics)
-        self.logger.info(WORKFLOW_FINISHED_TAG)
+        
+        if failed_count > 0:
+            msg = f"Analysis completed with {failed_count} failures out of {len(self.models_paths)} models."
+            self.logger.error(msg)
+            # Raise exception to signal workflow failure (non-zero exit code)
+            raise WorkflowError(msg)
+        else:
+            self.logger.info(WORKFLOW_FINISHED_TAG)

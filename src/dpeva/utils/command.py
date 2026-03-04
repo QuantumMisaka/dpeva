@@ -1,3 +1,4 @@
+import shlex
 from typing import Optional, ClassVar, List
 from dpeva.constants import DEFAULT_DP_BACKEND, VALID_DP_BACKENDS
 
@@ -5,6 +6,7 @@ class DPCommandBuilder:
     """
     Builder for DeepMD-kit CLI commands (dp [backend]).
     Centralizes command construction to avoid hardcoded strings.
+    Uses shlex.quote to prevent command injection.
     """
     
     DEFAULT_BACKEND: ClassVar[str] = DEFAULT_DP_BACKEND
@@ -47,18 +49,18 @@ class DPCommandBuilder:
             skip_neighbor_stat: Whether to add --skip-neighbor-stat.
             log_file: If provided, appends '2>&1 | tee log_file'.
         """
-        cmd = f"{cls._get_base_cmd()} train {input_file}"
+        cmd = f"{cls._get_base_cmd()} train {shlex.quote(input_file)}"
         
         if skip_neighbor_stat:
             cmd += " --skip-neighbor-stat"
             
         if finetune_path:
-            cmd += f" --finetune {finetune_path}"
+            cmd += f" --finetune {shlex.quote(finetune_path)}"
         elif init_model_path:
-            cmd += f" --init-model {init_model_path}"
+            cmd += f" --init-model {shlex.quote(init_model_path)}"
             
         if log_file:
-            cmd += f" 2>&1 | tee {log_file}"
+            cmd += f" 2>&1 | tee {shlex.quote(log_file)}"
             
         return cmd
 
@@ -72,7 +74,7 @@ class DPCommandBuilder:
         """
         cmd = f"{cls._get_base_cmd()} freeze"
         if output:
-            cmd += f" -o {output}"
+            cmd += f" -o {shlex.quote(output)}"
         return cmd
 
     @classmethod
@@ -87,12 +89,12 @@ class DPCommandBuilder:
             head: Model head (optional).
             log_file: If provided, appends '2>&1 | tee log_file'.
         """
-        cmd = f"{cls._get_base_cmd()} eval-desc -s {system} -m {model} -o {output}"
+        cmd = f"{cls._get_base_cmd()} eval-desc -s {shlex.quote(system)} -m {shlex.quote(model)} -o {shlex.quote(output)}"
         if head:
-            cmd += f" --head {head}"
+            cmd += f" --head {shlex.quote(head)}"
             
         if log_file:
-            cmd += f" 2>&1 | tee {log_file}"
+            cmd += f" 2>&1 | tee {shlex.quote(log_file)}"
             
         return cmd
 
@@ -108,11 +110,11 @@ class DPCommandBuilder:
             head: Model head (optional).
             log_file: If provided, appends '2>&1 | tee log_file'.
         """
-        cmd = f"{cls._get_base_cmd()} test -s {system} -m {model} -d {prefix}"
+        cmd = f"{cls._get_base_cmd()} test -s {shlex.quote(system)} -m {shlex.quote(model)} -d {shlex.quote(prefix)}"
         if head:
-            cmd += f" --head {head}"
+            cmd += f" --head {shlex.quote(head)}"
             
         if log_file:
-            cmd += f" 2>&1 | tee {log_file}"
+            cmd += f" 2>&1 | tee {shlex.quote(log_file)}"
             
         return cmd

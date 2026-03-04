@@ -26,6 +26,7 @@ from typing import List, Tuple
 VERSION_FILE = "src/dpeva/__init__.py"
 DOCS_TO_UPDATE = [
     "docs/guides/developer-guide.md",
+    "README.md",
 ]
 CHANGELOG_FILE = "CHANGELOG.md"
 
@@ -78,7 +79,17 @@ def update_file_version(filepath: str, current_version: str, new_version: str, d
             f'__version__ = "{new_version}"',
             content
         )
-    # For Markdown docs
+    # For README.md (Badge update)
+    elif filepath.endswith("README.md"):
+        # Pattern for the version badge
+        # Matches: [![Version](.../badge/version-X.Y.Z-green)](...)
+        pattern = r'(\[!\[Version\]\(https://img\.shields\.io/badge/version-)([^/-]+)(-green\)\].*)'
+        if re.search(pattern, content):
+             new_content = re.sub(pattern, fr'\g<1>{new_version}\g<3>', content)
+        else:
+            # Fallback to simple replace if badge not found (or for other occurrences)
+            new_content = content.replace(current_version, new_version)
+    # For other Markdown docs
     else:
         # Look for pattern like "* **版本**: 0.4.5" or similar context
         # Or just global replace if we are confident. 

@@ -87,14 +87,16 @@ class CollectionWorkflow:
                     "hi": self.config.uq_rnd_rescaled_trust_hi
                 }
             },
-            num_models=self.config.num_models
+            num_models=self.config.num_models,
+            testdata_dir=str(self.config.testdata_dir) # Pass testdata_dir for optional verification
         )
         self.sampling_manager = SamplingManager(self.config.model_dump())
         
         # Backend Handling
         env_backend = os.environ.get("DPEVA_INTERNAL_BACKEND")
         if env_backend:
-            self.logger.info(f"Overriding backend to '{env_backend}'")
+            self.logger.info(f"⚡ Running in Internal Worker Mode (Backend override: '{env_backend}'). "
+                             f"This process is likely executed by a Slurm job.")
             self.backend = env_backend
         else:
             self.backend = self.config.submission.backend
@@ -333,7 +335,16 @@ class CollectionWorkflow:
         # ---------------------------------------------------------
         # Phase 3: Export
         # ---------------------------------------------------------
-        self.io_manager.export_dpdata(str(self.config.testdata_dir), df_final, unique_system_names)
+        _, _, count_sampled_frames, count_other_frames = self.io_manager.export_dpdata(str(self.config.testdata_dir), df_final, unique_system_names)
+        
+        total_exported = count_sampled_frames + count_other_frames
+        if total_exported == 0 and not df_final.empty:
+            self.logger.error("CRITICAL: No frames were exported despite candidates being selected!")
+            self.logger.error("Possible causes: Data loading failure, name mismatch, or permission issues.")
+            self.logger.error("Check the logs above for 'Failed to load system' or 'Failed to export' warnings.")
+            raise RuntimeError("Collection Workflow failed to export any data.")
+            
+        self.logger.info(f"Total remaining frames (to be exported as other_dpdata): {count_other_frames}")
         self.logger.info(WORKFLOW_FINISHED_TAG)
 
 
@@ -392,6 +403,8 @@ class CollectionWorkflow:
         df["pool"] = df["dataname"].apply(lambda x: get_pool_name(get_sys_name(x)))
         stats = df.groupby("pool").agg(num_systems=("dataname", lambda x: x.apply(get_sys_name).nunique()), num_frames=("dataname", "count"))
         self.logger.info(f"Initial Stats:\n{stats}")
+        total_frames = stats['num_frames'].sum()
+        self.logger.info(f"Total candidate frames in pool: {total_frames}")
         return stats
 
     def _log_sampling_stats(self, df_final):
@@ -404,3 +417,5 @@ class CollectionWorkflow:
         df_final["pool"] = df_final["dataname"].apply(lambda x: get_pool_name(get_sys_name(x)))
         stats_sampled = df_final.groupby("pool").agg(sampled_frames=("dataname", "count"))
         self.logger.info(f"Sampled Stats:\n{stats_sampled}")
+        total_sampled = stats_sampled['sampled_frames'].sum()
+        self.logger.info(f"Total sampled frames: {total_sampled}")

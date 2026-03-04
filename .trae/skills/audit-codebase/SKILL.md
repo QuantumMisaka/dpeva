@@ -16,19 +16,19 @@ This skill runs a custom static analysis tool tailored for the DP-EVA project. I
 To run the audit on the default source directory (`src/dpeva`):
 
 ```bash
-python tools/audit.py
+python scripts/audit.py
 ```
 
 To run in **strict mode** (fails on warnings):
 
 ```bash
-python tools/audit.py --strict
+python scripts/audit.py --strict
 ```
 
 To audit a specific directory:
 
 ```bash
-python tools/audit.py <directory>
+python scripts/audit.py <directory>
 ```
 
 ## Interpretation
