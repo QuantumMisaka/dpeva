@@ -87,7 +87,8 @@ class CollectionWorkflow:
                     "hi": self.config.uq_rnd_rescaled_trust_hi
                 }
             },
-            num_models=self.config.num_models
+            num_models=self.config.num_models,
+            testdata_dir=str(self.config.testdata_dir) # Pass testdata_dir for optional verification
         )
         self.sampling_manager = SamplingManager(self.config.model_dump())
         

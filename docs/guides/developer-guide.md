@@ -7,7 +7,7 @@
   - 配置字段字典：/docs/reference/config-schema.md
   - 校验规则补充：/docs/reference/validation.md
 
-* **版本**: 0.4.9
+* **版本**: 0.4.10
 * **生成日期**: 2026-03-03
 * **作者**: Quantum Misaka with Trae SOLO
 
@@ -488,7 +488,9 @@ DPEVA_TAG: WORKFLOW_FINISHED
     *   **[验证]** 强化了单元测试覆盖率，专门针对 Training 和 Inference 工作流的 "One-Job-Per-Model" 并行投作业逻辑增加了防退化测试，确保并行行为不被意外修改破坏。
     *   **[修复]** 解决了集成测试在 Slurm 节点间的文件系统隔离问题 (Shared `test_runs` vs `/tmp`)，并优化了日志文件检测机制。
     *   **[一致性]** 验证了 Feature (CLI/Python) 和 Collection (Self-Submission) 工作流在 Slurm 下的提交逻辑正确性。
-*   **v0.4.9** (2026-03-03):
+*   **v0.4.10** (2026-03-03):
+    *   **[重构]** `CollectionWorkflow` 引入了基于文件结构的原子解析逻辑（File Structure-Based Atom Parsing），通过计算力文件与能量文件的行数比例精确推导原子数，彻底解决了非化学式命名系统的解析难题。
+    *   **[增强]** 实现了基于 `testdata_dir` 的双重验证机制，在力文件解析失败时可自动回退到原始数据集查找原子数，显著提升了系统的鲁棒性。
     *   **[安全]** 修复了 P0/P1 级安全漏洞，包括路径穿越、命令注入和异常吞没问题。
     *   **[质量]** 引入 `scripts/gate.sh` 质量门禁和 `audit.py` 代码审计工具。
     *   **[规范]** 重构目录结构，明确区分 `scripts/` (项目维护) 与 `tools/` (业务工具)。

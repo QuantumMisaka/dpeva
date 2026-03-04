@@ -370,14 +370,14 @@ class UQVisualizer:
         plt.figure(figsize=(12, 10))
         
         # Define consistent styles
-        style_all = {"color": "#D3D3D3", "alpha": 0.3, "s": 15, "marker": "."} # Gray background for All Data
+        style_all = {"color": "#A9A9A9", "alpha": 0.4, "s": 15, "marker": "."} # Darker Gray background for All Data
         style_cand = {"color": "#4169E1", "alpha": 0.6, "s": 25, "marker": "*"}  # RoyalBlue for Candidate
-        style_sel_new = {"color": "red", "edgecolors": "black", "linewidth": 0.8, "s": 100, "marker": "*"}
+        style_sel_new = {"color": "red", "edgecolors": "black", "linewidth": 0.8, "s": 75, "marker": "*"}
         
         # Plot Full Background first if available
         if full_features is not None:
              plt.scatter(full_features[:, 0], full_features[:, 1], 
-                        label=f"All Data in Pool {len(full_features):,}", **style_all, zorder=0)
+                        label=f"All Data in Pool {len(full_features):,}", **style_all, zorder=1)
 
         if n_candidates is not None:
             # Joint Mode Visualization: Simplify to show only Candidates and New Selection

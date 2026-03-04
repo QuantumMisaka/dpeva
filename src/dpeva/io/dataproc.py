@@ -6,7 +6,6 @@ from typing import Dict, List, Optional, Tuple
 import logging
 import numpy as np
 import os
-from copy import deepcopy
 
 class DPTestResultParser:
     """
@@ -14,7 +13,7 @@ class DPTestResultParser:
     Handles both energy, force, and virial outputs, and detects if ground truth is available.
     """
     
-    def __init__(self, result_dir: str, head: str = "results", type_map: List[str] = None):
+    def __init__(self, result_dir: str, head: str = "results", type_map: List[str] = None, testdata_dir: str = None):
         """
         Initialize the parser.
         
@@ -22,10 +21,12 @@ class DPTestResultParser:
             result_dir (str): Directory containing the test results (e.g. *.e.out files).
             head (str): The head name used in dp test output files (e.g. "results").
             type_map (list): List of atom types. If None, defaults to ["H", "C", "O", "Fe"].
+            testdata_dir (str): Path to original test data for fallback atom count verification.
         """
         self.result_dir = result_dir
         self.head = head
         self.type_map = type_map if type_map else ["H", "C", "O", "Fe"]
+        self.testdata_dir = testdata_dir
         self.logger = logging.getLogger(__name__)
         
         self.data_e: Optional[np.ndarray] = None
@@ -103,7 +104,8 @@ class DPTestResultParser:
 
         try:
             # Parse Data Names and Frame Info from Energy file comments
-            dataname_list, datanames_nframe = self._get_dataname_info(e_file)
+            # Pass f_file to use structure-based atom counting
+            dataname_list, datanames_nframe = self._get_dataname_info(e_file, f_file)
         except Exception as e:
             self.logger.error(f"Failed to parse dataname info: {e}")
             raise
@@ -184,85 +186,127 @@ class DPTestResultParser:
             self.has_ground_truth = True
             self.logger.info("Detected non-zero data columns. Assuming ground truth exists.")
 
-    def _get_dataname_info(self, filename: str) -> Tuple[List, Dict]:
+    def _get_dataname_info(self, e_file: str, f_file: str = None) -> Tuple[List, Dict]:
         """
-        Extract system names and frame counts from the comment lines of the output file.
+        Extract system names, frame counts, and atom counts from output files.
+        Uses structure-based parsing: natom = N_force_lines / N_frames.
 
         Args:
-            filename (str): Path to the output file (e.g., .e_peratom.out).
+            e_file (str): Path to the energy output file (e.g., .e_peratom.out).
+            f_file (str): Path to the force output file (e.g., .f.out).
 
         Returns:
             Tuple[List, Dict]: 
                 - datanames_nframe_list: List of [dataname, frame_idx, natom].
                 - datanames_nframe_dict: Dict mapping dataname to number of frames.
         """
-        datanames_indice_dict = {}
-        with open(filename, 'r') as f:
-            lines = f.readlines()
-            for i, line in enumerate(lines):
-                if line.startswith('#'):
-                    parts = line.split(':')
-                    if len(parts) >= 2:
-                        raw_path = parts[0].strip().lstrip('#').strip()
-                        # Use heuristic to extract Pool/System if available to avoid name collision
-                        path_clean = os.path.normpath(raw_path)
-                        path_parts = path_clean.split(os.sep)
-                        # Filter out dot but keep .. to handle relative paths correctly
-                        path_parts = [p for p in path_parts if p and p != '.']
-                        
-                        if len(path_parts) >= 2 and path_parts[-2] != '..':
-                            # Likely Pool/System structure (e.g. pool/sys or ../pool/sys)
-                            dataname = f"{path_parts[-2]}/{path_parts[-1]}"
-                        else:
-                            # Fallback to basename (e.g. sys or ../sys)
-                            dataname = path_parts[-1]
+        def parse_indices(filename):
+            indices = {}
+            with open(filename, 'r') as f:
+                lines = f.readlines()
+                for i, line in enumerate(lines):
+                    if line.startswith('#'):
+                        parts = line.split(':')
+                        if len(parts) >= 2:
+                            raw_path = parts[0].strip().lstrip('#').strip()
+                            path_clean = os.path.normpath(raw_path)
+                            path_parts = path_clean.split(os.sep)
+                            path_parts = [p for p in path_parts if p and p != '.']
                             
-                        datanames_indice_dict[dataname] = i
+                            if len(path_parts) >= 2 and path_parts[-2] != '..':
+                                dataname = f"{path_parts[-2]}/{path_parts[-1]}"
+                            else:
+                                dataname = path_parts[-1]
+                            indices[dataname] = i
+            return indices, len(lines)
+
+        e_indices, e_total_lines = parse_indices(e_file)
+        
+        f_indices = {}
+        f_total_lines = 0
+        if f_file and os.path.exists(f_file):
+            f_indices, f_total_lines = parse_indices(f_file)
         
         datanames_nframe_list = []
         datanames_nframe_dict = {}
         
-        full_index = len(lines)
-        sorted_indices = sorted(datanames_indice_dict.items(), key=lambda x: x[1])
+        sorted_e_indices = sorted(e_indices.items(), key=lambda x: x[1])
         
-        for idx, (dataname, start_line) in enumerate(sorted_indices):
-            if idx == len(sorted_indices) - 1:
-                end_line = full_index
+        for idx, (dataname, e_start) in enumerate(sorted_e_indices):
+            # 1. Calculate N_frames
+            if idx == len(sorted_e_indices) - 1:
+                e_end = e_total_lines
             else:
-                end_line = sorted_indices[idx+1][1]
+                e_end = sorted_e_indices[idx+1][1]
             
-            n_frames = end_line - start_line - 1
+            n_frames = e_end - e_start - 1
             datanames_nframe_dict[dataname] = n_frames
             
-            natom = self._get_natom_from_name(dataname)
+            # 2. Calculate natom
+            natom = 1 # Default fallback
+            natom_source = "fallback" # Track source for logging
             
+            if f_file and dataname in f_indices:
+                f_start = f_indices[dataname]
+                
+                # Find f_end
+                # Assuming force file has same system order/keys, but safer to look it up
+                sorted_f_indices = sorted(f_indices.items(), key=lambda x: x[1])
+                # Find index of current dataname in sorted f keys
+                f_idx = -1
+                for i, (name, _) in enumerate(sorted_f_indices):
+                    if name == dataname:
+                        f_idx = i
+                        break
+                
+                if f_idx != -1:
+                    if f_idx == len(sorted_f_indices) - 1:
+                        f_end = f_total_lines
+                    else:
+                        f_end = sorted_f_indices[f_idx+1][1]
+                    
+                    n_force_lines = f_end - f_start - 1
+                    
+                    if n_frames > 0:
+                        calculated_natom = n_force_lines / n_frames
+                        if abs(calculated_natom - round(calculated_natom)) < 1e-5:
+                            natom = int(round(calculated_natom))
+                            natom_source = "force_file"
+                        else:
+                            self.logger.warning(f"Non-integer natom ratio for {dataname}: {n_force_lines}/{n_frames} = {calculated_natom}. Using fallback logic.")
+            else:
+                 if f_file: # Only warn if we expected force file to exist
+                     self.logger.warning(f"Could not find system {dataname} in force file.")
+
+            # Fallback 2: Try looking up in testdata_dir if available
+            if natom_source != "force_file" and self.testdata_dir and os.path.exists(self.testdata_dir):
+                from dpeva.io.dataset import load_systems
+                
+                # Try locating system
+                # Name might be "Pool/System" or just "System"
+                sys_path = os.path.join(self.testdata_dir, dataname)
+                if not os.path.exists(sys_path):
+                    basename = os.path.basename(dataname)
+                    sys_path_base = os.path.join(self.testdata_dir, basename)
+                    if os.path.exists(sys_path_base):
+                        sys_path = sys_path_base
+                
+                if os.path.exists(sys_path):
+                    try:
+                        systems = load_systems(sys_path)
+                        if systems and len(systems) > 0:
+                            natom = len(systems[0]["atom_types"])
+                            natom_source = "testdata_dir"
+                            self.logger.info(f"Resolved atom count {natom} for {dataname} from testdata_dir.")
+                    except Exception as e:
+                        self.logger.debug(f"Failed to load system from testdata_dir for {dataname}: {e}")
+
+            if natom_source == "fallback":
+                 self.logger.warning(f"Using fallback natom=1 for {dataname}.")
+
             for i in range(n_frames):
                 datanames_nframe_list.append([dataname, i, natom])
                 
         return datanames_nframe_list, datanames_nframe_dict
 
-    def _get_natom_from_name(self, dataname: str) -> int:
-        """
-        Estimate number of atoms from dataname string (heuristic).
 
-        Args:
-            dataname (str): The system name string (e.g. "H2O1").
-
-        Returns:
-            int: Estimated number of atoms. Returns 1 if parsing fails.
-        """
-        try:
-            natom = 0
-            name_string = deepcopy(dataname)
-            for ele in self.type_map:
-                name_string = name_string.replace(ele, f" {ele},")
-            ele_num_pair_list = name_string.strip().split(" ")
-            for ele_string in ele_num_pair_list:
-                if ',' in ele_string:
-                    count = ele_string.split(',')[1]
-                    if count:
-                        natom += int(count)
-            return natom if natom > 0 else 1 # Fallback
-        except Exception as e:
-            self.logger.warning(f"Failed to estimate natom from name '{dataname}': {e}. Using fallback=1.")
-            return 1 # Fallback
