@@ -336,6 +336,14 @@ class CollectionWorkflow:
         # Phase 3: Export
         # ---------------------------------------------------------
         _, _, count_sampled_frames, count_other_frames = self.io_manager.export_dpdata(str(self.config.testdata_dir), df_final, unique_system_names)
+        
+        total_exported = count_sampled_frames + count_other_frames
+        if total_exported == 0 and not df_final.empty:
+            self.logger.error("CRITICAL: No frames were exported despite candidates being selected!")
+            self.logger.error("Possible causes: Data loading failure, name mismatch, or permission issues.")
+            self.logger.error("Check the logs above for 'Failed to load system' or 'Failed to export' warnings.")
+            raise RuntimeError("Collection Workflow failed to export any data.")
+            
         self.logger.info(f"Total remaining frames (to be exported as other_dpdata): {count_other_frames}")
         self.logger.info(WORKFLOW_FINISHED_TAG)
 
