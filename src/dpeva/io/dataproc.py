@@ -246,15 +246,13 @@ class DPTestResultParser:
             
             # 2. Calculate natom
             natom = 1 # Default fallback
-            natom_source = "fallback" # Track source for logging
+            natom_source = "fallback"
             
             if f_file and dataname in f_indices:
                 f_start = f_indices[dataname]
                 
                 # Find f_end
-                # Assuming force file has same system order/keys, but safer to look it up
                 sorted_f_indices = sorted(f_indices.items(), key=lambda x: x[1])
-                # Find index of current dataname in sorted f keys
                 f_idx = -1
                 for i, (name, _) in enumerate(sorted_f_indices):
                     if name == dataname:
@@ -285,7 +283,6 @@ class DPTestResultParser:
                 from dpeva.io.dataset import load_systems
                 
                 # Try locating system
-                # Name might be "Pool/System" or just "System"
                 sys_path = os.path.join(self.testdata_dir, dataname)
                 if not os.path.exists(sys_path):
                     basename = os.path.basename(dataname)

@@ -6,6 +6,28 @@ from typing import List, Optional, Union
 
 logger = logging.getLogger(__name__)
 
+def _load_single_path(path, sys_name, fmt="auto"):
+    """
+    Helper to load a single path with format retry.
+    """
+    formats_to_try = ["deepmd/npy/mixed", "deepmd/npy"] if fmt == "auto" else [fmt]
+    
+    for f in formats_to_try:
+        try:
+            try:
+                sys = dpdata.LabeledSystem(path, fmt=f)
+            except Exception:
+                sys = dpdata.System(path, fmt=f)
+            
+            # Attach target name for reference
+            sys.target_name = sys_name
+            # Fix duplicate atom names
+            _fix_duplicate_atom_names(sys, sys_name)
+            return sys
+        except Exception:
+            continue
+    raise ValueError(f"Failed to load system at {path} with formats {formats_to_try}")
+
 def load_systems(
     data_dir: str, 
     fmt: str = "auto", 
@@ -26,26 +48,6 @@ def load_systems(
     """
     loaded_systems = []
     
-    # Helper to load a single path with format retry
-    def _load_single_path(path, sys_name):
-        formats_to_try = ["deepmd/npy/mixed", "deepmd/npy"] if fmt == "auto" else [fmt]
-        
-        for f in formats_to_try:
-            try:
-                try:
-                    sys = dpdata.LabeledSystem(path, fmt=f)
-                except Exception:
-                    sys = dpdata.System(path, fmt=f)
-                
-                # Attach target name for reference
-                sys.target_name = sys_name
-                # Fix duplicate atom names
-                _fix_duplicate_atom_names(sys, sys_name)
-                return sys
-            except Exception:
-                continue
-        raise ValueError(f"Failed to load system at {path} with formats {formats_to_try}")
-
     # 1. Determine directories to load
     if target_systems:
         dirs_to_load = []
@@ -56,6 +58,13 @@ def load_systems(
                 continue
             dirs_to_load.append((sys_name, d))
     else:
+        # Optimization: Check if data_dir is itself a system
+        try:
+            sys = _load_single_path(data_dir, os.path.basename(data_dir), fmt)
+            return [sys]
+        except Exception:
+            pass
+
         # Try to load as MultiSystems first if no target specified (Auto-Discovery Mode)
         try:
             formats_to_try = ["deepmd/npy/mixed", "deepmd/npy"] if fmt == "auto" else [fmt]
@@ -74,6 +83,8 @@ def load_systems(
             
             # Fallback to scanning directories manually if MultiSystems fails
             subdirs = sorted([d for d in os.listdir(data_dir) if os.path.isdir(os.path.join(data_dir, d))])
+            # Filter out internal deepmd directories (set.*) to avoid false positives
+            subdirs = [d for d in subdirs if not d.startswith("set.")]
             dirs_to_load = [(d, os.path.join(data_dir, d)) for d in subdirs]
             
         except Exception as e:
@@ -83,7 +94,7 @@ def load_systems(
     # 2. Load each directory
     for name, path in dirs_to_load:
         try:
-            sys = _load_single_path(path, name)
+            sys = _load_single_path(path, name, fmt)
             loaded_systems.append(sys)
         except Exception as e:
             logger.warning(f"Failed to load system at {path}: {e}")

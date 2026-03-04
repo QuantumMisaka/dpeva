@@ -66,9 +66,6 @@ class UQManager:
             ))
             
         # Optional: Cross-verify atom counts with testdata_dir
-        # Note: Since DPTestResultParser now uses testdata_dir internally for fallback,
-        # explicit verification here might be redundant but still useful for double-checking 
-        # force-based calculations. We'll keep it as a safety net.
         if self.testdata_dir and os.path.exists(self.testdata_dir) and len(preds) > 0:
             self._verify_atom_counts_list(preds[0].dataname_list)
             
@@ -97,9 +94,6 @@ class UQManager:
         
         for name, parsed_natom in unique_systems.items():
             # Try to locate system in testdata_dir
-            # Name might be "Pool/System" or just "System"
-            # load_systems handles "Pool/System" if it exists under testdata_dir
-            
             sys_path = os.path.join(self.testdata_dir, name)
             if not os.path.exists(sys_path):
                 # Try name as basename if not found (for single pool case)
@@ -112,15 +106,12 @@ class UQManager:
                     continue
             
             try:
-                # Load system (lightweight load if possible, but load_systems does full load)
-                # Since we only need atom count, maybe we can peek?
-                # But to be robust, let's use the standard loader.
-                # Assuming load_systems returns a list of dpdata.LabeledSystem
+                # Load system
                 systems = load_systems(sys_path)
                 if not systems:
                     continue
                     
-                # Check the first system (assuming consistent topology for same name)
+                # Check the first system
                 real_natom = len(systems[0]["atom_types"])
                 
                 if parsed_natom != real_natom:

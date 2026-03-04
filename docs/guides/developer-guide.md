@@ -7,7 +7,7 @@
   - 配置字段字典：/docs/reference/config-schema.md
   - 校验规则补充：/docs/reference/validation.md
 
-* **版本**: 0.4.10
+* **版本**: 0.4.11
 * **生成日期**: 2026-03-03
 * **作者**: Quantum Misaka with Trae SOLO
 
@@ -406,92 +406,71 @@ DPEVA_TAG: WORKFLOW_FINISHED
 
 ## 6. 版本修订记录 (Revision History)
 
-*   **v2.1.0** (2026-01-28): 初始重构版本，引入 Auto-UQ 和模块化架构。
-*   **v2.2.0** (2026-01-30): 
-    *   **[新增]** 联合采样 (Joint Sampling) 功能支持，允许同时加载训练集进行去重采样。
-    *   **[优化]** 单数据池描述符加载逻辑，消除 Fallback Warning，提升为兼容模式。
-*   **v2.3.0** (2026-01-31):
-    *   **[重构]** 废弃并移除 `DPTestResults` 遗留类，引入标准化的 `PredictionData` 接口。
-    *   **[架构]** 实现了 `UQCalculator` 与特定数据格式的解耦，提升了系统的可维护性和扩展性。
-    *   **[清理]** 移除了所有 deprecated 警告，修复了辅助工具脚本 (`utils/uq/`) 的兼容性问题。
-    *   **[合并]** 整合了多数据池支持、UQ 参数优化、变量名标准化及描述符一致性验证等技术文档。
-*   **v2.4.0** (2026-02-01):
-    *   **[性能]** 深度优化 `CollectionWorkflow`，将导出循环复杂度从 O(N*M) 降至 O(N)，并在多数据池场景下实现 **2.2x - 5x** 的提速。
-    *   **[功能]** 增强数据导出逻辑，现在能精确保持原始的多数据池目录结构 (`Pool/System`)，而不再强制合并。
-    *   **[日志]** 引入 `_configure_file_logging`，确保 `CollectionWorkflow` 在标准 stderr 输出外，自动生成独立的 `collection.log` 运行日志。
-    *   **[配置]** 移除了 redundant `testdata_fmt` 配置项，全面启用格式自动检测。
-*   **v2.4.1** (2026-02-02):
-    *   **[功能]** 引入 UQ Auto-Threshold 上下限控制 (`uq_auto_bounds`)。为 KDE 自动阈值算法增加了用户可配置的物理边界（Clamp机制），有效防止极端数据分布下产生过低或过高的不可信阈值，增强了主动学习流程的鲁棒性。
-    *   **[机制]** 实现了 "Self-Invocation" (自调用) 模式的 Slurm 提交机制，彻底移除临时冻结配置文件 (`collect_config_frozen.json`) 和包装脚本的生成，提交逻辑更加优雅且易于维护。
-*   **v2.4.2** (2026-02-02):
-    *   **[规范]** 统一了四大核心 Workflow (Train, Infer, Collect, Feature) 的任务完成日志标识。无论 Backend 是 Local 还是 Slurm，所有 Worker 任务在成功结束时均会输出标准化的 `DPEVA_TAG: WORKFLOW_FINISHED` 标记，为自动化工作流监控和任务链编排提供了可靠的锚点。
-*   **v2.5.0** (2026-02-04):
-    *   **[重构]** 统一使用 `dpeva.io.dataset.load_systems` 函数加载结构数据，该函数内置了 `deepmd/npy/mixed` 优先的 Auto 格式检测策略，并自动修复 `dpdata` 加载时可能出现的原子名称重复问题。
-    *   **[修复]** 解决了 Python Native 模式下计算 Mixed 格式描述符与 CLI 模式结果不一致的问题。通过 `load_systems` 将复杂的 MultiSystems 结构扁平化为独立的 System 列表，确保了与 CLI 模式一致的数据处理粒度。
-    *   **[验证]** 在 Slurm 环境下对 CLI 模式和 Python 模式进行了严格的一致性验证，在 GPU 计算浮点误差范围内（Max Diff < 8e-4, Mean Diff ~ 1e-7），两者结果完全一致。
-    *   **[配置]** `FeatureConfig` 移除了 `format` (或 `data_format`) 字段，系统现已全面统一为自动检测数据格式（`auto` 模式），极大简化了用户配置。旧配置文件中的该字段将被静默忽略，不影响兼容性。
-*   **v2.6.0** (2026-02-04):
-    *   **[架构]** 全面重构用户接口层，引入统一的 `dpeva` 命令行工具 (CLI)。
-    *   **[重构]** 移除旧版 `runner/` 目录，将其重组为 `examples/recipes/`，提供纯 Python API 调用范例，实现核心逻辑与调用脚本的彻底解耦。
-    *   **[功能]** 新增 `dpeva.cli` 模块，支持 `train`, `infer`, `collect`, `feature`, `analysis` 子命令。
-    *   **[机制]** 优化 `CollectionWorkflow` 的自提交机制，现在通过 `python -m dpeva.cli collect` 触发 Slurm 作业，消除了对外部脚本路径的依赖。
-*   **v2.7.0** (2026-02-05):
-    *   **[功能]** 集成 **2-DIRECT** 采样策略，支持基于原子环境的两步聚类筛选，大幅降低标注成本。
-    *   **[重构]** 彻底重构 DIRECT 采样参数体系：
-        *   引入 `direct_n_clusters` 作为原生控制参数。
-        *   移除 `num_selection` 参数。
-        *   支持基于阈值的动态聚类模式（Advanced Mode）。
-    *   **[配置]** 更新所有 Example Recipe 以适配新的参数标准。
-*   **v2.7.1** (2026-02-05):
-    *   **[修复]** 修复了 `BirchClustering` 在极端阈值条件下可能导致无限循环或计算挂起的问题。
-    *   **[优化]** 为 Birch 聚类引入了 `max_iter` (默认 50) 和 `min_threshold` (默认 1e-3) 保护机制。当算法无法收敛到目标聚类数时，会优雅降级并输出 Warning，而不是无限等待，显著提升了采样流程的鲁棒性。
-*   **v2.8.0** (2026-02-08):
-    *   **[架构]** 全面重构 `CollectionWorkflow`，引入领域驱动设计 (DDD) 思想。将数据 IO、UQ 计算、采样逻辑分别拆解为 `CollectionIOManager`, `UQManager`, `SamplingManager` 三个独立的服务类。
-    *   **[解耦]** `collect.py` 瘦身为轻量级编排器，代码行数减少 60%，不再包含具体的业务逻辑实现，极大提升了可读性和可测试性。
-    *   **[测试]** 为拆分出的 Manager 类补充了完整的单元测试，并确保集成测试（单/多数据池模式）在重构后行为一致。
-*   **v2.9.0** (2026-02-14):
-    *   **[架构]** 重构 `TrainingWorkflow`，采用与 `CollectionWorkflow` 一致的领域驱动设计 (DDD)。
-    *   **[解耦]** 将训练逻辑拆分为 `TrainingIOManager`, `TrainingConfigManager`, `TrainingExecutionManager`，彻底移除了对单体类 `ParallelTrainer` 的依赖。
-    *   **[过时]** 标记 `ParallelTrainer` 为 Deprecated，将在未来版本中移除。
-*   **v0.4.1-1** (2026-02-14):
-    *   **[版本]** 版本号重置并统一为 0.4.1，与 PyPI/Package 版本保持一致。
-    *   **[修复]** 修复了启动 Banner 中 ASCII Art 字符画的对齐问题。
-    *   **[文档]** 更新开发者文档，补充了基于 Zen of Python 的项目哲学与优化路线图。
-*   **v0.4.1-2** (2026-02-16):
-    *   **[架构]** 重构 `InferenceWorkflow`，采用领域驱动设计 (DDD) 模式。将核心逻辑拆分为 `InferenceIOManager` (IO与解析), `InferenceExecutionManager` (作业提交), `InferenceAnalysisManager` (统计与绘图)。
-    *   **[解耦]** `infer.py` 瘦身为轻量级编排器，彻底解决了“上帝类”问题，提升了代码的可维护性和测试性。
-    *   **[测试]** 更新了推理工作流的单元测试，确保重构后的逻辑与 Mock 对象正确交互。
-*   **v0.4.2** (2026-02-23):
-    *   **[修复]** 修复了 `DIRECTSampler` 在 Joint Sampling 模式下因传递非法参数 `n_candidates` 导致的 `ValueError`。
-    *   **[重构]** 采用 **Post-Filtering（后处理过滤）** 策略，将采样过滤逻辑从底层 `DIRECTSampler` 移回 `SamplingManager`。
-    *   **[测试]** 全面优化测试套件，移除了硬编码路径和对临时目录的依赖，修复了 Pydantic 和 Pandas 的警告。
-    *   **[原则]** 此次修复严格遵循 **Separation of Concerns** 原则，撤销了对核心算法模块的侵入式修改，确保了 `sampling` 模块的通用性和纯洁性。
-*   **v0.4.3** (2026-02-25):
-    *   **[架构]** 重构 `AnalysisWorkflow` 和 `CollectionWorkflow`，统一了底层分析逻辑。
-    *   **[重构]** 引入 `UnifiedAnalysisManager`，消除了单模型分析与推理分析之间的代码重复 (DRY)。
-    *   **[功能]** `AnalysisWorkflow` 现通过 `dpdata` 支持稳健的原子成分加载，修复了文件名解析脆弱的问题。
-    *   **[文档]** 明确了 Analysis (单模型) 与 Collect (系综) 的职责边界，并在 `docs/design` 中发布了详细的设计审查报告。
-    *   **[测试]** 完善了 Analysis 模块的单元测试与集成测试，确保了端到端的正确性。
-*   **v0.4.4** (2026-02-27):
-    *   **[日志]** 全面重构日志系统，引入标准化的 `setup_workflow_logger` 工具。
-    *   **[修复]** 修复了 `TrainingWorkflow` 误将日志写入 `collection.log` 且屏蔽 stdout 的严重缺陷。现在训练日志正确输出到 `training.log` 并保留控制台输出。
-    *   **[规范]** 为所有 Workflow (Train, Infer, Feature, Collect, Analysis) 定义了专属的日志文件名常量，消除了歧义。
-    *   **[功能]** 为 `Inference` 和 `Feature` 工作流补全了缺失的文件日志功能，增强了生产环境的可追溯性。
-    *   **[测试]** 更新了相关单元测试，确保新日志机制的正确性，并修复了训练初始化测试中的回归问题。
+### 6.1 维护策略 (Maintenance Policy)
+为确保文档的可读性与追溯性，本项目的版本记录遵循以下原则：
+
+1.  **历史归档 (Historical Archive)**：
+    *   对于重大版本重置（如 v2.x -> v0.4.x）之前的历史记录，不再保留详细条目，仅进行概要性总结。
+2.  **当前纪元 (Current Era)**：
+    *   当前主版本系列（v0.4.x）必须保持**完整**的记录链条。
+    *   **追加式记录 (Append-only)**：新版本记录应始终添加在列表顶部，严禁覆盖或修改旧版本的历史条目。
+    *   **中间版本找回**：若因误操作导致记录丢失，必须基于 git log 进行回溯与补全。
+
+### 6.2 版本历史
+
+#### **Current Era (v0.4.x)**
+
+*   **v0.4.11** (2026-03-03):
+     *   **[优化]** 增强了 `dpeva.io.dataset.load_systems` 的智能加载逻辑。现在能优先识别单系统目录，避免了将 `set.000` 等内部数据文件夹误判为独立系统，消除了大量虚假的 Warning 日志。
+     *   **[重构]** `CollectionWorkflow` 引入了基于文件结构的原子解析逻辑（File Structure-Based Atom Parsing），通过计算力文件与能量文件的行数比例精确推导原子数，彻底解决了非化学式命名系统的解析难题。
+     *   **[增强]** 实现了基于 `testdata_dir` 的双重验证机制，在力文件解析失败时可自动回退到原始数据集查找原子数，显著提升了系统的鲁棒性。
+ 
+ *   **v0.4.10** (2026-03-04):
+     *   **[安全]** 修复了 P0/P1 级安全漏洞，包括路径穿越、命令注入和异常吞没问题。
+     *   **[质量]** 引入 `scripts/gate.sh` 质量门禁和 `audit.py` 代码审计工具。
+     *   **[规范]** 重构目录结构，明确区分 `scripts/` (项目维护) 与 `tools/` (业务工具)。
+     *   **[修复]** 修正了 CLI 退出码契约和完成标记语义。
+ 
+ *   **v0.4.9** (2026-03-04):
+     *   **[修复]** 修复了日志重复输出到根记录器 (Root Logger) 的问题，确保日志流清晰。
+ 
+ *   **v0.4.8** (2026-03-03):
+     *   **[工具]** 重构 `verify_desc_consistency.py`，增强描述符一致性校验能力。
+     *   **[发布]** `release-helper` 支持自动更新 README 中的版本徽章。
+ 
+ *   **v0.4.7** (2026-02-28):
+    *   **[测试]** 新增 Slurm Backend 的端到端集成测试，在真实 Slurm 环境中验证了作业提交、运行和日志生成的完整闭环。
+    *   **[验证]** 强化了单元测试覆盖率，增加了防退化测试。
+    *   **[修复]** 解决了集成测试在 Slurm 节点间的文件系统隔离问题。
+
 *   **v0.4.5** (2026-02-27):
     *   **[并行]** 修复了 `InferenceWorkflow` 在 Slurm 后端下的并行提交逻辑。
-    *   **[重构]** 移除了 `infer.py` 中的“自提交 (Self-Submission)”机制，改为由 `InferenceExecutionManager` 直接生成并提交多个并行的 `dp test` 任务脚本。
-    *   **[性能]** 显著提升了多模型推理在集群环境下的吞吐量，现在每个模型将独立占用 Slurm 资源（如 GPU）进行并行计算，而非挤在单一作业中串行执行。
-    *   **[测试]** 新增 `test_inference_parallel_submission.py` 集成测试，验证了 Slurm 任务脚本生成的独立性与参数正确性。
-*   **v0.4.7** (2026-02-28):
-    *   **[测试]** 新增 Slurm Backend 的端到端集成测试 (`tests/integration/slurm_multidatapool/orchestrator.py`)，在真实 Slurm 环境中验证了作业提交、运行和日志生成的完整闭环。
-    *   **[验证]** 强化了单元测试覆盖率，专门针对 Training 和 Inference 工作流的 "One-Job-Per-Model" 并行投作业逻辑增加了防退化测试，确保并行行为不被意外修改破坏。
-    *   **[修复]** 解决了集成测试在 Slurm 节点间的文件系统隔离问题 (Shared `test_runs` vs `/tmp`)，并优化了日志文件检测机制。
-    *   **[一致性]** 验证了 Feature (CLI/Python) 和 Collection (Self-Submission) 工作流在 Slurm 下的提交逻辑正确性。
-*   **v0.4.10** (2026-03-03):
-    *   **[重构]** `CollectionWorkflow` 引入了基于文件结构的原子解析逻辑（File Structure-Based Atom Parsing），通过计算力文件与能量文件的行数比例精确推导原子数，彻底解决了非化学式命名系统的解析难题。
-    *   **[增强]** 实现了基于 `testdata_dir` 的双重验证机制，在力文件解析失败时可自动回退到原始数据集查找原子数，显著提升了系统的鲁棒性。
-    *   **[安全]** 修复了 P0/P1 级安全漏洞，包括路径穿越、命令注入和异常吞没问题。
-    *   **[质量]** 引入 `scripts/gate.sh` 质量门禁和 `audit.py` 代码审计工具。
-    *   **[规范]** 重构目录结构，明确区分 `scripts/` (项目维护) 与 `tools/` (业务工具)。
-    *   **[修复]** 修正了 CLI 退出码契约和完成标记语义。
+    *   **[重构]** 移除了 `infer.py` 中的“自提交”机制，改为由 Manager 直接生成并行任务。
+    *   **[性能]** 显著提升了多模型推理在集群环境下的吞吐量。
+
+*   **v0.4.4** (2026-02-27):
+    *   **[日志]** 全面重构日志系统，引入标准化的 `setup_workflow_logger`。
+    *   **[修复]** 修复了 `TrainingWorkflow` 日志错乱且屏蔽 stdout 的严重缺陷。
+    *   **[规范]** 为所有 Workflow 定义了专属的日志文件名常量。
+
+*   **v0.4.3** (2026-02-25):
+    *   **[架构]** 重构 `AnalysisWorkflow` 和 `CollectionWorkflow`，统一了底层分析逻辑。
+    *   **[重构]** 引入 `UnifiedAnalysisManager`，消除代码重复。
+    *   **[功能]** `AnalysisWorkflow` 支持稳健的原子成分加载。
+
+*   **v0.4.2** (2026-02-23):
+    *   **[修复]** 修复了 `DIRECTSampler` 在 Joint Sampling 模式下的参数错误。
+    *   **[重构]** 采用 Post-Filtering 策略，将过滤逻辑移回 Manager 层。
+    *   **[测试]** 全面优化测试套件，移除对临时目录的硬编码依赖。
+
+*   **v0.4.1** (2026-02-14):
+    *   **[版本]** 版本号重置并统一为 0.4.1，与 PyPI/Package 版本保持一致。
+    *   **[架构]** 完成了 `InferenceWorkflow` 的 DDD 重构。
+    *   **[文档]** 更新开发者文档，补充了基于 Zen of Python 的项目哲学。
+
+#### **Legacy Era (v2.x)**
+*(2026-01-28 ~ 2026-02-14)*
+
+在此阶段，项目完成了从单一脚本到模块化架构的蜕变。主要成就包括：
+*   **v2.1 - v2.7**: 引入了 Auto-UQ、联合采样 (Joint Sampling)、2-DIRECT 两步聚类等核心算法特性，并建立了统一的 `dpeva` CLI 接口。
+*   **v2.8 - v2.9**: 确立了领域驱动设计 (DDD) 架构，完成了 Collection 和 Training 工作流的彻底解耦与重构，为 v0.4.x 的稳定迭代奠定了基础。
