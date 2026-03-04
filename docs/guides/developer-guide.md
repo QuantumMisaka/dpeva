@@ -7,7 +7,7 @@
   - 配置字段字典：/docs/reference/config-schema.md
   - 校验规则补充：/docs/reference/validation.md
 
-* **版本**: 0.4.11
+* **版本**: 0.4.12
 * **生成日期**: 2026-03-03
 * **作者**: Quantum Misaka with Trae SOLO
 
@@ -420,7 +420,11 @@ DPEVA_TAG: WORKFLOW_FINISHED
 
 #### **Current Era (v0.4.x)**
 
-*   **v0.4.11** (2026-03-03):
+ *   **v0.4.12** (2026-03-04):
+     *   **[修复]** 增强了 `CollectionWorkflow` 的异常检测机制。在所有候选系统导出失败（Zero-Export）的极端情况下，显式抛出 `RuntimeError` 并输出 Critical 日志，防止任务“静默成功”导致下游流水线异常。
+     *   **[文档]** 优化了 `release-helper` 技能文档，明确了基于 Git Log 的变更回溯与追加式文档更新流程，废弃了过时的 CHANGELOG 维护方式。
+ 
+ *   **v0.4.11** (2026-03-03):
      *   **[优化]** 增强了 `dpeva.io.dataset.load_systems` 的智能加载逻辑。现在能优先识别单系统目录，避免了将 `set.000` 等内部数据文件夹误判为独立系统，消除了大量虚假的 Warning 日志。
      *   **[重构]** `CollectionWorkflow` 引入了基于文件结构的原子解析逻辑（File Structure-Based Atom Parsing），通过计算力文件与能量文件的行数比例精确推导原子数，彻底解决了非化学式命名系统的解析难题。
      *   **[增强]** 实现了基于 `testdata_dir` 的双重验证机制，在力文件解析失败时可自动回退到原始数据集查找原子数，显著提升了系统的鲁棒性。
