@@ -1,6 +1,6 @@
 # DP-EVA (Deep Potential EVolution Accelerator)
 
-![Version](https://img.shields.io/badge/version-0.5.0-blue)
+![Version](https://img.shields.io/badge/version-0.5.1-blue)
 ![Python](https://img.shields.io/badge/python-3.8%2B-green)
 ![License](https://img.shields.io/badge/License-LGPL_v3-blue.svg)
 
@@ -12,7 +12,7 @@ DP-EVA is an active learning framework designed for efficient fine-tuning of Dee
 *   **Advanced UQ**: Supports Query by Committee (QbC) and Random Network Distillation (RND) with robust "Clamp-and-Clean" numerics.
 *   **Smart Sampling**: Implements 2-Step DIRECT sampling (Structure -> Atomic Environment) to select the most representative and uncertain configurations.
 *   **HPC Ready**: Built-in `JobManager` supports seamless switching between Local and Slurm backends, with optimized task packing for massive labeling jobs.
-*   **Labeling Automation**: (v0.5.0+) Integrated DFT workflow (ABACUS) for automatic input generation, error correction, and data cleaning.
+*   **Labeling Automation**: (v0.5.1+) Integrated DFT workflow (ABACUS) for automatic input generation, error correction, and data cleaning.
 
 ## Quick Start
 

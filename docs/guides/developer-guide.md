@@ -7,7 +7,7 @@
   - 配置字段字典：/docs/reference/config-schema.md
   - 校验规则补充：/docs/reference/validation.md
 
-* **版本**: 0.5.0
+* **版本**: 0.5.1
 * **生成日期**: 2026-03-05
 * **作者**: Quantum Misaka with Trae SOLO
 
@@ -419,6 +419,12 @@ DPEVA_TAG: WORKFLOW_FINISHED
 ### 6.2 版本历史
 
 #### **Current Era (v0.5.x)**
+
+*   **v0.5.1** (2026-03-05):
+    *   **[增强]** 在 `CollectionWorkflow` 中新增了 UQ 统计日志输出。现在 `UQManager` 会在不确定度分析阶段自动计算并打印 QbC、RND 及 Rescaled RND 的详细统计量（Count, Mean, Std, Percentiles），大幅提升了筛选过程的可观测性。
+    *   **[文档]** 全面补全了 Labeling 模块的文档，包括 CLI 指南、配置 Schema 及校验规则。
+    *   **[修复]** 修正了 `LabelingConfig` 中 `cleaning_thresholds` 字段的类型定义，允许使用 `null` 跳过特定物理量的检查，修复了 Pydantic v2 下的验证错误。
+    *   **[治理]** 清理并归档了过时的项目状态报告和设计规范，更新了文档治理矩阵。
 
 *   **v0.5.0** (2026-03-05):
     *   **[特性]** 全新发布 Labeling 模块 (`src/dpeva/labeling`)，支持从 `dpdata` 结构数据到 DFT 输入文件的全自动生成、任务打包与提交。
