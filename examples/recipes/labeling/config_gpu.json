@@ -1,0 +1,68 @@
+{
+    "work_dir": "labeling_workdir",
+    "input_data_path": "sampled_dpdata",
+    "output_dir": "labeling_output",
+    "pp_dir": "$HOME/PP_ORB/PP",
+    "orb_dir": "$HOME/PP_ORB/ORB",
+    "omp_threads": 1,
+    "cleaning_thresholds": {
+        "cohesive_energy": null,
+        "force": 40.0,
+        "stress": 40.0,
+        "max_atoms": 255
+    },
+    "submission": {
+        "backend": "slurm",
+        "slurm_config": {
+            "partition": "4V100",
+            "ntasks": 1,
+            "gpus_per_node": 1,
+            "qos": "rush-1o2gpu",
+            "walltime": "24:00:00"
+        },
+        "env_setup": [
+            "source /opt/sai_config/mps_mapping.d/${SLURM_JOB_PARTITION}.bash",
+            "module load abacus/LTSv3.10.1-sm70-auto"
+        ]
+    },
+    "tasks_per_job": 50,
+    "dft_params": {
+        "calculation": "scf",
+        "ecutwfc": 100,
+        "scf_thr": 1e-7,
+        "scf_nmax": 300,
+        "basis_type": "lcao",
+        "ks_solver": "cusolver",
+        "mixing_type": "broyden",
+        "mixing_beta": 0.4,
+        "mixing_ndim": 20,
+        "smearing_method": "gaussian",
+        "smearing_sigma": 0.004,
+        "cal_force": 1,
+        "cal_stress": 1
+    },
+    "pp_map": {
+        "Fe": "Fe_ONCV_PBE-1.2.upf",
+        "C": "C.upf",
+        "H": "H.upf",
+        "O": "O.upf"
+    },
+    "orb_map": {
+        "Fe": "Fe_gga_7au_100Ry_4s2p2d1f.orb",
+        "C": "C_gga_8au_100Ry_2s2p1d.orb",
+        "H": "H_gga_6au_100Ry_2s1p.orb",
+        "O": "O_gga_6au_100Ry_2s2p1d.orb"
+    },
+    "ref_energies": {
+        "Fe": -3215.2791,
+        "C": -156.0795,
+        "O": -444.6670,
+        "H": -13.5410
+    },
+    "output_format": "deepmd/npy",
+    "attempt_params": [
+        {},
+        {"mixing_beta": 0.1, "mixing_ndim": 20},
+        {"mixing_beta": 0.025, "mixing_ndim": 20}
+    ]
+}

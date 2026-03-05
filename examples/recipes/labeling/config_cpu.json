@@ -1,0 +1,65 @@
+{
+    "work_dir": "labeling_workdir_cpu",
+    "input_data_path": "./sampled_dpdata",
+    "output_dir": "labeling_output_cpu",
+    "pp_dir": "./pseudopotentials",
+    "orb_dir": "/orbitals",
+    "omp_threads": 1,
+    "cleaning_thresholds": {
+        "cohesive_energy": null,
+        "force": 40.0,
+        "stress": 40.0,
+        "max_atoms": 255
+    },
+    "submission": {
+        "backend": "slurm",
+        "slurm_config": {
+            "partition": "cpu",
+            "ntasks": 16,
+            "walltime": "24:00:00"
+        },
+        "env_setup": [
+            "module load abacus/3.10.1"
+        ]
+    },
+    "tasks_per_job": 50,
+    "dft_params": {
+        "calculation": "scf",
+        "ecutwfc": 100,
+        "scf_thr": 1e-7,
+        "scf_nmax": 300,
+        "basis_type": "lcao",
+        "ks_solver": "genelpa",
+        "mixing_type": "broyden",
+        "mixing_beta": 0.4,
+        "mixing_ndim": 20,
+        "smearing_method": "gaussian",
+        "smearing_sigma": 0.004,
+        "cal_force": 1,
+        "cal_stress": 1
+    },
+    "pp_map": {
+        "Fe": "Fe_ONCV_PBE-1.2.upf",
+        "C": "C.upf",
+        "H": "H.upf",
+        "O": "O.upf"
+    },
+    "orb_map": {
+        "Fe": "Fe_gga_7au_100Ry_4s2p2d1f.orb",
+        "C": "C_gga_8au_100Ry_2s2p1d.orb",
+        "H": "H_gga_6au_100Ry_2s1p.orb",
+        "O": "O_gga_6au_100Ry_2s2p1d.orb"
+    },
+    "ref_energies": {
+        "Fe": -3215.2791,
+        "C": -156.0795,
+        "O": -444.6670,
+        "H": -13.5410
+    },
+    "output_format": "deepmd/npy",
+    "attempt_params": [
+        {},
+        {"mixing_beta": 0.1, "mixing_ndim": 20},
+        {"mixing_beta": 0.025, "mixing_ndim": 20}
+    ]
+}

@@ -38,3 +38,10 @@ dpeva collect examples/recipes/collection/config_normal.json
 # Generate descriptors for a dataset
 dpeva feature examples/recipes/feature_generation/config_feature.json
 ```
+
+**Example: First Principles Labeling**
+
+```bash
+# Run ABACUS labeling workflow
+dpeva label examples/recipes/labeling_recipe.json
+```

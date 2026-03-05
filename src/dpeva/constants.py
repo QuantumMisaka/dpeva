@@ -39,12 +39,27 @@ DEFAULT_TESTING_DIR: Final[str] = "test_results"
 DEFAULT_ANALYSIS_OUTPUT_DIR: Final[str] = "analysis"
 DEFAULT_LOG_FILE: Final[str] = "collection.log"
 
+# Labeling Defaults
+DEFAULT_LABELING_TASKS_PER_JOB: Final[int] = 50
+DEFAULT_LABELING_KPT_CRITERIA: Final[int] = 25
+DEFAULT_LABELING_VACUUM_THICKNESS: Final[float] = 6.3
+DEFAULT_LABELING_CLEANING_THRESHOLDS: Final[dict] = {
+    "cohesive_energy": float("nan"),  # eV/atom (NaN means skip check)
+    "force": 40.0,                    # eV/Angstrom
+    "stress": 40.0,                   # GPa
+    "max_atoms": 255
+}
+DEFAULT_LABELING_ATTEMPT_PARAMS: Final[list] = [
+    {},
+]
+
 # Workflow Log Files
 LOG_FILE_TRAIN: Final[str] = "training.log"
 LOG_FILE_COLLECT: Final[str] = "collection.log"
 LOG_FILE_INFER: Final[str] = "inference.log"
 LOG_FILE_FEATURE: Final[str] = "feature.log"
 LOG_FILE_ANALYSIS: Final[str] = "analysis.log"
+LOG_FILE_LABEL: Final[str] = "labeling.log"
 
 # Visualization
 FIG_DPI: Final[int] = 300
