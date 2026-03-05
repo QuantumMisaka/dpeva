@@ -1,6 +1,6 @@
 ---
 name: "audit-codebase"
-description: "Executes project-specific static analysis to detect hardcoded paths, magic numbers, missing docstrings, and commented code. Invoke before committing changes or when asked to check code quality."
+description: "Executes project-specific static analysis to detect hardcoded paths, magic numbers, missing docstrings, and commented code. Invoke when asked to code review for code quality."
 ---
 
 # DP-EVA Code Audit
