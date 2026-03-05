@@ -21,7 +21,7 @@
             "nodes": 1,
             "ntasks": 1,
             "gpus_per_node": 4,
-            "qos": "rush-4gpu"
+            "qos": "rush-gpu"
         }
     }
 }

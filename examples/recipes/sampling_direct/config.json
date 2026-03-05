@@ -1,21 +1,21 @@
 {
-    "project": "work_direct",
-    "testdata_dir": "test/dptest_results",
-    "desc_dir": "test/descriptors",
-    "results_prefix": "results",
+    "project": "./",
+    "uq_select_scheme": "tangent_lo",
     "testing_dir": "test_results",
+    "results_prefix": "results",
+    "desc_dir": "./desc_pool",
+    "testdata_dir": "./other_dpdata",
     
-    "root_savedir": "iteration_1_selected",
-    
+    "fig_dpi": 300,
+    "root_savedir": "dpeva_sampling_direct",
+
     "uq_trust_mode": "no_filter",
-    "uq_trust_ratio": 0.5,
-    "uq_trust_width": 0.05,
     
     "sampler_type": "direct",
     "direct_n_clusters": 50,
     "direct_k": 1,
     "direct_thr_init": 0.5,
-    
+
     "submission": {
         "backend": "slurm",
         "env_setup": [
