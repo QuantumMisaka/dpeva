@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import logging
+import warnings
 
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.cluster import Birch
+from sklearn.exceptions import ConvergenceWarning
 
 logger = logging.getLogger(__name__)
 
@@ -60,18 +62,41 @@ class BirchClustering(BaseEstimator, TransformerMixin):
             PCA feature, centroid positions of each cluster in PCA feature s
             pace, and the array of input PCA features.
         """
-        model = Birch(n_clusters=self.n, threshold=self.threshold_init, **self.kwargs).fit(PCAfeatures)
+        # Boundary Check: Empty input
+        if PCAfeatures is None or len(PCAfeatures) == 0:
+            logger.error("Input PCAfeatures is empty.")
+            raise ValueError("Input PCAfeatures cannot be empty.")
+            
+        n_samples = PCAfeatures.shape[0]
+        target_n = self.n
         
-        if self.n is not None:
+        # Boundary Check: n_samples < target_n
+        if target_n is not None and n_samples < target_n:
+            logger.warning(
+                f"Number of samples ({n_samples}) is less than target clusters ({target_n}). "
+                f"Adjusting target clusters to {n_samples}."
+            )
+            target_n = n_samples
+
+        def fit_birch_safe(n_clusters, threshold, **kwargs):
+            # Suppress ConvergenceWarning from sklearn as we handle retry logic
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", category=ConvergenceWarning)
+                warnings.filterwarnings("ignore", message=".*Number of subclusters found.*")
+                return Birch(n_clusters=n_clusters, threshold=threshold, **kwargs).fit(PCAfeatures)
+
+        model = fit_birch_safe(n_clusters=target_n, threshold=self.threshold_init, **self.kwargs)
+        
+        if target_n is not None:
             iteration = 0
             while (
-                len(set(model.subcluster_labels_)) < self.n
+                len(set(model.subcluster_labels_)) < target_n
                 and iteration < self.max_iter
             ):  # decrease threshold until desired n clusters is achieved
                 current_clusters = len(set(model.subcluster_labels_))
                 logger.info(
                     f"Iteration {iteration+1}/{self.max_iter}: "
-                    f"BirchClustering with threshold={self.threshold_init:.6f} and n={self.n} "
+                    f"BirchClustering with threshold={self.threshold_init:.6f} and n={target_n} "
                     f"gives {current_clusters} subclusters.",
                 )
                 
@@ -85,27 +110,27 @@ class BirchClustering(BaseEstimator, TransformerMixin):
 
                 # Update threshold
                 # Safety: Ensure we don't multiply by 0 if current_clusters is 0 (though unlikely)
-                ratio = current_clusters / self.n if self.n > 0 else 0
+                ratio = current_clusters / target_n if target_n > 0 else 0
                 if ratio == 0:
                      ratio = 0.1 # Fallback to avoid zeroing out threshold instantly
                 
                 self.threshold_init = self.threshold_init * ratio
                 
-                model = Birch(n_clusters=self.n, threshold=self.threshold_init, **self.kwargs).fit(PCAfeatures)
+                model = fit_birch_safe(n_clusters=target_n, threshold=self.threshold_init, **self.kwargs)
                 iteration += 1
 
             # Final check and warning
             final_subclusters = len(set(model.subcluster_labels_))
-            if final_subclusters < self.n:
+            if final_subclusters < target_n:
                 logger.warning(
-                    f"BirchClustering failed to reach target n={self.n} clusters after {iteration} iterations. "
+                    f"BirchClustering failed to reach target n={target_n} clusters after {iteration} iterations. "
                     f"Final subclusters: {final_subclusters}. Proceeding with best effort."
                 )
 
         labels = model.predict(PCAfeatures)
         self.model = model
         logger.info(
-            f"BirchClustering with threshold_init={self.threshold_init} and n={self.n} "
+            f"BirchClustering with threshold_init={self.threshold_init} and n={target_n} "
             f"gives {len(set(model.subcluster_labels_))} clusters.",
         )
         label_centers = dict(zip(model.subcluster_labels_, model.subcluster_centers_))
