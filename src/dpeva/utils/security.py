@@ -1,7 +1,4 @@
 import os
-import pathlib
-import re
-from typing import Optional
 
 def validate_filename(filename: str) -> str:
     """
@@ -21,7 +18,7 @@ def validate_filename(filename: str) -> str:
         raise ValueError("Filename cannot be empty")
         
     # Check for path separators
-    if os.path.sep in filename or (os.path.altsep and os.path.altsep in filename):
+    if "/" in filename or "\\" in filename or os.path.sep in filename or (os.path.altsep and os.path.altsep in filename):
         raise ValueError(f"Filename '{filename}' contains path separators")
         
     # Check for traversal
@@ -52,11 +49,13 @@ def safe_join(base_dir: str, *paths: str) -> str:
         ValueError: If the resulting path attempts to traverse outside base_dir.
     """
     base_abs = os.path.abspath(base_dir)
-    joined = os.path.abspath(os.path.join(base_dir, *paths))
-    
-    if not joined.startswith(base_abs):
+    joined = os.path.abspath(os.path.join(base_abs, *paths))
+    try:
+        common = os.path.commonpath([base_abs, joined])
+    except ValueError as e:
+        raise ValueError(f"Invalid path relationship between {base_abs} and {joined}: {e}") from e
+    if common != base_abs:
         raise ValueError(f"Path traversal attempt detected: {joined} is not within {base_abs}")
-        
     return joined
 
 def normalize_sys_name(sys_name: str) -> str:
@@ -70,30 +69,20 @@ def normalize_sys_name(sys_name: str) -> str:
     Returns:
         A sanitized system name safe for directory naming.
     """
-    # Replace path separators with underscores to flatten structure if needed,
-    # OR reject them.
-    # For DP-EVA, sys_name is often used as directory name.
-    # If sys_name comes from "path/to/sys", we might want "sys" or "path_to_sys".
-    # But usually sys.target_name is just the leaf or a unique identifier.
-    
-    # Strategy: Replace separators with underscores
-    clean_name = sys_name.replace(os.path.sep, "_")
-    if os.path.altsep:
-        clean_name = clean_name.replace(os.path.altsep, "_")
-        
-    # Remove traversal sequences
-    while ".." in clean_name:
-        clean_name = clean_name.replace("..", "")
-        
-    # Validate final result
-    try:
-        validate_filename(clean_name)
-    except ValueError as e:
-        # Fallback or strict error? 
-        # Given we cleaned it, if it still fails, it's weird.
-        # But '..' replacement might leave empty string or still fail control chars.
-        if not clean_name:
-            raise ValueError(f"System name '{sys_name}' reduced to empty string after sanitization")
-        raise e
-        
-    return clean_name
+    raw_name = str(sys_name).strip()
+    if not raw_name:
+        raise ValueError("System name cannot be empty")
+    unified = raw_name.replace("\\", "/")
+    if unified.startswith("/"):
+        raise ValueError(f"System name '{sys_name}' cannot be an absolute path")
+    parts = []
+    for part in unified.split("/"):
+        if part in {"", "."}:
+            continue
+        if part == "..":
+            raise ValueError(f"System name '{sys_name}' contains traversal segment '..'")
+        validate_filename(part)
+        parts.append(part)
+    if not parts:
+        raise ValueError(f"System name '{sys_name}' reduced to empty path after normalization")
+    return os.path.join(*parts)

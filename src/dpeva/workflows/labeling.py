@@ -15,7 +15,7 @@ from typing import List
 import dpdata
 
 from dpeva.config import LabelingConfig
-from dpeva.managers.labeling import LabelingManager
+from dpeva.labeling.manager import LabelingManager
 from dpeva.submission.manager import JobManager
 from dpeva.submission.templates import JobConfig
 from dpeva.constants import WORKFLOW_FINISHED_TAG
@@ -145,6 +145,7 @@ class LabelingWorkflow:
                     command="", # Will be set by submit_python_script
                     job_name=f"fp_{job_dir.name}_att{attempt}",
                     partition=slurm_conf.get("partition"),
+                    qos=slurm_conf.get("qos"),
                     nodes=slurm_conf.get("nodes", 1),
                     ntasks=slurm_conf.get("ntasks", 1),
                     gpus_per_node=slurm_conf.get("gpus_per_node"),

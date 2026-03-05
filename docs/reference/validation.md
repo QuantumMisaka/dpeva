@@ -69,3 +69,14 @@
 *   `FeatureConfig.model_path`
 *   `InferenceConfig.data_path`
 *   `TrainingConfig.base_model_path`
+
+## 5. 标注工作流校验 (LabelingConfig)
+
+### 5.1 阈值与参数
+*   `cleaning_thresholds`: 支持设置为 `null` 以跳过对特定物理量（如 `cohesive_energy`）的检查。
+*   `kpt_criteria`: 必须 `> 0`。用于自动计算 K 点网格密度。
+
+### 5.2 路径校验
+*   `input_data_path`: 必须存在。
+*   `pp_dir`: 必须存在。
+*   `orb_dir`: 必须存在。

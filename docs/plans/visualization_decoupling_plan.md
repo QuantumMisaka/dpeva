@@ -65,6 +65,8 @@ The following development items are **100% Complete** and ready for archiving:
 
 ## 1. Objectives
 
+> **Status Update (2026-03-05)**: The visualization decoupling functionality described in this plan is **not implemented**. Only the plotting style/settings module (`dpeva.utils.visual_style`) has been isolated as part of the Labeling module integration. The core decoupling of `converged_data_view.py` remains pending.
+
 *   **Decoupling**: Remove heavy dependencies (`matplotlib`, `seaborn`) from core compute nodes (`labeling`, `training`).
 *   **Performance**: Optimize rendering for large datasets (100k+ points).
 *   **Flexibility**: Support headless rendering (CI/CD) and interactive notebooks.

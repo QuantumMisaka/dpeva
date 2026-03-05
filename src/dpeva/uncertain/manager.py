@@ -145,6 +145,37 @@ class UQManager:
         uq_rnd_rescaled = self.calculator.align_scales(uq_results[COL_UQ_QBC], uq_results[COL_UQ_RND])
         
         return uq_results, uq_rnd_rescaled
+        
+    def log_uq_statistics(self, uq_results: Dict, uq_rnd_rescaled: np.ndarray):
+        """
+        Log detailed statistics for UQ variables (similar to pandas describe).
+        
+        Args:
+            uq_results (Dict): UQ results dictionary containing COL_UQ_QBC and COL_UQ_RND.
+            uq_rnd_rescaled (np.ndarray): Rescaled RND values.
+        """
+        self.logger.info("Calculating statistics for UQ variables (QbC, RND, RND_rescaled)")
+        
+        try:
+            # Construct temporary DataFrame for statistics
+            df_stats = pd.DataFrame({
+                "UQ_QbC": uq_results[COL_UQ_QBC],
+                "UQ_RND": uq_results[COL_UQ_RND],
+                "UQ_RND_rescaled": uq_rnd_rescaled
+            })
+            
+            # Calculate describe stats
+            # percentiles=[.25, .5, .75, .95, .99] to match user requirement
+            stats = df_stats.describe(percentiles=[.25, .5, .75, .95, .99])
+            
+            # Format the output string to align columns beautifully
+            # We use to_string() which provides a nice table format by default
+            stats_str = stats.to_string(float_format=lambda x: "{:.4f}".format(x))
+            
+            self.logger.info(f"UQ Statistics:\n{stats_str}")
+            
+        except Exception as e:
+            self.logger.warning(f"Failed to calculate UQ statistics: {e}")
 
     def run_auto_threshold(self, uq_results: Dict, uq_rnd_rescaled: np.ndarray):
         """Calculates and updates trust thresholds if mode is 'auto'."""

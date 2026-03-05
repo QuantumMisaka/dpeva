@@ -53,6 +53,12 @@
         "H": "H_gga_6au_100Ry_2s1p.orb",
         "O": "O_gga_6au_100Ry_2s2p1d.orb"
     },
+    "mag_map": {
+        "Fe": 5.0,
+        "C": 1.0,
+        "H": 1.0,
+        "O": 1.0
+    },
     "ref_energies": {
         "Fe": -3215.2791,
         "C": -156.0795,

@@ -97,8 +97,12 @@ def run_abacus_tasks():
     print(f"Found {{len(task_dirs)}} tasks in {{root_dir}}")
     
     for task_dir in task_dirs:
-        print(f"Running task: {task_dir.name}")
-        os.chdir(task_dir)
+        # Resolve task_dir to absolute path if it's relative
+        # Though task_dirs from iterdir() are usually absolute or relative to cwd.
+        # Let's ensure it's a Path object.
+        task_dir_path = Path(task_dir)
+        print(f"Running task: {{task_dir_path.name}}")
+        os.chdir(task_dir_path)
         
         # Command to run ABACUS
         # We assume 'abacus' is in PATH or loaded via modules
@@ -111,18 +115,18 @@ def run_abacus_tasks():
         # Construct command
         # If slurm_ntasks > 1, use mpirun
         if int(slurm_ntasks) > 1:
-            cmd = f"mpirun -np {slurm_ntasks} {abacus_cmd}"
+            cmd = f"mpirun -np {{slurm_ntasks}} {{abacus_cmd}}"
         else:
             cmd = abacus_cmd
             
         try:
             with open("abacus.out", "w") as outfile:
                 subprocess.run(cmd, shell=True, check=True, stdout=outfile, stderr=subprocess.STDOUT)
-            print(f"Task {task_dir.name} completed.")
+            print(f"Task {{task_dir_path.name}} completed.")
         except subprocess.CalledProcessError as e:
-            print(f"Task {task_dir.name} failed: {e}")
+            print(f"Task {{task_dir_path.name}} failed: {{e}}")
         except Exception as e:
-            print(f"Task {task_dir.name} error: {e}")
+            print(f"Task {{task_dir_path.name}} error: {{e}}")
         finally:
             os.chdir(root_dir)
 

@@ -13,7 +13,7 @@ from pathlib import Path
 
 import numpy as np
 from ase import Atoms
-from ase.io.abacus import write_input, write_abacus
+from ase.io.abacus import write_input, write_abacus # ase-abacus is needed for now
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -41,6 +41,7 @@ class AbacusGenerator:
         self.dft_params = config.get("dft_params", {})
         self.pp_map = config.get("pp_map", {})
         self.orb_map = config.get("orb_map", {})
+        self.mag_map = config.get("mag_map", {})
         self.pp_dir = config.get("pp_dir", "")
         self.orb_dir = config.get("orb_dir", "")
         self.kpt_criteria = config.get("kpt_criteria", 25)
@@ -73,8 +74,7 @@ class AbacusGenerator:
         Set initial magnetic moments based on config (optional).
         Currently supports Fe-C-H-O logic if provided in config.
         """
-        mag_map = self.config.get("mag_map", {})
-        if not mag_map:
+        if not self.mag_map:
             return
 
         init_magmom = atoms.get_initial_magnetic_moments()
@@ -82,7 +82,7 @@ class AbacusGenerator:
         if np.all(init_magmom == 0):
              init_magmom = np.zeros(len(atoms))
 
-        for symbol, mag in mag_map.items():
+        for symbol, mag in self.mag_map.items():
             indices = [atom.index for atom in atoms if atom.symbol == symbol]
             init_magmom[indices] = mag
         

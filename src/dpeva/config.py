@@ -189,7 +189,8 @@ class LabelingConfig(BaseWorkflowConfig):
     tasks_per_job: int = Field(DEFAULT_LABELING_TASKS_PER_JOB, gt=0, description="Number of tasks per packed job.")
     
     # Cleaning & Strategy
-    cleaning_thresholds: Dict[str, float] = Field(default=DEFAULT_LABELING_CLEANING_THRESHOLDS)
+    mag_map: Dict[str, float] = Field(default_factory=dict, description="Initial magnetic moments per element (e.g. {'Fe': 5.0})")
+    cleaning_thresholds: Dict[str, Optional[float]] = Field(default=DEFAULT_LABELING_CLEANING_THRESHOLDS)
     attempt_params: List[Dict[str, Any]] = Field(default=DEFAULT_LABELING_ATTEMPT_PARAMS, description="Parameters for each attempt (index=0 is initial).")
     ref_energies: Dict[str, float] = Field(default_factory=dict, description="Reference energies per element.")
     

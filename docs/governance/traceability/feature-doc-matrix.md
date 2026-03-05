@@ -12,6 +12,7 @@
 |---|---|---|
 | `dpeva train` | `/src/dpeva/cli.py` | `/docs/guides/cli.md`、`/docs/guides/quickstart.md` |
 | `dpeva infer` | `/src/dpeva/cli.py` | `/docs/guides/cli.md`、`/docs/guides/quickstart.md` |
+| `dpeva label` | `/src/dpeva/cli.py` | `/docs/guides/cli.md`、`/docs/guides/quickstart.md` |
 | `dpeva feature` | `/src/dpeva/cli.py` | `/docs/guides/cli.md`、`/docs/guides/quickstart.md` |
 | `dpeva collect` | `/src/dpeva/cli.py` | `/docs/guides/cli.md`、`/docs/guides/quickstart.md` |
 | `dpeva analysis` | `/src/dpeva/cli.py` | `/docs/guides/cli.md`、`/docs/guides/quickstart.md` |
@@ -24,6 +25,7 @@
 | `SubmissionConfig` | `/src/dpeva/config.py` | `/docs/reference/config-schema.md`、`/docs/reference/validation.md` |
 | `TrainingConfig` | `/src/dpeva/config.py` | `/docs/reference/config-schema.md`、`/docs/reference/validation.md` |
 | `InferenceConfig` | `/src/dpeva/config.py` | `/docs/reference/config-schema.md`、`/docs/reference/validation.md` |
+| `LabelingConfig` | `/src/dpeva/config.py` | `/docs/reference/config-schema.md`、`/docs/reference/validation.md` |
 | `FeatureConfig` | `/src/dpeva/config.py` | `/docs/reference/config-schema.md`、`/docs/reference/validation.md` |
 | `CollectionConfig` | `/src/dpeva/config.py` | `/docs/reference/config-schema.md`、`/docs/reference/validation.md` |
 | `AnalysisConfig` | `/src/dpeva/config.py` | `/docs/reference/config-schema.md`、`/docs/reference/validation.md` |

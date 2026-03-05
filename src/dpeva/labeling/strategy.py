@@ -33,11 +33,7 @@ class ResubmissionStrategy:
                                 {"mixing_beta": 0.1},  # Attempt 1 (Retry 1)
                             ]
         """
-        self.attempt_params = attempt_params or [
-            {"mixing_beta": 0.4, "mixing_ndim": 8},
-            {"mixing_beta": 0.1, "mixing_ndim": 20},
-            {"mixing_beta": 0.025, "mixing_ndim": 20}
-        ]
+        self.attempt_params = attempt_params
 
     def get_params(self, attempt: int) -> Dict[str, Any]:
         """Get parameters for a specific attempt index."""
