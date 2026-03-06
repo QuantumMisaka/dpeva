@@ -82,6 +82,8 @@ basic_input = {
     'mixing_gg0': 1.0,
     'mixing_ndim': 20,
     'scf_thr': 1e-7,
+    'scf_os_stop': 1,
+    'scf_os_ndim': 80,
     'scf_nmax': 300,
     'kpts': kpts,
     'pp': pp,
