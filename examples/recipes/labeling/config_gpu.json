@@ -1,7 +1,6 @@
 {
     "work_dir": "labeling_workdir",
     "input_data_path": "sampled_dpdata",
-    "output_dir": "labeling_output",
     "pp_dir": "$HOME/PP_ORB/PP",
     "orb_dir": "$HOME/PP_ORB/ORB",
     "omp_threads": 1,

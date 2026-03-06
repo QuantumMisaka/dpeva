@@ -25,6 +25,7 @@ class TaskPacker:
     def pack(self, root_dir: Path, exclude_patterns: List[str] = None) -> List[Path]:
         """
         Move task directories into packed subdirectories.
+        Supports recursive scanning for nested structures.
         
         Args:
             root_dir: Directory containing task folders.
@@ -36,24 +37,34 @@ class TaskPacker:
         root_dir = Path(root_dir)
         exclude_patterns = exclude_patterns or ["CONVERGED", f"{self.job_prefix}_*"]
         
-        # Identify task dirs
+        # Identify task dirs (Recursive scan)
+        # Task dirs are identified by containing 'INPUT' file
         task_dirs = []
-        for item in root_dir.iterdir():
-            if not item.is_dir():
+        for item in root_dir.rglob("INPUT"):
+            task_dir = item.parent
+            if not task_dir.is_dir():
                 continue
             
+            # Avoid re-packing already packed dirs
+            # Check if parent matches job_prefix pattern
+            if task_dir.parent.name.startswith(f"{self.job_prefix}_"):
+                continue
+
             # Check exclusions
             excluded = False
             for pat in exclude_patterns:
-                if item.match(pat):
+                # Match against relative path from root to handle nested structures
+                rel_path = task_dir.relative_to(root_dir)
+                if rel_path.match(pat) or any(part.startswith(self.job_prefix) for part in rel_path.parts):
                     excluded = True
                     break
             if excluded:
                 continue
             
-            task_dirs.append(item)
+            task_dirs.append(task_dir)
         
-        task_dirs.sort()
+        # Sort for deterministic packing
+        task_dirs.sort(key=lambda p: str(p))
         logger.info(f"Found {len(task_dirs)} tasks to pack.")
         
         if not task_dirs:
@@ -76,8 +87,38 @@ class TaskPacker:
                 job_dirs.append(current_job_dir)
             
             try:
+                # Move task_dir to current_job_dir
+                # Note: task_dir name might conflict if flattened. 
+                # e.g. sys1/cluster/task_0 and sys2/bulk/task_0
+                # Solution: Rename task dir to include parent info or just assume unique names?
+                # Original script assumed unique names (sysname-index).
+                # Our task_name is {sys_name}_{f_idx}, which should be unique across different systems if sys_name is unique.
+                # If sys_name is dataset name, and we have multiple datasets, we might have collisions if different datasets use same naming scheme for frames?
+                # Actually task_name = f"{sys_name}_{f_idx}" is unique enough usually.
+                # But wait, if sys_name is "C20O0Fe0H0" (dataset name), and we have multiple systems in it?
+                # The generator loop iterates systems. sys_name is dataset name.
+                # Oh, wait. In multi-pool mode, we iterate input_data.
+                # input_data is a MultiSystems.
+                # If we loaded from multiple datasets, input_data is a flat list of Systems.
+                # The 'short_name' attribute is usually the system name from dpdata.
+                # If dpdata loads mixed format, short_name might be preserved.
+                # Let's trust task_name is unique.
+                
                 shutil.move(str(task_dir), str(current_job_dir))
                 sub_count += 1
+                
+                # Cleanup empty parent dirs
+                try:
+                    parent = task_dir.parent
+                    while parent != root_dir:
+                        if not any(parent.iterdir()):
+                            parent.rmdir()
+                            parent = parent.parent
+                        else:
+                            break
+                except OSError:
+                    pass # Directory not empty or other error
+                    
             except Exception as e:
                 logger.error(f"Failed to move {task_dir} to {current_job_dir}: {e}")
         

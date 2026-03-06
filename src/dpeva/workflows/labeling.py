@@ -201,6 +201,7 @@ class LabelingWorkflow:
             logger.warning("No valid job IDs found to monitor.")
             return
 
+        wait_count = 0
         while True:
             # Check queue via squeue
             cmd = ["squeue", "--job", ",".join(clean_ids), "--noheader", "--format=%i"]
@@ -212,7 +213,12 @@ class LabelingWorkflow:
                     logger.info("All jobs finished.")
                     break
                 
-                logger.info(f"{len(active_ids)} jobs still running...")
+                # Log only every 10th interval (10 mins) to reduce spam
+                # But keep polling every minute
+                if wait_count % 10 == 0:
+                    logger.info(f"{len(active_ids)} jobs still running... (waited {wait_count * interval // 60} mins)")
+                
+                wait_count += 1
                 time.sleep(interval)
                 
             except Exception as e:

@@ -1,7 +1,6 @@
 {
-    "work_dir": "labeling_workdir_cpu",
+    "work_dir": "labeling_workdir",
     "input_data_path": "./sampled_dpdata",
-    "output_dir": "labeling_output_cpu",
     "pp_dir": "./pseudopotentials",
     "orb_dir": "/orbitals",
     "omp_threads": 1,

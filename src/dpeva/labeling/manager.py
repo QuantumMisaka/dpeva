@@ -58,14 +58,23 @@ class LabelingManager:
         for i, system in enumerate(input_data):
             n_frames = system.get_nframes()
             atoms_list = system.to_ase_structure()
+            # Use short_name (dataset name) if available, else generic name
             sys_name = getattr(system, "short_name", f"sys_{i}")
             
             for f_idx, atoms in enumerate(atoms_list):
                 task_name = f"{sys_name}_{f_idx}"
-                task_dir = self.input_dir / task_name
+                
+                # Determine stru_type first to construct path: inputs/dataset/stru_type/task_name
                 
                 try:
-                    self.generator.generate(atoms, task_dir, task_name)
+                    # Use new analyze method from analyzer
+                    pre_atoms, stru_type, vacuum_status = self.generator.analyzer.analyze(atoms)
+                    
+                    # Construct hierarchical path
+                    task_dir = self.input_dir / sys_name / stru_type / task_name
+                    
+                    # Generate files using pre-analyzed data
+                    self.generator.generate(pre_atoms, task_dir, task_name, stru_type, vacuum_status)
                     generated_count += 1
                 except Exception as e:
                     logger.error(f"Failed to generate input for {task_name}: {e}")
@@ -73,6 +82,7 @@ class LabelingManager:
         logger.info(f"Generated {generated_count} tasks.")
         
         # Pack tasks
+        # Note: packer needs to scan recursively now because of deeper structure
         packed_job_dirs = self.packer.pack(self.input_dir)
         return packed_job_dirs
 
@@ -138,7 +148,7 @@ if __name__ == "__main__":
     def process_results(self, packed_job_dirs: List[Path]) -> Tuple[List[Path], List[Path]]:
         """
         Process results from packed job directories.
-        Iterates over tasks inside packed jobs.
+        Iterates over tasks inside packed jobs (recursive).
         """
         logger.info("Processing results...")
         self.converged_dir.mkdir(parents=True, exist_ok=True)
@@ -151,17 +161,33 @@ if __name__ == "__main__":
                 logger.warning(f"Job directory {job_dir} does not exist.")
                 continue
             
-            # Iterate tasks inside job dir
-            for task_dir in job_dir.iterdir():
+            # Recursive scan for tasks (contain INPUT)
+            # Use same logic as packer to identify tasks
+            for input_file in job_dir.rglob("INPUT"):
+                task_dir = input_file.parent
                 if not task_dir.is_dir():
                     continue
                 
                 # Check convergence
                 if self.postprocessor.check_convergence(task_dir):
                     converged_tasks.append(task_dir)
+                    
                     # Move to CONVERGED
+                    # Preserve hierarchy relative to inputs/
                     try:
-                        shutil.move(str(task_dir), str(self.converged_dir))
+                        # Extract sys_name from task_name (sys_name_fidx)
+                        # Warning: sys_name might contain underscores.
+                        # We know f_idx is int at end.
+                        parts = task_dir.name.rsplit('_', 1)
+                        if len(parts) == 2 and parts[1].isdigit():
+                            sys_name = parts[0]
+                            # Create subdir in CONVERGED
+                            target_parent = self.converged_dir / sys_name
+                            target_parent.mkdir(parents=True, exist_ok=True)
+                            shutil.move(str(task_dir), str(target_parent))
+                        else:
+                            # Fallback
+                            shutil.move(str(task_dir), str(self.converged_dir))
                     except Exception as e:
                         logger.error(f"Failed to move {task_dir} to CONVERGED: {e}")
                 else:
@@ -203,6 +229,7 @@ if __name__ == "__main__":
     def collect_and_export(self):
         """
         Collect converged results and export cleaned dataset.
+        Also exports anomalies to separate directories.
         """
         logger.info("Collecting converged results...")
         systems = dpdata.MultiSystems()
@@ -211,12 +238,32 @@ if __name__ == "__main__":
              logger.warning("CONVERGED directory not found.")
              return
 
-        # Scan CONVERGED directory
-        for task_dir in self.converged_dir.iterdir():
-            if task_dir.is_dir():
-                ls = self.postprocessor.load_data(task_dir)
-                if ls:
-                    systems.append(ls)
+        # Scan CONVERGED directory (recursive)
+        # CONVERGED structure might be hierarchical now
+        # We need to find directories that contain OUT.ABACUS or are valid dpdata systems
+        # Since we use postprocessor.load_data, it checks for abacus.out or similar.
+        # But we need to traverse.
+        
+        task_dirs = []
+        # Walk through CONVERGED
+        for root, dirs, files in os.walk(self.converged_dir):
+            # If this dir looks like a task dir (has abacus.out or OUT.ABACUS)
+            # load_data checks for these.
+            # But we don't want to try loading parent dirs.
+            # Heuristic: if it has 'STRU' and 'INPUT', it's likely a task dir.
+            if "INPUT" in files and "STRU" in files:
+                task_dirs.append(Path(root))
+        
+        # Sort for consistency
+        task_dirs.sort(key=lambda p: str(p))
+        
+        for task_dir in task_dirs:
+            ls = self.postprocessor.load_data(task_dir)
+            if ls:
+                systems.append(ls)
+        
+        total_input = len(task_dirs) # Approximation of converged count based on dirs found
+        logger.info(f"Loaded {len(systems)} converged systems from {total_input} directories.")
         
         if len(systems) == 0:
             logger.warning("No converged systems found.")
@@ -228,14 +275,79 @@ if __name__ == "__main__":
         # Filter
         df_clean = self.postprocessor.filter_data(df)
         
+        # Stats logging (Requirement 3)
+        # We need to break down by dataset (pool).
+        # Let's count
+        pool_stats = {}
+        
+        # Since systems is a new MultiSystems, we need to re-associate with task_dirs to get pool names.
+        # But systems order matches append order.
+        # Let's rebuild loop to track pool names.
+        
+        valid_systems = []
+        sys_pool_map = [] # Index -> Pool Name
+        
+        for task_dir in task_dirs:
+            ls = self.postprocessor.load_data(task_dir)
+            if ls:
+                valid_systems.append(ls)
+                # Infer pool name from path relative to CONVERGED
+                # CONVERGED/pool_name/...
+                try:
+                    rel_path = task_dir.relative_to(self.converged_dir)
+                    pool_name = rel_path.parts[0] if len(rel_path.parts) > 0 else "unknown"
+                except:
+                    pool_name = "unknown"
+                sys_pool_map.append(pool_name)
+        
+        systems = dpdata.MultiSystems(valid_systems) # Re-wrap
+        
+        # Re-compute df on valid systems
+        df = self.postprocessor.compute_metrics(systems)
+        df_clean = self.postprocessor.filter_data(df)
+        
+        # Aggregate stats
+        # Total
+        total_converged = len(df)
+        total_clean = len(df_clean)
+        total_filtered = total_converged - total_clean
+        
+        logger.info("=== Labeling Statistics ===")
+        logger.info(f"Total Converged Structures: {total_converged}")
+        logger.info(f"Total Cleaned Structures:   {total_clean}")
+        logger.info(f"Total Filtered (Outliers):  {total_filtered}")
+        
+        # Per Pool Stats
+        pools = set(sys_pool_map)
+        for pool in sorted(pools):
+            # Indices belonging to this pool
+            pool_indices = [i for i, p in enumerate(sys_pool_map) if p == pool]
+            
+            # Filter df for these indices
+            # df has 'sys_idx' column
+            pool_df = df[df['sys_idx'].isin(pool_indices)]
+            pool_clean_df = df_clean[df_clean['sys_idx'].isin(pool_indices)]
+            
+            p_conv = len(pool_df)
+            p_clean = len(pool_clean_df)
+            p_filt = p_conv - p_clean
+            
+            logger.info(f"  Pool '{pool}': Converged={p_conv}, Clean={p_clean}, Filtered={p_filt}")
+            
         # Export
         output_format = self.config.get("output_format", "deepmd/npy")
-        self.postprocessor.export_data(systems, df_clean, self.output_dir, format=output_format)
+        
+        # Requirement 2: Cleaned data in separate dir
+        # Proposed: outputs/cleaned/dataset and outputs/anomalies/dataset
+        
+        cleaned_dir = self.output_dir / "cleaned"
+        anomaly_dir = self.output_dir / "anomalies"
+        
+        self.postprocessor.export_data(systems, df_clean, cleaned_dir, format=output_format)
         
         # Export anomalies if filtering was performed
         if len(df) > len(df_clean):
             df_anomalies = df.drop(df_clean.index)
-            anomaly_dir = self.output_dir / "anomalies"
             self.postprocessor.export_data(systems, df_anomalies, anomaly_dir, format=output_format)
             
             # Export extxyz for quick view (sampled from anomalies)
@@ -248,6 +360,8 @@ if __name__ == "__main__":
                 try:
                     si, fi = int(row["sys_idx"]), int(row["frame_idx"])
                     atoms = systems[si][fi].to_ase_structure()[0]
-                    atoms.write(extxyz_dir / f"anomaly_{si}_{fi}.extxyz")
+                    # Filename with pool info
+                    pool_name = sys_pool_map[si]
+                    atoms.write(extxyz_dir / f"anomaly_{pool_name}_{si}_{fi}.extxyz")
                 except Exception as e:
                     logger.warning(f"Failed to export anomaly extxyz: {e}")
