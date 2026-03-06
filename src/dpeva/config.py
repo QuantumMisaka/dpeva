@@ -172,7 +172,7 @@ class InferenceConfig(BaseWorkflowConfig):
 class LabelingConfig(BaseWorkflowConfig):
     """Configuration for Labeling Workflow (FP Calculation)."""
     input_data_path: Path = Field(..., description="Path to input dataset (dpdata compatible).")
-    output_dir: Path = Field(..., description="Path to output results.")
+    work_dir: Path = Field(..., description="Path to labeling working directory.")
     
     # FP Params
     dft_params: Dict[str, Any] = Field(default_factory=dict, description="ABACUS INPUT parameters.")
