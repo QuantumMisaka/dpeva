@@ -51,40 +51,71 @@ class LabelingWorkflow:
         
         # 1. Load Data
         logger.info(f"Loading input data from {self.config.input_data_path}")
-        input_data = dpdata.MultiSystems()
+        dataset_map = {}
         try:
-            # Handle nested structure: input_data_path / dataset_name / system
-            # Iterate subdirectories
             root_path = Path(self.config.input_data_path)
             if not root_path.exists():
                 raise FileNotFoundError(f"Input path not found: {root_path}")
+            
+            # Detect mode: Single-Pool vs Multi-Pool
+            # Logic:
+            # 1. If root is a system (has type.raw etc) -> Single Pool (Dataset = root.name)
+            # 2. If subdirs are systems -> Single Pool (Dataset = root.name)
+            # 3. Else -> Multi Pool (Dataset = subdir.name)
+            
+            is_root_system = (root_path / "type.raw").exists() or (root_path / "type_map.raw").exists() or (root_path / "set.000").exists()
+            
+            if is_root_system:
+                # Case 1: Root is a single system
+                logger.info(f"Detected Single-System mode. Dataset: {root_path.name}")
+                ms = dpdata.MultiSystems()
+                loaded = load_systems(str(root_path), fmt="auto")
+                for s in loaded: ms.append(s)
+                dataset_map[root_path.name] = ms
+            else:
+                subdirs = sorted([d for d in root_path.iterdir() if d.is_dir()])
+                is_subdir_system = False
+                for d in subdirs:
+                    if (d / "type.raw").exists() or (d / "type_map.raw").exists() or (d / "set.000").exists():
+                        is_subdir_system = True
+                        break
                 
-            dataset_dirs = [d for d in root_path.iterdir() if d.is_dir()]
-            dataset_dirs.sort()
-            
-            for d_dir in dataset_dirs:
-                # Try loading as MultiSystems (deepmd/npy/mixed or deepmd/npy)
-                # If d_dir is a system itself, load_systems handles it.
-                # If d_dir contains systems, load_systems handles it.
-                # But we want to preserve dataset info if possible.
-                try:
-                    loaded = load_systems(str(d_dir), fmt="auto")
-                    for s in loaded:
-                        input_data.append(s)
-                except Exception as e:
-                    logger.warning(f"Failed to load from {d_dir}: {e}")
-            
-            if len(input_data) == 0:
+                if is_subdir_system:
+                    # Case 2: Root is a dataset containing systems
+                    logger.info(f"Detected Single-Pool mode. Dataset: {root_path.name}")
+                    ms = dpdata.MultiSystems()
+                    loaded = load_systems(str(root_path), fmt="auto")
+                    for s in loaded: ms.append(s)
+                    dataset_map[root_path.name] = ms
+                else:
+                    # Case 3: Root contains datasets
+                    logger.info("Detected Multi-Pool mode.")
+                    for d in subdirs:
+                        # Skip hidden or internal dirs if any
+                        if d.name.startswith("."): continue
+                        
+                        logger.info(f"Loading dataset: {d.name}")
+                        loaded = load_systems(str(d), fmt="auto")
+                        if loaded:
+                            ms = dpdata.MultiSystems()
+                            for s in loaded: ms.append(s)
+                            dataset_map[d.name] = ms
+                        else:
+                            logger.warning(f"No systems found in {d.name}, skipping.")
+
+            if not dataset_map:
                 raise ValueError(f"No valid systems found in {self.config.input_data_path}")
                 
-            logger.info(f"Loaded {len(input_data)} systems total.")
+            total_systems = sum(len(ms) for ms in dataset_map.values())
+            logger.info(f"Loaded {len(dataset_map)} datasets, {total_systems} systems total.")
             
         except Exception as e:
             logger.critical(f"Failed to load input data: {e}")
             raise
 
         # 2. Prepare Tasks
-        packed_job_dirs = self.manager.prepare_tasks(input_data)
+        # Note: Manager now accepts dataset_map
+        packed_job_dirs = self.manager.prepare_tasks(dataset_map)
         if not packed_job_dirs:
             logger.warning("No tasks generated.")
             return

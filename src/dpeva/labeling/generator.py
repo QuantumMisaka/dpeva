@@ -100,7 +100,7 @@ class AbacusGenerator:
             f.write(f"{kpoints[0]} {kpoints[1]} {kpoints[2]} 0 0 0\n")
 
     def generate(self, atoms: Atoms, output_dir: Union[str, Path], task_name: str, 
-                 stru_type: str = None, vacuum_status: List[bool] = None):
+                 stru_type: str = None, vacuum_status: List[bool] = None, dataset_name: str = "unknown", system_name: str = "unknown"):
         """
         Generate input files for a single structure.
         
@@ -110,6 +110,8 @@ class AbacusGenerator:
             task_name: Name of the task.
             stru_type: Pre-determined structure type (optional).
             vacuum_status: Pre-determined vacuum status (optional).
+            dataset_name: Name of the dataset this task belongs to.
+            system_name: Name of the system this task belongs to.
         """
         output_dir = Path(output_dir)
         output_dir.mkdir(parents=True, exist_ok=True)
@@ -118,6 +120,27 @@ class AbacusGenerator:
         if stru_type is None or vacuum_status is None:
             atoms, stru_type, vacuum_status = self.analyzer.analyze(atoms)
         
+        # Metadata Injection (New feature)
+        # Extract frame index from task_name if possible (format: sys_idx)
+        try:
+            frame_idx = int(task_name.split("_")[-1])
+        except (ValueError, IndexError):
+            frame_idx = -1
+
+        import json
+        meta = {
+            "dataset_name": dataset_name,
+            "system_name": system_name,
+            "stru_type": stru_type,
+            "task_name": task_name,
+            "frame_idx": frame_idx
+        }
+        try:
+            with open(output_dir / "task_meta.json", "w") as f:
+                json.dump(meta, f, indent=2)
+        except Exception as e:
+            logger.warning(f"Failed to write task_meta.json: {e}")
+
         input_params = deepcopy(self.dft_params)
         
         # Layer specific params

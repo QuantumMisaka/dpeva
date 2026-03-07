@@ -7,8 +7,8 @@
   - 配置字段字典：/docs/reference/config-schema.md
   - 校验规则补充：/docs/reference/validation.md
 
-* **版本**: 0.5.1
-* **生成日期**: 2026-03-05
+* **版本**: 0.5.2
+* **生成日期**: 2026-03-07
 * **作者**: Quantum Misaka with Trae SOLO
 
 ---
@@ -419,6 +419,12 @@ DPEVA_TAG: WORKFLOW_FINISHED
 ### 6.2 版本历史
 
 #### **Current Era (v0.5.x)**
+
+*   **v0.5.2** (2026-03-07):
+    *   **[增强]** Labeling Workflow 新增分层统计（Global/Dataset/Type）和元数据注入机制，确保任务在打包和移动后仍能追溯其数据来源和结构类型。
+    *   **[修复]** 解决了 Labeling 任务计数重复（Double Counting）问题，修复了 `dpdata.MultiSystems` 在结果收集时的初始化错误。
+    *   **[优化]** `AbacusGenerator` 实现了结构分析逻辑 (`StructureAnalyzer`) 的彻底解耦，提升了代码的可测试性和模块化程度。
+    *   **[配置]** 修复了 `output_dir` 配置被硬编码覆盖的缺陷，现在能正确尊重用户配置。
 
 *   **v0.5.1** (2026-03-05):
     *   **[增强]** 在 `CollectionWorkflow` 中新增了 UQ 统计日志输出。现在 `UQManager` 会在不确定度分析阶段自动计算并打印 QbC、RND 及 Rescaled RND 的详细统计量（Count, Mean, Std, Percentiles），大幅提升了筛选过程的可观测性。

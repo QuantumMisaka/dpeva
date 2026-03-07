@@ -27,18 +27,31 @@
     "tasks_per_job": 50,
     "dft_params": {
         "calculation": "scf",
+        "nspin": 2,
+        "xc": "pbe",
+        "symmetry": 0,
+        "vdw_method": "none",
         "ecutwfc": 100,
         "scf_thr": 1e-7,
         "scf_nmax": 300,
+        "scf_os_stop": 1,
+        "scf_os_ndim": 60,
         "basis_type": "lcao",
         "ks_solver": "cusolver",
         "mixing_type": "broyden",
         "mixing_beta": 0.4,
+        "mixing_gg0": 1.0,
         "mixing_ndim": 20,
         "smearing_method": "gaussian",
         "smearing_sigma": 0.004,
         "cal_force": 1,
-        "cal_stress": 1
+        "cal_stress": 1,
+        "init_chg": "atomic",
+        "out_stru": 1,
+        "out_chg": 0,
+        "out_mul": 1,
+        "out_bandgap": 1,
+        "onsite_radius": 3.0
     },
     "pp_map": {
         "Fe": "Fe_ONCV_PBE-1.2.upf",
@@ -67,7 +80,7 @@
     "output_format": "deepmd/npy",
     "attempt_params": [
         {},
-        {"mixing_beta": 0.1, "mixing_ndim": 20},
-        {"mixing_beta": 0.025, "mixing_ndim": 20}
+        {"mixing_beta": 0.1, "scf_os_stop": 1, "scf_os_ndim": 120},
+        {"mixing_beta": 0.025, "scf_os_stop": 1, "scf_os_ndim": 180}
     ]
 }
