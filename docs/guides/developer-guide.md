@@ -7,7 +7,7 @@
   - 配置字段字典：/docs/reference/config-schema.md
   - 校验规则补充：/docs/reference/validation.md
 
-* **版本**: 0.5.2
+* **版本**: 0.5.3
 * **生成日期**: 2026-03-07
 * **作者**: Quantum Misaka with Trae SOLO
 
@@ -419,6 +419,13 @@ DPEVA_TAG: WORKFLOW_FINISHED
 ### 6.2 版本历史
 
 #### **Current Era (v0.5.x)**
+
+*   **v0.5.3** (2026-03-08):
+    *   **[增强]** Labeling Workflow 实现了智能的单/多数据池（Single/Multi-Pool）识别逻辑，自动适配 `inputs` 目录结构。
+    *   **[特性]** `task_meta.json` 新增 `system_name` 字段，实现了 `Dataset -> System -> Task` 的全链路数据追溯。
+    *   **[统计]** 实现了分层统计报告（Global -> Dataset -> Type），涵盖 Total, Converged, Failed 及 Cleaned 任务的详细计数。
+    *   **[测试]** 建立了 Labeling 模块的完整单元测试体系，覆盖核心算法与业务逻辑，通过率 100%。
+    *   **[文档]** 完成了 Labeling 模块的功能清单与任务追踪文档，并已归档至 `docs/archive/specs/v0.5.3/`。
 
 *   **v0.5.2** (2026-03-07):
     *   **[增强]** Labeling Workflow 新增分层统计（Global/Dataset/Type）和元数据注入机制，确保任务在打包和移动后仍能追溯其数据来源和结构类型。

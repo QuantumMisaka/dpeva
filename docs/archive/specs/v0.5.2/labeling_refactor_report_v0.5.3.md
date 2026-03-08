@@ -68,5 +68,30 @@
    INFO:dpeva.labeling.manager:    Type: cluster         -> Total=2, Conv=1, Fail=1, Clean=1, Filt=0
    ```
 
-## 4. 结论 (Conclusion)
-本次重构成功解决了 Dataset 概念混淆问题，并按需求实现了详细的统计报告功能。代码已通过集成测试（生成与提交）及单元验证（统计逻辑），具备发布条件。
+## 4. 详细测试报告 (Detailed Test Report)
+
+### 4.1 测试用例执行明细 (Test Case Execution)
+
+| 用例 ID | 测试项 | 预期结果 | 实际结果 | 状态 | 备注 |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **TC-001** | **多数据池识别** | 系统自动识别 `DeepCNT`, `oc22-FeCOH`, `omat24-FeCOH` 为独立 Dataset | 日志显示 `Detected Multi-Pool mode` 并正确加载 3 个 Dataset | ✅ Pass | 覆盖了 Multi-Pool 场景 |
+| **TC-002** | **目录层级生成** | 任务目录遵循 `inputs/[Dataset]/[Type]/[Task]` 结构 | 实际生成路径如 `inputs/DeepCNT/cluster/C0Fe38_0` | ✅ Pass | 验证了 Manager 的路径构建逻辑 |
+| **TC-003** | **元数据注入** | `task_meta.json` 包含 `dataset_name` 和 `system_name` | 抽样检查 `C0Fe38_0/task_meta.json` 包含预期字段 | ✅ Pass | 确保了数据溯源能力 |
+| **TC-004** | **任务打包** | 26 个任务按 `tasks_per_job=2` 打包为 13 个 Job | 日志显示 `Packed tasks into 13 job directories` | ✅ Pass | 验证了 Packer 的递归扫描兼容性 |
+| **TC-005** | **作业提交** | 成功提交 Slurm 作业 | 日志显示 `Submitted batch job 2084xx` 共 13 次 | ✅ Pass | 验证了 JobManager 的集成 |
+| **TC-006** | **统计报告** | 输出包含 Dataset 维度的 Total/Conv/Fail/Clean/Filt 统计 | `verify_stats.py` 模拟运行输出符合预期格式 | ✅ Pass | 覆盖了统计聚合逻辑 |
+
+### 4.2 缺陷统计与修复 (Defects & Fixes)
+
+| 缺陷 ID | 描述 | 严重级 | 修复方案 | 状态 |
+| :--- | :--- | :--- | :--- | :--- |
+| **BUG-001** | `AbacusGenerator` 接口参数缺失 | High | 在 `generate` 方法中增加 `system_name` 参数并透传至 `task_meta.json` | ✅ Fixed |
+| **BUG-002** | `LabelingManager` 统计逻辑遗漏 Failed 任务 | Medium | 增加对 `inputs` 目录的递归扫描逻辑以补全 Failed 任务统计 | ✅ Fixed |
+| **BUG-003** | `verify_stats.py` 中 `dpdata` Mock 不完整 | Low | 完善 Mock 对象的属性以通过 `postprocessor` 的内部检查 | ✅ Fixed |
+
+### 4.3 风险评估 (Risk Assessment)
+- **Dataset 命名冲突**: 若不同 Dataset 下存在同名 System (e.g. `DS1/sys1`, `DS2/sys1`)，在 `inputs` 目录下通过 Dataset 分层已解决冲突，但在 `dpdata.MultiSystems` 对象内部需确保 `target_name` 唯一性（目前代码已处理）。
+- **IO 性能**: 统计阶段需递归扫描 `inputs` 目录，若任务量极大 (>10w)，可能存在 IO 瓶颈。建议后续引入 SQLite 或 Redis 进行状态管理。
+
+## 5. 结论 (Conclusion)
+本次重构成功解决了 Dataset 概念混淆问题，并按需求实现了详细的统计报告功能。代码已通过集成测试（生成与提交）及单元验证（统计逻辑），具备发布条件。建议在下一版本中关注 IO 性能优化。
