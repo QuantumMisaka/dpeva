@@ -7,7 +7,7 @@
   - 配置字段字典：/docs/reference/config-schema.md
   - 校验规则补充：/docs/reference/validation.md
 
-* **版本**: 0.5.3
+* **版本**: 0.6.0
 * **生成日期**: 2026-03-07
 * **作者**: Quantum Misaka with Trae SOLO
 
@@ -468,12 +468,19 @@ DPEVA_TAG: WORKFLOW_FINISHED
 
 #### **Current Era (v0.5.x)**
 
+*   **v0.6.0** (2026-03-09):
+    *   **[治理]** 全面实施文档系统治理 (Docs Governance)，重构了 `docs/` 目录结构，建立 Guides/Reference/Plans 分层体系。
+    *   **[自动化]** 引入 Sphinx 文档构建系统，支持从源码自动生成 API 文档，实现 "Code as Source of Truth"。
+    *   **[规范]** 废弃静态 `config-schema.md`，转为动态生成的 API Reference，消除文档脱节风险。
+    *   **[质量]** 引入 `check_docs_freshness.py` 并集成至 CI，强制监控文档时效性。
+    *   **[重构]** `AGENTS.md` 转为面向 Agent 的开发指南，`README.md` 瘦身聚焦项目概览。
+
 *   **v0.5.3** (2026-03-08):
     *   **[增强]** Labeling Workflow 实现了智能的单/多数据池（Single/Multi-Pool）识别逻辑，自动适配 `inputs` 目录结构。
     *   **[特性]** `task_meta.json` 新增 `system_name` 字段，实现了 `Dataset -> System -> Task` 的全链路数据追溯。
     *   **[统计]** 实现了分层统计报告（Global -> Dataset -> Type），涵盖 Total, Converged, Failed 及 Cleaned 任务的详细计数。
     *   **[测试]** 建立了 Labeling 模块的完整单元测试体系，覆盖核心算法与业务逻辑，通过率 100%。
-    *   **[文档]** 完成了 Labeling 模块的功能清单与任务追踪文档，并已归档至 `docs/archive/specs/v0.5.3/`。
+    *   **[文档]** 完成了 Labeling 模块的功能清单与任务追踪文档，并已归档至 `docs/archive/specs/v0.6.0/`。
 
 *   **v0.5.2** (2026-03-07):
     *   **[增强]** Labeling Workflow 新增分层统计（Global/Dataset/Type）和元数据注入机制，确保任务在打包和移动后仍能追溯其数据来源和结构类型。

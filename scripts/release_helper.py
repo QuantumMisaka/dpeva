@@ -27,6 +27,7 @@ VERSION_FILE = "src/dpeva/__init__.py"
 DOCS_TO_UPDATE = [
     "docs/guides/developer-guide.md",
     "README.md",
+    "docs/source/conf.py",
 ]
 CHANGELOG_FILE = "CHANGELOG.md"
 
@@ -68,15 +69,23 @@ def update_file_version(filepath: str, current_version: str, new_version: str, d
         content = f.read()
     
     # Simple replace logic - can be improved with regex if needed context
-    # But for version numbers like "0.4.5" -> "0.4.6", direct replace is usually safe 
-    # if the version string is unique enough. 
+
     # To be safer, we can use regex to ensure it looks like a version context.
     
     # For __init__.py
-    if filepath.endswith(".py"):
+    if filepath.endswith("__init__.py"):
         new_content = re.sub(
             r'__version__\s*=\s*["\']' + re.escape(current_version) + r'["\']',
             f'__version__ = "{new_version}"',
+            content
+        )
+    # For docs/source/conf.py
+    elif filepath.endswith("conf.py"):
+        # Update version = 'x.y.z' and release = 'x.y.z'
+        # Pattern: version = '0.6.0' or release = '0.6.0'
+        new_content = re.sub(
+            r"(version|release)\s*=\s*['\"]" + re.escape(current_version) + r"['\"]",
+            fr"\1 = '{new_version}'",
             content
         )
     # For README.md (Badge update)
@@ -91,10 +100,6 @@ def update_file_version(filepath: str, current_version: str, new_version: str, d
             new_content = content.replace(current_version, new_version)
     # For other Markdown docs
     else:
-        # Look for pattern like "* **版本**: 0.4.5" or similar context
-        # Or just global replace if we are confident. 
-        # Given developer-guide.md has "* **版本**: 0.4.5", let's target that.
-        # But also generic references.
         # Let's try a safe global replace for now, printing what changed.
         new_content = content.replace(current_version, new_version)
     
