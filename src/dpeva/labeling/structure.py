@@ -86,25 +86,84 @@ class StructureAnalyzer:
                 vacuum_status.append(True)
         return vacuum_status
 
-    def swap_crystal_lattice(self, atoms: Atoms, swap_indices: List[int]) -> Atoms:
-        """Swap lattice vectors (e.g., to align vacuum with Z)."""
-        new_atoms = atoms.copy()
-        cell_par = new_atoms.cell.cellpar()
+    def align_axis_to_z(self, atoms: Atoms, axis: int) -> Atoms:
+        """
+        Rotate the cell to align the specified axis to the Z-axis.
+        Performs a cyclic permutation to ensure det(R)=1 (proper rotation).
         
-        # Swap lengths
-        cell_par[swap_indices[0]], cell_par[swap_indices[1]] = \
-            cell_par[swap_indices[1]], cell_par[swap_indices[0]]
-        # Swap angles (indices 3,4,5 correspond to alpha, beta, gamma)
-        cell_par[swap_indices[0] + 3], cell_par[swap_indices[1] + 3] = \
-            cell_par[swap_indices[1] + 3], cell_par[swap_indices[0] + 3]
+        Args:
+            atoms: Atoms object
+            axis: The axis index (0, 1, or 2) to align to Z.
             
-        new_atoms.set_cell(cell_par)
+        Returns:
+            Rotated Atoms object with axis aligned to Z.
+        """
+        if axis == 2:
+            return atoms.copy()
+            
+        new_atoms = atoms.copy()
         
-        # Swap scaled positions
-        scaled_pos = atoms.get_scaled_positions()
-        scaled_pos[:, swap_indices[0]], scaled_pos[:, swap_indices[1]] = \
-            scaled_pos[:, swap_indices[1]], scaled_pos[:, swap_indices[0]]
-        new_atoms.set_scaled_positions(scaled_pos)
+        # Determine cyclic permutation to map 'axis' to index 2 (Z)
+        # We want New[2] to correspond to Old[axis].
+        # Cyclic permutations of (0, 1, 2) are:
+        # (0, 1, 2) -> Identity
+        # (1, 2, 0) -> 0 moves to 2, 1 moves to 0, 2 moves to 1.
+        # (2, 0, 1) -> 0 moves to 1, 1 moves to 2, 2 moves to 0.
+        
+        if axis == 0:
+            # We want Old[0] at New[2].
+            # Permutation: [1, 2, 0]
+            # New[0] <= Old[1]
+            # New[1] <= Old[2]
+            # New[2] <= Old[0]
+            perm = [1, 2, 0]
+        elif axis == 1:
+            # We want Old[1] at New[2].
+            # Permutation: [2, 0, 1]
+            # New[0] <= Old[2]
+            # New[1] <= Old[0]
+            # New[2] <= Old[1]
+            perm = [2, 0, 1]
+        else:
+            raise ValueError("Axis must be 0, 1, or 2")
+            
+        # Apply permutation to cell parameters
+        old_cellpar = new_atoms.cell.cellpar()
+        new_cellpar = np.zeros_like(old_cellpar)
+        
+        # Lengths (0-2)
+        new_cellpar[0] = old_cellpar[perm[0]]
+        new_cellpar[1] = old_cellpar[perm[1]]
+        new_cellpar[2] = old_cellpar[perm[2]]
+        
+        # Angles (3-5)
+        # Helper to map vector indices to angle index
+        # (1,2)->3 (alpha), (0,2)->4 (beta), (0,1)->5 (gamma)
+        def get_angle_index(i, j):
+            pair = tuple(sorted((i, j)))
+            if pair == (1, 2): return 3
+            if pair == (0, 2): return 4
+            if pair == (0, 1): return 5
+            return -1
+            
+        # New alpha (angle between New[1] and New[2])
+        new_cellpar[3] = old_cellpar[get_angle_index(perm[1], perm[2])]
+        # New beta (angle between New[0] and New[2])
+        new_cellpar[4] = old_cellpar[get_angle_index(perm[0], perm[2])]
+        # New gamma (angle between New[0] and New[1])
+        new_cellpar[5] = old_cellpar[get_angle_index(perm[0], perm[1])]
+        
+        new_atoms.set_cell(new_cellpar)
+        
+        # Apply permutation to scaled positions
+        # Ensure wrapping to [0, 1) before rotation to avoid C-component drift
+        old_scaled = atoms.get_scaled_positions(wrap=True)
+        new_scaled = np.zeros_like(old_scaled)
+        new_scaled[:, 0] = old_scaled[:, perm[0]]
+        new_scaled[:, 1] = old_scaled[:, perm[1]]
+        new_scaled[:, 2] = old_scaled[:, perm[2]]
+        
+        new_atoms.set_scaled_positions(new_scaled)
         
         return new_atoms
 
@@ -132,8 +191,15 @@ class StructureAnalyzer:
             # Move extended dim to Z (2) if needed
             extend_dim = vacuum_status.index(False)
             if extend_dim != 2:
-                processed_atoms = self.swap_crystal_lattice(processed_atoms, [extend_dim, 2])
-                vacuum_status[extend_dim], vacuum_status[2] = vacuum_status[2], vacuum_status[extend_dim]
+                processed_atoms = self.align_axis_to_z(processed_atoms, extend_dim)
+                # Update vacuum status after rotation
+                # Since we rotated cyclicly:
+                # If X (0) -> Z (2). [1, 2, 0].
+                # New vac[0] = Old vac[1]
+                # New vac[1] = Old vac[2]
+                # New vac[2] = Old vac[0]
+                # We can re-judge vacuum to be safe and simple
+                vacuum_status = self.judge_vacuum(processed_atoms)
                 
         elif vac_count == 1:
             stru_type = "layer"
@@ -146,8 +212,9 @@ class StructureAnalyzer:
             
             # Swap longer dim to Z (2) if needed
             if long_dim != 2:
-                processed_atoms = self.swap_crystal_lattice(processed_atoms, [long_dim, 2])
-                vacuum_status[long_dim], vacuum_status[2] = vacuum_status[2], vacuum_status[long_dim]
+                processed_atoms = self.align_axis_to_z(processed_atoms, long_dim)
+                # Re-judge vacuum status
+                vacuum_status = self.judge_vacuum(processed_atoms)
         
         # Check for Cubic Cluster
         if vac_count != 0:
