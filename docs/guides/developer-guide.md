@@ -16,7 +16,7 @@
 ## 1. 项目概述 (Overview)
 
 ### 1.1 项目简介
-DP-EVA (Deep Potential EVolution Accelerator, 深度势能演化加速器) 是一个面向 DPA3 (Deep Potential v3) 高效微调的自动化主动学习框架。该项目旨在通过智能化的数据筛选策略，从海量无标签数据中识别出最具价值的样本（高模型不确定度 + 高结构代表性），从而以最小的数据标注成本实现模型性能的最大化提升。
+DP-EVA (Deep Potential EVolution Accelerator, 深度势能演化加速器) 是一个面向 DPA 通用机器学习原子间势（Universal Machine Learning Interatomic Potential） 高效微调的自动化主动学习框架。该项目旨在通过智能化的数据筛选策略（合适不确定度 + 高结构代表性），从海量无标签数据中识别出最具价值的样本（”EVA适格者“），从而以最小的数据标注成本实现模型性能的最大化提升。
 
 ### 1.2 核心哲学 (The Zen of DP-EVA)
 本项目遵循 Python 工程化最佳实践及 **Zen of Python** 哲学进行重构与维护：
@@ -110,21 +110,56 @@ dpeva/
 ### 2.2 数据流图 (Data Flow)
 ```mermaid
 graph TD
-    DataPool[Data Pool] -->|Structure| Feature[Feature Generator]
-    BaseModel[Base Model] -->|Fine-tune| Ensemble[Ensemble Models]
-    
-    subgraph Active_Learning_Loop
-        Ensemble -->|Inference| Preds[PredictionData]
-        Preds -->|Variance & Deviation| UQ[UQ Calculator]
-        UQ -->|Auto/Manual Threshold| Filter[UQ Filter]
-        Filter -->|Candidates| Candidates[Candidate Structures]
+    %% Initial State
+    InitTrain[Existing Training Set]
+    TargetPool[Target Data Pool]
+    BaseModel[Base Model]
+
+    %% Parallel: Training & Inference & Feature
+    subgraph Parallel_Execution
+        direction TB
+        BaseModel -->|Fine-tune| Ensemble[Ensemble Models]
+        InitTrain -->|Fine-tune| Ensemble
         
-        Feature -->|Descriptor| Candidates
-        Candidates -->|DIRECT Sampling| Selected[Selected Samples]
+        Ensemble -->|Inference| Preds[Target Pool Predictions]
+        TargetPool -->|Inference| Preds
+        
+        TargetPool -->|Calc Feature| TargetFeat[Target Features]
+        InitTrain -->|Calc Feature (Joint Only)| TrainFeat[Training Features]
+    end
+
+    %% Collection
+    subgraph Collection_Workflow
+        Preds -->|Uncertainty| UQ[UQ Metrics]
+        UQ -->|Filter| Candidates[Candidate Structures]
+        TargetFeat -->|Descriptor| Candidates
+        TrainFeat -->|Descriptor| Candidates
+        
+        Candidates -->|Sampling (DIRECT)| Sampled[Sampled Samples]
+        Candidates -->|Remaining| OtherPool[Other Data Pool]
     end
     
-    Selected -->|Labeling| LabeledData[New Labeled Data]
-    LabeledData --> BaseModel
+    %% Labeling
+    subgraph Labeling_Workflow
+        Sampled -->|FP Calc| Labeled[New Labeled Data]
+    end
+
+    %% Data Integration (New Feature)
+    subgraph Data_Integration
+        Labeled -->|Merge| NewTrain[Next Gen Training Set]
+        InitTrain -->|Merge| NewTrain
+    end
+    
+    %% Analysis (Standalone)
+    subgraph Analysis_Module
+        NewTrain -.->|Stats & Viz| Report[Dataset Report]
+        Preds -.->|Stats & Viz| ModelReport[Model Performance Report]
+    end
+
+    NewTrain -->|Next Cycle| BaseModel
+
+    %% Optional if no another TargetPool
+    OtherPool -->|Next Cycle| TargetPool
 ```
 
 ---
@@ -247,6 +282,19 @@ dpeva feature config_feature.json
 ```bash
 dpeva analysis config_analysis.json
 ```
+
+`analysis` 支持两种模式：
+
+- `model_test`：读取 `result_dir` 分析推理结果（默认）。
+- `dataset`：读取 `dataset_dir` 直接统计数据集并输出分布图与统计表。
+
+#### 4.1.6 标注后自动整合 (Label Integration)
+
+在 `label` 配置中启用 `integration_enabled=true` 后，工作流会在 `collect_and_export` 结束后自动执行数据整合：
+
+- 输入：`outputs/cleaned` + 可选 `existing_training_data_path`
+- 输出：`merged_training_data_path`（未指定时默认 `outputs/merged_training_data`）
+- 统计：输出 `integration_summary.json`
 
 ### 4.2 Python API (Recipes)
 对于需要动态生成配置或集成到复杂 Python 流程中的场景，可以直接调用 `dpeva.workflows` 中的 Workflow 类。

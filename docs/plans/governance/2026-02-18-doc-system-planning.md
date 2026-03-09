@@ -17,7 +17,7 @@
   - [validation.md](/docs/reference/validation.md)
   - 字段/校验的单一权威来源为 `docs/reference/*`
 - `docs/architecture/`（架构与决策）
-  - [DP-EVA_Design_Report.md](/docs/design/DP-EVA_Design_Report.md)
+  - [design-report.md](/docs/architecture/design-report.md)
   - [2026-02-04-deepmd-dependency.md](/docs/architecture/decisions/2026-02-04-deepmd-dependency.md)
 - `docs/reports/`（一次性分析/实验）
   - [modulo-hypothesis.md](/docs/reports/modulo-hypothesis.md)
@@ -176,4 +176,3 @@
 - 执行支持（I）：全体贡献者（按 PR 通知）
 
 推荐的落地动作：为每个 `active` 文档在头部填写 `Owners`，并在 PR 模板中增加“文档是否需要更新”的检查项。
-

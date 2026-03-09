@@ -43,7 +43,7 @@
 |---|---|---|
 | Slurm E2E Smoke（Multi DataPool） | `/tests/integration/test_slurm_multidatapool_e2e.py` | `/docs/guides/testing/integration-slurm.md` |
 | 编排器与日志监控 | `/tests/integration/slurm_multidatapool/orchestrator.py` | `/docs/guides/testing/integration-slurm.md` |
-| 输入裁剪（降本） | `/tests/integration/slurm_multidatapool/data_minimizer.py` | `/docs/guides/testing/integration-slurm.md`、`/docs/guides/testing/integration-slurm-plan.md` |
+| 输入裁剪（降本） | `/tests/integration/slurm_multidatapool/data_minimizer.py` | `/docs/guides/testing/integration-slurm.md`、`/docs/plans/integration-slurm-plan.md` |
 
 ## 5. 工作流契约测试矩阵（维护用）
 

@@ -2,7 +2,7 @@
 
 - Status: active
 - Audience: Developers / Infra
-- Last-Updated: 2026-02-18
+- Last-Updated: 2026-03-09
 
 ## 0.1 相关方
 
@@ -86,4 +86,5 @@
 
 ## 6. 变更记录
 
+- 2026-03-09：迁移至 `/docs/plans/`，与执行型规格落点策略对齐。
 - 2026-02-18：补齐计划的交付物、里程碑与验收标准，并明确异常处理策略。

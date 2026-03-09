@@ -6,6 +6,7 @@ from typing import Optional, Dict, List, Any, Union
 
 from dpeva.config import AnalysisConfig
 from dpeva.analysis.managers import AnalysisIOManager, UnifiedAnalysisManager
+from dpeva.analysis.dataset import DatasetAnalysisManager
 from dpeva.constants import WORKFLOW_FINISHED_TAG, LOG_FILE_ANALYSIS
 from dpeva.utils.logs import setup_workflow_logger, close_workflow_logger
 
@@ -33,11 +34,14 @@ class AnalysisWorkflow:
         self.io_manager = AnalysisIOManager(str(self.config.output_dir))
         # Use UnifiedAnalysisManager
         self.analysis_manager = UnifiedAnalysisManager(ref_energies=self.config.ref_energies)
+        self.dataset_analysis_manager = DatasetAnalysisManager()
         
     def run(self):
         """Execute the analysis workflow."""
-        result_dir = str(self.config.result_dir)
+        result_dir = str(self.config.result_dir) if self.config.result_dir else ""
+        dataset_dir = str(self.config.dataset_dir) if self.config.dataset_dir else ""
         output_dir = str(self.config.output_dir)
+        mode = self.config.mode
         
         self.logger.info(f"Starting Analysis in {output_dir}")
         
@@ -54,38 +58,36 @@ class AnalysisWorkflow:
         )
         
         try:
-            # 1. Load Data
-            data, parser = self.io_manager.load_data(result_dir, self.config.type_map)
-            
-            # 2. Get Composition Info
-            atom_counts_list = None
-            atom_num_list = None
-            
-            if self.config.data_path:
-                # Use robust dpdata loading if data_path is provided
-                self.logger.info(f"Loading composition info from {self.config.data_path}...")
-                atom_counts_list, atom_num_list = self.io_manager.load_composition_info(str(self.config.data_path))
+            if mode == "dataset":
+                self.logger.info(f"Running dataset analysis mode for {dataset_dir}")
+                self.dataset_analysis_manager.analyze(self.config.dataset_dir, self.config.output_dir)
             else:
-                # Fallback to legacy filename parsing
-                self.logger.info("Extracting composition info from filenames (Legacy Mode)...")
-                atom_counts_list, atom_num_list = parser.get_composition_list()
-            
-            # 3. Analyze using Unified Manager
-            stats_export, metrics, stats_calc, e_rel_pred, e_rel_true = self.analysis_manager.analyze_model(
-                data=data,
-                output_dir=output_dir,
-                atom_counts_list=atom_counts_list,
-                atom_num_list=atom_num_list
-            )
-            
-            # 4. Save Results (Legacy formats required by AnalysisWorkflow spec)
-            if metrics:
-                self.io_manager.save_metrics(metrics)
-                self.io_manager.save_summary_csv(metrics)
-                
-            if e_rel_pred is not None:
-                stats_desc = pd.Series(e_rel_pred).describe().to_dict()
-                self.io_manager.save_stats_desc(stats_desc, "cohesive_energy_pred_stats.json")
+                data, parser = self.io_manager.load_data(result_dir, self.config.type_map)
+
+                atom_counts_list = None
+                atom_num_list = None
+
+                if self.config.data_path:
+                    self.logger.info(f"Loading composition info from {self.config.data_path}...")
+                    atom_counts_list, atom_num_list = self.io_manager.load_composition_info(str(self.config.data_path))
+                else:
+                    self.logger.info("Extracting composition info from filenames (Legacy Mode)...")
+                    atom_counts_list, atom_num_list = parser.get_composition_list()
+
+                stats_export, metrics, stats_calc, e_rel_pred, e_rel_true = self.analysis_manager.analyze_model(
+                    data=data,
+                    output_dir=output_dir,
+                    atom_counts_list=atom_counts_list,
+                    atom_num_list=atom_num_list
+                )
+
+                if metrics:
+                    self.io_manager.save_metrics(metrics)
+                    self.io_manager.save_summary_csv(metrics)
+
+                if e_rel_pred is not None:
+                    stats_desc = pd.Series(e_rel_pred).describe().to_dict()
+                    self.io_manager.save_stats_desc(stats_desc, "cohesive_energy_pred_stats.json")
 
             self.logger.info("Analysis completed successfully.")
             self.logger.info(WORKFLOW_FINISHED_TAG)

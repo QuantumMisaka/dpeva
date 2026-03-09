@@ -8,7 +8,7 @@
 
 ## 1. 交付物索引
 
-- 开发计划文档：./integration-slurm-plan.md
+- 开发计划文档：/docs/plans/integration-slurm-plan.md
 - 生产目录 I/O 分析：./multi-datapool-artifacts.md
 - Workflow 最小配置模板说明：./integration-config-templates.md
 - Slurm 集成测试（代码）：

@@ -1,5 +1,9 @@
 # Guides（操作指南）
 
+- Status: active
+- Audience: Users
+- Last-Updated: 2026-03-09
+
 本目录用于存放“怎么用 / 怎么做”的活文档（更新频率高）。
 
 当前 DP-EVA 的主要使用说明集中在：

@@ -154,12 +154,22 @@ class FeatureConfig(BaseWorkflowConfig):
 class AnalysisConfig(BaseModel):
     """Configuration for Analysis Workflow (Post-processing)."""
     model_config = ConfigDict(extra='ignore', populate_by_name=True)
-    
-    result_dir: Path = Field(..., description="Path to DP test results directory.")
+
+    mode: Literal["model_test", "dataset"] = Field("model_test", description="Analysis mode.")
+    result_dir: Optional[Path] = Field(None, description="Path to DP test results directory.")
+    dataset_dir: Optional[Path] = Field(None, description="Path to dataset directory for dataset analysis mode.")
     output_dir: Path = Field(Path(DEFAULT_ANALYSIS_OUTPUT_DIR), description="Output directory for analysis results.")
     type_map: List[str] = Field(..., description="Atom type map (e.g. ['Fe', 'C']).")
     data_path: Optional[Path] = Field(None, description="Path to original dataset (for robust composition loading).")
     ref_energies: Dict[str, float] = Field(default_factory=dict, description="Reference energies per element for cohesive energy calculation.")
+
+    @model_validator(mode='after')
+    def validate_mode_paths(self):
+        if self.mode == "model_test" and self.result_dir is None:
+            raise ValueError("result_dir is required when mode='model_test'")
+        if self.mode == "dataset" and self.dataset_dir is None:
+            raise ValueError("dataset_dir is required when mode='dataset'")
+        return self
 
 class InferenceConfig(BaseWorkflowConfig):
     """Configuration for Inference Workflow."""
@@ -196,6 +206,10 @@ class LabelingConfig(BaseWorkflowConfig):
     
     # Output format
     output_format: str = Field(default="deepmd/npy", description="Output format for dataset (deepmd/npy or deepmd/npy/mixed)")
+    integration_enabled: bool = Field(default=False, description="Whether to integrate cleaned data into next-gen training data.")
+    existing_training_data_path: Optional[Path] = Field(None, description="Path to existing training dataset.")
+    merged_training_data_path: Optional[Path] = Field(None, description="Output path for merged training dataset.")
+    integration_deduplicate: bool = Field(default=False, description="Whether to enable deduplication in integration.")
 
 class TrainingConfig(BaseWorkflowConfig):
     """Configuration for Training Workflow."""

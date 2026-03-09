@@ -23,7 +23,7 @@
 
 - 系统设计与模式分析：[design-report.md](/docs/architecture/design-report.md)
 - DeepMD 依赖决策记录：[2026-02-04-deepmd-dependency.md](/docs/architecture/decisions/2026-02-04-deepmd-dependency.md)
-- 描述符模长假设与实验报告：[modulo-hypothesis.md](/docs/reports/modulo-hypothesis.md)
+- 描述符模长假设与实验报告：[modulo-hypothesis.md](/docs/archive/reports/modulo-hypothesis.md)
 
 ## 2. 文档分层与权威来源（避免重复/冲突）
 
@@ -35,6 +35,13 @@
 - `docs/logo_design/`：项目 logo 设计与相关文档。
 - `docs/plans/`：开发计划与修复方案。开发完成后，会归档到 `docs/archive/`。
 - `docs/archive/`：历史与弃用文档（只读）。必须在文件头显式标注适用版本与是否已落地。
+
+### 2.1 现行文档与归档文档判别规则
+
+- 现行规范只在 `docs/guides/`、`docs/reference/`、`docs/policy/`、`docs/governance/` 维护。
+- `docs/archive/` 仅保留历史上下文，不作为现行规范来源。
+- 同一主题若 active 与 archive 并存，读取顺序固定为：active 文档优先，archive 仅作背景参考。
+- 当前版本的执行型规格统一落在 `docs/plans/`，`docs/archive/specs/` 仅保留历史规格。
 
 ## 3. 文档维护规则（建议作为团队约定）
 

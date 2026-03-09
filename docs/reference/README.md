@@ -1,10 +1,13 @@
 # Reference（权威参考）
 
-本目录用于存放“查表/权威定义”的文档（更新频率中等，要求准确、可追溯）。
+- Status: active
+- Audience: Users / Developers
+- Last-Updated: 2026-03-09
 
-当前权威参考位于：
+本目录用于存放“查表/权威定义”的文档。
 
-- 配置字段字典：[config-schema.md](/docs/reference/config-schema.md)
-- 校验规则补充：[validation.md](/docs/reference/validation.md)
+> **Warning**
+> 静态的 [config-schema.md](config-schema.md) 已被弃用。
+> 请查看在线文档中的 [API Reference](../api/config.rst) 获取最新的配置字段说明（由 Pydantic 模型自动生成）。
 
-权威内容以 `docs/reference/*` 为准。
+- [validation.md](validation.md): 参数校验与约束补充说明。
