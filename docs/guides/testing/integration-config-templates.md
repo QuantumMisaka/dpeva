@@ -13,7 +13,7 @@ last-updated: 2026-03-09
 
 对应可直接复制的模板文件位于：
 
-- [tests/integration/slurm_multidatapool/configs](/tests/integration/slurm_multidatapool/configs)
+- [tests/integration/slurm_multidatapool/configs](../../tests/integration/slurm_multidatapool/configs)
 
 本模板以“多数据池生产目录”语义为基准（`other_dpdata_all/`、`sampled_dpdata/`、`desc_pool/`、`desc_train/`、`0..3/`、`test_val/`），并尽量压缩到 Pydantic 模型要求的最小字段集。
 

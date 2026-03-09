@@ -26,7 +26,7 @@ last-updated: 2026-03-09
 - Python：`>=3.8`
 - 包名：`dpeva`
 
-依赖定义以 [pyproject.toml](/pyproject.toml) 为准。
+依赖定义以 [pyproject.toml](../pyproject.toml) 为准。
 
 ## 4. 安装方式
 

@@ -27,7 +27,7 @@ last-updated: 2026-02-19
 - 与代码一致：用户接口（CLI/配置/输出目录/完成标记）变更必须在同一 PR 内同步更新文档。
 
 ## 4. 文档类型与落点
-- 分类与落点以 [docs-structure.md](/docs/policy/docs-structure.md) 为准。
+- 分类与落点以 [docs-structure.md](docs-structure.md) 为准。
 
 常见落点：
 
@@ -50,7 +50,7 @@ last-updated: 2026-02-19
 
 ## 6. Review 与验收
 
-验收标准以 [quality.md](/docs/policy/quality.md) 为准。
+验收标准以 [quality.md](quality.md) 为准。
 
 建议的 PR 自检：
 

@@ -7,8 +7,8 @@ from pathlib import Path
 project = 'DP-EVA'
 copyright = '2026, DP-EVA Developers'
 author = 'DP-EVA Developers'
-version = '0.6.0'
-release = '0.6.0'
+version = '0.6.1'
+release = '0.6.1'
 
 # -- Path setup --------------------------------------------------------------
 # Add src to sys.path to allow autodoc to find modules
@@ -25,7 +25,7 @@ extensions = [
 
 templates_path = ['_templates']
 exclude_patterns = []
-language = 'en'
+language = 'zh_CN'
 
 # -- Options for HTML output -------------------------------------------------
 html_theme = 'sphinx_book_theme'

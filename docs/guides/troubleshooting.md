@@ -117,7 +117,7 @@ DPEVA_TAG: WORKFLOW_FINISHED
 处理：
 
 - 以提交目录为准确认 `.out` 位置（建议固定 `work_dir` 并在其中提交）
-- 对照 [slurm.md](/docs/guides/slurm.md) 的常见日志命名约定
+- 对照 [slurm.md](slurm.md) 的常见日志命名约定
 
 ## 7. 数值类问题（NaN/Inf/聚类不收敛）
 

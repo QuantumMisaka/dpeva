@@ -14,8 +14,8 @@ last-updated: 2026-03-09
   - 配置字段字典：/docs/reference/config_schema.md
   - 校验规则补充：/docs/reference/validation.md
 
-* **版本**: 0.6.0
-* **生成日期**: 2026-03-07
+* **版本**: 0.6.1
+* **生成日期**: 2026-03-09
 * **作者**: Quantum Misaka with Trae SOLO
 
 ---
@@ -326,8 +326,8 @@ workflow.run()
 ### 4.3 配置参数说明
 详细的输入参数定义、类型约束及验证规则，请参阅 API 文档：
 
-*   **参数列表**: [config_schema.md](/docs/reference/config_schema.md)
-*   **验证规则**: [validation.md](/docs/reference/validation.md)
+*   **参数列表**: [config_schema.md](../reference/config_schema.md)
+*   **验证规则**: [validation.md](../reference/validation.md)
 
 以下仅展示标准 JSON 配置文件的基本结构概览。
 
@@ -474,6 +474,12 @@ DPEVA_TAG: WORKFLOW_FINISHED
 ### 6.2 版本历史
 
 #### **Current Era (v0.5.x)**
+
+*   **v0.6.1** (2026-03-09):
+    *   **[部署]** 新增 GitHub Actions 自动部署流程，支持将文档发布至 GitHub Pages，并实现多版本管理。
+    *   **[配置]** 修正 Sphinx 语言配置为中文 (`zh_CN`)，优化文档搜索体验。
+    *   **[治理]** 修复了文档系统中的绝对路径链接问题，消除了构建过程中的 Cross-reference 警告。
+    *   **[文档]** 新增 `docs/guides/deployment.md` 部署指南，详细说明了 CI/CD 架构与配置策略。
 
 *   **v0.6.0** (2026-03-09):
     *   **[治理]** 全面实施文档系统治理 (Docs Governance)，重构了 `docs/` 目录结构，建立 Guides/Reference/Plans 分层体系。

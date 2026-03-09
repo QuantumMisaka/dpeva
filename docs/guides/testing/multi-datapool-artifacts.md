@@ -13,7 +13,7 @@ last-updated: 2026-03-09
 
 目标目录：`/test/test-for-multiple-datapool` (File missing)
 
-本文档用于把生产级运行产物拆解为“输入资产 / 输出资产”，并将其映射到 DP-EVA 各 Workflow 的配置字段（对照 [examples/recipes](/examples/recipes)）。
+本文档用于把生产级运行产物拆解为“输入资产 / 输出资产”，并将其映射到 DP-EVA 各 Workflow 的配置字段（对照 [examples/recipes](../../examples/recipes)）。
 
 ## 0. 相关方
 
@@ -72,7 +72,7 @@ last-updated: 2026-03-09
 
 参考配置：
 
-- [config_feature.json](/examples/recipes/feature_generation/config_feature.json)
+- [config_feature.json](../../examples/recipes/feature_generation/config_feature.json)
 
 ### 2.2 TrainingWorkflow（Ensemble 训练）
 
@@ -93,7 +93,7 @@ last-updated: 2026-03-09
 
 参考配置：
 
-- [config_train.json](/examples/recipes/training/config_train.json)
+- [config_train.json](../../examples/recipes/training/config_train.json)
 
 ### 2.3 InferenceWorkflow（候选集合推理）
 
@@ -113,7 +113,7 @@ last-updated: 2026-03-09
 
 参考配置：
 
-- [config_infer.json](/examples/recipes/inference/config_infer.json)
+- [config_infer.json](../../examples/recipes/inference/config_infer.json)
 
 ### 2.4 CollectionWorkflow（UQ + Filtering + Sampling + Export）
 

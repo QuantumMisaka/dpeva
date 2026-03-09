@@ -7,7 +7,7 @@ last-updated: 2026-03-09
 
 # DP-EVA 文档系统规划与重构报告
 
-面向目录：[docs/](/docs)
+面向目录：[docs/](../../docs)
 
 本报告目标：基于现有文档盘点与代码现状，给出一套可执行的文档体系规划方案，包括分类体系、缺失文档补充、优化建议、模板标准、版本维护机制与质量标准，并给出实施步骤、优先级、时间安排与责任分配。
 
@@ -16,21 +16,21 @@ last-updated: 2026-03-09
 ### 1.1 当前文档分布（按目录）
 
 - `docs/guides/`（主线指南）
-  - [developer-guide.md](/docs/guides/developer-guide.md)
-  - [quickstart.md](/docs/guides/quickstart.md)
+  - [developer-guide.md](../../guides/developer-guide.md)
+  - [quickstart.md](../../guides/quickstart.md)
   - `guides/testing/*`（Slurm 集成测试专题）
 - `docs/reference/`（字段字典与校验）
-  - [config_schema.md](/docs/reference/config_schema.md)
-  - [validation.md](/docs/reference/validation.md)
+  - [config_schema.md](../../reference/config_schema.md)
+  - [validation.md](../../reference/validation.md)
   - 字段/校验的单一权威来源为 `docs/reference/*`
 - `docs/architecture/`（架构与决策）
-  - [design-report.md](/docs/architecture/design-report.md)
-  - [2026-02-04-deepmd-dependency.md](/docs/architecture/decisions/2026-02-04-deepmd-dependency.md)
+  - [design-report.md](../../architecture/design-report.md)
+  - [2026-02-04-deepmd-dependency.md](../../architecture/decisions/2026-02-04-deepmd-dependency.md)
 - `docs/reports/`（一次性分析/实验）
-  - [modulo-hypothesis.md](/docs/archive/reports/modulo-hypothesis.md)
+  - [modulo-hypothesis.md](../../archive/reports/modulo-hypothesis.md)
 - `docs/archive/`（历史/弃用）
-  - [Code_Review_Report_v2.7.1.md](/docs/archive/2026-02-01-Code_Review_Report_v2.7.1.md)
-  - [Variable_Review_Report.md](/docs/archive/2026-02-01-Variable_Review_Report.md)
+  - [Code_Review_Report_v2.7.1.md](../../archive/2026-02-01-Code_Review_Report_v2.7.1.md)
+  - [Variable_Review_Report.md](../../archive/2026-02-01-Variable_Review_Report.md)
   - `archive/refactoring/*`
 - 资产图片：`docs/img/`、`docs/design/*.png`
 
@@ -71,12 +71,12 @@ last-updated: 2026-03-09
 
 - P0（影响上手与可用性）
   - `docs/README.md`：统一入口与导航（已补齐）
-  - Quickstart：最短路径跑通（已建立骨架：[quickstart.md](/docs/guides/quickstart.md)）
-  - CLI 指南（已建立骨架：[cli.md](/docs/guides/cli.md)）
-  - Troubleshooting（已建立骨架：[troubleshooting.md](/docs/guides/troubleshooting.md)）
+  - Quickstart：最短路径跑通（已建立骨架：[quickstart.md](../../guides/quickstart.md)）
+  - CLI 指南（已建立骨架：[cli.md](../../guides/cli.md)）
+  - Troubleshooting（已建立骨架：[troubleshooting.md](../../guides/troubleshooting.md)）
 - P1（影响长期维护与一致性）
-  - 配置编写指南（已建立骨架：[configuration.md](/docs/guides/configuration.md)）
-  - Slurm 指南（已建立骨架：[slurm.md](/docs/guides/slurm.md)）
+  - 配置编写指南（已建立骨架：[configuration.md](../../guides/configuration.md)）
+  - Slurm 指南（已建立骨架：[slurm.md](../../guides/slurm.md)）
   - Glossary（术语表，避免 DataPool/System/Descriptor 等歧义）
   - 兼容性矩阵（DeepMD/dpdata/Python/后端）
 - P2（工程化与对外发布）
@@ -113,9 +113,9 @@ last-updated: 2026-03-09
 ## 5. 文档模板标准化方案
 
 - 模板已落地（可作为新文档基线）：
-  - 页面模板：[docs/_templates/page.md](/docs/_templates/page.md)
-  - ADR 模板：[docs/_templates/adr.md](/docs/_templates/adr.md)
-  - 报告模板：[docs/_templates/report.md](/docs/_templates/report.md)
+  - 页面模板：[docs/_templates/page.md](../../_templates/page.md)
+  - ADR 模板：[docs/_templates/adr.md](../../_templates/adr.md)
+  - 报告模板：[docs/_templates/report.md](../../_templates/report.md)
 
 统一元信息建议（适用于 `active` 文档）：Status / Applies-To / Owners / Last-Updated / Related Links。
 
@@ -123,7 +123,7 @@ last-updated: 2026-03-09
 
 权威规则与建议流程见：
 
-- 文档维护机制：[docs/policy/maintenance.md](/docs/policy/maintenance.md)
+- 文档维护机制：[docs/policy/maintenance.md](../../policy/maintenance.md)
 
 关键落点：
 
@@ -135,7 +135,7 @@ last-updated: 2026-03-09
 
 权威标准见：
 
-- 文档质量标准：[docs/policy/quality.md](/docs/policy/quality.md)
+- 文档质量标准：[docs/policy/quality.md](../../policy/quality.md)
 
 建议将“质量评分/验收清单”纳入 PR Review 流程，作为 `active` 文档准入条件。
 

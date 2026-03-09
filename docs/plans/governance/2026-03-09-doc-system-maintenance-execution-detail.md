@@ -52,6 +52,12 @@ last-updated: 2026-03-09
     *   操作: 将 `docs/archive/plans/v0.6.0/` 扁平化为 `docs/archive/v0.6.0/plans/` (按版本归档而非按类型)。
 *   **T-STRUCT-03** (High, 1h): 清理 `docs/reports` 根目录。
     *   操作: 将非 Active 报告移入 `docs/archive/reports`，仅保留模板或当前季度报告。
+*   **T-STRUCT-04** (Critical, 1h): 消除 `docs/source` 与 `docs/` 的内容重复。
+    *   状态: **Completed** (2026-03-09)
+    *   操作: 将 `source/{guides,policy,reference,architecture,plans}` 替换为指向 `docs/` 对应目录的软链接，确保单一真实源 (SSOT)。
+*   **T-CONFIG-01** (High, 0.5h): 修正 Sphinx 语言配置。
+    *   状态: **Completed** (2026-03-09)
+    *   操作: 将 `conf.py` 中的 `language` 设置为 `zh_CN`。
 
 ### 3.2 内容补全 (Content Completion)
 *   **T-CONTENT-01** (High, 2h): 为缺失目录创建 `README.md`。
@@ -59,6 +65,8 @@ last-updated: 2026-03-09
     *   内容: 目录用途、文件命名规范、贡献指南。
 *   **T-CONTENT-02** (Medium, 1h): 更新 `docs/README.md`。
     *   操作: 同步新的目录结构，增加 `governance/reviews` 入口。
+*   **T-CONTENT-03** (High, 2h): 增强 `Quickstart` 指南。
+    *   操作: 补充“一键安装命令”和“Hello World”配置片段，减少用户在 Examples 目录间的跳转成本。
 
 ### 3.3 治理体系 (Governance System)
 *   **T-GOV-01** (High, 1h): 落地 RACI 矩阵。
@@ -94,8 +102,14 @@ graph LR
 ### 4.2 文档生成与发布
 *   **生成器**: 沿用 Sphinx (如有) 或迁移至 MkDocs (推荐，因 Markdown 友好)。
 *   **发布策略**: 
-    *   `main` 分支 -> `latest` 文档。
-    *   `tags/v*` -> 对应版本文档快照。
+    *   **GitHub Pages (推荐)**: 
+        *   利用 GitHub Actions 自动构建。
+        *   `main` 分支 -> `https://<org>.github.io/dpeva/latest/`
+        *   `tags/v*` -> `https://<org>.github.io/dpeva/vX.Y/`
+    *   **ReadTheDocs (备选)**:
+        *   配置 `.readthedocs.yaml`。
+        *   优势：原生支持多版本管理与搜索。
+        *   劣势：国内访问可能受限。
 
 ---
 
@@ -202,8 +216,9 @@ last-updated: 2026-03-09
 
 ## 14. 后续迭代路线图 (Roadmap)
 
-*   **v0.7.0**: 
-    *   引入国际化 (i18n) 基础架构支持 (中/英)。
-    *   集成 LLM 辅助文档生成工具。
+*   **v0.7.0 (Q2 2026)**: 
+    *   **国际化 (i18n)**: 建立中英文档双语支持架构，优先覆盖 `Quickstart` 与 `Installation`。
+    *   **Quickstart 2.0**: 重构入门指南，集成交互式配置生成器与一键运行脚本。
+    *   **集成 LLM**: 引入 AI 辅助文档生成工具，提升 API 文档的易读性。
 *   **v0.8.0**:
     *   建立交互式 API 文档 (基于 OpenAPI/Swagger)。

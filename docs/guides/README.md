@@ -15,8 +15,8 @@ last-updated: 2026-03-09
 
 当前 DP-EVA 的主要使用说明集中在：
 
-- 开发者指南：[developer-guide.md](/docs/guides/developer-guide.md)
-- Recipes 示例：[examples/recipes](/examples/recipes)
+- 开发者指南：[developer-guide.md](developer-guide.md)
+- Recipes 示例：[examples/recipes](../examples/recipes)
 
 后续建议逐步沉淀为：
 

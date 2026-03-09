@@ -14,24 +14,24 @@ last-updated: 2026-03-09
 
 ### 1.1 使用者（想把流程跑起来）
 
-- 项目概览与快速开始：[README.md](/README.md)
-- 安装与环境准备：[installation.md](/docs/guides/installation.md)
-- Quickstart（最短路径跑通）：[quickstart.md](/docs/guides/quickstart.md)
-- CLI 使用指南：[cli.md](/docs/guides/cli.md)
+- 项目概览与快速开始：[README.md](README.md)
+- 安装与环境准备：[installation.md](guides/installation.md)
+- Quickstart（最短路径跑通）：[quickstart.md](guides/quickstart.md)
+- CLI 使用指南：[cli.md](guides/cli.md)
 
 ### 1.2 开发者（要改代码/加功能/修Bug）
 
-- 开发流程标准与架构说明：[developer-guide.md](/docs/guides/developer-guide.md)
-- 配置字段权威参考（查表）：[config_schema.md](/docs/reference/config_schema.md)
-- 参数验证与约束补充：[validation.md](/docs/reference/validation.md)
-- Slurm 使用与排障：[slurm.md](/docs/guides/slurm.md)
-- 文档贡献指南：[contributing.md](/docs/policy/contributing.md)
+- 开发流程标准与架构说明：[developer-guide.md](guides/developer-guide.md)
+- 配置字段权威参考（查表）：[config_schema.md](reference/config_schema.md)
+- 参数验证与约束补充：[validation.md](reference/validation.md)
+- Slurm 使用与排障：[slurm.md](guides/slurm.md)
+- 文档贡献指南：[contributing.md](policy/contributing.md)
 
 ### 1.3 研究者（关注算法假设/设计权衡/实验结论）
 
-- 系统设计与模式分析：[design-report.md](/docs/architecture/design-report.md)
-- DeepMD 依赖决策记录：[2026-02-04-deepmd-dependency.md](/docs/architecture/decisions/2026-02-04-deepmd-dependency.md)
-- 描述符模长假设与实验报告：[modulo-hypothesis.md](/docs/archive/reports/modulo-hypothesis.md)
+- 系统设计与模式分析：[design-report.md](architecture/design-report.md)
+- DeepMD 依赖决策记录：[2026-02-04-deepmd-dependency.md](architecture/decisions/2026-02-04-deepmd-dependency.md)
+- 描述符模长假设与实验报告：[modulo-hypothesis.md](archive/reports/modulo-hypothesis.md)
 
 ## 2. 文档分层与权威来源（避免重复/冲突）
 
@@ -65,5 +65,5 @@ last-updated: 2026-03-09
 
 | 审查日期 | 版本 | 审查人 | 状态 | 快速链接 |
 | :--- | :--- | :--- | :--- | :--- |
-| 2026-03-09 | v1.0 | Trae AI | Completed | [DocReview_20260309_v1.0.md](/docs/governance/reviews/DocReview_20260309_v1.0.md) |
+| 2026-03-09 | v1.0 | Trae AI | Completed | [DocReview_20260309_v1.0.md](governance/reviews/DocReview_20260309_v1.0.md) |
 
