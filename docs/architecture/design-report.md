@@ -1,3 +1,10 @@
+---
+title: Document
+status: active
+audience: Developers
+last-updated: 2026-03-09
+---
+
 # DP-EVA 项目设计模式与架构分析报告
 
 ## 1. 设计模式识别与分类 (Design Patterns Identification)

@@ -1,3 +1,10 @@
+---
+title: Archived Document
+status: archived
+audience: Historians
+last-updated: 2026-03-09
+---
+
 ### DP-EVA 工作流启动方案调研与演进报告
 
 > **[DEPRECATED]** This report is for historical reference only.

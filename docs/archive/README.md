@@ -1,3 +1,10 @@
+---
+title: Archived Document
+status: archived
+audience: Historians
+last-updated: 2026-03-09
+---
+
 # Archive（归档文档）
 
 本目录用于存放历史文档与已废弃的评审/重构计划（只读为主）。

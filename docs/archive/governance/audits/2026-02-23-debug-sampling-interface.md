@@ -1,3 +1,10 @@
+---
+title: Archived Document
+status: archived
+audience: Historians
+last-updated: 2026-03-09
+---
+
 
 ## 调试与修复报告：SamplingManager 接口与 n_candidates 参数传递问题
 

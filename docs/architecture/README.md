@@ -1,3 +1,10 @@
+---
+title: Document
+status: active
+audience: Developers
+last-updated: 2026-03-09
+---
+
 # Architecture（系统结构）
 
 本目录用于存放与当前 `src/` 代码一致的系统架构说明（更新频率中等）。

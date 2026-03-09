@@ -1,3 +1,10 @@
+---
+title: Document
+status: active
+audience: Developers
+last-updated: 2026-03-09
+---
+
 # 参数校验与约束（Validation Rules）
 
 - Status: active

@@ -1,3 +1,10 @@
+---
+title: Document
+status: active
+audience: Developers
+last-updated: 2026-03-09
+---
+
 # 文档系统治理改进路线图 (Docs Governance Roadmap)
 
 - Status: active
@@ -24,7 +31,7 @@
 | 问题类型 | 具体表现 | 改进建议 | 优先级 |
 | :--- | :--- | :--- | :--- |
 | **冲突 (Conflict)** | `docs/reference/config-schema.md` 与 `src/dpeva/config.py` 脱节。 | **Sync**: 引入 Sphinx + Pydantic 插件自动生成文档。 | **P0** |
-| **冲突 (Conflict)** | `AGENTS.md` 与 `.trae/skills/*.md` 双重定义技能。 | **Merge**: 废弃 `AGENTS.md` 的技能描述，仅保留指向 Skills 的链接。 | **P0** |
+| **冲突 (Conflict)** | `AGENTS.md` 与 `.trae/skills/*.md` 双重定义技能。 | **Merge**: 废弃 `.trae/skills/*.md` 中的命令行技能，仅在 `AGENTS.md` 中体现。 | **P0** |
 | **冗余 (Redundancy)** | `README.md`, `AGENTS.md`, `installation.md` 三处重复安装命令。 | **Split**: `README` 仅保留核心介绍，安装指引统一收敛至 `installation.md`。 | **P1** |
 | **规划 (Planning)** | `docs/governance/plans` 与 `docs/plans` 入口分散。 | **Merge**: 将治理计划统一迁移至 `docs/plans/governance/`。 | **P2** |
 | **结构 (Structure)** | `docs/logo_design` 游离于规范之外；Archive 命名不规范。 | **Move**: 迁移至 `docs/assets/logo`；Archive 补全日期前缀。 | **P2** |
@@ -35,7 +42,7 @@
 **目标**: 消除多头权威，收敛信息入口，为 Sphinx 接入做准备。
 
 - [x] **Action 1**: 重构 `README.md`，移除具体安装步骤，改为引用链接。
-- [x] **Action 2**: 改造 `AGENTS.md` 为纯导航页，内容迁移至 `.trae/skills/`。
+- [x] **Action 2**: 改造 `AGENTS.md` 为纯导航页，内容迁移至 `.trae/skills/`。（已废弃）
 - [x] **Action 3**: 建立 `docs/plans/governance/` 目录，归并分散的治理计划。
 - [x] **Action 4**: 标准化目录结构：
     - 移动 `docs/logo_design/` -> `docs/assets/logo/`。

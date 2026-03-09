@@ -1,3 +1,10 @@
+---
+title: Archived Document
+status: archived
+audience: Historians
+last-updated: 2026-03-09
+---
+
 # 代码审查详细报告 (Code Review Report)
 
 > **[DEPRECATED]** This report is for historical reference only.

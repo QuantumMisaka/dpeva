@@ -1,8 +1,11 @@
-# 文档版本管理与维护机制（Maintenance）
+---
+title: 文档版本管理与维护机制 (Maintenance)
+status: active
+audience: Maintainers
+last-updated: 2026-03-09
+---
 
-- Status: active
-- Audience: Maintainers
-- Last-Updated: 2026-02-18
+# 文档版本管理与维护机制（Maintenance）
 
 ## 1. 文档版本策略
 
@@ -23,6 +26,17 @@
 - API Reference：配置模型维护人（Pydantic Model Owner）
 
 Owner 可以是角色而非具体姓名；但每篇 `active` 文档必须有 Owner。
+
+### 2.1 RACI 职责矩阵
+
+| 文档类型 (Type) | 谁负责写 (Responsible) | 谁负责审 (Accountable) | 谁提供咨询 (Consulted) | 谁接收通知 (Informed) |
+| :--- | :--- | :--- | :--- | :--- |
+| **Guides (User/Dev)** | Feature Developer | Tech Lead | QA / Users | All Developers |
+| **Reference (API/Config)** | Code Owner | Architect | - | All Developers |
+| **Architecture (Design)** | Architect | Project Lead | Tech Lead | All Developers |
+| **Policy (Governance)** | Docs Owner | Project Lead | Team Members | All Developers |
+| **Reports (Audit/Exp)** | Auditor / Researcher | Tech Lead | - | Stakeholders |
+
 
 ## 3. 变更触发规则（何时必须更新文档）
 

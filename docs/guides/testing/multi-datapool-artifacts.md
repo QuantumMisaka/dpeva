@@ -1,10 +1,17 @@
+---
+title: Document
+status: active
+audience: Developers
+last-updated: 2026-03-09
+---
+
 # test-for-multiple-datapool 生产目录输入输出分析
 
 - Status: active
 - Audience: Developers
 - Last-Updated: 2026-02-18
 
-目标目录：[test-for-multiple-datapool](/test/test-for-multiple-datapool)
+目标目录：`/test/test-for-multiple-datapool` (File missing)
 
 本文档用于把生产级运行产物拆解为“输入资产 / 输出资产”，并将其映射到 DP-EVA 各 Workflow 的配置字段（对照 [examples/recipes](/examples/recipes)）。
 
@@ -134,8 +141,8 @@
 
 参考配置：
 
-- 普通模式：[config_multi_normal.json](/examples/recipes/collection/config_multi_normal.json)
-- 联合模式：[config_multi_joint.json](/examples/recipes/collection/config_multi_joint.json)
+- 普通模式：`/examples/recipes/collection/config_multi_normal.json` (File missing)
+- 联合模式：`/examples/recipes/collection/config_multi_joint.json` (File missing)
 
 ### 2.5 AnalysisWorkflow（结果统计与可视化）
 
@@ -150,7 +157,7 @@
 
 参考配置：
 
-- [analysis/config.json](/examples/recipes/analysis/config.json)
+- `/examples/recipes/analysis/config.json` (File missing)
 
 ## 3. 用于集成测试编排的关键观察
 

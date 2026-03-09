@@ -1,3 +1,10 @@
+---
+title: Archived Document
+status: archived
+audience: Historians
+last-updated: 2026-03-09
+---
+
 # 结构描述符模长物理意义验证报告
 
 - Status: active

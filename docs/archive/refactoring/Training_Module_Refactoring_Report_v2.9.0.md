@@ -1,3 +1,10 @@
+---
+title: Archived Document
+status: archived
+audience: Historians
+last-updated: 2026-03-09
+---
+
 # Training Module Refactoring Report (v2.9.0)
 
 > **[DEPRECATED]** This report is for historical reference only.

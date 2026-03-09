@@ -1,3 +1,10 @@
+---
+title: Document
+status: active
+audience: Developers
+last-updated: 2026-03-09
+---
+
 # DP-EVA 文档系统规划与重构报告
 
 面向目录：[docs/](/docs)
@@ -20,10 +27,10 @@
   - [design-report.md](/docs/architecture/design-report.md)
   - [2026-02-04-deepmd-dependency.md](/docs/architecture/decisions/2026-02-04-deepmd-dependency.md)
 - `docs/reports/`（一次性分析/实验）
-  - [modulo-hypothesis.md](/docs/reports/modulo-hypothesis.md)
+  - [modulo-hypothesis.md](/docs/archive/reports/modulo-hypothesis.md)
 - `docs/archive/`（历史/弃用）
-  - [Code_Review_Report_v2.7.1.md](/docs/archive/Code_Review_Report_v2.7.1.md)
-  - [Variable_Review_Report.md](/docs/archive/Variable_Review_Report.md)
+  - [Code_Review_Report_v2.7.1.md](/docs/archive/2026-02-01-Code_Review_Report_v2.7.1.md)
+  - [Variable_Review_Report.md](/docs/archive/2026-02-01-Variable_Review_Report.md)
   - `archive/refactoring/*`
 - 资产图片：`docs/img/`、`docs/design/*.png`
 

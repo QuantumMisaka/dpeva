@@ -1,3 +1,10 @@
+---
+title: Document
+status: active
+audience: Developers
+last-updated: 2026-03-09
+---
+
 # 工作流-契约测试矩阵（Workflow Contract ↔ Tests）
 
 - Status: active

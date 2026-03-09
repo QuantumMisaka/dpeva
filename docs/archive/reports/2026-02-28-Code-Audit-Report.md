@@ -1,3 +1,10 @@
+---
+title: Archived Document
+status: archived
+audience: Historians
+last-updated: 2026-03-09
+---
+
          
 经过对 `dpeva` 项目代码库的详细检查，以下是针对你提出的 6 项任务的检查结果报告。我们遵循 **Zen of Python** 的哲学，重点识别硬编码、魔术数字、缺失文档及代码质量风险。
 
@@ -28,7 +35,7 @@
 
 ### **3. 检查魔术种子 (src/dpeva/training/managers.py)**
 在 `TrainingConfigManager` 类中发现了明显的魔术种子：
-- **代码位置**：[managers.py:L65](file:///home/pku-jianghong/liuzhaoqing/work/ft2dp-dpeva/dpeva/src/dpeva/training/managers.py#L65)
+- **代码位置**：[managers.py:L65](../../../../src/dpeva/training/managers.py#L65)
 - **具体内容**：`default_seeds = [19090, 42, 10032, 2933]`。
 - **风险**：这些数字缺乏解释，且直接硬编码在逻辑方法中。
 

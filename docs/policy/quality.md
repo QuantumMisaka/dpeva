@@ -1,8 +1,11 @@
-# 文档质量标准（Documentation Quality Standard）
+---
+title: 文档质量标准 (Documentation Quality Standard)
+status: active
+audience: Maintainers
+last-updated: 2026-02-18
+---
 
-- Status: active
-- Audience: Maintainers
-- Last-Updated: 2026-02-18
+# 文档质量标准（Documentation Quality Standard）
 
 ## 1. 质量维度与评分（建议 0–2 分）
 

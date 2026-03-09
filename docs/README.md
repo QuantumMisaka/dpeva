@@ -1,4 +1,12 @@
+---
+title: DP-EVA 文档导航 (Docs Index)
+status: active
+audience: Users / Developers
+last-updated: 2026-03-09
+---
+
 # DP-EVA 文档导航（Docs Index）
+
 
 本文档是 `docs/` 的统一入口：提供读者分流、权威信息源定位、以及文档维护规则。
 
@@ -50,3 +58,12 @@
   - `docs/guides/*`（若涉及使用方式/流程）
 - 文档必须以“单一权威来源”为原则：同一份字段字典不允许在多处复制粘贴维护。
 - `docs/archive/` 内容默认不回写，除非修正事实性错误（需要保留修订说明）。
+
+## 4. 文档审查记录 (Audit Logs)
+
+定期对文档系统的健康状况进行体检，包括结构完整性、治理合规性与内容有效性。
+
+| 审查日期 | 版本 | 审查人 | 状态 | 快速链接 |
+| :--- | :--- | :--- | :--- | :--- |
+| 2026-03-09 | v1.0 | Trae AI | Completed | [DocReview_20260309_v1.0.md](/docs/governance/reviews/DocReview_20260309_v1.0.md) |
+

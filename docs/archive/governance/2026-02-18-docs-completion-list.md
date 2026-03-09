@@ -1,3 +1,10 @@
+---
+title: Archived Document
+status: archived
+audience: Historians
+last-updated: 2026-03-09
+---
+
 # 文档补全清单（Completion List）
 
 - Status: archived
@@ -21,7 +28,7 @@
 | 文档 | 类型 | 内容要点 |
 |---|---|---|
 | [integration-slurm.md](/docs/guides/testing/integration-slurm.md) | Guide | Slurm集成测试交付主页：交付物索引、链式编排原则、裁剪策略、运行方式、异常处理与变更记录。 |
-| [integration-slurm-plan.md](/docs/plans/integration-slurm-plan.md) | Plan/Guide | 集成测试里程碑、DoD、交付物与异常处理策略。 |
+| [integration-slurm-plan.md](/docs/archive/v0.6.0/plans/integration-slurm-plan.md) | Plan/Guide | 集成测试里程碑、DoD、交付物与异常处理策略。 |
 | [integration-config-templates.md](/docs/guides/testing/integration-config-templates.md) | Guide | 模板索引与约定、输入输出语义、异常处理与变更记录。 |
 | [multi-datapool-artifacts.md](/docs/guides/testing/multi-datapool-artifacts.md) | Report/Guide | 生产目录I/O拆解、Workflow映射、关键观察、异常处理与变更记录。 |
 | [config-schema.md](/docs/reference/config-schema.md) | Reference | 配置字段字典迁移落点（作为单一权威来源）。 |

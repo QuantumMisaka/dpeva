@@ -1,3 +1,10 @@
+---
+title: Archived Document
+status: archived
+audience: Historians
+last-updated: 2026-03-09
+---
+
 # DP-EVA Labeling 模块功能点开发与迁移规划文档
 
 > **[DEPRECATED]** This report is for historical reference only.

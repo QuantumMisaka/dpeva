@@ -1,9 +1,16 @@
+---
+title: Document
+status: active
+audience: Developers
+last-updated: 2026-03-09
+---
+
 # Configuration Schema Reference (Deprecated)
 
 > **WARNING: DEPRECATED**
 >
 > This file is no longer manually maintained.
-> Please refer to the **[API Reference](../api/config.rst)** in the Sphinx documentation for the authoritative configuration schema generated directly from the `src/dpeva/config.py` source code.
+> Please refer to the **[API Reference](../source/api/config.rst)** in the Sphinx documentation for the authoritative configuration schema generated directly from the `src/dpeva/config.py` source code.
 
 - Status: deprecated
 - Audience: Users / Developers

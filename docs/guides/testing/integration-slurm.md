@@ -1,10 +1,17 @@
+---
+title: Document
+status: active
+audience: Developers
+last-updated: 2026-03-09
+---
+
 # DP-EVA 集成测试设计与交付报告（Slurm + Multi DataPool）
 
 - Status: active
 - Audience: Developers / Infra
 - Last-Updated: 2026-02-18
 
-本报告给出基于真实生产目录 [test-for-multiple-datapool](/test/test-for-multiple-datapool) 反推的集成测试设计，并交付可执行的 Slurm 编排用例与输入裁剪方案。
+本报告给出基于真实生产目录 `/test/test-for-multiple-datapool` (File missing) 反推的集成测试设计，并交付可执行的 Slurm 编排用例与输入裁剪方案。
 
 ## 1. 交付物索引
 

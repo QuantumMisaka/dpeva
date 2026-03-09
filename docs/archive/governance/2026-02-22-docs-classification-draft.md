@@ -1,3 +1,10 @@
+---
+title: Archived Document
+status: archived
+audience: Historians
+last-updated: 2026-03-09
+---
+
 # 文档分类维度与命名规范（Docs Taxonomy）
 
 本文档定义 DP-EVA 文档的统一分类维度与命名规范，用于长期维护与扩展。

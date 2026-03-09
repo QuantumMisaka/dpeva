@@ -1,23 +1,17 @@
-name: Documentation
+name: Build Documentation
 
 on:
   push:
-    branches:
-      - main
+    branches: [ "main" ]
     tags:
       - 'v*'
-  pull_request:
-    branches:
-      - main
+  workflow_dispatch:
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0 # Required for git history in freshness check
+      - uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -26,15 +20,11 @@ jobs:
 
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install .[docs]
+          pip install -e .[docs]
+          # Ensure sphinx and extensions are installed
+          pip install sphinx sphinx-book-theme myst-parser sphinxcontrib-autodoc_pydantic
 
-      - name: Check documentation freshness
-        run: |
-          # Run freshness check but don't fail the build (yet)
-          python scripts/check_docs_freshness.py --days 90 || echo "WARNING: Stale documentation found!"
-
-      - name: Build documentation
+      - name: Build HTML
         run: |
           cd docs
           make html
@@ -44,6 +34,17 @@ jobs:
         with:
           path: docs/build/html
 
+  deploy:
+    needs: build
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
       - name: Deploy to GitHub Pages
-        if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')
+        id: deployment
         uses: actions/deploy-pages@v4

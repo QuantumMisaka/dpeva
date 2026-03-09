@@ -1,8 +1,11 @@
-# 文档结构与命名规范（Docs Structure & Naming）
+---
+title: 文档结构与命名规范 (Docs Structure & Naming)
+status: active
+audience: Maintainers / Developers
+last-updated: 2026-03-09
+---
 
-- Status: active
-- Audience: Maintainers / Developers
-- Last-Updated: 2026-03-09
+# 文档结构与命名规范（Docs Structure & Naming）
 
 本文档定义当前版本的文档集结构与命名规范，并说明分类原则、状态规则与未来扩展预留目录。
 
@@ -74,9 +77,13 @@
 │   └── docs-structure.md
 ├── governance
 │   ├── README.md
+│   ├── reviews
+│   │   ├── README.md
+│   │   └── DocReview_20260309_v1.0.md
 │   ├── plans
 │   │   ├── 2026-02-18-doc-system-planning.md
-│   │   └── 2026-03-03-codebase-remediation-breakdown.md
+│   │   ├── 2026-03-03-codebase-remediation-breakdown.md
+│   │   └── 2026-03-09-doc-system-maintenance-execution-detail.md
 │   ├── audits (Archived to docs/archive/governance/audits)
 │   ├── traceability
 │   │   ├── feature-doc-matrix.md
@@ -86,6 +93,7 @@
 │   └── tools
 │       └── link-normalization.json
 ├── plans
+│   ├── README.md
 │   ├── iteration_plan_v0.6.md
 │   ├── integration-slurm-plan.md
 │   ├── release_note_v0.6.0.md
@@ -114,13 +122,24 @@
     │       └── checklist.md
     ├── refactoring
     │   └── ... (Historical plans)
-    └── reports
-        ├── 2026-02-22-integration-test-optimization.md
-        ├── 2026-02-22-integration-test-output-verification.md
-        ├── 2026-02-22-integration-test-review.md
-        ├── 2026-02-22-unit-test-report.md
-        ├── 2026-02-27-Code-Audit_Report.md
-        └── modulo-hypothesis.md
+    ├── reports
+    │   ├── README.md
+    │   ├── 2026-02-22-integration-test-optimization.md
+    │   ├── 2026-02-22-integration-test-output-verification.md
+    │   ├── 2026-02-22-integration-test-review.md
+    │   ├── 2026-02-22-unit-test-report.md
+    │   ├── 2026-02-27-Code-Audit_Report.md
+    │   └── modulo-hypothesis.md
+    └── v0.6.0
+        └── plans
+            ├── integration-slurm-plan.md
+            ├── labeling_test_plan.md
+            ├── release_note_v0.6.0.md
+            ├── v0.6-acceptance-record.md
+            ├── iteration_plan_v0.6.md
+            ├── labeling_unit_test_design.md
+            ├── v0.6.0-doc-governance-execution.md
+            └── v0.6-phase0-contract-and-risk.md
 ```
 
 ## 5. 未来扩展预留目录

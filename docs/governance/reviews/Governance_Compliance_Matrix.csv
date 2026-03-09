@@ -1,0 +1,12 @@
+Path,Status,Missing_Items,Priority,Est_Hours
+docs/README.md,Pass,-,-,-
+docs/policy/README.md,Pass,-,-,-
+docs/reviews/README.md,Fail,File Missing,High,0.5
+docs/reports/README.md,Fail,Empty Content,Medium,0.5
+docs/guides/README.md,Pass,-,-,-
+docs/reference/README.md,Pass,-,-,-
+docs/architecture/README.md,Pass,-,-,-
+docs/governance/README.md,Pass,-,-,-
+docs/plans/README.md,Fail,File Missing,Low,0.5
+docs/archive/README.md,Pass,-,-,-
+docs/archive/reports/README.md,Fail,File Missing,Low,0.5
