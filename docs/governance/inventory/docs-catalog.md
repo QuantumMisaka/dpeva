@@ -47,6 +47,7 @@
 |---|---|---|---|---|---|---|
 | [doc-system-planning.md](/docs/governance/plans/2026-02-18-doc-system-planning.md) | Plan | Maintainers | Medium | active | docs\|planning\|raci | 文档体系规划：分类体系、缺失补充、模板、维护与质量标准、实施排期与责任分配。 |
 | [feature-doc-matrix.md](/docs/governance/traceability/feature-doc-matrix.md) | Policy | Maintainers | High | active | traceability\|release | 功能-文档双向追踪矩阵（发布前核对）。 |
+| [workflow-contract-test-matrix.md](/docs/governance/traceability/workflow-contract-test-matrix.md) | Policy | Maintainers | High | active | traceability\|test | 工作流契约测试矩阵。 |
 | [doc-accuracy-audit.md](/docs/governance/audits/2026-02-19-doc-accuracy-audit.md) | Report | Maintainers | Medium | active | audit\|accuracy | 文档准确性审计：对照代码与对外接口，形成差异与风险项。 |
 | [docs-review-report.md](/docs/governance/audits/2026-02-19-docs-review-report.md) | Report | Maintainers | Medium | active | audit\|quality | 文档质量审查结论与问题清单。 |
 | [link-normalization.json](/docs/governance/tools/link-normalization.json) | Asset | Maintainers | Medium | active | tooling\|links | 链接规范化机器可读规则（用于工具/CI）。 |

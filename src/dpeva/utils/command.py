@@ -47,7 +47,7 @@ class DPCommandBuilder:
             finetune_path: Path to pretrained model for finetuning (--finetune).
             init_model_path: Path to pretrained model for initialization (--init-model).
             skip_neighbor_stat: Whether to add --skip-neighbor-stat.
-            log_file: If provided, appends '2>&1 | tee log_file'.
+            log_file: If provided, appends '> log_file 2>&1'.
         """
         cmd = f"{cls._get_base_cmd()} train {shlex.quote(input_file)}"
         
@@ -60,7 +60,7 @@ class DPCommandBuilder:
             cmd += f" --init-model {shlex.quote(init_model_path)}"
             
         if log_file:
-            cmd += f" 2>&1 | tee {shlex.quote(log_file)}"
+            cmd += f" > {shlex.quote(log_file)} 2>&1"
             
         return cmd
 
@@ -87,14 +87,14 @@ class DPCommandBuilder:
             system: Path to system directory.
             output: Output directory/file.
             head: Model head (optional).
-            log_file: If provided, appends '2>&1 | tee log_file'.
+            log_file: If provided, appends '> log_file 2>&1'.
         """
         cmd = f"{cls._get_base_cmd()} eval-desc -s {shlex.quote(system)} -m {shlex.quote(model)} -o {shlex.quote(output)}"
         if head:
             cmd += f" --head {shlex.quote(head)}"
             
         if log_file:
-            cmd += f" 2>&1 | tee {shlex.quote(log_file)}"
+            cmd += f" > {shlex.quote(log_file)} 2>&1"
             
         return cmd
 
@@ -108,13 +108,13 @@ class DPCommandBuilder:
             system: Path to system directory.
             prefix: Output prefix (-d).
             head: Model head (optional).
-            log_file: If provided, appends '2>&1 | tee log_file'.
+            log_file: If provided, appends '> log_file 2>&1'.
         """
         cmd = f"{cls._get_base_cmd()} test -s {shlex.quote(system)} -m {shlex.quote(model)} -d {shlex.quote(prefix)}"
         if head:
             cmd += f" --head {shlex.quote(head)}"
             
         if log_file:
-            cmd += f" 2>&1 | tee {shlex.quote(log_file)}"
+            cmd += f" > {shlex.quote(log_file)} 2>&1"
             
         return cmd

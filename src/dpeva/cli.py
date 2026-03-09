@@ -104,6 +104,24 @@ def handle_analysis(args):
     workflow = AnalysisWorkflow(config)
     workflow.run()
 
+def handle_label(args):
+    """
+    Handles the 'label' command.
+    Initializes and runs the LabelingWorkflow (FP Calculation).
+    
+    Args:
+        args (argparse.Namespace): Command-line arguments containing 'config'.
+    """
+    from dpeva.workflows.labeling import LabelingWorkflow
+    from dpeva.config import LabelingConfig
+    
+    config_dict = load_and_resolve_config(args.config)
+    # Validate and parse config using Pydantic model
+    config = LabelingConfig(**config_dict)
+    
+    workflow = LabelingWorkflow(config)
+    workflow.run()
+
 def main():
     """
     Main entry point for the CLI.
@@ -139,6 +157,11 @@ def main():
     p_analysis = subparsers.add_parser("analysis", help="Run Inference Analysis Workflow")
     p_analysis.add_argument("config", help="Path to configuration JSON")
     p_analysis.set_defaults(func=handle_analysis)
+
+    # Labeling Sub-command
+    p_label = subparsers.add_parser("label", help="Run FP Labeling Workflow")
+    p_label.add_argument("config", help="Path to configuration JSON")
+    p_label.set_defaults(func=handle_label)
 
     args = parser.parse_args()
     

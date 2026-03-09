@@ -1,43 +1,47 @@
 # DP-EVA Examples
 
-> ⚠️ **Attention**: Before running any examples (especially with `dpeva` CLI or Slurm submission), you **MUST** update the `env_setup` field in `input.json` to match your actual cluster environment paths (e.g., DeepMD-kit environment path). The provided paths (like `/opt/envs/deepmd3.1.2.env`) are placeholders.
-
 This directory contains minimal reproducible examples (recipes) for DP-EVA workflows.
+
+## ⚠️ Important Prerequisites
+
+Before running any examples, especially with `dpeva` CLI or Slurm submission:
+
+1.  **Check Environment Paths**:
+    Open the configuration files (e.g., `config_normal.json`) and verify the `env_setup` section.
+    You **MUST** update paths like `/opt/envs/deepmd3.1.2.env` to match your actual cluster environment.
+
+2.  **Data Preparation**:
+    The examples assume certain data directories exist relative to the config file.
+    -   `other_dpdata/`: Candidate pool data (for inference/collection).
+    -   `sampled_dpdata/`: Training data (for training/joint collection).
+    -   `desc_pool/`: Pre-calculated descriptors.
 
 ## Directory Structure
 
-- `recipes/`: Contains configuration templates for different workflows.
-  - `feature_generation/`: Generating descriptors from data.
-  - `training/`: Training DeepMD models.
-  - `inference/`: Running inference and calculating errors.
-  - `collection/`: Active learning collection (UQ + Sampling).
-  - `analysis/`: Post-processing analysis.
-  - `sampling_direct/`: Standalone sampling using Standard DIRECT.
-  - `sampling_2direct/`: Standalone sampling using 2-Step DIRECT.
+-   **`recipes/`**: The core collection of configuration templates for all DP-EVA workflows.
+    -   See [recipes/README.md](recipes/README.md) for detailed usage instructions.
 
-## Prerequisites
+## Quick Start
 
-1. **DeepMD-kit Environment**: Ensure `dp` command is available or the environment path in `env_setup` is correct.
-   - Example configs use `/opt/envs/deepmd3.1.2.env` for S-A-I. Update this path if your environment differs.
-2. **Slurm (Optional)**: If using `backend: "slurm"`, ensure you have access to `sbatch`.
-3. **Data Preparation**:
-   - The examples assume certain data directories exist relative to the config file or work directory.
-   - Common expected data:
-     - `other_dpdata/`: Candidate pool data.
-     - `sampled_dpdata/`: Training data.
-     - `desc_pool/`: Descriptors for candidate pool.
-     - `DPA-3.1-3M.pt`: Pre-trained model (if using transfer learning).
+Most examples are designed to be run via the DP-EVA CLI.
 
-## How to Run
-
-Most examples are designed to be run via the CLI:
+**Example: Active Learning Collection**
 
 ```bash
-# Example: Running feature generation
-dpeva feature recipes/feature_generation/config_feature.json
-
-# Example: Running collection workflow
-dpeva collect recipes/collection/config_single_normal.json
+# Run standard collection workflow
+dpeva collect examples/recipes/collection/config_normal.json
 ```
 
-**Note**: You should copy the `recipes` or specific config files to your working directory and adjust paths (like `data_path`, `project`) to point to your actual data.
+**Example: Feature Generation**
+
+```bash
+# Generate descriptors for a dataset
+dpeva feature examples/recipes/feature_generation/config_feature.json
+```
+
+**Example: First Principles Labeling**
+
+```bash
+# Run ABACUS labeling workflow
+dpeva label examples/recipes/labeling_recipe.json
+```

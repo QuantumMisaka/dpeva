@@ -11,7 +11,7 @@
 
 范围：
 
-- `dpeva train / infer / feature / collect / analysis`
+- `dpeva train / infer / feature / collect / label / analysis`
 - `--no-banner`
 
 ## 2. 相关方
@@ -103,7 +103,19 @@ dpeva --no-banner <subcommand> <config_path>
 
 示例配置：`examples/recipes/collection/config_multi_normal.json`、`examples/recipes/collection/config_multi_joint.json`
 
-### 4.5 analysis（推理结果统计）
+### 4.5 label（标注）
+
+- 输入
+  - `LabelingConfig`
+- 功能
+  - 执行主动学习中的标注工作流 (LabelingWorkflow)
+  - 将 `dpdata` 格式的候选结构转化为 DFT (ABACUS) 计算任务
+  - 支持自动 K 点生成、任务打包 (Packing) 和 Slurm 并行提交
+  - 自动处理任务失败重试与结果回收
+- 输出
+  - `labeled_data`（包含 DFT 计算结果的新数据集）
+
+### 4.6 analysis（推理结果统计）
 
 - 输入：`AnalysisConfig.result_dir`（例如 `0/test_val`）
 - 输出：`AnalysisConfig.output_dir`

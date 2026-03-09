@@ -177,6 +177,9 @@ class CollectionWorkflow:
             # 1.2 Compute UQ
             uq_results, uq_rnd_rescaled = self.uq_manager.run_analysis(preds)
             
+            # 1.2.1 UQ Statistics Logging
+            self.uq_manager.log_uq_statistics(uq_results, uq_rnd_rescaled)
+            
             # 1.3 Auto Threshold
             self.uq_manager.run_auto_threshold(uq_results, uq_rnd_rescaled)
             

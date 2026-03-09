@@ -1,5 +1,5 @@
 {
-    "data_path": "./other_dpdata_test",
+    "data_path": "./other_dpdata",
     "work_dir": "./",
     "task_name": "test_val",
     "model_head": "OC22",

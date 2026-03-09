@@ -75,6 +75,12 @@ class TestCollectionWorkflow2Direct:
             "full_pca_features": np.random.rand(10, 2)
         }
 
+        # Mock load_systems for export phase
+        mock_sys = MagicMock()
+        mock_sys.target_name = "s"
+        mock_sys.__len__.return_value = 10
+        mock_load_sys.return_value = [mock_sys]
+
         # Mock IO Manager's load_descriptors
         with patch("dpeva.io.collection.CollectionIOManager.load_descriptors") as mock_load_desc:
             mock_load_desc.return_value = (datanames, np.random.rand(n_frames, 10))

@@ -4,6 +4,7 @@ from typing import Dict, List, Any, Union
 def resolve_config_paths(config: Dict[str, Any], config_file_path: str, path_keys: List[str] = None) -> Dict[str, Any]:
     """
     Resolves relative paths in a configuration dictionary relative to the configuration file's location.
+    Also expands environment variables (e.g. $HOME) in path strings.
     
     Args:
         config: The configuration dictionary.
@@ -25,16 +26,22 @@ def resolve_config_paths(config: Dict[str, Any], config_file_path: str, path_key
             "data_path", "model_path", "savedir", "work_dir", 
             "input_json_path", "base_model_path", "training_data_path",
             "desc_dir", "testdata_dir", "training_desc_dir", "root_savedir",
-            "output_basedir", "result_dir", "output_dir", "config_path"
+            "output_basedir", "result_dir", "output_dir", "config_path",
+            "input_data_path", "pp_dir", "orb_dir"
         ]
         
     for key in path_keys:
         if key in config:
             val = config[key]
             if isinstance(val, str) and val:
+                # Expand user (~) and environment variables ($HOME, etc.)
+                val = os.path.expanduser(os.path.expandvars(val))
+                
                 # If path is not absolute, make it absolute relative to config file
                 if not os.path.isabs(val):
                     config[key] = os.path.abspath(os.path.join(config_dir, val))
+                else:
+                    config[key] = val
             elif isinstance(val, list):
                 # Handle list of paths if necessary? Currently DPEVA mostly uses single paths.
                 # But let's be safe for future or specific fields like template_path which might be list?

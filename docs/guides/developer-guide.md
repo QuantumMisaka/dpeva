@@ -7,8 +7,8 @@
   - 配置字段字典：/docs/reference/config-schema.md
   - 校验规则补充：/docs/reference/validation.md
 
-* **版本**: 0.4.12
-* **生成日期**: 2026-03-03
+* **版本**: 0.5.3
+* **生成日期**: 2026-03-07
 * **作者**: Quantum Misaka with Trae SOLO
 
 ---
@@ -418,9 +418,43 @@ DPEVA_TAG: WORKFLOW_FINISHED
 
 ### 6.2 版本历史
 
-#### **Current Era (v0.4.x)**
+#### **Current Era (v0.5.x)**
 
- *   **v0.4.12** (2026-03-04):
+*   **v0.5.3** (2026-03-08):
+    *   **[增强]** Labeling Workflow 实现了智能的单/多数据池（Single/Multi-Pool）识别逻辑，自动适配 `inputs` 目录结构。
+    *   **[特性]** `task_meta.json` 新增 `system_name` 字段，实现了 `Dataset -> System -> Task` 的全链路数据追溯。
+    *   **[统计]** 实现了分层统计报告（Global -> Dataset -> Type），涵盖 Total, Converged, Failed 及 Cleaned 任务的详细计数。
+    *   **[测试]** 建立了 Labeling 模块的完整单元测试体系，覆盖核心算法与业务逻辑，通过率 100%。
+    *   **[文档]** 完成了 Labeling 模块的功能清单与任务追踪文档，并已归档至 `docs/archive/specs/v0.5.3/`。
+
+*   **v0.5.2** (2026-03-07):
+    *   **[增强]** Labeling Workflow 新增分层统计（Global/Dataset/Type）和元数据注入机制，确保任务在打包和移动后仍能追溯其数据来源和结构类型。
+    *   **[修复]** 解决了 Labeling 任务计数重复（Double Counting）问题，修复了 `dpdata.MultiSystems` 在结果收集时的初始化错误。
+    *   **[优化]** `AbacusGenerator` 实现了结构分析逻辑 (`StructureAnalyzer`) 的彻底解耦，提升了代码的可测试性和模块化程度。
+    *   **[配置]** 修复了 `output_dir` 配置被硬编码覆盖的缺陷，现在能正确尊重用户配置。
+
+*   **v0.5.1** (2026-03-05):
+    *   **[增强]** 在 `CollectionWorkflow` 中新增了 UQ 统计日志输出。现在 `UQManager` 会在不确定度分析阶段自动计算并打印 QbC、RND 及 Rescaled RND 的详细统计量（Count, Mean, Std, Percentiles），大幅提升了筛选过程的可观测性。
+    *   **[文档]** 全面补全了 Labeling 模块的文档，包括 CLI 指南、配置 Schema 及校验规则。
+    *   **[修复]** 修正了 `LabelingConfig` 中 `cleaning_thresholds` 字段的类型定义，允许使用 `null` 跳过特定物理量的检查，修复了 Pydantic v2 下的验证错误。
+    *   **[治理]** 清理并归档了过时的项目状态报告和设计规范，更新了文档治理矩阵。
+
+*   **v0.5.0** (2026-03-05):
+    *   **[特性]** 全新发布 Labeling 模块 (`src/dpeva/labeling`)，支持从 `dpdata` 结构数据到 DFT 输入文件的全自动生成、任务打包与提交。
+    *   **[重构]** 引入 `TaskPacker` 机制，支持将数万个微小 DFT 任务打包为少量 Slurm 作业，显著降低调度器压力。
+    *   **[增强]** 实现了智能的 `ResubmissionStrategy`，支持基于参数梯度（如 `mixing_beta` 衰减）的自动收敛修正。
+    *   **[数据]** 新增 `AbacusPostProcessor`，支持内聚能（Cohesive Energy）计算、自动参考能量拟合及多维度数据清洗。
+    *   **[配置]** 在 `config.json` 中显式暴露 `ref_energies` 和 `cleaning_thresholds`，遵循“显式优于隐式”原则。
+    *   **[架构]** 完成 Labeling 模块的 DDD 架构落地，通过 `LabelingManager` 和 `LabelingWorkflow` 实现全链路编排。
+
+#### **Legacy Era (v0.4.x)**
+*(2026-02-14 ~ 2026-03-04)*
+
+在此阶段，项目完成了核心架构的稳固与工具链的完善。主要成就包括：
+*   **v0.4.10 - v0.4.12**: 修复了安全漏洞，增强了 `CollectionWorkflow` 的异常检测，并引入了 `audit.py` 代码审计工具。
+*   **v0.4.1 - v0.4.9**: 确立了领域驱动设计 (DDD) 架构，完成了 Inference、Collection 和 Training 工作流的重构，并实现了 Slurm 后端的双模调度与并行优化。
+
+#### **Legacy Era (v2.x)**
      *   **[修复]** 增强了 `CollectionWorkflow` 的异常检测机制。在所有候选系统导出失败（Zero-Export）的极端情况下，显式抛出 `RuntimeError` 并输出 Critical 日志，防止任务“静默成功”导致下游流水线异常。
      *   **[文档]** 优化了 `release-helper` 技能文档，明确了基于 Git Log 的变更回溯与追加式文档更新流程，废弃了过时的 CHANGELOG 维护方式。
  

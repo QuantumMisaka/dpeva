@@ -75,17 +75,41 @@ def modify_input_file(filepath, changes):
 def main():
     parser = argparse.ArgumentParser(description="Batch modify ABACUS INPUT files.")
     parser.add_argument("root_dir", help="Root directory to search for INPUT files")
-    parser.add_argument("--beta", type=float, default=0.4, help="mixing_beta value (default: 0.4)")
-    parser.add_argument("--ndim", type=int, default=20, help="mixing_ndim value (default: 20)")
+    parser.add_argument("--beta", type=float, help="mixing_beta value")
+    parser.add_argument("--ndim", type=int, help="mixing_ndim value")
+    parser.add_argument("--scf_nmax", type=int, help="scf_nmax value")
+    parser.add_argument("--scf_os_stop", help="scf_os_stop value")
+    parser.add_argument("--scf_os_ndim", type=int, help="scf_os_ndim value")
+    parser.add_argument("--set", action='append', help="Set arbitrary key=value. E.g. --set key=value")
     parser.add_argument("--pattern", default=None, help="Glob pattern to match file paths relative to root_dir (e.g. '*/*/N_*/INPUT')")
     
     args = parser.parse_args()
     
     root_dir = os.path.abspath(args.root_dir)
-    changes = {
-        "mixing_beta": str(args.beta),
-        "mixing_ndim": str(args.ndim)
-    }
+    changes = {}
+    
+    if args.beta is not None:
+        changes["mixing_beta"] = str(args.beta)
+    if args.ndim is not None:
+        changes["mixing_ndim"] = str(args.ndim)
+    if args.scf_nmax is not None:
+        changes["scf_nmax"] = str(args.scf_nmax)
+    if args.scf_os_stop is not None:
+        changes["scf_os_stop"] = str(args.scf_os_stop)
+    if args.scf_os_ndim is not None:
+        changes["scf_os_ndim"] = str(args.scf_os_ndim)
+
+    if args.set:
+        for s in args.set:
+            if '=' in s:
+                k, v = s.split('=', 1)
+                changes[k.strip()] = v.strip()
+            else:
+                print(f"Warning: Ignoring invalid set argument '{s}'. Must be KEY=VALUE.")
+
+    if not changes:
+        print("No changes specified. Use --beta, --ndim, --scf_nmax, --scf_os_stop, --scf_os_ndim or --set.")
+        return
     
     print(f"Searching in: {root_dir}")
     print(f"Applying changes: {changes}")

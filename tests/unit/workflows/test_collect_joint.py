@@ -94,6 +94,12 @@ class TestCollectionWorkflowJoint:
             "full_pca_features": np.random.rand(1, 2)
         }
         
+        # Mock load_systems for export phase
+        mock_sys = MagicMock()
+        mock_sys.target_name = "c1"
+        mock_sys.__len__.return_value = 1
+        mock_load_sys.return_value = [mock_sys]
+
         # Patch load_descriptors on IOManager
         with patch("dpeva.io.collection.CollectionIOManager.load_descriptors") as mock_load:
             # First call (candidate), Second call (training)
@@ -136,14 +142,15 @@ class TestCollectionWorkflowJoint:
         os.makedirs(mock_config["desc_dir"], exist_ok=True)
         os.makedirs(mock_config["testdata_dir"], exist_ok=True)
     
-        mock_config.pop("training_desc_dir")
+        if "training_desc_dir" in mock_config:
+             mock_config.pop("training_desc_dir")
         # Ensure we are not in joint mode config-wise
         
         # We need to mock _log_initial_stats, DIRECTSampler, UQVisualizer, load_systems, load_descriptors
         with patch("dpeva.workflows.collect.CollectionWorkflow._log_initial_stats"), \
              patch("dpeva.sampling.manager.DIRECTSampler") as mock_sampler, \
              patch("dpeva.workflows.collect.UQVisualizer"), \
-             patch("dpeva.io.collection.load_systems"), \
+             patch("dpeva.io.collection.load_systems") as mock_load_sys, \
              patch("dpeva.uncertain.manager.UQManager.load_predictions") as mock_load_preds, \
              patch("dpeva.uncertain.manager.UQManager.run_analysis") as mock_run_analysis, \
              patch("dpeva.uncertain.manager.UQManager.run_filtering") as mock_filtering, \
@@ -172,6 +179,12 @@ class TestCollectionWorkflowJoint:
             
             mock_load_desc.return_value = (["c1"], np.random.rand(1, 10))
             
+            # Mock load_systems for export phase
+            mock_sys = MagicMock()
+            mock_sys.target_name = "c1"
+            mock_sys.__len__.return_value = 1
+            mock_load_sys.return_value = [mock_sys]
+
             mock_sampler_instance = MagicMock()
             mock_sampler.return_value = mock_sampler_instance
             mock_sampler_instance.fit_transform.return_value = {

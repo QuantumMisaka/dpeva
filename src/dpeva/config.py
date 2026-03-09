@@ -38,6 +38,11 @@ from dpeva.constants import (
     DEFAULT_STEP2_SELECTION,
     DEFAULT_ANALYSIS_OUTPUT_DIR,
     FIG_DPI,
+    DEFAULT_LABELING_TASKS_PER_JOB,
+    DEFAULT_LABELING_KPT_CRITERIA,
+    DEFAULT_LABELING_VACUUM_THICKNESS,
+    DEFAULT_LABELING_CLEANING_THRESHOLDS,
+    DEFAULT_LABELING_ATTEMPT_PARAMS,
 )
 
 class SubmissionConfig(BaseModel):
@@ -163,6 +168,34 @@ class InferenceConfig(BaseWorkflowConfig):
     results_prefix: str = Field(DEFAULT_RESULTS_PREFIX, description="Output file prefix.")
     task_name: str = DEFAULT_INFER_TASK_NAME
     ref_energies: Dict[str, float] = Field(default_factory=dict, description="Reference energies per element for cohesive energy calculation.")
+
+class LabelingConfig(BaseWorkflowConfig):
+    """Configuration for Labeling Workflow (FP Calculation)."""
+    input_data_path: Path = Field(..., description="Path to input dataset (dpdata compatible).")
+    work_dir: Path = Field(..., description="Path to labeling working directory.")
+    
+    # FP Params
+    dft_params: Dict[str, Any] = Field(default_factory=dict, description="ABACUS INPUT parameters.")
+    pp_map: Dict[str, str] = Field(default_factory=dict, description="Pseudopotential mapping.")
+    orb_map: Dict[str, str] = Field(default_factory=dict, description="Orbital mapping.")
+    pp_dir: str = Field(..., description="Directory containing PP files.")
+    orb_dir: str = Field(..., description="Directory containing Orb files.")
+    
+    # Generation
+    kpt_criteria: int = Field(DEFAULT_LABELING_KPT_CRITERIA, gt=0)
+    vacuum_thickness: float = Field(DEFAULT_LABELING_VACUUM_THICKNESS, gt=0)
+    
+    # Packing
+    tasks_per_job: int = Field(DEFAULT_LABELING_TASKS_PER_JOB, gt=0, description="Number of tasks per packed job.")
+    
+    # Cleaning & Strategy
+    mag_map: Dict[str, float] = Field(default_factory=dict, description="Initial magnetic moments per element (e.g. {'Fe': 5.0})")
+    cleaning_thresholds: Dict[str, Optional[float]] = Field(default=DEFAULT_LABELING_CLEANING_THRESHOLDS)
+    attempt_params: List[Dict[str, Any]] = Field(default=DEFAULT_LABELING_ATTEMPT_PARAMS, description="Parameters for each attempt (index=0 is initial).")
+    ref_energies: Dict[str, float] = Field(default_factory=dict, description="Reference energies per element.")
+    
+    # Output format
+    output_format: str = Field(default="deepmd/npy", description="Output format for dataset (deepmd/npy or deepmd/npy/mixed)")
 
 class TrainingConfig(BaseWorkflowConfig):
     """Configuration for Training Workflow."""

@@ -33,6 +33,12 @@ class TestCollectionWorkflowDirectModes:
         os.makedirs(mock_config["desc_dir"], exist_ok=True)
         os.makedirs(mock_config["testdata_dir"], exist_ok=True)
         
+        # Mock load_systems for export phase
+        mock_sys = MagicMock()
+        mock_sys.target_name = "s"
+        mock_sys.__len__.return_value = 1
+        mock_load_sys.return_value = [mock_sys]
+
         # Mock load_descriptors via IOManager patch or simple return
         # Since we can't easily patch IOManager method on instance, we rely on patching load_systems if used,
         # OR we patch CollectionIOManager.load_descriptors
@@ -67,6 +73,12 @@ class TestCollectionWorkflowDirectModes:
         os.makedirs(mock_config["desc_dir"], exist_ok=True)
         os.makedirs(mock_config["testdata_dir"], exist_ok=True)
         
+        # Mock load_systems for export phase
+        mock_sys = MagicMock()
+        mock_sys.target_name = "s"
+        mock_sys.__len__.return_value = 1
+        mock_load_sys.return_value = [mock_sys]
+
         with patch("dpeva.io.collection.CollectionIOManager.load_descriptors") as mock_load_desc:
             mock_load_desc.return_value = (["s-0"], np.random.rand(1, 10))
             

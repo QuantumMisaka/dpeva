@@ -122,7 +122,7 @@ class TestCollectionIOManagerFull:
             mock_load.return_value = [sys_mock]
             
             manager.ensure_dirs()
-            manager.export_dpdata(str(testdata_dir), df_final, unique_systems)
+            counts = manager.export_dpdata(str(testdata_dir), df_final, unique_systems)
             
             # Verify calls
             # Sampled: 0, 2
@@ -131,3 +131,33 @@ class TestCollectionIOManagerFull:
             sys_mock.sub_system.assert_any_call([1, 3, 4])
             
             assert sub_mock.to_deepmd_npy.call_count == 2
+            assert counts == (1, 1, 2, 3)
+
+    def test_export_dpdata_preserves_hierarchy(self, manager, tmp_path):
+        testdata_dir = tmp_path / "testdata"
+        testdata_dir.mkdir()
+
+        sys_name = "alex-2d-1d-FeCOH/Fe0O0C1H5"
+        df_final = pd.DataFrame({"dataname": [f"{sys_name}-0"]})
+        unique_systems = [sys_name]
+
+        with patch("dpeva.io.collection.load_systems") as mock_load:
+            sys_mock = MagicMock()
+            sys_mock.target_name = sys_name
+            sys_mock.__len__.return_value = 2
+            sub_mock = MagicMock()
+            sys_mock.sub_system.return_value = sub_mock
+            mock_load.return_value = [sys_mock]
+
+            manager.ensure_dirs()
+            manager.export_dpdata(str(testdata_dir), df_final, unique_systems)
+
+            calls = [c.args[0] for c in sub_mock.to_deepmd_npy.call_args_list]
+            sampled_expected = os.path.join(
+                manager.dpdata_savedir, "sampled_dpdata", "alex-2d-1d-FeCOH", "Fe0O0C1H5"
+            )
+            other_expected = os.path.join(
+                manager.dpdata_savedir, "other_dpdata", "alex-2d-1d-FeCOH", "Fe0O0C1H5"
+            )
+            assert sampled_expected in calls
+            assert other_expected in calls
