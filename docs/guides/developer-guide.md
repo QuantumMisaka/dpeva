@@ -13,6 +13,7 @@ last-updated: 2026-03-09
 - Related:
   - 配置字段字典：/docs/reference/config_schema.md
   - 校验规则补充：/docs/reference/validation.md
+  - 上游软件与职责：/docs/reference/upstream-software.md
 
 * **版本**: 0.6.1
 * **生成日期**: 2026-03-09

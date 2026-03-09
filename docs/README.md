@@ -18,12 +18,14 @@ last-updated: 2026-03-09
 - 安装与环境准备：[installation.md](guides/installation.md)
 - Quickstart（最短路径跑通）：[quickstart.md](guides/quickstart.md)
 - CLI 使用指南：[cli.md](guides/cli.md)
+- 核心上游软件与职责：[upstream-software.md](reference/upstream-software.md)
 
 ### 1.2 开发者（要改代码/加功能/修Bug）
 
 - 开发流程标准与架构说明：[developer-guide.md](guides/developer-guide.md)
 - 配置字段权威参考（查表）：[config_schema.md](reference/config_schema.md)
 - 参数验证与约束补充：[validation.md](reference/validation.md)
+- 核心上游软件与职责：[upstream-software.md](reference/upstream-software.md)
 - Slurm 使用与排障：[slurm.md](guides/slurm.md)
 - 文档贡献指南：[contributing.md](policy/contributing.md)
 
@@ -66,4 +68,3 @@ last-updated: 2026-03-09
 | 审查日期 | 版本 | 审查人 | 状态 | 快速链接 |
 | :--- | :--- | :--- | :--- | :--- |
 | 2026-03-09 | v1.0 | Trae AI | Completed | [DocReview_20260309_v1.0.md](governance/reviews/DocReview_20260309_v1.0.md) |
-

@@ -18,3 +18,4 @@ last-updated: 2026-03-09
 > 请查看在线文档中的 [API Reference](../source/api/config.rst) 获取最新的配置字段说明（由 Pydantic 模型自动生成）。
 
 - [validation.md](validation.md): 参数校验与约束补充说明。
+- [upstream-software.md](upstream-software.md): 核心上游软件位置与功能分工。

@@ -50,6 +50,7 @@ For detailed configuration examples, see `examples/recipes/`.
 
 *   **Getting Started**: [Quickstart](docs/guides/quickstart.md) | [Installation](docs/guides/installation.md)
 *   **Reference**: [Config Schema](docs/reference/config-schema.md) | [CLI](docs/guides/cli.md)
+*   **Upstream**: [Upstream Software](docs/reference/upstream-software.md)
 *   **Developer**: [Developer Guide](docs/guides/developer-guide.md) | [Architecture](docs/architecture/README.md)
 *   **Governance**: [Policy](docs/policy/README.md) | [Roadmap](docs/plans/docs-governance-roadmap.md)
 
