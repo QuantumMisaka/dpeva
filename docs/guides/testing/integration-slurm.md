@@ -94,7 +94,7 @@ Collect 阶段也必须具备统一完成锚点。当前已在 [collect.py](/src
 
 参考：
 
-- ../../reference/config-schema.md
+- ../../reference/config_schema.md
 
 ## 6. 运行说明（面向 Slurm 环境）
 

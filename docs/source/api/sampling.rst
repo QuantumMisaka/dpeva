@@ -1,4 +1,5 @@
-# Sampling API
+Sampling API
+============
 
 .. automodule:: dpeva.sampling
    :members:

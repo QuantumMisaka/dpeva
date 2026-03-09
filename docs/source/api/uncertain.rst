@@ -1,4 +1,5 @@
-# Uncertainty API
+Uncertainty API
+===============
 
 .. automodule:: dpeva.uncertain
    :members:

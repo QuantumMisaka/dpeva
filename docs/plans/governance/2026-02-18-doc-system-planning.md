@@ -20,7 +20,7 @@ last-updated: 2026-03-09
   - [quickstart.md](/docs/guides/quickstart.md)
   - `guides/testing/*`（Slurm 集成测试专题）
 - `docs/reference/`（字段字典与校验）
-  - [config-schema.md](/docs/reference/config-schema.md)
+  - [config_schema.md](/docs/reference/config_schema.md)
   - [validation.md](/docs/reference/validation.md)
   - 字段/校验的单一权威来源为 `docs/reference/*`
 - `docs/architecture/`（架构与决策）
@@ -90,7 +90,7 @@ last-updated: 2026-03-09
 - 问题：示例字段容易随版本变更过期；测试命令路径历史不一致。
 - 建议：
   - Quickstart 只保留“最小配置 + 链接到 docs/guides/quickstart.md”
-  - 示例配置字段与 `docs/reference/config-schema.md` 建立强链接
+  - 示例配置字段与 `docs/reference/config_schema.md` 建立强链接
 
 ### 4.2 Developer Guide（主线）
 
@@ -101,7 +101,7 @@ last-updated: 2026-03-09
 
 ### 4.3 reference（字段字典与校验）
 
-- 建议将 `config-schema.md` 定义为单一权威来源，并逐步自动化生成：
+- 建议将 `config_schema.md` 定义为单一权威来源，并逐步自动化生成：
   - 由 Pydantic 模型提取字段、类型、默认值、约束
   - 文档仅补充“语义解释/示例/迁移说明”
 

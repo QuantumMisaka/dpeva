@@ -34,8 +34,8 @@ last-updated: 2026-03-09
 
 | 类别 | 发现问题 | 修复动作 | 影响 |
 |---|---|---|---|
-| Reference | `training_mode` 默认值与代码不一致 | 将默认值改为 `init` 并补齐 `template_path` 字段说明：`/docs/reference/config-schema.md` | 避免用户误以为默认继续训练 |
-| Reference | `uq_trust_mode` 可选值与校验说明不一致 | 将枚举补齐 `no_filter` 并同步校验说明：`/docs/reference/config-schema.md`、`/docs/reference/validation.md` | 避免信任区筛选开关行为不明 |
+| Reference | `training_mode` 默认值与代码不一致 | 将默认值改为 `init` 并补齐 `template_path` 字段说明：`/docs/reference/config_schema.md` | 避免用户误以为默认继续训练 |
+| Reference | `uq_trust_mode` 可选值与校验说明不一致 | 将枚举补齐 `no_filter` 并同步校验说明：`/docs/reference/config_schema.md`、`/docs/reference/validation.md` | 避免信任区筛选开关行为不明 |
 | Docs | 项目内 Markdown 链接存在 `file:///...` 与目录相对路径 | 全量标准化为根相对路径（以 `/` 开头），并删除旧入口文档避免多入口分叉 | 提升可移植性与渲染一致性 |
 
 ## 4. 风险项（需进入 Issue 队列，可能阻塞发布）

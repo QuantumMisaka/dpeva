@@ -31,7 +31,7 @@ last-updated: 2026-03-09
 | [integration-slurm-plan.md](/docs/archive/v0.6.0/plans/integration-slurm-plan.md) | Plan/Guide | 集成测试里程碑、DoD、交付物与异常处理策略。 |
 | [integration-config-templates.md](/docs/guides/testing/integration-config-templates.md) | Guide | 模板索引与约定、输入输出语义、异常处理与变更记录。 |
 | [multi-datapool-artifacts.md](/docs/guides/testing/multi-datapool-artifacts.md) | Report/Guide | 生产目录I/O拆解、Workflow映射、关键观察、异常处理与变更记录。 |
-| [config-schema.md](/docs/reference/config-schema.md) | Reference | 配置字段字典迁移落点（作为单一权威来源）。 |
+| [config_schema.md](/docs/reference/config_schema.md) | Reference | 配置字段字典迁移落点（作为单一权威来源）。 |
 | [validation.md](/docs/reference/validation.md) | Reference | 校验规则迁移落点（作为单一权威来源）。 |
 | [maintenance.md](/docs/policy/maintenance.md) | Policy | 文档版本维护、Owner、触发规则、Review与过期治理。 |
 | [quality.md](/docs/policy/quality.md) | Policy | 文档质量评分维度、元信息规范与类型验收清单。 |

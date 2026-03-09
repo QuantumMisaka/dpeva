@@ -22,7 +22,7 @@
    :maxdepth: 2
    :caption: Reference
 
-   reference/config-schema
+   reference/config_schema
    reference/validation
 
 .. toctree::

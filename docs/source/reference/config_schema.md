@@ -1,0 +1,1 @@
+../../../reference/config_schema.md

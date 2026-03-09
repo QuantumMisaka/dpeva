@@ -63,7 +63,7 @@ last-updated: 2026-03-09
 
 ### M2：最小化配置模板沉淀
 
-- 从 `docs/reference/config-schema.md` 与 `examples/recipes/*/config*.json` 提取每个 Workflow 的最小字段集。
+- 从 `docs/reference/config_schema.md` 与 `examples/recipes/*/config*.json` 提取每个 Workflow 的最小字段集。
 - 统一约定集成测试中的路径解析策略（相对路径 + 自动解析）。
 - 统一 Slurm 配置字段（分区、CPU/GPU、walltime、日志文件名）。
 

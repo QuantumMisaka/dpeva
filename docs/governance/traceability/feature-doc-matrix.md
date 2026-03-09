@@ -29,13 +29,13 @@ last-updated: 2026-03-09
 | 功能点 | 代码实现 | 文档入口 |
 |---|---|---|
 | 路径解析与提交后端 | `/src/dpeva/utils/config.py`、`/src/dpeva/config.py` | `/docs/guides/configuration.md` |
-| `SubmissionConfig` | `/src/dpeva/config.py` | `/docs/reference/config-schema.md`、`/docs/reference/validation.md` |
-| `TrainingConfig` | `/src/dpeva/config.py` | `/docs/reference/config-schema.md`、`/docs/reference/validation.md` |
-| `InferenceConfig` | `/src/dpeva/config.py` | `/docs/reference/config-schema.md`、`/docs/reference/validation.md` |
-| `LabelingConfig` | `/src/dpeva/config.py` | `/docs/reference/config-schema.md`、`/docs/reference/validation.md` |
-| `FeatureConfig` | `/src/dpeva/config.py` | `/docs/reference/config-schema.md`、`/docs/reference/validation.md` |
-| `CollectionConfig` | `/src/dpeva/config.py` | `/docs/reference/config-schema.md`、`/docs/reference/validation.md` |
-| `AnalysisConfig` | `/src/dpeva/config.py` | `/docs/reference/config-schema.md`、`/docs/reference/validation.md` |
+| `SubmissionConfig` | `/src/dpeva/config.py` | `/docs/reference/config_schema.md`、`/docs/reference/validation.md` |
+| `TrainingConfig` | `/src/dpeva/config.py` | `/docs/reference/config_schema.md`、`/docs/reference/validation.md` |
+| `InferenceConfig` | `/src/dpeva/config.py` | `/docs/reference/config_schema.md`、`/docs/reference/validation.md` |
+| `LabelingConfig` | `/src/dpeva/config.py` | `/docs/reference/config_schema.md`、`/docs/reference/validation.md` |
+| `FeatureConfig` | `/src/dpeva/config.py` | `/docs/reference/config_schema.md`、`/docs/reference/validation.md` |
+| `CollectionConfig` | `/src/dpeva/config.py` | `/docs/reference/config_schema.md`、`/docs/reference/validation.md` |
+| `AnalysisConfig` | `/src/dpeva/config.py` | `/docs/reference/config_schema.md`、`/docs/reference/validation.md` |
 
 ## 3. 工作流完成标记与可观测性（对外约定）
 

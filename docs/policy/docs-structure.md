@@ -24,7 +24,7 @@ last-updated: 2026-03-09
 ## 2. 命名规范
 
 - 目录名：全小写，短语用 `-` 连接（如 `guides/testing`）。
-- 主文档：语义清晰、稳定（如 `quickstart.md`、`config-schema.md`）。
+- 主文档：语义清晰、稳定（如 `quickstart.md`、`config_schema.md`）。
 - 审计/计划类报告：使用 `YYYY-MM-DD-<topic>.md`（例如 `2026-02-19-doc-accuracy-audit.md`）。
 - 禁止在仓库内保留旧入口跳转页；旧路径兼容性应通过站点侧 301 或发布说明解决。
 
@@ -60,7 +60,7 @@ last-updated: 2026-03-09
 │       └── multi-datapool-artifacts.md
 ├── reference
 │   ├── README.md
-│   ├── config-schema.md
+│   ├── config_schema.md
 │   └── validation.md
 ├── architecture
 │   ├── README.md

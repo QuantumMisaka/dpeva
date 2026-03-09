@@ -22,7 +22,7 @@ last-updated: 2026-03-09
 ### 1.2 开发者（要改代码/加功能/修Bug）
 
 - 开发流程标准与架构说明：[developer-guide.md](/docs/guides/developer-guide.md)
-- 配置字段权威参考（查表）：[config-schema.md](/docs/reference/config-schema.md)
+- 配置字段权威参考（查表）：[config_schema.md](/docs/reference/config_schema.md)
 - 参数验证与约束补充：[validation.md](/docs/reference/validation.md)
 - Slurm 使用与排障：[slurm.md](/docs/guides/slurm.md)
 - 文档贡献指南：[contributing.md](/docs/policy/contributing.md)

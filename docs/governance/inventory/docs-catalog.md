@@ -35,7 +35,7 @@ last-updated: 2026-03-09
 
 | Document | Category | Audience | Cadence | Status | Tags | 摘要（关键信息点） |
 |---|---|---|---|---|---|---|
-| [config-schema.md](/docs/reference/config-schema.md) | Reference | Developers | Medium | active | config\|pydantic\|schema | Workflow 配置字段字典（通用字段、Train/Infer/Feature/Collect/Analysis），包括类型/默认值/说明/约束。 |
+| [config_schema.md](/docs/reference/config_schema.md) | Reference | Developers | Medium | active | config\|pydantic\|schema | Workflow 配置字段字典（通用字段、Train/Infer/Feature/Collect/Analysis），包括类型/默认值/说明/约束。 |
 | [validation.md](/docs/reference/validation.md) | Reference | Developers | Medium | active | validation\|constraints | Pydantic 参数校验逻辑补充：范围约束、跨字段依赖、env_setup 格式化、路径存在性校验。 |
 | [reference/README.md](/docs/reference/README.md) | Policy | Developers | Medium | active | reference\|single-source | Reference 分层说明与迁移建议入口。 |
 
