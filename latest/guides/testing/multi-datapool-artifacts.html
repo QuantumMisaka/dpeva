@@ -1,0 +1,744 @@
+
+<!DOCTYPE html>
+
+
+<html lang="zh-CN" data-content_root="../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>test-for-multiple-datapool 生产目录输入输出分析 &#8212; DP-EVA Documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/sphinx-book-theme.css?v=eba8b062" />
+    <link rel="stylesheet" type="text/css" href="../../_static/autodoc_pydantic.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="../../_static/documentation_options.js?v=6acd3760"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script src="../../_static/translations.js?v=beaddf03"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'guides/testing/multi-datapool-artifacts';</script>
+    <link rel="index" title="索引" href="../../genindex.html" />
+    <link rel="search" title="搜索" href="../../search.html" />
+    <link rel="next" title="开发计划 (Development Plans)" href="../../plans/README.html" />
+    <link rel="prev" title="DP-EVA 集成测试设计与交付报告（Slurm + Multi DataPool）" href="integration-slurm.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="zh-CN"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">DP-EVA Documentation</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="搜索" aria-label="搜索" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">搜索</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">安装与环境准备（Installation）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quickstart（最短路径跑通）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cli.html">CLI 使用指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../configuration.html">配置编写指南（Configuration）</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">User Guides</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../slurm.html">Slurm 使用与排障指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../troubleshooting.html">Troubleshooting（常见问题与排查）</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../reference/index.html">Reference</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../reference/README.html">Reference（权威参考）</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../reference/validation.html">参数校验与约束（Validation Rules）</a></li>
+
+<li class="toctree-l2"><a class="reference internal" href="../../reference/upstream-software.html">上游软件与核心依赖（Upstream Software）</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Developer Guide</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../developer-guide.html">DP-EVA 项目开发文档</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../architecture/README.html">Architecture（系统结构）</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../api/config.html">Configuration Reference</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../api/config/submission.html">Common &amp; Submission Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/config/feature.html">Feature Generation Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/config/training.html">Training Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/config/inference.html">Inference Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/config/collection.html">Collection (Active Learning) Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/config/labeling.html">Labeling Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/config/analysis.html">Analysis Configuration</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/workflows.html">Workflows API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/labeling.html">Labeling API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/sampling.html">Sampling API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/uncertain.html">Uncertainty API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/submission.html">Submission API</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Governance</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../policy/README.html">Policy（制度与规范）</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../plans/governance/index.html">Doc System Planning</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../plans/governance/README.html">README</a></li>
+</ul>
+</details></li>
+</ul>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../architecture/design-report.html">DP-EVA 项目设计模式与架构分析报告</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../architecture/decisions/README.html">README</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../architecture/decisions/2026-02-04-deepmd-dependency.html">ADR: DeepMD-kit 依赖管理策略</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../README.html">Guides（操作指南）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../docs-governance-quickstart.html">文档治理快速上手（开发者与 AI）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../deployment.html">GitHub Actions 文档部署指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developer/README.html">Developer Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developer/config-docs-maintenance.html">变量说明文档维护指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="README.html">Testing（测试指南）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="integration-config-templates.html">DP-EVA 集成测试最小配置模板（Slurm）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="integration-slurm.html">DP-EVA 集成测试设计与交付报告（Slurm + Multi DataPool）</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">test-for-multiple-datapool 生产目录输入输出分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../plans/README.html">开发计划 (Development Plans)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../policy/contributing.html">文档贡献指南（Contributing）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../policy/docs-structure.html">文档结构与命名规范（Docs Structure &amp; Naming）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../policy/maintenance.html">文档版本管理与维护机制（Maintenance）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../policy/quality.html">文档质量标准（Documentation Quality Standard）</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="下载此页面">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../../_sources/guides/testing/multi-datapool-artifacts.md" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="下载源文件"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.md</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="列印成 PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="全屏模式"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="搜索" aria-label="搜索" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>test-for-multiple-datapool 生产目录输入输出分析</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> 目录 </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">0. 相关方</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">1. 目录结构概览（按语义分组）</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow">2. Workflow ↔ 输入/输出资产映射</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#featureworkflow">2.1 FeatureWorkflow（描述符生成）</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#trainingworkflow-ensemble">2.2 TrainingWorkflow（Ensemble 训练）</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#inferenceworkflow">2.3 InferenceWorkflow（候选集合推理）</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#collectionworkflow-uq-filtering-sampling-export">2.4 CollectionWorkflow（UQ + Filtering + Sampling + Export）</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#analysisworkflow">2.5 AnalysisWorkflow（结果统计与可视化）</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">3. 用于集成测试编排的关键观察</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">4. 异常处理</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">5. 变更记录</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="test-for-multiple-datapool">
+<h1>test-for-multiple-datapool 生产目录输入输出分析<a class="headerlink" href="#test-for-multiple-datapool" title="Link to this heading">#</a></h1>
+<ul class="simple">
+<li><p>Status: active</p></li>
+<li><p>Audience: Developers</p></li>
+<li><p>Last-Updated: 2026-02-18</p></li>
+</ul>
+<p>目标目录：<code class="docutils literal notranslate"><span class="pre">/test/test-for-multiple-datapool</span></code> (File missing)</p>
+<p>本文档用于把生产级运行产物拆解为“输入资产 / 输出资产”，并将其映射到 DP-EVA 各 Workflow 的配置字段（对照 <a class="reference external" href="https://github.com/QuantumMisaka/dpeva/tree/main/examples/recipes">examples/recipes</a>）。</p>
+<section id="id1">
+<h2>0. 相关方<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p>开发者：维护 workflow 的输入输出约定与集成测试断言</p></li>
+<li><p>使用者：理解生产目录语义并定位产物位置</p></li>
+<li><p>平台维护：保障 Slurm/DeepMD 环境可复现</p></li>
+</ul>
+</section>
+<section id="id2">
+<h2>1. 目录结构概览（按语义分组）<a class="headerlink" href="#id2" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">other_dpdata_all/</span></code></p>
+<ul>
+<li><p>多数据池候选集合（Multi Pool），目录结构为 <code class="docutils literal notranslate"><span class="pre">Pool/System/set.000/*</span></code>。</p></li>
+<li><p>典型候选 system 可能只包含 <code class="docutils literal notranslate"><span class="pre">coord.npy/box.npy/type.raw/type_map.raw</span></code>（无能量/力标注），用于推理与不确定性评估。</p></li>
+</ul>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">sampled_dpdata/</span></code></p>
+<ul>
+<li><p>训练用标注数据（Single Pool 的平铺 system 目录），目录结构为 <code class="docutils literal notranslate"><span class="pre">System/set.000/*</span></code>。</p></li>
+<li><p>典型训练 system 包含 <code class="docutils literal notranslate"><span class="pre">energy.npy/force.npy/virial.npy</span></code> 等标注数据。</p></li>
+</ul>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">desc_pool/</span></code></p>
+<ul>
+<li><p>候选集合（<code class="docutils literal notranslate"><span class="pre">other_dpdata_all</span></code>）对应的描述符输出（Feature Workflow 的产物）。</p></li>
+<li><p>目录结构为 <code class="docutils literal notranslate"><span class="pre">Pool/System.npy</span></code>，system 名称与候选 dpdata 中的 <code class="docutils literal notranslate"><span class="pre">System</span></code> 目录名一致。</p></li>
+</ul>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">desc_train/</span></code></p>
+<ul>
+<li><p>训练集合（<code class="docutils literal notranslate"><span class="pre">sampled_dpdata</span></code>）对应的描述符输出（Feature Workflow 的产物）。</p></li>
+<li><p>目录结构为 <code class="docutils literal notranslate"><span class="pre">System.npy</span></code>（平铺）。</p></li>
+</ul>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">0/</span> <span class="pre">1/</span> <span class="pre">2/</span> <span class="pre">3/</span></code></p>
+<ul>
+<li><p>Ensemble 训练输出目录（Training Workflow 的产物），每个目录代表一个 seed / 一个模型实例。</p></li>
+<li><p>典型文件：</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">input.json</span></code>：DeepMD-kit <code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">train</span></code> 输入（训练超参、数据路径等）。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">model.ckpt.pt</span></code> / <code class="docutils literal notranslate"><span class="pre">model.ckpt-*.pt</span></code>：训练权重（推理输入）。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">lcurve.out</span></code>：训练曲线。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">test_val/</span></code>：推理输出目录（Inference Workflow 的产物），包含 <code class="docutils literal notranslate"><span class="pre">results.e.out/results.f.out/...</span></code> 与 <code class="docutils literal notranslate"><span class="pre">test.log</span></code>。</p></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">dpeva_uq_result/</span></code></p>
+<ul>
+<li><p>数据采集与筛选（Collection Workflow）的输出目录（以 <code class="docutils literal notranslate"><span class="pre">root_savedir</span></code> 命名）。</p></li>
+<li><p>典型产物：</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">dataframe/*.csv</span></code>：UQ/描述符/采样过程的中间与最终表格。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">view/*.png</span></code>：UQ 分布、PCA 覆盖度等可视化。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">dpdata/sampled_dpdata/</span></code>：筛选出的样本（保持 Multi Pool 结构）。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">dpdata/other_dpdata/</span></code>：未被选中的候选样本集合（保持 Multi Pool 结构）。</p></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="workflow">
+<h2>2. Workflow ↔ 输入/输出资产映射<a class="headerlink" href="#workflow" title="Link to this heading">#</a></h2>
+<section id="featureworkflow">
+<h3>2.1 FeatureWorkflow（描述符生成）<a class="headerlink" href="#featureworkflow" title="Link to this heading">#</a></h3>
+<p>输入：</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">FeatureConfig.data_path</span></code></p>
+<ul>
+<li><p>候选描述符：指向 <code class="docutils literal notranslate"><span class="pre">other_dpdata_all/</span></code></p></li>
+<li><p>训练描述符：指向 <code class="docutils literal notranslate"><span class="pre">sampled_dpdata/</span></code></p></li>
+</ul>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">FeatureConfig.model_path</span></code></p>
+<ul>
+<li><p>用于 <code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">eval-desc</span></code> 的模型（生产目录中可见 <code class="docutils literal notranslate"><span class="pre">DPA-3.1-3M.pt</span></code> / 或任意可用模型）。</p></li>
+</ul>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">FeatureConfig.model_head</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">submission.backend=&quot;slurm&quot;</span></code></p></li>
+</ul>
+<p>输出：</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">FeatureConfig.savedir</span></code></p>
+<ul>
+<li><p>候选：<code class="docutils literal notranslate"><span class="pre">desc_pool/</span></code>（Multi Pool 输出，<code class="docutils literal notranslate"><span class="pre">Pool/System.npy</span></code>）</p></li>
+<li><p>训练：<code class="docutils literal notranslate"><span class="pre">desc_train/</span></code>（Single Pool 输出，<code class="docutils literal notranslate"><span class="pre">System.npy</span></code>）</p></li>
+</ul>
+</li>
+</ul>
+<p>参考配置：</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://github.com/QuantumMisaka/dpeva/blob/main/examples/recipes/feature_generation/config_feature.json">config_feature.json</a></p></li>
+</ul>
+</section>
+<section id="trainingworkflow-ensemble">
+<h3>2.2 TrainingWorkflow（Ensemble 训练）<a class="headerlink" href="#trainingworkflow-ensemble" title="Link to this heading">#</a></h3>
+<p>输入：</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">TrainingConfig.training_data_path</span></code>：指向 <code class="docutils literal notranslate"><span class="pre">sampled_dpdata/</span></code>（需要包含标注能量/力等）</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">TrainingConfig.input_json_path</span></code>：DeepMD-kit 训练输入，例如生产目录内各模型下的 <code class="docutils literal notranslate"><span class="pre">input.json</span></code></p>
+<ul>
+<li><p>生产 <code class="docutils literal notranslate"><span class="pre">input.json</span></code> 内 <code class="docutils literal notranslate"><span class="pre">training.training_data.systems</span></code> 指向 <code class="docutils literal notranslate"><span class="pre">../sampled_dpdata</span></code></p></li>
+</ul>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">TrainingConfig.base_model_path</span></code>：预训练模型（例如 <code class="docutils literal notranslate"><span class="pre">DPA-3.1-3M.pt</span></code>）</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">TrainingConfig.num_models</span></code>：对应输出子目录数量（生产为 4，对应 <code class="docutils literal notranslate"><span class="pre">0..3/</span></code>）</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">TrainingConfig.model_head</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">submission.backend=&quot;slurm&quot;</span></code></p></li>
+</ul>
+<p>输出：</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">work_dir/0..N-1/</span></code></p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">model.ckpt.pt</span></code>、<code class="docutils literal notranslate"><span class="pre">checkpoint</span></code>、<code class="docutils literal notranslate"><span class="pre">lcurve.out</span></code> 等</p></li>
+</ul>
+</li>
+</ul>
+<p>参考配置：</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://github.com/QuantumMisaka/dpeva/blob/main/examples/recipes/training/config_train.json">config_train.json</a></p></li>
+</ul>
+</section>
+<section id="inferenceworkflow">
+<h3>2.3 InferenceWorkflow（候选集合推理）<a class="headerlink" href="#inferenceworkflow" title="Link to this heading">#</a></h3>
+<p>输入：</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">InferenceConfig.data_path</span></code>：指向 <code class="docutils literal notranslate"><span class="pre">other_dpdata_all/</span></code>（候选集合，可无标注）</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">InferenceConfig.task_name</span></code>：生产目录中为 <code class="docutils literal notranslate"><span class="pre">test_val/</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">work_dir</span></code>：训练输出所在目录；推理会扫描 <code class="docutils literal notranslate"><span class="pre">0..N-1/</span></code> 并提交 <code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">test</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">InferenceConfig.model_head</span></code>（如使用 Frozen/Head 模式）</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">submission.backend=&quot;slurm&quot;</span></code></p></li>
+</ul>
+<p>输出：</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">work_dir/&lt;i&gt;/&lt;task_name&gt;/</span></code></p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">results.e.out/results.f.out/results.v.out</span></code> 等</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">test.log</span></code>：<code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">test</span></code> 过程日志（可用于定位测试数据扫描情况）</p></li>
+</ul>
+</li>
+</ul>
+<p>参考配置：</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://github.com/QuantumMisaka/dpeva/blob/main/examples/recipes/inference/config_infer.json">config_infer.json</a></p></li>
+</ul>
+</section>
+<section id="collectionworkflow-uq-filtering-sampling-export">
+<h3>2.4 CollectionWorkflow（UQ + Filtering + Sampling + Export）<a class="headerlink" href="#collectionworkflow-uq-filtering-sampling-export" title="Link to this heading">#</a></h3>
+<p>输入（核心）：</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">CollectionConfig.desc_dir</span></code>：候选描述符目录 <code class="docutils literal notranslate"><span class="pre">desc_pool/</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">CollectionConfig.testdata_dir</span></code>：候选 dpdata 目录 <code class="docutils literal notranslate"><span class="pre">other_dpdata_all/</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">CollectionConfig.testing_dir</span></code>：推理输出子目录名 <code class="docutils literal notranslate"><span class="pre">test_val/</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">CollectionConfig.results_prefix</span></code>：推理结果前缀 <code class="docutils literal notranslate"><span class="pre">results</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">CollectionConfig.root_savedir</span></code>：输出目录名，例如生产目录 <code class="docutils literal notranslate"><span class="pre">dpeva_uq_result/</span></code></p></li>
+<li><p>采样参数（例如 <code class="docutils literal notranslate"><span class="pre">direct_n_clusters/direct_k</span></code> 或 <code class="docutils literal notranslate"><span class="pre">sampler_type=&quot;2-direct&quot;</span></code> 等）</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">submission.backend=&quot;slurm&quot;</span></code>（生产配置中用 CPU 队列执行 collect）</p></li>
+</ul>
+<p>输入（联合采样 Joint Sampling，可选）：</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">CollectionConfig.training_data_dir</span></code>：训练 dpdata 目录 <code class="docutils literal notranslate"><span class="pre">sampled_dpdata/</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">CollectionConfig.training_desc_dir</span></code>：训练描述符目录 <code class="docutils literal notranslate"><span class="pre">desc_train/</span></code></p></li>
+</ul>
+<p>输出：</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;root_savedir&gt;/dataframe/*.csv</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;root_savedir&gt;/view/*.png</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;root_savedir&gt;/dpdata/sampled_dpdata/&lt;Pool&gt;/&lt;System&gt;/...</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;root_savedir&gt;/dpdata/other_dpdata/&lt;Pool&gt;/&lt;System&gt;/...</span></code></p></li>
+</ul>
+<p>参考配置：</p>
+<ul class="simple">
+<li><p>普通模式：<code class="docutils literal notranslate"><span class="pre">/examples/recipes/collection/config_multi_normal.json</span></code> (File missing)</p></li>
+<li><p>联合模式：<code class="docutils literal notranslate"><span class="pre">/examples/recipes/collection/config_multi_joint.json</span></code> (File missing)</p></li>
+</ul>
+</section>
+<section id="analysisworkflow">
+<h3>2.5 AnalysisWorkflow（结果统计与可视化）<a class="headerlink" href="#analysisworkflow" title="Link to this heading">#</a></h3>
+<p>输入：</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">AnalysisConfig.result_dir</span></code>：指向某一个模型的推理输出目录，例如 <code class="docutils literal notranslate"><span class="pre">0/test_val/</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">AnalysisConfig.type_map</span></code>：元素列表（与体系一致）</p></li>
+</ul>
+<p>输出：</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">AnalysisConfig.output_dir</span></code>：分析产物目录（图表/统计汇总）</p></li>
+</ul>
+<p>参考配置：</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">/examples/recipes/analysis/config.json</span></code> (File missing)</p></li>
+</ul>
+</section>
+</section>
+<section id="id3">
+<h2>3. 用于集成测试编排的关键观察<a class="headerlink" href="#id3" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p>候选集合（<code class="docutils literal notranslate"><span class="pre">other_dpdata_all</span></code>）与训练集合（<code class="docutils literal notranslate"><span class="pre">sampled_dpdata</span></code>）在“是否包含标注”上语义不同：</p>
+<ul>
+<li><p>训练数据需要 <code class="docutils literal notranslate"><span class="pre">energy/force/virial</span></code> 等，用于 <code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">train</span></code></p></li>
+<li><p>候选数据可只包含结构信息，用于 <code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">test</span></code> 生成预测并供 UQ 计算</p></li>
+</ul>
+</li>
+<li><p>描述符输出命名规则与输入目录结构一致：</p>
+<ul>
+<li><p>Multi Pool：输出 <code class="docutils literal notranslate"><span class="pre">Pool/System.npy</span></code></p></li>
+<li><p>Single Pool：输出 <code class="docutils literal notranslate"><span class="pre">System.npy</span></code></p></li>
+</ul>
+</li>
+<li><p>集成测试链路应以 <code class="docutils literal notranslate"><span class="pre">DPEVA_TAG:</span> <span class="pre">WORKFLOW_FINISHED</span></code> 作为每一步结束锚点；编排器通过监控 Slurm 输出日志定位完成节点再启动下一步</p></li>
+</ul>
+</section>
+<section id="id4">
+<h2>4. 异常处理<a class="headerlink" href="#id4" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p>目录结构与本文档不一致：以实际目录为准，并在本文件补充“差异说明”（不要覆盖式修改历史结论）。</p></li>
+<li><p>训练数据缺标注：确认 <code class="docutils literal notranslate"><span class="pre">sampled_dpdata</span></code> 的 <code class="docutils literal notranslate"><span class="pre">energy/force/virial</span></code> 等是否存在。</p></li>
+<li><p>候选池缺 <code class="docutils literal notranslate"><span class="pre">type_map.raw</span></code>：优先补齐基础文件，否则元素映射可能错误。</p></li>
+</ul>
+</section>
+<section id="id5">
+<h2>5. 变更记录<a class="headerlink" href="#id5" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p>2026-02-18：补齐生产目录 I/O 拆解与 Workflow 配置映射，并作为集成测试专题附录。</p></li>
+</ul>
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="integration-slurm.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">上一页</p>
+        <p class="prev-next-title">DP-EVA 集成测试设计与交付报告（Slurm + Multi DataPool）</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="../../plans/README.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">下一页</p>
+        <p class="prev-next-title">开发计划 (Development Plans)</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> 目录
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">0. 相关方</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">1. 目录结构概览（按语义分组）</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow">2. Workflow ↔ 输入/输出资产映射</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#featureworkflow">2.1 FeatureWorkflow（描述符生成）</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#trainingworkflow-ensemble">2.2 TrainingWorkflow（Ensemble 训练）</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#inferenceworkflow">2.3 InferenceWorkflow（候选集合推理）</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#collectionworkflow-uq-filtering-sampling-export">2.4 CollectionWorkflow（UQ + Filtering + Sampling + Export）</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#analysisworkflow">2.5 AnalysisWorkflow（结果统计与可视化）</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">3. 用于集成测试编排的关键观察</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">4. 异常处理</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">5. 变更记录</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+作者： DP-EVA Developers
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2026, DP-EVA Developers.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

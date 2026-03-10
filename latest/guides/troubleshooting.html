@@ -1,0 +1,691 @@
+
+<!DOCTYPE html>
+
+
+<html lang="zh-CN" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Troubleshooting（常见问题与排查） &#8212; DP-EVA Documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=eba8b062" />
+    <link rel="stylesheet" type="text/css" href="../_static/autodoc_pydantic.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="../_static/documentation_options.js?v=6acd3760"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script src="../_static/translations.js?v=beaddf03"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'guides/troubleshooting';</script>
+    <link rel="index" title="索引" href="../genindex.html" />
+    <link rel="search" title="搜索" href="../search.html" />
+    <link rel="next" title="Reference" href="../reference/index.html" />
+    <link rel="prev" title="Slurm 使用与排障指南" href="slurm.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="zh-CN"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">DP-EVA Documentation</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="搜索" aria-label="搜索" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">搜索</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">安装与环境准备（Installation）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart（最短路径跑通）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cli.html">CLI 使用指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="configuration.html">配置编写指南（Configuration）</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">User Guides</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="slurm.html">Slurm 使用与排障指南</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Troubleshooting（常见问题与排查）</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../reference/index.html">Reference</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../reference/README.html">Reference（权威参考）</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reference/validation.html">参数校验与约束（Validation Rules）</a></li>
+
+<li class="toctree-l2"><a class="reference internal" href="../reference/upstream-software.html">上游软件与核心依赖（Upstream Software）</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Developer Guide</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="developer-guide.html">DP-EVA 项目开发文档</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../architecture/README.html">Architecture（系统结构）</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../api/config.html">Configuration Reference</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../api/config/submission.html">Common &amp; Submission Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/config/feature.html">Feature Generation Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/config/training.html">Training Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/config/inference.html">Inference Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/config/collection.html">Collection (Active Learning) Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/config/labeling.html">Labeling Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/config/analysis.html">Analysis Configuration</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/workflows.html">Workflows API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/labeling.html">Labeling API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/sampling.html">Sampling API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/uncertain.html">Uncertainty API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/submission.html">Submission API</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Governance</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../policy/README.html">Policy（制度与规范）</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../plans/governance/index.html">Doc System Planning</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../plans/governance/README.html">README</a></li>
+</ul>
+</details></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../architecture/design-report.html">DP-EVA 项目设计模式与架构分析报告</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../architecture/decisions/README.html">README</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../architecture/decisions/2026-02-04-deepmd-dependency.html">ADR: DeepMD-kit 依赖管理策略</a></li>
+<li class="toctree-l1"><a class="reference internal" href="README.html">Guides（操作指南）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="docs-governance-quickstart.html">文档治理快速上手（开发者与 AI）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="deployment.html">GitHub Actions 文档部署指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="developer/README.html">Developer Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="developer/config-docs-maintenance.html">变量说明文档维护指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="testing/README.html">Testing（测试指南）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="testing/integration-config-templates.html">DP-EVA 集成测试最小配置模板（Slurm）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="testing/integration-slurm.html">DP-EVA 集成测试设计与交付报告（Slurm + Multi DataPool）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="testing/multi-datapool-artifacts.html">test-for-multiple-datapool 生产目录输入输出分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../plans/README.html">开发计划 (Development Plans)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../policy/contributing.html">文档贡献指南（Contributing）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../policy/docs-structure.html">文档结构与命名规范（Docs Structure &amp; Naming）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../policy/maintenance.html">文档版本管理与维护机制（Maintenance）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../policy/quality.html">文档质量标准（Documentation Quality Standard）</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="下载此页面">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../_sources/guides/troubleshooting.md" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="下载源文件"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.md</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="列印成 PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="全屏模式"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="搜索" aria-label="搜索" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Troubleshooting（常见问题与排查）</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> 目录 </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">1. 目的与范围</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">2. 相关方</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">3. 总体排查顺序（强制建议）</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">3.1 任务完成锚点</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">4. 环境类问题</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dp-command-not-found">4.1 <code class="docutils literal notranslate"><span class="pre">dp:</span> <span class="pre">command</span> <span class="pre">not</span> <span class="pre">found</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#deepmd">4.2 DeepMD 版本不匹配/行为差异</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#dpdata-multi-datapool">5. 数据类问题（dpdata / Multi DataPool）</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpdata">5.1 dpdata 目录结构不符合预期</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#type-map">5.2 <code class="docutils literal notranslate"><span class="pre">type_map</span></code> 不一致导致元素映射错误</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#slurm">6. 作业与调度类问题（Slurm）</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#sbatch">6.1 <code class="docutils literal notranslate"><span class="pre">sbatch</span></code> 提交失败</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pending">6.2 长时间 pending</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">6.3 日志不落盘/找不到日志文件</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#nan-inf">7. 数值类问题（NaN/Inf/聚类不收敛）</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#uq-nan-inf">7.1 UQ 分布异常或全 NaN/Inf</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">7.2 聚类不收敛或采样结果为空</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id8">8. 变更记录</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="troubleshooting">
+<h1>Troubleshooting（常见问题与排查）<a class="headerlink" href="#troubleshooting" title="Link to this heading">#</a></h1>
+<ul class="simple">
+<li><p>Status: active</p></li>
+<li><p>Audience: Users / Developers / Infra</p></li>
+<li><p>Last-Updated: 2026-02-18</p></li>
+</ul>
+<section id="id1">
+<h2>1. 目的与范围<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
+<p>本页用于快速定位 DP-EVA 在 Train/Infer/Feature/Collect/Analysis 过程中出现的问题，给出“先看哪里、再排什么”的最短路径。</p>
+</section>
+<section id="id2">
+<h2>2. 相关方<a class="headerlink" href="#id2" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p>使用者：运行工作流、收集日志与复现问题</p></li>
+<li><p>开发者：维护错误提示、输入校验与日志锚点</p></li>
+<li><p>平台维护：处理 Slurm 队列与 DeepMD 环境问题</p></li>
+</ul>
+</section>
+<section id="id3">
+<h2>3. 总体排查顺序（强制建议）<a class="headerlink" href="#id3" title="Link to this heading">#</a></h2>
+<ol class="arabic simple">
+<li><p>确认当前工作目录与配置文件路径（相对路径解析是否正确）</p></li>
+<li><p>定位对应工作流的日志文件（Train/Infer/Feature/Collect）</p></li>
+<li><p>判断是否出现完成标记（见 3.1）</p></li>
+<li><p>若失败来自外部命令（<code class="docutils literal notranslate"><span class="pre">dp</span></code>/Slurm），先定位外部命令报错，再回到配置与输入数据</p></li>
+</ol>
+<section id="id4">
+<h3>3.1 任务完成锚点<a class="headerlink" href="#id4" title="Link to this heading">#</a></h3>
+<p>DP-EVA 以统一完成标记作为应用层完成锚点：</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>DPEVA_TAG: WORKFLOW_FINISHED
+</pre></div>
+</div>
+<p>没有该标记时，优先认为任务“未成功结束”，需要继续追踪日志中的异常堆栈或外部命令错误输出。</p>
+</section>
+</section>
+<section id="id5">
+<h2>4. 环境类问题<a class="headerlink" href="#id5" title="Link to this heading">#</a></h2>
+<section id="dp-command-not-found">
+<h3>4.1 <code class="docutils literal notranslate"><span class="pre">dp:</span> <span class="pre">command</span> <span class="pre">not</span> <span class="pre">found</span></code><a class="headerlink" href="#dp-command-not-found" title="Link to this heading">#</a></h3>
+<p>症状：</p>
+<ul class="simple">
+<li><p>作业日志出现 <code class="docutils literal notranslate"><span class="pre">dp:</span> <span class="pre">command</span> <span class="pre">not</span> <span class="pre">found</span></code></p></li>
+</ul>
+<p>原因：</p>
+<ul class="simple">
+<li><p>DeepMD-kit 环境未加载或未写入 <code class="docutils literal notranslate"><span class="pre">PATH</span></code></p></li>
+</ul>
+<p>处理：</p>
+<ul class="simple">
+<li><p>Local：在当前 shell 环境中先 <code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">--version</span></code> 验证</p></li>
+<li><p>Slurm：将环境加载写入 <code class="docutils literal notranslate"><span class="pre">submission.env_setup</span></code>（不要依赖交互式 shell）</p></li>
+</ul>
+</section>
+<section id="deepmd">
+<h3>4.2 DeepMD 版本不匹配/行为差异<a class="headerlink" href="#deepmd" title="Link to this heading">#</a></h3>
+<p>症状：</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">dp</span></code> 命令存在但输出/参数行为与预期不一致</p></li>
+</ul>
+<p>处理：</p>
+<ul class="simple">
+<li><p>记录 <code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">--version</span></code> 输出与运行环境信息（CUDA/驱动）</p></li>
+<li><p>若为集群，建议固定模块版本或 Conda 环境版本</p></li>
+</ul>
+</section>
+</section>
+<section id="dpdata-multi-datapool">
+<h2>5. 数据类问题（dpdata / Multi DataPool）<a class="headerlink" href="#dpdata-multi-datapool" title="Link to this heading">#</a></h2>
+<section id="dpdata">
+<h3>5.1 dpdata 目录结构不符合预期<a class="headerlink" href="#dpdata" title="Link to this heading">#</a></h3>
+<p>症状：</p>
+<ul class="simple">
+<li><p>Feature/Infer/Collect 报“找不到系统/空数据/系统数为 0”</p></li>
+</ul>
+<p>处理：</p>
+<ul class="simple">
+<li><p>检查数据目录是否包含 <code class="docutils literal notranslate"><span class="pre">type.raw/type_map.raw</span></code> 与 <code class="docutils literal notranslate"><span class="pre">set.000/*.npy</span></code></p></li>
+<li><p>Multi DataPool 场景确认目录层级为：<code class="docutils literal notranslate"><span class="pre">Pool/System/set.000</span></code></p></li>
+</ul>
+</section>
+<section id="type-map">
+<h3>5.2 <code class="docutils literal notranslate"><span class="pre">type_map</span></code> 不一致导致元素映射错误<a class="headerlink" href="#type-map" title="Link to this heading">#</a></h3>
+<p>症状：</p>
+<ul class="simple">
+<li><p>推理结果异常（能量/力量级明显不对）</p></li>
+<li><p>部分 system 加载失败</p></li>
+</ul>
+<p>处理：</p>
+<ul class="simple">
+<li><p>确认训练集与候选池在 <code class="docutils literal notranslate"><span class="pre">type_map.raw</span></code> 的元素顺序一致</p></li>
+<li><p>Analysis 的 <code class="docutils literal notranslate"><span class="pre">type_map</span></code> 必须与训练/数据一致</p></li>
+</ul>
+</section>
+</section>
+<section id="slurm">
+<h2>6. 作业与调度类问题（Slurm）<a class="headerlink" href="#slurm" title="Link to this heading">#</a></h2>
+<section id="sbatch">
+<h3>6.1 <code class="docutils literal notranslate"><span class="pre">sbatch</span></code> 提交失败<a class="headerlink" href="#sbatch" title="Link to this heading">#</a></h3>
+<p>症状：</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">sbatch:</span> <span class="pre">error:</span> <span class="pre">...</span></code></p></li>
+</ul>
+<p>处理：</p>
+<ul class="simple">
+<li><p>检查 <code class="docutils literal notranslate"><span class="pre">partition/qos/account</span></code> 是否符合策略</p></li>
+<li><p>GPU/CPU 资源字段是否与分区匹配</p></li>
+<li><p>检查提交目录权限与配额</p></li>
+</ul>
+</section>
+<section id="pending">
+<h3>6.2 长时间 pending<a class="headerlink" href="#pending" title="Link to this heading">#</a></h3>
+<p>处理：</p>
+<ul class="simple">
+<li><p>使用 <code class="docutils literal notranslate"><span class="pre">squeue</span> <span class="pre">-j</span> <span class="pre">&lt;jobid&gt;</span></code> 查看原因（资源不足/策略限制）</p></li>
+<li><p>适当降低资源申请（缩短 walltime、减少 GPU/CPU）</p></li>
+</ul>
+</section>
+<section id="id6">
+<h3>6.3 日志不落盘/找不到日志文件<a class="headerlink" href="#id6" title="Link to this heading">#</a></h3>
+<p>处理：</p>
+<ul class="simple">
+<li><p>以提交目录为准确认 <code class="docutils literal notranslate"><span class="pre">.out</span></code> 位置（建议固定 <code class="docutils literal notranslate"><span class="pre">work_dir</span></code> 并在其中提交）</p></li>
+<li><p>对照 <a class="reference external" href="https://github.com/QuantumMisaka/dpeva/blob/main/docs/guides/slurm.md">slurm.md</a> 的常见日志命名约定</p></li>
+</ul>
+</section>
+</section>
+<section id="nan-inf">
+<h2>7. 数值类问题（NaN/Inf/聚类不收敛）<a class="headerlink" href="#nan-inf" title="Link to this heading">#</a></h2>
+<section id="uq-nan-inf">
+<h3>7.1 UQ 分布异常或全 NaN/Inf<a class="headerlink" href="#uq-nan-inf" title="Link to this heading">#</a></h3>
+<p>处理：</p>
+<ul class="simple">
+<li><p>优先检查推理输出是否完整（<code class="docutils literal notranslate"><span class="pre">results.*.out</span></code> 是否存在）</p></li>
+<li><p>检查是否存在失败模型（某个模型推理输出缺失会影响方差/UQ）</p></li>
+<li><p>若输入数据包含异常结构（box/coord 形状不一致），先修复数据</p></li>
+</ul>
+</section>
+<section id="id7">
+<h3>7.2 聚类不收敛或采样结果为空<a class="headerlink" href="#id7" title="Link to this heading">#</a></h3>
+<p>处理：</p>
+<ul class="simple">
+<li><p>检查 <code class="docutils literal notranslate"><span class="pre">sampler_type</span></code> 与参数组是否匹配（direct vs 2-direct）</p></li>
+<li><p>降低 <code class="docutils literal notranslate"><span class="pre">direct_n_clusters</span></code> 或调整阈值相关参数</p></li>
+<li><p>若候选池数量过少或被联合采样去重，采样数少于目标是预期行为</p></li>
+</ul>
+</section>
+</section>
+<section id="id8">
+<h2>8. 变更记录<a class="headerlink" href="#id8" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p>2026-02-18：补齐 Troubleshooting 的结构化排查路径与四类常见问题处理建议。</p></li>
+</ul>
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="slurm.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">上一页</p>
+        <p class="prev-next-title">Slurm 使用与排障指南</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="../reference/index.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">下一页</p>
+        <p class="prev-next-title">Reference</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> 目录
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">1. 目的与范围</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">2. 相关方</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">3. 总体排查顺序（强制建议）</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">3.1 任务完成锚点</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">4. 环境类问题</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dp-command-not-found">4.1 <code class="docutils literal notranslate"><span class="pre">dp:</span> <span class="pre">command</span> <span class="pre">not</span> <span class="pre">found</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#deepmd">4.2 DeepMD 版本不匹配/行为差异</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#dpdata-multi-datapool">5. 数据类问题（dpdata / Multi DataPool）</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpdata">5.1 dpdata 目录结构不符合预期</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#type-map">5.2 <code class="docutils literal notranslate"><span class="pre">type_map</span></code> 不一致导致元素映射错误</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#slurm">6. 作业与调度类问题（Slurm）</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#sbatch">6.1 <code class="docutils literal notranslate"><span class="pre">sbatch</span></code> 提交失败</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pending">6.2 长时间 pending</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">6.3 日志不落盘/找不到日志文件</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#nan-inf">7. 数值类问题（NaN/Inf/聚类不收敛）</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#uq-nan-inf">7.1 UQ 分布异常或全 NaN/Inf</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">7.2 聚类不收敛或采样结果为空</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id8">8. 变更记录</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+作者： DP-EVA Developers
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2026, DP-EVA Developers.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>
