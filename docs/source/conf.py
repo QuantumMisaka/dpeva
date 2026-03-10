@@ -20,6 +20,7 @@ extensions = [
     'sphinx.ext.viewcode',
     'sphinx.ext.napoleon',
     'sphinxcontrib.autodoc_pydantic',
+    'sphinxcontrib.mermaid',
     'myst_parser',
 ]
 

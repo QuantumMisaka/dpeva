@@ -51,6 +51,7 @@ docs = [
     "sphinx-book-theme",
     "myst-parser",
     "autodoc-pydantic",
+    "sphinxcontrib-mermaid",
 ]
 
 [project.urls]

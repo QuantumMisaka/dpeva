@@ -1,8 +1,8 @@
 # DP-EVA 品牌视觉识别系统设计规范 (Visual Identity System Design Spec)
 
-**版本**: v2.1 (Execution-Ready Brief)  
-**日期**: 2026-03-03  
-**项目名称**: DP-EVA (Deep Potential EVolution Accelerator)  
+**版本**: v2.2 (Execution-Ready Document)  
+**日期**: 2026-03-08  
+**项目名称**: DP-EVA (Deep Potential EVolution Accelerator)   
 **中文名称**: 深度势能演化加速器  
 **交付对象**: 高级视觉设计师 / 3D 动效设计师  
 **设计目标**: 设计师仅依赖本文件即可落地制作（含VI规范、场景适配与动效/3D方案）
@@ -12,7 +12,7 @@
 ## 1. 品牌核心与设计哲学 (Brand Core)
 
 ### 1.1 品牌定位
-DP-EVA 是连接 **“严谨物理建模 (DeepModeling)”** 与 **“激进 AI 进化 (Evolution)”** 的桥梁。它在茫茫化学空间（LCL 之海）中，通过主动学习算法，精准筛选出具有独立价值的样本（适格者），加速科学发现的进化过程。
+[DP-EVA](https://github.com/QuantumMisaka/dpeva) 是针对深度势能（Deep Potential）或其他机器学习原子间势（Machine Learning Interatomic Potentials, MLIPs）进行高质量训练（微调）数据筛选的AI原生的主动学习套件，项目受到了番剧《新世纪福音战士》的灵感启发（Neon Genesis Evangelion, EVA），旨在连接 **“严谨物理建模 (DeepModeling)”** 与 **“激进 AI 进化 (Evolution)”** 的桥梁。它在茫茫化学空间（LCL 之海）中，通过主动学习算法，精准筛选出具有独立价值的样本（适格者），加速科学发现的进化过程。
 
 ### 1.2 核心隐喻 (Key Metaphors)
 *   **秩序 vs 混沌**: 左侧代表科学的秩序与理性，右侧代表进化的爆发与突破。
@@ -296,4 +296,7 @@ Logo 采用 **“图文融合 (Iconic Logotype)”** 形式，整体为水平结
 ## 11. 参考资料
 - **DeepModeling 官网**: [https://deepmodeling.com/](https://deepmodeling.com/)
 - **EVA 维基百科**: [萌娘百科 - 新世纪福音战士](https://mzh.moegirl.org.cn/%E6%96%B0%E4%B8%96%E7%BA%AA%E7%A6%8F%E9%9F%B3%E6%88%98%E5%A3%AB)
-- **项目 Banner**: `src/dpeva/utils/banner.py`
+- DeepModeling LOGO（随附件提供）
+- EVA LOGO（随附件提供）
+- 项目链接：https://github.com/QuantumMisaka/dpeva
+- **项目 Banner**: （已经体现在文档中）
