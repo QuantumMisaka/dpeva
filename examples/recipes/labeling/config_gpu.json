@@ -78,6 +78,10 @@
         "O": 1.0
     },
     "output_format": "deepmd/npy",
+    "integration_enabled": false,
+    "existing_training_data_path": null,
+    "merged_training_data_path": null,
+    "integration_deduplicate": false,
     "attempt_params": [
         {},
         {"mixing_beta": 0.1, "scf_os_stop": 1, "scf_os_ndim": 150},

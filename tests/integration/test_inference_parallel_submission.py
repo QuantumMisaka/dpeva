@@ -48,6 +48,9 @@ def test_inference_parallel_submission(slurm_config):
         # Initialize workflow
         workflow = InferenceWorkflow(config_dict)
         
+        # Mock analyze_results
+        workflow.analyze_results = MagicMock()
+        
         # Run workflow
         workflow.run()
         
@@ -95,6 +98,11 @@ def test_inference_local_submission(slurm_config):
         mock_job_instance = MockJobManager.return_value
         
         workflow = InferenceWorkflow(config_dict)
+        
+        # Mock analyze_results to avoid actual file processing error
+        # Since we only want to test submission logic here
+        workflow.analyze_results = MagicMock()
+        
         workflow.run()
         
         # Should still call submit 3 times

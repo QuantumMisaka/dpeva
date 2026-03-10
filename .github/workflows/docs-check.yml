@@ -1,0 +1,55 @@
+name: Docs Build & Check
+
+on:
+  push:
+    branches: [ "main", "develop" ]
+    paths:
+      - 'docs/**'
+      - 'src/dpeva/config.py'
+      - '.github/workflows/docs-check.yml'
+  pull_request:
+    branches: [ "main", "develop" ]
+    paths:
+      - 'docs/**'
+      - 'src/dpeva/config.py'
+
+jobs:
+  build-docs:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.10"
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e .[docs]
+        # Ensure deepmd-kit is installed if needed for autodoc imports, or mocked
+        # pip install deepmd-kit || true 
+        
+    - name: Build Documentation (Sphinx)
+      run: |
+        cd docs
+        # Treat warnings as errors (-W) to ensure quality
+        make html SPHINXOPTS="-W --keep-going"
+        
+    - name: Verify Key Artifacts
+      run: |
+        if [ ! -f docs/build/html/index.html ]; then
+          echo "Error: index.html not found!"
+          exit 1
+        fi
+        if [ ! -f docs/build/html/api/config.html ]; then
+          echo "Error: api/config.html not generated!"
+          exit 1
+        fi
+        
+    - name: Check Links (Optional)
+      if: github.event_name == 'pull_request'
+      run: |
+        cd docs
+        make linkcheck SPHINXOPTS="-W --keep-going" || echo "Link check failed, but proceeding for now (non-blocking)"
