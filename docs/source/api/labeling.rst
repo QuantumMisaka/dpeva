@@ -1,4 +1,5 @@
-# Labeling API
+Labeling API
+============
 
 .. automodule:: dpeva.labeling
    :members:

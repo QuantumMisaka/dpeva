@@ -1,4 +1,5 @@
-# Workflows API
+Workflows API
+=============
 
 .. automodule:: dpeva.workflows
    :members:

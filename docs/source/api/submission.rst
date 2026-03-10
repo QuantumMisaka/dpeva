@@ -1,4 +1,5 @@
-# Submission API
+Submission API
+==============
 
 .. automodule:: dpeva.submission
    :members:
