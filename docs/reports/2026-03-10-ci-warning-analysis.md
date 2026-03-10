@@ -1,3 +1,10 @@
+---
+title: CI 构建警告分析报告与修复计划
+status: active
+audience: Developers / Maintainers
+last-updated: 2026-03-10
+---
+
 # CI 构建警告分析报告与修复计划
 
 **状态**: 已解决 (Resolved)
@@ -31,7 +38,7 @@
 Sphinx 要求所有构建的源文件都必须在某个 `toctree` 指令中被引用。目前的文档结构重构（Docs Governance）产生了大量新的规划文档（Plans）和架构文档（Architecture），但 `index.rst` 和各级 `README.md` 中的 `toctree` 尚未及时更新以包含这些新文件。
 
 ### 2.2 交叉引用失效
-*   **相对路径引用代码**: 在 Markdown 中使用 `[link](../src/...)` 试图链接到代码文件。Sphinx 默认将这些解析为文档间的引用，而源码文件并不在 Sphinx 的 source 目录中（或者未被正确配置为静态资源）。
+*   **相对路径引用代码**: 在 Markdown 中使用 `../src/...` 试图链接到代码文件。Sphinx 默认将这些解析为文档间的引用，而源码文件并不在 Sphinx 的 source 目录中（或者未被正确配置为静态资源）。
 *   **Markdown 互链机制**: MyST-Parser 虽然支持标准 Markdown 链接，但在 Sphinx 环境下，跨目录引用需要精确的路径解析。
 *   **文件移动**: 重构过程中文件位置变动（如 `guides/` 目录整理），但旧文档中的相对链接未同步更新。
 

@@ -1,3 +1,9 @@
+---
+title: Variable Management System Audit Report
+status: active
+audience: Developers / Maintainers
+last-updated: 2026-03-10
+---
 
 Variable Management System Audit Report
 =======================================

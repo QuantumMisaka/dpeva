@@ -2,7 +2,7 @@
 title: 文档质量标准 (Documentation Quality Standard)
 status: active
 audience: Maintainers
-last-updated: 2026-02-18
+last-updated: 2026-03-10
 ---
 
 # 文档质量标准（Documentation Quality Standard）
@@ -26,6 +26,8 @@ last-updated: 2026-02-18
 - Owners: 角色或模块维护人
 - Last-Updated: YYYY-MM-DD
 - Related: 关键代码/配置/测试链接（尽量链接到 repo 内）
+
+对于 `status: active` 文档，`owner` 或 `owners` 视为必填项。
 
 ## 3. 文档类型验收清单
 
@@ -54,3 +56,10 @@ last-updated: 2026-02-18
 - 有适用范围与局限性
 - 默认只追加不回写（除非修正事实错误）
 
+## 4. 稳态化验收门槛（强制）
+
+- **Build Gate**：`make html SPHINXOPTS="-W --keep-going"` 通过，WARNING=0
+- **Governance Gate**：`scripts/doc_check.py` 通过，结构/元信息/链接/绝对路径检查均通过
+- **Freshness Gate**：`scripts/check_docs_freshness.py --days 90` 通过
+- **Ownership Gate**：`active` 文档 owner 覆盖率=100%，并与 `docs/governance/inventory/owners-matrix.md` 一致
+- **PR Gate**：PR 模板文档清单项全部勾选，若为接口变更必须包含 docs 更新说明

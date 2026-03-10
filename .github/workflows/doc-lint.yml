@@ -5,10 +5,20 @@ on:
     branches: [ "main" ]
     paths:
       - 'docs/**'
+      - 'scripts/doc_check.py'
+      - 'scripts/check_docs_freshness.py'
+      - '.github/workflows/doc-lint.yml'
+      - '.github/PULL_REQUEST_TEMPLATE.md'
+      - '.github/CODEOWNERS'
   pull_request:
     branches: [ "main" ]
     paths:
       - 'docs/**'
+      - 'scripts/doc_check.py'
+      - 'scripts/check_docs_freshness.py'
+      - '.github/workflows/doc-lint.yml'
+      - '.github/PULL_REQUEST_TEMPLATE.md'
+      - '.github/CODEOWNERS'
 
 jobs:
   doc-lint:
@@ -30,10 +40,8 @@ jobs:
       - name: Run Governance Check (Structure & Metadata)
         run: |
           python3 scripts/doc_check.py
-        continue-on-error: true
 
       - name: Run Freshness Check
         run: |
           # Check for docs older than 90 days, excluding archives
           python3 scripts/check_docs_freshness.py --days 90
-        continue-on-error: true

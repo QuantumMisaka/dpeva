@@ -1,3 +1,9 @@
+---
+title: 变量说明文档自动化配置方案
+status: active
+audience: Developers
+last-updated: 2026-03-10
+---
 
 # 变量说明文档自动化配置方案
 

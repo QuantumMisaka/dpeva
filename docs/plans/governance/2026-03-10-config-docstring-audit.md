@@ -1,3 +1,10 @@
+---
+title: 变量描述审查报告 (Docstring Review Report)
+status: active
+audience: Developers
+last-updated: 2026-03-10
+---
+
 # 变量描述审查报告 (Docstring Review Report)
 
 **Review Date**: 2026-03-10

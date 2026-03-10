@@ -22,8 +22,7 @@
    :maxdepth: 2
    :caption: Reference
 
-   reference/config_schema
-   reference/validation
+   reference/index
 
 .. toctree::
    :maxdepth: 2
@@ -39,3 +38,27 @@
 
    policy/README
    plans/docs-governance-roadmap
+
+.. toctree::
+   :maxdepth: 1
+   :hidden:
+
+   architecture/design-report
+   architecture/decisions/README
+   architecture/decisions/2026-02-04-deepmd-dependency
+   guides/README
+   guides/deployment
+   guides/developer/README
+   guides/developer/config-docs-maintenance
+   guides/testing/README
+   guides/testing/integration-config-templates
+   guides/testing/integration-slurm
+   guides/testing/multi-datapool-artifacts
+   plans/README
+   plans/governance/index
+   policy/contributing
+   policy/docs-structure
+   policy/maintenance
+   policy/quality
+   reference/README
+   reference/upstream-software

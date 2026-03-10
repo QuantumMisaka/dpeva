@@ -85,7 +85,7 @@ last-updated: 2026-03-09
 ## 4. 技术方案与架构 (Technical Solution)
 
 ### 4.1 工具链集成
-```mermaid
+```{mermaid}
 graph LR
     A[Developer] -->|Commit| B(Pre-commit Hook)
     B -->|Check| C{Lint & Format}
@@ -159,7 +159,7 @@ graph LR
 title: 文档标题
 status: active # active, draft, archived
 audience: developers # developers, users, maintainers
-owner: @role-or-team
+owner: "@role-or-team"
 last-updated: 2026-03-09
 ---
 ```

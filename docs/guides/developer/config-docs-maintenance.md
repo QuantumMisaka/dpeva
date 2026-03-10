@@ -1,3 +1,10 @@
+---
+title: 变量说明文档维护指南
+status: active
+audience: Developers
+last-updated: 2026-03-10
+---
+
 # 变量说明文档维护指南
 
 本文档指导开发者如何维护 `src/dpeva/config.py` 中的 Pydantic 配置模型，以确保 `Configuration Reference` 自动文档保持最新和准确。

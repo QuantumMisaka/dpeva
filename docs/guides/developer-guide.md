@@ -116,7 +116,7 @@ dpeva/
 ```
 
 ### 2.2 数据流图 (Data Flow)
-```mermaid
+```{mermaid}
 graph TD
     %% Initial State
     InitTrain[Existing Training Set]
@@ -327,8 +327,8 @@ workflow.run()
 ### 4.3 配置参数说明
 详细的输入参数定义、类型约束及验证规则，请参阅 API 文档：
 
-*   **参数列表**: [config_schema.md](../reference/config_schema.md)
-*   **验证规则**: [validation.md](../reference/validation.md)
+*   **参数列表**: [config_schema.md](https://github.com/QuantumMisaka/dpeva/blob/main/docs/reference/config_schema.md)
+*   **验证规则**: [validation.md](https://github.com/QuantumMisaka/dpeva/blob/main/docs/reference/validation.md)
 
 以下仅展示标准 JSON 配置文件的基本结构概览。
 

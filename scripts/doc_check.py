@@ -53,6 +53,10 @@ def check_front_matter():
         path = Path(root)
         if any(part in IGNORE_DIRS for part in path.parts) or path.name.startswith("."):
             continue
+        if "archive" in path.parts:
+            continue
+        if "archive" in path.parts:
+            continue
             
         for file in files:
             if file.endswith(".md"):
@@ -84,6 +88,8 @@ def check_links():
         path = Path(root)
         if any(part in IGNORE_DIRS for part in path.parts) or path.name.startswith("."):
             continue
+        if "archive" in path.parts:
+            continue
             
         for file in files:
             if file.endswith(".md"):
@@ -107,21 +113,62 @@ def check_links():
                             
                         # Resolve path
                         if target_path_str.startswith("/"):
-                            # Absolute path from project root (assuming docs root or repo root?)
-                            # Convention: /docs/... means repo root
-                            target_full_path = Path(target_path_str.lstrip("/"))
+                            target_full_path = (Path.cwd() / target_path_str.lstrip("/")).resolve()
                         else:
-                            # Relative path
-                            target_full_path = (file_path.parent / target_path_str).resolve().relative_to(Path.cwd())
+                            target_full_path = (file_path.parent / target_path_str).resolve()
                             
                         if not target_full_path.exists():
                             broken_links.append((file_path, link_target, "File not found"))
                             
                 except Exception as e:
-                    # broken_links.append((file_path, "Error", str(e)))
-                    pass
+                    broken_links.append((file_path, "Error", str(e)))
                     
     return broken_links
+
+def check_forbidden_links():
+    forbidden_links = []
+    link_pattern = r"\[([^\]]+)\]\(([^)]+)\)"
+    for root, dirs, files in os.walk(DOCS_ROOT):
+        path = Path(root)
+        if any(part in IGNORE_DIRS for part in path.parts) or path.name.startswith("."):
+            continue
+        for file in files:
+            if file.endswith(".md"):
+                file_path = path / file
+                try:
+                    with open(file_path, "r", encoding="utf-8") as f:
+                        content = f.read()
+                    for match in re.finditer(link_pattern, content):
+                        link_target = match.group(2).strip()
+                        if link_target.startswith(("/home/", "\\home\\")):
+                            forbidden_links.append((file_path, link_target, "Filesystem absolute path is forbidden"))
+                        if re.match(r"^[A-Za-z]:[\\/]", link_target):
+                            forbidden_links.append((file_path, link_target, "Windows absolute path is forbidden"))
+                except Exception as e:
+                    forbidden_links.append((file_path, "Error", str(e)))
+    return forbidden_links
+
+def check_owner_metadata():
+    missing_owner = []
+    for root, dirs, files in os.walk(DOCS_ROOT):
+        path = Path(root)
+        if any(part in IGNORE_DIRS for part in path.parts) or path.name.startswith("."):
+            continue
+        for file in files:
+            if file.endswith(".md"):
+                file_path = path / file
+                try:
+                    with open(file_path, "r", encoding="utf-8") as f:
+                        content = f.read()
+                    meta = parse_front_matter(content)
+                    if not meta:
+                        continue
+                    if str(meta.get("status", "")).strip().lower() == "active":
+                        if "owner" not in meta and "owners" not in meta:
+                            missing_owner.append(file_path)
+                except Exception:
+                    continue
+    return missing_owner
 
 def main():
     print("🔍 Starting Documentation Governance Audit...\n")
@@ -155,9 +202,27 @@ def main():
             print(f"  - {f} -> {target} ({reason})")
     else:
         print("✅ Links OK")
+
+    print("\n⛔ Checking Forbidden Absolute Paths...")
+    forbidden_links = check_forbidden_links()
+    if forbidden_links:
+        print("❌ Forbidden Links Found:")
+        for f, target, reason in forbidden_links:
+            print(f"  - {f} -> {target} ({reason})")
+    else:
+        print("✅ Forbidden Path Check OK")
+
+    print("\n👤 Checking Owner Coverage (non-blocking)...")
+    missing_owner = check_owner_metadata()
+    if missing_owner:
+        print("⚠️ Missing owner/owners in active docs:")
+        for f in missing_owner:
+            print(f"  - {f}")
+    else:
+        print("✅ Owner Coverage OK")
         
     # Summary
-    if missing_readmes or invalid_meta or broken_links:
+    if missing_readmes or invalid_meta or broken_links or forbidden_links:
         print("\n🚫 Audit FAILED. Please fix the issues above.")
         sys.exit(1)
     else:

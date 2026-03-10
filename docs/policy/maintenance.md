@@ -2,7 +2,7 @@
 title: 文档版本管理与维护机制 (Maintenance)
 status: active
 audience: Maintainers
-last-updated: 2026-03-09
+last-updated: 2026-03-10
 ---
 
 # 文档版本管理与维护机制（Maintenance）
@@ -56,3 +56,19 @@ Owner 可以是角色而非具体姓名；但每篇 `active` 文档必须有 Own
   - 断链扫描（链接可达性）
   - 过期字段扫描（例如 `num_selection` 这类已废弃字段）
   - 示例可运行性抽检（优先 Quickstart 与集成测试）
+
+## 6. 稳态化运行基线（必须满足）
+
+- 基线门禁：
+  - `python3 scripts/doc_check.py` 必须通过
+  - `python3 scripts/check_docs_freshness.py --days 90` 必须通过
+  - `make html SPHINXOPTS="-W --keep-going"` 必须通过
+- 责任归属：
+  - 所有 `active` 文档必须声明 `owner` 或 `owners`
+  - Owner 角色映射与覆盖追踪统一维护在 `docs/governance/inventory/owners-matrix.md`
+- 变更流程：
+  - 涉及 CLI、配置字段、输出契约、示例目录结构的变更，必须在同一 PR 完成文档更新
+  - PR 必须使用文档检查清单并由对应 Code Owner 审查
+- 复核节奏：
+  - 每周一次增量复核（断链、元信息、新鲜度）
+  - 每月一次全量复核（结构、导航、重复内容、Owner 覆盖率）

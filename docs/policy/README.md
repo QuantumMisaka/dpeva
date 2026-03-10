@@ -17,15 +17,14 @@ last-updated: 2026-03-09
 
 | 文档 | 一句话描述 | Last-Updated |
 |---|---|---|
-| [maintenance.md](maintenance.md) | 文档维护机制：Owner、Review、过期治理与版本策略。 | 2026-02-18 |
-| [quality.md](quality.md) | 文档质量标准与验收清单（元信息、结构、示例、链接）。 | 2026-02-18 |
-| [contributing.md](contributing.md) | 文档贡献指南：权威来源、链接规范、PR 自检与模板。 | 2026-02-19 |
+| [maintenance.md](https://github.com/QuantumMisaka/dpeva/blob/main/docs/policy/maintenance.md) | 文档维护机制：Owner、Review、过期治理与版本策略。 | 2026-02-18 |
+| [quality.md](https://github.com/QuantumMisaka/dpeva/blob/main/docs/policy/quality.md) | 文档质量标准与验收清单（元信息、结构、示例、链接）。 | 2026-02-18 |
+| [contributing.md](https://github.com/QuantumMisaka/dpeva/blob/main/docs/policy/contributing.md) | 文档贡献指南：权威来源、链接规范、PR 自检与模板。 | 2026-02-19 |
 
 ## 2. 快速开始
 
-- 文档贡献入口：/docs/policy/contributing.md
+- 文档贡献入口：/policy/contributing.md
 
 ## 3. 贡献指南
 
 - /CONTRIBUTING.md
-

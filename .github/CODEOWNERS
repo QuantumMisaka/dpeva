@@ -1,0 +1,13 @@
+* @QuantumMisaka
+
+docs/policy/* @QuantumMisaka
+docs/governance/* @QuantumMisaka
+docs/reference/* @QuantumMisaka
+docs/guides/* @QuantumMisaka
+
+scripts/doc_check.py @QuantumMisaka
+scripts/check_docs_freshness.py @QuantumMisaka
+
+.github/workflows/docs-check.yml @QuantumMisaka
+.github/workflows/doc-lint.yml @QuantumMisaka
+.github/PULL_REQUEST_TEMPLATE.md @QuantumMisaka

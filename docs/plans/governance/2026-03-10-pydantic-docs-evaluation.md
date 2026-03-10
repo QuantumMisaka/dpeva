@@ -1,3 +1,9 @@
+---
+title: 评估报告：Sphinx 与 Pydantic 文档化现状
+status: active
+audience: Developers
+last-updated: 2026-03-10
+---
 
 # 评估报告：Sphinx 与 Pydantic 文档化现状
 
