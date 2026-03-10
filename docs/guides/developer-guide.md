@@ -15,8 +15,8 @@ last-updated: 2026-03-09
   - 校验规则补充：/docs/reference/validation.md
   - 上游软件与职责：/docs/reference/upstream-software.md
 
-* **版本**: 0.6.1
-* **生成日期**: 2026-03-09
+* **版本**: 0.6.2
+* **生成日期**: 2026-03-10
 * **作者**: Quantum Misaka with Trae SOLO
 
 ---
@@ -475,6 +475,12 @@ DPEVA_TAG: WORKFLOW_FINISHED
 ### 6.2 版本历史
 
 #### **Current Era (v0.5.x)**
+
+*   **v0.6.2** (2026-03-10):
+    *   **[质量]** 全面验证并修复了单元测试和集成测试，确保所有用例 100% 通过（167/167 Unit, 7/7 Integration）。
+    *   **[文档]** 对变量说明文档进行了全面审查与修复，补充了 `config.py` 中大量字段的 docstring，使其满足自动化文档生成的质量要求。
+    *   **[CI/CD]** 建立了严格的文档质量门禁 (`docs-check.yml`) 和结构检查流程 (`doc-lint.yml`)，确保文档零警告构建。
+    *   **[治理]** 更新了文档技能与维护规范，确立了 `config.py` 作为配置说明单一可信源 (SSOT) 的地位。
 
 *   **v0.6.1** (2026-03-09):
     *   **[部署]** 新增 GitHub Actions 自动部署流程，支持将文档发布至 GitHub Pages，并实现多版本管理。
