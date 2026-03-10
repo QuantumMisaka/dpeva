@@ -23,7 +23,7 @@ last-updated: 2026-03-09
 
 ## 3. Python 环境要求
 
-- Python：`>=3.8`
+- Python：`>=3.10`
 - 包名：`dpeva`
 
 依赖定义以 [pyproject.toml](https://github.com/QuantumMisaka/dpeva/blob/main/pyproject.toml) 为准。

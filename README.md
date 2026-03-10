@@ -1,7 +1,7 @@
 # DP-EVA (Deep Potential EVolution Accelerator)
 
 ![Version](https://img.shields.io/badge/version-0.6.3-blue)
-![Python](https://img.shields.io/badge/python-3.8%2B-green)
+![Python](https://img.shields.io/badge/python-3.10%2B-green)
 ![License](https://img.shields.io/badge/License-LGPL_v3-blue.svg)
 
 DP-EVA is an active learning framework designed for efficient fine-tuning of DPA universal machine learning interatomic potential. It integrates uncertainty quantification (UQ), diverse sampling (DIRECT), and labeling workflows to minimize data annotation costs while maximizing model performance.
