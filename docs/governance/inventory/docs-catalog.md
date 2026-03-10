@@ -35,7 +35,7 @@ last-updated: 2026-03-09
 
 | Document | Category | Audience | Cadence | Status | Tags | 摘要（关键信息点） |
 |---|---|---|---|---|---|---|
-| [config_schema.md](../../reference/config_schema.md) | Reference | Developers | Medium | active | config\|pydantic\|schema | Workflow 配置字段字典（通用字段、Train/Infer/Feature/Collect/Analysis），包括类型/默认值/说明/约束。 |
+| [config_schema.md](../../reference/README.md) | Reference | Developers | Medium | active | config\|pydantic\|schema | Workflow 配置字段字典（通用字段、Train/Infer/Feature/Collect/Analysis），包括类型/默认值/说明/约束。 |
 | [validation.md](../../reference/validation.md) | Reference | Developers | Medium | active | validation\|constraints | Pydantic 参数校验逻辑补充：范围约束、跨字段依赖、env_setup 格式化、路径存在性校验。 |
 | [reference/README.md](../../reference/README.md) | Policy | Developers | Medium | active | reference\|single-source | Reference 分层说明与迁移建议入口。 |
 
@@ -55,11 +55,11 @@ last-updated: 2026-03-09
 
 | Document | Category | Audience | Cadence | Status | Tags | 摘要（关键信息点） |
 |---|---|---|---|---|---|---|
-| [doc-system-planning.md](../../plans/governance/2026-02-18-doc-system-planning.md) | Plan | Maintainers | Medium | active | docs\|planning\|raci | 文档体系规划：分类体系、缺失补充、模板、维护与质量标准、实施排期与责任分配。 |
+| [doc-system-planning.md](../../archive/v0.6.1/plans/2026-02-18-doc-system-planning.md) | Plan | Maintainers | Medium | active | docs\|planning\|raci | 文档体系规划：分类体系、缺失补充、模板、维护与质量标准、实施排期与责任分配。 |
 | [feature-doc-matrix.md](../traceability/feature-doc-matrix.md) | Policy | Maintainers | High | active | traceability\|release | 功能-文档双向追踪矩阵（发布前核对）。 |
 | [workflow-contract-test-matrix.md](../traceability/workflow-contract-test-matrix.md) | Policy | Maintainers | High | active | traceability\|test | 工作流契约测试矩阵。 |
-| [doc-accuracy-audit.md](../../archive/governance/reviews/2026-02-19-doc-accuracy-audit.md) | Report | Maintainers | Medium | archived | audit\|accuracy | 文档准确性审计：对照代码与对外接口，形成差异与风险项。 |
-| [docs-review-report.md](../../archive/governance/reviews/2026-02-19-docs-review-report.md) | Report | Maintainers | Medium | archived | audit\|quality | 文档质量审查结论与问题清单。 |
+| [doc-accuracy-audit.md](../../archive/v0.5.2/governance/reviews/2026-02-19-doc-accuracy-audit.md) | Report | Maintainers | Medium | archived | audit\|accuracy | 文档准确性审计：对照代码与对外接口，形成差异与风险项。 |
+| [docs-review-report.md](../../archive/v0.5.2/governance/reviews/2026-02-19-docs-review-report.md) | Report | Maintainers | Medium | archived | audit\|quality | 文档质量审查结论与问题清单。 |
 | [link-normalization.json](../tools/link-normalization.json) | Asset | Maintainers | Medium | active | tooling\|links | 链接规范化机器可读规则（用于工具/CI）。 |
 | [integration-slurm-plan.md](../../archive/v0.6.0/plans/integration-slurm-plan.md) | Plan | Developers/Infra | Medium | active | slurm\|integration\|plan | Slurm 集成测试执行计划，按执行型规格策略归入 plans。 |
 
@@ -69,12 +69,12 @@ last-updated: 2026-03-09
 |---|---|---|---|---|---|---|
 | [design-report.md](../../architecture/design-report.md) | Architecture | Developers | Medium | active | patterns\|ddd\|refactor | 设计模式识别、耦合分析与解耦策略。 |
 | [2026-02-04-deepmd-dependency.md](../../architecture/decisions/2026-02-04-deepmd-dependency.md) | Decision | Maintainers | Low | active | adr\|deepmd\|dependency | DeepMD-kit 依赖管理决策。 |
-| [modulo-hypothesis.md](../../archive/reports/modulo-hypothesis.md) | Report | Researchers | Low | archived | descriptor\|modulo\|evidence | 结构描述符模长的物理意义假设与实证分析。 |
+| [modulo-hypothesis.md](../../archive/v0.5.2/reports/modulo-hypothesis.md) | Report | Researchers | Low | archived | descriptor\|modulo\|evidence | 结构描述符模长的物理意义假设与实证分析。 |
 
 ## 6. Archive（历史与弃用）
 
 | Document | Category | Audience | Cadence | Status | Tags | 摘要（关键信息点） |
 |---|---|---|---|---|---|---|
 | [archive/README.md](../../archive/README.md) | Policy | All | Low | active | archive\|policy | 归档策略：适用版本、落地状态、修订说明约定。 |
-| [2026-02-01-Code_Review_Report_v2.7.1.md](../../archive/2026-02-01-Code_Review_Report_v2.7.1.md) | Archive | Developers | Low | archived | code-review | 历史代码审查报告（性能/并发/测试等）。 |
-| [2026-02-01-Variable_Review_Report.md](../../archive/2026-02-01-Variable_Review_Report.md) | Archive | Developers | Low | archived | config\|variables | 历史变量/配置体系审查。 |
+| [2026-02-01-Code_Review_Report_v2.7.1.md](../../archive/v0.5.0/reports/2026-02-01-Code_Review_Report_v2.7.1.md) | Archive | Developers | Low | archived | code-review | 历史代码审查报告（性能/并发/测试等）。 |
+| [2026-02-01-Variable_Review_Report.md](../../archive/v0.5.0/reports/2026-02-01-Variable_Review_Report.md) | Archive | Developers | Low | archived | config\|variables | 历史变量/配置体系审查。 |

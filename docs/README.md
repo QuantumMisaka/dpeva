@@ -23,7 +23,7 @@ last-updated: 2026-03-09
 ### 1.2 开发者（要改代码/加功能/修Bug）
 
 - 开发流程标准与架构说明：[developer-guide.md](guides/developer-guide.md)
-- 配置字段权威参考（查表）：[config_schema.md](reference/config_schema.md)
+- 配置字段权威参考（查表）：[reference/index.rst](reference/index.rst)
 - 参数验证与约束补充：[validation.md](reference/validation.md)
 - 核心上游软件与职责：[upstream-software.md](reference/upstream-software.md)
 - Slurm 使用与排障：[slurm.md](guides/slurm.md)
@@ -33,7 +33,7 @@ last-updated: 2026-03-09
 
 - 系统设计与模式分析：[design-report.md](architecture/design-report.md)
 - DeepMD 依赖决策记录：[2026-02-04-deepmd-dependency.md](architecture/decisions/2026-02-04-deepmd-dependency.md)
-- 描述符模长假设与实验报告：[modulo-hypothesis.md](archive/reports/modulo-hypothesis.md)
+- 描述符模长假设与实验报告：[modulo-hypothesis.md](archive/v0.5.2/reports/modulo-hypothesis.md)
 
 ## 2. 文档分层与权威来源（避免重复/冲突）
 

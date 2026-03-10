@@ -72,3 +72,29 @@ Owner 可以是角色而非具体姓名；但每篇 `active` 文档必须有 Own
 - 复核节奏：
   - 每周一次增量复核（断链、元信息、新鲜度）
   - 每月一次全量复核（结构、导航、重复内容、Owner 覆盖率）
+
+## 7. 过程资产管理规范 (Process Asset Management)
+
+为确保项目知识沉淀有序，所有过程性文档必须遵循以下生命周期管理规范：
+
+### 7.1 代码审查报告 (Code Review Reports)
+- **落点**: `docs/reports/`
+- **命名**: `YYYY-MM-DD-Code-Review-<Feature/Module>.md`
+- **内容**: 审查对象、发现的问题、修复建议、修复状态。
+- **归档**: 审查结束并修复闭环后，随版本发布归档至 `docs/archive/vX.Y.Z/reports/`。
+
+### 7.2 功能开发细则 (Feature Plans/Specs)
+- **落点**: `docs/plans/`
+- **命名**: `YYYY-MM-DD-<Feature>-Plan.md` 或 `YYYY-MM-DD-<Feature>-Spec.md`
+- **内容**: 目标、范围、设计方案、测试计划、任务分解。
+- **归档**: 功能开发完成并通过验收后，归档至 `docs/archive/vX.Y.Z/plans/`。
+
+### 7.3 文档归档 (Archiving)
+- **触发时机**:
+  - 版本发布 (Release) 前。
+  - 重大功能开发闭环 (Feature Completed) 后。
+- **操作步骤**:
+  1. 确认文档状态已更新为 `completed` 或 `archived`。
+  2. 移动文件至对应版本的 `docs/archive/vX.Y.Z/{plans,reports}/` 目录。
+  3. 更新 `docs/archive/vX.Y.Z/README.md` 索引。
+

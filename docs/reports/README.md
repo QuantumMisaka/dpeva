@@ -25,16 +25,12 @@ last-updated: 2026-03-09
 - **Archived**: 历史版本或已过时的报告，请移动至 `docs/archive/reports/`。
 - **Naming**: `YYYY-MM-DD-<topic>.md`
 
-## 3. 模板 (Template)
+## 4. 活跃报告 (Active Reports)
 
-```markdown
-# 报告标题 (Report Title)
+```{toctree}
+:maxdepth: 1
 
-- Status: active
-- Audience: Developers
-- Last-Updated: 2026-03-09
-
-## 1. 背景 (Context)
-## 2. 分析 (Analysis)
-## 3. 结论 (Conclusion)
+2026-03-10-ci-warning-analysis
+2026-03-10-variable-audit-resolution
 ```
+

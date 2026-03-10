@@ -79,3 +79,26 @@ dpeva/
 - **Configuration**: DP-EVA uses strict Pydantic validation. See `src/dpeva/config.py` for definitive schema.
 - **Pathing**: Use absolute paths in configs to avoid ambiguity.
 - **Data**: Most workflows expect `dpdata` compatible formats.
+
+## Agent Documentation Protocol
+
+**All Agents MUST adhere to the following documentation lifecycle rules:**
+
+1.  **Code Review Phase**:
+    - Create review reports in `docs/reports/` with naming `YYYY-MM-DD-Code-Review-<Topic>.md`.
+    - Do NOT create reports in root or `docs/archive` directly.
+
+2.  **Feature Planning Phase**:
+    - Create implementation plans/specs in `docs/plans/` with naming `YYYY-MM-DD-<Feature>-Plan.md`.
+    - Include `status: active` and `audience: developers` in front matter.
+
+3.  **Task Completion & Archiving**:
+    - Upon feature completion or issue resolution, verify if the plan/report should be archived.
+    - Move completed plans to `docs/archive/vX.Y.Z/plans/`.
+    - Move completed reports to `docs/archive/vX.Y.Z/reports/`.
+    - Update the index file `docs/archive/vX.Y.Z/README.md` immediately.
+
+4.  **Strict Prohibition**:
+    - NEVER create documentation files in the project root.
+    - NEVER leave orphan files without `README.md` indexing.
+

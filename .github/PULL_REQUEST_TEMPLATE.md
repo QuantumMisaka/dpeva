@@ -10,6 +10,7 @@
 - [ ] 已执行 `python3 scripts/doc_check.py`
 - [ ] 已执行 `python3 scripts/check_docs_freshness.py --days 90`
 - [ ] 已执行 `make html SPHINXOPTS="-W --keep-going"`
+- [ ] 若涉及功能开发完成，已将对应计划/报告归档至 `docs/archive/vX.Y.Z/`
 - [ ] 本次新增/更新的 `status: active` 文档已包含 `owner` 或 `owners`
 
 ## 风险与迁移说明
