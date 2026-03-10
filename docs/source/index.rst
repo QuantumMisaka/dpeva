@@ -37,6 +37,7 @@
    :caption: Governance
 
    policy/README
+   plans/governance/index
    plans/docs-governance-roadmap
 
 .. toctree::
@@ -47,6 +48,7 @@
    architecture/decisions/README
    architecture/decisions/2026-02-04-deepmd-dependency
    guides/README
+   guides/docs-governance-quickstart
    guides/deployment
    guides/developer/README
    guides/developer/config-docs-maintenance
@@ -55,7 +57,6 @@
    guides/testing/integration-slurm
    guides/testing/multi-datapool-artifacts
    plans/README
-   plans/governance/index
    policy/contributing
    policy/docs-structure
    policy/maintenance

@@ -137,3 +137,33 @@ jobs:
 - [ ] **Tooling**: Implement `scripts/doc_check.py`.
 - [ ] **CI**: Configure GitHub Actions.
 - [ ] **Audit**: Run initial scan and fix debts.
+
+## 7. Project Profile: DP-EVA
+
+Use this section as the default execution baseline when working in this repository.
+
+### 7.1 Primary governance entry points
+- `docs/guides/docs-governance-quickstart.md`
+- `docs/governance/README.md`
+- `docs/policy/contributing.md`
+- `docs/policy/maintenance.md`
+- `docs/policy/quality.md`
+- `docs/governance/inventory/owners-matrix.md`
+
+### 7.2 Mandatory pre-PR checks
+```bash
+python3 scripts/doc_check.py
+python3 scripts/check_docs_freshness.py --days 90
+make -C docs html SPHINXOPTS="-W --keep-going"
+```
+
+### 7.3 Linkcheck strategy for stable CI
+```bash
+make -C docs linkcheck SPHINXOPTS="-W --keep-going -D linkcheck_ignore='https://github.com/QuantumMisaka/dpeva/.*'"
+```
+
+### 7.4 AI contributor rules
+- Treat `docs/reference/*` as SSOT for field definitions.
+- For contract changes (CLI/config/output markers), update docs in the same PR.
+- Re-run governance checks after any docs edits and include evidence in PR body.
+- Keep active docs discoverable via `docs/source/index.rst` to avoid orphan warnings.
