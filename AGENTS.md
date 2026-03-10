@@ -98,7 +98,13 @@ dpeva/
     - Move completed reports to `docs/archive/vX.Y.Z/reports/`.
     - Update the index file `docs/archive/vX.Y.Z/README.md` immediately.
 
-4.  **Strict Prohibition**:
+4.  **Sphinx Indexing Requirement**:
+    - When adding/moving/deleting `.md` files, YOU MUST check and update the corresponding `.rst` files in `docs/source/`.
+    - Ensure `toctree` directives do not reference non-existent files.
+    - Run `make html` (if available) or verify paths manually to prevent broken builds.
+
+5.  **Strict Prohibition**:
     - NEVER create documentation files in the project root.
     - NEVER leave orphan files without `README.md` indexing.
+
 

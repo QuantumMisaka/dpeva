@@ -38,7 +38,6 @@
 
    policy/README
    plans/governance/index
-   plans/docs-governance-roadmap
 
 .. toctree::
    :maxdepth: 1
@@ -61,6 +60,3 @@
    policy/docs-structure
    policy/maintenance
    policy/quality
-   reference/README
-   reference/upstream-software
-   reports/README

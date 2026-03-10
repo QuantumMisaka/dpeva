@@ -21,7 +21,19 @@ last-updated: 2026-03-09
 - 现行与归档边界：active 内容仅在非 archive 目录维护，`archive/*` 只保留历史快照。
 - 规格落点策略：当前执行型规格统一在 `/docs/plans/*`；`/docs/archive/specs/*` 仅历史归档。
 
-## 2. 命名规范
+## 2. Sphinx 索引映射 (Index Mapping)
+
+本项目使用 Sphinx + MyST Parser 构建文档，物理文件 (`.md`) 与逻辑索引 (`.rst`) 存在严格映射关系：
+
+- **物理层**: 文档实际存储在 `docs/` 根目录下（如 `docs/guides/cli.md`）。
+- **逻辑层**: 构建配置位于 `docs/source/`，其中 `.rst` 文件定义目录树 (`toctree`)。
+- **更新规则**:
+  - **新增文档**: 必须在 `docs/source/index.rst` 或对应子索引（如 `docs/source/guides/index.rst`）中添加文件名（不含扩展名）。
+  - **移动/归档**: 必须从原 `.rst` 中移除引用，若归档目录有索引文件，需同步更新。
+  - **删除文档**: 必须从所有引用它的 `.rst` 文件中移除条目，防止构建报错。
+
+## 3. 命名规范
+
 
 - 目录名：全小写，短语用 `-` 连接（如 `guides/testing`）。
 - 主文档：语义清晰、稳定（如 `quickstart.md`、`config_schema.md`）。

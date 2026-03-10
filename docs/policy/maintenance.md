@@ -98,3 +98,14 @@ Owner 可以是角色而非具体姓名；但每篇 `active` 文档必须有 Own
   2. 移动文件至对应版本的 `docs/archive/vX.Y.Z/{plans,reports}/` 目录。
   3. 更新 `docs/archive/vX.Y.Z/README.md` 索引。
 
+### 7.4 索引文件维护 (Index Maintenance)
+- **规则**: 文档的物理移动（重命名/归档）必须伴随逻辑索引（Sphinx `.rst`）的更新。
+- **Sphinx 映射**:
+  - 核心索引文件位于 `docs/source/` 目录。
+  - `docs/source/index.rst` 映射整个文档站点的导航结构。
+  - 子目录索引（如 `docs/source/reference/index.rst`）负责该板块的文件列表。
+- **强制检查**:
+  - 任何 Markdown 文件的增删改，必须检查 `docs/source/**/*.rst` 是否有对应的 `toctree` 引用需要更新。
+  - 运行 `make html` 确保无 `WARNING: toctree contains reference to nonexisting document` 报错。
+
+
