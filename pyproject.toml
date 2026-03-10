@@ -48,7 +48,9 @@ dev = [
 ]
 docs = [
     "sphinx>=5.0",
-    "sphinx-rtd-theme",
+    "sphinx-book-theme",
+    "myst-parser",
+    "autodoc-pydantic",
 ]
 
 [project.urls]
