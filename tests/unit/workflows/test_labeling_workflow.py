@@ -88,3 +88,35 @@ class TestLabelingWorkflow:
         wf = LabelingWorkflow(config)
         with pytest.raises(ValueError, match="No valid systems found"):
             wf.run()
+
+    @patch("dpeva.workflows.labeling.DataIntegrationManager")
+    @patch("dpeva.workflows.labeling.load_systems")
+    @patch("dpeva.workflows.labeling.LabelingManager")
+    def test_wf_004_integration_enabled(self, MockManager, mock_load, MockIntegrationManager, tmp_path):
+        config = LabelingConfig(
+            work_dir=str(tmp_path),
+            input_data_path=str(tmp_path / "data"),
+            submission={"backend": "local"},
+            dft_params={},
+            attempt_params=[],
+            pp_dir="/tmp/pp",
+            orb_dir="/tmp/orb",
+            integration_enabled=True,
+        )
+        data_dir = tmp_path / "data"
+        data_dir.mkdir()
+        (data_dir / "type.raw").touch()
+
+        import dpdata
+        mock_sys = MagicMock(spec=dpdata.System)
+        mock_load.return_value = [mock_sys]
+
+        manager = MockManager.return_value
+        bundle_dir = tmp_path / "bundle"
+        bundle_dir.mkdir()
+        manager.prepare_tasks.return_value = [bundle_dir]
+
+        wf = LabelingWorkflow(config)
+        wf.run()
+
+        MockIntegrationManager.return_value.integrate.assert_called_once()

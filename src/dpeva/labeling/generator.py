@@ -13,7 +13,14 @@ from pathlib import Path
 
 import numpy as np
 from ase import Atoms
-from ase.io.abacus import write_input, write_abacus # ase-abacus is needed for now
+try:
+    from ase.io.abacus import write_input, write_abacus
+except ImportError:
+    raise ImportError(
+        "Could not import ase.io.abacus. This module requires the 'ase-abacus' plugin.\n"
+        "Please install it via:\n"
+        "  pip install git+https://gitlab.com/1041176461/ase-abacus.git"
+    )
 
 from dpeva.labeling.structure import StructureAnalyzer
 

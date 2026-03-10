@@ -80,3 +80,23 @@ class TestAnalysisWorkflow:
             workflow.run()
             
         mock_close_logger.assert_called_once()
+
+    @patch("dpeva.workflows.analysis.DatasetAnalysisManager")
+    @patch("dpeva.workflows.analysis.AnalysisIOManager")
+    @patch("dpeva.workflows.analysis.setup_workflow_logger")
+    @patch("dpeva.workflows.analysis.close_workflow_logger")
+    def test_run_dataset_mode(self, mock_close_logger, mock_setup_logger, MockIOManager, MockDatasetManager, tmp_path):
+        config = {
+            "mode": "dataset",
+            "dataset_dir": str(tmp_path / "dataset"),
+            "output_dir": str(tmp_path / "analysis"),
+            "type_map": ["O", "H"]
+        }
+
+        workflow = AnalysisWorkflow(config)
+        workflow.run()
+
+        mock_setup_logger.assert_called_once()
+        MockIOManager.return_value.load_data.assert_not_called()
+        MockDatasetManager.return_value.analyze.assert_called_once()
+        mock_close_logger.assert_called_once()

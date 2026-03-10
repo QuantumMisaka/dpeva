@@ -1,4 +1,12 @@
+---
+title: DP-EVA 文档导航 (Docs Index)
+status: active
+audience: Users / Developers
+last-updated: 2026-03-09
+---
+
 # DP-EVA 文档导航（Docs Index）
+
 
 本文档是 `docs/` 的统一入口：提供读者分流、权威信息源定位、以及文档维护规则。
 
@@ -6,24 +14,26 @@
 
 ### 1.1 使用者（想把流程跑起来）
 
-- 项目概览与快速开始：[README.md](/README.md)
-- 安装与环境准备：[installation.md](/docs/guides/installation.md)
-- Quickstart（最短路径跑通）：[quickstart.md](/docs/guides/quickstart.md)
-- CLI 使用指南：[cli.md](/docs/guides/cli.md)
+- 项目概览与快速开始：[README.md](README.md)
+- 安装与环境准备：[installation.md](guides/installation.md)
+- Quickstart（最短路径跑通）：[quickstart.md](guides/quickstart.md)
+- CLI 使用指南：[cli.md](guides/cli.md)
+- 核心上游软件与职责：[upstream-software.md](reference/upstream-software.md)
 
 ### 1.2 开发者（要改代码/加功能/修Bug）
 
-- 开发流程标准与架构说明：[developer-guide.md](/docs/guides/developer-guide.md)
-- 配置字段权威参考（查表）：[config-schema.md](/docs/reference/config-schema.md)
-- 参数验证与约束补充：[validation.md](/docs/reference/validation.md)
-- Slurm 使用与排障：[slurm.md](/docs/guides/slurm.md)
-- 文档贡献指南：[contributing.md](/docs/policy/contributing.md)
+- 开发流程标准与架构说明：[developer-guide.md](guides/developer-guide.md)
+- 配置字段权威参考（查表）：[reference/index.rst](reference/index.rst)
+- 参数验证与约束补充：[validation.md](reference/validation.md)
+- 核心上游软件与职责：[upstream-software.md](reference/upstream-software.md)
+- Slurm 使用与排障：[slurm.md](guides/slurm.md)
+- 文档贡献指南：[contributing.md](policy/contributing.md)
 
 ### 1.3 研究者（关注算法假设/设计权衡/实验结论）
 
-- 系统设计与模式分析：[design-report.md](/docs/architecture/design-report.md)
-- DeepMD 依赖决策记录：[2026-02-04-deepmd-dependency.md](/docs/architecture/decisions/2026-02-04-deepmd-dependency.md)
-- 描述符模长假设与实验报告：[modulo-hypothesis.md](/docs/reports/modulo-hypothesis.md)
+- 系统设计与模式分析：[design-report.md](architecture/design-report.md)
+- DeepMD 依赖决策记录：[2026-02-04-deepmd-dependency.md](architecture/decisions/2026-02-04-deepmd-dependency.md)
+- 描述符模长假设与实验报告：[modulo-hypothesis.md](archive/v0.5.2/reports/modulo-hypothesis.md)
 
 ## 2. 文档分层与权威来源（避免重复/冲突）
 
@@ -36,6 +46,13 @@
 - `docs/plans/`：开发计划与修复方案。开发完成后，会归档到 `docs/archive/`。
 - `docs/archive/`：历史与弃用文档（只读）。必须在文件头显式标注适用版本与是否已落地。
 
+### 2.1 现行文档与归档文档判别规则
+
+- 现行规范只在 `docs/guides/`、`docs/reference/`、`docs/policy/`、`docs/governance/` 维护。
+- `docs/archive/` 仅保留历史上下文，不作为现行规范来源。
+- 同一主题若 active 与 archive 并存，读取顺序固定为：active 文档优先，archive 仅作背景参考。
+- 当前版本的执行型规格统一落在 `docs/plans/`，`docs/archive/specs/` 仅保留历史规格。
+
 ## 3. 文档维护规则（建议作为团队约定）
 
 - 变更 `src/` 的用户接口、配置字段、关键目录结构时，PR 必须同步更新：
@@ -43,3 +60,11 @@
   - `docs/guides/*`（若涉及使用方式/流程）
 - 文档必须以“单一权威来源”为原则：同一份字段字典不允许在多处复制粘贴维护。
 - `docs/archive/` 内容默认不回写，除非修正事实性错误（需要保留修订说明）。
+
+## 4. 文档审查记录 (Audit Logs)
+
+定期对文档系统的健康状况进行体检，包括结构完整性、治理合规性与内容有效性。
+
+| 审查日期 | 版本 | 审查人 | 状态 | 快速链接 |
+| :--- | :--- | :--- | :--- | :--- |
+| 2026-03-09 | v1.0 | Trae AI | Completed | [DocReview_20260309_v1.0.md](governance/reviews/DocReview_20260309_v1.0.md) |

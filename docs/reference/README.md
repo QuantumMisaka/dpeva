@@ -1,10 +1,21 @@
+---
+title: Document
+status: active
+audience: Developers
+last-updated: 2026-03-09
+---
+
 # Reference（权威参考）
 
-本目录用于存放“查表/权威定义”的文档（更新频率中等，要求准确、可追溯）。
+- Status: active
+- Audience: Users / Developers
+- Last-Updated: 2026-03-09
 
-当前权威参考位于：
+本目录用于存放“查表/权威定义”的文档。
 
-- 配置字段字典：[config-schema.md](/docs/reference/config-schema.md)
-- 校验规则补充：[validation.md](/docs/reference/validation.md)
+> **Warning**
+> 静态的 [config_schema.md](https://github.com/QuantumMisaka/dpeva/blob/main/docs/reference/config_schema.md) 已被弃用。
+> 请查看在线文档中的 [API Reference](https://github.com/QuantumMisaka/dpeva/blob/main/docs/source/api/config.rst) 获取最新的配置字段说明（由 Pydantic 模型自动生成）。
 
-权威内容以 `docs/reference/*` 为准。
+- [validation.md](https://github.com/QuantumMisaka/dpeva/blob/main/docs/reference/validation.md): 参数校验与约束补充说明。
+- [upstream-software.md](https://github.com/QuantumMisaka/dpeva/blob/main/docs/reference/upstream-software.md): 核心上游软件位置与功能分工。

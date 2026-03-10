@@ -57,7 +57,7 @@ class SubmissionConfig(BaseModel):
     )
     env_setup: Union[str, List[str]] = Field(
         default="", 
-        description="Environment setup commands."
+        description="List of shell commands to execute before running the task (e.g., `module load cuda`)."
     )
 
     @field_validator("env_setup")
@@ -136,7 +136,10 @@ class FeatureConfig(BaseWorkflowConfig):
     model_path: Path = Field(..., description="Path to model file.")
     model_head: str = Field(..., description="Model head name.")
     
-    output_mode: Literal["atomic", "structural"] = DEFAULT_DESC_OUTPUT_MODE
+    output_mode: Literal["atomic", "structural"] = Field(
+        default=DEFAULT_DESC_OUTPUT_MODE,
+        description="Descriptor output format. Options: `atomic` (per-atom features) or `structural` (global features)."
+    )
     batch_size: int = Field(DEFAULT_DESC_BATCH_SIZE, gt=0)
     mode: Literal["cli", "python"] = DEFAULT_FEATURE_MODE
     
@@ -154,12 +157,22 @@ class FeatureConfig(BaseWorkflowConfig):
 class AnalysisConfig(BaseModel):
     """Configuration for Analysis Workflow (Post-processing)."""
     model_config = ConfigDict(extra='ignore', populate_by_name=True)
-    
-    result_dir: Path = Field(..., description="Path to DP test results directory.")
+
+    mode: Literal["model_test", "dataset"] = Field("model_test", description="Analysis mode.")
+    result_dir: Optional[Path] = Field(None, description="Path to DP test results directory.")
+    dataset_dir: Optional[Path] = Field(None, description="Path to dataset directory for dataset analysis mode.")
     output_dir: Path = Field(Path(DEFAULT_ANALYSIS_OUTPUT_DIR), description="Output directory for analysis results.")
     type_map: List[str] = Field(..., description="Atom type map (e.g. ['Fe', 'C']).")
     data_path: Optional[Path] = Field(None, description="Path to original dataset (for robust composition loading).")
     ref_energies: Dict[str, float] = Field(default_factory=dict, description="Reference energies per element for cohesive energy calculation.")
+
+    @model_validator(mode='after')
+    def validate_mode_paths(self):
+        if self.mode == "model_test" and self.result_dir is None:
+            raise ValueError("result_dir is required when mode='model_test'")
+        if self.mode == "dataset" and self.dataset_dir is None:
+            raise ValueError("dataset_dir is required when mode='dataset'")
+        return self
 
 class InferenceConfig(BaseWorkflowConfig):
     """Configuration for Inference Workflow."""
@@ -176,14 +189,28 @@ class LabelingConfig(BaseWorkflowConfig):
     
     # FP Params
     dft_params: Dict[str, Any] = Field(default_factory=dict, description="ABACUS INPUT parameters.")
-    pp_map: Dict[str, str] = Field(default_factory=dict, description="Pseudopotential mapping.")
-    orb_map: Dict[str, str] = Field(default_factory=dict, description="Orbital mapping.")
+    pp_map: Dict[str, str] = Field(
+        default_factory=dict, 
+        description="Dictionary mapping element symbols to pseudopotential filenames (e.g., `{'Fe': 'Fe.upf'}`)."
+    )
+    orb_map: Dict[str, str] = Field(
+        default_factory=dict, 
+        description="Dictionary mapping element symbols to orbital filenames (e.g., `{'Fe': 'Fe.orb'}`)."
+    )
     pp_dir: str = Field(..., description="Directory containing PP files.")
     orb_dir: str = Field(..., description="Directory containing Orb files.")
     
     # Generation
-    kpt_criteria: int = Field(DEFAULT_LABELING_KPT_CRITERIA, gt=0)
-    vacuum_thickness: float = Field(DEFAULT_LABELING_VACUUM_THICKNESS, gt=0)
+    kpt_criteria: int = Field(
+        DEFAULT_LABELING_KPT_CRITERIA, 
+        gt=0,
+        description="K-point density parameter (K*L). Determines grid density: `k_i = ceil(criteria / lattice_i)`."
+    )
+    vacuum_thickness: float = Field(
+        DEFAULT_LABELING_VACUUM_THICKNESS, 
+        gt=0,
+        description="Minimum vacuum thickness in Angstroms for surface/cluster models."
+    )
     
     # Packing
     tasks_per_job: int = Field(DEFAULT_LABELING_TASKS_PER_JOB, gt=0, description="Number of tasks per packed job.")
@@ -196,6 +223,10 @@ class LabelingConfig(BaseWorkflowConfig):
     
     # Output format
     output_format: str = Field(default="deepmd/npy", description="Output format for dataset (deepmd/npy or deepmd/npy/mixed)")
+    integration_enabled: bool = Field(default=False, description="Whether to integrate cleaned data into next-gen training data.")
+    existing_training_data_path: Optional[Path] = Field(None, description="Path to existing training dataset.")
+    merged_training_data_path: Optional[Path] = Field(None, description="Output path for merged training dataset.")
+    integration_deduplicate: bool = Field(default=False, description="Whether to enable deduplication in integration.")
 
 class TrainingConfig(BaseWorkflowConfig):
     """Configuration for Training Workflow."""
@@ -231,7 +262,10 @@ class CollectionConfig(BaseWorkflowConfig):
     
     # UQ Parameters
     num_models: int = Field(DEFAULT_NUM_MODELS, ge=3, description="Number of models for UQ calculation.")
-    uq_select_scheme: Literal["tangent_lo", "strict", "circle_lo", "crossline_lo", "loose"] = DEFAULT_UQ_SCHEME
+    uq_select_scheme: Literal["tangent_lo", "strict", "circle_lo", "crossline_lo", "loose"] = Field(
+        default=DEFAULT_UQ_SCHEME,
+        description="Strategy for selecting high-uncertainty data. Options: `tangent_lo`, `strict`, `circle_lo`, etc."
+    )
     uq_trust_mode: Literal["auto", "manual", "no_filter"] = "auto"
     uq_trust_ratio: float = Field(DEFAULT_UQ_TRUST_RATIO, ge=0.0, le=1.0)
     uq_trust_width: float = Field(DEFAULT_UQ_TRUST_WIDTH, gt=0.0)

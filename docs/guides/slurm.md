@@ -1,3 +1,10 @@
+---
+title: Document
+status: active
+audience: Developers
+last-updated: 2026-03-09
+---
+
 # Slurm 使用与排障指南
 
 - Status: active
@@ -19,7 +26,7 @@
 
 权威字段定义：
 
-- ../reference/config-schema.md
+- ../reference/config_schema.md
 - ../reference/validation.md
 
 ### 3.1 最小 Slurm 配置

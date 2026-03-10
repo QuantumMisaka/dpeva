@@ -1,9 +1,16 @@
+---
+title: Document
+status: active
+audience: Developers
+last-updated: 2026-03-09
+---
+
 # CLI 使用指南
 
 - Status: active
 - Audience: Users / Developers
 - Applies-To: CLI 模式（推荐）
-- Last-Updated: 2026-03-03
+- Last-Updated: 2026-03-08
 
 ## 1. 目的与范围
 
@@ -47,7 +54,7 @@ dpeva --no-banner <subcommand> <config_path>
 
 所有子命令的第一个参数均为配置 JSON 路径。配置字段的权威查表入口：
 
-- ../reference/config-schema.md
+- ../reference/config_schema.md
 - ../reference/validation.md
 
 ### 4.1 train（并行微调训练）
@@ -114,13 +121,19 @@ dpeva --no-banner <subcommand> <config_path>
   - 自动处理任务失败重试与结果回收
 - 输出
   - `labeled_data`（包含 DFT 计算结果的新数据集）
+  - 当 `integration_enabled=true` 时，额外输出 `outputs/merged_training_data`（或 `merged_training_data_path` 指定路径）
+  - 整合统计文件：`integration_summary.json`
 
-### 4.6 analysis（推理结果统计）
+### 4.6 analysis（双模式分析）
 
-- 输入：`AnalysisConfig.result_dir`（例如 `0/test_val`）
-- 输出：`AnalysisConfig.output_dir`
+- `model_test` 模式（默认）
+  - 输入：`AnalysisConfig.result_dir`（例如 `0/test_val`）
+  - 输出：`AnalysisConfig.output_dir`（指标、误差统计、图表）
+- `dataset` 模式
+  - 输入：`AnalysisConfig.dataset_dir`
+  - 输出：`dataset_stats.json`、`dataset_frame_summary.csv` 与分布图
 
-示例配置：`examples/recipes/analysis/config.json`
+示例配置：`examples/recipes/analysis/config_analysis.json`
 
 ## 5. 完成标记与链式编排
 
@@ -151,4 +164,5 @@ DPEVA_TAG: WORKFLOW_FINISHED
 ## 7. 变更记录
 
 - 2026-03-03：更新退出码契约说明，明确 `WorkflowError` 会导致退出码 1。
+- 2026-03-08：补充 analysis 双模式与 labeling integration 输出说明。
 - 2026-02-18：补齐子命令 I/O、完成标记与退出码说明，并建立与 recipes/api 的权威链接。

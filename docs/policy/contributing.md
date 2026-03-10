@@ -1,8 +1,11 @@
-# 文档贡献指南（Contributing）
+---
+title: 文档贡献指南 (Contributing)
+status: active
+audience: Developers / Maintainers
+last-updated: 2026-03-10
+---
 
-- Status: active
-- Audience: Developers / Maintainers
-- Last-Updated: 2026-02-19
+# 文档贡献指南（Contributing）
 
 ## 1. 目的与范围
 
@@ -22,9 +25,10 @@
 - 单一权威来源：字段字典与校验规则只在 `docs/reference/*` 维护，其他文档只引用不复制。
 - 相对路径链接：项目内资源链接统一使用相对路径，避免与环境绑定。
 - 与代码一致：用户接口（CLI/配置/输出目录/完成标记）变更必须在同一 PR 内同步更新文档。
+- 禁止文件系统绝对路径链接：禁止 `/home/...`、`C:\...`；引用仓库代码文件请使用仓库 URL。
 
 ## 4. 文档类型与落点
-- 分类与落点以 [DOCS_CLASSIFICATION.md](/docs/DOCS_CLASSIFICATION.md) 为准。
+- 分类与落点以 [docs-structure.md](https://github.com/QuantumMisaka/dpeva/blob/main/docs/policy/docs-structure.md) 为准。
 
 常见落点：
 
@@ -39,23 +43,35 @@
 
 所有标记为 `Status: active` 的文档必须包含：
 
-- Status / Audience / Last-Updated
+- Status / Audience / Last-Updated / Owner(s)
 
 建议补充：
 
-- Applies-To / Owners / Related
+- Applies-To / Related
 
 ## 6. Review 与验收
 
-验收标准以 [quality.md](/docs/policy/quality.md) 为准。
+验收标准以 [quality.md](https://github.com/QuantumMisaka/dpeva/blob/main/docs/policy/quality.md) 为准。
 
 建议的 PR 自检：
 
 - 链接检查：确保无断链、无绝对路径链接
 - 示例一致性：示例配置字段与 Pydantic 模型一致
 - 风险说明：对破坏性变更提供迁移说明与旧路径跳转入口（如确需重命名/重排）
+- 责任归属：确认本次变更文档具备 `owner` 或 `owners`
 
-## 7. 模板
+## 7. 稳态化提交流程（标准）
+
+1. 在提交前执行：
+   - `python3 scripts/doc_check.py`
+   - `python3 scripts/check_docs_freshness.py --days 90`
+   - `make html SPHINXOPTS="-W --keep-going"`
+2. 在 PR 描述中回答：
+   - 是否涉及 CLI/配置/输出契约变更
+   - 若涉及，已同步更新哪些文档与示例
+3. 由对应 Owner 或 Code Owner 完成审查后合并。
+
+## 8. 模板
 
 - 页面模板：/docs/_templates/page.md
 - ADR 模板：/docs/_templates/adr.md

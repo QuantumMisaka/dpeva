@@ -1,3 +1,10 @@
+---
+title: Document
+status: active
+audience: Developers
+last-updated: 2026-03-09
+---
+
 # Quickstart（最短路径跑通）
 
 - Status: active
@@ -67,7 +74,7 @@ work/
 参考最小配置模板：
 
 - `examples/recipes/`：../examples/recipes/
-- 配置字段字典：../reference/config-schema.md
+- 配置字段字典：../reference/config_schema.md
 
 ### 5.1 Feature（生成描述符）
 

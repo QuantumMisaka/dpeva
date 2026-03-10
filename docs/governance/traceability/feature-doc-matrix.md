@@ -1,3 +1,10 @@
+---
+title: Document
+status: active
+audience: Developers
+last-updated: 2026-03-09
+---
+
 # 功能-文档双向追踪矩阵（Feature ↔ Docs）
 
 - Status: active
@@ -22,13 +29,13 @@
 | 功能点 | 代码实现 | 文档入口 |
 |---|---|---|
 | 路径解析与提交后端 | `/src/dpeva/utils/config.py`、`/src/dpeva/config.py` | `/docs/guides/configuration.md` |
-| `SubmissionConfig` | `/src/dpeva/config.py` | `/docs/reference/config-schema.md`、`/docs/reference/validation.md` |
-| `TrainingConfig` | `/src/dpeva/config.py` | `/docs/reference/config-schema.md`、`/docs/reference/validation.md` |
-| `InferenceConfig` | `/src/dpeva/config.py` | `/docs/reference/config-schema.md`、`/docs/reference/validation.md` |
-| `LabelingConfig` | `/src/dpeva/config.py` | `/docs/reference/config-schema.md`、`/docs/reference/validation.md` |
-| `FeatureConfig` | `/src/dpeva/config.py` | `/docs/reference/config-schema.md`、`/docs/reference/validation.md` |
-| `CollectionConfig` | `/src/dpeva/config.py` | `/docs/reference/config-schema.md`、`/docs/reference/validation.md` |
-| `AnalysisConfig` | `/src/dpeva/config.py` | `/docs/reference/config-schema.md`、`/docs/reference/validation.md` |
+| `SubmissionConfig` | `/src/dpeva/config.py` | `/docs/reference/config_schema.md`、`/docs/reference/validation.md` |
+| `TrainingConfig` | `/src/dpeva/config.py` | `/docs/reference/config_schema.md`、`/docs/reference/validation.md` |
+| `InferenceConfig` | `/src/dpeva/config.py` | `/docs/reference/config_schema.md`、`/docs/reference/validation.md` |
+| `LabelingConfig` | `/src/dpeva/config.py` | `/docs/reference/config_schema.md`、`/docs/reference/validation.md` |
+| `FeatureConfig` | `/src/dpeva/config.py` | `/docs/reference/config_schema.md`、`/docs/reference/validation.md` |
+| `CollectionConfig` | `/src/dpeva/config.py` | `/docs/reference/config_schema.md`、`/docs/reference/validation.md` |
+| `AnalysisConfig` | `/src/dpeva/config.py` | `/docs/reference/config_schema.md`、`/docs/reference/validation.md` |
 
 ## 3. 工作流完成标记与可观测性（对外约定）
 
@@ -43,7 +50,7 @@
 |---|---|---|
 | Slurm E2E Smoke（Multi DataPool） | `/tests/integration/test_slurm_multidatapool_e2e.py` | `/docs/guides/testing/integration-slurm.md` |
 | 编排器与日志监控 | `/tests/integration/slurm_multidatapool/orchestrator.py` | `/docs/guides/testing/integration-slurm.md` |
-| 输入裁剪（降本） | `/tests/integration/slurm_multidatapool/data_minimizer.py` | `/docs/guides/testing/integration-slurm.md`、`/docs/guides/testing/integration-slurm-plan.md` |
+| 输入裁剪（降本） | `/tests/integration/slurm_multidatapool/data_minimizer.py` | `/docs/guides/testing/integration-slurm.md`、`/docs/plans/integration-slurm-plan.md` |
 
 ## 5. 工作流契约测试矩阵（维护用）
 

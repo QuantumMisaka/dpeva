@@ -1,3 +1,10 @@
+---
+title: Document
+status: active
+audience: Developers
+last-updated: 2026-03-09
+---
+
 # 安装与环境准备（Installation）
 
 - Status: active
@@ -6,20 +13,20 @@
 
 ## 1. 目的与范围
 
-本页说明 DP-EVA 的安装方式、Python 依赖、以及运行工作流所需的外部依赖（DeepMD-kit）。
+本页说明 DP-EVA 的安装方式、Python 依赖、以及运行工作流所需的外部依赖。
 
 ## 2. 相关方
 
 - 使用者：在本地或集群环境安装并运行工作流
 - 开发者：以可编辑模式安装并进行开发/测试
-- 平台维护：提供 DeepMD 与 Slurm 环境
+- 平台维护：提供 DeepMD、ABACUS 与 Slurm 环境
 
 ## 3. Python 环境要求
 
-- Python：`>=3.8`
+- Python：`>=3.10`
 - 包名：`dpeva`
 
-依赖定义以 [pyproject.toml](/pyproject.toml) 为准。
+依赖定义以 [pyproject.toml](https://github.com/QuantumMisaka/dpeva/blob/main/pyproject.toml) 为准。
 
 ## 4. 安装方式
 
@@ -66,6 +73,7 @@ dp --version
 
 - /docs/guides/slurm.md
 - /docs/architecture/decisions/2026-02-04-deepmd-dependency.md
+- /docs/reference/upstream-software.md
 
 ## 6. 下一步
 

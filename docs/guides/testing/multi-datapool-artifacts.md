@@ -1,12 +1,19 @@
+---
+title: Document
+status: active
+audience: Developers
+last-updated: 2026-03-09
+---
+
 # test-for-multiple-datapool 生产目录输入输出分析
 
 - Status: active
 - Audience: Developers
 - Last-Updated: 2026-02-18
 
-目标目录：[test-for-multiple-datapool](/test/test-for-multiple-datapool)
+目标目录：`/test/test-for-multiple-datapool` (File missing)
 
-本文档用于把生产级运行产物拆解为“输入资产 / 输出资产”，并将其映射到 DP-EVA 各 Workflow 的配置字段（对照 [examples/recipes](/examples/recipes)）。
+本文档用于把生产级运行产物拆解为“输入资产 / 输出资产”，并将其映射到 DP-EVA 各 Workflow 的配置字段（对照 [examples/recipes](https://github.com/QuantumMisaka/dpeva/tree/main/examples/recipes)）。
 
 ## 0. 相关方
 
@@ -65,7 +72,7 @@
 
 参考配置：
 
-- [config_feature.json](/examples/recipes/feature_generation/config_feature.json)
+- [config_feature.json](https://github.com/QuantumMisaka/dpeva/blob/main/examples/recipes/feature_generation/config_feature.json)
 
 ### 2.2 TrainingWorkflow（Ensemble 训练）
 
@@ -86,7 +93,7 @@
 
 参考配置：
 
-- [config_train.json](/examples/recipes/training/config_train.json)
+- [config_train.json](https://github.com/QuantumMisaka/dpeva/blob/main/examples/recipes/training/config_train.json)
 
 ### 2.3 InferenceWorkflow（候选集合推理）
 
@@ -106,7 +113,7 @@
 
 参考配置：
 
-- [config_infer.json](/examples/recipes/inference/config_infer.json)
+- [config_infer.json](https://github.com/QuantumMisaka/dpeva/blob/main/examples/recipes/inference/config_infer.json)
 
 ### 2.4 CollectionWorkflow（UQ + Filtering + Sampling + Export）
 
@@ -134,8 +141,8 @@
 
 参考配置：
 
-- 普通模式：[config_multi_normal.json](/examples/recipes/collection/config_multi_normal.json)
-- 联合模式：[config_multi_joint.json](/examples/recipes/collection/config_multi_joint.json)
+- 普通模式：`/examples/recipes/collection/config_multi_normal.json` (File missing)
+- 联合模式：`/examples/recipes/collection/config_multi_joint.json` (File missing)
 
 ### 2.5 AnalysisWorkflow（结果统计与可视化）
 
@@ -150,7 +157,7 @@
 
 参考配置：
 
-- [analysis/config.json](/examples/recipes/analysis/config.json)
+- `/examples/recipes/analysis/config.json` (File missing)
 
 ## 3. 用于集成测试编排的关键观察
 

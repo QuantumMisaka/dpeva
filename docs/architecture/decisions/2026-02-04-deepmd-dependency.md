@@ -1,3 +1,10 @@
+---
+title: Document
+status: active
+audience: Developers
+last-updated: 2026-03-09
+---
+
 # ADR: DeepMD-kit 依赖管理策略
 
 - Status: active
@@ -134,17 +141,17 @@ except ImportError:
 
 ```toml
 [project]
-name = \"dpeva\"
+name = "dpeva"
 dependencies = [
-    \"dpdata>=0.2.13\",
-    \"numpy\",
-    \"pandas\",
-    \"pydantic>=2.0\"
+    "dpdata>=0.2.13",
+    "numpy",
+    "pandas",
+    "pydantic>=2.0"
 ]
 
 [project.optional-dependencies]
 local = [
-    \"deepmd-kit>=2.2.0\"
+    "deepmd-kit>=2.2.0"
 ]
 ```
 

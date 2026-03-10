@@ -16,6 +16,7 @@ import dpdata
 
 from dpeva.config import LabelingConfig
 from dpeva.labeling.manager import LabelingManager
+from dpeva.labeling.integration import DataIntegrationManager
 from dpeva.submission.manager import JobManager
 from dpeva.submission.templates import JobConfig
 from dpeva.constants import WORKFLOW_FINISHED_TAG
@@ -213,6 +214,16 @@ class LabelingWorkflow:
         
         # 4. Final Export
         self.manager.collect_and_export()
+        if self.config.integration_enabled:
+            integration_manager = DataIntegrationManager(deduplicate=self.config.integration_deduplicate)
+            cleaned_dir = Path(self.config.work_dir) / "outputs" / "cleaned"
+            merged_path = self.config.merged_training_data_path or (Path(self.config.work_dir) / "outputs" / "merged_training_data")
+            summary = integration_manager.integrate(
+                new_labeled_data_path=cleaned_dir,
+                merged_output_path=Path(merged_path),
+                existing_training_data_path=self.config.existing_training_data_path,
+            )
+            logger.info(f"Data integration finished: {summary}")
         logger.info(WORKFLOW_FINISHED_TAG)
 
     def _monitor_slurm_jobs(self, job_ids: List[str], interval: int = 60):

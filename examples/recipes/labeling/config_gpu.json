@@ -10,6 +10,12 @@
         "stress": 40.0,
         "max_atoms": 255
     },
+    "ref_energies": {
+        "Fe": -3215.2791,
+        "C": -156.0795,
+        "O": -444.6670,
+        "H": -13.5410
+    },
     "submission": {
         "backend": "slurm",
         "slurm_config": {
@@ -35,7 +41,7 @@
         "scf_thr": 1e-7,
         "scf_nmax": 300,
         "scf_os_stop": 1,
-        "scf_os_ndim": 60,
+        "scf_os_ndim": 80,
         "basis_type": "lcao",
         "ks_solver": "cusolver",
         "mixing_type": "broyden",
@@ -71,16 +77,14 @@
         "H": 1.0,
         "O": 1.0
     },
-    "ref_energies": {
-        "Fe": -3215.2791,
-        "C": -156.0795,
-        "O": -444.6670,
-        "H": -13.5410
-    },
     "output_format": "deepmd/npy",
+    "integration_enabled": false,
+    "existing_training_data_path": null,
+    "merged_training_data_path": null,
+    "integration_deduplicate": false,
     "attempt_params": [
         {},
-        {"mixing_beta": 0.1, "scf_os_stop": 1, "scf_os_ndim": 120},
-        {"mixing_beta": 0.025, "scf_os_stop": 1, "scf_os_ndim": 180}
+        {"mixing_beta": 0.1, "scf_os_stop": 1, "scf_os_ndim": 150},
+        {"mixing_beta": 0.025, "scf_os_stop": 1, "scf_os_ndim": 200}
     ]
 }

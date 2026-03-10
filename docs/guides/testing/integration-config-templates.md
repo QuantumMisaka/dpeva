@@ -1,3 +1,10 @@
+---
+title: Document
+status: active
+audience: Developers
+last-updated: 2026-03-09
+---
+
 # DP-EVA 集成测试最小配置模板（Slurm）
 
 - Status: active
@@ -6,7 +13,7 @@
 
 对应可直接复制的模板文件位于：
 
-- [tests/integration/slurm_multidatapool/configs](/tests/integration/slurm_multidatapool/configs)
+- [tests/integration/slurm_multidatapool/configs](https://github.com/QuantumMisaka/dpeva/tree/main/tests/integration/slurm_multidatapool/configs)
 
 本模板以“多数据池生产目录”语义为基准（`other_dpdata_all/`、`sampled_dpdata/`、`desc_pool/`、`desc_train/`、`0..3/`、`test_val/`），并尽量压缩到 Pydantic 模型要求的最小字段集。
 

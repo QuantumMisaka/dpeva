@@ -1,3 +1,10 @@
+---
+title: Document
+status: active
+audience: Developers
+last-updated: 2026-03-09
+---
+
 # 配置编写指南（Configuration）
 
 - Status: active
@@ -8,7 +15,7 @@
 
 本页说明“如何写配置、如何组织路径、如何最小化配置”。全量字段字典与校验规则请以 Reference 为准：
 
-- ../reference/config-schema.md
+- ../reference/config_schema.md
 - ../reference/validation.md
 
 ## 2. 相关方

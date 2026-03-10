@@ -1,13 +1,36 @@
-# Reports（报告与一次性结论）
+---
+title: Document
+status: active
+audience: Developers
+last-updated: 2026-03-09
+---
 
-本目录用于存放“一次性结论/分析报告/实验记录”（默认只追加，不回写）。
+# 技术报告 (Technical Reports)
 
-## 测试与验证报告 (2026-02)
-- [单元测试报告 (Unit Test Report)](2026-02-22-unit-test-report.md)
-- [集成测试审查报告 (Integration Test Review)](2026-02-22-integration-test-review.md)
-- [集成测试优化报告 (Integration Test Optimization)](2026-02-22-integration-test-optimization.md)
-- [集成测试输出验证报告 (Integration Test Output Verification)](2026-02-22-integration-test-output-verification.md)
+- Status: active
+- Audience: All
+- Last-Updated: 2026-03-09
 
-## 其他报告
-- 描述符模长假设报告：[modulo-hypothesis.md](/docs/reports/modulo-hypothesis.md)
-- 历史重构/评审报告：[archive](/docs/archive)
+本文档目录用于存放当前活跃的技术分析、实验报告与设计文档。
+
+## 1. 报告类型
+
+- **Technical Analysis**: 算法性能分析、设计权衡、架构决策。
+- **Experiment Reports**: 关键实验结果、参数调优记录。
+- **Release Reports**: 版本发布总结。
+
+## 2. 维护策略
+
+- **Active**: 当前版本或长期有效的报告。
+- **Archived**: 历史版本或已过时的报告，请移动至 `docs/archive/reports/`。
+- **Naming**: `YYYY-MM-DD-<topic>.md`
+
+## 4. 活跃报告 (Active Reports)
+
+```{toctree}
+:maxdepth: 1
+
+2026-03-10-ci-warning-analysis
+2026-03-10-variable-audit-resolution
+```
+
