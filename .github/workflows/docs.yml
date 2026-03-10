@@ -22,7 +22,7 @@ jobs:
         run: |
           pip install -e .[docs]
           # Ensure sphinx and extensions are installed
-          pip install sphinx sphinx-book-theme myst-parser sphinxcontrib-autodoc_pydantic
+          pip install sphinx sphinx-book-theme myst-parser autodoc-pydantic
 
       - name: Build HTML
         run: |

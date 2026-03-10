@@ -62,7 +62,7 @@ make html
 ## 4. 性能基准
 
 - **构建时间**: 增量构建 < 2s，全量构建 < 10s。
-- **依赖**: `sphinx`, `sphinx-book-theme`, `sphinxcontrib-autodoc_pydantic`, `myst-parser`。
+- **依赖**: `sphinx`, `sphinx-book-theme`, `autodoc-pydantic`, `myst-parser`。
 
 ## 5. 常见问题
 
