@@ -90,6 +90,7 @@ Logo 采用 **“图文融合 (Iconic Logotype)”** 形式，整体为水平结
     *   形态：细长的短横，中间略亮、两端渐隐（类似粒子加速器束斑）。
     *   细节：短横内部可加入 2–3 条极细平行线（像数据通道），但整体仍像一个 `-`。
     *   寓意：从 `DP`（基础建模）向 `EVA`（进化加速）输送“能量/信息”。
+    *   **物理隐喻**：可视为**“势能函数的一阶导数（力）”**的符号化表达，或者 **“不确定度收敛”** 的几何表达（如从发散到收敛的线条）。
 
 2.  **采样阈门短划 (Selection Gate Dash)**
     *   形态：短横两端略有“门槛”折角（微小的八边形切角），中间留一道缝。
@@ -157,6 +158,7 @@ Logo 采用 **“图文融合 (Iconic Logotype)”** 形式，整体为水平结
 
 1.  **化学空间点云 (Chemical-Space Point Cloud)**
     *   形态：稀疏点阵/散点云（可带轻微透视）。
+    *   **参考数据**: 请严格参考 `Final_sampled_PCAview.png` 中的 **PCA 降维分布形态**，避免使用通用的均匀随机噪点。
     *   语义：海量候选样本。
     *   规则：点云密度从左到右逐渐稀疏；被选中的点用橙色高亮（少量）。
 
@@ -212,6 +214,10 @@ Logo 采用 **“图文融合 (Iconic Logotype)”** 形式，整体为水平结
 *   **Web**: 最小高度 24px (确保 `DP` 与 `EVA` 字样清晰)。
 *   **Print**: 最小宽度 20mm。
 *   **Icon**: 支持 16x16px (Favicon) 识别度（需提供像素对齐的简化版）。
+
+### 6.5 物理工艺兼容性
+*   **丝印/刻蚀限制**: 考虑到 Logo 可能应用于服务器机箱、金属铭牌等场景，单色稿中所有线条的**物理宽度不得小于 0.5mm**（按 20mm 总宽计算）。
+*   **镂空限制**: 在金属镂空场景下，必须保证所有封闭图形（如 `D`, `P`, `A` 内部）有连接桥，防止内部掉落（Stencil 风格变体可选）。
 
 建议导出尺寸（至少覆盖）
 
@@ -293,9 +299,39 @@ Logo 采用 **“图文融合 (Iconic Logotype)”** 形式，整体为水平结
 
 **附注**: 本文档旨在建立一套严谨且极具张力的视觉语言，请设计师在执行时，务必保持对“科学”与“艺术”双重属性的敬畏。
 
-## 11. 参考资料
+## 11. AI 生成协助指南 (AI Generation Guide)
+
+本章节提供针对 Midjourney (v6+) 或 Stable Diffusion 的结构化提示词，辅助设计师快速生成创意草图或材质参考。
+
+### 11.1 核心概念 Prompt (Concept)
+> 用于探索“科学与进化”融合的构图灵感。
+
+```text
+/imagine prompt: logo design for "DP-EVA", split composition, left side "DP" in geometric tech-blue sans-serif font representing physics and order, right side "EVA" in aggressive sharp orange serif font representing biological evolution and mecha, connecting with a acceleration beam dash, futuristic sci-fi aesthetic, neon genesis evangelion style, minimalism, vector style, 8k resolution, white background --no shading, complex details --v 6.0
+```
+
+### 11.2 3D 材质参考 Prompt (Material)
+> 用于生成 Section 9.1 描述的材质质感。
+
+```text
+/imagine prompt: 3D render of text "DP-EVA", isometric view. "DP" made of frosted glass with internal blue glow. "EVA" made of glossy black obsidian with internal magma orange vein glow. "A" has a green neon eye. Cinematic lighting, cold blue main light, warm orange rim light, dark void background, octane render, unreal engine 5, hyper-realistic --ar 16:9 --v 6.0
+```
+
+### 11.3 辅助图形纹理 Prompt (Texture)
+> 用于生成背景点云或等势线纹理。建议使用 `Final_sampled_PCAview.png` 作为 Image Prompt (iw 0.5) 以获得真实的科学数据分布特征。
+
+```text
+/imagine prompt: abstract background texture, chemical space point cloud, sparse data points, t-SNE visualization style, scientific data visualization, connecting lines, deep blue and neon orange color palette, high tech, clean, minimal --tile --v 6.0
+```
+
+---
+
+## 12. 参考资料
 - **DeepModeling 官网**: [https://deepmodeling.com/](https://deepmodeling.com/)
 - **EVA 维基百科**: [萌娘百科 - 新世纪福音战士](https://mzh.moegirl.org.cn/%E6%96%B0%E4%B8%96%E7%BA%AA%E7%A6%8F%E9%9F%B3%E6%88%98%E5%A3%AB)
+- **真实采样数据参考 (Real-world Data References)**:
+    - 整体分布参考: `Final_sampled_PCAview.png` (展示了从蓝色候选集到红色选中点的筛选过程)
+    - 覆盖度参考: `DIRECT_PCA_feature_coverage.png` (展示了 DIRECT 算法的空间填充特性)
 - DeepModeling LOGO（随附件提供）
 - EVA LOGO（随附件提供）
 - 项目链接：https://github.com/QuantumMisaka/dpeva
