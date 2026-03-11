@@ -30,6 +30,5 @@ last-updated: 2026-03-11
 ```{toctree}
 :maxdepth: 1
 
-2026-03-10-combined-review
 2026-03-11-remediation-summary
 ```

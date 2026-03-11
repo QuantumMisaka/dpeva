@@ -1,6 +1,6 @@
 ---
 title: Codebase Remediation Plan
-status: active
+status: archived
 audience: Developers
 last-updated: 2026-03-11
 owner: Engineering
@@ -10,7 +10,7 @@ owner: Engineering
 
 ## 1. 目标与原则
 
-- 目标：基于 [2026-03-10-combined-review](file:///home/pku-jianghong/liuzhaoqing/work/ft2dp-dpeva/dpeva/docs/reports/2026-03-10-combined-review.md#L55-L164) 的全部问题，建立并执行可追踪、可验收、可回溯的修复闭环。
+- 目标：基于 [2026-03-10-combined-review](file:///home/pku-jianghong/liuzhaoqing/work/ft2dp-dpeva/dpeva/docs/archive/v0.6.4/reports/2026-03-10-combined-review.md#L55-L164) 的全部问题，建立并执行可追踪、可验收、可回溯的修复闭环。
 - 原则：先 P0 再 P1/P2；每项修复后执行单元、集成、回归测试；全部修复必须有“变更记录 + 测试证据 + 风险记录”。
 - 完成定义：问题清单全部进入已关闭状态；测试门禁通过；修复总结报告完成。
 
@@ -165,3 +165,8 @@ owner: Engineering
   - `pytest tests/unit -q` 通过（189 passed）
   - `pytest tests/integration -q` 通过（7 passed, 1 skipped）
   - `pytest tests/unit tests/integration --cov=src/dpeva --cov-branch --cov-report=term` 通过（196 passed, 1 skipped，TOTAL 76%）
+
+## 12. 完成确认（归档结论）
+
+- R01-R37 已全部关闭，计划目标全部达成。
+- 本计划已结束执行并转入 v0.6.4 归档，只读保存。

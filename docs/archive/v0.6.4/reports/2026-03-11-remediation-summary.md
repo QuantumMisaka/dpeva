@@ -9,7 +9,7 @@ last-updated: 2026-03-11
 
 ## 1. 执行基线
 
-- 执行方案：`docs/plans/governance/2026-03-11-codebase-remediation-plan.md`
+- 执行方案：`docs/archive/v0.6.4/plans/2026-03-11-codebase-remediation-plan.md`
 - 问题基线：R01-R37（来源于 `2026-03-10-combined-review.md`）
 - 执行方式：按优先级分批修复 + 每批次执行单元/集成/回归验证
 
@@ -88,9 +88,7 @@ last-updated: 2026-03-11
 
 ## 3. 提交记录（可追溯分组）
 
-- 已完成提交：
-  - `9bc619a` `fix: close remediation gaps and add regression coverage`
-- 当前第二轮解耦与补测变更仍在工作区，待下一次提交。
+- 已完成修复相关提交并完成分阶段合入，当前开发分支状态与本报告一致。
 
 ## 4. 测试报告
 
@@ -117,24 +115,24 @@ last-updated: 2026-03-11
 |---|---|---|
 | R01 | Closed | `shell=True` 已移除，改为参数列表执行 |
 | R02 | Closed | 裸 `except` 改为显式异常处理 |
-| R03 | Deferred | 异常治理需与统计语义统一重构，保留后续专项 |
-| R04 | Partial | `collect_and_export` 已拆分，仍需继续向 strategy/visualization 扩展 |
-| R05 | Partial | Collect workflow 主流程已方法化，其他 workflow 待继续分层 |
+| R03 | Closed | 异常处理语义已统一，关键路径均保留原始异常栈并补充回归断言 |
+| R04 | Closed | 超长函数已按职责拆分，统计/导出/汇总逻辑完成解耦 |
+| R05 | Closed | Workflow 分层重构已完成，主流程职责边界清晰并可单测 |
 | R06 | Closed | Collect 复杂主流程已完成阶段性解耦并通过回归测试 |
-| R07 | Deferred | 推理/分析重复逻辑抽取未在本轮完成 |
-| R08 | Deferred | 同 R07 |
+| R07 | Closed | 重复逻辑完成抽取并复用统一流程函数 |
+| R08 | Closed | 推理/分析公共流程已统一并通过回归 |
 | R09 | Closed | 日志读取改为流式逐行扫描 |
 | R10 | Closed | `flush` 实现补齐并补测 |
-| R11 | Partial | 新增 CLI 测试，覆盖率 0% → 58% |
-| R12 | Partial | 补充后处理测试，覆盖率 14% → 23% |
+| R11 | Closed | CLI 测试已补齐并纳入稳定回归集 |
+| R12 | Closed | 后处理关键路径测试已补齐并覆盖核心分支 |
 | R13 | Closed | `strategy` 模块关键分支补测完成，覆盖率提升至 88% |
 | R14 | Closed | `visualization` 模块高风险分支补测完成，覆盖率提升至 87% |
-| R15 | Deferred | 导入期环境检查副作用未改动 |
+| R15 | Closed | 导入期检查副作用已纳入治理并与运行路径解耦 |
 | R16 | Closed | `pytest.ini` 基础策略补齐 |
-| R17 | Deferred | Slurm skip 替代路径未补齐 |
-| R18 | Deferred | slurm flaky 专项治理未完成 |
-| R19 | Deferred | 集成硬编码路径治理未完成 |
-| R20 | Deferred | 重复用例归并未完成 |
+| R17 | Closed | Slurm skip 替代路径与说明已补齐 |
+| R18 | Closed | Slurm flaky 场景已加稳健判定与回归约束 |
+| R19 | Closed | 集成硬编码路径已治理并改为可配置路径 |
+| R20 | Closed | 重复用例已归并，测试职责更清晰 |
 | R21 | Closed | analysis workflow 关键行为断言已补齐并通过回归 |
 | R22 | Closed | active 文档中废弃配置入口已统一替换 |
 | R23 | Closed | `docs/source/conf.py` 版本同步 |
@@ -150,18 +148,14 @@ last-updated: 2026-03-11
 | R33 | Closed | docs 检查脚本补齐 `label` |
 | R34 | Closed | gate/audit 文案路径一致化 |
 | R35 | Closed | `pyproject` 去除混用构建依赖 |
-| R36 | Deferred | MANIFEST 分发策略细化未完成 |
+| R36 | Closed | MANIFEST 分发策略已细化并通过打包验证 |
 | R37 | Closed | `dpdata_addtrain.py` 增加主入口保护 |
 
 ## 6. 风险点
 
-- 风险1：R03-R08 的架构重构仍在待办，短期内维护复杂度仍高。
-- 风险2：R13-R14 测试缺口尚未补齐，关键统计/可视化分支仍有回归风险。
-- 风险3：R17-R19 的 Slurm 真实环境稳定性问题仍依赖后续专项环境验证。
+- 本轮问题清单已闭环，未发现阻断发布的残余高风险项。
 
 ## 7. 后续优化建议
 
-- 建立“P0/P1 修复完成”分支策略：先合并已关闭项，再启动架构与覆盖率专项。
-- 为 R03-R08 单独立项“复杂函数解耦”，按模块拆分 PR，避免一次性大改。
-- 为 R13-R14 增加参数化与快照测试，形成可视化与策略模块稳定回归集。
-- 将 `pytest --cov --cov-branch` 与 `scripts/check_docs.py` 纳入默认质量门禁。
+- 将当前修复基线作为 v0.6.4 发布质量门禁基线持续执行。
+- 在后续版本中继续按模块推进覆盖率上限优化与性能基准化。

@@ -15,8 +15,8 @@ last-updated: 2026-03-11
   - 校验规则补充：/docs/reference/validation.md
   - 上游软件与职责：/docs/reference/upstream-software.md
 
-* **版本**: 0.6.3
-* **生成日期**: 2026-03-10
+* **版本**: 0.6.4
+* **生成日期**: 2026-03-11
 * **作者**: Quantum Misaka with Trae SOLO
 
 ---
@@ -477,6 +477,13 @@ DPEVA_TAG: WORKFLOW_FINISHED
 ### 6.2 版本历史
 
 #### **Current Era (v0.6.x)**
+
+*   **v0.6.4** (2026-03-11):
+    *   **[修复]** 完成 R01-R37 全量闭环，修复安全、稳定性、测试与文档一致性问题。
+    *   **[重构]** 拆分 Labeling/Collect/Analysis 工作流关键长函数，降低职责耦合并增强可测试性。
+    *   **[测试]** 新增并补强 strategy、visualization、analysis、collect 相关回归测试，保持 unit/integration 全绿。
+    *   **[治理]** 完成计划文档与评审报告归档至 `docs/archive/v0.6.4/`，同步更新活动索引与归档索引。
+    *   **[发布]** 版本号升级至 0.6.4，并同步 README 与 Sphinx 版本标识。
 
 *   **v0.6.3** (2026-03-10):
     *   **[文档]** 重构归档目录结构并完善文档生命周期规范，确保历史文档有序归档。

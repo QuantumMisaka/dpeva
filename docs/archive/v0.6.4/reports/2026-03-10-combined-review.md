@@ -1,6 +1,6 @@
 ---
 title: Combined Codebase Review
-status: active
+status: archived
 audience: Developers
 last-updated: 2026-03-10
 ---
