@@ -103,3 +103,51 @@ class TestUQVisualizer:
             
         # Just check that plot commands are issued
         assert mock_plt.plot.called
+
+    def test_plot_uq_identity_scatter_missing_identity(self, visualizer, mock_plt, mock_sns):
+        df = pd.DataFrame({"uq_qbc_for": [0.1], "uq_rnd_for_rescaled": [0.2]})
+        visualizer.plot_uq_identity_scatter(df, "strict", 0.1, 0.2, 0.1, 0.2)
+        assert not mock_sns.scatterplot.called
+
+    def test_plot_uq_identity_scatter_with_truncation(self, visualizer, mock_plt, mock_sns):
+        df = pd.DataFrame(
+            {
+                "uq_qbc_for": [0.1, 2.5],
+                "uq_rnd_for_rescaled": [0.2, 2.6],
+                "uq_identity": ["candidate", "failed"],
+            }
+        )
+        visualizer.plot_uq_identity_scatter(df, "strict", 0.1, 0.2, 0.1, 0.2)
+        assert mock_sns.scatterplot.call_count >= 2
+        assert mock_plt.savefig.call_count >= 2
+
+    def test_plot_candidate_vs_error(self, visualizer, mock_plt):
+        df_uq = pd.DataFrame(
+            {
+                "uq_qbc_for": [0.1, 0.2],
+                "uq_rnd_for_rescaled": [0.2, 0.3],
+                "diff_maxf_0_frame": [0.3, 0.4],
+            }
+        )
+        df_candidate = df_uq.iloc[[0]].copy()
+        visualizer.plot_candidate_vs_error(df_uq, df_candidate)
+        assert mock_plt.savefig.call_count >= 2
+
+    def test_plot_pca_analysis_returns_dataframe(self, visualizer, mock_plt):
+        explained_variance = np.array([0.6, 0.3, 0.05, 0.03, 0.01, 0.005, 0.003, 0.002])
+        all_features = np.array([[0.1, 0.2], [0.2, 0.3], [0.3, 0.4], [0.4, 0.5]])
+        df_uq = pd.DataFrame({"dataname": ["a-0", "a-1", "b-0", "b-1"]})
+        out_df = visualizer.plot_pca_analysis(
+            explained_variance=explained_variance,
+            selected_PC_dim=2,
+            all_features=all_features,
+            direct_indices=[0, 1],
+            random_indices=[2, 3],
+            scores_direct=np.array([0.5, 0.6]),
+            scores_random=np.array([0.4, 0.3]),
+            df_uq=df_uq,
+            final_indices=[0, 1],
+            n_candidates=2,
+            full_features=all_features,
+        )
+        assert list(out_df.columns) == ["PC1", "PC2"]

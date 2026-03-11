@@ -128,3 +128,40 @@ owner: Engineering
   - 应对：保留可跳过逻辑并补充本地可复现实验路径。
 - 风险3：文档与代码更新节奏不一致。
   - 应对：强制“同一变更包含文档更新 + docs 构建验证”。
+
+## 9. 开发进展更新（2026-03-11 第二轮）
+
+- 已完成：`labeling/manager.py` 的统计导出流程拆分（数据收集、过滤导出、异常导出、统计聚合、报告输出解耦）。
+- 已完成：`workflows/collect.py` 的主流程拆分（UQ阶段、采样阶段、导出阶段方法化）。
+- 已完成：新增回归测试
+  - `tests/unit/workflows/test_collect_refactor.py`
+  - `tests/unit/labeling/test_manager.py` 新增聚合统计断言
+- 已验证：
+  - `pytest tests/unit -q` 通过（178 passed）
+  - `pytest tests/integration -q` 通过（7 passed, 1 skipped）
+  - `pytest tests/unit tests/integration --cov=src/dpeva --cov-branch --cov-report=term` 通过（185 passed, 1 skipped）
+  - `python scripts/check_docs.py`、`python scripts/audit.py`、`make -C docs html` 均通过
+
+## 10. 开发进展更新（2026-03-11 第三轮）
+
+- 已完成：`labeling/strategy.py` 默认参数鲁棒性修复（`attempt_params=None` 时安全回退空列表）。
+- 已完成：新增 `tests/unit/labeling/test_strategy.py`，覆盖参数获取、缺失输入、参数追加与无效重试分支。
+- 已完成：增强 `tests/unit/uncertain/test_visualization.py`，补齐 identity 缺失分支、截断分支、候选误差图与 PCA 汇总图分支。
+- 已完成：`collect.py` 提炼 `_extract_unique_system_names` 以降低 UQ 阶段复杂度。
+- 已验证：
+  - `pytest tests/unit -q` 通过（187 passed）
+  - `pytest tests/integration -q` 通过（7 passed, 1 skipped）
+  - `pytest tests/unit tests/integration --cov=src/dpeva --cov-branch --cov-report=term` 通过（194 passed, 1 skipped，TOTAL 76%）
+  - `python scripts/check_docs.py`、`python scripts/audit.py`、`make -C docs html` 均通过
+
+## 11. 开发进展更新（2026-03-11 第四轮）
+
+- 已完成：`workflows/analysis.py` 再解耦，拆分 `run` 为 `_run_dataset_mode`、`_run_model_mode`、`_resolve_composition_info`。
+- 已完成：异常处理语义修正，由 `raise e` 改为 `raise`，保留原始 traceback。
+- 已完成：增强 `tests/unit/workflows/test_analysis_workflow.py`，补齐：
+  - data_path 组成信息加载分支断言
+  - metrics 为空时跳过保存分支断言
+- 已验证：
+  - `pytest tests/unit -q` 通过（189 passed）
+  - `pytest tests/integration -q` 通过（7 passed, 1 skipped）
+  - `pytest tests/unit tests/integration --cov=src/dpeva --cov-branch --cov-report=term` 通过（196 passed, 1 skipped，TOTAL 76%）

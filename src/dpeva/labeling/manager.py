@@ -8,9 +8,11 @@ Orchestrates the labeling process: input generation, task packing, and result co
 import os
 import logging
 import shutil
+import json
 from pathlib import Path
 from typing import Dict, Any, List, Optional, Union, Tuple
 
+import pandas as pd
 from dpeva.config import LabelingConfig
 from dpeva.labeling.generator import AbacusGenerator
 from dpeva.labeling.packer import TaskPacker
@@ -281,216 +283,164 @@ if __name__ == "__main__":
         return list(job_dirs)
 
     def collect_and_export(self):
-        """
-        Collect converged results and export cleaned dataset.
-        Also exports anomalies to separate directories.
-        """
         logger.info("Collecting converged results...")
-        systems = dpdata.MultiSystems()
-        
         if not self.converged_dir.exists():
-             logger.warning("CONVERGED directory not found.")
-             # Create empty df to prevent crash if nothing converged
-             # But we should still scan inputs for failed tasks?
-             # Yes, proceed.
-        
-        # Scan CONVERGED directory (recursive)
+            logger.warning("CONVERGED directory not found.")
+        task_dirs = self._collect_converged_task_dirs()
+        systems, df, df_clean = self._build_metrics_data(task_dirs)
+        if not df.empty:
+            self._export_filtered_results(systems, df, df_clean)
+        failed_tasks_info = self._collect_failed_tasks_info()
+        stats = self._aggregate_stats(df, df_clean, failed_tasks_info)
+        self._log_stats(stats)
+
+    def _collect_converged_task_dirs(self) -> List[Path]:
         task_dirs = []
         if self.converged_dir.exists():
-            for root, dirs, files in os.walk(self.converged_dir):
-                if "INPUT" in files and "STRU" in files:
-                    # Filter out output directories to avoid double counting
-                    if "OUT." in Path(root).name:
-                        continue
+            for root, _, files in os.walk(self.converged_dir):
+                if "INPUT" in files and "STRU" in files and "OUT." not in Path(root).name:
                     task_dirs.append(Path(root))
-        
         task_dirs.sort(key=lambda p: str(p))
-        
-        # Metadata Registry
-        import json
-        import pandas as pd
-        task_registry = [] # List of dicts: {sys_idx, dataset, type, task_name}
-        
+        return task_dirs
+
+    def _read_task_meta(self, task_dir: Path, base_dir: Path) -> Dict[str, str]:
+        dataset_name = "unknown"
+        stru_type = "unknown"
+        task_name = task_dir.name
+        meta_file = task_dir / "task_meta.json"
+        if meta_file.exists():
+            try:
+                with open(meta_file) as f:
+                    meta = json.load(f)
+                    dataset_name = meta.get("dataset_name", "unknown")
+                    stru_type = meta.get("stru_type", "unknown")
+                    task_name = meta.get("task_name", task_dir.name)
+            except (OSError, json.JSONDecodeError, TypeError, ValueError) as exc:
+                logger.warning(f"Failed to read metadata from {task_dir}: {exc}")
+        else:
+            try:
+                rel_path = task_dir.relative_to(base_dir)
+                if len(rel_path.parts) >= 3:
+                    dataset_name = rel_path.parts[0]
+                    stru_type = rel_path.parts[1]
+                elif len(rel_path.parts) >= 1:
+                    dataset_name = rel_path.parts[0]
+            except ValueError:
+                pass
+        return {"dataset": dataset_name, "type": stru_type, "task_name": task_name}
+
+    def _build_metrics_data(self, task_dirs: List[Path]) -> Tuple[dpdata.MultiSystems, pd.DataFrame, pd.DataFrame]:
+        systems = dpdata.MultiSystems()
         valid_systems = []
-        
-        for i, task_dir in enumerate(task_dirs):
-            ls = self.postprocessor.load_data(task_dir)
-            if ls:
-                valid_systems.append(ls)
-                
-                # Read metadata
-                meta_file = task_dir / "task_meta.json"
-                dataset_name = "unknown"
-                stru_type = "unknown"
-                task_name = task_dir.name
-                
-                if meta_file.exists():
-                    try:
-                        with open(meta_file) as f:
-                            meta = json.load(f)
-                            dataset_name = meta.get("dataset_name", "unknown")
-                            stru_type = meta.get("stru_type", "unknown")
-                            task_name = meta.get("task_name", task_dir.name)
-                    except Exception as e:
-                        logger.warning(f"Failed to read metadata from {task_dir}: {e}")
-                else:
-                    # Fallback: try to guess from path if hierarchical
-                    try:
-                        rel_path = task_dir.relative_to(self.converged_dir)
-                        # Expecting dataset/type/task
-                        if len(rel_path.parts) >= 3:
-                            dataset_name = rel_path.parts[0]
-                            stru_type = rel_path.parts[1]
-                        elif len(rel_path.parts) >= 1:
-                            dataset_name = rel_path.parts[0]
-                    except:
-                        pass
-                
+        task_registry = []
+        for task_dir in task_dirs:
+            labeled_system = self.postprocessor.load_data(task_dir)
+            if labeled_system:
+                valid_systems.append(labeled_system)
+                meta = self._read_task_meta(task_dir, self.converged_dir)
                 task_registry.append({
                     "sys_idx": len(valid_systems) - 1,
-                    "dataset": dataset_name,
-                    "type": stru_type,
-                    "task_name": task_name
+                    "dataset": meta["dataset"],
+                    "type": meta["type"],
+                    "task_name": meta["task_name"],
                 })
-        
         logger.info(f"Loaded {len(valid_systems)} converged systems from {len(task_dirs)} directories.")
-        
-        # Construct DF
-        df = pd.DataFrame()
-        df_clean = pd.DataFrame()
-        
-        if len(valid_systems) > 0:
-            for s in valid_systems:
-                systems.append(s)
-            
-            # Re-compute df on valid systems
-            df = self.postprocessor.compute_metrics(systems)
-            
-            # Merge registry info into df
-            registry_df = pd.DataFrame(task_registry)
-            if not registry_df.empty:
-                df = df.merge(registry_df, on="sys_idx", how="left")
-            else:
-                df["dataset"] = "unknown"
-                df["type"] = "unknown"
-                
-            df_clean = self.postprocessor.filter_data(df)
-            
-            # Export (unchanged logic)
-            output_format = self.config.get("output_format", "deepmd/npy")
-            cleaned_dir = self.output_dir / "cleaned"
-            anomaly_dir = self.output_dir / "anomalies"
-            
-            self.postprocessor.export_data(systems, df_clean, cleaned_dir, format=output_format)
-            
-            if len(df) > len(df_clean):
-                df_anomalies = df.drop(df_clean.index)
-                self.postprocessor.export_data(systems, df_anomalies, anomaly_dir, format=output_format)
-                
-                # Export extxyz
-                extxyz_dir = anomaly_dir / "extxyz"
-                extxyz_dir.mkdir(exist_ok=True, parents=True)
-                top_anomalies = df_anomalies.sort_values("max_force", ascending=False).head(50)
-                for idx, row in top_anomalies.iterrows():
-                    try:
-                        si, fi = int(row["sys_idx"]), int(row["frame_idx"])
-                        atoms = systems[si][fi].to_ase_structure()[0]
-                        ds_name = row.get("dataset", "unknown")
-                        atoms.write(extxyz_dir / f"anomaly_{ds_name}_{si}_{fi}.extxyz")
-                    except Exception as e:
-                        logger.warning(f"Failed to export anomaly extxyz: {e}")
+        if not valid_systems:
+            return systems, pd.DataFrame(), pd.DataFrame()
+        for labeled_system in valid_systems:
+            systems.append(labeled_system)
+        df = self.postprocessor.compute_metrics(systems)
+        registry_df = pd.DataFrame(task_registry)
+        if not registry_df.empty:
+            df = df.merge(registry_df, on="sys_idx", how="left")
+        else:
+            df["dataset"] = "unknown"
+            df["type"] = "unknown"
+        df_clean = self.postprocessor.filter_data(df)
+        return systems, df, df_clean
 
-        # --- Statistics Reporting ---
-        # Scan inputs dir for failed tasks
+    def _export_filtered_results(self, systems: dpdata.MultiSystems, df: pd.DataFrame, df_clean: pd.DataFrame):
+        output_format = self.config.get("output_format", "deepmd/npy")
+        cleaned_dir = self.output_dir / "cleaned"
+        anomaly_dir = self.output_dir / "anomalies"
+        self.postprocessor.export_data(systems, df_clean, cleaned_dir, format=output_format)
+        if len(df) <= len(df_clean):
+            return
+        df_anomalies = df.drop(df_clean.index)
+        self.postprocessor.export_data(systems, df_anomalies, anomaly_dir, format=output_format)
+        self._export_anomaly_extxyz(systems, df_anomalies, anomaly_dir / "extxyz")
+
+    def _export_anomaly_extxyz(self, systems: dpdata.MultiSystems, df_anomalies: pd.DataFrame, extxyz_dir: Path):
+        extxyz_dir.mkdir(exist_ok=True, parents=True)
+        top_anomalies = df_anomalies.sort_values("max_force", ascending=False).head(50)
+        for _, row in top_anomalies.iterrows():
+            try:
+                si, fi = int(row["sys_idx"]), int(row["frame_idx"])
+                atoms = systems[si][fi].to_ase_structure()[0]
+                ds_name = row.get("dataset", "unknown")
+                atoms.write(extxyz_dir / f"anomaly_{ds_name}_{si}_{fi}.extxyz")
+            except Exception as e:
+                logger.warning(f"Failed to export anomaly extxyz: {e}")
+
+    def _collect_failed_tasks_info(self) -> List[Dict[str, str]]:
         failed_tasks_info = []
-        if self.input_dir.exists():
-            # Only scan 3 levels deep: dataset/type/task
-            # Or just glob recursively for INPUT and exclude OUT.*
-             for input_file in self.input_dir.rglob("INPUT"):
-                if "OUT." in input_file.parent.name:
-                    continue
-                task_dir = input_file.parent
-                if not task_dir.is_dir(): continue
-                
-                # Read meta
-                meta_file = task_dir / "task_meta.json"
-                ds = "unknown"
-                st = "unknown"
-                if meta_file.exists():
-                    try:
-                        with open(meta_file) as f:
-                            meta = json.load(f)
-                            ds = meta.get("dataset_name", "unknown")
-                            st = meta.get("stru_type", "unknown")
-                    except (OSError, json.JSONDecodeError, TypeError, ValueError) as exc:
-                        logger.warning(f"Failed to read task meta from {meta_file}: {exc}")
-                else:
-                    # Infer from path: inputs/dataset/type/task
-                    try:
-                        rel = task_dir.relative_to(self.input_dir)
-                        if len(rel.parts) >= 3:
-                            ds = rel.parts[0]
-                            st = rel.parts[1]
-                    except ValueError as exc:
-                        logger.warning(f"Failed to infer task path metadata from {task_dir}: {exc}")
-                
-                failed_tasks_info.append({"dataset": ds, "type": st})
-        
-        # Aggregation
+        if not self.input_dir.exists():
+            return failed_tasks_info
+        for input_file in self.input_dir.rglob("INPUT"):
+            if "OUT." in input_file.parent.name:
+                continue
+            task_dir = input_file.parent
+            if not task_dir.is_dir():
+                continue
+            meta = self._read_task_meta(task_dir, self.input_dir)
+            failed_tasks_info.append({"dataset": meta["dataset"], "type": meta["type"]})
+        return failed_tasks_info
+
+    def _aggregate_stats(self, df: pd.DataFrame, df_clean: pd.DataFrame, failed_tasks_info: List[Dict[str, str]]) -> Dict[str, Dict[str, Dict[str, int]]]:
         stats = {}
         all_datasets = set()
-        if not df.empty and "dataset" in df.columns: 
+        if not df.empty and "dataset" in df.columns:
             all_datasets.update(df["dataset"].unique())
-        for f in failed_tasks_info: all_datasets.add(f["dataset"])
-        
+        for failed in failed_tasks_info:
+            all_datasets.add(failed["dataset"])
         for ds in sorted(all_datasets):
             stats[ds] = {}
             ds_df = df[df["dataset"] == ds] if not df.empty and "dataset" in df.columns else pd.DataFrame()
             ds_clean = df_clean[df_clean["dataset"] == ds] if not df_clean.empty and "dataset" in df_clean.columns else pd.DataFrame()
-            
             ds_failed = [x for x in failed_tasks_info if x["dataset"] == ds]
-            
             all_types = set()
-            if not ds_df.empty: all_types.update(ds_df["type"].unique())
+            if not ds_df.empty:
+                all_types.update(ds_df["type"].unique())
             all_types.update(x["type"] for x in ds_failed)
-            
             for t in sorted(all_types):
                 t_df = ds_df[ds_df["type"] == t] if not ds_df.empty else pd.DataFrame()
                 t_clean_df = ds_clean[ds_clean["type"] == t] if not ds_clean.empty else pd.DataFrame()
-                
                 n_conv = len(t_df)
                 n_clean = len(t_clean_df)
-                n_filt = n_conv - n_clean
                 n_fail = sum(1 for x in ds_failed if x["type"] == t)
-                n_total = n_conv + n_fail
-                
                 stats[ds][t] = {
-                    "total": n_total,
+                    "total": n_conv + n_fail,
                     "conv": n_conv,
                     "fail": n_fail,
                     "clean": n_clean,
-                    "filt": n_filt
+                    "filt": n_conv - n_clean,
                 }
-        
-        # Print Report
+        return stats
+
+    def _log_stats(self, stats: Dict[str, Dict[str, Dict[str, int]]]):
         logger.info("=== Labeling Statistics Report ===")
-        
         g_total = sum(v["total"] for ds in stats.values() for v in ds.values())
         g_conv = sum(v["conv"] for ds in stats.values() for v in ds.values())
         g_fail = sum(v["fail"] for ds in stats.values() for v in ds.values())
         g_clean = sum(v["clean"] for ds in stats.values() for v in ds.values())
         g_filt = sum(v["filt"] for ds in stats.values() for v in ds.values())
-        
         logger.info(f"Global: Total={g_total}, Converged={g_conv}, Failed={g_fail}, Cleaned={g_clean}, Filtered={g_filt}")
-        
         for ds, types in stats.items():
             d_total = sum(v["total"] for v in types.values())
             d_conv = sum(v["conv"] for v in types.values())
             d_fail = sum(v["fail"] for v in types.values())
             d_clean = sum(v["clean"] for v in types.values())
             d_filt = sum(v["filt"] for v in types.values())
-            
             logger.info(f"  Dataset: {ds:<20} (Total={d_total}, Conv={d_conv}, Fail={d_fail}, Clean={d_clean}, Filt={d_filt})")
-            
             for t, v in types.items():
-                 logger.info(f"    Type: {t:<15} -> Total={v['total']}, Conv={v['conv']}, Fail={v['fail']}, Clean={v['clean']}, Filt={v['filt']}")
+                logger.info(f"    Type: {t:<15} -> Total={v['total']}, Conv={v['conv']}, Fail={v['fail']}, Clean={v['clean']}, Filt={v['filt']}")

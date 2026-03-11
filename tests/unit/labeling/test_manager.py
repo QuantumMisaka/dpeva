@@ -3,6 +3,7 @@ import pytest
 from unittest.mock import MagicMock, patch, call
 from pathlib import Path
 import json
+import pandas as pd
 from dpeva.labeling.manager import LabelingManager
 
 class TestLabelingManager:
@@ -188,3 +189,25 @@ class TestLabelingManager:
 
         manager.postprocessor.load_data.assert_called_once()
         manager.postprocessor.compute_metrics.assert_called_once()
+
+    def test_mgr_007_aggregate_stats(self, manager):
+        df = pd.DataFrame(
+            [
+                {"dataset": "DS1", "type": "cluster"},
+                {"dataset": "DS1", "type": "cluster"},
+                {"dataset": "DS1", "type": "surface"},
+            ]
+        )
+        df_clean = pd.DataFrame(
+            [
+                {"dataset": "DS1", "type": "cluster"},
+                {"dataset": "DS1", "type": "surface"},
+            ]
+        )
+        failed = [{"dataset": "DS1", "type": "cluster"}, {"dataset": "DS2", "type": "bulk"}]
+        stats = manager._aggregate_stats(df, df_clean, failed)
+        assert stats["DS1"]["cluster"]["total"] == 3
+        assert stats["DS1"]["cluster"]["conv"] == 2
+        assert stats["DS1"]["cluster"]["fail"] == 1
+        assert stats["DS1"]["cluster"]["clean"] == 1
+        assert stats["DS2"]["bulk"]["total"] == 1

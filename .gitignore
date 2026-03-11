@@ -13,3 +13,4 @@ examples/uncertain/models/
 .coverage
 coverage.xml
 htmlcov/
+test/

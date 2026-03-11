@@ -54,15 +54,43 @@ last-updated: 2026-03-11
 - 新增 `tests/unit/utils/test_logs.py`（stdout/stderr 转发缓冲）
 - 扩展 `tests/unit/labeling/test_manager.py`（runner 脚本安全性与坏元数据容错）
 
+### T04/T05 第二轮（结构解耦与回归）
+
+- `src/dpeva/labeling/manager.py`：
+  - 将 `collect_and_export` 拆分为多段职责方法（收集、指标构建、导出、异常落盘、失败扫描、统计聚合、统计输出）
+- `src/dpeva/workflows/collect.py`：
+  - 将 `run` 拆分为 `_run_uq_phase`、`_run_sampling_phase`、`_run_export_phase`
+  - 将 UQ 分支拆分为 `_run_no_filter_uq_phase`、`_run_filtered_uq_phase`
+- 新增/增强测试：
+  - 新增 `tests/unit/workflows/test_collect_refactor.py`
+  - 扩展 `tests/unit/labeling/test_manager.py` 的统计聚合断言
+
+### T05 第三轮（覆盖率专项补强）
+
+- `src/dpeva/labeling/strategy.py`：
+  - `attempt_params` 初始化增加空值安全回退，消除 `None` 输入下潜在异常路径
+- 新增 `tests/unit/labeling/test_strategy.py`：
+  - 覆盖参数获取边界、缺失 INPUT、参数更新/追加、无效 attempt 分支
+- 增强 `tests/unit/uncertain/test_visualization.py`：
+  - 补齐 `plot_uq_identity_scatter` 的缺列分支与截断分支
+  - 补齐 `plot_candidate_vs_error` 与 `plot_pca_analysis` 分支
+- `src/dpeva/workflows/collect.py`：
+  - 提炼 `_extract_unique_system_names`，降低 `_run_filtered_uq_phase` 圈复杂度
+
+### T04/T05 第四轮（Analysis 工作流分层与断言补强）
+
+- `src/dpeva/workflows/analysis.py`：
+  - 拆分 `run` 主流程为 `_run_dataset_mode`、`_run_model_mode`、`_resolve_composition_info`
+  - 异常重抛由 `raise e` 改为 `raise`，保留原始栈信息
+- `tests/unit/workflows/test_analysis_workflow.py`：
+  - 新增 data_path 分支断言，验证 composition 信息走 `load_composition_info`
+  - 新增空 metrics 分支断言，验证保存函数跳过行为
+
 ## 3. 提交记录（可追溯分组）
 
-当前为工作区变更记录阶段，未执行 `git commit`。建议按以下原子批次提交：
-
-1. `docs: fix stale config/log references and examples entrypoints`
-2. `chore: align scripts and project configs`
-3. `fix(labeling): remove shell execution risk and explicit exception handling`
-4. `test: add cli/postprocess/logs regression coverage`
-5. `docs(report): add remediation plan and summary`
+- 已完成提交：
+  - `9bc619a` `fix: close remediation gaps and add regression coverage`
+- 当前第二轮解耦与补测变更仍在工作区，待下一次提交。
 
 ## 4. 测试报告
 
@@ -74,11 +102,13 @@ last-updated: 2026-03-11
 
 ### 4.2 全量回归验证
 
-- `pytest tests/unit -q`：`175 passed`
+- `pytest tests/unit -q`：`189 passed`
 - `pytest tests/integration -q`：`7 passed, 1 skipped`
-- `pytest tests/unit tests/integration --cov=src/dpeva --cov-branch --cov-report=term`：`182 passed, 1 skipped`
-- 覆盖率：总覆盖 `72%`（较基线提升，`cli.py` 0% → 58%，`postprocess.py` 14% → 23%，`utils/logs.py` 88% → 94%）
+- `pytest tests/unit tests/integration --cov=src/dpeva --cov-branch --cov-report=term`：`196 passed, 1 skipped`
+- 覆盖率：总覆盖 `76%`（`labeling/strategy.py` 12% → 88%，`uncertain/visualization.py` 48% → 87%，`collect.py` 79%）
+- `workflows/analysis.py` 覆盖率：`97%`
 - `python scripts/audit.py`：通过
+- `python scripts/check_docs.py`：通过
 - `make -C docs html`：通过（无 warning）
 
 ## 5. 问题闭环状态（R01-R37）
@@ -88,24 +118,24 @@ last-updated: 2026-03-11
 | R01 | Closed | `shell=True` 已移除，改为参数列表执行 |
 | R02 | Closed | 裸 `except` 改为显式异常处理 |
 | R03 | Deferred | 异常治理需与统计语义统一重构，保留后续专项 |
-| R04 | Deferred | 超长函数拆分未在本轮完成 |
-| R05 | Deferred | Workflow 分层重构未在本轮完成 |
-| R06 | Deferred | Collect 复杂函数拆分未在本轮完成 |
+| R04 | Partial | `collect_and_export` 已拆分，仍需继续向 strategy/visualization 扩展 |
+| R05 | Partial | Collect workflow 主流程已方法化，其他 workflow 待继续分层 |
+| R06 | Closed | Collect 复杂主流程已完成阶段性解耦并通过回归测试 |
 | R07 | Deferred | 推理/分析重复逻辑抽取未在本轮完成 |
 | R08 | Deferred | 同 R07 |
 | R09 | Closed | 日志读取改为流式逐行扫描 |
 | R10 | Closed | `flush` 实现补齐并补测 |
 | R11 | Partial | 新增 CLI 测试，覆盖率 0% → 58% |
 | R12 | Partial | 补充后处理测试，覆盖率 14% → 23% |
-| R13 | Deferred | strategy 模块补测未完成 |
-| R14 | Deferred | visualization 模块补测未完成 |
+| R13 | Closed | `strategy` 模块关键分支补测完成，覆盖率提升至 88% |
+| R14 | Closed | `visualization` 模块高风险分支补测完成，覆盖率提升至 87% |
 | R15 | Deferred | 导入期环境检查副作用未改动 |
 | R16 | Closed | `pytest.ini` 基础策略补齐 |
 | R17 | Deferred | Slurm skip 替代路径未补齐 |
 | R18 | Deferred | slurm flaky 专项治理未完成 |
 | R19 | Deferred | 集成硬编码路径治理未完成 |
 | R20 | Deferred | 重复用例归并未完成 |
-| R21 | Deferred | analysis workflow 行为断言补测未完成 |
+| R21 | Closed | analysis workflow 关键行为断言已补齐并通过回归 |
 | R22 | Closed | active 文档中废弃配置入口已统一替换 |
 | R23 | Closed | `docs/source/conf.py` 版本同步 |
 | R24 | Closed | quickstart 补齐 `label` |
