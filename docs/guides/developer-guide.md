@@ -2,16 +2,16 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-03-09
+last-updated: 2026-03-11
 ---
 
 # DP-EVA 项目开发文档
 
 - Status: active
 - Audience: Developers
-- Last-Updated: 2026-03-03
+- Last-Updated: 2026-03-11
 - Related:
-  - 配置字段字典：/docs/reference/config_schema.md
+  - 配置字段字典：/docs/source/api/config.rst
   - 校验规则补充：/docs/reference/validation.md
   - 上游软件与职责：/docs/reference/upstream-software.md
 
@@ -329,7 +329,7 @@ workflow.run()
 ### 4.3 配置参数说明
 详细的输入参数定义、类型约束及验证规则，请参阅 API 文档：
 
-*   **参数列表**: [config_schema.md](https://github.com/QuantumMisaka/dpeva/blob/main/docs/reference/config_schema.md)
+*   **参数列表**: [config.rst](https://github.com/QuantumMisaka/dpeva/blob/main/docs/source/api/config.rst)
 *   **验证规则**: [validation.md](https://github.com/QuantumMisaka/dpeva/blob/main/docs/reference/validation.md)
 
 以下仅展示标准 JSON 配置文件的基本结构概览。
@@ -369,7 +369,7 @@ workflow.run()
 
 参考：
 
-- `/docs/reference/config_schema.md`
+- `/docs/source/api/config.rst`
 - `/docs/reference/validation.md`
 
 #### 4.4.2 Auto-UQ 边界控制 (`uq_auto_bounds`)
@@ -378,19 +378,19 @@ Auto-UQ 用于根据数据分布自动确定筛选边界；具体的字段与约
 
 参考：
 
-- `/docs/reference/config_schema.md`
+- `/docs/source/api/config.rst`
 - `/docs/reference/validation.md`
 
 #### 4.4.3 采样参数说明 (Sampling)
 
 采样相关参数（DIRECT/2-direct/joint 等）属于收集工作流的核心可调维度，建议：
 
-- 只在 `/docs/reference/config_schema.md` 维护字段字典与默认值
+- 只在 `/docs/source/api/config.rst` 维护字段字典与默认值
 - 在指南中仅描述“如何选择参数组”的经验规则，并引用对应字段
 
 参考：
 
-- `/docs/reference/config_schema.md`
+- `/docs/source/api/config.rst`
 
 ## 5. 开发与测试 (Development)
 

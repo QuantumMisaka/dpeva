@@ -2,7 +2,7 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-03-09
+last-updated: 2026-03-11
 ---
 
 # Quickstart（最短路径跑通）
@@ -10,7 +10,7 @@ last-updated: 2026-03-09
 - Status: active
 - Audience: Users / Developers
 - Applies-To: CLI 模式（推荐）
-- Last-Updated: 2026-02-18
+- Last-Updated: 2026-03-11
 
 ## 1. 目的与范围
 
@@ -22,7 +22,7 @@ last-updated: 2026-03-09
 
 范围：
 
-- 覆盖 CLI 子命令：`train / infer / feature / collect / analysis`
+- 覆盖 CLI 子命令：`train / infer / feature / collect / label / analysis`
 - 给出 Local 与 Slurm 两种运行方式的最小示例
 
 ## 2. 相关方
@@ -63,7 +63,7 @@ work/
 关键输出约定（常见）：
 
 - `work_dir/0..N-1/`：训练输出（模型与日志）
-- `work_dir/<i>/<task_name>/`：推理输出（`results.*.out` 与 `test_job.log`）
+- `work_dir/<i>/<task_name>/`：推理输出（`results.*.out` 与 `test_job.out`）
 - `savedir`：描述符输出目录（Feature）
 - `root_savedir`：采集/筛选输出（Collect）
 
@@ -74,7 +74,7 @@ work/
 参考最小配置模板：
 
 - `examples/recipes/`：../examples/recipes/
-- 配置字段字典：../reference/config_schema.md
+- 配置字段字典：../source/api/config.rst
 
 ### 5.1 Feature（生成描述符）
 
@@ -107,7 +107,7 @@ dpeva infer configs/infer.json
 验证输出：
 
 - `0/<task_name>/results.e.out` 存在
-- `0/<task_name>/test_job.log` 存在
+- `0/<task_name>/test_job.out` 存在
 
 ### 5.4 Collect（UQ + Sampling + Export）
 
@@ -120,7 +120,18 @@ dpeva collect configs/collect.json
 - `<root_savedir>/dataframe/df_uq_desc_sampled-final.csv` 存在
 - `<root_savedir>/dpdata/` 下导出目录存在
 
-### 5.5 Analysis（结果统计）
+### 5.5 Label（DFT 标注）
+
+```bash
+dpeva label configs/label.json
+```
+
+验证输出：
+
+- `work_dir/outputs/cleaned/` 存在
+- 若开启 integration，`integration_summary.json` 存在
+
+### 5.6 Analysis（结果统计）
 
 ```bash
 dpeva analysis configs/analysis.json
@@ -137,7 +148,7 @@ dpeva analysis configs/analysis.json
 建议用“完成标记 + 日志监控”的方式串联：
 
 - 训练日志：`<work_dir>/<i>/train.out`
-- 推理日志：`<work_dir>/<i>/<task_name>/test_job.log`
+- 推理日志：`<work_dir>/<i>/<task_name>/test_job.out`
 - Feature 日志：`<savedir>/eval_desc.log`
 - Collect 日志：`collect_slurm.out`（以具体配置/脚本输出为准）
 
@@ -170,4 +181,5 @@ DPEVA_TAG: WORKFLOW_FINISHED
 
 ## 8. 变更记录
 
+- 2026-03-11：补齐 `label` 子命令 Quickstart 步骤，并同步推理日志文件名与配置入口。
 - 2026-02-18：补齐 Local/Slurm Quickstart 的最小链路与完成标记约定，统一链接入口。

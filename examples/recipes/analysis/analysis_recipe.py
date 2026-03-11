@@ -25,7 +25,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(level
 
 def main():
     # 1. Configuration
-    config_path = "config.json" # <--- Change this
+    config_path = "config_analysis.json" # <--- Change this
     
     if not os.path.exists(config_path):
         print(f"Config file not found: {config_path}")

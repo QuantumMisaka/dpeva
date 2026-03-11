@@ -52,11 +52,18 @@ class StreamToLogger(object):
         self.linebuf = ''
 
     def write(self, buf):
-        for line in buf.rstrip().splitlines():
-            self.logger.log(self.log_level, line.rstrip())
+        if not buf:
+            return
+        self.linebuf += buf
+        while "\n" in self.linebuf:
+            line, self.linebuf = self.linebuf.split("\n", 1)
+            if line:
+                self.logger.log(self.log_level, line.rstrip())
 
     def flush(self):
-        pass
+        if self.linebuf:
+            self.logger.log(self.log_level, self.linebuf.rstrip())
+            self.linebuf = ''
 
 def close_workflow_logger(logger_name: str, log_path: str):
     """

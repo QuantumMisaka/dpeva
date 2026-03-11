@@ -19,7 +19,7 @@ DP-EVA is an active learning framework designed for efficient fine-tuning of DPA
 
 - **Unit Tests**: `pytest tests/unit` -- Fast, mocked tests. **Run this first.**
 - **Integration Tests**: `pytest tests/integration` -- Slower, requires real environment.
-- **Single Test**: `pytest tests/unit/test_config.py` -- Run specific test file.
+- **Single Test**: `pytest tests/unit/utils/test_config_paths.py` -- Run specific test file.
 
 ### Lint and Format
 
@@ -45,11 +45,11 @@ DP-EVA is an active learning framework designed for efficient fine-tuning of DPA
 - **Verify**: Check for `results_*.out` files in the output directory.
 
 ### 3. Collection (Sampling)
-- **Command**: `dpeva collect examples/recipes/collection/config_collect.json`
+- **Command**: `dpeva collect examples/recipes/collection/config_collect_normal.json`
 - **Verify**: Check for `sampled_data` directory, `collection.log` and other output information.
 
 ### 4. Labeling (DFT)
-- **Command**: `dpeva label examples/recipes/labeling/config_label.json`
+- **Command**: `dpeva label examples/recipes/labeling/config_cpu.json`
 - **Verify**: Check for `inputs/` generation and `outputs/cleaned/` data.
 
 ### 5. Analysis
@@ -106,5 +106,4 @@ dpeva/
 5.  **Strict Prohibition**:
     - NEVER create documentation files in the project root.
     - NEVER leave orphan files without `README.md` indexing.
-
 

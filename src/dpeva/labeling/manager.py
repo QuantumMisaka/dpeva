@@ -113,6 +113,7 @@ class LabelingManager:
 import os
 import subprocess
 import sys
+import shlex
 from pathlib import Path
 
 # Set OMP_NUM_THREADS
@@ -143,16 +144,15 @@ def run_abacus_tasks():
         # Check SLURM_NTASKS for MPI
         slurm_ntasks = os.environ.get("SLURM_NTASKS", "1")
         
-        # Construct command
-        # If slurm_ntasks > 1, use mpirun
+        abacus_args = shlex.split(abacus_cmd)
         if int(slurm_ntasks) > 1:
-            cmd = f"mpirun -np {{slurm_ntasks}} {{abacus_cmd}}"
+            cmd = ["mpirun", "-np", str(slurm_ntasks), *abacus_args]
         else:
-            cmd = abacus_cmd
+            cmd = abacus_args
             
         try:
             with open("abacus.out", "w") as outfile:
-                subprocess.run(cmd, shell=True, check=True, stdout=outfile, stderr=subprocess.STDOUT)
+                subprocess.run(cmd, check=True, stdout=outfile, stderr=subprocess.STDOUT)
             print(f"Task {{task_dir_path.name}} completed.")
         except subprocess.CalledProcessError as e:
             print(f"Task {{task_dir_path.name}} failed: {{e}}")
@@ -422,7 +422,8 @@ if __name__ == "__main__":
                             meta = json.load(f)
                             ds = meta.get("dataset_name", "unknown")
                             st = meta.get("stru_type", "unknown")
-                    except: pass
+                    except (OSError, json.JSONDecodeError, TypeError, ValueError) as exc:
+                        logger.warning(f"Failed to read task meta from {meta_file}: {exc}")
                 else:
                     # Infer from path: inputs/dataset/type/task
                     try:
@@ -430,7 +431,8 @@ if __name__ == "__main__":
                         if len(rel.parts) >= 3:
                             ds = rel.parts[0]
                             st = rel.parts[1]
-                    except: pass
+                    except ValueError as exc:
+                        logger.warning(f"Failed to infer task path metadata from {task_dir}: {exc}")
                 
                 failed_tasks_info.append({"dataset": ds, "type": st})
         

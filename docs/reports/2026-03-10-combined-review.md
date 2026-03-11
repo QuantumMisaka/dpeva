@@ -8,6 +8,7 @@ last-updated: 2026-03-10
 # DP-EVA 全量综合审查报告（Combined Review）
 
 - 审查日期：2026-03-10
+- 项目版本：v0.6.3
 - 审查范围：`src/`、`tests/`、`docs/`、`examples/`、根目录工程资产与 `scripts/`、`tools/`
 - 审查方法：静态扫描、语义检索、配置核查、测试执行、覆盖率统计
 

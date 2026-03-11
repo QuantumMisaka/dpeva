@@ -2,14 +2,14 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-03-09
+last-updated: 2026-03-11
 ---
 
 # DP-EVA 文档目录清单（结构化摘要与标签）
 
 - Status: active
 - Audience: Maintainers
-- Last-Updated: 2026-03-09
+- Last-Updated: 2026-03-11
 
 本清单用于逐份记录 `docs/` 下文档的主题、功能、受众与关键信息点，并作为后续分类归档与补全的依据。
 
@@ -35,7 +35,7 @@ last-updated: 2026-03-09
 
 | Document | Category | Audience | Cadence | Status | Tags | 摘要（关键信息点） |
 |---|---|---|---|---|---|---|
-| [config_schema.md](../../reference/README.md) | Reference | Developers | Medium | active | config\|pydantic\|schema | Workflow 配置字段字典（通用字段、Train/Infer/Feature/Collect/Analysis），包括类型/默认值/说明/约束。 |
+| [api/config.rst](../../source/api/config.rst) | Reference | Developers | Medium | active | config\|pydantic\|schema | Workflow 配置字段字典（由 Pydantic 模型自动生成，覆盖通用字段与各 Workflow 配置）。 |
 | [validation.md](../../reference/validation.md) | Reference | Developers | Medium | active | validation\|constraints | Pydantic 参数校验逻辑补充：范围约束、跨字段依赖、env_setup 格式化、路径存在性校验。 |
 | [reference/README.md](../../reference/README.md) | Policy | Developers | Medium | active | reference\|single-source | Reference 分层说明与迁移建议入口。 |
 

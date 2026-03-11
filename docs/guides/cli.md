@@ -2,7 +2,7 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-03-09
+last-updated: 2026-03-11
 ---
 
 # CLI 使用指南
@@ -10,7 +10,7 @@ last-updated: 2026-03-09
 - Status: active
 - Audience: Users / Developers
 - Applies-To: CLI 模式（推荐）
-- Last-Updated: 2026-03-08
+- Last-Updated: 2026-03-11
 
 ## 1. 目的与范围
 
@@ -54,7 +54,7 @@ dpeva --no-banner <subcommand> <config_path>
 
 所有子命令的第一个参数均为配置 JSON 路径。配置字段的权威查表入口：
 
-- ../reference/config_schema.md
+- ../source/api/config.rst
 - ../reference/validation.md
 
 ### 4.1 train（并行微调训练）
@@ -78,7 +78,7 @@ dpeva --no-banner <subcommand> <config_path>
   - `work_dir`（包含 `0..N-1/` 模型目录）
 - 输出
   - `work_dir/<i>/<task_name>/results.*.out`
-  - `work_dir/<i>/<task_name>/test_job.log`
+  - `work_dir/<i>/<task_name>/test_job.out`
 
 示例配置：`examples/recipes/inference/config_infer.json`
 
@@ -164,5 +164,6 @@ DPEVA_TAG: WORKFLOW_FINISHED
 ## 7. 变更记录
 
 - 2026-03-03：更新退出码契约说明，明确 `WorkflowError` 会导致退出码 1。
+- 2026-03-11：更新配置权威入口为 API Reference，并同步 infer 日志文件名为 `test_job.out`。
 - 2026-03-08：补充 analysis 双模式与 labeling integration 输出说明。
 - 2026-02-18：补齐子命令 I/O、完成标记与退出码说明，并建立与 recipes/api 的权威链接。

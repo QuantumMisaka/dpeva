@@ -155,3 +155,36 @@ class TestLabelingManager:
         # Here we verify that collect_and_export doesn't crash and hopefully counts correctly.
         # Ideally, we should capture logs to verify "Fail=1".
         pass 
+
+    def test_mgr_005_runner_script_avoids_shell_true(self, manager, tmp_path):
+        script = manager.generate_runner_script(tmp_path)
+        assert "shell=True" not in script
+        assert "subprocess.run(cmd, check=True" in script
+        assert "import shlex" in script
+        assert "shlex.split(abacus_cmd)" in script
+
+    @patch("dpeva.labeling.manager.dpdata")
+    def test_mgr_006_invalid_task_meta_is_handled(self, mock_dpdata, manager):
+        failed_task = manager.input_dir / "DS1" / "cluster" / "Failed_Task"
+        failed_task.mkdir(parents=True)
+        (failed_task / "INPUT").touch()
+        (failed_task / "task_meta.json").write_text("{invalid json")
+
+        (manager.converged_dir / "DS1" / "cluster" / "Conv_Task").mkdir(parents=True)
+        (manager.converged_dir / "DS1" / "cluster" / "Conv_Task" / "INPUT").touch()
+        (manager.converged_dir / "DS1" / "cluster" / "Conv_Task" / "STRU").touch()
+        with open(manager.converged_dir / "DS1" / "cluster" / "Conv_Task" / "task_meta.json", "w") as f:
+            json.dump({"dataset_name": "DS1", "stru_type": "cluster"}, f)
+
+        mock_system = MagicMock()
+        manager.postprocessor.load_data = MagicMock(return_value=mock_system)
+        import pandas as pd
+        df_real = pd.DataFrame({"sys_idx": [0], "frame_idx": [0], "max_force": [0.1]})
+        manager.postprocessor.compute_metrics = MagicMock(return_value=df_real)
+        manager.postprocessor.filter_data = MagicMock(return_value=df_real)
+        manager.postprocessor.export_data = MagicMock()
+
+        manager.collect_and_export()
+
+        manager.postprocessor.load_data.assert_called_once()
+        manager.postprocessor.compute_metrics.assert_called_once()

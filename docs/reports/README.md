@@ -2,14 +2,14 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-03-10
+last-updated: 2026-03-11
 ---
 
 # 技术报告 (Technical Reports)
 
 - Status: active
 - Audience: All
-- Last-Updated: 2026-03-10
+- Last-Updated: 2026-03-11
 
 本文档目录用于存放当前活跃的技术分析、实验报告与设计文档。
 
@@ -31,4 +31,5 @@ last-updated: 2026-03-10
 :maxdepth: 1
 
 2026-03-10-combined-review
+2026-03-11-remediation-summary
 ```

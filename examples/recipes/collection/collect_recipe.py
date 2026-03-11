@@ -27,8 +27,8 @@ import argparse
 
 def main():
     parser = argparse.ArgumentParser(description="Run DP-EVA Collection Workflow")
-    parser.add_argument("config", nargs="?", default="config_single_normal.json", 
-                        help="Path to the configuration JSON file (default: config_single_normal.json)")
+    parser.add_argument("config", nargs="?", default="config_collect_normal.json", 
+                        help="Path to the configuration JSON file (default: config_collect_normal.json)")
     args = parser.parse_args()
 
     # 1. Configuration

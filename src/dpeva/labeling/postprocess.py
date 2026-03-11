@@ -63,11 +63,11 @@ class AbacusPostProcessor:
         for log_file in log_files:
             try:
                 with open(log_file, 'r') as f:
-                    content = f.read()
-                    if "charge density convergence is achieved" in content:
-                        return True
-                    if "convergence has not been achieved" in content:
-                        return False
+                    for line in f:
+                        if "charge density convergence is achieved" in line:
+                            return True
+                        if "convergence has not been achieved" in line:
+                            return False
             except Exception as e:
                 logger.warning(f"Error reading log file {log_file}: {e}")
                 continue
@@ -248,4 +248,3 @@ class AbacusPostProcessor:
             logger.info(f"Exported {len(new_ms)} systems to {output_dir}")
         except Exception as e:
             logger.error(f"Export failed: {e}")
-

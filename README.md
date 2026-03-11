@@ -59,7 +59,7 @@ For detailed configuration examples, see `examples/recipes/`.
 *   **Upstream**: [Upstream Software](docs/reference/upstream-software.md)
 *   **Developer**: [Developer Guide](docs/guides/developer-guide.md) | [Architecture](docs/architecture/README.md)
 *   **Governance**: [Policy](docs/policy/README.md) | [Roadmap](docs/plans/docs-governance-roadmap.md)
-*   **Review**: [Combined Code Review 2026-03-10](docs/reports/2026-03-10-combined-review.md)
+*   **Review**: [Combined Code Review 2026-03-10](docs/reports/2026-03-10-combined-review.md) | [Remediation Summary 2026-03-11](docs/reports/2026-03-11-remediation-summary.md)
 
 ## License
 

@@ -6,7 +6,7 @@ set -e
 # This script runs the minimal set of checks required for code submission.
 # It includes:
 # 1. Unit Tests (pytest)
-# 2. Code Audit (tools/audit.py) - Checks for hardcoded paths, magic numbers, etc.
+# 2. Code Audit (scripts/audit.py) - Checks for hardcoded paths, magic numbers, etc.
 
 # Colors for output
 RED='\033[0;31m'
