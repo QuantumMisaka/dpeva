@@ -2,7 +2,8 @@
 title: 文档版本管理与维护机制 (Maintenance)
 status: active
 audience: Maintainers
-last-updated: 2026-03-10
+last-updated: 2026-03-12
+owner: Docs Owner
 ---
 
 # 文档版本管理与维护机制（Maintenance）
@@ -78,16 +79,26 @@ Owner 可以是角色而非具体姓名；但每篇 `active` 文档必须有 Own
 为确保项目知识沉淀有序，所有过程性文档必须遵循以下生命周期管理规范：
 
 ### 7.1 代码审查报告 (Code Review Reports)
-- **落点**: `docs/reports/`
+- **草案落点**: `.trae/documents/`
+- **收敛落点**: `docs/reports/`
 - **命名**: `YYYY-MM-DD-Code-Review-<Feature/Module>.md`
 - **内容**: 审查对象、发现的问题、修复建议、修复状态。
 - **归档**: 审查结束并修复闭环后，随版本发布归档至 `docs/archive/vX.Y.Z/reports/`。
 
 ### 7.2 功能开发细则 (Feature Plans/Specs)
-- **落点**: `docs/plans/`
+- **草案落点**: `.trae/documents/`
+- **收敛落点**: `docs/plans/`
 - **命名**: `YYYY-MM-DD-<Feature>-Plan.md` 或 `YYYY-MM-DD-<Feature>-Spec.md`
 - **内容**: 目标、范围、设计方案、测试计划、任务分解。
 - **归档**: 功能开发完成并通过验收后，归档至 `docs/archive/vX.Y.Z/plans/`。
+
+### 7.2.1 收敛准入标准（迁入 docs）
+
+从 `.trae/documents/` 迁入 `docs/plans/` 或 `docs/reports/` 前，需满足：
+
+1. 文档可被非当前执行者独立理解；
+2. 结论具备可复核证据（测试、构建或审查依据）；
+3. 内容具有后续复用价值（而非一次性调试噪音）。
 
 ### 7.3 文档归档 (Archiving)
 - **触发时机**:
@@ -107,5 +118,4 @@ Owner 可以是角色而非具体姓名；但每篇 `active` 文档必须有 Own
 - **强制检查**:
   - 任何 Markdown 文件的增删改，必须检查 `docs/source/**/*.rst` 是否有对应的 `toctree` 引用需要更新。
   - 运行 `make html` 确保无 `WARNING: toctree contains reference to nonexisting document` 报错。
-
 

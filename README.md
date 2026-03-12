@@ -1,6 +1,6 @@
 # DP-EVA (Deep Potential EVolution Accelerator)
 
-![Version](https://img.shields.io/badge/version-0.6.4-blue)
+![Version](https://img.shields.io/badge/version-0.6.5-blue)
 ![Python](https://img.shields.io/badge/python-3.10%2B-green)
 ![License](https://img.shields.io/badge/License-LGPL_v3-blue.svg)
 [![Code Review](https://img.shields.io/badge/review-2026--03--10-important)](docs/archive/v0.6.4/reports/2026-03-10-combined-review.md)
@@ -59,7 +59,7 @@ For detailed configuration examples, see `examples/recipes/`.
 *   **Upstream**: [Upstream Software](docs/reference/upstream-software.md)
 *   **Developer**: [Developer Guide](docs/guides/developer-guide.md) | [Architecture](docs/architecture/README.md)
 *   **Governance**: [Policy](docs/policy/README.md) | [Roadmap](docs/plans/docs-governance-roadmap.md)
-*   **Review**: [Combined Code Review 2026-03-10](docs/archive/v0.6.4/reports/2026-03-10-combined-review.md) | [Remediation Summary 2026-03-11](docs/reports/2026-03-11-remediation-summary.md)
+*   **Review**: [Combined Code Review 2026-03-10](docs/archive/v0.6.4/reports/2026-03-10-combined-review.md) | [Remediation Summary 2026-03-11](docs/reports/2026-03-11-remediation-summary.md) | [Labeling Iteration Summary 2026-03-12](docs/reports/2026-03-12-labeling-decoupling-iteration-summary.md)
 
 ## License
 

@@ -2,7 +2,7 @@
 title: 文档治理快速上手（开发者与 AI）
 status: active
 audience: Developers / Maintainers
-last-updated: 2026-03-10
+last-updated: 2026-03-12
 owner: Docs Owner
 ---
 
@@ -48,3 +48,9 @@ make -C docs html SPHINXOPTS="-W --keep-going"
 - 避免复制字段定义，始终链接到 `docs/reference/*`
 - 修改文档后必须复跑治理检查并回写验证结果
 - 优先补充导航入口与操作步骤，避免新增孤立文档
+
+## 6. AI 草案与项目文档边界
+
+- 执行期草案默认放 `.trae/documents/`，用于快速迭代与中间记录。
+- 仅当文档达到“可共享、可复盘、可发布”状态，才迁入 `docs/plans/` 或 `docs/reports/`。
+- 版本发布或任务闭环后，统一归档到 `docs/archive/vX.Y.Z/{plans,reports}/`。

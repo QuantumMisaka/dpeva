@@ -1,7 +1,6 @@
 
 import pytest
-from unittest.mock import MagicMock, patch, call
-from pathlib import Path
+from unittest.mock import MagicMock, patch
 from dpeva.workflows.labeling import LabelingWorkflow
 from dpeva.config import LabelingConfig
 
@@ -33,18 +32,16 @@ class TestLabelingWorkflow:
         import dpdata
         mock_sys = MagicMock(spec=dpdata.System)
         mock_load.return_value = [mock_sys]
+        manager = MockManager.return_value
+        manager.prepare_tasks.return_value = []
         
-        # Act
         wf = LabelingWorkflow(config)
         wf.run()
-        
-        # Assert
-        # Check prepare_tasks call
-        manager = MockManager.return_value
+
         manager.prepare_tasks.assert_called_once()
         dataset_map = manager.prepare_tasks.call_args[0][0]
-        
-        assert "data" in dataset_map # Dataset name is dir name
+
+        assert "data" in dataset_map
         assert len(dataset_map) == 1
 
     @patch("dpeva.workflows.labeling.load_systems")
@@ -62,15 +59,13 @@ class TestLabelingWorkflow:
         import dpdata
         mock_sys = MagicMock(spec=dpdata.System)
         mock_load.return_value = [mock_sys]
+        manager = MockManager.return_value
+        manager.prepare_tasks.return_value = []
         
-        # Act
         wf = LabelingWorkflow(config)
         wf.run()
-        
-        # Assert
-        manager = MockManager.return_value
         dataset_map = manager.prepare_tasks.call_args[0][0]
-        
+
         assert "DS1" in dataset_map
         assert "DS2" in dataset_map
         assert len(dataset_map) == 2
@@ -120,3 +115,87 @@ class TestLabelingWorkflow:
         wf.run()
 
         MockIntegrationManager.return_value.integrate.assert_called_once()
+
+    @patch("dpeva.workflows.labeling.load_systems")
+    @patch("dpeva.workflows.labeling.LabelingManager")
+    def test_wf_stage_prepare(self, MockManager, mock_load, config, tmp_path):
+        data_dir = tmp_path / "data"
+        data_dir.mkdir()
+        (data_dir / "type.raw").touch()
+
+        import dpdata
+        mock_sys = MagicMock(spec=dpdata.System)
+        mock_load.return_value = [mock_sys]
+
+        manager = MockManager.return_value
+        packed_dir = tmp_path / "inputs" / "N_10_0"
+        packed_dir.mkdir(parents=True)
+        manager.prepare_tasks.return_value = [packed_dir]
+
+        wf = LabelingWorkflow(config)
+        prepared = wf.run_prepare()
+
+        assert prepared == [packed_dir]
+        manager.prepare_tasks.assert_called_once()
+
+    def test_wf_stage_execute_requires_prepare(self, config):
+        wf = LabelingWorkflow(config)
+        with pytest.raises(ValueError, match="Please run prepare stage first"):
+            wf.run_execute()
+
+    @patch("dpeva.workflows.labeling.DataIntegrationManager")
+    @patch("dpeva.workflows.labeling.LabelingManager")
+    def test_wf_stage_postprocess(self, MockManager, MockIntegrationManager, config):
+        config.integration_enabled = True
+        wf = LabelingWorkflow(config)
+        wf.run_postprocess()
+
+        manager = MockManager.return_value
+        manager.collect_and_export.assert_called_once()
+        MockIntegrationManager.return_value.integrate.assert_called_once()
+
+    @patch("dpeva.workflows.labeling.close_workflow_logger")
+    @patch("dpeva.workflows.labeling.setup_workflow_logger")
+    @patch("dpeva.workflows.labeling.load_systems")
+    @patch("dpeva.workflows.labeling.LabelingManager")
+    def test_wf_stage_prepare_creates_stage_log(self, MockManager, mock_load, mock_setup_logger, mock_close_logger, config, tmp_path):
+        data_dir = tmp_path / "data"
+        data_dir.mkdir()
+        (data_dir / "type.raw").touch()
+        import dpdata
+        mock_sys = MagicMock(spec=dpdata.System)
+        mock_load.return_value = [mock_sys]
+        MockManager.return_value.prepare_tasks.return_value = []
+
+        wf = LabelingWorkflow(config)
+        wf.run_prepare()
+
+        mock_setup_logger.assert_called_once_with("dpeva", str(config.work_dir), "labeling_prepare.log", capture_stdout=True)
+        mock_close_logger.assert_called_once_with("dpeva", str(tmp_path / "labeling_prepare.log"))
+
+    @patch("dpeva.workflows.labeling.close_workflow_logger")
+    @patch("dpeva.workflows.labeling.setup_workflow_logger")
+    @patch("dpeva.workflows.labeling.LabelingManager")
+    def test_wf_stage_execute_creates_stage_log(self, MockManager, mock_setup_logger, mock_close_logger, config, tmp_path):
+        inputs_dir = tmp_path / "inputs" / "N_50_0"
+        inputs_dir.mkdir(parents=True)
+        (inputs_dir / "task_a").mkdir()
+        MockManager.return_value.process_results.return_value = ([], [])
+
+        wf = LabelingWorkflow(config)
+        wf.run_execute()
+
+        mock_setup_logger.assert_called_once_with("dpeva", str(config.work_dir), "labeling_execute.log", capture_stdout=True)
+        mock_close_logger.assert_called_once_with("dpeva", str(tmp_path / "labeling_execute.log"))
+
+    @patch("dpeva.workflows.labeling.close_workflow_logger")
+    @patch("dpeva.workflows.labeling.setup_workflow_logger")
+    @patch("dpeva.workflows.labeling.DataIntegrationManager")
+    @patch("dpeva.workflows.labeling.LabelingManager")
+    def test_wf_stage_postprocess_creates_stage_log(self, MockManager, MockIntegrationManager, mock_setup_logger, mock_close_logger, config, tmp_path):
+        config.integration_enabled = True
+        wf = LabelingWorkflow(config)
+        wf.run_postprocess()
+
+        mock_setup_logger.assert_called_once_with("dpeva", str(config.work_dir), "labeling_postprocess.log", capture_stdout=True)
+        mock_close_logger.assert_called_once_with("dpeva", str(tmp_path / "labeling_postprocess.log"))

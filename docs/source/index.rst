@@ -36,6 +36,8 @@
    :maxdepth: 1
    :caption: Governance
 
+   guides/docs-governance-quickstart
+   guides/process-asset-lifecycle
    policy/README
    plans/governance/index
 
@@ -47,7 +49,6 @@
    architecture/decisions/README
    architecture/decisions/2026-02-04-deepmd-dependency
    guides/README
-   guides/docs-governance-quickstart
    guides/deployment
    guides/developer/README
    guides/developer/config-docs-maintenance

@@ -211,3 +211,36 @@ class TestLabelingManager:
         assert stats["DS1"]["cluster"]["fail"] == 1
         assert stats["DS1"]["cluster"]["clean"] == 1
         assert stats["DS2"]["bulk"]["total"] == 1
+
+    def test_mgr_008_prepare_is_idempotent(self, manager, mock_multisystems):
+        stale_task = manager.input_dir / "N_50_0" / "stale_task"
+        stale_task.mkdir(parents=True, exist_ok=True)
+        (stale_task / "INPUT").touch()
+
+        manager.generator = MagicMock()
+        manager.generator.analyzer.analyze.return_value = (MagicMock(), "cluster", [True, True, True])
+        manager.packer.pack = MagicMock(return_value=[])
+
+        dataset_map = {"DS1": mock_multisystems}
+        manager.prepare_tasks(dataset_map)
+
+        assert not stale_task.exists()
+        manager.packer.pack.assert_called_once_with(manager.input_dir)
+
+    def test_mgr_009_prepare_keeps_outputs_and_converged(self, manager, mock_multisystems):
+        output_marker = manager.output_dir / "keep.txt"
+        converged_marker = manager.converged_dir / "keep.txt"
+        output_marker.parent.mkdir(parents=True, exist_ok=True)
+        converged_marker.parent.mkdir(parents=True, exist_ok=True)
+        output_marker.write_text("output")
+        converged_marker.write_text("converged")
+
+        manager.generator = MagicMock()
+        manager.generator.analyzer.analyze.return_value = (MagicMock(), "cluster", [True, True, True])
+        manager.packer.pack = MagicMock(return_value=[])
+
+        dataset_map = {"DS1": mock_multisystems}
+        manager.prepare_tasks(dataset_map)
+
+        assert output_marker.exists()
+        assert converged_marker.exists()

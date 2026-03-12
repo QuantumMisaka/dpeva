@@ -2,7 +2,7 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-03-11
+last-updated: 2026-03-12
 ---
 
 # CLI 使用指南
@@ -10,7 +10,7 @@ last-updated: 2026-03-11
 - Status: active
 - Audience: Users / Developers
 - Applies-To: CLI 模式（推荐）
-- Last-Updated: 2026-03-11
+- Last-Updated: 2026-03-12
 
 ## 1. 目的与范围
 
@@ -47,6 +47,8 @@ dpeva <subcommand> <config_path>
 ```bash
 dpeva --no-banner <subcommand> <config_path>
 ```
+
+CLI 会在参数解析阶段对 `<config_path>` 执行统一前置校验（存在性、可读性、JSON 文件后缀）。
 
 实现入口：`src/dpeva/cli.py`（基于 `argparse`）。
 
@@ -114,6 +116,8 @@ dpeva --no-banner <subcommand> <config_path>
 
 - 输入
   - `LabelingConfig`
+- 命令参数
+  - `--stage {all,prepare,execute,postprocess}`（默认 `all`）
 - 功能
   - 执行主动学习中的标注工作流 (LabelingWorkflow)
   - 将 `dpdata` 格式的候选结构转化为 DFT (ABACUS) 计算任务
@@ -149,13 +153,25 @@ DPEVA_TAG: WORKFLOW_FINISHED
 
 - **退出码契约**
   - **正常执行**：0。
-  - **失败退出**：1。CLI 会打印错误摘要与堆栈。
-  - 注意：任何业务逻辑失败（如配置缺失、数据不存在、模型不兼容）均会触发退出码 1，**严禁静默失败**。
+  - **参数解析失败**：2（例如 config 文件不存在、不可读、路径不是文件，或参数形态错误）。
+  - **运行期失败**：1（配置内容不合法、业务逻辑失败、外部命令失败等）。
+  - 注意：CLI 对用户输入类错误优先给出可操作提示，避免无意义堆栈噪音；内部异常仍会保留堆栈用于排障。
 
 - 常见异常类型
-  - 配置校验失败（`ValidationError`）：字段缺失/类型不匹配。
+  - 参数级配置文件错误（argparse）：`config_path` 不存在/不可读/非 JSON 文件。
+  - 配置内容校验失败（`ValidationError`）：字段缺失/类型不匹配。
   - 路径/文件错误（`FileNotFoundError` / `WorkflowError`）：数据目录、模型文件未找到。
   - 运行时错误（`RuntimeError` / `WorkflowError`）：DeepMD 版本不兼容、外部命令执行失败。
+
+- 常见误用示例
+
+```bash
+# 错误：把 stage 词放在 config 位置
+dpeva label prepare
+
+# 正确：显式提供 config，并通过 --stage 指定阶段
+dpeva label config.json --stage prepare
+```
 
 排障入口：
 
@@ -164,6 +180,7 @@ DPEVA_TAG: WORKFLOW_FINISHED
 ## 7. 变更记录
 
 - 2026-03-03：更新退出码契约说明，明确 `WorkflowError` 会导致退出码 1。
+- 2026-03-12：新增 config 路径前置校验说明，补充 label `--stage` 参数和参数解析失败退出码 2。
 - 2026-03-11：更新配置权威入口为 API Reference，并同步 infer 日志文件名为 `test_job.out`。
 - 2026-03-08：补充 analysis 双模式与 labeling integration 输出说明。
 - 2026-02-18：补齐子命令 I/O、完成标记与退出码说明，并建立与 recipes/api 的权威链接。

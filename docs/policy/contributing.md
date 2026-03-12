@@ -3,6 +3,7 @@ title: 文档贡献指南 (Contributing)
 status: active
 audience: Developers / Maintainers
 last-updated: 2026-03-10
+owner: Docs Owner
 ---
 
 # 文档贡献指南（Contributing）
@@ -13,7 +14,7 @@ last-updated: 2026-03-10
 
 范围：
 
-- `docs/guides/*`、`docs/reference/*`、`docs/architecture/*`、`docs/policy/*`、`docs/reports/*`
+- `docs/guides/*`、`docs/reference/*`、`docs/architecture/*`、`docs/policy/*`、`docs/plans/*`、`docs/reports/*`
 
 ## 2. 相关方
 
@@ -36,8 +37,16 @@ last-updated: 2026-03-10
 - 权威查表：`docs/reference/`
 - 架构与决策：`docs/architecture/` 与 `docs/architecture/decisions/`
 - 一次性结论：`docs/reports/`
+- 项目级计划：`docs/plans/`
 - 制度与规范：`docs/policy/`
 - 历史归档：`docs/archive/`
+- 执行期草案：`.trae/documents/`（不直接作为项目文档入口）
+
+### 4.1 草案与项目文档迁移规则
+
+- AI/开发执行期文档先放 `.trae/documents/`。
+- 当内容进入“团队共享、可复盘、可发布”的状态时，迁移到 `docs/plans/` 或 `docs/reports/`。
+- 发布后统一归档至 `docs/archive/vX.Y.Z/{plans,reports}/`，并更新对应索引。
 
 ## 5. 必备元信息
 

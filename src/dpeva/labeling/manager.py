@@ -58,7 +58,7 @@ class LabelingManager:
         """
         total_systems = sum(len(ms) for ms in dataset_map.values())
         logger.info(f"Generating inputs for {len(dataset_map)} datasets ({total_systems} systems)...")
-        self.input_dir.mkdir(parents=True, exist_ok=True)
+        self._reset_prepare_workspace()
         
         generated_count = 0
         
@@ -99,6 +99,12 @@ class LabelingManager:
         # Note: packer needs to scan recursively now because of deeper structure
         packed_job_dirs = self.packer.pack(self.input_dir)
         return packed_job_dirs
+
+    def _reset_prepare_workspace(self):
+        if self.input_dir.exists():
+            logger.info(f"Resetting prepare workspace: {self.input_dir}")
+            shutil.rmtree(self.input_dir)
+        self.input_dir.mkdir(parents=True, exist_ok=True)
 
     def generate_runner_script(self, job_dir: Path) -> str:
         """

@@ -2,21 +2,21 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-03-11
+last-updated: 2026-03-12
 ---
 
 # DP-EVA 项目开发文档
 
 - Status: active
 - Audience: Developers
-- Last-Updated: 2026-03-11
+- Last-Updated: 2026-03-12
 - Related:
   - 配置字段字典：/docs/source/api/config.rst
   - 校验规则补充：/docs/reference/validation.md
   - 上游软件与职责：/docs/reference/upstream-software.md
 
-* **版本**: 0.6.4
-* **生成日期**: 2026-03-11
+* **版本**: 0.6.5
+* **生成日期**: 2026-03-12
 * **作者**: Quantum Misaka with Trae SOLO
 
 ---
@@ -477,6 +477,14 @@ DPEVA_TAG: WORKFLOW_FINISHED
 ### 6.2 版本历史
 
 #### **Current Era (v0.6.x)**
+
+*   **v0.6.5** (2026-03-12):
+    *   **[修复]** 修复 Labeling integration 中 `atom_names` 顺序敏感误报，支持在元素集合一致时自动归一化顺序并完成合并。
+    *   **[重构]** 完成 Labeling workflow 三阶段解耦，提供 `run_prepare/run_execute/run_postprocess` 显式阶段入口并保留默认全流程编排。
+    *   **[增强]** `dpeva label` 新增 `--stage all|prepare|execute|postprocess` 阶段化执行能力，支持不重算 ABACUS 的后处理复用。
+    *   **[稳定性]** 增强 prepare 幂等性，执行前自动重置 `inputs` 工作区，消除重复执行时历史残留导致的任务打包冲突。
+    *   **[可观测性]** 三阶段日志独立落盘为 `labeling_prepare.log`、`labeling_execute.log`、`labeling_postprocess.log`，提升排障效率。
+    *   **[测试]** 新增并补强 integration、workflow、CLI、manager 相关单测，`pytest tests/unit` 全量通过。
 
 *   **v0.6.4** (2026-03-11):
     *   **[修复]** 完成 R01-R37 全量闭环，修复安全、稳定性、测试与文档一致性问题。
