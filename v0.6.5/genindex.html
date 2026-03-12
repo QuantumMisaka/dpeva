@@ -1,0 +1,1347 @@
+
+<!DOCTYPE html>
+
+
+<html lang="zh-CN" data-content_root="./" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>索引 &#8212; DP-EVA Documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/sphinx-book-theme.css?v=eba8b062" />
+    <link rel="stylesheet" type="text/css" href="_static/autodoc_pydantic.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="_static/documentation_options.js?v=a25fec3b"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script src="_static/translations.js?v=beaddf03"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+    <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
+
+
+
+const initStyles = () => {
+    const defaultStyle = document.createElement('style');
+    defaultStyle.textContent = `pre.mermaid {
+    /* Same as .mermaid-container > pre */
+    display: block;
+    width: 100%;
+}
+
+pre.mermaid > svg {
+    /* Same as .mermaid-container > pre > svg */
+    height: 500px;
+    width: 100%;
+    max-width: 100% !important;
+}`;
+    document.head.appendChild(defaultStyle);
+
+    const fullscreenStyle = document.createElement('style');
+    fullscreenStyle.textContent = `.mermaid-container {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+}
+
+.mermaid-container > pre {
+    display: block;
+    width: 100%;
+}
+
+.mermaid-container > pre > svg {
+    height: 500px;
+    width: 100%;
+    max-width: 100% !important;
+}
+
+.mermaid-fullscreen-btn {
+    width: 28px;
+    height: 28px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    font-size: 14px;
+    line-height: 1;
+    padding: 0;
+    color: #333;
+}
+
+.mermaid-fullscreen-btn:hover {
+    opacity: 100% !important;
+    background: rgba(255, 255, 255, 1);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+    transform: scale(1.1);
+}
+
+.mermaid-fullscreen-btn.dark-theme {
+    background: rgba(50, 50, 50, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #e0e0e0;
+}
+
+.mermaid-fullscreen-btn.dark-theme:hover {
+    background: rgba(60, 60, 60, 1);
+    box-shadow: 0 3px 10px rgba(255, 255, 255, 0.2);
+}
+
+.mermaid-fullscreen-modal {
+    display: none;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 95vw;
+    height: 100vh;
+    background: rgba(255, 255, 255, 0.98);
+    z-index: 9999;
+    padding: 20px;
+    overflow: auto;
+}
+
+.mermaid-fullscreen-modal.dark-theme {
+    background: rgba(0, 0, 0, 0.98);
+}
+
+.mermaid-fullscreen-modal.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mermaid-container-fullscreen {
+    position: relative;
+    width: 95vw;
+    height: 90vh;
+    max-width: 95vw;
+    max-height: 90vh;
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    overflow: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mermaid-container-fullscreen.dark-theme {
+    background: #1a1a1a;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+}
+
+.mermaid-container-fullscreen pre.mermaid {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mermaid-container-fullscreen .mermaid svg {
+    height: 100% !important;
+    width: 100% !important;
+    cursor: grab;
+}
+
+.mermaid-fullscreen-close {
+    position: fixed !important;
+    top: 20px !important;
+    right: 20px !important;
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    transition: all 0.2s;
+    font-size: 24px;
+    line-height: 1;
+    color: #333;
+}
+
+.mermaid-fullscreen-close:hover {
+    background: white;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+    transform: scale(1.1);
+}
+
+.mermaid-fullscreen-close.dark-theme {
+    background: rgba(50, 50, 50, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #e0e0e0;
+}
+
+.mermaid-fullscreen-close.dark-theme:hover {
+    background: rgba(60, 60, 60, 1);
+    box-shadow: 0 6px 16px rgba(255, 255, 255, 0.2);
+}
+
+.mermaid-fullscreen-modal .mermaid-fullscreen-btn {
+    display: none !important;
+}`;
+    document.head.appendChild(fullscreenStyle);
+}
+
+// Detect if page has dark background
+const isDarkTheme = () => {
+    // We use a set of heuristics:
+    // 1. Check for common dark mode classes or attributes
+    // 2. Check computed background color brightness
+    if (document.documentElement.classList.contains('dark') ||
+        document.documentElement.getAttribute('data-theme') === 'dark' ||
+        document.body.classList.contains('dark') ||
+        document.body.getAttribute('data-theme') === 'dark') {
+        // console.log("Dark theme detected via class/attribute");
+        return true;
+    }
+    if (document.documentElement.classList.contains('light') ||
+        document.documentElement.getAttribute('data-theme') === 'light' ||
+        document.body.classList.contains('light') ||
+        document.body.getAttribute('data-theme') === 'light') {
+        // console.log("Light theme detected via class/attribute");
+        return false;
+    }
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        // console.log("Dark theme detected via prefers-color-scheme");
+        return true;
+    }
+    const bgColor = window.getComputedStyle(document.body).backgroundColor;
+    const match = bgColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)/);
+    if (match) {
+        const r = parseInt(match[1]);
+        const g = parseInt(match[2]);
+        const b = parseInt(match[3]);
+        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+        // console.log("Background color brightness:", brightness);
+        return brightness < 128;
+    }
+    // console.log("No dark or light theme detected, defaulting to light theme");
+    return false;
+};
+
+let darkTheme = isDarkTheme();
+let modal = null;
+let modalContent = null;
+let previousScrollOffset = [window.scrollX, window.scrollY];
+
+const runMermaid = async (rerun) => {
+    console.log("Running mermaid diagrams, rerun =", rerun);
+    // clear all existing mermaid charts
+    let all_mermaids = document.querySelectorAll(".mermaid");
+
+    if (rerun) {
+        all_mermaids.forEach((el) => {
+            if(!el.hasAttribute("data-original-code")) {
+                // store original code
+                // console.log(`Storing original code for first run: `, el.innerHTML);
+                el.setAttribute('data-original-code', el.innerHTML);
+            }
+            if(el.getAttribute("data-processed") === "true") {
+                // remove and restore original
+                el.removeAttribute("data-processed");
+                // console.log(`Restoring original code for re-run: `, el.getAttribute('data-original-code'));
+                el.innerHTML = el.getAttribute('data-original-code');
+            } else {
+                // store original code
+                // console.log(`Storing original code for re-run: `, el.innerHTML);
+                el.setAttribute('data-original-code', el.innerHTML);
+            }
+        });
+        await mermaid.run();
+    }
+
+    all_mermaids = document.querySelectorAll(".mermaid");
+    const mermaids_processed = document.querySelectorAll(".mermaid[data-processed='true']");
+
+    if ("False" === "True") {
+        const mermaids_to_add_zoom = -1 === -1 ? all_mermaids.length : -1;
+        if(mermaids_to_add_zoom > 0) {
+            var svgs = d3.selectAll("");
+            if(all_mermaids.length !== mermaids_processed.length) {
+                setTimeout(() => runMermaid(false), 200);
+                return;
+            } else if(svgs.size() !== mermaids_to_add_zoom) {
+                setTimeout(() => runMermaid(false), 200);
+                return;
+            } else {
+                svgs.each(function() {
+                    var svg = d3.select(this);
+                    svg.html("<g class='wrapper'>" + svg.html() + "</g>");
+                    var inner = svg.select("g");
+                    var zoom = d3.zoom().on("zoom", function(event) {
+                        inner.attr("transform", event.transform);
+                    });
+                    svg.call(zoom);
+                });
+            }
+        }
+    } else if(all_mermaids.length !== mermaids_processed.length) {
+        // Wait for mermaid to process all diagrams
+        setTimeout(() => runMermaid(false), 200);
+        return;
+    }
+
+    // Stop here if not adding fullscreen capability
+    if ("True" !== "True") return;
+
+    if (modal !== null ) {
+        // Destroy existing modal
+        modal.remove();
+        modal = null;
+        modalContent = null;
+    }
+
+    modal = document.createElement('div');
+    modal.className = 'mermaid-fullscreen-modal' + (darkTheme ? ' dark-theme' : '');
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-label', 'Fullscreen diagram viewer');
+    modal.innerHTML = `
+        <button class="mermaid-fullscreen-close${darkTheme ? ' dark-theme' : ''}" aria-label="Close fullscreen">✕</button>
+        <div class="mermaid-container-fullscreen${darkTheme ? ' dark-theme' : ''}"></div>
+    `;
+    document.body.appendChild(modal);
+
+    modalContent = modal.querySelector('.mermaid-container-fullscreen');
+    const closeBtn = modal.querySelector('.mermaid-fullscreen-close');
+
+    const closeModal = () => {
+        modal.classList.remove('active');
+        modalContent.innerHTML = '';
+        document.body.style.overflow = ''
+        window.scrollTo({left: previousScrollOffset[0], top: previousScrollOffset[1], behavior: 'instant'});
+    };
+
+    closeBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modal.classList.contains('active')) {
+            closeModal();
+        }
+    });
+
+    document.querySelectorAll('.mermaid').forEach((mermaidDiv) => {
+        if (mermaidDiv.parentNode.classList.contains('mermaid-container') ||
+            mermaidDiv.closest('.mermaid-fullscreen-modal')) {
+            // Already processed, adjust button class if needed
+            const existingBtn = mermaidDiv.parentNode.querySelector('.mermaid-fullscreen-btn');
+            if (existingBtn) {
+                existingBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
+            }
+            return;
+        }
+
+        const container = document.createElement('div');
+        container.className = 'mermaid-container';
+        mermaidDiv.parentNode.insertBefore(container, mermaidDiv);
+        container.appendChild(mermaidDiv);
+
+        const fullscreenBtn = document.createElement('button');
+        fullscreenBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
+        fullscreenBtn.setAttribute('aria-label', 'View diagram in fullscreen');
+        fullscreenBtn.textContent = '⛶';
+        fullscreenBtn.style.opacity = '50%';
+
+        // Calculate dynamic position based on diagram's margin and padding
+        const diagramStyle = window.getComputedStyle(mermaidDiv);
+        const marginTop = parseFloat(diagramStyle.marginTop) || 0;
+        const marginRight = parseFloat(diagramStyle.marginRight) || 0;
+        const paddingTop = parseFloat(diagramStyle.paddingTop) || 0;
+        const paddingRight = parseFloat(diagramStyle.paddingRight) || 0;
+        fullscreenBtn.style.top = `${marginTop + paddingTop + 4}px`;
+        fullscreenBtn.style.right = `${marginRight + paddingRight + 4}px`;
+
+        fullscreenBtn.addEventListener('click', () => {
+            previousScrollOffset = [window.scroll, window.scrollY];
+            const clone = mermaidDiv.cloneNode(true);
+            modalContent.innerHTML = '';
+            modalContent.appendChild(clone);
+
+            const svg = clone.querySelector('svg');
+            if (svg) {
+                svg.removeAttribute('width');
+                svg.removeAttribute('height');
+                svg.style.width = '100%';
+                svg.style.height = 'auto';
+                svg.style.maxWidth = '100%';
+                svg.style.sdisplay = 'block';
+
+                if ("False" === "True") {
+                    setTimeout(() => {
+                        const g = svg.querySelector('g');
+                        if (g) {
+                            var svgD3 = d3.select(svg);
+                            svgD3.html("<g class='wrapper'>" + svgD3.html() + "</g>");
+                            var inner = svgD3.select("g");
+                            var zoom = d3.zoom().on("zoom", function(event) {
+                                inner.attr("transform", event.transform);
+                            });
+                            svgD3.call(zoom);
+                        }
+                    }, 100);
+                }
+            }
+
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        });
+        container.appendChild(fullscreenBtn);
+    });
+};
+
+const load = async () => {
+    initStyles();
+
+    await runMermaid(true);
+
+    const reRunIfThemeChanges = async () => {
+        const newDarkTheme = isDarkTheme();
+        if (newDarkTheme !== darkTheme) {
+            darkTheme = newDarkTheme;
+            console.log("Theme change detected, re-running mermaid with", darkTheme ? "dark" : "default", "theme");
+            await mermaid.initialize(
+                {...JSON.parse(
+                    `{"startOnLoad": false}`
+                ),
+                ...{ darkMode: darkTheme, theme: darkTheme ? 'dark' : 'default' },
+                }
+            );
+            await runMermaid(true);
+        }
+    };
+
+    // Update theme classes when theme changes
+    const themeObserver = new MutationObserver(reRunIfThemeChanges);
+    themeObserver.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-theme']
+    });
+    themeObserver.observe(document.body, {
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-theme']
+    });
+};
+
+
+
+
+
+console.log("Initializing mermaid with", darkTheme ? "dark" : "default", "theme");
+mermaid.initialize(
+    {...JSON.parse(
+        `{"startOnLoad": false}`
+    ),
+    ...{ darkMode: darkTheme, theme: darkTheme ? 'dark' : 'default' },
+    }
+);
+
+window.addEventListener("load", load);
+window.runMermaid = runMermaid;</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'genindex';</script>
+    <link rel="index" title="索引" href="#" />
+    <link rel="search" title="搜索" href="search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="zh-CN"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">DP-EVA Documentation</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="搜索" aria-label="搜索" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">搜索</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="guides/installation.html">安装与环境准备（Installation）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guides/quickstart.html">Quickstart（最短路径跑通）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guides/cli.html">CLI 使用指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guides/configuration.html">配置编写指南（Configuration）</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">User Guides</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="guides/slurm.html">Slurm 使用与排障指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guides/troubleshooting.html">Troubleshooting（常见问题与排查）</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="reference/index.html">Reference</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="reference/README.html">Reference（权威参考）</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reference/validation.html">参数校验与约束（Validation Rules）</a></li>
+
+<li class="toctree-l2"><a class="reference internal" href="reference/upstream-software.html">上游软件与核心依赖（Upstream Software）</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Developer Guide</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="guides/developer-guide.html">DP-EVA 项目开发文档</a></li>
+<li class="toctree-l1"><a class="reference internal" href="architecture/README.html">Architecture（系统结构）</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="api/config.html">Configuration Reference</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="api/config/submission.html">Common &amp; Submission Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/config/feature.html">Feature Generation Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/config/training.html">Training Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/config/inference.html">Inference Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/config/collection.html">Collection (Active Learning) Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/config/labeling.html">Labeling Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/config/analysis.html">Analysis Configuration</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="api/workflows.html">Workflows API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/labeling.html">Labeling API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/sampling.html">Sampling API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/uncertain.html">Uncertainty API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/submission.html">Submission API</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Governance</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="guides/docs-governance-quickstart.html">文档治理快速上手（开发者与 AI）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guides/process-asset-lifecycle.html">过程资产生命周期（AI 草案到项目文档）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="policy/README.html">Policy（制度与规范）</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="plans/governance/index.html">Doc System Planning</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="plans/governance/README.html">README</a></li>
+</ul>
+</details></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="architecture/design-report.html">DP-EVA 项目设计模式与架构分析报告</a></li>
+<li class="toctree-l1"><a class="reference internal" href="architecture/decisions/README.html">README</a></li>
+<li class="toctree-l1"><a class="reference internal" href="architecture/decisions/2026-02-04-deepmd-dependency.html">ADR: DeepMD-kit 依赖管理策略</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guides/README.html">Guides（操作指南）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guides/deployment.html">GitHub Actions 文档部署指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guides/developer/README.html">Developer Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guides/developer/config-docs-maintenance.html">变量说明文档维护指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guides/testing/README.html">Testing（测试指南）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guides/testing/integration-config-templates.html">DP-EVA 集成测试最小配置模板（Slurm）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guides/testing/integration-slurm.html">DP-EVA 集成测试设计与交付报告（Slurm + Multi DataPool）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guides/testing/multi-datapool-artifacts.html">test-for-multiple-datapool 生产目录输入输出分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plans/README.html">开发计划 (Development Plans)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="policy/contributing.html">文档贡献指南（Contributing）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="policy/docs-structure.html">文档结构与命名规范（Docs Structure &amp; Naming）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="policy/maintenance.html">文档版本管理与维护机制（Maintenance）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="policy/quality.html">文档质量标准（Documentation Quality Standard）</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="全屏模式"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="搜索" aria-label="搜索" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1></h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+
+<h1 id="index">索引</h1>
+
+<div class="genindex-jumpbox">
+ <a href="#A"><strong>A</strong></a>
+ | <a href="#B"><strong>B</strong></a>
+ | <a href="#C"><strong>C</strong></a>
+ | <a href="#D"><strong>D</strong></a>
+ | <a href="#E"><strong>E</strong></a>
+ | <a href="#F"><strong>F</strong></a>
+ | <a href="#G"><strong>G</strong></a>
+ | <a href="#I"><strong>I</strong></a>
+ | <a href="#J"><strong>J</strong></a>
+ | <a href="#K"><strong>K</strong></a>
+ | <a href="#L"><strong>L</strong></a>
+ | <a href="#M"><strong>M</strong></a>
+ | <a href="#N"><strong>N</strong></a>
+ | <a href="#O"><strong>O</strong></a>
+ | <a href="#P"><strong>P</strong></a>
+ | <a href="#Q"><strong>Q</strong></a>
+ | <a href="#R"><strong>R</strong></a>
+ | <a href="#S"><strong>S</strong></a>
+ | <a href="#T"><strong>T</strong></a>
+ | <a href="#U"><strong>U</strong></a>
+ | <a href="#V"><strong>V</strong></a>
+ | <a href="#W"><strong>W</strong></a>
+ 
+</div>
+<h2 id="A">A</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/labeling.html#dpeva.labeling.AbacusGenerator">AbacusGenerator（dpeva.labeling 中的类）</a>
+</li>
+      <li><a href="api/labeling.html#dpeva.labeling.AbacusPostProcessor">AbacusPostProcessor（dpeva.labeling 中的类）</a>
+</li>
+      <li><a href="api/workflows.html#dpeva.workflows.AnalysisWorkflow">AnalysisWorkflow（dpeva.workflows 中的类）</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/workflows.html#dpeva.workflows.InferenceWorkflow.analyze_results">analyze_results() （dpeva.workflows.InferenceWorkflow 方法）</a>
+</li>
+      <li><a href="api/labeling.html#dpeva.labeling.ResubmissionStrategy.apply">apply() （dpeva.labeling.ResubmissionStrategy 方法）</a>
+</li>
+      <li><a href="api/config/labeling.html#dpeva.config.LabelingConfig.attempt_params">attempt_params（dpeva.config.LabelingConfig 属性）</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="B">B</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/config/submission.html#dpeva.config.SubmissionConfig.backend">backend（dpeva.config.SubmissionConfig 属性）</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/config/training.html#dpeva.config.TrainingConfig.base_model_path">base_model_path（dpeva.config.TrainingConfig 属性）</a>
+</li>
+      <li><a href="api/config/feature.html#dpeva.config.FeatureConfig.batch_size">batch_size（dpeva.config.FeatureConfig 属性）</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="C">C</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/labeling.html#dpeva.labeling.AbacusPostProcessor.check_convergence">check_convergence() （dpeva.labeling.AbacusPostProcessor 方法）</a>
+</li>
+      <li><a href="api/config/labeling.html#dpeva.config.LabelingConfig.cleaning_thresholds">cleaning_thresholds（dpeva.config.LabelingConfig 属性）</a>
+</li>
+      <li><a href="api/workflows.html#dpeva.workflows.CollectionWorkflow">CollectionWorkflow（dpeva.workflows 中的类）</a>
+</li>
+      <li><a href="api/submission.html#dpeva.submission.JobConfig.command">command（dpeva.submission.JobConfig 属性）</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/labeling.html#dpeva.labeling.AbacusPostProcessor.compute_metrics">compute_metrics() （dpeva.labeling.AbacusPostProcessor 方法）</a>
+</li>
+      <li><a href="api/config/collection.html#dpeva.config.CollectionConfig.config_path">config_path（dpeva.config.CollectionConfig 属性）</a>
+</li>
+      <li><a href="api/submission.html#dpeva.submission.JobConfig.cpus_per_task">cpus_per_task（dpeva.submission.JobConfig 属性）</a>
+</li>
+      <li><a href="api/submission.html#dpeva.submission.JobConfig.custom_headers">custom_headers（dpeva.submission.JobConfig 属性）</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="D">D</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/config/analysis.html#dpeva.config.AnalysisConfig.data_path">data_path（dpeva.config.AnalysisConfig 属性）</a>
+</li>
+      <li><a href="api/config/feature.html#dpeva.config.FeatureConfig.data_path">data_path（dpeva.config.FeatureConfig 属性）</a>
+</li>
+      <li><a href="api/config/inference.html#dpeva.config.InferenceConfig.data_path">data_path（dpeva.config.InferenceConfig 属性）</a>
+</li>
+      <li><a href="api/config/analysis.html#dpeva.config.AnalysisConfig.dataset_dir">dataset_dir（dpeva.config.AnalysisConfig 属性）</a>
+</li>
+      <li><a href="api/config/collection.html#dpeva.config.CollectionConfig.desc_dir">desc_dir（dpeva.config.CollectionConfig 属性）</a>
+</li>
+      <li><a href="api/config/labeling.html#dpeva.config.LabelingConfig.dft_params">dft_params（dpeva.config.LabelingConfig 属性）</a>
+</li>
+      <li><a href="api/config/collection.html#dpeva.config.CollectionConfig.direct_k">direct_k（dpeva.config.CollectionConfig 属性）</a>
+</li>
+      <li><a href="api/config/collection.html#dpeva.config.CollectionConfig.direct_n_clusters">direct_n_clusters（dpeva.config.CollectionConfig 属性）</a>
+</li>
+      <li><a href="api/config/collection.html#dpeva.config.CollectionConfig.direct_thr_init">direct_thr_init（dpeva.config.CollectionConfig 属性）</a>
+</li>
+      <li><a href="api/config/submission.html#dpeva.config.BaseWorkflowConfig.dp_backend">dp_backend（dpeva.config.BaseWorkflowConfig 属性）</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li>
+    dpeva.labeling
+
+      <ul>
+        <li><a href="api/labeling.html#module-dpeva.labeling">module</a>
+</li>
+      </ul></li>
+      <li>
+    dpeva.sampling
+
+      <ul>
+        <li><a href="api/sampling.html#module-dpeva.sampling">module</a>
+</li>
+      </ul></li>
+      <li>
+    dpeva.submission
+
+      <ul>
+        <li><a href="api/submission.html#module-dpeva.submission">module</a>
+</li>
+      </ul></li>
+      <li>
+    dpeva.uncertain
+
+      <ul>
+        <li><a href="api/uncertain.html#module-dpeva.uncertain">module</a>
+</li>
+      </ul></li>
+      <li>
+    dpeva.workflows
+
+      <ul>
+        <li><a href="api/workflows.html#module-dpeva.workflows">module</a>
+</li>
+      </ul></li>
+  </ul></td>
+</tr></table>
+
+<h2 id="E">E</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/config/submission.html#dpeva.config.SubmissionConfig.env_setup">env_setup（dpeva.config.SubmissionConfig 属性）</a>
+</li>
+      <li><a href="api/submission.html#dpeva.submission.JobConfig.env_setup">env_setup（dpeva.submission.JobConfig 属性）</a>
+</li>
+      <li><a href="api/submission.html#dpeva.submission.JobConfig.error_log">error_log（dpeva.submission.JobConfig 属性）</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/config/labeling.html#dpeva.config.LabelingConfig.existing_training_data_path">existing_training_data_path（dpeva.config.LabelingConfig 属性）</a>
+</li>
+      <li><a href="api/labeling.html#dpeva.labeling.AbacusPostProcessor.export_data">export_data() （dpeva.labeling.AbacusPostProcessor 方法）</a>
+</li>
+      <li><a href="api/config/submission.html#dpeva.config.BaseWorkflowConfig.extract_flat_submission_config">extract_flat_submission_config()（dpeva.config.BaseWorkflowConfig 类方法）</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="F">F</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/workflows.html#dpeva.workflows.FeatureWorkflow">FeatureWorkflow（dpeva.workflows 中的类）</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/config/collection.html#dpeva.config.CollectionConfig.fig_dpi">fig_dpi（dpeva.config.CollectionConfig 属性）</a>
+</li>
+      <li><a href="api/labeling.html#dpeva.labeling.AbacusPostProcessor.filter_data">filter_data() （dpeva.labeling.AbacusPostProcessor 方法）</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="G">G</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/labeling.html#dpeva.labeling.AbacusGenerator.generate">generate() （dpeva.labeling.AbacusGenerator 方法）</a>
+</li>
+      <li><a href="api/submission.html#dpeva.submission.JobManager.generate_script">generate_script() （dpeva.submission.JobManager 方法）</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/labeling.html#dpeva.labeling.ResubmissionStrategy.get_params">get_params() （dpeva.labeling.ResubmissionStrategy 方法）</a>
+</li>
+      <li><a href="api/submission.html#dpeva.submission.JobConfig.gpus_per_node">gpus_per_node（dpeva.submission.JobConfig 属性）</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="I">I</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/workflows.html#dpeva.workflows.InferenceWorkflow">InferenceWorkflow（dpeva.workflows 中的类）</a>
+</li>
+      <li><a href="api/config/labeling.html#dpeva.config.LabelingConfig.input_data_path">input_data_path（dpeva.config.LabelingConfig 属性）</a>
+</li>
+      <li><a href="api/config/training.html#dpeva.config.TrainingConfig.input_json_path">input_json_path（dpeva.config.TrainingConfig 属性）</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/config/labeling.html#dpeva.config.LabelingConfig.integration_deduplicate">integration_deduplicate（dpeva.config.LabelingConfig 属性）</a>
+</li>
+      <li><a href="api/config/labeling.html#dpeva.config.LabelingConfig.integration_enabled">integration_enabled（dpeva.config.LabelingConfig 属性）</a>
+</li>
+      <li><a href="api/config/labeling.html#dpeva.config.LabelingConfig.integration_output_format">integration_output_format（dpeva.config.LabelingConfig 属性）</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="J">J</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/submission.html#dpeva.submission.JobConfig.job_name">job_name（dpeva.submission.JobConfig 属性）</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/submission.html#dpeva.submission.JobConfig">JobConfig（dpeva.submission 中的类）</a>
+</li>
+      <li><a href="api/submission.html#dpeva.submission.JobManager">JobManager（dpeva.submission 中的类）</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="K">K</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/config/labeling.html#dpeva.config.LabelingConfig.kpt_criteria">kpt_criteria（dpeva.config.LabelingConfig 属性）</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="L">L</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/labeling.html#dpeva.labeling.AbacusPostProcessor.load_data">load_data() （dpeva.labeling.AbacusPostProcessor 方法）</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="M">M</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/config/labeling.html#dpeva.config.LabelingConfig.mag_map">mag_map（dpeva.config.LabelingConfig 属性）</a>
+</li>
+      <li><a href="api/config/labeling.html#dpeva.config.LabelingConfig.merged_training_data_path">merged_training_data_path（dpeva.config.LabelingConfig 属性）</a>
+</li>
+      <li><a href="api/config/feature.html#dpeva.config.FeatureConfig.model_head">model_head（dpeva.config.FeatureConfig 属性）</a>
+</li>
+      <li><a href="api/config/inference.html#dpeva.config.InferenceConfig.model_head">model_head（dpeva.config.InferenceConfig 属性）</a>
+</li>
+      <li><a href="api/config/training.html#dpeva.config.TrainingConfig.model_head">model_head（dpeva.config.TrainingConfig 属性）</a>
+</li>
+      <li><a href="api/config/feature.html#dpeva.config.FeatureConfig.model_path">model_path（dpeva.config.FeatureConfig 属性）</a>
+</li>
+      <li><a href="api/config/analysis.html#dpeva.config.AnalysisConfig.mode">mode（dpeva.config.AnalysisConfig 属性）</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/config/feature.html#dpeva.config.FeatureConfig.mode">mode（dpeva.config.FeatureConfig 属性）</a>
+</li>
+      <li>
+    module
+
+      <ul>
+        <li><a href="api/labeling.html#module-dpeva.labeling">dpeva.labeling</a>
+</li>
+        <li><a href="api/sampling.html#module-dpeva.sampling">dpeva.sampling</a>
+</li>
+        <li><a href="api/submission.html#module-dpeva.submission">dpeva.submission</a>
+</li>
+        <li><a href="api/uncertain.html#module-dpeva.uncertain">dpeva.uncertain</a>
+</li>
+        <li><a href="api/workflows.html#module-dpeva.workflows">dpeva.workflows</a>
+</li>
+      </ul></li>
+  </ul></td>
+</tr></table>
+
+<h2 id="N">N</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/submission.html#dpeva.submission.JobConfig.nodelist">nodelist（dpeva.submission.JobConfig 属性）</a>
+</li>
+      <li><a href="api/submission.html#dpeva.submission.JobConfig.nodes">nodes（dpeva.submission.JobConfig 属性）</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/submission.html#dpeva.submission.JobConfig.ntasks">ntasks（dpeva.submission.JobConfig 属性）</a>
+</li>
+      <li><a href="api/config/collection.html#dpeva.config.CollectionConfig.num_models">num_models（dpeva.config.CollectionConfig 属性）</a>
+</li>
+      <li><a href="api/config/training.html#dpeva.config.TrainingConfig.num_models">num_models（dpeva.config.TrainingConfig 属性）</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="O">O</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/config/submission.html#dpeva.config.BaseWorkflowConfig.omp_threads">omp_threads（dpeva.config.BaseWorkflowConfig 属性）</a>
+</li>
+      <li><a href="api/config/labeling.html#dpeva.config.LabelingConfig.orb_dir">orb_dir（dpeva.config.LabelingConfig 属性）</a>
+</li>
+      <li><a href="api/config/labeling.html#dpeva.config.LabelingConfig.orb_map">orb_map（dpeva.config.LabelingConfig 属性）</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/config/analysis.html#dpeva.config.AnalysisConfig.output_dir">output_dir（dpeva.config.AnalysisConfig 属性）</a>
+</li>
+      <li><a href="api/config/labeling.html#dpeva.config.LabelingConfig.output_format">output_format（dpeva.config.LabelingConfig 属性）</a>
+</li>
+      <li><a href="api/submission.html#dpeva.submission.JobConfig.output_log">output_log（dpeva.submission.JobConfig 属性）</a>
+</li>
+      <li><a href="api/config/feature.html#dpeva.config.FeatureConfig.output_mode">output_mode（dpeva.config.FeatureConfig 属性）</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="P">P</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/submission.html#dpeva.submission.JobConfig.partition">partition（dpeva.submission.JobConfig 属性）</a>
+</li>
+      <li><a href="api/config/labeling.html#dpeva.config.LabelingConfig.pp_dir">pp_dir（dpeva.config.LabelingConfig 属性）</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/config/labeling.html#dpeva.config.LabelingConfig.pp_map">pp_map（dpeva.config.LabelingConfig 属性）</a>
+</li>
+      <li><a href="api/config/collection.html#dpeva.config.CollectionConfig.project">project（dpeva.config.CollectionConfig 属性）</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="Q">Q</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/submission.html#dpeva.submission.JobConfig.qos">qos（dpeva.submission.JobConfig 属性）</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="R">R</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/config/analysis.html#dpeva.config.AnalysisConfig.ref_energies">ref_energies（dpeva.config.AnalysisConfig 属性）</a>
+</li>
+      <li><a href="api/config/inference.html#dpeva.config.InferenceConfig.ref_energies">ref_energies（dpeva.config.InferenceConfig 属性）</a>
+</li>
+      <li><a href="api/config/labeling.html#dpeva.config.LabelingConfig.ref_energies">ref_energies（dpeva.config.LabelingConfig 属性）</a>
+</li>
+      <li><a href="api/labeling.html#dpeva.labeling.ResubmissionStrategy">ResubmissionStrategy（dpeva.labeling 中的类）</a>
+</li>
+      <li><a href="api/config/analysis.html#dpeva.config.AnalysisConfig.result_dir">result_dir（dpeva.config.AnalysisConfig 属性）</a>
+</li>
+      <li><a href="api/config/collection.html#dpeva.config.CollectionConfig.results_prefix">results_prefix（dpeva.config.CollectionConfig 属性）</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/config/inference.html#dpeva.config.InferenceConfig.results_prefix">results_prefix（dpeva.config.InferenceConfig 属性）</a>
+</li>
+      <li><a href="api/config/collection.html#dpeva.config.CollectionConfig.root_savedir">root_savedir（dpeva.config.CollectionConfig 属性）</a>
+</li>
+      <li><a href="api/workflows.html#dpeva.workflows.AnalysisWorkflow.run">run() （dpeva.workflows.AnalysisWorkflow 方法）</a>
+</li>
+      <li><a href="api/workflows.html#dpeva.workflows.CollectionWorkflow.run">run() （dpeva.workflows.CollectionWorkflow 方法）</a>
+</li>
+      <li><a href="api/workflows.html#dpeva.workflows.FeatureWorkflow.run">run() （dpeva.workflows.FeatureWorkflow 方法）</a>
+</li>
+      <li><a href="api/workflows.html#dpeva.workflows.InferenceWorkflow.run">run() （dpeva.workflows.InferenceWorkflow 方法）</a>
+</li>
+      <li><a href="api/workflows.html#dpeva.workflows.TrainingWorkflow.run">run() （dpeva.workflows.TrainingWorkflow 方法）</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="S">S</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/config/collection.html#dpeva.config.CollectionConfig.sampler_type">sampler_type（dpeva.config.CollectionConfig 属性）</a>
+</li>
+      <li><a href="api/config/feature.html#dpeva.config.FeatureConfig.savedir">savedir（dpeva.config.FeatureConfig 属性）</a>
+</li>
+      <li><a href="api/config/training.html#dpeva.config.TrainingConfig.seeds">seeds（dpeva.config.TrainingConfig 属性）</a>
+</li>
+      <li><a href="api/config/submission.html#dpeva.config.SubmissionConfig.slurm_config">slurm_config（dpeva.config.SubmissionConfig 属性）</a>
+</li>
+      <li><a href="api/config/collection.html#dpeva.config.CollectionConfig.step1_n_clusters">step1_n_clusters（dpeva.config.CollectionConfig 属性）</a>
+</li>
+      <li><a href="api/config/collection.html#dpeva.config.CollectionConfig.step1_threshold">step1_threshold（dpeva.config.CollectionConfig 属性）</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/config/collection.html#dpeva.config.CollectionConfig.step2_k">step2_k（dpeva.config.CollectionConfig 属性）</a>
+</li>
+      <li><a href="api/config/collection.html#dpeva.config.CollectionConfig.step2_n_clusters">step2_n_clusters（dpeva.config.CollectionConfig 属性）</a>
+</li>
+      <li><a href="api/config/collection.html#dpeva.config.CollectionConfig.step2_selection">step2_selection（dpeva.config.CollectionConfig 属性）</a>
+</li>
+      <li><a href="api/config/collection.html#dpeva.config.CollectionConfig.step2_threshold">step2_threshold（dpeva.config.CollectionConfig 属性）</a>
+</li>
+      <li><a href="api/config/submission.html#dpeva.config.BaseWorkflowConfig.submission">submission（dpeva.config.BaseWorkflowConfig 属性）</a>
+</li>
+      <li><a href="api/submission.html#dpeva.submission.JobManager.submit">submit() （dpeva.submission.JobManager 方法）</a>
+</li>
+      <li><a href="api/submission.html#dpeva.submission.JobManager.submit_python_script">submit_python_script() （dpeva.submission.JobManager 方法）</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="T">T</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/config/inference.html#dpeva.config.InferenceConfig.task_name">task_name（dpeva.config.InferenceConfig 属性）</a>
+</li>
+      <li><a href="api/config/labeling.html#dpeva.config.LabelingConfig.tasks_per_job">tasks_per_job（dpeva.config.LabelingConfig 属性）</a>
+</li>
+      <li><a href="api/config/training.html#dpeva.config.TrainingConfig.template_path">template_path（dpeva.config.TrainingConfig 属性）</a>
+</li>
+      <li><a href="api/config/collection.html#dpeva.config.CollectionConfig.testdata_dir">testdata_dir（dpeva.config.CollectionConfig 属性）</a>
+</li>
+      <li><a href="api/config/collection.html#dpeva.config.CollectionConfig.testing_dir">testing_dir（dpeva.config.CollectionConfig 属性）</a>
+</li>
+      <li><a href="api/submission.html#dpeva.submission.JobConfig.to_dict">to_dict() （dpeva.submission.JobConfig 方法）</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/config/collection.html#dpeva.config.CollectionConfig.training_data_dir">training_data_dir（dpeva.config.CollectionConfig 属性）</a>
+</li>
+      <li><a href="api/config/training.html#dpeva.config.TrainingConfig.training_data_path">training_data_path（dpeva.config.TrainingConfig 属性）</a>
+</li>
+      <li><a href="api/config/collection.html#dpeva.config.CollectionConfig.training_desc_dir">training_desc_dir（dpeva.config.CollectionConfig 属性）</a>
+</li>
+      <li><a href="api/config/training.html#dpeva.config.TrainingConfig.training_mode">training_mode（dpeva.config.TrainingConfig 属性）</a>
+</li>
+      <li><a href="api/config/training.html#dpeva.config.TrainingConfig.training_seeds">training_seeds（dpeva.config.TrainingConfig 属性）</a>
+</li>
+      <li><a href="api/workflows.html#dpeva.workflows.TrainingWorkflow">TrainingWorkflow（dpeva.workflows 中的类）</a>
+</li>
+      <li><a href="api/config/analysis.html#dpeva.config.AnalysisConfig.type_map">type_map（dpeva.config.AnalysisConfig 属性）</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="U">U</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/config/collection.html#dpeva.config.CollectionConfig.uq_auto_bounds">uq_auto_bounds（dpeva.config.CollectionConfig 属性）</a>
+</li>
+      <li><a href="api/config/collection.html#dpeva.config.CollectionConfig.uq_qbc_trust_hi">uq_qbc_trust_hi（dpeva.config.CollectionConfig 属性）</a>
+</li>
+      <li><a href="api/config/collection.html#dpeva.config.CollectionConfig.uq_qbc_trust_lo">uq_qbc_trust_lo（dpeva.config.CollectionConfig 属性）</a>
+</li>
+      <li><a href="api/config/collection.html#dpeva.config.CollectionConfig.uq_qbc_trust_ratio">uq_qbc_trust_ratio（dpeva.config.CollectionConfig 属性）</a>
+</li>
+      <li><a href="api/config/collection.html#dpeva.config.CollectionConfig.uq_qbc_trust_width">uq_qbc_trust_width（dpeva.config.CollectionConfig 属性）</a>
+</li>
+      <li><a href="api/config/collection.html#dpeva.config.CollectionConfig.uq_rnd_rescaled_trust_hi">uq_rnd_rescaled_trust_hi（dpeva.config.CollectionConfig 属性）</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/config/collection.html#dpeva.config.CollectionConfig.uq_rnd_rescaled_trust_lo">uq_rnd_rescaled_trust_lo（dpeva.config.CollectionConfig 属性）</a>
+</li>
+      <li><a href="api/config/collection.html#dpeva.config.CollectionConfig.uq_rnd_rescaled_trust_ratio">uq_rnd_rescaled_trust_ratio（dpeva.config.CollectionConfig 属性）</a>
+</li>
+      <li><a href="api/config/collection.html#dpeva.config.CollectionConfig.uq_rnd_rescaled_trust_width">uq_rnd_rescaled_trust_width（dpeva.config.CollectionConfig 属性）</a>
+</li>
+      <li><a href="api/config/collection.html#dpeva.config.CollectionConfig.uq_select_scheme">uq_select_scheme（dpeva.config.CollectionConfig 属性）</a>
+</li>
+      <li><a href="api/config/collection.html#dpeva.config.CollectionConfig.uq_trust_mode">uq_trust_mode（dpeva.config.CollectionConfig 属性）</a>
+</li>
+      <li><a href="api/config/collection.html#dpeva.config.CollectionConfig.uq_trust_ratio">uq_trust_ratio（dpeva.config.CollectionConfig 属性）</a>
+</li>
+      <li><a href="api/config/collection.html#dpeva.config.CollectionConfig.uq_trust_width">uq_trust_width（dpeva.config.CollectionConfig 属性）</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="V">V</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/config/labeling.html#dpeva.config.LabelingConfig.vacuum_thickness">vacuum_thickness（dpeva.config.LabelingConfig 属性）</a>
+</li>
+      <li><a href="api/config/submission.html#dpeva.config.BaseWorkflowConfig.validate_dp_backend">validate_dp_backend()（dpeva.config.BaseWorkflowConfig 类方法）</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/config/submission.html#dpeva.config.SubmissionConfig.validate_env_setup">validate_env_setup()（dpeva.config.SubmissionConfig 类方法）</a>
+</li>
+      <li><a href="api/config/labeling.html#dpeva.config.LabelingConfig.validate_labeling_output_format">validate_labeling_output_format()（dpeva.config.LabelingConfig 类方法）</a>
+</li>
+      <li><a href="api/config/submission.html#dpeva.config.BaseWorkflowConfig.validate_omp_threads">validate_omp_threads()（dpeva.config.BaseWorkflowConfig 类方法）</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="W">W</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/submission.html#dpeva.submission.JobConfig.walltime">walltime（dpeva.submission.JobConfig 属性）</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/config/submission.html#dpeva.config.BaseWorkflowConfig.work_dir">work_dir（dpeva.config.BaseWorkflowConfig 属性）</a>
+</li>
+      <li><a href="api/config/labeling.html#dpeva.config.LabelingConfig.work_dir">work_dir（dpeva.config.LabelingConfig 属性）</a>
+</li>
+  </ul></td>
+</tr></table>
+
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+作者： DP-EVA Developers
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2026, DP-EVA Developers.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

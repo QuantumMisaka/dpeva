@@ -1,0 +1,763 @@
+
+<!DOCTYPE html>
+
+
+<html lang="zh-CN" data-content_root="../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>ADR: DeepMD-kit 依赖管理策略 &#8212; DP-EVA Documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/sphinx-book-theme.css?v=eba8b062" />
+    <link rel="stylesheet" type="text/css" href="../../_static/autodoc_pydantic.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="../../_static/documentation_options.js?v=a25fec3b"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script src="../../_static/translations.js?v=beaddf03"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'architecture/decisions/2026-02-04-deepmd-dependency';</script>
+    <link rel="index" title="索引" href="../../genindex.html" />
+    <link rel="search" title="搜索" href="../../search.html" />
+    <link rel="next" title="Guides（操作指南）" href="../../guides/README.html" />
+    <link rel="prev" title="README" href="README.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="zh-CN"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">DP-EVA Documentation</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="搜索" aria-label="搜索" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">搜索</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../guides/installation.html">安装与环境准备（Installation）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guides/quickstart.html">Quickstart（最短路径跑通）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guides/cli.html">CLI 使用指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guides/configuration.html">配置编写指南（Configuration）</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">User Guides</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../guides/slurm.html">Slurm 使用与排障指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guides/troubleshooting.html">Troubleshooting（常见问题与排查）</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../reference/index.html">Reference</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../reference/README.html">Reference（权威参考）</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../reference/validation.html">参数校验与约束（Validation Rules）</a></li>
+
+<li class="toctree-l2"><a class="reference internal" href="../../reference/upstream-software.html">上游软件与核心依赖（Upstream Software）</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Developer Guide</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../guides/developer-guide.html">DP-EVA 项目开发文档</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../README.html">Architecture（系统结构）</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../api/config.html">Configuration Reference</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../api/config/submission.html">Common &amp; Submission Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/config/feature.html">Feature Generation Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/config/training.html">Training Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/config/inference.html">Inference Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/config/collection.html">Collection (Active Learning) Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/config/labeling.html">Labeling Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/config/analysis.html">Analysis Configuration</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/workflows.html">Workflows API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/labeling.html">Labeling API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/sampling.html">Sampling API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/uncertain.html">Uncertainty API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/submission.html">Submission API</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Governance</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../guides/docs-governance-quickstart.html">文档治理快速上手（开发者与 AI）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guides/process-asset-lifecycle.html">过程资产生命周期（AI 草案到项目文档）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../policy/README.html">Policy（制度与规范）</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../plans/governance/index.html">Doc System Planning</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../plans/governance/README.html">README</a></li>
+</ul>
+</details></li>
+</ul>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../design-report.html">DP-EVA 项目设计模式与架构分析报告</a></li>
+<li class="toctree-l1"><a class="reference internal" href="README.html">README</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">ADR: DeepMD-kit 依赖管理策略</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guides/README.html">Guides（操作指南）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guides/deployment.html">GitHub Actions 文档部署指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guides/developer/README.html">Developer Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guides/developer/config-docs-maintenance.html">变量说明文档维护指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guides/testing/README.html">Testing（测试指南）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guides/testing/integration-config-templates.html">DP-EVA 集成测试最小配置模板（Slurm）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guides/testing/integration-slurm.html">DP-EVA 集成测试设计与交付报告（Slurm + Multi DataPool）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guides/testing/multi-datapool-artifacts.html">test-for-multiple-datapool 生产目录输入输出分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../plans/README.html">开发计划 (Development Plans)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../policy/contributing.html">文档贡献指南（Contributing）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../policy/docs-structure.html">文档结构与命名规范（Docs Structure &amp; Naming）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../policy/maintenance.html">文档版本管理与维护机制（Maintenance）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../policy/quality.html">文档质量标准（Documentation Quality Standard）</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="下载此页面">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../../_sources/architecture/decisions/2026-02-04-deepmd-dependency.md" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="下载源文件"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.md</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="列印成 PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="全屏模式"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="搜索" aria-label="搜索" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>ADR: DeepMD-kit 依赖管理策略</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> 目录 </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#context">Context</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#decision">Decision</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#consequences">Consequences</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#alternatives-considered">Alternatives Considered</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#git-submodule">Git Submodule</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#related">Related</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#appendix-legacy-report-full-migration">Appendix: Legacy Report (Full Migration)</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#deepmd-kit">技术决策报告：DeepMD-kit 依赖管理方案评估</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">1. 现状分析：DeepMD-kit 调用场景与耦合度</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">1.1 调用方式</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">1.2 定制化需求</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#git-submodule-vs">2. 方案评估：Git Submodule vs 现有模式</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">2.1 采用 Git Submodule 的权衡</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#pip-conda">2.2 官方发布版本 (Pip/Conda) 的权衡</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">3. 决策结论</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">4. 实施方案：替代依赖管理策略</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">4.1 依赖声明规范化</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#runtime-version-check">4.2 运行时版本检查 (Runtime Version Check)</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#ci-cd">4.3 CI/CD 策略</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id8">4.4 文档说明</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id9">5. 总结</a></li>
+</ul>
+</li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="adr-deepmd-kit">
+<h1>ADR: DeepMD-kit 依赖管理策略<a class="headerlink" href="#adr-deepmd-kit" title="Link to this heading">#</a></h1>
+<ul class="simple">
+<li><p>Status: active</p></li>
+<li><p>Date: 2026-02-04</p></li>
+<li><p>Owners: Maintainers</p></li>
+</ul>
+<section id="context">
+<h2>Context<a class="headerlink" href="#context" title="Link to this heading">#</a></h2>
+<p>DP-EVA 作为上层工作流编排系统，主要通过两种方式与 DeepMD-kit 交互：</p>
+<ul class="simple">
+<li><p>CLI 调用为主：<code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">train</span></code> / <code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">test</span></code> / <code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">eval-desc</span></code>（通过命令构建与作业调度系统调用，不依赖 DeepMD Python 源码）</p></li>
+<li><p>Python API 调用为辅：仅用于小规模/调试的本地描述符计算（环境缺失时可降级）</p></li>
+</ul>
+<p>当前代码未体现对 DeepMD-kit 源码的二次开发或 Patch 需求。</p>
+</section>
+<section id="decision">
+<h2>Decision<a class="headerlink" href="#decision" title="Link to this heading">#</a></h2>
+<p>拒绝将 DeepMD-kit 以 Git submodule 方式引入仓库；采用“外部环境依赖 + 版本约束 + 运行时检查”的策略管理 DeepMD-kit。</p>
+</section>
+<section id="consequences">
+<h2>Consequences<a class="headerlink" href="#consequences" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p>优点</p>
+<ul>
+<li><p>安装与使用更符合用户预期（Conda/Pip 预编译包）</p></li>
+<li><p>仓库保持轻量，避免构建 C++/TF/PT 复杂依赖</p></li>
+<li><p>允许根据 CUDA/硬件选择合适发行包</p></li>
+</ul>
+</li>
+<li><p>代价</p>
+<ul>
+<li><p>环境一致性需要通过文档、依赖约束与运行时检查保障</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="alternatives-considered">
+<h2>Alternatives Considered<a class="headerlink" href="#alternatives-considered" title="Link to this heading">#</a></h2>
+<section id="git-submodule">
+<h3>Git Submodule<a class="headerlink" href="#git-submodule" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p>优点：版本锁定、源码级调试便利、Fork 管理清晰</p></li>
+<li><p>缺点：DeepMD-kit 构建复杂、仓库体积增大、用户体验差、易引发环境冲突</p></li>
+</ul>
+</section>
+</section>
+<section id="related">
+<h2>Related<a class="headerlink" href="#related" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p>依赖与版本检查相关实现：<code class="docutils literal notranslate"><span class="pre">src/dpeva/constants.py</span></code>（MIN_DEEPMD_VERSION）与初始化时的版本检查逻辑</p></li>
+</ul>
+</section>
+<section id="appendix-legacy-report-full-migration">
+<h2>Appendix: Legacy Report (Full Migration)<a class="headerlink" href="#appendix-legacy-report-full-migration" title="Link to this heading">#</a></h2>
+<p>以下内容迁移自历史技术决策报告，用于确保旧文档的功能点/示例/注意事项在新位置完整保留（避免信息丢失）。</p>
+<section id="deepmd-kit">
+<h3>技术决策报告：DeepMD-kit 依赖管理方案评估<a class="headerlink" href="#deepmd-kit" title="Link to this heading">#</a></h3>
+<p><strong>日期</strong>: 2026-02-04<br />
+<strong>状态</strong>: 已评审 (Approved)<br />
+<strong>决策</strong>: 🔴 <strong>拒绝采用 Git Submodule</strong>，推荐采用 <strong>外部环境依赖 + 版本约束</strong> 模式。</p>
+</section>
+<hr class="docutils" />
+<section id="id1">
+<h3>1. 现状分析：DeepMD-kit 调用场景与耦合度<a class="headerlink" href="#id1" title="Link to this heading">#</a></h3>
+<p>通过对 <code class="docutils literal notranslate"><span class="pre">dpeva</span></code> 代码库的全面审计，我们梳理了项目对 <code class="docutils literal notranslate"><span class="pre">deepmd-kit</span></code> 的依赖情况：</p>
+<section id="id2">
+<h4>1.1 调用方式<a class="headerlink" href="#id2" title="Link to this heading">#</a></h4>
+<p>项目通过两种方式与 <code class="docutils literal notranslate"><span class="pre">deepmd-kit</span></code> 交互，呈现 <strong>松耦合</strong> 特征：</p>
+<ol class="arabic simple">
+<li><p><strong>CLI 命令行调用 (主要方式)</strong></p>
+<ul class="simple">
+<li><p>模块：<code class="docutils literal notranslate"><span class="pre">/src/dpeva/utils/command.py</span></code>（DPCommandBuilder）</p></li>
+<li><p>场景：</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">train</span></code>：模型训练（Trainer）</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">freeze</span></code>：模型导出（Trainer）</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">test</span></code>：模型推理与精度验证（Inference）</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">eval-desc</span></code>：描述符计算（Feature/Collection）</p></li>
+</ul>
+</li>
+<li><p>特征：依赖系统 <code class="docutils literal notranslate"><span class="pre">PATH</span></code> 中的 <code class="docutils literal notranslate"><span class="pre">dp</span></code> 可执行文件，通过 <code class="docutils literal notranslate"><span class="pre">subprocess</span></code> 或作业调度系统（Slurm）调用。不依赖 Python 源码。</p></li>
+</ul>
+</li>
+<li><p><strong>Python API 调用 (可选方式)</strong></p>
+<ul class="simple">
+<li><p>模块：<code class="docutils literal notranslate"><span class="pre">/src/dpeva/feature/generator.py</span></code></p></li>
+<li><p>场景：<code class="docutils literal notranslate"><span class="pre">DescriptorGenerator</span></code> 的 <code class="docutils literal notranslate"><span class="pre">mode=\&quot;python\&quot;</span></code>。</p></li>
+<li><p>代码：</p></li>
+</ul>
+</li>
+</ol>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">deepmd.infer.deep_pot</span><span class="w"> </span><span class="kn">import</span> <span class="n">DeepPot</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">_DEEPMD_AVAILABLE</span> <span class="o">=</span> <span class="kc">False</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>特征：仅用于本地直接计算描述符。若环境未安装 Python 包，代码会自动降级或禁用该功能，不影响核心 CLI 流程。</p></li>
+</ul>
+</section>
+<section id="id3">
+<h4>1.2 定制化需求<a class="headerlink" href="#id3" title="Link to this heading">#</a></h4>
+<ul class="simple">
+<li><p>当前代码：未发现对 <code class="docutils literal notranslate"><span class="pre">deepmd-kit</span></code> 核心算法（如 <code class="docutils literal notranslate"><span class="pre">DescriptSeA</span></code>, <code class="docutils literal notranslate"><span class="pre">FittingNet</span></code>）的源码级修改或 Patch。</p></li>
+<li><p>需求性质：<code class="docutils literal notranslate"><span class="pre">dpeva</span></code> 定位为 <strong>上层工作流编排系统 (Orchestrator)</strong>，而非 <code class="docutils literal notranslate"><span class="pre">deepmd-kit</span></code> 的二次开发或插件。</p></li>
+</ul>
+</section>
+</section>
+<hr class="docutils" />
+<section id="git-submodule-vs">
+<h3>2. 方案评估：Git Submodule vs 现有模式<a class="headerlink" href="#git-submodule-vs" title="Link to this heading">#</a></h3>
+<section id="id4">
+<h4>2.1 采用 Git Submodule 的权衡<a class="headerlink" href="#id4" title="Link to this heading">#</a></h4>
+<p>若将 <code class="docutils literal notranslate"><span class="pre">deepmd-kit</span></code> 作为 submodule 引入：</p>
+<ul class="simple">
+<li><p>优点：</p>
+<ul>
+<li><p>绝对版本锁定：可精确锁定到某次 Commit，确保所有开发者使用完全一致的代码快照。</p></li>
+<li><p>源码级调试：方便在开发 <code class="docutils literal notranslate"><span class="pre">dpeva</span></code> 时直接跳转调试 <code class="docutils literal notranslate"><span class="pre">deepmd-kit</span></code> 内部代码。</p></li>
+<li><p>私有定制：若未来需修改 <code class="docutils literal notranslate"><span class="pre">deepmd-kit</span></code> C++ 核心且无法合并回上游，submodule 是管理 Fork 的好方法。</p></li>
+</ul>
+</li>
+<li><p>缺点（阻碍性因素）：</p>
+<ul>
+<li><p>构建复杂性极高：<code class="docutils literal notranslate"><span class="pre">deepmd-kit</span></code> 包含大量 C++ 代码，依赖 TensorFlow/PyTorch C++ 库。要求所有 <code class="docutils literal notranslate"><span class="pre">dpeva</span></code> 用户在安装时本地编译 <code class="docutils literal notranslate"><span class="pre">deepmd-kit</span></code> 是不现实的（通常通过 Conda/Pip 安装预编译包）。</p></li>
+<li><p>仓库体积膨胀：<code class="docutils literal notranslate"><span class="pre">deepmd-kit</span></code> 仓库较大，增加 <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">clone</span></code> 时间。</p></li>
+<li><p>用户体验差：普通用户只想 <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">dpeva</span></code>，不希望处理子模块同步和编译错误。</p></li>
+<li><p>环境冲突：Submodule 强制指定版本可能与用户环境中已安装的 <code class="docutils literal notranslate"><span class="pre">deepmd-kit</span></code>（如系统级 Conda 环境）冲突。</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="pip-conda">
+<h4>2.2 官方发布版本 (Pip/Conda) 的权衡<a class="headerlink" href="#pip-conda" title="Link to this heading">#</a></h4>
+<ul class="simple">
+<li><p>优点：</p>
+<ul>
+<li><p>安装便捷：<code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">deepmd-kit</span></code> 即可获取预编译包。</p></li>
+<li><p>解耦：<code class="docutils literal notranslate"><span class="pre">dpeva</span></code> 只关注如何调用，不关注如何构建。</p></li>
+<li><p>兼容性：允许用户根据硬件（CUDA 版本）自由选择匹配的 DeepMD 版本。</p></li>
+</ul>
+</li>
+</ul>
+</section>
+</section>
+<hr class="docutils" />
+<section id="id5">
+<h3>3. 决策结论<a class="headerlink" href="#id5" title="Link to this heading">#</a></h3>
+<p>基于上述分析，我们 <strong>强烈不建议</strong> 使用 Git Submodule。</p>
+<p>核心理由：</p>
+<ol class="arabic simple">
+<li><p>构建成本过高：<code class="docutils literal notranslate"><span class="pre">dpeva</span></code> 是 Python 纯代码项目，引入需编译的 C++ 子模块会破坏项目的轻量级特性。</p></li>
+<li><p>定位不符：<code class="docutils literal notranslate"><span class="pre">dpeva</span></code> 是 <code class="docutils literal notranslate"><span class="pre">deepmd-kit</span></code> 的使用者，而非扩展者。</p></li>
+<li><p>版本稳定性：通过 <code class="docutils literal notranslate"><span class="pre">/pyproject.toml</span></code> 的版本约束足以满足稳定性需求。</p></li>
+</ol>
+</section>
+<hr class="docutils" />
+<section id="id6">
+<h3>4. 实施方案：替代依赖管理策略<a class="headerlink" href="#id6" title="Link to this heading">#</a></h3>
+<p>既然拒绝 Submodule，我们需要更规范地管理外部依赖，防止“环境不一致”导致的问题。</p>
+<section id="id7">
+<h4>4.1 依赖声明规范化<a class="headerlink" href="#id7" title="Link to this heading">#</a></h4>
+<p>建议根据使用程度分级声明（示例）：</p>
+<div class="highlight-toml notranslate"><div class="highlight"><pre><span></span><span class="k">[project]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;dpeva&quot;</span>
+<span class="n">dependencies</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="s2">&quot;dpdata&gt;=0.2.13&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;numpy&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;pandas&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;pydantic&gt;=2.0&quot;</span>
+<span class="p">]</span>
+
+<span class="k">[project.optional-dependencies]</span>
+<span class="n">local</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="s2">&quot;deepmd-kit&gt;=2.2.0&quot;</span>
+<span class="p">]</span>
+</pre></div>
+</div>
+</section>
+<section id="runtime-version-check">
+<h4>4.2 运行时版本检查 (Runtime Version Check)<a class="headerlink" href="#runtime-version-check" title="Link to this heading">#</a></h4>
+<p>在 <code class="docutils literal notranslate"><span class="pre">dpeva</span></code> 启动时增加版本检查逻辑，确保环境中的 <code class="docutils literal notranslate"><span class="pre">dp</span></code> 命令版本符合要求。</p>
+<p>建议新增模块：<code class="docutils literal notranslate"><span class="pre">/src/dpeva/utils/env_check.py</span></code>（或等价实现）</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">packaging</span><span class="w"> </span><span class="kn">import</span> <span class="n">version</span>
+
+<span class="n">MIN_DEEPMD_VERSION</span> <span class="o">=</span> \<span class="s2">&quot;2.0.0</span><span class="se">\&quot;</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">check_deepmd_version</span><span class="p">():</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">check_output</span><span class="p">([</span>\<span class="s2">&quot;dp</span><span class="se">\&quot;</span><span class="s2">, </span><span class="se">\&quot;</span><span class="s2">--version</span><span class="se">\&quot;</span><span class="s2">], text=True).strip()</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">FileNotFoundError</span><span class="p">,</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">CalledProcessError</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>\<span class="s2">&quot;DeepMD-kit not found. Please install deepmd-kit and ensure &#39;dp&#39; is in PATH.</span><span class="se">\&quot;</span><span class="s2">)</span>
+</pre></div>
+</div>
+</section>
+<section id="ci-cd">
+<h4>4.3 CI/CD 策略<a class="headerlink" href="#ci-cd" title="Link to this heading">#</a></h4>
+<ul class="simple">
+<li><p>基本策略：在 CI 中对 <code class="docutils literal notranslate"><span class="pre">dpeva</span></code> 自身的单元测试不强依赖 <code class="docutils literal notranslate"><span class="pre">dp</span></code>，对依赖 <code class="docutils literal notranslate"><span class="pre">dp</span></code> 的路径使用跳过或分层 CI（具备 DeepMD 环境的 runner 再跑）。</p></li>
+<li><p>集成测试：建议在具备 Slurm/DeepMD 的环境跑 <code class="docutils literal notranslate"><span class="pre">tests/integration</span></code>（与 <code class="docutils literal notranslate"><span class="pre">/docs/guides/testing/*</span></code> 对齐）。</p></li>
+</ul>
+</section>
+<section id="id8">
+<h4>4.4 文档说明<a class="headerlink" href="#id8" title="Link to this heading">#</a></h4>
+<ul class="simple">
+<li><p>安装与环境准备：<code class="docutils literal notranslate"><span class="pre">/docs/guides/installation.md</span></code></p></li>
+<li><p>DeepMD 依赖策略（本文档 ADR）</p></li>
+</ul>
+</section>
+</section>
+<hr class="docutils" />
+<section id="id9">
+<h3>5. 总结<a class="headerlink" href="#id9" title="Link to this heading">#</a></h3>
+<p>DeepMD-kit 属于重依赖组件，submodule 引入会显著放大构建与维护成本。对于 DP-EVA 这种上层编排系统，应优先采用外部环境依赖 + 版本约束 + 运行时检查的策略，以获得更好的可用性与可维护性。</p>
+</section>
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="README.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">上一页</p>
+        <p class="prev-next-title">README</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="../../guides/README.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">下一页</p>
+        <p class="prev-next-title">Guides（操作指南）</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> 目录
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#context">Context</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#decision">Decision</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#consequences">Consequences</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#alternatives-considered">Alternatives Considered</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#git-submodule">Git Submodule</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#related">Related</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#appendix-legacy-report-full-migration">Appendix: Legacy Report (Full Migration)</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#deepmd-kit">技术决策报告：DeepMD-kit 依赖管理方案评估</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">1. 现状分析：DeepMD-kit 调用场景与耦合度</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">1.1 调用方式</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">1.2 定制化需求</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#git-submodule-vs">2. 方案评估：Git Submodule vs 现有模式</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">2.1 采用 Git Submodule 的权衡</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#pip-conda">2.2 官方发布版本 (Pip/Conda) 的权衡</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">3. 决策结论</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">4. 实施方案：替代依赖管理策略</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">4.1 依赖声明规范化</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#runtime-version-check">4.2 运行时版本检查 (Runtime Version Check)</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#ci-cd">4.3 CI/CD 策略</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id8">4.4 文档说明</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id9">5. 总结</a></li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+作者： DP-EVA Developers
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2026, DP-EVA Developers.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

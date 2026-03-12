@@ -1,0 +1,1825 @@
+
+<!DOCTYPE html>
+
+
+<html lang="zh-CN" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>DP-EVA 项目开发文档 &#8212; DP-EVA Documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=eba8b062" />
+    <link rel="stylesheet" type="text/css" href="../_static/autodoc_pydantic.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="../_static/documentation_options.js?v=a25fec3b"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script src="../_static/translations.js?v=beaddf03"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+    <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
+
+
+
+const initStyles = () => {
+    const defaultStyle = document.createElement('style');
+    defaultStyle.textContent = `pre.mermaid {
+    /* Same as .mermaid-container > pre */
+    display: block;
+    width: 100%;
+}
+
+pre.mermaid > svg {
+    /* Same as .mermaid-container > pre > svg */
+    height: 500px;
+    width: 100%;
+    max-width: 100% !important;
+}`;
+    document.head.appendChild(defaultStyle);
+
+    const fullscreenStyle = document.createElement('style');
+    fullscreenStyle.textContent = `.mermaid-container {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+}
+
+.mermaid-container > pre {
+    display: block;
+    width: 100%;
+}
+
+.mermaid-container > pre > svg {
+    height: 500px;
+    width: 100%;
+    max-width: 100% !important;
+}
+
+.mermaid-fullscreen-btn {
+    width: 28px;
+    height: 28px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    font-size: 14px;
+    line-height: 1;
+    padding: 0;
+    color: #333;
+}
+
+.mermaid-fullscreen-btn:hover {
+    opacity: 100% !important;
+    background: rgba(255, 255, 255, 1);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+    transform: scale(1.1);
+}
+
+.mermaid-fullscreen-btn.dark-theme {
+    background: rgba(50, 50, 50, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #e0e0e0;
+}
+
+.mermaid-fullscreen-btn.dark-theme:hover {
+    background: rgba(60, 60, 60, 1);
+    box-shadow: 0 3px 10px rgba(255, 255, 255, 0.2);
+}
+
+.mermaid-fullscreen-modal {
+    display: none;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 95vw;
+    height: 100vh;
+    background: rgba(255, 255, 255, 0.98);
+    z-index: 9999;
+    padding: 20px;
+    overflow: auto;
+}
+
+.mermaid-fullscreen-modal.dark-theme {
+    background: rgba(0, 0, 0, 0.98);
+}
+
+.mermaid-fullscreen-modal.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mermaid-container-fullscreen {
+    position: relative;
+    width: 95vw;
+    height: 90vh;
+    max-width: 95vw;
+    max-height: 90vh;
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    overflow: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mermaid-container-fullscreen.dark-theme {
+    background: #1a1a1a;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+}
+
+.mermaid-container-fullscreen pre.mermaid {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mermaid-container-fullscreen .mermaid svg {
+    height: 100% !important;
+    width: 100% !important;
+    cursor: grab;
+}
+
+.mermaid-fullscreen-close {
+    position: fixed !important;
+    top: 20px !important;
+    right: 20px !important;
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    transition: all 0.2s;
+    font-size: 24px;
+    line-height: 1;
+    color: #333;
+}
+
+.mermaid-fullscreen-close:hover {
+    background: white;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+    transform: scale(1.1);
+}
+
+.mermaid-fullscreen-close.dark-theme {
+    background: rgba(50, 50, 50, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #e0e0e0;
+}
+
+.mermaid-fullscreen-close.dark-theme:hover {
+    background: rgba(60, 60, 60, 1);
+    box-shadow: 0 6px 16px rgba(255, 255, 255, 0.2);
+}
+
+.mermaid-fullscreen-modal .mermaid-fullscreen-btn {
+    display: none !important;
+}`;
+    document.head.appendChild(fullscreenStyle);
+}
+
+// Detect if page has dark background
+const isDarkTheme = () => {
+    // We use a set of heuristics:
+    // 1. Check for common dark mode classes or attributes
+    // 2. Check computed background color brightness
+    if (document.documentElement.classList.contains('dark') ||
+        document.documentElement.getAttribute('data-theme') === 'dark' ||
+        document.body.classList.contains('dark') ||
+        document.body.getAttribute('data-theme') === 'dark') {
+        // console.log("Dark theme detected via class/attribute");
+        return true;
+    }
+    if (document.documentElement.classList.contains('light') ||
+        document.documentElement.getAttribute('data-theme') === 'light' ||
+        document.body.classList.contains('light') ||
+        document.body.getAttribute('data-theme') === 'light') {
+        // console.log("Light theme detected via class/attribute");
+        return false;
+    }
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        // console.log("Dark theme detected via prefers-color-scheme");
+        return true;
+    }
+    const bgColor = window.getComputedStyle(document.body).backgroundColor;
+    const match = bgColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)/);
+    if (match) {
+        const r = parseInt(match[1]);
+        const g = parseInt(match[2]);
+        const b = parseInt(match[3]);
+        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+        // console.log("Background color brightness:", brightness);
+        return brightness < 128;
+    }
+    // console.log("No dark or light theme detected, defaulting to light theme");
+    return false;
+};
+
+let darkTheme = isDarkTheme();
+let modal = null;
+let modalContent = null;
+let previousScrollOffset = [window.scrollX, window.scrollY];
+
+const runMermaid = async (rerun) => {
+    console.log("Running mermaid diagrams, rerun =", rerun);
+    // clear all existing mermaid charts
+    let all_mermaids = document.querySelectorAll(".mermaid");
+
+    if (rerun) {
+        all_mermaids.forEach((el) => {
+            if(!el.hasAttribute("data-original-code")) {
+                // store original code
+                // console.log(`Storing original code for first run: `, el.innerHTML);
+                el.setAttribute('data-original-code', el.innerHTML);
+            }
+            if(el.getAttribute("data-processed") === "true") {
+                // remove and restore original
+                el.removeAttribute("data-processed");
+                // console.log(`Restoring original code for re-run: `, el.getAttribute('data-original-code'));
+                el.innerHTML = el.getAttribute('data-original-code');
+            } else {
+                // store original code
+                // console.log(`Storing original code for re-run: `, el.innerHTML);
+                el.setAttribute('data-original-code', el.innerHTML);
+            }
+        });
+        await mermaid.run();
+    }
+
+    all_mermaids = document.querySelectorAll(".mermaid");
+    const mermaids_processed = document.querySelectorAll(".mermaid[data-processed='true']");
+
+    if ("False" === "True") {
+        const mermaids_to_add_zoom = -1 === -1 ? all_mermaids.length : -1;
+        if(mermaids_to_add_zoom > 0) {
+            var svgs = d3.selectAll("");
+            if(all_mermaids.length !== mermaids_processed.length) {
+                setTimeout(() => runMermaid(false), 200);
+                return;
+            } else if(svgs.size() !== mermaids_to_add_zoom) {
+                setTimeout(() => runMermaid(false), 200);
+                return;
+            } else {
+                svgs.each(function() {
+                    var svg = d3.select(this);
+                    svg.html("<g class='wrapper'>" + svg.html() + "</g>");
+                    var inner = svg.select("g");
+                    var zoom = d3.zoom().on("zoom", function(event) {
+                        inner.attr("transform", event.transform);
+                    });
+                    svg.call(zoom);
+                });
+            }
+        }
+    } else if(all_mermaids.length !== mermaids_processed.length) {
+        // Wait for mermaid to process all diagrams
+        setTimeout(() => runMermaid(false), 200);
+        return;
+    }
+
+    // Stop here if not adding fullscreen capability
+    if ("True" !== "True") return;
+
+    if (modal !== null ) {
+        // Destroy existing modal
+        modal.remove();
+        modal = null;
+        modalContent = null;
+    }
+
+    modal = document.createElement('div');
+    modal.className = 'mermaid-fullscreen-modal' + (darkTheme ? ' dark-theme' : '');
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-label', 'Fullscreen diagram viewer');
+    modal.innerHTML = `
+        <button class="mermaid-fullscreen-close${darkTheme ? ' dark-theme' : ''}" aria-label="Close fullscreen">✕</button>
+        <div class="mermaid-container-fullscreen${darkTheme ? ' dark-theme' : ''}"></div>
+    `;
+    document.body.appendChild(modal);
+
+    modalContent = modal.querySelector('.mermaid-container-fullscreen');
+    const closeBtn = modal.querySelector('.mermaid-fullscreen-close');
+
+    const closeModal = () => {
+        modal.classList.remove('active');
+        modalContent.innerHTML = '';
+        document.body.style.overflow = ''
+        window.scrollTo({left: previousScrollOffset[0], top: previousScrollOffset[1], behavior: 'instant'});
+    };
+
+    closeBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modal.classList.contains('active')) {
+            closeModal();
+        }
+    });
+
+    document.querySelectorAll('.mermaid').forEach((mermaidDiv) => {
+        if (mermaidDiv.parentNode.classList.contains('mermaid-container') ||
+            mermaidDiv.closest('.mermaid-fullscreen-modal')) {
+            // Already processed, adjust button class if needed
+            const existingBtn = mermaidDiv.parentNode.querySelector('.mermaid-fullscreen-btn');
+            if (existingBtn) {
+                existingBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
+            }
+            return;
+        }
+
+        const container = document.createElement('div');
+        container.className = 'mermaid-container';
+        mermaidDiv.parentNode.insertBefore(container, mermaidDiv);
+        container.appendChild(mermaidDiv);
+
+        const fullscreenBtn = document.createElement('button');
+        fullscreenBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
+        fullscreenBtn.setAttribute('aria-label', 'View diagram in fullscreen');
+        fullscreenBtn.textContent = '⛶';
+        fullscreenBtn.style.opacity = '50%';
+
+        // Calculate dynamic position based on diagram's margin and padding
+        const diagramStyle = window.getComputedStyle(mermaidDiv);
+        const marginTop = parseFloat(diagramStyle.marginTop) || 0;
+        const marginRight = parseFloat(diagramStyle.marginRight) || 0;
+        const paddingTop = parseFloat(diagramStyle.paddingTop) || 0;
+        const paddingRight = parseFloat(diagramStyle.paddingRight) || 0;
+        fullscreenBtn.style.top = `${marginTop + paddingTop + 4}px`;
+        fullscreenBtn.style.right = `${marginRight + paddingRight + 4}px`;
+
+        fullscreenBtn.addEventListener('click', () => {
+            previousScrollOffset = [window.scroll, window.scrollY];
+            const clone = mermaidDiv.cloneNode(true);
+            modalContent.innerHTML = '';
+            modalContent.appendChild(clone);
+
+            const svg = clone.querySelector('svg');
+            if (svg) {
+                svg.removeAttribute('width');
+                svg.removeAttribute('height');
+                svg.style.width = '100%';
+                svg.style.height = 'auto';
+                svg.style.maxWidth = '100%';
+                svg.style.sdisplay = 'block';
+
+                if ("False" === "True") {
+                    setTimeout(() => {
+                        const g = svg.querySelector('g');
+                        if (g) {
+                            var svgD3 = d3.select(svg);
+                            svgD3.html("<g class='wrapper'>" + svgD3.html() + "</g>");
+                            var inner = svgD3.select("g");
+                            var zoom = d3.zoom().on("zoom", function(event) {
+                                inner.attr("transform", event.transform);
+                            });
+                            svgD3.call(zoom);
+                        }
+                    }, 100);
+                }
+            }
+
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        });
+        container.appendChild(fullscreenBtn);
+    });
+};
+
+const load = async () => {
+    initStyles();
+
+    await runMermaid(true);
+
+    const reRunIfThemeChanges = async () => {
+        const newDarkTheme = isDarkTheme();
+        if (newDarkTheme !== darkTheme) {
+            darkTheme = newDarkTheme;
+            console.log("Theme change detected, re-running mermaid with", darkTheme ? "dark" : "default", "theme");
+            await mermaid.initialize(
+                {...JSON.parse(
+                    `{"startOnLoad": false}`
+                ),
+                ...{ darkMode: darkTheme, theme: darkTheme ? 'dark' : 'default' },
+                }
+            );
+            await runMermaid(true);
+        }
+    };
+
+    // Update theme classes when theme changes
+    const themeObserver = new MutationObserver(reRunIfThemeChanges);
+    themeObserver.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-theme']
+    });
+    themeObserver.observe(document.body, {
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-theme']
+    });
+};
+
+
+
+
+
+console.log("Initializing mermaid with", darkTheme ? "dark" : "default", "theme");
+mermaid.initialize(
+    {...JSON.parse(
+        `{"startOnLoad": false}`
+    ),
+    ...{ darkMode: darkTheme, theme: darkTheme ? 'dark' : 'default' },
+    }
+);
+
+window.addEventListener("load", load);
+window.runMermaid = runMermaid;</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'guides/developer-guide';</script>
+    <link rel="index" title="索引" href="../genindex.html" />
+    <link rel="search" title="搜索" href="../search.html" />
+    <link rel="next" title="Architecture（系统结构）" href="../architecture/README.html" />
+    <link rel="prev" title="上游软件与核心依赖（Upstream Software）" href="../reference/upstream-software.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="zh-CN"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">DP-EVA Documentation</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="搜索" aria-label="搜索" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">搜索</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">安装与环境准备（Installation）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart（最短路径跑通）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cli.html">CLI 使用指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="configuration.html">配置编写指南（Configuration）</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">User Guides</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="slurm.html">Slurm 使用与排障指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="troubleshooting.html">Troubleshooting（常见问题与排查）</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../reference/index.html">Reference</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../reference/README.html">Reference（权威参考）</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reference/validation.html">参数校验与约束（Validation Rules）</a></li>
+
+<li class="toctree-l2"><a class="reference internal" href="../reference/upstream-software.html">上游软件与核心依赖（Upstream Software）</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Developer Guide</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">DP-EVA 项目开发文档</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../architecture/README.html">Architecture（系统结构）</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../api/config.html">Configuration Reference</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../api/config/submission.html">Common &amp; Submission Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/config/feature.html">Feature Generation Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/config/training.html">Training Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/config/inference.html">Inference Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/config/collection.html">Collection (Active Learning) Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/config/labeling.html">Labeling Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/config/analysis.html">Analysis Configuration</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/workflows.html">Workflows API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/labeling.html">Labeling API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/sampling.html">Sampling API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/uncertain.html">Uncertainty API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/submission.html">Submission API</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Governance</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="docs-governance-quickstart.html">文档治理快速上手（开发者与 AI）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="process-asset-lifecycle.html">过程资产生命周期（AI 草案到项目文档）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../policy/README.html">Policy（制度与规范）</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../plans/governance/index.html">Doc System Planning</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../plans/governance/README.html">README</a></li>
+</ul>
+</details></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../architecture/design-report.html">DP-EVA 项目设计模式与架构分析报告</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../architecture/decisions/README.html">README</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../architecture/decisions/2026-02-04-deepmd-dependency.html">ADR: DeepMD-kit 依赖管理策略</a></li>
+<li class="toctree-l1"><a class="reference internal" href="README.html">Guides（操作指南）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="deployment.html">GitHub Actions 文档部署指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="developer/README.html">Developer Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="developer/config-docs-maintenance.html">变量说明文档维护指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="testing/README.html">Testing（测试指南）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="testing/integration-config-templates.html">DP-EVA 集成测试最小配置模板（Slurm）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="testing/integration-slurm.html">DP-EVA 集成测试设计与交付报告（Slurm + Multi DataPool）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="testing/multi-datapool-artifacts.html">test-for-multiple-datapool 生产目录输入输出分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../plans/README.html">开发计划 (Development Plans)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../policy/contributing.html">文档贡献指南（Contributing）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../policy/docs-structure.html">文档结构与命名规范（Docs Structure &amp; Naming）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../policy/maintenance.html">文档版本管理与维护机制（Maintenance）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../policy/quality.html">文档质量标准（Documentation Quality Standard）</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="下载此页面">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../_sources/guides/developer-guide.md" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="下载源文件"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.md</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="列印成 PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="全屏模式"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="搜索" aria-label="搜索" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>DP-EVA 项目开发文档</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> 目录 </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#overview">1. 项目概述 (Overview)</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">1.1 项目简介</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#the-zen-of-dp-eva">1.2 核心哲学 (The Zen of DP-EVA)</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">1.2.1 核心原则</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">1.2.2 架构实践</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#roadmap">1.3 优化方向与路线图 (Roadmap)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#development-process-standard">1.4 开发流程标准 (Development Process Standard)</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#architecture">2. 系统架构 (Architecture)</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">2.1 目录结构</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#data-flow">2.2 数据流图 (Data Flow)</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#modules">3. 核心模块详解 (Modules)</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#training-dpeva-training">3.1 Training 模块 (<code class="docutils literal notranslate"><span class="pre">dpeva.training</span></code>)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#inference-dpeva-inference">3.2 Inference 模块 (<code class="docutils literal notranslate"><span class="pre">dpeva.inference</span></code>)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#uncertainty-sampling-dpeva-uncertain-dpeva-sampling">3.3 Uncertainty &amp; Sampling 模块 (<code class="docutils literal notranslate"><span class="pre">dpeva.uncertain</span></code>, <code class="docutils literal notranslate"><span class="pre">dpeva.sampling</span></code>)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#feature-dpeva-feature">3.4 Feature 模块 (<code class="docutils literal notranslate"><span class="pre">dpeva.feature</span></code>)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#submission-dpeva-submission">3.5 Submission 模块 (<code class="docutils literal notranslate"><span class="pre">dpeva.submission</span></code>)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#slurm-backend-slurm-architecture">3.6 Slurm Backend 设计 (Slurm Architecture)</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#interface-guide">4. 接口使用指南 (Interface Guide)</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#cli">4.1 统一命令行 (CLI)</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#train">4.1.1 训练 (Train)</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#infer">4.1.2 推理与分析 (Infer)</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#collect">4.1.3 数据采集 (Collect)</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#feature">4.1.4 特征生成 (Feature)</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#analysis">4.1.5 分析 (Analysis)</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#label-integration">4.1.6 标注后自动整合 (Label Integration)</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#python-api-recipes">4.2 Python API (Recipes)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">4.3 配置参数说明</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#train-config">4.3.1 训练配置 (Train Config)</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">4.3.2 其他配置</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#uq">4.4 UQ 与采样配置要点</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#uq-trust-mode">4.4.1 <code class="docutils literal notranslate"><span class="pre">uq_trust_mode</span></code> 配置说明</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#auto-uq-uq-auto-bounds">4.4.2 Auto-UQ 边界控制 (<code class="docutils literal notranslate"><span class="pre">uq_auto_bounds</span></code>)</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#sampling">4.4.3 采样参数说明 (Sampling)</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#development">5. 开发与测试 (Development)</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">5.1 代码规范</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id8">5.2 验证测试</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#faq">5.3 常见问题 (FAQ)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow-monitoring">5.4 工作流监控标准 (Workflow Monitoring)</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#revision-history">6. 版本修订记录 (Revision History)</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#maintenance-policy">6.1 维护策略 (Maintenance Policy)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id9">6.2 版本历史</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#current-era-v0-6-x"><strong>Current Era (v0.6.x)</strong></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#legacy-era-v0-4-x"><strong>Legacy Era (v0.4.x)</strong></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#legacy-era-v2-x"><strong>Legacy Era (v2.x)</strong></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id10"><strong>Legacy Era (v2.x)</strong></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="dp-eva">
+<h1>DP-EVA 项目开发文档<a class="headerlink" href="#dp-eva" title="Link to this heading">#</a></h1>
+<ul class="simple">
+<li><p>Status: active</p></li>
+<li><p>Audience: Developers</p></li>
+<li><p>Last-Updated: 2026-03-12</p></li>
+<li><p>Related:</p>
+<ul>
+<li><p>配置字段字典：/docs/source/api/config.rst</p></li>
+<li><p>校验规则补充：/docs/reference/validation.md</p></li>
+<li><p>上游软件与职责：/docs/reference/upstream-software.md</p></li>
+</ul>
+</li>
+</ul>
+<ul class="simple">
+<li><p><strong>版本</strong>: 0.6.5</p></li>
+<li><p><strong>生成日期</strong>: 2026-03-12</p></li>
+<li><p><strong>作者</strong>: Quantum Misaka with Trae SOLO</p></li>
+</ul>
+<hr class="docutils" />
+<section id="overview">
+<h2>1. 项目概述 (Overview)<a class="headerlink" href="#overview" title="Link to this heading">#</a></h2>
+<section id="id1">
+<h3>1.1 项目简介<a class="headerlink" href="#id1" title="Link to this heading">#</a></h3>
+<p>DP-EVA (Deep Potential EVolution Accelerator, 深度势能演化加速器) 是一个面向 DPA 通用机器学习原子间势（Universal Machine Learning Interatomic Potential） 高效微调的自动化主动学习框架。该项目旨在通过智能化的数据筛选策略（合适不确定度 + 高结构代表性），从海量无标签数据中识别出最具价值的样本（”EVA适格者“），从而以最小的数据标注成本实现模型性能的最大化提升。</p>
+</section>
+<section id="the-zen-of-dp-eva">
+<h3>1.2 核心哲学 (The Zen of DP-EVA)<a class="headerlink" href="#the-zen-of-dp-eva" title="Link to this heading">#</a></h3>
+<p>本项目遵循 Python 工程化最佳实践及 <strong>Zen of Python</strong> 哲学进行重构与维护：</p>
+<section id="id2">
+<h4>1.2.1 核心原则<a class="headerlink" href="#id2" title="Link to this heading">#</a></h4>
+<ul class="simple">
+<li><p><strong>明确与简洁 (Explicit &amp; Simple)</strong>：优先选择清晰直观的实现，拒绝隐晦的技巧与魔法（如环境变量隐式控制）。</p></li>
+<li><p><strong>可读性至上 (Readability Counts)</strong>：代码首先是写给人看的。命名、缩进、结构需一目了然。</p></li>
+<li><p><strong>实用与优雅 (Practicality Beats Purity)</strong>：在理想设计与现实需求冲突时，选择实用方案；优雅是指恰到好处的平衡。</p></li>
+<li><p><strong>一种最好 (There Should Be One Obvious Way to Do It)</strong>：面对问题应有唯一明显的解决方案，避免提供多个功能重叠的接口。</p></li>
+<li><p><strong>宽容但不纵容 (Errors Should Never Pass Silently)</strong>：错误必须被显式捕获和处理。允许失败但必须给出清晰的异常信息。严禁使用裸 <code class="docutils literal notranslate"><span class="pre">except:</span></code> 吞掉异常，也不要在关键失败路径上仅记录日志而静默返回（Silent Return）。</p></li>
+</ul>
+</section>
+<section id="id3">
+<h4>1.2.2 架构实践<a class="headerlink" href="#id3" title="Link to this heading">#</a></h4>
+<ul class="simple">
+<li><p><strong>模块解耦 (Modular Design)</strong>：将复杂的科研脚本拆解为职责单一的原子模块 (Training, Inference, Uncertainty, Sampling)。</p></li>
+<li><p><strong>领域驱动设计 (Domain-Driven Design)</strong>：v2.8.0+ 引入了领域驱动架构，将核心工作流拆分为 IO、Config、Execution 等独立服务层，大幅降低耦合度。</p></li>
+<li><p><strong>数据标准化 (Data Standardization)</strong>：引入标准化的 <code class="docutils literal notranslate"><span class="pre">PredictionData</span></code> 接口，替代不透明的遗留对象。</p></li>
+<li><p><strong>双模调度 (Dual-Mode Scheduling)</strong>：底层统一封装 <code class="docutils literal notranslate"><span class="pre">JobManager</span></code>，无缝支持 Local (Multiprocessing) 和 Slurm 集群环境。</p></li>
+<li><p><strong>日志规范 (Logging Discipline)</strong>：库代码不干预全局日志配置，确保日志输出清晰、无冗余且易于追踪。</p></li>
+<li><p><strong>职责边界 (Boundary of Responsibility)</strong>：上层业务逻辑（如 Joint Sampling 的数据切分）应收敛于 Manager/Service 层，严禁侵入式修改底层通用算法模块（如 <code class="docutils literal notranslate"><span class="pre">DIRECTSampler</span></code>）。保持底层模块的纯洁性与通用性（Ref: v0.4.2 n_candidates fix）。</p></li>
+</ul>
+</section>
+</section>
+<section id="roadmap">
+<h3>1.3 优化方向与路线图 (Roadmap)<a class="headerlink" href="#roadmap" title="Link to this heading">#</a></h3>
+<p>基于 Code Review 的建议，项目后续将重点关注以下方向：</p>
+<ol class="arabic simple">
+<li><p><strong>全链路 DDD 重构</strong>：目前 Training, Collection, Inference 模块已完成 DDD 改造，后续需将 Feature 模块迁移至相同架构 (IO/Config/Execution Managers)。</p></li>
+<li><p><strong>统一配置管理</strong>：进一步强化 Pydantic 在所有配置类中的应用，消除字典传递，确保类型安全。</p></li>
+<li><p><strong>测试覆盖率</strong>：提升集成测试的覆盖范围，特别是针对 Slurm 提交和异常处理的边界测试。</p></li>
+<li><p><strong>遗留代码清理</strong>：逐步移除标记为 Deprecated 的单体类 (<code class="docutils literal notranslate"><span class="pre">ParallelTrainer</span></code> 等)，保持代码库轻量化。</p></li>
+</ol>
+</section>
+<section id="development-process-standard">
+<h3>1.4 开发流程标准 (Development Process Standard)<a class="headerlink" href="#development-process-standard" title="Link to this heading">#</a></h3>
+<p>为确保代码质量与知识沉淀，所有开发活动必须严格遵循以下标准流程：</p>
+<ol class="arabic simple">
+<li><p><strong>计划 (Plan)</strong>:</p>
+<ul class="simple">
+<li><p>在开始编码前，必须基于现状进行需求分析与技术方案设计。</p></li>
+<li><p>对于重大重构或新功能，需编写简要的 RFC (Request for Comments) 或 Design Doc。</p></li>
+</ul>
+</li>
+<li><p><strong>执行 (Execute)</strong>:</p>
+<ul class="simple">
+<li><p>代码编写应遵循 <strong>Zen of Python</strong> 原则。</p></li>
+<li><p>优先使用领域驱动设计 (DDD) 模式，避免创建上帝类。</p></li>
+<li><p>保持提交粒度适中，Commit Message 清晰。</p></li>
+</ul>
+</li>
+<li><p><strong>验证 (Verify)</strong>:</p>
+<ul class="simple">
+<li><p><strong>必须</strong> 编写或更新单元测试，确保覆盖核心逻辑。</p></li>
+<li><p>在提交前运行所有相关测试，确保无回归 (Regression)。</p></li>
+</ul>
+</li>
+<li><p><strong>文档化 (Document)</strong>:</p>
+<ul class="simple">
+<li><p><strong>强制要求</strong>: 开发完成后，必须同步更新本文档 (<code class="docutils literal notranslate"><span class="pre">developer-guide.md</span></code>) 的相关章节（如架构图、接口变更）。</p></li>
+<li><p><strong>技术细节</strong>: 将详细的实现细节、配置参数字典、算法推导等内容沉淀至 <code class="docutils literal notranslate"><span class="pre">docs/reference/</span></code> 或 <code class="docutils literal notranslate"><span class="pre">docs/guides/</span></code> 下的专项文档中。</p></li>
+<li><p><strong>废弃清理</strong>: 及时标记并清理过时的文档与代码。</p></li>
+<li><p><strong>治理入口</strong>: 首次参与贡献请先阅读 <code class="docutils literal notranslate"><span class="pre">docs/guides/docs-governance-quickstart.md</span></code>。</p></li>
+<li><p><strong>提交前检查</strong>: 执行 <code class="docutils literal notranslate"><span class="pre">python3</span> <span class="pre">scripts/doc_check.py</span></code>、<code class="docutils literal notranslate"><span class="pre">python3</span> <span class="pre">scripts/check_docs_freshness.py</span> <span class="pre">--days</span> <span class="pre">90</span></code>、<code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">-C</span> <span class="pre">docs</span> <span class="pre">html</span> <span class="pre">SPHINXOPTS=&quot;-W</span> <span class="pre">--keep-going&quot;</span></code>。</p></li>
+</ul>
+</li>
+</ol>
+</section>
+</section>
+<hr class="docutils" />
+<section id="architecture">
+<h2>2. 系统架构 (Architecture)<a class="headerlink" href="#architecture" title="Link to this heading">#</a></h2>
+<section id="id4">
+<h3>2.1 目录结构<a class="headerlink" href="#id4" title="Link to this heading">#</a></h3>
+<p>项目代码组织在 <code class="docutils literal notranslate"><span class="pre">src/dpeva</span></code> 包下，结构清晰：</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>dpeva/
+├── examples/recipes/       # [API范例] Python 调用示例 (Recipes)
+│   ├── training/           # 训练脚本范例
+│   ├── inference/          # 推理脚本范例
+│   ├── collection/         # 采集脚本范例
+│   └── ...
+├── scripts/                # [项目维护] 自动化与 CI/CD 脚本 (CI/CD, Release, Audit)
+│   ├── gate.sh             # 质量门禁入口
+│   ├── audit.py            # 代码静态分析工具
+│   ├── check_docs.py       # 文档一致性检查
+│   └── release_helper.py   # 版本发布助手
+├── tools/                  # [业务工具] DeepMD 数据处理与校验实用程序
+│   ├── count_deepmd_system_frames.py
+│   ├── verify_desc_consistency.py
+│   └── ...
+├── src/dpeva/
+│   ├── cli.py              # [用户接口] 统一命令行入口 (dpeva)
+│   ├── workflows/          # [核心] 业务流程编排层
+│   │   ├── train.py        # 训练工作流 (TrainingWorkflow)
+│   │   ├── infer.py        # 推理与分析工作流 (InferenceWorkflow)
+│   │   ├── collect.py      # 数据采集工作流 (CollectionWorkflow) - 现已重构为编排器
+│   │   └── feature.py      # 特征生成工作流 (FeatureWorkflow)
+│   ├── services/           # [服务层] (概念上) 领域逻辑服务
+│   │   ├── io.collection   # 数据IO服务 (CollectionIOManager)
+│   │   ├── uncertain.manager # UQ编排服务 (UQManager)
+│   │   └── sampling.manager  # 采样编排服务 (SamplingManager)
+│   ├── training/           # 训练模块 (ParallelTrainer)
+│   ├── inference/          # 推理模块 (StatsCalculator, Visualizer)
+│   ├── uncertain/          # 不确定度模块 (UQCalculator, UQFilter, Visualizer)
+│   ├── sampling/           # 采样模块 (DIRECT, PCA, Clustering)
+│   ├── feature/            # 特征生成模块 (DescriptorGenerator)
+│   ├── submission/         # 任务提交抽象层 (JobManager, JobConfig, Templates)
+│   ├── io/                 # 数据读写辅助 (DPTestResultParser, PredictionData, types)
+│   └── utils/              # 通用工具
+└── test/                   # [开发专用] 单元测试与回归测试脚本
+</pre></div>
+</div>
+</section>
+<section id="data-flow">
+<h3>2.2 数据流图 (Data Flow)<a class="headerlink" href="#data-flow" title="Link to this heading">#</a></h3>
+<pre  class="mermaid">
+        graph TD
+    %% Initial State
+    InitTrain[Existing Training Set]
+    TargetPool[Target Data Pool]
+    BaseModel[Base Model]
+
+    %% Parallel: Training &amp; Inference &amp; Feature
+    subgraph Parallel_Execution
+        direction TB
+        BaseModel --&gt;|Fine-tune| Ensemble[Ensemble Models]
+        InitTrain --&gt;|Fine-tune| Ensemble
+        
+        Ensemble --&gt;|Inference| Preds[Target Pool Predictions]
+        TargetPool --&gt;|Inference| Preds
+        
+        TargetPool --&gt;|Calc Feature| TargetFeat[Target Features]
+        InitTrain --&gt;|Calc Feature (Joint Only)| TrainFeat[Training Features]
+    end
+
+    %% Collection
+    subgraph Collection_Workflow
+        Preds --&gt;|Uncertainty| UQ[UQ Metrics]
+        UQ --&gt;|Filter| Candidates[Candidate Structures]
+        TargetFeat --&gt;|Descriptor| Candidates
+        TrainFeat --&gt;|Descriptor| Candidates
+        
+        Candidates --&gt;|Sampling (DIRECT)| Sampled[Sampled Samples]
+        Candidates --&gt;|Remaining| OtherPool[Other Data Pool]
+    end
+    
+    %% Labeling
+    subgraph Labeling_Workflow
+        Sampled --&gt;|FP Calc| Labeled[New Labeled Data]
+    end
+
+    %% Data Integration (New Feature)
+    subgraph Data_Integration
+        Labeled --&gt;|Merge| NewTrain[Next Gen Training Set]
+        InitTrain --&gt;|Merge| NewTrain
+    end
+    
+    %% Analysis (Standalone)
+    subgraph Analysis_Module
+        NewTrain -.-&gt;|Stats &amp; Viz| Report[Dataset Report]
+        Preds -.-&gt;|Stats &amp; Viz| ModelReport[Model Performance Report]
+    end
+
+    NewTrain --&gt;|Next Cycle| BaseModel
+
+    %% Optional if no another TargetPool
+    OtherPool --&gt;|Next Cycle| TargetPool
+    </pre></section>
+</section>
+<hr class="docutils" />
+<section id="modules">
+<h2>3. 核心模块详解 (Modules)<a class="headerlink" href="#modules" title="Link to this heading">#</a></h2>
+<section id="training-dpeva-training">
+<h3>3.1 Training 模块 (<code class="docutils literal notranslate"><span class="pre">dpeva.training</span></code>)<a class="headerlink" href="#training-dpeva-training" title="Link to this heading">#</a></h3>
+<p>负责管理 DeepMD 模型的并行训练任务。</p>
+<ul class="simple">
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">TrainingWorkflow</span></code></strong>: 核心编排类 (Orchestrator)。基于 DDD 模式重构，协调以下 Manager 完成任务：</p>
+<ul>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">TrainingIOManager</span></code></strong>: 负责工作空间管理与文件操作。</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">TrainingConfigManager</span></code></strong>: 负责配置解析与随机种子管理。</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">TrainingExecutionManager</span></code></strong>: 负责命令构建与作业提交。</p></li>
+</ul>
+</li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">ParallelTrainer</span></code></strong>: (已过时/Deprecated) 遗留类，保留以维持向后兼容性。</p></li>
+<li><p><strong>特性</strong>:</p>
+<ul>
+<li><p>自动工作目录隔离 (<code class="docutils literal notranslate"><span class="pre">0/</span></code>, <code class="docutils literal notranslate"><span class="pre">1/</span></code>, <code class="docutils literal notranslate"><span class="pre">2/</span></code>, <code class="docutils literal notranslate"><span class="pre">3/</span></code>)。</p></li>
+<li><p>支持 <code class="docutils literal notranslate"><span class="pre">OMP_NUM_THREADS</span></code> 自动配置。</p></li>
+<li><p>内置随机种子循环机制，确保多模型多样性。</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="inference-dpeva-inference">
+<h3>3.2 Inference 模块 (<code class="docutils literal notranslate"><span class="pre">dpeva.inference</span></code>)<a class="headerlink" href="#inference-dpeva-inference" title="Link to this heading">#</a></h3>
+<p>负责模型批量推理及后续的误差分析。</p>
+<ul class="simple">
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">InferenceWorkflow</span></code></strong>:</p>
+<ul>
+<li><p>自动扫描模型目录并提交 <code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">test</span></code> 任务。</p></li>
+<li><p><strong>高级分析</strong>: 内置 <code class="docutils literal notranslate"><span class="pre">StatsCalculator</span></code>，自动计算 RMSE/MAE。</p></li>
+<li><p><strong>相对能量分析</strong>: 支持通过最小二乘法 (Least Squares) 拟合原子能量，计算 Cohesive Energy，从而在不同组分体系间进行公平比较。</p></li>
+<li><p><strong>可视化</strong>: 自动生成 Parity Plot (能量/力) 和误差分布图。</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="uncertainty-sampling-dpeva-uncertain-dpeva-sampling">
+<h3>3.3 Uncertainty &amp; Sampling 模块 (<code class="docutils literal notranslate"><span class="pre">dpeva.uncertain</span></code>, <code class="docutils literal notranslate"><span class="pre">dpeva.sampling</span></code>)<a class="headerlink" href="#uncertainty-sampling-dpeva-uncertain-dpeva-sampling" title="Link to this heading">#</a></h3>
+<p>这是主动学习的大脑，负责从海量数据中“淘金”。</p>
+<ul class="simple">
+<li><p><strong>数据标准化 (<code class="docutils literal notranslate"><span class="pre">io.types.PredictionData</span></code>)</strong>:</p>
+<ul>
+<li><p>取代了旧版的 <code class="docutils literal notranslate"><span class="pre">DPTestResults</span></code> 遗留类。</p></li>
+<li><p>统一使用 <code class="docutils literal notranslate"><span class="pre">PredictionData</span></code> (Dataclass) 作为数据容器，包含 <code class="docutils literal notranslate"><span class="pre">energy</span></code>, <code class="docutils literal notranslate"><span class="pre">force</span></code>, <code class="docutils literal notranslate"><span class="pre">virial</span></code> 等标准字段。</p></li>
+</ul>
+</li>
+<li><p><strong>UQ 计算 (<code class="docutils literal notranslate"><span class="pre">UQCalculator</span></code>)</strong>:</p>
+<ul>
+<li><p><strong>QbC (Query by Committee)</strong>: 计算多模型预测方差。公式：$\sigma_{QbC} = \sqrt{\sum_{i=x,y,z} Var(F_i)}$。</p></li>
+<li><p><strong>RND (Random Network Distillation)</strong>: 计算当前模型与参考模型的偏差。公式：$\sigma_{RND} = \sqrt{\sum_{i=x,y,z} Mean((F_i^{pred} - F_i^{base})^2)}$。</p></li>
+<li><p><strong>数值稳定性 (Robustness)</strong>: 实现了 <strong>&quot;Clamp-and-Clean&quot;</strong> 策略：</p>
+<ul>
+<li><p><strong>Clamp</strong>: 强制方差计算结果非负 (<code class="docutils literal notranslate"><span class="pre">np.maximum(var,</span> <span class="pre">0.0)</span></code>)，消除浮点误差导致的 RuntimeWarning。</p></li>
+<li><p><strong>Clean</strong>: 自动检测 <code class="docutils literal notranslate"><span class="pre">NaN</span></code> 输出并将其替换为 <code class="docutils literal notranslate"><span class="pre">Infinity</span></code>（最大不确定度），确保异常模型预测会被标记为 <code class="docutils literal notranslate"><span class="pre">Failed</span></code> 而非被忽略。</p></li>
+<li><p><strong>Robust Scaling</strong>: 手动实现了抗 Inf 的 Robust Scaling 算法，仅基于有限值计算统计量，保留 <code class="docutils literal notranslate"><span class="pre">Inf</span></code> 的极端属性。</p></li>
+</ul>
+</li>
+<li><p><strong>自动阈值 (Auto-Threshold)</strong>: 基于 KDE (核密度估计) 自动识别不确定度分布峰值，自适应确定 <code class="docutils literal notranslate"><span class="pre">trust_lo</span></code>。</p></li>
+</ul>
+</li>
+<li><p><strong>筛选策略 (<code class="docutils literal notranslate"><span class="pre">UQFilter</span></code>)</strong>: 支持 <code class="docutils literal notranslate"><span class="pre">strict</span></code>, <code class="docutils literal notranslate"><span class="pre">tangent</span></code>, <code class="docutils literal notranslate"><span class="pre">circle</span></code> 等多种 2D 边界筛选算法。</p></li>
+<li><p><strong>DIRECT 采样 (<code class="docutils literal notranslate"><span class="pre">DIRECTSampler</span></code>)</strong>:</p>
+<ul>
+<li><p><strong>联合采样 (Joint Sampling)</strong>: 支持同时加载训练集和候选集，在联合特征空间中进行覆盖度最大化采样，避免新样本与旧样本重复。</p></li>
+<li><p><strong>基于聚类</strong>: 使用 BIRCH 聚类算法在 PCA 降维后的空间中寻找最具代表性的样本点。</p></li>
+<li><p><strong>归一化策略</strong>: 对结构描述符（原子描述符均值）进行 <strong>L2 归一化</strong>，随后进行 Z-score 标准化。</p></li>
+</ul>
+</li>
+<li><p><strong>2-DIRECT 采样 (<code class="docutils literal notranslate"><span class="pre">TwoStepDIRECTSampler</span></code>)</strong>:</p>
+<ul>
+<li><p><strong>两步策略</strong>: 先基于结构描述符进行粗粒度聚类 (Step 1)，再对每个结构簇内的原子环境进行细粒度聚类 (Step 2)。</p></li>
+<li><p><strong>原子级筛选</strong>: 在 Step 2 中支持基于原子数量 (<code class="docutils literal notranslate"><span class="pre">smallest</span></code>) 等策略选择最具代表性的结构，有效降低标注成本。</p></li>
+<li><p><strong>归一化策略 (Normalization)</strong>:</p>
+<ul>
+<li><p><strong>Step 1 (Structure)</strong>: 采用 L2 归一化 + Z-score 标准化。结构描述符通过对原子描述符取平均并进行 L2 归一化生成，保留了反映原子环境一致性的模长特征。</p></li>
+<li><p><strong>Step 2 (Atomic)</strong>: 仅采用 Z-score 标准化，<strong>不进行 L2 归一化</strong>。实测表明，保留原子描述符的原始模长（蕴含局部环境复杂度信息）能显著提升聚类效果和最终模型性能。</p></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="feature-dpeva-feature">
+<h3>3.4 Feature 模块 (<code class="docutils literal notranslate"><span class="pre">dpeva.feature</span></code>)<a class="headerlink" href="#feature-dpeva-feature" title="Link to this heading">#</a></h3>
+<p>负责生成原子结构的描述符。</p>
+<ul class="simple">
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">DescriptorGenerator</span></code></strong>:</p>
+<ul>
+<li><p><strong>CLI 模式</strong>: 调用 <code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">eval-desc</span></code> 命令，支持 Slurm 提交。</p></li>
+<li><p><strong>Python 模式</strong>: 直接调用 <code class="docutils literal notranslate"><span class="pre">deepmd.infer</span></code> API，适合小规模或调试使用。</p></li>
+<li><p><strong>数据一致性</strong>: 统一使用 <code class="docutils literal notranslate"><span class="pre">dpeva.io.dataset.load_systems</span></code> 加载数据，确保在 <code class="docutils literal notranslate"><span class="pre">mixed</span></code> 格式下与 CLI 模式行为一致。</p></li>
+<li><p><strong>单数据池兼容</strong>: 智能识别 <code class="docutils literal notranslate"><span class="pre">desc_dir/System.npy</span></code> 格式的描述符文件，兼容单数据池模式下的平铺结构。</p></li>
+<li><p><strong>多数据池支持</strong>: 递归支持 <code class="docutils literal notranslate"><span class="pre">Dataset/System</span></code> 3层结构，通过增强的路径解析逻辑确保描述符与数据一一对应。</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="submission-dpeva-submission">
+<h3>3.5 Submission 模块 (<code class="docutils literal notranslate"><span class="pre">dpeva.submission</span></code>)<a class="headerlink" href="#submission-dpeva-submission" title="Link to this heading">#</a></h3>
+<p>统一的任务提交抽象层。</p>
+<ul class="simple">
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">JobManager</span></code></strong>: 屏蔽 Local/Slurm 差异。</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">JobConfig</span></code></strong>: 强类型的作业配置类，支持 Partition, QoS, GPUs 等 Slurm 高级参数。</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">TemplateEngine</span></code></strong>: 基于模板生成作业脚本，易于扩展和定制。</p></li>
+</ul>
+</section>
+<section id="slurm-backend-slurm-architecture">
+<h3>3.6 Slurm Backend 设计 (Slurm Architecture)<a class="headerlink" href="#slurm-backend-slurm-architecture" title="Link to this heading">#</a></h3>
+<p>DP-EVA 专为高性能计算 (HPC) 环境设计，其 Slurm 后端支持以下关键特性：</p>
+<ul class="simple">
+<li><p><strong>双模调度 (Dual-Mode)</strong>: 通过 <code class="docutils literal notranslate"><span class="pre">JobManager</span></code> 统一封装，代码逻辑无缝切换 Local/Slurm 模式。</p></li>
+<li><p><strong>并行投作业 (Parallel Submission)</strong>:</p>
+<ul>
+<li><p><strong>Training</strong>: 训练阶段，每个模型（如 4 个 Ensemble 模型）会被分配独立的 Slurm 作业 (<code class="docutils literal notranslate"><span class="pre">train.slurm</span></code>)，从而在集群中并行训练，极大缩短总耗时。</p></li>
+<li><p><strong>Inference</strong>: 推理阶段 (v0.4.5+)，每个模型的测试任务 (<code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">test</span></code>) 同样被封装为独立的 Slurm 作业 (<code class="docutils literal notranslate"><span class="pre">run_test.slurm</span></code>)，实现多模型并行推理。</p></li>
+</ul>
+</li>
+<li><p><strong>一任务一作业 (One-Task-One-Job)</strong>: 摒弃了将所有任务打包进单一作业的串行模式，确保每个子任务都能独占申请到的计算资源（如 GPU），避免资源争抢和效率瓶颈。</p></li>
+<li><p><strong>状态监控</strong>: 所有 Slurm 作业在完成后会输出 <code class="docutils literal notranslate"><span class="pre">DPEVA_TAG:</span> <span class="pre">WORKFLOW_FINISHED</span></code> 标记，便于自动化工具监控任务状态。</p></li>
+</ul>
+</section>
+</section>
+<hr class="docutils" />
+<section id="interface-guide">
+<h2>4. 接口使用指南 (Interface Guide)<a class="headerlink" href="#interface-guide" title="Link to this heading">#</a></h2>
+<p>本项目提供两种使用方式：<strong>统一命令行 (CLI)</strong>（推荐）和 <strong>Python API</strong>（高级定制）。</p>
+<section id="cli">
+<h3>4.1 统一命令行 (CLI)<a class="headerlink" href="#cli" title="Link to this heading">#</a></h3>
+<p>自 v2.6.0 起，项目引入统一的 <code class="docutils literal notranslate"><span class="pre">dpeva</span></code> 命令，支持子命令模式。</p>
+<p><strong>安装</strong>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.
+<span class="c1"># 验证安装</span>
+dpeva<span class="w"> </span>--help
+</pre></div>
+</div>
+<p><strong>通用用法</strong>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>dpeva<span class="w"> </span>&lt;subcommand&gt;<span class="w"> </span>&lt;config_path&gt;
+</pre></div>
+</div>
+<section id="train">
+<h4>4.1.1 训练 (Train)<a class="headerlink" href="#train" title="Link to this heading">#</a></h4>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>dpeva<span class="w"> </span>train<span class="w"> </span>config_train.json
+</pre></div>
+</div>
+</section>
+<section id="infer">
+<h4>4.1.2 推理与分析 (Infer)<a class="headerlink" href="#infer" title="Link to this heading">#</a></h4>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>dpeva<span class="w"> </span>infer<span class="w"> </span>config_test.json
+</pre></div>
+</div>
+</section>
+<section id="collect">
+<h4>4.1.3 数据采集 (Collect)<a class="headerlink" href="#collect" title="Link to this heading">#</a></h4>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>dpeva<span class="w"> </span>collect<span class="w"> </span>config_collect.json
+</pre></div>
+</div>
+</section>
+<section id="feature">
+<h4>4.1.4 特征生成 (Feature)<a class="headerlink" href="#feature" title="Link to this heading">#</a></h4>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>dpeva<span class="w"> </span>feature<span class="w"> </span>config_feature.json
+</pre></div>
+</div>
+</section>
+<section id="analysis">
+<h4>4.1.5 分析 (Analysis)<a class="headerlink" href="#analysis" title="Link to this heading">#</a></h4>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>dpeva<span class="w"> </span>analysis<span class="w"> </span>config_analysis.json
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">analysis</span></code> 支持两种模式：</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">model_test</span></code>：读取 <code class="docutils literal notranslate"><span class="pre">result_dir</span></code> 分析推理结果（默认）。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">dataset</span></code>：读取 <code class="docutils literal notranslate"><span class="pre">dataset_dir</span></code> 直接统计数据集并输出分布图与统计表。</p></li>
+</ul>
+</section>
+<section id="label-integration">
+<h4>4.1.6 标注后自动整合 (Label Integration)<a class="headerlink" href="#label-integration" title="Link to this heading">#</a></h4>
+<p>在 <code class="docutils literal notranslate"><span class="pre">label</span></code> 配置中启用 <code class="docutils literal notranslate"><span class="pre">integration_enabled=true</span></code> 后，工作流会在 <code class="docutils literal notranslate"><span class="pre">collect_and_export</span></code> 结束后自动执行数据整合：</p>
+<ul class="simple">
+<li><p>输入：<code class="docutils literal notranslate"><span class="pre">outputs/cleaned</span></code> + 可选 <code class="docutils literal notranslate"><span class="pre">existing_training_data_path</span></code></p></li>
+<li><p>输出：<code class="docutils literal notranslate"><span class="pre">merged_training_data_path</span></code>（未指定时默认 <code class="docutils literal notranslate"><span class="pre">outputs/merged_training_data</span></code>）</p></li>
+<li><p>统计：输出 <code class="docutils literal notranslate"><span class="pre">integration_summary.json</span></code></p></li>
+</ul>
+</section>
+</section>
+<section id="python-api-recipes">
+<h3>4.2 Python API (Recipes)<a class="headerlink" href="#python-api-recipes" title="Link to this heading">#</a></h3>
+<p>对于需要动态生成配置或集成到复杂 Python 流程中的场景，可以直接调用 <code class="docutils literal notranslate"><span class="pre">dpeva.workflows</span></code> 中的 Workflow 类。
+示例脚本位于 <code class="docutils literal notranslate"><span class="pre">examples/recipes/</span></code> 目录下。</p>
+<p><strong>示例 (Training)</strong>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">dpeva.workflows.train</span><span class="w"> </span><span class="kn">import</span> <span class="n">TrainingWorkflow</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dpeva.utils.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">resolve_config_paths</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+
+<span class="c1"># 1. 加载配置</span>
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;config.json&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+    <span class="n">config</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+<span class="n">config</span> <span class="o">=</span> <span class="n">resolve_config_paths</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="s2">&quot;config.json&quot;</span><span class="p">)</span>
+
+<span class="c1"># 2. 初始化并运行</span>
+<span class="n">workflow</span> <span class="o">=</span> <span class="n">TrainingWorkflow</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+<span class="n">workflow</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="id5">
+<h3>4.3 配置参数说明<a class="headerlink" href="#id5" title="Link to this heading">#</a></h3>
+<p>详细的输入参数定义、类型约束及验证规则，请参阅 API 文档：</p>
+<ul class="simple">
+<li><p><strong>参数列表</strong>: <a class="reference external" href="https://github.com/QuantumMisaka/dpeva/blob/main/docs/source/api/config.rst">config.rst</a></p></li>
+<li><p><strong>验证规则</strong>: <a class="reference external" href="https://github.com/QuantumMisaka/dpeva/blob/main/docs/reference/validation.md">validation.md</a></p></li>
+</ul>
+<p>以下仅展示标准 JSON 配置文件的基本结构概览。</p>
+<section id="train-config">
+<h4>4.3.1 训练配置 (Train Config)<a class="headerlink" href="#train-config" title="Link to this heading">#</a></h4>
+<p><strong>参考文件</strong>: <code class="docutils literal notranslate"><span class="pre">examples/recipes/training/config_train.json</span></code></p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;project&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;./training_task&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;base_model_path&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;frozen_model.pb&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;num_models&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">4</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;training_mode&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;cont&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;model_head&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ferro&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;input_json_path&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;input.json&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;training_data_path&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;data&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;submission&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">&quot;backend&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;local&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;omp_threads&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">4</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="id6">
+<h4>4.3.2 其他配置<a class="headerlink" href="#id6" title="Link to this heading">#</a></h4>
+<p>请参考 <code class="docutils literal notranslate"><span class="pre">examples/recipes/</span></code> 目录下的示例文件以及上述 API 文档。</p>
+</section>
+</section>
+<hr class="docutils" />
+<section id="uq">
+<h3>4.4 UQ 与采样配置要点<a class="headerlink" href="#uq" title="Link to this heading">#</a></h3>
+<p>本节补充 UQ 与采样相关的关键配置语义；完整字段列表与约束以 <code class="docutils literal notranslate"><span class="pre">/docs/reference/*</span></code> 为准。</p>
+<section id="uq-trust-mode">
+<h4>4.4.1 <code class="docutils literal notranslate"><span class="pre">uq_trust_mode</span></code> 配置说明<a class="headerlink" href="#uq-trust-mode" title="Link to this heading">#</a></h4>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">auto</span></code>：自动计算信任区边界（推荐默认）</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">manual</span></code>：手动指定信任区边界（需提供对应阈值参数）</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">no_filter</span></code>：不启用信任区筛选</p></li>
+</ul>
+<p>参考：</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">/docs/source/api/config.rst</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">/docs/reference/validation.md</span></code></p></li>
+</ul>
+</section>
+<section id="auto-uq-uq-auto-bounds">
+<h4>4.4.2 Auto-UQ 边界控制 (<code class="docutils literal notranslate"><span class="pre">uq_auto_bounds</span></code>)<a class="headerlink" href="#auto-uq-uq-auto-bounds" title="Link to this heading">#</a></h4>
+<p>Auto-UQ 用于根据数据分布自动确定筛选边界；具体的字段与约束以 Reference 文档为准，并在后续迭代中建议沉淀为独立章节以避免与算法实现脱节。</p>
+<p>参考：</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">/docs/source/api/config.rst</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">/docs/reference/validation.md</span></code></p></li>
+</ul>
+</section>
+<section id="sampling">
+<h4>4.4.3 采样参数说明 (Sampling)<a class="headerlink" href="#sampling" title="Link to this heading">#</a></h4>
+<p>采样相关参数（DIRECT/2-direct/joint 等）属于收集工作流的核心可调维度，建议：</p>
+<ul class="simple">
+<li><p>只在 <code class="docutils literal notranslate"><span class="pre">/docs/source/api/config.rst</span></code> 维护字段字典与默认值</p></li>
+<li><p>在指南中仅描述“如何选择参数组”的经验规则，并引用对应字段</p></li>
+</ul>
+<p>参考：</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">/docs/source/api/config.rst</span></code></p></li>
+</ul>
+</section>
+</section>
+</section>
+<section id="development">
+<h2>5. 开发与测试 (Development)<a class="headerlink" href="#development" title="Link to this heading">#</a></h2>
+<section id="id7">
+<h3>5.1 代码规范<a class="headerlink" href="#id7" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><strong>日志</strong>: 禁止在 <code class="docutils literal notranslate"><span class="pre">src/dpeva</span></code> 库文件中调用 <code class="docutils literal notranslate"><span class="pre">logging.basicConfig()</span></code>。仅在 <code class="docutils literal notranslate"><span class="pre">runner</span></code> 脚本中配置全局日志。</p></li>
+<li><p><strong>路径</strong>: 所有文件操作应使用绝对路径 (<code class="docutils literal notranslate"><span class="pre">os.path.abspath</span></code>)。</p></li>
+<li><p><strong>异常</strong>: 显式捕获并记录异常，避免静默失败。</p></li>
+<li><p><strong>数据接口</strong>: 使用 <code class="docutils literal notranslate"><span class="pre">dpeva.io.types.PredictionData</span></code> 传递预测结果，禁止传递裸字典。</p></li>
+<li><p><strong>变量命名</strong>: 统一输入数据路径变量名为 <code class="docutils literal notranslate"><span class="pre">data_path</span></code> (Feature/Inference Workflow)。</p></li>
+</ul>
+</section>
+<section id="id8">
+<h3>5.2 验证测试<a class="headerlink" href="#id8" title="Link to this heading">#</a></h3>
+<p>在开发阶段，你可以通过<code class="docutils literal notranslate"><span class="pre">conda</span> <span class="pre">activate</span> <span class="pre">dpeva-dev</span></code> 加载所需环境，并在项目目录下运行 <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">--upgrade</span> <span class="pre">.</span></code> 更新开发依赖，确保测试环境与开发环境保持一致。</p>
+<p>用户自行开展单元测试时，需要自行配置好 Python 环境，确保 <code class="docutils literal notranslate"><span class="pre">dpeva</span></code> 命令在环境内并处于最新状态，且 <code class="docutils literal notranslate"><span class="pre">pytest</span></code> 已安装。</p>
+<ul>
+<li><p><strong>运行单元测试 (Unit Tests)</strong>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># 基础运行</span>
+pytest<span class="w"> </span>tests/unit
+
+<span class="c1"># 带覆盖率报告的运行 (推荐)</span>
+pytest<span class="w"> </span>tests/unit<span class="w"> </span>--cov<span class="o">=</span>dpeva<span class="w"> </span>--cov-report<span class="o">=</span>term-missing
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><strong>规范</strong>:</p>
+<ul>
+<li><p><strong>Mock 外部依赖</strong>: 所有对 <code class="docutils literal notranslate"><span class="pre">dp</span></code>, <code class="docutils literal notranslate"><span class="pre">dpdata</span></code>, <code class="docutils literal notranslate"><span class="pre">slurm</span></code> 的调用必须被 Mock，严禁在单元测试中产生实际的文件 I/O 或进程提交。</p></li>
+<li><p><strong>日志验证</strong>: 涉及日志输出的逻辑，需验证 <code class="docutils literal notranslate"><span class="pre">setup_workflow_logger</span></code> 是否被正确调用。</p></li>
+<li><p><strong>异常覆盖</strong>: 必须覆盖所有 <code class="docutils literal notranslate"><span class="pre">try-except</span></code> 分支，确保异常被正确捕获和记录。</p></li>
+</ul>
+</li>
+<li><p><strong>覆盖范围</strong>: 核心算法 (UQCalculator, UQFilter, DIRECTSampler) 的逻辑验证。</p></li>
+<li><p><strong>测试策略</strong>:</p>
+<ul>
+<li><p><strong>Golden Value</strong>: 与 NumPy 手算结果比对，误差容忍度 &lt; 1e-5。</p></li>
+<li><p><strong>边界测试</strong>: 覆盖 NaN, Inf, 空数据, 单点数据等极端场景。</p></li>
+<li><p><strong>覆盖率要求</strong>: 核心模块行覆盖率需达到 100%。</p></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p><strong>运行兼容性测试 (Compatibility Test)</strong>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span><span class="nb">test</span>
+python<span class="w"> </span>run_compat_test.py
+</pre></div>
+</div>
+<p>此脚本会自动验证单数据池 (Single Pool) 和多数据池 (Multi Pool) 在普通模式与联合模式下的运行正确性。</p>
+<ul class="simple">
+<li><p><strong>描述符一致性</strong>: 已通过 <code class="docutils literal notranslate"><span class="pre">verify_desc_consistency.py</span></code> 验证 CLI 模式下 NPY/Mixed 格式生成结果的一致性 (Diff &lt; 1e-5)。</p></li>
+</ul>
+</li>
+<li><p><strong>运行 Auto-UQ 测试</strong>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>test/verification_test_run
+python<span class="w"> </span>run_auto_uq_test.py
+</pre></div>
+</div>
+<p>验证 KDE 阈值计算逻辑及可视化图表。</p>
+</li>
+</ul>
+</section>
+<section id="faq">
+<h3>5.3 常见问题 (FAQ)<a class="headerlink" href="#faq" title="Link to this heading">#</a></h3>
+<p><strong>Q: 单数据池模式下提示 &quot;Found descriptor via basename fallback&quot; 是什么意思？</strong>
+A: 旧版本会产生此 Warning，<strong>新版本 (v2.2.0)</strong> 已将其优化为 Info 级别的兼容性提示。这表示系统自动通过 <code class="docutils literal notranslate"><span class="pre">System.npy</span></code> 文件名匹配到了嵌套在 <code class="docutils literal notranslate"><span class="pre">Dataset/System</span></code> 路径下的结构数据，属于正常行为。</p>
+<p><strong>Q: 为什么联合采样导出的样本数少于 <code class="docutils literal notranslate"><span class="pre">direct_n_clusters</span></code>？</strong>
+A: 这是预期行为。在联合模式下，<code class="docutils literal notranslate"><span class="pre">direct_n_clusters</span></code> 定义的是特征空间的总覆盖目标。如果某些区域已经被现有训练集覆盖，DIRECT 算法就不会再重复采样，从而节省标注成本。</p>
+</section>
+<section id="workflow-monitoring">
+<h3>5.4 工作流监控标准 (Workflow Monitoring)<a class="headerlink" href="#workflow-monitoring" title="Link to this heading">#</a></h3>
+<p>为了支持自动化工作流编排（如使用 Airflow 或自定义 Scheduler），本项目统一了任务完成的日志标记。所有核心 Workflow 在成功执行完毕后，均会在标准输出或日志文件末尾打印以下 Tag：</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>DPEVA_TAG: WORKFLOW_FINISHED
+</pre></div>
+</div>
+<p><strong>监控建议</strong>:</p>
+<ul class="simple">
+<li><p>外部调度系统应通过 <code class="docutils literal notranslate"><span class="pre">grep</span></code> 或正则表达式持续监控任务的 Log 文件（如 <code class="docutils literal notranslate"><span class="pre">train.log</span></code>, <code class="docutils literal notranslate"><span class="pre">collection.log</span></code>, <code class="docutils literal notranslate"><span class="pre">eval_desc.log</span></code> 或 Slurm <code class="docutils literal notranslate"><span class="pre">.out</span></code> 文件）。</p></li>
+<li><p>一旦检测到该 Tag，即可判定当前步骤已从应用层逻辑上成功结束，可以安全触发后续任务。</p></li>
+</ul>
+</section>
+</section>
+<hr class="docutils" />
+<section id="revision-history">
+<h2>6. 版本修订记录 (Revision History)<a class="headerlink" href="#revision-history" title="Link to this heading">#</a></h2>
+<section id="maintenance-policy">
+<h3>6.1 维护策略 (Maintenance Policy)<a class="headerlink" href="#maintenance-policy" title="Link to this heading">#</a></h3>
+<p>为确保文档的可读性与追溯性，本项目的版本记录遵循以下原则：</p>
+<ol class="arabic simple">
+<li><p><strong>历史归档 (Historical Archive)</strong>：</p>
+<ul class="simple">
+<li><p>对于重大版本重置（如 v2.x -&gt; v0.4.x）之前的历史记录，不再保留详细条目，仅进行概要性总结。</p></li>
+</ul>
+</li>
+<li><p><strong>当前纪元 (Current Era)</strong>：</p>
+<ul class="simple">
+<li><p>当前主版本系列（v0.4.x）必须保持<strong>完整</strong>的记录链条。</p></li>
+<li><p><strong>追加式记录 (Append-only)</strong>：新版本记录应始终添加在列表顶部，严禁覆盖或修改旧版本的历史条目。</p></li>
+<li><p><strong>中间版本找回</strong>：若因误操作导致记录丢失，必须基于 git log 进行回溯与补全。</p></li>
+</ul>
+</li>
+</ol>
+</section>
+<section id="id9">
+<h3>6.2 版本历史<a class="headerlink" href="#id9" title="Link to this heading">#</a></h3>
+<section id="current-era-v0-6-x">
+<h4><strong>Current Era (v0.6.x)</strong><a class="headerlink" href="#current-era-v0-6-x" title="Link to this heading">#</a></h4>
+<ul class="simple">
+<li><p><strong>v0.6.5</strong> (2026-03-12):</p>
+<ul>
+<li><p><strong>[修复]</strong> 修复 Labeling integration 中 <code class="docutils literal notranslate"><span class="pre">atom_names</span></code> 顺序敏感误报，支持在元素集合一致时自动归一化顺序并完成合并。</p></li>
+<li><p><strong>[重构]</strong> 完成 Labeling workflow 三阶段解耦，提供 <code class="docutils literal notranslate"><span class="pre">run_prepare/run_execute/run_postprocess</span></code> 显式阶段入口并保留默认全流程编排。</p></li>
+<li><p><strong>[增强]</strong> <code class="docutils literal notranslate"><span class="pre">dpeva</span> <span class="pre">label</span></code> 新增 <code class="docutils literal notranslate"><span class="pre">--stage</span> <span class="pre">all|prepare|execute|postprocess</span></code> 阶段化执行能力，支持不重算 ABACUS 的后处理复用。</p></li>
+<li><p><strong>[稳定性]</strong> 增强 prepare 幂等性，执行前自动重置 <code class="docutils literal notranslate"><span class="pre">inputs</span></code> 工作区，消除重复执行时历史残留导致的任务打包冲突。</p></li>
+<li><p><strong>[可观测性]</strong> 三阶段日志独立落盘为 <code class="docutils literal notranslate"><span class="pre">labeling_prepare.log</span></code>、<code class="docutils literal notranslate"><span class="pre">labeling_execute.log</span></code>、<code class="docutils literal notranslate"><span class="pre">labeling_postprocess.log</span></code>，提升排障效率。</p></li>
+<li><p><strong>[测试]</strong> 新增并补强 integration、workflow、CLI、manager 相关单测，<code class="docutils literal notranslate"><span class="pre">pytest</span> <span class="pre">tests/unit</span></code> 全量通过。</p></li>
+<li><p><strong>[特性]</strong> 为 CLI 所有子命令实现配置文件的 Schema 前置校验，在工作流启动前即拦截无效参数。</p></li>
+<li><p><strong>[特性]</strong> Labeling 集成阶段新增 <code class="docutils literal notranslate"><span class="pre">output_format</span></code> 参数，支持自定义合并后的数据集格式（默认 <code class="docutils literal notranslate"><span class="pre">deepmd/npy</span></code>）。</p></li>
+<li><p><strong>[文档]</strong> 重构 <code class="docutils literal notranslate"><span class="pre">examples</span></code> 目录结构，移除冗余层级，并更新对应的 <code class="docutils literal notranslate"><span class="pre">README</span></code> 与用户指南。</p></li>
+<li><p><strong>[可视化]</strong> 更新品牌视觉资产（Logo），优化 PCA 绘图配色（#FFC000/#6A5ACD）及采样可视化逻辑。</p></li>
+<li><p><strong>[文档]</strong> 更新 README 展示新标识，新增可视化改进实施计划。</p></li>
+</ul>
+</li>
+<li><p><strong>v0.6.4</strong> (2026-03-11):</p>
+<ul>
+<li><p><strong>[修复]</strong> 完成 R01-R37 全量闭环，修复安全、稳定性、测试与文档一致性问题。</p></li>
+<li><p><strong>[重构]</strong> 拆分 Labeling/Collect/Analysis 工作流关键长函数，降低职责耦合并增强可测试性。</p></li>
+<li><p><strong>[测试]</strong> 新增并补强 strategy、visualization、analysis、collect 相关回归测试，保持 unit/integration 全绿。</p></li>
+<li><p><strong>[治理]</strong> 完成计划文档与评审报告归档至 <code class="docutils literal notranslate"><span class="pre">docs/archive/v0.6.4/</span></code>，同步更新活动索引与归档索引。</p></li>
+<li><p><strong>[发布]</strong> 版本号升级至 0.6.4，并同步 README 与 Sphinx 版本标识。</p></li>
+</ul>
+</li>
+<li><p><strong>v0.6.3</strong> (2026-03-10):</p>
+<ul>
+<li><p><strong>[文档]</strong> 重构归档目录结构并完善文档生命周期规范，确保历史文档有序归档。</p></li>
+<li><p><strong>[治理]</strong> 完善文档治理结构并新增快速上手指南，优化用户体验。</p></li>
+<li><p><strong>[修复]</strong> 修复文档链接策略并完成治理稳态化收尾，消除构建警告。</p></li>
+<li><p><strong>[特性]</strong> 文档支持 Mermaid 图表渲染，增强技术架构的可视化表达能力。</p></li>
+<li><p><strong>[构建]</strong> 更新文档构建依赖和配置，提升构建稳定性和效率。</p></li>
+<li><p><strong>[依赖]</strong> 将 <code class="docutils literal notranslate"><span class="pre">ase-abacus</span></code> 插件纳入核心依赖，并添加导入检查，优化 Labeling 模块的用户体验与稳定性。</p></li>
+<li><p><strong>[CI/CD]</strong> Warning修复，添加 <code class="docutils literal notranslate"><span class="pre">docs/source/_static</span></code> 目录下的 <code class="docutils literal notranslate"><span class="pre">.gitkeep</span></code> 文件，避免 Sphinx 构建警告。并在 <code class="docutils literal notranslate"><span class="pre">doc-lint.yml</span></code> 中添加对 <code class="docutils literal notranslate"><span class="pre">ase-abacus</span></code> 的安装。</p></li>
+</ul>
+</li>
+<li><p><strong>v0.6.2</strong> (2026-03-10):</p>
+<ul>
+<li><p><strong>[质量]</strong> 全面验证并修复了单元测试和集成测试，确保所有用例 100% 通过（167/167 Unit, 7/7 Integration）。</p></li>
+<li><p><strong>[文档]</strong> 对变量说明文档进行了全面审查与修复，补充了 <code class="docutils literal notranslate"><span class="pre">config.py</span></code> 中大量字段的 docstring，使其满足自动化文档生成的质量要求。</p></li>
+<li><p><strong>[CI/CD]</strong> 建立了严格的文档质量门禁 (<code class="docutils literal notranslate"><span class="pre">docs-check.yml</span></code>) 和结构检查流程 (<code class="docutils literal notranslate"><span class="pre">doc-lint.yml</span></code>)，确保文档零警告构建。</p></li>
+<li><p><strong>[治理]</strong> 更新了文档技能与维护规范，确立了 <code class="docutils literal notranslate"><span class="pre">config.py</span></code> 作为配置说明单一可信源 (SSOT) 的地位。</p></li>
+</ul>
+</li>
+<li><p><strong>v0.6.1</strong> (2026-03-09):</p>
+<ul>
+<li><p><strong>[部署]</strong> 新增 GitHub Actions 自动部署流程，支持将文档发布至 GitHub Pages，并实现多版本管理。</p></li>
+<li><p><strong>[配置]</strong> 修正 Sphinx 语言配置为中文 (<code class="docutils literal notranslate"><span class="pre">zh_CN</span></code>)，优化文档搜索体验。</p></li>
+<li><p><strong>[治理]</strong> 修复了文档系统中的绝对路径链接问题，消除了构建过程中的 Cross-reference 警告。</p></li>
+<li><p><strong>[文档]</strong> 新增 <code class="docutils literal notranslate"><span class="pre">docs/guides/deployment.md</span></code> 部署指南，详细说明了 CI/CD 架构与配置策略。</p></li>
+</ul>
+</li>
+<li><p><strong>v0.6.0</strong> (2026-03-09):</p>
+<ul>
+<li><p><strong>[治理]</strong> 全面实施文档系统治理 (Docs Governance)，重构了 <code class="docutils literal notranslate"><span class="pre">docs/</span></code> 目录结构，建立 Guides/Reference/Plans 分层体系。</p></li>
+<li><p><strong>[自动化]</strong> 引入 Sphinx 文档构建系统，支持从源码自动生成 API 文档，实现 &quot;Code as Source of Truth&quot;。</p></li>
+<li><p><strong>[规范]</strong> 废弃静态 <code class="docutils literal notranslate"><span class="pre">config_schema.md</span></code>，转为动态生成的 API Reference，消除文档脱节风险。</p></li>
+<li><p><strong>[质量]</strong> 引入 <code class="docutils literal notranslate"><span class="pre">check_docs_freshness.py</span></code> 并集成至 CI，强制监控文档时效性。</p></li>
+<li><p><strong>[重构]</strong> <code class="docutils literal notranslate"><span class="pre">AGENTS.md</span></code> 转为面向 Agent 的开发指南，<code class="docutils literal notranslate"><span class="pre">README.md</span></code> 瘦身聚焦项目概览。</p></li>
+</ul>
+</li>
+<li><p><strong>v0.5.3</strong> (2026-03-08):</p>
+<ul>
+<li><p><strong>[增强]</strong> Labeling Workflow 实现了智能的单/多数据池（Single/Multi-Pool）识别逻辑，自动适配 <code class="docutils literal notranslate"><span class="pre">inputs</span></code> 目录结构。</p></li>
+<li><p><strong>[特性]</strong> <code class="docutils literal notranslate"><span class="pre">task_meta.json</span></code> 新增 <code class="docutils literal notranslate"><span class="pre">system_name</span></code> 字段，实现了 <code class="docutils literal notranslate"><span class="pre">Dataset</span> <span class="pre">-&gt;</span> <span class="pre">System</span> <span class="pre">-&gt;</span> <span class="pre">Task</span></code> 的全链路数据追溯。</p></li>
+<li><p><strong>[统计]</strong> 实现了分层统计报告（Global -&gt; Dataset -&gt; Type），涵盖 Total, Converged, Failed 及 Cleaned 任务的详细计数。</p></li>
+<li><p><strong>[测试]</strong> 建立了 Labeling 模块的完整单元测试体系，覆盖核心算法与业务逻辑，通过率 100%。</p></li>
+<li><p><strong>[文档]</strong> 完成了 Labeling 模块的功能清单与任务追踪文档，并已归档至 <code class="docutils literal notranslate"><span class="pre">docs/archive/specs/v0.6.0/</span></code>。</p></li>
+</ul>
+</li>
+<li><p><strong>v0.5.2</strong> (2026-03-07):</p>
+<ul>
+<li><p><strong>[增强]</strong> Labeling Workflow 新增分层统计（Global/Dataset/Type）和元数据注入机制，确保任务在打包和移动后仍能追溯其数据来源和结构类型。</p></li>
+<li><p><strong>[修复]</strong> 解决了 Labeling 任务计数重复（Double Counting）问题，修复了 <code class="docutils literal notranslate"><span class="pre">dpdata.MultiSystems</span></code> 在结果收集时的初始化错误。</p></li>
+<li><p><strong>[优化]</strong> <code class="docutils literal notranslate"><span class="pre">AbacusGenerator</span></code> 实现了结构分析逻辑 (<code class="docutils literal notranslate"><span class="pre">StructureAnalyzer</span></code>) 的彻底解耦，提升了代码的可测试性和模块化程度。</p></li>
+<li><p><strong>[配置]</strong> 修复了 <code class="docutils literal notranslate"><span class="pre">output_dir</span></code> 配置被硬编码覆盖的缺陷，现在能正确尊重用户配置。</p></li>
+</ul>
+</li>
+<li><p><strong>v0.5.1</strong> (2026-03-05):</p>
+<ul>
+<li><p><strong>[增强]</strong> 在 <code class="docutils literal notranslate"><span class="pre">CollectionWorkflow</span></code> 中新增了 UQ 统计日志输出。现在 <code class="docutils literal notranslate"><span class="pre">UQManager</span></code> 会在不确定度分析阶段自动计算并打印 QbC、RND 及 Rescaled RND 的详细统计量（Count, Mean, Std, Percentiles），大幅提升了筛选过程的可观测性。</p></li>
+<li><p><strong>[文档]</strong> 全面补全了 Labeling 模块的文档，包括 CLI 指南、配置 Schema 及校验规则。</p></li>
+<li><p><strong>[修复]</strong> 修正了 <code class="docutils literal notranslate"><span class="pre">LabelingConfig</span></code> 中 <code class="docutils literal notranslate"><span class="pre">cleaning_thresholds</span></code> 字段的类型定义，允许使用 <code class="docutils literal notranslate"><span class="pre">null</span></code> 跳过特定物理量的检查，修复了 Pydantic v2 下的验证错误。</p></li>
+<li><p><strong>[治理]</strong> 清理并归档了过时的项目状态报告和设计规范，更新了文档治理矩阵。</p></li>
+</ul>
+</li>
+<li><p><strong>v0.5.0</strong> (2026-03-05):</p>
+<ul>
+<li><p><strong>[特性]</strong> 全新发布 Labeling 模块 (<code class="docutils literal notranslate"><span class="pre">src/dpeva/labeling</span></code>)，支持从 <code class="docutils literal notranslate"><span class="pre">dpdata</span></code> 结构数据到 DFT 输入文件的全自动生成、任务打包与提交。</p></li>
+<li><p><strong>[重构]</strong> 引入 <code class="docutils literal notranslate"><span class="pre">TaskPacker</span></code> 机制，支持将数万个微小 DFT 任务打包为少量 Slurm 作业，显著降低调度器压力。</p></li>
+<li><p><strong>[增强]</strong> 实现了智能的 <code class="docutils literal notranslate"><span class="pre">ResubmissionStrategy</span></code>，支持基于参数梯度（如 <code class="docutils literal notranslate"><span class="pre">mixing_beta</span></code> 衰减）的自动收敛修正。</p></li>
+<li><p><strong>[数据]</strong> 新增 <code class="docutils literal notranslate"><span class="pre">AbacusPostProcessor</span></code>，支持内聚能（Cohesive Energy）计算、自动参考能量拟合及多维度数据清洗。</p></li>
+<li><p><strong>[配置]</strong> 在 <code class="docutils literal notranslate"><span class="pre">config.json</span></code> 中显式暴露 <code class="docutils literal notranslate"><span class="pre">ref_energies</span></code> 和 <code class="docutils literal notranslate"><span class="pre">cleaning_thresholds</span></code>，遵循“显式优于隐式”原则。</p></li>
+<li><p><strong>[架构]</strong> 完成 Labeling 模块的 DDD 架构落地，通过 <code class="docutils literal notranslate"><span class="pre">LabelingManager</span></code> 和 <code class="docutils literal notranslate"><span class="pre">LabelingWorkflow</span></code> 实现全链路编排。</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="legacy-era-v0-4-x">
+<h4><strong>Legacy Era (v0.4.x)</strong><a class="headerlink" href="#legacy-era-v0-4-x" title="Link to this heading">#</a></h4>
+<p><em>(2026-02-14 ~ 2026-03-04)</em></p>
+<p>在此阶段，项目完成了核心架构的稳固与工具链的完善。主要成就包括：</p>
+<ul class="simple">
+<li><p><strong>v0.4.10 - v0.4.12</strong>: 修复了安全漏洞，增强了 <code class="docutils literal notranslate"><span class="pre">CollectionWorkflow</span></code> 的异常检测，并引入了 <code class="docutils literal notranslate"><span class="pre">audit.py</span></code> 代码审计工具。</p></li>
+<li><p><strong>v0.4.1 - v0.4.9</strong>: 确立了领域驱动设计 (DDD) 架构，完成了 Inference、Collection 和 Training 工作流的重构，并实现了 Slurm 后端的双模调度与并行优化。</p></li>
+</ul>
+</section>
+<section id="legacy-era-v2-x">
+<h4><strong>Legacy Era (v2.x)</strong><a class="headerlink" href="#legacy-era-v2-x" title="Link to this heading">#</a></h4>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span> *   **[修复]** 增强了 `CollectionWorkflow` 的异常检测机制。在所有候选系统导出失败（Zero-Export）的极端情况下，显式抛出 `RuntimeError` 并输出 Critical 日志，防止任务“静默成功”导致下游流水线异常。
+ *   **[文档]** 优化了 `release-helper` 技能文档，明确了基于 Git Log 的变更回溯与追加式文档更新流程，废弃了过时的 CHANGELOG 维护方式。
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><strong>v0.4.11</strong> (2026-03-03):</p>
+<ul>
+<li><p><strong>[优化]</strong> 增强了 <code class="docutils literal notranslate"><span class="pre">dpeva.io.dataset.load_systems</span></code> 的智能加载逻辑。现在能优先识别单系统目录，避免了将 <code class="docutils literal notranslate"><span class="pre">set.000</span></code> 等内部数据文件夹误判为独立系统，消除了大量虚假的 Warning 日志。</p></li>
+<li><p><strong>[重构]</strong> <code class="docutils literal notranslate"><span class="pre">CollectionWorkflow</span></code> 引入了基于文件结构的原子解析逻辑（File Structure-Based Atom Parsing），通过计算力文件与能量文件的行数比例精确推导原子数，彻底解决了非化学式命名系统的解析难题。</p></li>
+<li><p><strong>[增强]</strong> 实现了基于 <code class="docutils literal notranslate"><span class="pre">testdata_dir</span></code> 的双重验证机制，在力文件解析失败时可自动回退到原始数据集查找原子数，显著提升了系统的鲁棒性。</p></li>
+</ul>
+</li>
+<li><p><strong>v0.4.10</strong> (2026-03-04):</p>
+<ul>
+<li><p><strong>[安全]</strong> 修复了 P0/P1 级安全漏洞，包括路径穿越、命令注入和异常吞没问题。</p></li>
+<li><p><strong>[质量]</strong> 引入 <code class="docutils literal notranslate"><span class="pre">scripts/gate.sh</span></code> 质量门禁和 <code class="docutils literal notranslate"><span class="pre">audit.py</span></code> 代码审计工具。</p></li>
+<li><p><strong>[规范]</strong> 重构目录结构，明确区分 <code class="docutils literal notranslate"><span class="pre">scripts/</span></code> (项目维护) 与 <code class="docutils literal notranslate"><span class="pre">tools/</span></code> (业务工具)。</p></li>
+<li><p><strong>[修复]</strong> 修正了 CLI 退出码契约和完成标记语义。</p></li>
+</ul>
+</li>
+<li><p><strong>v0.4.9</strong> (2026-03-04):</p>
+<ul>
+<li><p><strong>[修复]</strong> 修复了日志重复输出到根记录器 (Root Logger) 的问题，确保日志流清晰。</p></li>
+</ul>
+</li>
+<li><p><strong>v0.4.8</strong> (2026-03-03):</p>
+<ul>
+<li><p><strong>[工具]</strong> 重构 <code class="docutils literal notranslate"><span class="pre">verify_desc_consistency.py</span></code>，增强描述符一致性校验能力。</p></li>
+<li><p><strong>[发布]</strong> <code class="docutils literal notranslate"><span class="pre">release-helper</span></code> 支持自动更新 README 中的版本徽章。</p></li>
+</ul>
+</li>
+<li><p><strong>v0.4.7</strong> (2026-02-28):
+*   <strong>[测试]</strong> 新增 Slurm Backend 的端到端集成测试，在真实 Slurm 环境中验证了作业提交、运行和日志生成的完整闭环。
+*   <strong>[验证]</strong> 强化了单元测试覆盖率，增加了防退化测试。
+*   <strong>[修复]</strong> 解决了集成测试在 Slurm 节点间的文件系统隔离问题。</p></li>
+<li><p><strong>v0.4.5</strong> (2026-02-27):</p>
+<ul>
+<li><p><strong>[并行]</strong> 修复了 <code class="docutils literal notranslate"><span class="pre">InferenceWorkflow</span></code> 在 Slurm 后端下的并行提交逻辑。</p></li>
+<li><p><strong>[重构]</strong> 移除了 <code class="docutils literal notranslate"><span class="pre">infer.py</span></code> 中的“自提交”机制，改为由 Manager 直接生成并行任务。</p></li>
+<li><p><strong>[性能]</strong> 显著提升了多模型推理在集群环境下的吞吐量。</p></li>
+</ul>
+</li>
+<li><p><strong>v0.4.4</strong> (2026-02-27):</p>
+<ul>
+<li><p><strong>[日志]</strong> 全面重构日志系统，引入标准化的 <code class="docutils literal notranslate"><span class="pre">setup_workflow_logger</span></code>。</p></li>
+<li><p><strong>[修复]</strong> 修复了 <code class="docutils literal notranslate"><span class="pre">TrainingWorkflow</span></code> 日志错乱且屏蔽 stdout 的严重缺陷。</p></li>
+<li><p><strong>[规范]</strong> 为所有 Workflow 定义了专属的日志文件名常量。</p></li>
+</ul>
+</li>
+<li><p><strong>v0.4.3</strong> (2026-02-25):</p>
+<ul>
+<li><p><strong>[架构]</strong> 重构 <code class="docutils literal notranslate"><span class="pre">AnalysisWorkflow</span></code> 和 <code class="docutils literal notranslate"><span class="pre">CollectionWorkflow</span></code>，统一了底层分析逻辑。</p></li>
+<li><p><strong>[重构]</strong> 引入 <code class="docutils literal notranslate"><span class="pre">UnifiedAnalysisManager</span></code>，消除代码重复。</p></li>
+<li><p><strong>[功能]</strong> <code class="docutils literal notranslate"><span class="pre">AnalysisWorkflow</span></code> 支持稳健的原子成分加载。</p></li>
+</ul>
+</li>
+<li><p><strong>v0.4.2</strong> (2026-02-23):</p>
+<ul>
+<li><p><strong>[修复]</strong> 修复了 <code class="docutils literal notranslate"><span class="pre">DIRECTSampler</span></code> 在 Joint Sampling 模式下的参数错误。</p></li>
+<li><p><strong>[重构]</strong> 采用 Post-Filtering 策略，将过滤逻辑移回 Manager 层。</p></li>
+<li><p><strong>[测试]</strong> 全面优化测试套件，移除对临时目录的硬编码依赖。</p></li>
+</ul>
+</li>
+<li><p><strong>v0.4.1</strong> (2026-02-14):</p>
+<ul>
+<li><p><strong>[版本]</strong> 版本号重置并统一为 0.4.1，与 PyPI/Package 版本保持一致。</p></li>
+<li><p><strong>[架构]</strong> 完成了 <code class="docutils literal notranslate"><span class="pre">InferenceWorkflow</span></code> 的 DDD 重构。</p></li>
+<li><p><strong>[文档]</strong> 更新开发者文档，补充了基于 Zen of Python 的项目哲学。</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="id10">
+<h4><strong>Legacy Era (v2.x)</strong><a class="headerlink" href="#id10" title="Link to this heading">#</a></h4>
+<p><em>(2026-01-28 ~ 2026-02-14)</em></p>
+<p>在此阶段，项目完成了从单一脚本到模块化架构的蜕变。主要成就包括：</p>
+<ul class="simple">
+<li><p><strong>v2.1 - v2.7</strong>: 引入了 Auto-UQ、联合采样 (Joint Sampling)、2-DIRECT 两步聚类等核心算法特性，并建立了统一的 <code class="docutils literal notranslate"><span class="pre">dpeva</span></code> CLI 接口。</p></li>
+<li><p><strong>v2.8 - v2.9</strong>: 确立了领域驱动设计 (DDD) 架构，完成了 Collection 和 Training 工作流的彻底解耦与重构，为 v0.4.x 的稳定迭代奠定了基础。</p></li>
+</ul>
+</section>
+</section>
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="../reference/upstream-software.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">上一页</p>
+        <p class="prev-next-title">上游软件与核心依赖（Upstream Software）</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="../architecture/README.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">下一页</p>
+        <p class="prev-next-title">Architecture（系统结构）</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> 目录
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#overview">1. 项目概述 (Overview)</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">1.1 项目简介</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#the-zen-of-dp-eva">1.2 核心哲学 (The Zen of DP-EVA)</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">1.2.1 核心原则</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">1.2.2 架构实践</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#roadmap">1.3 优化方向与路线图 (Roadmap)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#development-process-standard">1.4 开发流程标准 (Development Process Standard)</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#architecture">2. 系统架构 (Architecture)</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">2.1 目录结构</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#data-flow">2.2 数据流图 (Data Flow)</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#modules">3. 核心模块详解 (Modules)</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#training-dpeva-training">3.1 Training 模块 (<code class="docutils literal notranslate"><span class="pre">dpeva.training</span></code>)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#inference-dpeva-inference">3.2 Inference 模块 (<code class="docutils literal notranslate"><span class="pre">dpeva.inference</span></code>)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#uncertainty-sampling-dpeva-uncertain-dpeva-sampling">3.3 Uncertainty &amp; Sampling 模块 (<code class="docutils literal notranslate"><span class="pre">dpeva.uncertain</span></code>, <code class="docutils literal notranslate"><span class="pre">dpeva.sampling</span></code>)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#feature-dpeva-feature">3.4 Feature 模块 (<code class="docutils literal notranslate"><span class="pre">dpeva.feature</span></code>)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#submission-dpeva-submission">3.5 Submission 模块 (<code class="docutils literal notranslate"><span class="pre">dpeva.submission</span></code>)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#slurm-backend-slurm-architecture">3.6 Slurm Backend 设计 (Slurm Architecture)</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#interface-guide">4. 接口使用指南 (Interface Guide)</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#cli">4.1 统一命令行 (CLI)</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#train">4.1.1 训练 (Train)</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#infer">4.1.2 推理与分析 (Infer)</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#collect">4.1.3 数据采集 (Collect)</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#feature">4.1.4 特征生成 (Feature)</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#analysis">4.1.5 分析 (Analysis)</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#label-integration">4.1.6 标注后自动整合 (Label Integration)</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#python-api-recipes">4.2 Python API (Recipes)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">4.3 配置参数说明</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#train-config">4.3.1 训练配置 (Train Config)</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">4.3.2 其他配置</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#uq">4.4 UQ 与采样配置要点</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#uq-trust-mode">4.4.1 <code class="docutils literal notranslate"><span class="pre">uq_trust_mode</span></code> 配置说明</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#auto-uq-uq-auto-bounds">4.4.2 Auto-UQ 边界控制 (<code class="docutils literal notranslate"><span class="pre">uq_auto_bounds</span></code>)</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#sampling">4.4.3 采样参数说明 (Sampling)</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#development">5. 开发与测试 (Development)</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">5.1 代码规范</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id8">5.2 验证测试</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#faq">5.3 常见问题 (FAQ)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow-monitoring">5.4 工作流监控标准 (Workflow Monitoring)</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#revision-history">6. 版本修订记录 (Revision History)</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#maintenance-policy">6.1 维护策略 (Maintenance Policy)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id9">6.2 版本历史</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#current-era-v0-6-x"><strong>Current Era (v0.6.x)</strong></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#legacy-era-v0-4-x"><strong>Legacy Era (v0.4.x)</strong></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#legacy-era-v2-x"><strong>Legacy Era (v2.x)</strong></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id10"><strong>Legacy Era (v2.x)</strong></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+作者： DP-EVA Developers
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2026, DP-EVA Developers.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>
