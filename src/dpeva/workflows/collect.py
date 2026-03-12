@@ -132,221 +132,165 @@ class CollectionWorkflow:
             raise ValueError(f"Test data directory not found: {self.config.testdata_dir}")
 
     def run(self):
-        """
-        Execute the Collection workflow.
-
-        Depending on the backend configuration, this method either submits a Slurm job
-        or runs the collection process locally (UQ analysis, filtering, sampling, and export).
-        """
         if self.backend == "slurm":
             self._submit_to_slurm()
             return
         self.logger.info(f"Initializing selection in {self.project} ---")
         vis = UQVisualizer(self.io_manager.view_savedir, dpi=self.config.fig_dpi)
+        df_desc, df_candidate, unique_system_names = self._run_uq_phase(vis)
+        df_final = self._run_sampling_phase(df_candidate, df_desc, vis)
+        self._run_export_phase(df_final, unique_system_names)
 
-        # ---------------------------------------------------------
-        # Phase 1: UQ Analysis & Filtering
-        # ---------------------------------------------------------
+    def _run_uq_phase(self, vis: UQVisualizer):
         if self.config.uq_trust_mode == "no_filter":
-            self.logger.info("UQ Trust Mode is 'no_filter'. Skipping UQ.")
-            # Load Descriptors directly
-            desc_datanames, desc_stru = self.io_manager.load_descriptors(str(self.config.desc_dir), "candidate descriptors")
-            if len(desc_stru) == 0: raise ValueError("No descriptors loaded!")
-            
-            # Construct dummy frames
-            df_desc = pd.DataFrame(desc_stru, columns=[f"{COL_DESC_PREFIX}{i}" for i in range(desc_stru.shape[1])])
-            df_desc["dataname"] = desc_datanames
-            
-            df_uq = df_desc[["dataname"]].copy()
-            df_uq["uq_identity"] = "candidate"
-            
-            df_uq_desc = df_desc.copy()
-            df_candidate = df_desc.copy()
-            df_candidate["uq_identity"] = "candidate"
-            
-            # Identify systems for later use
-            unique_system_names = sorted(list(set(get_sys_name(d) for d in desc_datanames)))
-            
-            # Stats
-            self._log_initial_stats(desc_datanames)
-            
+            return self._run_no_filter_uq_phase()
+        return self._run_filtered_uq_phase(vis)
+
+    def _run_no_filter_uq_phase(self):
+        self.logger.info("UQ Trust Mode is 'no_filter'. Skipping UQ.")
+        desc_datanames, desc_stru = self.io_manager.load_descriptors(str(self.config.desc_dir), "candidate descriptors")
+        if len(desc_stru) == 0:
+            raise ValueError("No descriptors loaded!")
+        df_desc = pd.DataFrame(desc_stru, columns=[f"{COL_DESC_PREFIX}{i}" for i in range(desc_stru.shape[1])])
+        df_desc["dataname"] = desc_datanames
+        df_candidate = df_desc.copy()
+        df_candidate["uq_identity"] = "candidate"
+        unique_system_names = sorted(list(set(get_sys_name(d) for d in desc_datanames)))
+        self._log_initial_stats(desc_datanames)
+        return df_desc, df_candidate, unique_system_names
+
+    def _run_filtered_uq_phase(self, vis: UQVisualizer):
+        preds, has_gt = self.uq_manager.load_predictions()
+        uq_results, uq_rnd_rescaled = self.uq_manager.run_analysis(preds)
+        self.uq_manager.log_uq_statistics(uq_results, uq_rnd_rescaled)
+        self.uq_manager.run_auto_threshold(uq_results, uq_rnd_rescaled)
+        vis.plot_uq_distribution(uq_results[COL_UQ_QBC], uq_results[COL_UQ_RND], uq_rnd_rescaled)
+        vis.plot_uq_with_trust_range(
+            uq_results[COL_UQ_QBC],
+            "UQ-QbC-force",
+            "UQ-QbC-force.png",
+            self.uq_manager.qbc_params["lo"],
+            self.uq_manager.qbc_params["hi"],
+        )
+        unique_system_names = self._extract_unique_system_names(preds[0].dataname_list)
+        expected_frames = {sys: preds[0].datanames_nframe.get(sys, 0) for sys in unique_system_names}
+        desc_datanames, desc_stru = self.io_manager.load_descriptors(
+            str(self.config.desc_dir),
+            "candidate descriptors",
+            target_names=unique_system_names,
+            expected_frames=expected_frames,
+        )
+        df_desc = pd.DataFrame(desc_stru, columns=[f"{COL_DESC_PREFIX}{i}" for i in range(desc_stru.shape[1])])
+        df_desc["dataname"] = desc_datanames
+        datanames_ind_list = [f"{i[0]}-{i[1]}" for i in preds[0].dataname_list]
+        data_dict_uq = {
+            "dataname": datanames_ind_list,
+            COL_UQ_QBC: uq_results[COL_UQ_QBC],
+            "uq_rnd_for_rescaled": uq_rnd_rescaled,
+            COL_UQ_RND: uq_results[COL_UQ_RND],
+        }
+        if has_gt:
+            data_dict_uq["diff_maxf_0_frame"] = uq_results["diff_maxf_0_frame"]
+        df_uq_raw = pd.DataFrame(data_dict_uq)
+        if len(df_uq_raw) == len(df_desc) and np.array_equal(df_uq_raw["dataname"].values, df_desc["dataname"].values):
+            df_uq_desc = pd.concat([df_uq_raw, df_desc.drop(columns=["dataname"])], axis=1)
         else:
-            # 1.1 Load Predictions
-            preds, has_gt = self.uq_manager.load_predictions()
-            
-            # 1.2 Compute UQ
-            uq_results, uq_rnd_rescaled = self.uq_manager.run_analysis(preds)
-            
-            # 1.2.1 UQ Statistics Logging
-            self.uq_manager.log_uq_statistics(uq_results, uq_rnd_rescaled)
-            
-            # 1.3 Auto Threshold
-            self.uq_manager.run_auto_threshold(uq_results, uq_rnd_rescaled)
-            
-            # 1.4 Visualization (UQ Distributions)
-            vis.plot_uq_distribution(uq_results[COL_UQ_QBC], uq_results[COL_UQ_RND], uq_rnd_rescaled)
-            vis.plot_uq_with_trust_range(uq_results[COL_UQ_QBC], "UQ-QbC-force", "UQ-QbC-force.png",
-                                        self.uq_manager.qbc_params["lo"], self.uq_manager.qbc_params["hi"])
-            
-            # 1.5 Prepare Data for Filtering
-            unique_system_names = []
-            seen = set()
-            for item in preds[0].dataname_list:
-                name = item[0]
-                if name not in seen:
-                    seen.add(name)
-                    unique_system_names.append(name)
-            
-            expected_frames = {sys: preds[0].datanames_nframe.get(sys, 0) for sys in unique_system_names}
-            
-            # Load Descriptors
-            desc_datanames, desc_stru = self.io_manager.load_descriptors(
-                str(self.config.desc_dir), "candidate descriptors", 
-                target_names=unique_system_names, expected_frames=expected_frames
-            )
-            
-            # Build DataFrames
-            df_desc = pd.DataFrame(desc_stru, columns=[f"{COL_DESC_PREFIX}{i}" for i in range(desc_stru.shape[1])])
-            df_desc["dataname"] = desc_datanames
-            
-            datanames_ind_list = [f"{i[0]}-{i[1]}" for i in preds[0].dataname_list]
-            data_dict_uq = {
-                "dataname": datanames_ind_list,
-                COL_UQ_QBC: uq_results[COL_UQ_QBC],
-                "uq_rnd_for_rescaled": uq_rnd_rescaled,
-                COL_UQ_RND: uq_results[COL_UQ_RND],
-            }
-            if has_gt:
-                data_dict_uq["diff_maxf_0_frame"] = uq_results["diff_maxf_0_frame"]
-            
-            df_uq_raw = pd.DataFrame(data_dict_uq)
-            
-            # Merge
-            if len(df_uq_raw) == len(df_desc) and np.array_equal(df_uq_raw["dataname"].values, df_desc["dataname"].values):
-                 df_uq_desc = pd.concat([df_uq_raw, df_desc.drop(columns=["dataname"])], axis=1)
-            else:
-                 df_uq_desc = pd.merge(df_uq_raw, df_desc, on="dataname")
-            
-            self.io_manager.save_dataframe(df_uq_desc, "df_uq_desc.csv")
-            
-            # 1.6 Filtering
-            df_candidate, df_accurate, df_failed, uq_filter = self.uq_manager.run_filtering(df_uq_desc)
-            
-            # Add Labels
-            df_uq = uq_filter.get_identity_labels(df_uq_raw, df_candidate, df_accurate)
-            self.io_manager.save_dataframe(df_uq, "df_uq.csv")
-            self.io_manager.save_dataframe(df_candidate, "df_uq_desc_sampled-UQ.csv")
-            
-            # 1.7 Visualize Selection
-            vis.plot_uq_identity_scatter(df_uq, self.config.uq_select_scheme,
-                                        self.uq_manager.qbc_params["lo"], self.uq_manager.qbc_params["hi"],
-                                        self.uq_manager.rnd_params["lo"], self.uq_manager.rnd_params["hi"])
-            
-            # 1.8 Error Analysis (if Ground Truth exists)
-            if has_gt:
-                self.logger.info("Ground Truth available. Plotting UQ vs Error...")
+            df_uq_desc = pd.merge(df_uq_raw, df_desc, on="dataname")
+        self.io_manager.save_dataframe(df_uq_desc, "df_uq_desc.csv")
+        df_candidate, df_accurate, _, uq_filter = self.uq_manager.run_filtering(df_uq_desc)
+        df_uq = uq_filter.get_identity_labels(df_uq_raw, df_candidate, df_accurate)
+        self.io_manager.save_dataframe(df_uq, "df_uq.csv")
+        self.io_manager.save_dataframe(df_candidate, "df_uq_desc_sampled-UQ.csv")
+        vis.plot_uq_identity_scatter(
+            df_uq,
+            self.config.uq_select_scheme,
+            self.uq_manager.qbc_params["lo"],
+            self.uq_manager.qbc_params["hi"],
+            self.uq_manager.rnd_params["lo"],
+            self.uq_manager.rnd_params["hi"],
+        )
+        if has_gt:
+            self.logger.info("Ground Truth available. Plotting UQ vs Error...")
+            vis.plot_uq_vs_error(uq_results[COL_UQ_QBC], uq_results[COL_UQ_RND], uq_results["diff_maxf_0_frame"])
+            if uq_rnd_rescaled is not None:
                 vis.plot_uq_vs_error(
-                    uq_results[COL_UQ_QBC], 
-                    uq_results[COL_UQ_RND], 
-                    uq_results["diff_maxf_0_frame"]
+                    uq_results[COL_UQ_QBC],
+                    uq_rnd_rescaled,
+                    uq_results["diff_maxf_0_frame"],
+                    rescaled=True,
                 )
-                if uq_rnd_rescaled is not None:
-                    vis.plot_uq_vs_error(
-                        uq_results[COL_UQ_QBC], 
-                        uq_rnd_rescaled, 
-                        uq_results["diff_maxf_0_frame"],
-                        rescaled=True
-                    )
-                    
-                    diff_maxf = uq_results["diff_maxf_0_frame"]
-                    vis.plot_uq_diff_parity(uq_results[COL_UQ_QBC], uq_rnd_rescaled, diff_maxf)
+                vis.plot_uq_diff_parity(uq_results[COL_UQ_QBC], uq_rnd_rescaled, uq_results["diff_maxf_0_frame"])
+        self._log_initial_stats(desc_datanames)
+        return df_desc, df_candidate, unique_system_names
 
-            self._log_initial_stats(desc_datanames)
+    def _extract_unique_system_names(self, dataname_list):
+        unique_system_names = []
+        seen = set()
+        for item in dataname_list:
+            name = item[0]
+            if name not in seen:
+                seen.add(name)
+                unique_system_names.append(name)
+        return unique_system_names
 
-
-        # ---------------------------------------------------------
-        # Phase 2: Sampling
-        # ---------------------------------------------------------
-        df_final = pd.DataFrame()
-        
+    def _run_sampling_phase(self, df_candidate: pd.DataFrame, df_desc: pd.DataFrame, vis: UQVisualizer) -> pd.DataFrame:
         if len(df_candidate) == 0:
             self.logger.warning("No candidates selected. Skipping Sampling.")
-            # Create empty df_final with correct columns if possible
             if not df_candidate.empty:
                 df_final = pd.DataFrame(columns=df_candidate.columns)
             else:
                 df_final = pd.DataFrame(columns=["dataname"])
-                
             self.io_manager.save_dataframe(df_final, "final_df.csv")
-            
+            return df_final
+        train_desc_stru = np.array([])
+        if self.config.training_desc_dir:
+            _, train_desc_stru = self.io_manager.load_descriptors(str(self.config.training_desc_dir), "training descriptors")
+        features, use_joint, n_candidates = self.sampling_manager.prepare_features(df_candidate, df_desc, train_desc_stru)
+        x_atom, n_atoms = None, None
+        if self.sampling_manager.sampler_type == "2-direct":
+            x_atom, n_atoms = self.io_manager.load_atomic_features(str(self.config.desc_dir), df_candidate)
+        background_features = df_desc[[col for col in df_desc.columns if col.startswith(COL_DESC_PREFIX)]].values
+        sampling_results = self.sampling_manager.execute_sampling(features, x_atom, n_atoms, background_features=background_features)
+        selected_indices = sampling_results["selected_indices"]
+        pca_features = sampling_results["pca_features"]
+        explained_var = sampling_results["explained_variance"]
+        random_indices = sampling_results["random_indices"]
+        scores_direct = sampling_results["scores_direct"]
+        scores_random = sampling_results["scores_random"]
+        full_pca_features = sampling_results.get("full_pca_features")
+        if use_joint:
+            final_indices = [idx for idx in selected_indices if idx < n_candidates]
         else:
-            # 2.1 Prepare Features (Joint Logic)
-            train_desc_stru = np.array([])
-            if self.config.training_desc_dir:
-                _, train_desc_stru = self.io_manager.load_descriptors(str(self.config.training_desc_dir), "training descriptors")
-                
-            features, use_joint, n_candidates = self.sampling_manager.prepare_features(df_candidate, df_desc, train_desc_stru)
-            
-            # 2.2 Load Atomic Features if needed (2-DIRECT)
-            X_atom, n_atoms = None, None
-            if self.sampling_manager.sampler_type == "2-direct":
-                X_atom, n_atoms = self.io_manager.load_atomic_features(str(self.config.desc_dir), df_candidate)
-                
-            # Prepare background features (full pool) for visualization
-            background_features = df_desc[[col for col in df_desc.columns if col.startswith(COL_DESC_PREFIX)]].values
-    
-            # 2.3 Execute Sampling
-            sampling_results = self.sampling_manager.execute_sampling(features, X_atom, n_atoms, 
-                                                                      background_features=background_features)
-            
-            selected_indices = sampling_results["selected_indices"]
-            pca_features = sampling_results["pca_features"]
-            explained_var = sampling_results["explained_variance"]
-            random_indices = sampling_results["random_indices"]
-            scores_direct = sampling_results["scores_direct"]
-            scores_random = sampling_results["scores_random"]
-            full_pca_features = sampling_results.get("full_pca_features")
-            
-            # 2.4 Handle Joint Indices
-            if use_joint:
-                final_indices = [idx for idx in selected_indices if idx < n_candidates]
-            else:
-                final_indices = selected_indices
-                
-            df_final = df_candidate.iloc[final_indices].copy()
-            self.io_manager.save_dataframe(df_final, "final_df.csv")
-            
-            # 2.5 Sampling Stats & Visualization
-            self._log_sampling_stats(df_final)
-            
-            self.logger.info("Visualizing Sampling Results (PCA & Coverage)...")
-            
-            vis.plot_pca_analysis(
-                explained_variance=explained_var,
-                selected_PC_dim=pca_features.shape[1],
-                all_features=pca_features,  # This is PCA-transformed 'features'
-                direct_indices=selected_indices,
-                random_indices=random_indices,
-                scores_direct=scores_direct,
-                scores_random=scores_random,
-                df_uq=df_candidate, # df_candidate corresponds to the first n_candidates rows of features
-                final_indices=final_indices,
-                n_candidates=n_candidates if use_joint else None,
-                full_features=full_pca_features # We pass the full features for background plot
-            )
-        
-        # ---------------------------------------------------------
-        # Phase 3: Export
-        # ---------------------------------------------------------
-        _, _, count_sampled_frames, count_other_frames = self.io_manager.export_dpdata(str(self.config.testdata_dir), df_final, unique_system_names)
-        
+            final_indices = selected_indices
+        df_final = df_candidate.iloc[final_indices].copy()
+        self.io_manager.save_dataframe(df_final, "final_df.csv")
+        self._log_sampling_stats(df_final)
+        self.logger.info("Visualizing Sampling Results (PCA & Coverage)...")
+        vis.plot_pca_analysis(
+            explained_variance=explained_var,
+            selected_PC_dim=pca_features.shape[1],
+            all_features=pca_features,
+            direct_indices=selected_indices,
+            random_indices=random_indices,
+            scores_direct=scores_direct,
+            scores_random=scores_random,
+            df_uq=df_candidate,
+            final_indices=final_indices,
+            n_candidates=n_candidates if use_joint else None,
+            full_features=full_pca_features,
+        )
+        return df_final
+
+    def _run_export_phase(self, df_final: pd.DataFrame, unique_system_names):
+        _, _, count_sampled_frames, count_other_frames = self.io_manager.export_dpdata(
+            str(self.config.testdata_dir), df_final, unique_system_names
+        )
         total_exported = count_sampled_frames + count_other_frames
         if total_exported == 0 and not df_final.empty:
             self.logger.error("CRITICAL: No frames were exported despite candidates being selected!")
             self.logger.error("Possible causes: Data loading failure, name mismatch, or permission issues.")
             self.logger.error("Check the logs above for 'Failed to load system' or 'Failed to export' warnings.")
             raise RuntimeError("Collection Workflow failed to export any data.")
-            
         self.logger.info(f"Total remaining frames (to be exported as other_dpdata): {count_other_frames}")
         self.logger.info(WORKFLOW_FINISHED_TAG)
 

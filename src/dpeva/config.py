@@ -43,6 +43,9 @@ from dpeva.constants import (
     DEFAULT_LABELING_VACUUM_THICKNESS,
     DEFAULT_LABELING_CLEANING_THRESHOLDS,
     DEFAULT_LABELING_ATTEMPT_PARAMS,
+    DEFAULT_LABELING_OUTPUT_FORMAT,
+    DEFAULT_LABELING_INTEGRATION_OUTPUT_FORMAT,
+    VALID_LABELING_OUTPUT_FORMATS,
 )
 
 class SubmissionConfig(BaseModel):
@@ -222,11 +225,27 @@ class LabelingConfig(BaseWorkflowConfig):
     ref_energies: Dict[str, float] = Field(default_factory=dict, description="Reference energies per element.")
     
     # Output format
-    output_format: str = Field(default="deepmd/npy", description="Output format for dataset (deepmd/npy or deepmd/npy/mixed)")
+    output_format: str = Field(
+        default=DEFAULT_LABELING_OUTPUT_FORMAT,
+        description="Output format for cleaned/anomalies dataset (deepmd/npy or deepmd/npy/mixed)",
+    )
     integration_enabled: bool = Field(default=False, description="Whether to integrate cleaned data into next-gen training data.")
     existing_training_data_path: Optional[Path] = Field(None, description="Path to existing training dataset.")
     merged_training_data_path: Optional[Path] = Field(None, description="Output path for merged training dataset.")
+    integration_output_format: str = Field(
+        default=DEFAULT_LABELING_INTEGRATION_OUTPUT_FORMAT,
+        description="Output format for merged training dataset (deepmd/npy or deepmd/npy/mixed)",
+    )
     integration_deduplicate: bool = Field(default=False, description="Whether to enable deduplication in integration.")
+
+    @field_validator("output_format", "integration_output_format")
+    @classmethod
+    def validate_labeling_output_format(cls, value):
+        if value not in VALID_LABELING_OUTPUT_FORMATS:
+            raise ValueError(
+                f"Unsupported output format: {value}. Supported formats: {VALID_LABELING_OUTPUT_FORMATS}"
+            )
+        return value
 
 class TrainingConfig(BaseWorkflowConfig):
     """Configuration for Training Workflow."""

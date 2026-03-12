@@ -2,14 +2,14 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-03-09
+last-updated: 2026-03-11
 ---
 
 # 工作流-契约测试矩阵（Workflow Contract ↔ Tests）
 
 - Status: active
 - Audience: Maintainers / Developers
-- Last-Updated: 2026-02-21
+- Last-Updated: 2026-03-11
 
 本矩阵把“对外可观测契约”（产物路径、日志完成标记、失败定位入口）映射到“可执行测试”（unit / integration），用于：
 
@@ -28,7 +28,7 @@ last-updated: 2026-03-09
 |---|---|---|---|---|---|
 | Feature | `dpeva feature <cfg>` | `savedir/` 下 `.npy`（单池）或 `savedir/<pool>/` 下 `.npy`（多池） | `eval_desc.log`（或 slurm 输出日志）包含完成标记 | `tests/unit`（补齐：命令尾部 marker） | `tests/integration/test_slurm_multidatapool_e2e.py`（Feature-候选/训练集） |
 | Train | `dpeva train <cfg>` | `work_dir/0..N-1/` + `model.ckpt.pt`（或等价模型产物） | `work_dir/<i>/train.out` 包含完成标记 | `tests/unit/workflows/test_train_workflow_init.py`（初始化/编排） +（补齐：脚本尾部 marker） | `tests/integration/test_slurm_multidatapool_e2e.py`（Train） |
-| Infer | `dpeva infer <cfg>` | `work_dir/<i>/<task_name>/results.e.out`（或前缀等价输出） | `work_dir/<i>/<task_name>/test_job.log` 包含完成标记 | `tests/unit/workflows/test_infer_workflow_exec.py`（提交契约） +（补齐：命令尾部 marker） | `tests/integration/test_slurm_multidatapool_e2e.py`（Infer） |
+| Infer | `dpeva infer <cfg>` | `work_dir/<i>/<task_name>/results.e.out`（或前缀等价输出） | `work_dir/<i>/<task_name>/test_job.out` 包含完成标记 | `tests/unit/workflows/test_infer_workflow_exec.py`（提交契约） +（补齐：命令尾部 marker） | `tests/integration/test_slurm_multidatapool_e2e.py`（Infer） |
 | Collect | `dpeva collect <cfg>` | `root_savedir/dataframe/df_uq_desc_sampled-final.csv` | `collect_slurm.out`（slurm）或本地日志包含完成标记 | `tests/unit/workflows/test_collect_logging_fix.py`（校验/约束） +（补齐：完成标记日志） | `tests/integration/test_slurm_multidatapool_e2e.py`（Collect） |
 | Analysis | `dpeva analysis <cfg>` | `output_dir/analysis.log` + 统计/图表文件（如 `metrics.json`） | 无统一标记约定（以 `analysis.log` 成功结束为准） | 建议补齐（解析/输出目录行为） | 未纳入 |
 

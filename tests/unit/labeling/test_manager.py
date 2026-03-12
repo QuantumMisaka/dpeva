@@ -3,6 +3,7 @@ import pytest
 from unittest.mock import MagicMock, patch, call
 from pathlib import Path
 import json
+import pandas as pd
 from dpeva.labeling.manager import LabelingManager
 
 class TestLabelingManager:
@@ -155,3 +156,91 @@ class TestLabelingManager:
         # Here we verify that collect_and_export doesn't crash and hopefully counts correctly.
         # Ideally, we should capture logs to verify "Fail=1".
         pass 
+
+    def test_mgr_005_runner_script_avoids_shell_true(self, manager, tmp_path):
+        script = manager.generate_runner_script(tmp_path)
+        assert "shell=True" not in script
+        assert "subprocess.run(cmd, check=True" in script
+        assert "import shlex" in script
+        assert "shlex.split(abacus_cmd)" in script
+
+    @patch("dpeva.labeling.manager.dpdata")
+    def test_mgr_006_invalid_task_meta_is_handled(self, mock_dpdata, manager):
+        failed_task = manager.input_dir / "DS1" / "cluster" / "Failed_Task"
+        failed_task.mkdir(parents=True)
+        (failed_task / "INPUT").touch()
+        (failed_task / "task_meta.json").write_text("{invalid json")
+
+        (manager.converged_dir / "DS1" / "cluster" / "Conv_Task").mkdir(parents=True)
+        (manager.converged_dir / "DS1" / "cluster" / "Conv_Task" / "INPUT").touch()
+        (manager.converged_dir / "DS1" / "cluster" / "Conv_Task" / "STRU").touch()
+        with open(manager.converged_dir / "DS1" / "cluster" / "Conv_Task" / "task_meta.json", "w") as f:
+            json.dump({"dataset_name": "DS1", "stru_type": "cluster"}, f)
+
+        mock_system = MagicMock()
+        manager.postprocessor.load_data = MagicMock(return_value=mock_system)
+        import pandas as pd
+        df_real = pd.DataFrame({"sys_idx": [0], "frame_idx": [0], "max_force": [0.1]})
+        manager.postprocessor.compute_metrics = MagicMock(return_value=df_real)
+        manager.postprocessor.filter_data = MagicMock(return_value=df_real)
+        manager.postprocessor.export_data = MagicMock()
+
+        manager.collect_and_export()
+
+        manager.postprocessor.load_data.assert_called_once()
+        manager.postprocessor.compute_metrics.assert_called_once()
+
+    def test_mgr_007_aggregate_stats(self, manager):
+        df = pd.DataFrame(
+            [
+                {"dataset": "DS1", "type": "cluster"},
+                {"dataset": "DS1", "type": "cluster"},
+                {"dataset": "DS1", "type": "surface"},
+            ]
+        )
+        df_clean = pd.DataFrame(
+            [
+                {"dataset": "DS1", "type": "cluster"},
+                {"dataset": "DS1", "type": "surface"},
+            ]
+        )
+        failed = [{"dataset": "DS1", "type": "cluster"}, {"dataset": "DS2", "type": "bulk"}]
+        stats = manager._aggregate_stats(df, df_clean, failed)
+        assert stats["DS1"]["cluster"]["total"] == 3
+        assert stats["DS1"]["cluster"]["conv"] == 2
+        assert stats["DS1"]["cluster"]["fail"] == 1
+        assert stats["DS1"]["cluster"]["clean"] == 1
+        assert stats["DS2"]["bulk"]["total"] == 1
+
+    def test_mgr_008_prepare_is_idempotent(self, manager, mock_multisystems):
+        stale_task = manager.input_dir / "N_50_0" / "stale_task"
+        stale_task.mkdir(parents=True, exist_ok=True)
+        (stale_task / "INPUT").touch()
+
+        manager.generator = MagicMock()
+        manager.generator.analyzer.analyze.return_value = (MagicMock(), "cluster", [True, True, True])
+        manager.packer.pack = MagicMock(return_value=[])
+
+        dataset_map = {"DS1": mock_multisystems}
+        manager.prepare_tasks(dataset_map)
+
+        assert not stale_task.exists()
+        manager.packer.pack.assert_called_once_with(manager.input_dir)
+
+    def test_mgr_009_prepare_keeps_outputs_and_converged(self, manager, mock_multisystems):
+        output_marker = manager.output_dir / "keep.txt"
+        converged_marker = manager.converged_dir / "keep.txt"
+        output_marker.parent.mkdir(parents=True, exist_ok=True)
+        converged_marker.parent.mkdir(parents=True, exist_ok=True)
+        output_marker.write_text("output")
+        converged_marker.write_text("converged")
+
+        manager.generator = MagicMock()
+        manager.generator.analyzer.analyze.return_value = (MagicMock(), "cluster", [True, True, True])
+        manager.packer.pack = MagicMock(return_value=[])
+
+        dataset_map = {"DS1": mock_multisystems}
+        manager.prepare_tasks(dataset_map)
+
+        assert output_marker.exists()
+        assert converged_marker.exists()

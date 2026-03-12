@@ -7,7 +7,7 @@ This directory contains minimal reproducible examples (recipes) for DP-EVA workf
 Before running any examples, especially with `dpeva` CLI or Slurm submission:
 
 1.  **Check Environment Paths**:
-    Open the configuration files (e.g., `config_normal.json`) and verify the `env_setup` section.
+    Open the configuration files (e.g., `config_collect_normal.json`) and verify the `env_setup` section.
     You **MUST** update paths like `/opt/envs/deepmd3.1.2.env` to match your actual cluster environment.
 
 2.  **Data Preparation**:
@@ -20,6 +20,8 @@ Before running any examples, especially with `dpeva` CLI or Slurm submission:
 
 -   **`recipes/`**: The core collection of configuration templates for all DP-EVA workflows.
     -   See [recipes/README.md](recipes/README.md) for detailed usage instructions.
+-   **`scripts/`**: Executable helper scripts for recipe configurations.
+    -   See [scripts/README.md](scripts/README.md) for available entry points.
 
 ## Quick Start
 
@@ -29,7 +31,7 @@ Most examples are designed to be run via the DP-EVA CLI.
 
 ```bash
 # Run standard collection workflow
-dpeva collect examples/recipes/collection/config_normal.json
+dpeva collect examples/recipes/collection/config_collect_normal.json
 ```
 
 **Example: Feature Generation**
@@ -43,5 +45,5 @@ dpeva feature examples/recipes/feature_generation/config_feature.json
 
 ```bash
 # Run ABACUS labeling workflow
-dpeva label examples/recipes/labeling_recipe.json
+dpeva label examples/recipes/labeling/config_cpu.json
 ```

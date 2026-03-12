@@ -2,14 +2,14 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-03-09
+last-updated: 2026-03-11
 ---
 
 # DP-EVA 集成测试设计与交付报告（Slurm + Multi DataPool）
 
 - Status: active
 - Audience: Developers / Infra
-- Last-Updated: 2026-02-18
+- Last-Updated: 2026-03-11
 
 本报告给出基于真实生产目录 `/test/test-for-multiple-datapool` (File missing) 反推的集成测试设计，并交付可执行的 Slurm 编排用例与输入裁剪方案。
 
@@ -76,7 +76,7 @@ Collect 阶段也必须具备统一完成锚点。当前已在 [collect.py](http
 1. Feature（候选池）→ `desc_pool/<pool>/<system>.npy`
 2. Feature（训练集）→ `desc_train/<system>.npy`
 3. Train（3 模型）→ `0..2/model.ckpt.pt` + `train.out`（含完成标记）
-4. Infer（3 模型）→ `0..2/test_val/results.e.out` + `test_job.log`（含完成标记）
+4. Infer（3 模型）→ `0..2/test_val/results.e.out` + `test_job.out`（含完成标记）
 5. Collect（CPU）→ `dpeva_uq_result/dataframe/final_df.csv` + `collect_slurm.out`（含完成标记）
 
 核心断言（最小验收输出）：
@@ -94,7 +94,7 @@ Collect 阶段也必须具备统一完成锚点。当前已在 [collect.py](http
 
 参考：
 
-- /reference/config_schema.md
+- /source/api/config.rst
 
 ## 6. 运行说明（面向 Slurm 环境）
 
@@ -115,7 +115,7 @@ Collect 阶段也必须具备统一完成锚点。当前已在 [collect.py](http
 ## 7. 风险与边界
 
 - 该集成测试依赖 Slurm 与 DeepMD 运行环境，不建议默认纳入无 Slurm 的 CI。
-- `collect_slurm.out`、`train.out`、`test_job.log` 等日志文件名来自当前 Workflow/Manager 的 JobConfig 固化设置；若未来变更，应同步更新编排器的监控路径。
+- `collect_slurm.out`、`train.out`、`test_job.out` 等日志文件名来自当前 Workflow/Manager 的 JobConfig 固化设置；若未来变更，应同步更新编排器的监控路径。
 
 ## 8. 异常处理
 
@@ -125,4 +125,5 @@ Collect 阶段也必须具备统一完成锚点。当前已在 [collect.py](http
 
 ## 9. 变更记录
 
+- 2026-03-11：更新配置字段入口与推理日志文件名，确保与当前实现一致。
 - 2026-02-18：形成测试专题主页，统一交付物索引、链式编排原则与运行说明。

@@ -1,6 +1,7 @@
 # DP-EVA Recipes
 
 This directory contains configuration templates for the core workflows in DP-EVA.
+Executable example scripts are maintained in `examples/scripts/`.
 
 ## 1. Active Learning Collection (`collection/`)
 
@@ -8,8 +9,8 @@ The `collect` workflow is the heart of DP-EVA, handling Uncertainty Quantificati
 
 | Configuration File | Mode | Description |
 | :--- | :--- | :--- |
-| **`config_normal.json`** | **Normal Sampling** | Selects new data purely based on the candidate pool's descriptor distribution. Suitable for initial exploration or when no training set is available/relevant. |
-| **`config_joint.json`** | **Joint Sampling** | Considers both the candidate pool and an existing training set (`training_data_dir`). Ensures new samples cover the "blind spots" of the current model relative to the training data. |
+| **`config_collect_normal.json`** | **Normal Sampling** | Selects new data purely based on the candidate pool's descriptor distribution. Suitable for initial exploration or when no training set is available/relevant. |
+| **`config_collect_joint.json`** | **Joint Sampling** | Considers both the candidate pool and an existing training set (`training_data_dir`). Ensures new samples cover the "blind spots" of the current model relative to the training data. |
 
 **Note**:
 -   **Data Pool Structure**: DP-EVA automatically detects whether your data is a single pool (one system) or multi-pool (multiple systems/trajectories) based on the directory structure. You do not need separate config files for this.
@@ -17,7 +18,7 @@ The `collect` workflow is the heart of DP-EVA, handling Uncertainty Quantificati
 
 **Usage:**
 ```bash
-dpeva collect examples/recipes/collection/config_normal.json
+dpeva collect examples/recipes/collection/config_collect_normal.json
 ```
 
 ## 2. Model Training (`training/`)
@@ -59,8 +60,22 @@ For users who want to use the sampling algorithms directly without the full DP-E
 
 -   **Standard DIRECT (`sampling_direct/`)**:
     -   Uses structural clustering to select representative frames.
-    -   Run with: `python sampling_direct/run_direct.py ...`
+    -   Run with `dpeva collect examples/recipes/sampling_direct/config_collect_direct.json`
+    -   Reference: `python examples/scripts/sampling_direct/run_direct.py ...`
 
 -   **2-Step DIRECT (`sampling_2direct/`)**:
     -   Two-step clustering (Structural -> Atomic) to optimize for labeling costs.
-    -   Run with: `python sampling_2direct/run_2direct.py ...`
+    -   Run with `dpeva collect examples/recipes/sampling_2direct/config_collect_2direct.json`
+    -   Reference: `python examples/scripts/sampling_2direct/run_2direct.py ...`
+
+## 6. Script Entry Points
+
+For programmatic workflow demos and helper scripts, use:
+
+- `examples/scripts/training/train_recipe.py`
+- `examples/scripts/inference/infer_recipe.py`
+- `examples/scripts/inference/check_model_force_stats.py`
+- `examples/scripts/feature_generation/feature_recipe.py`
+- `examples/scripts/collection/collect_recipe.py`
+- `examples/scripts/analysis/analysis_recipe.py`
+- `examples/scripts/labeling/run_labeling.sh`

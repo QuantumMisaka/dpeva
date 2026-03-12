@@ -2,14 +2,14 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-03-09
+last-updated: 2026-03-11
 ---
 
 # 功能-文档双向追踪矩阵（Feature ↔ Docs）
 
 - Status: active
 - Audience: Maintainers / Developers
-- Last-Updated: 2026-02-19
+- Last-Updated: 2026-03-11
 
 本矩阵用于把“对外功能点”（CLI/配置/工作流输出约定）映射到文档章节，作为发布前的强制核对清单。
 
@@ -29,13 +29,13 @@ last-updated: 2026-03-09
 | 功能点 | 代码实现 | 文档入口 |
 |---|---|---|
 | 路径解析与提交后端 | `/src/dpeva/utils/config.py`、`/src/dpeva/config.py` | `/docs/guides/configuration.md` |
-| `SubmissionConfig` | `/src/dpeva/config.py` | `/docs/reference/config_schema.md`、`/docs/reference/validation.md` |
-| `TrainingConfig` | `/src/dpeva/config.py` | `/docs/reference/config_schema.md`、`/docs/reference/validation.md` |
-| `InferenceConfig` | `/src/dpeva/config.py` | `/docs/reference/config_schema.md`、`/docs/reference/validation.md` |
-| `LabelingConfig` | `/src/dpeva/config.py` | `/docs/reference/config_schema.md`、`/docs/reference/validation.md` |
-| `FeatureConfig` | `/src/dpeva/config.py` | `/docs/reference/config_schema.md`、`/docs/reference/validation.md` |
-| `CollectionConfig` | `/src/dpeva/config.py` | `/docs/reference/config_schema.md`、`/docs/reference/validation.md` |
-| `AnalysisConfig` | `/src/dpeva/config.py` | `/docs/reference/config_schema.md`、`/docs/reference/validation.md` |
+| `SubmissionConfig` | `/src/dpeva/config.py` | `/docs/source/api/config.rst`、`/docs/reference/validation.md` |
+| `TrainingConfig` | `/src/dpeva/config.py` | `/docs/source/api/config.rst`、`/docs/reference/validation.md` |
+| `InferenceConfig` | `/src/dpeva/config.py` | `/docs/source/api/config.rst`、`/docs/reference/validation.md` |
+| `LabelingConfig` | `/src/dpeva/config.py` | `/docs/source/api/config.rst`、`/docs/reference/validation.md` |
+| `FeatureConfig` | `/src/dpeva/config.py` | `/docs/source/api/config.rst`、`/docs/reference/validation.md` |
+| `CollectionConfig` | `/src/dpeva/config.py` | `/docs/source/api/config.rst`、`/docs/reference/validation.md` |
+| `AnalysisConfig` | `/src/dpeva/config.py` | `/docs/source/api/config.rst`、`/docs/reference/validation.md` |
 
 ## 3. 工作流完成标记与可观测性（对外约定）
 

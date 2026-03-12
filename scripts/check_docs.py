@@ -26,7 +26,7 @@ def extract_subcommands(help_text):
     # Assuming argparse default formatting
     # Subcommands are usually listed under "positional arguments" or "commands"
     # But dpeva help output might differ. Let's look for known subcommands for now.
-    known_subcommands = ["train", "infer", "feature", "collect", "analysis"]
+    known_subcommands = ["train", "infer", "feature", "collect", "label", "analysis"]
     found = []
     for sub in known_subcommands:
         if sub in help_text:

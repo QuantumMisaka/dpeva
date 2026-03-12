@@ -371,8 +371,8 @@ class UQVisualizer:
         
         # Define consistent styles
         style_all = {"color": "#A9A9A9", "alpha": 0.4, "s": 15, "marker": "."} # Darker Gray background for All Data
-        style_cand = {"color": "#4169E1", "alpha": 0.6, "s": 25, "marker": "*"}  # RoyalBlue for Candidate
-        style_sel_new = {"color": "red", "edgecolors": "black", "linewidth": 0.8, "s": 75, "marker": "*"}
+        style_cand = {"color": "#FFC000", "alpha": 0.6, "s": 25, "marker": "*"}  # Orange-Yellow for Candidate
+        style_sel_new = {"color": "#6A5ACD", "edgecolors": "black", "linewidth": 0.5, "s": 60, "marker": "*"} # SlateBlue for Selected
         
         # Plot Full Background first if available
         if full_features is not None:
@@ -422,9 +422,9 @@ class UQVisualizer:
         
         # Consistent styles
         style_train = {"color": "#C0C0C0", "alpha": 0.4, "marker": "."} 
-        style_cand = {"color": "#6fa8dc", "alpha": 0.5, "marker": "*"} # Lighter blue for background
-        style_sel_train = {"color": "gray", "marker": "x", "s": 60, "linewidth": 1.5}
-        style_sel_new = {"color": "#FF8C00", "edgecolors": "black", "linewidth": 0.8, "s": 100, "marker": "*"} # DarkOrange for Coverage plots
+        style_cand = {"color": "#FFC000", "alpha": 0.5, "marker": "*"} # Orange-Yellow for Candidates
+        style_sel_train = {"color": "gray", "marker": "x", "s": 30, "linewidth": 1.0}
+        style_sel_new = {"color": "#6A5ACD", "edgecolors": "black", "linewidth": 0.5, "s": 60, "marker": "*"} # SlateBlue for Selected
         
         if n_candidates is not None:
             # Plot Training background
@@ -446,7 +446,7 @@ class UQVisualizer:
         else:
             selected_features = all_features[selected_indices]
             plt.plot(all_features[:, 0], all_features[:, 1], "*", color="gray", alpha=0.5, label=f"All {len(all_features):,} structures")
-            plt.plot(selected_features[:, 0], selected_features[:, 1], "*", color="#FF8C00", alpha=0.8, label=f"{method} sampled {len(selected_features):,}")
+            plt.plot(selected_features[:, 0], selected_features[:, 1], "*", color="#6A5ACD", alpha=0.8, label=f"{method} sampled {len(selected_features):,}")
             
         plt.legend(frameon=True, fontsize=12, loc='best')
         plt.ylabel("PC 2", size=14)

@@ -2,7 +2,7 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-03-09
+last-updated: 2026-03-11
 ---
 
 # Slurm 使用与排障指南
@@ -10,7 +10,7 @@ last-updated: 2026-03-09
 - Status: active
 - Audience: Users / Developers / Infra
 - Applies-To: `submission.backend="slurm"`
-- Last-Updated: 2026-03-03
+- Last-Updated: 2026-03-11
 
 ## 1. 目的与范围
 
@@ -26,7 +26,7 @@ last-updated: 2026-03-09
 
 权威字段定义：
 
-- ../reference/config_schema.md
+- ../source/api/config.rst
 - ../reference/validation.md
 
 ### 3.1 最小 Slurm 配置
@@ -76,7 +76,7 @@ DPEVA_TAG: WORKFLOW_FINISHED
 日志位置与命名由工作流与 JobConfig 固化（随版本可能变更，以实际产物为准）：
 
 - Train：`<work_dir>/<i>/train.out`
-- Infer：`<work_dir>/<i>/<task_name>/test_job.log`
+- Infer：`<work_dir>/<i>/<task_name>/test_job.out`
 - Feature：`<savedir>/eval_desc.log`
 - Collect：`collect_slurm.out`（Collect 的 Slurm 自调用 worker 输出）
 
@@ -105,7 +105,7 @@ tail -f 0/train.out | grep -F "DPEVA_TAG: WORKFLOW_FINISHED"
 对于推理：
 
 ```bash
-tail -f 0/test_val/test_job.log | grep -F "DPEVA_TAG: WORKFLOW_FINISHED"
+tail -f 0/test_val/test_job.out | grep -F "DPEVA_TAG: WORKFLOW_FINISHED"
 ```
 
 ## 6. 异常处理与排障
@@ -145,7 +145,7 @@ tail -f 0/test_val/test_job.log | grep -F "DPEVA_TAG: WORKFLOW_FINISHED"
 
 处理：
 
-- 直接查看对应 `.out`/`test_job.log` 的错误堆栈
+- 直接查看对应 `.out`/`test_job.out` 的错误堆栈
 - 若失败发生在 DeepMD 命令内部，优先检查输入数据、模型文件、CUDA/驱动与 DeepMD 版本
 
 排障入口：
@@ -154,5 +154,6 @@ tail -f 0/test_val/test_job.log | grep -F "DPEVA_TAG: WORKFLOW_FINISHED"
 
 ## 7. 变更记录
 
+- 2026-03-11：更新配置字段入口为 API Reference，并同步 infer 日志文件名为 `test_job.out`。
 - 2026-03-03：更新完成标记语义，明确“部分失败不输出完成标记”。
 - 2026-02-18：补齐 Slurm 配置结构、日志命名与完成标记监控建议，并纳入常见故障排查路径。

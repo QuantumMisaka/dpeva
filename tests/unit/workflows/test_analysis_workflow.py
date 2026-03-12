@@ -100,3 +100,45 @@ class TestAnalysisWorkflow:
         MockIOManager.return_value.load_data.assert_not_called()
         MockDatasetManager.return_value.analyze.assert_called_once()
         mock_close_logger.assert_called_once()
+
+    @patch("dpeva.workflows.analysis.UnifiedAnalysisManager")
+    @patch("dpeva.workflows.analysis.AnalysisIOManager")
+    @patch("dpeva.workflows.analysis.setup_workflow_logger")
+    @patch("dpeva.workflows.analysis.close_workflow_logger")
+    def test_run_uses_data_path_composition(self, mock_close_logger, mock_setup_logger, MockIOManager, MockManager, tmp_path):
+        config = {
+            "result_dir": str(tmp_path / "results"),
+            "output_dir": str(tmp_path / "analysis"),
+            "type_map": ["O", "H"],
+            "data_path": str(tmp_path / "dpdata"),
+            "ref_energies": {"O": -10.0, "H": -5.0},
+        }
+        mock_io = MockIOManager.return_value
+        mock_manager = MockManager.return_value
+        mock_parser = MagicMock()
+        mock_io.load_data.return_value = ({"energy": {"pred_e": np.array([1.0])}}, mock_parser)
+        mock_io.load_composition_info.return_value = ([{"O": 1, "H": 2}], [3])
+        mock_manager.analyze_model.return_value = ({}, {"e_mae": 0.1}, MagicMock(), np.array([-0.1]), np.array([-0.2]))
+        workflow = AnalysisWorkflow(config)
+        workflow.run()
+        mock_io.load_composition_info.assert_called_once_with(config["data_path"])
+        mock_parser.get_composition_list.assert_not_called()
+        mock_close_logger.assert_called_once()
+
+    @patch("dpeva.workflows.analysis.UnifiedAnalysisManager")
+    @patch("dpeva.workflows.analysis.AnalysisIOManager")
+    @patch("dpeva.workflows.analysis.setup_workflow_logger")
+    @patch("dpeva.workflows.analysis.close_workflow_logger")
+    def test_run_skips_metric_save_when_empty_metrics(self, mock_close_logger, mock_setup_logger, MockIOManager, MockManager, config):
+        mock_io = MockIOManager.return_value
+        mock_manager = MockManager.return_value
+        mock_parser = MagicMock()
+        mock_parser.get_composition_list.return_value = (None, None)
+        mock_io.load_data.return_value = ({"energy": {"pred_e": np.array([1.0])}}, mock_parser)
+        mock_manager.analyze_model.return_value = ({}, {}, MagicMock(), None, None)
+        workflow = AnalysisWorkflow(config)
+        workflow.run()
+        mock_io.save_metrics.assert_not_called()
+        mock_io.save_summary_csv.assert_not_called()
+        mock_io.save_stats_desc.assert_not_called()
+        mock_close_logger.assert_called_once()

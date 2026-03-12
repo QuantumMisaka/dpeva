@@ -10,7 +10,7 @@ Features:
 - Identifies commented-out code blocks
 
 Usage:
-    python tools/audit.py [directory] [--strict]
+    python scripts/audit.py [directory] [--strict]
     
     --strict: Exit with error if any violation found (CI/CD mode)
 """

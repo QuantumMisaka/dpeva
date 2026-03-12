@@ -2,7 +2,7 @@
 title: Guides（操作指南导航）
 status: active
 audience: Developers / Users
-last-updated: 2026-03-10
+last-updated: 2026-03-12
 owner: Docs Owner
 ---
 
@@ -14,6 +14,7 @@ owner: Docs Owner
 
 - 开发总入口：`developer-guide.md`
 - 文档治理上手：`docs-governance-quickstart.md`
+- 过程资产生命周期：`process-asset-lifecycle.md`
 - 配置文档维护：`developer/config-docs-maintenance.md`
 
 ## 2. 使用与运维指南

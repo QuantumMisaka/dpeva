@@ -78,6 +78,7 @@
     "integration_enabled": false,
     "existing_training_data_path": null,
     "merged_training_data_path": null,
+    "integration_output_format": "deepmd/npy/mixed",
     "integration_deduplicate": false,
     "attempt_params": [
         {},

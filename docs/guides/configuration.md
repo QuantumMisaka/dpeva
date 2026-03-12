@@ -2,20 +2,20 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-03-09
+last-updated: 2026-03-11
 ---
 
 # 配置编写指南（Configuration）
 
 - Status: active
 - Audience: Users / Developers
-- Last-Updated: 2026-02-18
+- Last-Updated: 2026-03-11
 
 ## 1. 目的与范围
 
 本页说明“如何写配置、如何组织路径、如何最小化配置”。全量字段字典与校验规则请以 Reference 为准：
 
-- ../reference/config_schema.md
+- ../source/api/config.rst
 - ../reference/validation.md
 
 ## 2. 相关方
@@ -142,6 +142,20 @@ last-updated: 2026-03-09
 }
 ```
 
+### 5.6 Labeling
+
+```json
+{
+  "input_data_path": "./candidate_dpdata",
+  "work_dir": "./labeling_work",
+  "pp_dir": "./abacus_pp",
+  "orb_dir": "./abacus_orb",
+  "pp_map": { "Fe": "Fe.upf", "C": "C.upf", "O": "O.upf", "H": "H.upf" },
+  "orb_map": { "Fe": "Fe.orb", "C": "C.orb", "O": "O.orb", "H": "H.orb" },
+  "submission": { "backend": "slurm" }
+}
+```
+
 ## 6. 异常处理
 
 - 配置校验失败：对照 `/docs/reference/validation.md` 的跨字段依赖与范围约束
@@ -150,4 +164,5 @@ last-updated: 2026-03-09
 
 ## 7. 变更记录
 
+- 2026-03-11：配置字段权威入口改为 API Reference，并补充 Labeling 最小配置示例。
 - 2026-02-18：补齐路径解析、Submission 结构与最小配置示例。

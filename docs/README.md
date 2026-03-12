@@ -2,7 +2,8 @@
 title: DP-EVA 文档导航 (Docs Index)
 status: active
 audience: Users / Developers
-last-updated: 2026-03-09
+last-updated: 2026-03-12
+owner: Quantum Misaka
 ---
 
 # DP-EVA 文档导航（Docs Index）
@@ -41,10 +42,28 @@ last-updated: 2026-03-09
 - `docs/guides/`：主线操作指南（Quickstart/CLI/配置/Slurm/测试专题等）。遇到字段解释只链接到 `docs/reference/`。
 - `docs/architecture/`：架构与关键技术决策（ADR）以及设计报告。
 - `docs/governance/`：文档治理交付物（规划、审计、追踪矩阵、工具配置）。
-- `docs/reports/`：一次性分析/实验/评审结论（默认只追加）。
+- `docs/plans/`：项目级“已收敛计划”（可复盘、可归档、面向团队共享）。
+- `docs/reports/`：项目级“已收敛结论”（里程碑总结、评审结论、发布总结）。
 - `docs/logo_design/`：项目 logo 设计与相关文档。
-- `docs/plans/`：开发计划与修复方案。开发完成后，会归档到 `docs/archive/`。
 - `docs/archive/`：历史与弃用文档（只读）。必须在文件头显式标注适用版本与是否已落地。
+
+### 2.1 AI 执行文档与项目文档边界
+
+为减少噪音并提升可维护性，区分“过程草案”与“项目资产”：
+
+| 位置 | 文档类型 | 可见性 | 生命周期 |
+|---|---|---|---|
+| `.trae/documents/` | AI 执行期草案、临时计划、阶段记录 | 工作空间内部 | 任务期内可变，不要求 Sphinx 暴露 |
+| `docs/plans/` | 团队共享的收敛计划（目标/验收/迁移策略） | 项目文档系统 | 完成后归档至 `docs/archive/vX.Y.Z/plans/` |
+| `docs/reports/` | 团队共享的收敛结论（评审/实验/发布总结） | 项目文档系统 | 发布后归档至 `docs/archive/vX.Y.Z/reports/` |
+| `docs/archive/` | 历史只读资产 | 默认不进主导航 | 长期保留，禁止覆盖式重写 |
+
+### 2.2 Sphinx 展示策略
+
+- `docs/source/index.rst` 只绑定“面向读者的稳定入口”，避免把过程性草稿直接暴露到主导航。
+- `docs/plans/`、`docs/reports/` 仅收录“可复盘、可共享”的文档；草案先放 `.trae/documents/`。
+- `docs/assets/` 作为静态资源目录，不作为独立页面展示。
+- `docs/archive/` 默认不进入主导航，按需通过归档索引访问。
 
 ### 2.1 现行文档与归档文档判别规则
 
@@ -60,6 +79,13 @@ last-updated: 2026-03-09
   - `docs/guides/*`（若涉及使用方式/流程）
 - 文档必须以“单一权威来源”为原则：同一份字段字典不允许在多处复制粘贴维护。
 - `docs/archive/` 内容默认不回写，除非修正事实性错误（需要保留修订说明）。
+
+### 3.1 过程资产迁移规则（AI 与人类开发统一）
+
+1. 草案阶段：文档放置 `.trae/documents/`，允许高频迭代。
+2. 收敛阶段：当计划/结论稳定且需团队共享时，迁移至 `docs/plans/` 或 `docs/reports/`。
+3. 发布阶段：版本发布或任务闭环后，归档至 `docs/archive/vX.Y.Z/{plans,reports}/` 并更新索引。
+4. 展示阶段：仅“收敛文档”进入 Sphinx 导航，避免将过程噪音暴露给最终读者。
 
 ## 4. 文档审查记录 (Audit Logs)
 
