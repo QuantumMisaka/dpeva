@@ -119,7 +119,7 @@ def show_banner(no_delay=False):
 {GRAY}│{RESET}{aa4}  {st4}{GRAY}│{RESET}
 {GRAY}│{RESET}{aa5}  {st5}{GRAY}│{RESET}
 {GRAY}├────────────────────────────────────────────────────────────────────────────┤{RESET}
-{GRAY}│{RESET}  {GRAY}:: LCL Sea Density ::{RESET}  {BLUE}......{RESET}  {ORANGE}* .{RESET}  {BLUE}..{RESET}  {ORANGE}.  *{RESET}  {BLUE}.{RESET}  {ORANGE}* .{RESET}  {BLUE}...{RESET}  {ORANGE}* .{RESET}  {BLUE}..{RESET}  {ORANGE}.{RESET}     {GRAY}│{RESET}
+{GRAY}│{RESET}  {GRAY}:: LCL Sea Density ::{RESET}  {ORANGE}......{RESET}  {BLUE}*{RESET} {ORANGE}.{RESET}  {ORANGE}..{RESET}  {ORANGE}.{RESET}  {BLUE}*{RESET}  {ORANGE}.{RESET}  {BLUE}*{RESET} {ORANGE}.{RESET}  {ORANGE}...{RESET}  {BLUE}*{RESET} {ORANGE}.{RESET}  {ORANGE}..{RESET}  {ORANGE}.{RESET}     {GRAY}│{RESET}
 {GRAY}│{RESET}  {GRAY}Deep Potential EVolution Accelerator{RESET}          {ORANGE}>>> [PRESS START] <<<{RESET}       {GRAY}│{RESET}
 {GRAY}└────────────────────────────────────────────────────────────────────────────┘{RESET}
 """
