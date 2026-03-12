@@ -1,3 +1,10 @@
+<div align="center">
+  <img src="docs/img/DP-EVA-Logo-0312.png" alt="DP-EVA Logo" width="100%">
+  <p>
+    <em>The DP-EVA identity bridges rigorous physical modeling ('DP') and radical AI evolution ('EVA'), connected by an acceleration beam that filters order from chaos. It symbolizes the awakening of critical data from the vast chemical space to accelerate scientific discovery.</em>
+  </p>
+</div>
+
 # DP-EVA (Deep Potential EVolution Accelerator)
 
 ![Version](https://img.shields.io/badge/version-0.6.5-blue)
