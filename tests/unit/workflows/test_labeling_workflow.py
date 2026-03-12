@@ -114,6 +114,10 @@ class TestLabelingWorkflow:
         wf = LabelingWorkflow(config)
         wf.run()
 
+        MockIntegrationManager.assert_called_once_with(
+            deduplicate=False,
+            output_format=config.integration_output_format,
+        )
         MockIntegrationManager.return_value.integrate.assert_called_once()
 
     @patch("dpeva.workflows.labeling.load_systems")
@@ -152,6 +156,10 @@ class TestLabelingWorkflow:
 
         manager = MockManager.return_value
         manager.collect_and_export.assert_called_once()
+        MockIntegrationManager.assert_called_once_with(
+            deduplicate=False,
+            output_format=config.integration_output_format,
+        )
         MockIntegrationManager.return_value.integrate.assert_called_once()
 
     @patch("dpeva.workflows.labeling.close_workflow_logger")

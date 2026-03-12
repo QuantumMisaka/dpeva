@@ -47,6 +47,8 @@ def test_integration_manager_export(mock_load_systems, tmp_path):
     assert result["existing_system_count"] == 1
     assert result["new_system_count"] == 1
     assert result["filtered_system_count"] == 0
+    assert result["output_format"] == "deepmd/npy/mixed"
+    assert (out_dir / "export.ok").read_text() == "deepmd/npy/mixed"
     assert (out_dir / "export.ok").exists()
     assert (out_dir / "integration_summary.json").exists()
 
@@ -71,8 +73,27 @@ def test_integration_manager_deduplicate(mock_load_systems, tmp_path):
     assert result["deduplicate_enabled"] is True
     assert result["merged_system_count_after_dedup"] == 1
     assert result["filtered_system_count"] == 1
+    assert result["output_format"] == "deepmd/npy/mixed"
     assert (out_dir / "export.ok").exists()
     assert (out_dir / "integration_summary.json").exists()
+
+
+@patch("dpeva.labeling.integration.dpdata.MultiSystems", _FakeMultiSystems)
+@patch("dpeva.labeling.integration.load_systems")
+def test_integration_manager_custom_output_format(mock_load_systems, tmp_path):
+    new_dir = tmp_path / "new_cleaned"
+    out_dir = tmp_path / "merged"
+    new_dir.mkdir()
+    mock_load_systems.side_effect = [[_FakeSystem([[[0.0, 0.0, 0.0]]])]]
+
+    manager = DataIntegrationManager(deduplicate=False, output_format="deepmd/npy")
+    result = manager.integrate(
+        new_labeled_data_path=new_dir,
+        merged_output_path=out_dir,
+    )
+
+    assert result["output_format"] == "deepmd/npy"
+    assert (out_dir / "export.ok").read_text() == "deepmd/npy"
 
 
 @patch("dpeva.labeling.integration.dpdata.MultiSystems", _FakeMultiSystems)

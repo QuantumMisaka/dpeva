@@ -7,6 +7,7 @@ from typing import Dict, Optional, List
 import dpdata
 import numpy as np
 
+from dpeva.constants import DEFAULT_LABELING_INTEGRATION_OUTPUT_FORMAT
 from dpeva.io.dataset import load_systems
 
 
@@ -14,8 +15,9 @@ logger = logging.getLogger(__name__)
 
 
 class DataIntegrationManager:
-    def __init__(self, deduplicate: bool = False):
+    def __init__(self, deduplicate: bool = False, output_format: str = DEFAULT_LABELING_INTEGRATION_OUTPUT_FORMAT):
         self.deduplicate = deduplicate
+        self.output_format = output_format
 
     def integrate(
         self,
@@ -64,7 +66,7 @@ class DataIntegrationManager:
         filtered_count = before_dedup - after_dedup
 
         merged_output_path.mkdir(parents=True, exist_ok=True)
-        merged.to("deepmd/npy", str(merged_output_path))
+        merged.to(self.output_format, str(merged_output_path))
         summary = {
             "existing_system_count": existing_count,
             "new_system_count": new_count,
@@ -72,6 +74,7 @@ class DataIntegrationManager:
             "merged_system_count_after_dedup": after_dedup,
             "filtered_system_count": filtered_count,
             "deduplicate_enabled": self.deduplicate,
+            "output_format": self.output_format,
             "reference_atom_names": reference_atom_names,
             "compatibility_issues": compatibility_issues,
             "output_path": str(merged_output_path),

@@ -119,7 +119,10 @@ class LabelingWorkflow:
     def _run_postprocess_impl(self):
         self.manager.collect_and_export()
         if self.config.integration_enabled:
-            integration_manager = DataIntegrationManager(deduplicate=self.config.integration_deduplicate)
+            integration_manager = DataIntegrationManager(
+                deduplicate=self.config.integration_deduplicate,
+                output_format=self.config.integration_output_format,
+            )
             cleaned_dir = Path(self.config.work_dir) / "outputs" / "cleaned"
             merged_path = self.config.merged_training_data_path or (Path(self.config.work_dir) / "outputs" / "merged_training_data")
             summary = integration_manager.integrate(

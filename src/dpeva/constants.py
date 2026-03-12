@@ -52,6 +52,9 @@ DEFAULT_LABELING_CLEANING_THRESHOLDS: Final[dict] = {
 DEFAULT_LABELING_ATTEMPT_PARAMS: Final[list] = [
     {},
 ]
+VALID_LABELING_OUTPUT_FORMATS: Final[list] = ["deepmd/npy", "deepmd/npy/mixed"]
+DEFAULT_LABELING_OUTPUT_FORMAT: Final[str] = "deepmd/npy"
+DEFAULT_LABELING_INTEGRATION_OUTPUT_FORMAT: Final[str] = "deepmd/npy/mixed"
 
 # Workflow Log Files
 LOG_FILE_TRAIN: Final[str] = "training.log"
