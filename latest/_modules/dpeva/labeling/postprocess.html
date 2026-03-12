@@ -36,7 +36,7 @@
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="../../../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="../../../_static/documentation_options.js?v=6acd3760"></script>
+    <script src="../../../_static/documentation_options.js?v=a25fec3b"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -629,6 +629,8 @@ window.runMermaid = runMermaid;</script>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Governance</span></p>
 <ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../guides/docs-governance-quickstart.html">文档治理快速上手（开发者与 AI）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../guides/process-asset-lifecycle.html">过程资产生命周期（AI 草案到项目文档）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../policy/README.html">Policy（制度与规范）</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../../plans/governance/index.html">Doc System Planning</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../../plans/governance/README.html">README</a></li>
@@ -640,7 +642,6 @@ window.runMermaid = runMermaid;</script>
 <li class="toctree-l1"><a class="reference internal" href="../../../architecture/decisions/README.html">README</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../architecture/decisions/2026-02-04-deepmd-dependency.html">ADR: DeepMD-kit 依赖管理策略</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../guides/README.html">Guides（操作指南）</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../guides/docs-governance-quickstart.html">文档治理快速上手（开发者与 AI）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../guides/deployment.html">GitHub Actions 文档部署指南</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../guides/developer/README.html">Developer Guides</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../guides/developer/config-docs-maintenance.html">变量说明文档维护指南</a></li>
@@ -825,11 +826,11 @@ document.write(`
         <span class="k">for</span> <span class="n">log_file</span> <span class="ow">in</span> <span class="n">log_files</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">log_file</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-                    <span class="n">content</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
-                    <span class="k">if</span> <span class="s2">&quot;charge density convergence is achieved&quot;</span> <span class="ow">in</span> <span class="n">content</span><span class="p">:</span>
-                        <span class="k">return</span> <span class="kc">True</span>
-                    <span class="k">if</span> <span class="s2">&quot;convergence has not been achieved&quot;</span> <span class="ow">in</span> <span class="n">content</span><span class="p">:</span>
-                        <span class="k">return</span> <span class="kc">False</span>
+                    <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">f</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="s2">&quot;charge density convergence is achieved&quot;</span> <span class="ow">in</span> <span class="n">line</span><span class="p">:</span>
+                            <span class="k">return</span> <span class="kc">True</span>
+                        <span class="k">if</span> <span class="s2">&quot;convergence has not been achieved&quot;</span> <span class="ow">in</span> <span class="n">line</span><span class="p">:</span>
+                            <span class="k">return</span> <span class="kc">False</span>
             <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
                 <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error reading log file </span><span class="si">{</span><span class="n">log_file</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
                 <span class="k">continue</span>
@@ -1023,7 +1024,6 @@ document.write(`
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Export failed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
 </div>
-
 
 </pre></div>
 

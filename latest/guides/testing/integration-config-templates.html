@@ -37,7 +37,7 @@
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="../../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="../../_static/documentation_options.js?v=6acd3760"></script>
+    <script src="../../_static/documentation_options.js?v=a25fec3b"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -194,6 +194,8 @@
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Governance</span></p>
 <ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../docs-governance-quickstart.html">文档治理快速上手（开发者与 AI）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../process-asset-lifecycle.html">过程资产生命周期（AI 草案到项目文档）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../policy/README.html">Policy（制度与规范）</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../plans/governance/index.html">Doc System Planning</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../plans/governance/README.html">README</a></li>
@@ -205,7 +207,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../../architecture/decisions/README.html">README</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../architecture/decisions/2026-02-04-deepmd-dependency.html">ADR: DeepMD-kit 依赖管理策略</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../README.html">Guides（操作指南）</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../docs-governance-quickstart.html">文档治理快速上手（开发者与 AI）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../deployment.html">GitHub Actions 文档部署指南</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../developer/README.html">Developer Guides</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../developer/config-docs-maintenance.html">变量说明文档维护指南</a></li>
@@ -393,7 +394,7 @@ document.write(`
 <ul class="simple">
 <li><p>Status: active</p></li>
 <li><p>Audience: Developers / Infra</p></li>
-<li><p>Last-Updated: 2026-02-18</p></li>
+<li><p>Last-Updated: 2026-03-11</p></li>
 </ul>
 <p>对应可直接复制的模板文件位于：</p>
 <ul class="simple">
@@ -451,7 +452,7 @@ document.write(`
 <ul class="simple">
 <li><p>模板：<code class="docutils literal notranslate"><span class="pre">infer.json</span></code></p></li>
 <li><p>输入：<code class="docutils literal notranslate"><span class="pre">other_dpdata_all/</span></code> + <code class="docutils literal notranslate"><span class="pre">0..3/model.ckpt.pt</span></code></p></li>
-<li><p>输出：<code class="docutils literal notranslate"><span class="pre">0..3/test_val/</span></code> 及 <code class="docutils literal notranslate"><span class="pre">test_job.log</span></code>（含完成标记）</p></li>
+<li><p>输出：<code class="docutils literal notranslate"><span class="pre">0..3/test_val/</span></code> 及 <code class="docutils literal notranslate"><span class="pre">test_job.out</span></code>（含完成标记）</p></li>
 </ul>
 </section>
 <section id="collect">
@@ -500,6 +501,7 @@ document.write(`
 <section id="id6">
 <h2>10. 变更记录<a class="headerlink" href="#id6" title="Link to this heading">#</a></h2>
 <ul class="simple">
+<li><p>2026-03-11：同步推理日志文件名为 <code class="docutils literal notranslate"><span class="pre">test_job.out</span></code>，与当前实现保持一致。</p></li>
 <li><p>2026-02-18：建立集成测试最小配置模板索引与目录/产物约定，作为测试专题的可复用资产入口。</p></li>
 </ul>
 </section>

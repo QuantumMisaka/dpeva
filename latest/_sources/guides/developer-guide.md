@@ -2,21 +2,21 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-03-09
+last-updated: 2026-03-12
 ---
 
 # DP-EVA 项目开发文档
 
 - Status: active
 - Audience: Developers
-- Last-Updated: 2026-03-03
+- Last-Updated: 2026-03-12
 - Related:
-  - 配置字段字典：/docs/reference/config_schema.md
+  - 配置字段字典：/docs/source/api/config.rst
   - 校验规则补充：/docs/reference/validation.md
   - 上游软件与职责：/docs/reference/upstream-software.md
 
-* **版本**: 0.6.3
-* **生成日期**: 2026-03-10
+* **版本**: 0.6.5
+* **生成日期**: 2026-03-12
 * **作者**: Quantum Misaka with Trae SOLO
 
 ---
@@ -329,7 +329,7 @@ workflow.run()
 ### 4.3 配置参数说明
 详细的输入参数定义、类型约束及验证规则，请参阅 API 文档：
 
-*   **参数列表**: [config_schema.md](https://github.com/QuantumMisaka/dpeva/blob/main/docs/reference/config_schema.md)
+*   **参数列表**: [config.rst](https://github.com/QuantumMisaka/dpeva/blob/main/docs/source/api/config.rst)
 *   **验证规则**: [validation.md](https://github.com/QuantumMisaka/dpeva/blob/main/docs/reference/validation.md)
 
 以下仅展示标准 JSON 配置文件的基本结构概览。
@@ -369,7 +369,7 @@ workflow.run()
 
 参考：
 
-- `/docs/reference/config_schema.md`
+- `/docs/source/api/config.rst`
 - `/docs/reference/validation.md`
 
 #### 4.4.2 Auto-UQ 边界控制 (`uq_auto_bounds`)
@@ -378,19 +378,19 @@ Auto-UQ 用于根据数据分布自动确定筛选边界；具体的字段与约
 
 参考：
 
-- `/docs/reference/config_schema.md`
+- `/docs/source/api/config.rst`
 - `/docs/reference/validation.md`
 
 #### 4.4.3 采样参数说明 (Sampling)
 
 采样相关参数（DIRECT/2-direct/joint 等）属于收集工作流的核心可调维度，建议：
 
-- 只在 `/docs/reference/config_schema.md` 维护字段字典与默认值
+- 只在 `/docs/source/api/config.rst` 维护字段字典与默认值
 - 在指南中仅描述“如何选择参数组”的经验规则，并引用对应字段
 
 参考：
 
-- `/docs/reference/config_schema.md`
+- `/docs/source/api/config.rst`
 
 ## 5. 开发与测试 (Development)
 
@@ -477,6 +477,27 @@ DPEVA_TAG: WORKFLOW_FINISHED
 ### 6.2 版本历史
 
 #### **Current Era (v0.6.x)**
+
+*   **v0.6.5** (2026-03-12):
+    *   **[修复]** 修复 Labeling integration 中 `atom_names` 顺序敏感误报，支持在元素集合一致时自动归一化顺序并完成合并。
+    *   **[重构]** 完成 Labeling workflow 三阶段解耦，提供 `run_prepare/run_execute/run_postprocess` 显式阶段入口并保留默认全流程编排。
+    *   **[增强]** `dpeva label` 新增 `--stage all|prepare|execute|postprocess` 阶段化执行能力，支持不重算 ABACUS 的后处理复用。
+    *   **[稳定性]** 增强 prepare 幂等性，执行前自动重置 `inputs` 工作区，消除重复执行时历史残留导致的任务打包冲突。
+    *   **[可观测性]** 三阶段日志独立落盘为 `labeling_prepare.log`、`labeling_execute.log`、`labeling_postprocess.log`，提升排障效率。
+    *   **[测试]** 新增并补强 integration、workflow、CLI、manager 相关单测，`pytest tests/unit` 全量通过。
+    *   **[特性]** 为 CLI 所有子命令实现配置文件的 Schema 前置校验，在工作流启动前即拦截无效参数。
+    *   **[特性]** Labeling 集成阶段新增 `output_format` 参数，支持自定义合并后的数据集格式（默认 `deepmd/npy`）。
+    *   **[文档]** 重构 `examples` 目录结构，移除冗余层级，并更新对应的 `README` 与用户指南。
+    *   **[可视化]** 更新品牌视觉资产（Logo），优化 PCA 绘图配色（#FFC000/#6A5ACD）及采样可视化逻辑。
+    *   **[文档]** 更新 README 展示新标识，新增可视化改进实施计划。
+
+
+*   **v0.6.4** (2026-03-11):
+    *   **[修复]** 完成 R01-R37 全量闭环，修复安全、稳定性、测试与文档一致性问题。
+    *   **[重构]** 拆分 Labeling/Collect/Analysis 工作流关键长函数，降低职责耦合并增强可测试性。
+    *   **[测试]** 新增并补强 strategy、visualization、analysis、collect 相关回归测试，保持 unit/integration 全绿。
+    *   **[治理]** 完成计划文档与评审报告归档至 `docs/archive/v0.6.4/`，同步更新活动索引与归档索引。
+    *   **[发布]** 版本号升级至 0.6.4，并同步 README 与 Sphinx 版本标识。
 
 *   **v0.6.3** (2026-03-10):
     *   **[文档]** 重构归档目录结构并完善文档生命周期规范，确保历史文档有序归档。

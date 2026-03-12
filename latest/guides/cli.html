@@ -37,7 +37,7 @@
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="../_static/documentation_options.js?v=6acd3760"></script>
+    <script src="../_static/documentation_options.js?v=a25fec3b"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -194,6 +194,8 @@
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Governance</span></p>
 <ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="docs-governance-quickstart.html">文档治理快速上手（开发者与 AI）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="process-asset-lifecycle.html">过程资产生命周期（AI 草案到项目文档）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../policy/README.html">Policy（制度与规范）</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../plans/governance/index.html">Doc System Planning</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../plans/governance/README.html">README</a></li>
@@ -205,7 +207,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../architecture/decisions/README.html">README</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../architecture/decisions/2026-02-04-deepmd-dependency.html">ADR: DeepMD-kit 依赖管理策略</a></li>
 <li class="toctree-l1"><a class="reference internal" href="README.html">Guides（操作指南）</a></li>
-<li class="toctree-l1"><a class="reference internal" href="docs-governance-quickstart.html">文档治理快速上手（开发者与 AI）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="deployment.html">GitHub Actions 文档部署指南</a></li>
 <li class="toctree-l1"><a class="reference internal" href="developer/README.html">Developer Guides</a></li>
 <li class="toctree-l1"><a class="reference internal" href="developer/config-docs-maintenance.html">变量说明文档维护指南</a></li>
@@ -402,7 +403,7 @@ document.write(`
 <li><p>Status: active</p></li>
 <li><p>Audience: Users / Developers</p></li>
 <li><p>Applies-To: CLI 模式（推荐）</p></li>
-<li><p>Last-Updated: 2026-03-08</p></li>
+<li><p>Last-Updated: 2026-03-12</p></li>
 </ul>
 <section id="id1">
 <h2>1. 目的与范围<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
@@ -439,6 +440,7 @@ dpeva<span class="w"> </span>train<span class="w"> </span>--help
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>dpeva<span class="w"> </span>--no-banner<span class="w"> </span>&lt;subcommand&gt;<span class="w"> </span>&lt;config_path&gt;
 </pre></div>
 </div>
+<p>CLI 会在参数解析阶段对 <code class="docutils literal notranslate"><span class="pre">&lt;config_path&gt;</span></code> 执行统一前置校验（存在性、可读性、JSON 文件后缀）。</p>
 <p>实现入口：<code class="docutils literal notranslate"><span class="pre">src/dpeva/cli.py</span></code>（基于 <code class="docutils literal notranslate"><span class="pre">argparse</span></code>）。</p>
 </section>
 </section>
@@ -446,7 +448,7 @@ dpeva<span class="w"> </span>train<span class="w"> </span>--help
 <h2>4. 子命令职责、输入输出与配置<a class="headerlink" href="#id6" title="Link to this heading">#</a></h2>
 <p>所有子命令的第一个参数均为配置 JSON 路径。配置字段的权威查表入口：</p>
 <ul class="simple">
-<li><p>../reference/config_schema.md</p></li>
+<li><p>../source/api/config.rst</p></li>
 <li><p>../reference/validation.md</p></li>
 </ul>
 <section id="train">
@@ -482,7 +484,7 @@ dpeva<span class="w"> </span>train<span class="w"> </span>--help
 <li><p>输出</p>
 <ul>
 <li><p><code class="docutils literal notranslate"><span class="pre">work_dir/&lt;i&gt;/&lt;task_name&gt;/results.*.out</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">work_dir/&lt;i&gt;/&lt;task_name&gt;/test_job.log</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">work_dir/&lt;i&gt;/&lt;task_name&gt;/test_job.out</span></code></p></li>
 </ul>
 </li>
 </ul>
@@ -537,6 +539,11 @@ dpeva<span class="w"> </span>train<span class="w"> </span>--help
 <li><p><code class="docutils literal notranslate"><span class="pre">LabelingConfig</span></code></p></li>
 </ul>
 </li>
+<li><p>命令参数</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">--stage</span> <span class="pre">{all,prepare,execute,postprocess}</span></code>（默认 <code class="docutils literal notranslate"><span class="pre">all</span></code>）</p></li>
+</ul>
+</li>
 <li><p>功能</p>
 <ul>
 <li><p>执行主动学习中的标注工作流 (LabelingWorkflow)</p></li>
@@ -587,18 +594,28 @@ dpeva<span class="w"> </span>train<span class="w"> </span>--help
 <li><p><strong>退出码契约</strong></p>
 <ul>
 <li><p><strong>正常执行</strong>：0。</p></li>
-<li><p><strong>失败退出</strong>：1。CLI 会打印错误摘要与堆栈。</p></li>
-<li><p>注意：任何业务逻辑失败（如配置缺失、数据不存在、模型不兼容）均会触发退出码 1，<strong>严禁静默失败</strong>。</p></li>
+<li><p><strong>参数解析失败</strong>：2（例如 config 文件不存在、不可读、路径不是文件，或参数形态错误）。</p></li>
+<li><p><strong>运行期失败</strong>：1（配置内容不合法、业务逻辑失败、外部命令失败等）。</p></li>
+<li><p>注意：CLI 对用户输入类错误优先给出可操作提示，避免无意义堆栈噪音；内部异常仍会保留堆栈用于排障。</p></li>
 </ul>
 </li>
 <li><p>常见异常类型</p>
 <ul>
-<li><p>配置校验失败（<code class="docutils literal notranslate"><span class="pre">ValidationError</span></code>）：字段缺失/类型不匹配。</p></li>
+<li><p>参数级配置文件错误（argparse）：<code class="docutils literal notranslate"><span class="pre">config_path</span></code> 不存在/不可读/非 JSON 文件。</p></li>
+<li><p>配置内容校验失败（<code class="docutils literal notranslate"><span class="pre">ValidationError</span></code>）：字段缺失/类型不匹配。</p></li>
 <li><p>路径/文件错误（<code class="docutils literal notranslate"><span class="pre">FileNotFoundError</span></code> / <code class="docutils literal notranslate"><span class="pre">WorkflowError</span></code>）：数据目录、模型文件未找到。</p></li>
 <li><p>运行时错误（<code class="docutils literal notranslate"><span class="pre">RuntimeError</span></code> / <code class="docutils literal notranslate"><span class="pre">WorkflowError</span></code>）：DeepMD 版本不兼容、外部命令执行失败。</p></li>
 </ul>
 </li>
+<li><p>常见误用示例</p></li>
 </ul>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># 错误：把 stage 词放在 config 位置</span>
+dpeva<span class="w"> </span>label<span class="w"> </span>prepare
+
+<span class="c1"># 正确：显式提供 config，并通过 --stage 指定阶段</span>
+dpeva<span class="w"> </span>label<span class="w"> </span>config.json<span class="w"> </span>--stage<span class="w"> </span>prepare
+</pre></div>
+</div>
 <p>排障入口：</p>
 <ul class="simple">
 <li><p>./troubleshooting.md</p></li>
@@ -608,6 +625,8 @@ dpeva<span class="w"> </span>train<span class="w"> </span>--help
 <h2>7. 变更记录<a class="headerlink" href="#id9" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p>2026-03-03：更新退出码契约说明，明确 <code class="docutils literal notranslate"><span class="pre">WorkflowError</span></code> 会导致退出码 1。</p></li>
+<li><p>2026-03-12：新增 config 路径前置校验说明，补充 label <code class="docutils literal notranslate"><span class="pre">--stage</span></code> 参数和参数解析失败退出码 2。</p></li>
+<li><p>2026-03-11：更新配置权威入口为 API Reference，并同步 infer 日志文件名为 <code class="docutils literal notranslate"><span class="pre">test_job.out</span></code>。</p></li>
 <li><p>2026-03-08：补充 analysis 双模式与 labeling integration 输出说明。</p></li>
 <li><p>2026-02-18：补齐子命令 I/O、完成标记与退出码说明，并建立与 recipes/api 的权威链接。</p></li>
 </ul>

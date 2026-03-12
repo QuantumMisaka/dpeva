@@ -36,7 +36,7 @@
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="../../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="../../_static/documentation_options.js?v=6acd3760"></script>
+    <script src="../../_static/documentation_options.js?v=a25fec3b"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -629,6 +629,8 @@ window.runMermaid = runMermaid;</script>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Governance</span></p>
 <ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../guides/docs-governance-quickstart.html">文档治理快速上手（开发者与 AI）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guides/process-asset-lifecycle.html">过程资产生命周期（AI 草案到项目文档）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../policy/README.html">Policy（制度与规范）</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../plans/governance/index.html">Doc System Planning</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../plans/governance/README.html">README</a></li>
@@ -640,7 +642,6 @@ window.runMermaid = runMermaid;</script>
 <li class="toctree-l1"><a class="reference internal" href="../../architecture/decisions/README.html">README</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../architecture/decisions/2026-02-04-deepmd-dependency.html">ADR: DeepMD-kit 依赖管理策略</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../guides/README.html">Guides（操作指南）</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../guides/docs-governance-quickstart.html">文档治理快速上手（开发者与 AI）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../guides/deployment.html">GitHub Actions 文档部署指南</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../guides/developer/README.html">Developer Guides</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../guides/developer/config-docs-maintenance.html">变量说明文档维护指南</a></li>
@@ -801,6 +802,9 @@ document.write(`
     <span class="n">DEFAULT_LABELING_VACUUM_THICKNESS</span><span class="p">,</span>
     <span class="n">DEFAULT_LABELING_CLEANING_THRESHOLDS</span><span class="p">,</span>
     <span class="n">DEFAULT_LABELING_ATTEMPT_PARAMS</span><span class="p">,</span>
+    <span class="n">DEFAULT_LABELING_OUTPUT_FORMAT</span><span class="p">,</span>
+    <span class="n">DEFAULT_LABELING_INTEGRATION_OUTPUT_FORMAT</span><span class="p">,</span>
+    <span class="n">VALID_LABELING_OUTPUT_FORMATS</span><span class="p">,</span>
 <span class="p">)</span>
 
 <div class="viewcode-block" id="SubmissionConfig">
@@ -1009,11 +1013,30 @@ document.write(`
     <span class="n">ref_energies</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Reference energies per element.&quot;</span><span class="p">)</span>
     
     <span class="c1"># Output format</span>
-    <span class="n">output_format</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;deepmd/npy&quot;</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Output format for dataset (deepmd/npy or deepmd/npy/mixed)&quot;</span><span class="p">)</span>
+    <span class="n">output_format</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="n">DEFAULT_LABELING_OUTPUT_FORMAT</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Output format for cleaned/anomalies dataset (deepmd/npy or deepmd/npy/mixed)&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
     <span class="n">integration_enabled</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Whether to integrate cleaned data into next-gen training data.&quot;</span><span class="p">)</span>
     <span class="n">existing_training_data_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Path to existing training dataset.&quot;</span><span class="p">)</span>
     <span class="n">merged_training_data_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Output path for merged training dataset.&quot;</span><span class="p">)</span>
-    <span class="n">integration_deduplicate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Whether to enable deduplication in integration.&quot;</span><span class="p">)</span></div>
+    <span class="n">integration_output_format</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="n">DEFAULT_LABELING_INTEGRATION_OUTPUT_FORMAT</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Output format for merged training dataset (deepmd/npy or deepmd/npy/mixed)&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">integration_deduplicate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Whether to enable deduplication in integration.&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="LabelingConfig.validate_labeling_output_format">
+<a class="viewcode-back" href="../../api/config/labeling.html#dpeva.config.LabelingConfig.validate_labeling_output_format">[文档]</a>
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;output_format&quot;</span><span class="p">,</span> <span class="s2">&quot;integration_output_format&quot;</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_labeling_output_format</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">VALID_LABELING_OUTPUT_FORMATS</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Unsupported output format: </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">. Supported formats: </span><span class="si">{</span><span class="n">VALID_LABELING_OUTPUT_FORMATS</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">value</span></div>
+</div>
 
 
 <div class="viewcode-block" id="TrainingConfig">

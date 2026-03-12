@@ -37,7 +37,7 @@
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="../_static/documentation_options.js?v=6acd3760"></script>
+    <script src="../_static/documentation_options.js?v=a25fec3b"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -45,8 +45,8 @@
     <script>DOCUMENTATION_OPTIONS.pagename = 'guides/docs-governance-quickstart';</script>
     <link rel="index" title="索引" href="../genindex.html" />
     <link rel="search" title="搜索" href="../search.html" />
-    <link rel="next" title="GitHub Actions 文档部署指南" href="deployment.html" />
-    <link rel="prev" title="Guides（操作指南）" href="README.html" />
+    <link rel="next" title="过程资产生命周期（AI 草案到项目文档）" href="process-asset-lifecycle.html" />
+    <link rel="prev" title="Submission API" href="../api/submission.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="zh-CN"/>
   </head>
@@ -193,19 +193,20 @@
 <li class="toctree-l1"><a class="reference internal" href="../api/submission.html">Submission API</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Governance</span></p>
-<ul class="nav bd-sidenav">
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">文档治理快速上手（开发者与 AI）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="process-asset-lifecycle.html">过程资产生命周期（AI 草案到项目文档）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../policy/README.html">Policy（制度与规范）</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../plans/governance/index.html">Doc System Planning</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../plans/governance/README.html">README</a></li>
 </ul>
 </details></li>
 </ul>
-<ul class="current nav bd-sidenav">
+<ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../architecture/design-report.html">DP-EVA 项目设计模式与架构分析报告</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../architecture/decisions/README.html">README</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../architecture/decisions/2026-02-04-deepmd-dependency.html">ADR: DeepMD-kit 依赖管理策略</a></li>
 <li class="toctree-l1"><a class="reference internal" href="README.html">Guides（操作指南）</a></li>
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">文档治理快速上手（开发者与 AI）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="deployment.html">GitHub Actions 文档部署指南</a></li>
 <li class="toctree-l1"><a class="reference internal" href="developer/README.html">Developer Guides</a></li>
 <li class="toctree-l1"><a class="reference internal" href="developer/config-docs-maintenance.html">变量说明文档维护指南</a></li>
@@ -371,6 +372,7 @@ document.write(`
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">3. 提交前最低检查</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pr">4. PR 必填治理信息</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">5. AI 开发者执行建议</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">6. AI 草案与项目文档边界</a></li>
 </ul>
             </nav>
         </div>
@@ -431,6 +433,14 @@ make<span class="w"> </span>-C<span class="w"> </span>docs<span class="w"> </spa
 <li><p>优先补充导航入口与操作步骤，避免新增孤立文档</p></li>
 </ul>
 </section>
+<section id="id5">
+<h2>6. AI 草案与项目文档边界<a class="headerlink" href="#id5" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p>执行期草案默认放 <code class="docutils literal notranslate"><span class="pre">.trae/documents/</span></code>，用于快速迭代与中间记录。</p></li>
+<li><p>仅当文档达到“可共享、可复盘、可发布”状态，才迁入 <code class="docutils literal notranslate"><span class="pre">docs/plans/</span></code> 或 <code class="docutils literal notranslate"><span class="pre">docs/reports/</span></code>。</p></li>
+<li><p>版本发布或任务闭环后，统一归档到 <code class="docutils literal notranslate"><span class="pre">docs/archive/vX.Y.Z/{plans,reports}/</span></code>。</p></li>
+</ul>
+</section>
 </section>
 
 
@@ -445,20 +455,20 @@ make<span class="w"> </span>-C<span class="w"> </span>docs<span class="w"> </spa
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="README.html"
+       href="../api/submission.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">上一页</p>
-        <p class="prev-next-title">Guides（操作指南）</p>
+        <p class="prev-next-title">Submission API</p>
       </div>
     </a>
     <a class="right-next"
-       href="deployment.html"
+       href="process-asset-lifecycle.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">下一页</p>
-        <p class="prev-next-title">GitHub Actions 文档部署指南</p>
+        <p class="prev-next-title">过程资产生命周期（AI 草案到项目文档）</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -483,6 +493,7 @@ make<span class="w"> </span>-C<span class="w"> </span>docs<span class="w"> </spa
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">3. 提交前最低检查</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pr">4. PR 必填治理信息</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">5. AI 开发者执行建议</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">6. AI 草案与项目文档边界</a></li>
 </ul>
   </nav></div>
 

@@ -37,7 +37,7 @@
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="../_static/documentation_options.js?v=6acd3760"></script>
+    <script src="../_static/documentation_options.js?v=a25fec3b"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -194,6 +194,8 @@
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Governance</span></p>
 <ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../guides/docs-governance-quickstart.html">文档治理快速上手（开发者与 AI）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/process-asset-lifecycle.html">过程资产生命周期（AI 草案到项目文档）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../policy/README.html">Policy（制度与规范）</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="governance/index.html">Doc System Planning</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="governance/README.html">README</a></li>
@@ -205,7 +207,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../architecture/decisions/README.html">README</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../architecture/decisions/2026-02-04-deepmd-dependency.html">ADR: DeepMD-kit 依赖管理策略</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../guides/README.html">Guides（操作指南）</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../guides/docs-governance-quickstart.html">文档治理快速上手（开发者与 AI）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../guides/deployment.html">GitHub Actions 文档部署指南</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../guides/developer/README.html">Developer Guides</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../guides/developer/config-docs-maintenance.html">变量说明文档维护指南</a></li>
@@ -368,7 +369,9 @@ document.write(`
                 <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">1. 计划类型</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">2. 维护策略</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#template">3. 模板 (Template)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#ai">3. AI 执行文档边界</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#template">4. 模板 (Template)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">5. 归档与索引要求</a></li>
 </ul>
             </nav>
         </div>
@@ -385,27 +388,43 @@ document.write(`
 <ul class="simple">
 <li><p>Status: active</p></li>
 <li><p>Audience: Developers</p></li>
-<li><p>Last-Updated: 2026-03-09</p></li>
+<li><p>Last-Updated: 2026-03-12</p></li>
 </ul>
-<p>本文档目录用于存放当前迭代周期的执行计划与任务分解。</p>
+<p>本目录用于存放“项目级、可共享、可追溯”的开发计划文档，不承载 AI 执行期草案。</p>
 <section id="id1">
 <h2>1. 计划类型<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
 <ul class="simple">
-<li><p><strong>Iteration Plan</strong>: 迭代周期计划。</p></li>
-<li><p><strong>Governance Plan</strong>: 文档/代码治理计划。</p></li>
-<li><p><strong>Feature Plan</strong>: 新功能开发计划。</p></li>
+<li><p><strong>Iteration Plan</strong>: 迭代周期计划（目标、范围、验收标准）。</p></li>
+<li><p><strong>Governance Plan</strong>: 文档/代码治理计划（规则、迁移、门禁）。</p></li>
+<li><p><strong>Feature Plan</strong>: 新功能实施计划（设计、测试、回滚策略）。</p></li>
 </ul>
 </section>
 <section id="id2">
 <h2>2. 维护策略<a class="headerlink" href="#id2" title="Link to this heading">#</a></h2>
 <ul class="simple">
-<li><p><strong>Active</strong>: 当前迭代周期内的计划。</p></li>
-<li><p><strong>Completed</strong>: 已完成的计划，请归档至 <code class="docutils literal notranslate"><span class="pre">docs/archive/vX.Y/plans/</span></code>。</p></li>
+<li><p><strong>Active</strong>: 当前有效且需要团队协作的计划。</p></li>
+<li><p><strong>Completed</strong>: 完成后归档至 <code class="docutils literal notranslate"><span class="pre">docs/archive/vX.Y.Z/plans/</span></code>，并从活跃索引移除。</p></li>
 <li><p><strong>Naming</strong>: <code class="docutils literal notranslate"><span class="pre">YYYY-MM-DD-&lt;topic&gt;-plan.md</span></code> 或 <code class="docutils literal notranslate"><span class="pre">vX.Y.Z-&lt;topic&gt;-plan.md</span></code>。</p></li>
+<li><p><strong>Ingestion Rule</strong>: 草案先放 <code class="docutils literal notranslate"><span class="pre">.trae/documents/</span></code>；仅“收敛计划”才迁入本目录。</p></li>
+</ul>
+</section>
+<section id="ai">
+<h2>3. AI 执行文档边界<a class="headerlink" href="#ai" title="Link to this heading">#</a></h2>
+<p>为避免过程文档污染项目导航，统一按以下边界执行：</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">.trae/documents/</span></code>：任务执行草案、临时计划、探索记录。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">docs/plans/</span></code>：团队共享、可复盘、可长期追踪的计划版本。</p></li>
+<li><p>迁入 <code class="docutils literal notranslate"><span class="pre">docs/plans/</span></code> 的前提：</p>
+<ol class="arabic simple">
+<li><p>目标与验收标准明确；</p></li>
+<li><p>影响范围与风险说明完整；</p></li>
+<li><p>可被非当前执行者理解并复用。</p></li>
+</ol>
+</li>
 </ul>
 </section>
 <section id="template">
-<h2>3. 模板 (Template)<a class="headerlink" href="#template" title="Link to this heading">#</a></h2>
+<h2>4. 模板 (Template)<a class="headerlink" href="#template" title="Link to this heading">#</a></h2>
 <div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span><span class="gh"># 计划标题 (Plan Title)</span>
 
 <span class="k">-</span><span class="w"> </span>Status: active
@@ -417,6 +436,20 @@ document.write(`
 <span class="gu">## 3. 验收标准 (Acceptance Criteria)</span>
 </pre></div>
 </div>
+</section>
+<section id="id3">
+<h2>5. 归档与索引要求<a class="headerlink" href="#id3" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p>文档移动或重命名时，必须同步更新 <code class="docutils literal notranslate"><span class="pre">docs/source/**/*.rst</span></code> 的 <code class="docutils literal notranslate"><span class="pre">toctree</span></code>。</p></li>
+<li><p>归档后必须更新对应版本目录 <code class="docutils literal notranslate"><span class="pre">docs/archive/vX.Y.Z/README.md</span></code>。</p></li>
+<li><p>提交前必须通过：</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">python3</span> <span class="pre">scripts/doc_check.py</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">python3</span> <span class="pre">scripts/check_docs_freshness.py</span> <span class="pre">--days</span> <span class="pre">90</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">-C</span> <span class="pre">docs</span> <span class="pre">html</span> <span class="pre">SPHINXOPTS=&quot;-W</span> <span class="pre">--keep-going&quot;</span></code></p></li>
+</ul>
+</li>
+</ul>
 </section>
 </section>
 
@@ -467,7 +500,9 @@ document.write(`
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">1. 计划类型</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">2. 维护策略</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#template">3. 模板 (Template)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#ai">3. AI 执行文档边界</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#template">4. 模板 (Template)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">5. 归档与索引要求</a></li>
 </ul>
   </nav></div>
 

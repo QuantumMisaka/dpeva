@@ -37,7 +37,7 @@
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="../../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="../../_static/documentation_options.js?v=6acd3760"></script>
+    <script src="../../_static/documentation_options.js?v=a25fec3b"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -194,6 +194,8 @@
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Governance</span></p>
 <ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../docs-governance-quickstart.html">文档治理快速上手（开发者与 AI）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../process-asset-lifecycle.html">过程资产生命周期（AI 草案到项目文档）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../policy/README.html">Policy（制度与规范）</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../plans/governance/index.html">Doc System Planning</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../plans/governance/README.html">README</a></li>
@@ -205,7 +207,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../../architecture/decisions/README.html">README</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../architecture/decisions/2026-02-04-deepmd-dependency.html">ADR: DeepMD-kit 依赖管理策略</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../README.html">Guides（操作指南）</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../docs-governance-quickstart.html">文档治理快速上手（开发者与 AI）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../deployment.html">GitHub Actions 文档部署指南</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../developer/README.html">Developer Guides</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../developer/config-docs-maintenance.html">变量说明文档维护指南</a></li>
@@ -399,7 +400,7 @@ document.write(`
 <ul class="simple">
 <li><p>Status: active</p></li>
 <li><p>Audience: Developers / Infra</p></li>
-<li><p>Last-Updated: 2026-02-18</p></li>
+<li><p>Last-Updated: 2026-03-11</p></li>
 </ul>
 <p>本报告给出基于真实生产目录 <code class="docutils literal notranslate"><span class="pre">/test/test-for-multiple-datapool</span></code> (File missing) 反推的集成测试设计，并交付可执行的 Slurm 编排用例与输入裁剪方案。</p>
 <section id="id1">
@@ -481,7 +482,7 @@ document.write(`
 <li><p>Feature（候选池）→ <code class="docutils literal notranslate"><span class="pre">desc_pool/&lt;pool&gt;/&lt;system&gt;.npy</span></code></p></li>
 <li><p>Feature（训练集）→ <code class="docutils literal notranslate"><span class="pre">desc_train/&lt;system&gt;.npy</span></code></p></li>
 <li><p>Train（3 模型）→ <code class="docutils literal notranslate"><span class="pre">0..2/model.ckpt.pt</span></code> + <code class="docutils literal notranslate"><span class="pre">train.out</span></code>（含完成标记）</p></li>
-<li><p>Infer（3 模型）→ <code class="docutils literal notranslate"><span class="pre">0..2/test_val/results.e.out</span></code> + <code class="docutils literal notranslate"><span class="pre">test_job.log</span></code>（含完成标记）</p></li>
+<li><p>Infer（3 模型）→ <code class="docutils literal notranslate"><span class="pre">0..2/test_val/results.e.out</span></code> + <code class="docutils literal notranslate"><span class="pre">test_job.out</span></code>（含完成标记）</p></li>
 <li><p>Collect（CPU）→ <code class="docutils literal notranslate"><span class="pre">dpeva_uq_result/dataframe/final_df.csv</span></code> + <code class="docutils literal notranslate"><span class="pre">collect_slurm.out</span></code>（含完成标记）</p></li>
 </ol>
 <p>核心断言（最小验收输出）：</p>
@@ -501,7 +502,7 @@ document.write(`
 </ul>
 <p>参考：</p>
 <ul class="simple">
-<li><p>/reference/config_schema.md</p></li>
+<li><p>/source/api/config.rst</p></li>
 </ul>
 </section>
 </section>
@@ -529,7 +530,7 @@ document.write(`
 <h2>7. 风险与边界<a class="headerlink" href="#id8" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p>该集成测试依赖 Slurm 与 DeepMD 运行环境，不建议默认纳入无 Slurm 的 CI。</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">collect_slurm.out</span></code>、<code class="docutils literal notranslate"><span class="pre">train.out</span></code>、<code class="docutils literal notranslate"><span class="pre">test_job.log</span></code> 等日志文件名来自当前 Workflow/Manager 的 JobConfig 固化设置；若未来变更，应同步更新编排器的监控路径。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">collect_slurm.out</span></code>、<code class="docutils literal notranslate"><span class="pre">train.out</span></code>、<code class="docutils literal notranslate"><span class="pre">test_job.out</span></code> 等日志文件名来自当前 Workflow/Manager 的 JobConfig 固化设置；若未来变更，应同步更新编排器的监控路径。</p></li>
 </ul>
 </section>
 <section id="id9">
@@ -543,6 +544,7 @@ document.write(`
 <section id="id10">
 <h2>9. 变更记录<a class="headerlink" href="#id10" title="Link to this heading">#</a></h2>
 <ul class="simple">
+<li><p>2026-03-11：更新配置字段入口与推理日志文件名，确保与当前实现一致。</p></li>
 <li><p>2026-02-18：形成测试专题主页，统一交付物索引、链式编排原则与运行说明。</p></li>
 </ul>
 </section>

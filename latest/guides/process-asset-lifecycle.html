@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Uncertainty API &#8212; DP-EVA Documentation</title>
+    <title>过程资产生命周期（AI 草案到项目文档） &#8212; DP-EVA Documentation</title>
   
   
   
@@ -42,11 +42,11 @@
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
     <script src="../_static/translations.js?v=beaddf03"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'api/uncertain';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'guides/process-asset-lifecycle';</script>
     <link rel="index" title="索引" href="../genindex.html" />
     <link rel="search" title="搜索" href="../search.html" />
-    <link rel="next" title="Submission API" href="submission.html" />
-    <link rel="prev" title="Sampling API" href="sampling.html" />
+    <link rel="next" title="Policy（制度与规范）" href="../policy/README.html" />
+    <link rel="prev" title="文档治理快速上手（开发者与 AI）" href="docs-governance-quickstart.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="zh-CN"/>
   </head>
@@ -152,15 +152,15 @@
     <div class="bd-toc-item navbar-nav active">
         <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="../guides/installation.html">安装与环境准备（Installation）</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../guides/quickstart.html">Quickstart（最短路径跑通）</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../guides/cli.html">CLI 使用指南</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../guides/configuration.html">配置编写指南（Configuration）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">安装与环境准备（Installation）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart（最短路径跑通）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cli.html">CLI 使用指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="configuration.html">配置编写指南（Configuration）</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">User Guides</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="../guides/slurm.html">Slurm 使用与排障指南</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../guides/troubleshooting.html">Troubleshooting（常见问题与排查）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="slurm.html">Slurm 使用与排障指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="troubleshooting.html">Troubleshooting（常见问题与排查）</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference</span></p>
 <ul class="nav bd-sidenav">
@@ -173,29 +173,29 @@
 </details></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Developer Guide</span></p>
-<ul class="current nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="../guides/developer-guide.html">DP-EVA 项目开发文档</a></li>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="developer-guide.html">DP-EVA 项目开发文档</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../architecture/README.html">Architecture（系统结构）</a></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="config.html">Configuration Reference</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
-<li class="toctree-l2"><a class="reference internal" href="config/submission.html">Common &amp; Submission Configuration</a></li>
-<li class="toctree-l2"><a class="reference internal" href="config/feature.html">Feature Generation Configuration</a></li>
-<li class="toctree-l2"><a class="reference internal" href="config/training.html">Training Configuration</a></li>
-<li class="toctree-l2"><a class="reference internal" href="config/inference.html">Inference Configuration</a></li>
-<li class="toctree-l2"><a class="reference internal" href="config/collection.html">Collection (Active Learning) Configuration</a></li>
-<li class="toctree-l2"><a class="reference internal" href="config/labeling.html">Labeling Configuration</a></li>
-<li class="toctree-l2"><a class="reference internal" href="config/analysis.html">Analysis Configuration</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../api/config.html">Configuration Reference</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../api/config/submission.html">Common &amp; Submission Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/config/feature.html">Feature Generation Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/config/training.html">Training Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/config/inference.html">Inference Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/config/collection.html">Collection (Active Learning) Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/config/labeling.html">Labeling Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/config/analysis.html">Analysis Configuration</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1"><a class="reference internal" href="workflows.html">Workflows API</a></li>
-<li class="toctree-l1"><a class="reference internal" href="labeling.html">Labeling API</a></li>
-<li class="toctree-l1"><a class="reference internal" href="sampling.html">Sampling API</a></li>
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">Uncertainty API</a></li>
-<li class="toctree-l1"><a class="reference internal" href="submission.html">Submission API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/workflows.html">Workflows API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/labeling.html">Labeling API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/sampling.html">Sampling API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/uncertain.html">Uncertainty API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/submission.html">Submission API</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Governance</span></p>
-<ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="../guides/docs-governance-quickstart.html">文档治理快速上手（开发者与 AI）</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../guides/process-asset-lifecycle.html">过程资产生命周期（AI 草案到项目文档）</a></li>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="docs-governance-quickstart.html">文档治理快速上手（开发者与 AI）</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">过程资产生命周期（AI 草案到项目文档）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../policy/README.html">Policy（制度与规范）</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../plans/governance/index.html">Doc System Planning</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../plans/governance/README.html">README</a></li>
@@ -206,14 +206,14 @@
 <li class="toctree-l1"><a class="reference internal" href="../architecture/design-report.html">DP-EVA 项目设计模式与架构分析报告</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../architecture/decisions/README.html">README</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../architecture/decisions/2026-02-04-deepmd-dependency.html">ADR: DeepMD-kit 依赖管理策略</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../guides/README.html">Guides（操作指南）</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../guides/deployment.html">GitHub Actions 文档部署指南</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../guides/developer/README.html">Developer Guides</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../guides/developer/config-docs-maintenance.html">变量说明文档维护指南</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../guides/testing/README.html">Testing（测试指南）</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../guides/testing/integration-config-templates.html">DP-EVA 集成测试最小配置模板（Slurm）</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../guides/testing/integration-slurm.html">DP-EVA 集成测试设计与交付报告（Slurm + Multi DataPool）</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../guides/testing/multi-datapool-artifacts.html">test-for-multiple-datapool 生产目录输入输出分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="README.html">Guides（操作指南）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="deployment.html">GitHub Actions 文档部署指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="developer/README.html">Developer Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="developer/config-docs-maintenance.html">变量说明文档维护指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="testing/README.html">Testing（测试指南）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="testing/integration-config-templates.html">DP-EVA 集成测试最小配置模板（Slurm）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="testing/integration-slurm.html">DP-EVA 集成测试设计与交付报告（Slurm + Multi DataPool）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="testing/multi-datapool-artifacts.html">test-for-multiple-datapool 生产目录输入输出分析</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../plans/README.html">开发计划 (Development Plans)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../policy/contributing.html">文档贡献指南（Contributing）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../policy/docs-structure.html">文档结构与命名规范（Docs Structure &amp; Naming）</a></li>
@@ -273,7 +273,7 @@
       
       
       
-      <li><a href="../_sources/api/uncertain.rst" target="_blank"
+      <li><a href="../_sources/guides/process-asset-lifecycle.md" target="_blank"
    class="btn btn-sm btn-download-source-button dropdown-item"
    title="下载源文件"
    data-bs-placement="left" data-bs-toggle="tooltip"
@@ -283,7 +283,7 @@
 <span class="btn__icon-container">
   <i class="fas fa-file"></i>
   </span>
-<span class="btn__text-container">.rst</span>
+<span class="btn__text-container">.md</span>
 </a>
 </li>
       
@@ -344,7 +344,9 @@ document.write(`
   </button>
 `);
 </script>
-
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
 </div></div>
       
     </div>
@@ -355,11 +357,24 @@ document.write(`
               
 
 <div id="jb-print-docs-body" class="onlyprint">
-    <h1>Uncertainty API</h1>
+    <h1>过程资产生命周期（AI 草案到项目文档）</h1>
     <!-- Table of contents -->
     <div id="print-main-content">
         <div id="jb-print-toc">
             
+            <div>
+                <h2> 目录 </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">1. 目标与原则</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">2. 四层落点模型</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#docs">3. 准入标准（迁入 docs 的前提）</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">4. 标准迁移流程</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#sphinx">5. Sphinx 展示策略</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">6. 提交前检查</a></li>
+</ul>
+            </nav>
         </div>
     </div>
 </div>
@@ -369,9 +384,86 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="module-dpeva.uncertain">
-<span id="uncertainty-api"></span><h1>Uncertainty API<a class="headerlink" href="#module-dpeva.uncertain" title="Link to this heading">#</a></h1>
-<p>Package implementing Uncertainty Quantification and related visualization</p>
+  <section id="ai">
+<h1>过程资产生命周期（AI 草案到项目文档）<a class="headerlink" href="#ai" title="Link to this heading">#</a></h1>
+<p>本文定义 AI 开发场景下，计划与报告类文档从“执行草案”到“项目资产”的标准迁移路径，确保文档系统高可读、低噪音、可追溯。</p>
+<section id="id1">
+<h2>1. 目标与原则<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p>降噪：将高频中间记录与稳定结论文档分层管理。</p></li>
+<li><p>可追溯：每份进入 <code class="docutils literal notranslate"><span class="pre">docs/</span></code> 的文档都可被团队复核并长期引用。</p></li>
+<li><p>可归档：发布后形成版本化历史，不覆盖旧结论。</p></li>
+</ul>
+</section>
+<section id="id2">
+<h2>2. 四层落点模型<a class="headerlink" href="#id2" title="Link to this heading">#</a></h2>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>阶段</p></th>
+<th class="head"><p>目录</p></th>
+<th class="head"><p>内容类型</p></th>
+<th class="head"><p>是否默认进入 Sphinx 主导航</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>执行草案</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">.trae/documents/</span></code></p></td>
+<td><p>临时计划、调试记录、阶段草稿</p></td>
+<td><p>否</p></td>
+</tr>
+<tr class="row-odd"><td><p>收敛计划</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">docs/plans/</span></code></p></td>
+<td><p>团队共享计划、验收标准、迁移策略</p></td>
+<td><p>是（精选入口）</p></td>
+</tr>
+<tr class="row-even"><td><p>收敛结论</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">docs/reports/</span></code></p></td>
+<td><p>迭代总结、评审结论、发布总结</p></td>
+<td><p>是（精选入口）</p></td>
+</tr>
+<tr class="row-odd"><td><p>历史归档</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">docs/archive/vX.Y.Z/{plans,reports}/</span></code></p></td>
+<td><p>已发布的冻结历史</p></td>
+<td><p>否（默认）</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="docs">
+<h2>3. 准入标准（迁入 docs 的前提）<a class="headerlink" href="#docs" title="Link to this heading">#</a></h2>
+<p>从 <code class="docutils literal notranslate"><span class="pre">.trae/documents/</span></code> 迁入 <code class="docutils literal notranslate"><span class="pre">docs/plans/</span></code> 或 <code class="docutils literal notranslate"><span class="pre">docs/reports/</span></code> 前，必须满足：</p>
+<ol class="arabic simple">
+<li><p>可理解：非当前执行者可独立阅读并复述核心结论。</p></li>
+<li><p>可复核：包含测试、构建、评审或实验依据。</p></li>
+<li><p>可复用：对后续开发、治理或发布仍有参考价值。</p></li>
+</ol>
+</section>
+<section id="id3">
+<h2>4. 标准迁移流程<a class="headerlink" href="#id3" title="Link to this heading">#</a></h2>
+<ol class="arabic simple">
+<li><p><strong>草案阶段</strong>：在 <code class="docutils literal notranslate"><span class="pre">.trae/documents/</span></code> 高频迭代。</p></li>
+<li><p><strong>收敛阶段</strong>：筛选稳定内容迁入 <code class="docutils literal notranslate"><span class="pre">docs/plans/</span></code> 或 <code class="docutils literal notranslate"><span class="pre">docs/reports/</span></code>。</p></li>
+<li><p><strong>索引阶段</strong>：更新对应 README 与 <code class="docutils literal notranslate"><span class="pre">toctree</span></code>，避免孤立文档。</p></li>
+<li><p><strong>归档阶段</strong>：版本发布或任务闭环后迁入 <code class="docutils literal notranslate"><span class="pre">docs/archive/vX.Y.Z/</span></code>。</p></li>
+</ol>
+</section>
+<section id="sphinx">
+<h2>5. Sphinx 展示策略<a class="headerlink" href="#sphinx" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p>主导航仅展示“稳定入口与收敛文档”，不直接展示执行草案。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">docs/assets/</span></code> 为静态资源目录，不作为独立页面。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">docs/archive/</span></code> 默认不进主导航，按需通过归档索引访问。</p></li>
+</ul>
+</section>
+<section id="id4">
+<h2>6. 提交前检查<a class="headerlink" href="#id4" title="Link to this heading">#</a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3<span class="w"> </span>scripts/doc_check.py
+python3<span class="w"> </span>scripts/check_docs_freshness.py<span class="w"> </span>--days<span class="w"> </span><span class="m">90</span>
+make<span class="w"> </span>-C<span class="w"> </span>docs<span class="w"> </span>html<span class="w"> </span><span class="nv">SPHINXOPTS</span><span class="o">=</span><span class="s2">&quot;-W --keep-going&quot;</span>
+</pre></div>
+</div>
+</section>
 </section>
 
 
@@ -386,20 +478,20 @@ document.write(`
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="sampling.html"
+       href="docs-governance-quickstart.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">上一页</p>
-        <p class="prev-next-title">Sampling API</p>
+        <p class="prev-next-title">文档治理快速上手（开发者与 AI）</p>
       </div>
     </a>
     <a class="right-next"
-       href="submission.html"
+       href="../policy/README.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">下一页</p>
-        <p class="prev-next-title">Submission API</p>
+        <p class="prev-next-title">Policy（制度与规范）</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -409,6 +501,26 @@ document.write(`
             </div>
             
             
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> 目录
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">1. 目标与原则</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">2. 四层落点模型</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#docs">3. 准入标准（迁入 docs 的前提）</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">4. 标准迁移流程</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#sphinx">5. Sphinx 展示策略</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">6. 提交前检查</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
               
             
           </div>

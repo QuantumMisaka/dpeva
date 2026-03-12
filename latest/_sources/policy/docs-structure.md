@@ -2,7 +2,7 @@
 title: 文档结构与命名规范 (Docs Structure & Naming)
 status: active
 audience: Maintainers / Developers
-last-updated: 2026-03-09
+last-updated: 2026-03-11
 ---
 
 # 文档结构与命名规范（Docs Structure & Naming）
@@ -36,7 +36,7 @@ last-updated: 2026-03-09
 
 
 - 目录名：全小写，短语用 `-` 连接（如 `guides/testing`）。
-- 主文档：语义清晰、稳定（如 `quickstart.md`、`config_schema.md`）。
+- 主文档：语义清晰、稳定（如 `quickstart.md`、`config.rst`）。
 - 审计/计划类报告：使用 `YYYY-MM-DD-<topic>.md`（例如 `2026-02-19-doc-accuracy-audit.md`）。
 - 禁止在仓库内保留旧入口跳转页；旧路径兼容性应通过站点侧 301 或发布说明解决。
 
@@ -72,7 +72,6 @@ last-updated: 2026-03-09
 │       └── multi-datapool-artifacts.md
 ├── reference
 │   ├── README.md
-│   ├── config_schema.md
 │   └── validation.md
 ├── architecture
 │   ├── README.md

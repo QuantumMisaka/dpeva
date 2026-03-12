@@ -36,7 +36,7 @@
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="_static/documentation_options.js?v=6acd3760"></script>
+    <script src="_static/documentation_options.js?v=a25fec3b"></script>
     <script src="_static/doctools.js?v=9bcbadda"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -629,6 +629,8 @@ window.runMermaid = runMermaid;</script>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Governance</span></p>
 <ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="guides/docs-governance-quickstart.html">文档治理快速上手（开发者与 AI）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guides/process-asset-lifecycle.html">过程资产生命周期（AI 草案到项目文档）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="policy/README.html">Policy（制度与规范）</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="plans/governance/index.html">Doc System Planning</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="plans/governance/README.html">README</a></li>
@@ -640,7 +642,6 @@ window.runMermaid = runMermaid;</script>
 <li class="toctree-l1"><a class="reference internal" href="architecture/decisions/README.html">README</a></li>
 <li class="toctree-l1"><a class="reference internal" href="architecture/decisions/2026-02-04-deepmd-dependency.html">ADR: DeepMD-kit 依赖管理策略</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guides/README.html">Guides（操作指南）</a></li>
-<li class="toctree-l1"><a class="reference internal" href="guides/docs-governance-quickstart.html">文档治理快速上手（开发者与 AI）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guides/deployment.html">GitHub Actions 文档部署指南</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guides/developer/README.html">Developer Guides</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guides/developer/config-docs-maintenance.html">变量说明文档维护指南</a></li>
@@ -961,13 +962,15 @@ document.write(`
 </li>
       <li><a href="api/config/labeling.html#dpeva.config.LabelingConfig.input_data_path">input_data_path（dpeva.config.LabelingConfig 属性）</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/config/training.html#dpeva.config.TrainingConfig.input_json_path">input_json_path（dpeva.config.TrainingConfig 属性）</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/config/labeling.html#dpeva.config.LabelingConfig.integration_deduplicate">integration_deduplicate（dpeva.config.LabelingConfig 属性）</a>
 </li>
       <li><a href="api/config/labeling.html#dpeva.config.LabelingConfig.integration_enabled">integration_enabled（dpeva.config.LabelingConfig 属性）</a>
+</li>
+      <li><a href="api/config/labeling.html#dpeva.config.LabelingConfig.integration_output_format">integration_output_format（dpeva.config.LabelingConfig 属性）</a>
 </li>
   </ul></td>
 </tr></table>
@@ -1251,6 +1254,8 @@ document.write(`
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/config/submission.html#dpeva.config.SubmissionConfig.validate_env_setup">validate_env_setup()（dpeva.config.SubmissionConfig 类方法）</a>
+</li>
+      <li><a href="api/config/labeling.html#dpeva.config.LabelingConfig.validate_labeling_output_format">validate_labeling_output_format()（dpeva.config.LabelingConfig 类方法）</a>
 </li>
       <li><a href="api/config/submission.html#dpeva.config.BaseWorkflowConfig.validate_omp_threads">validate_omp_threads()（dpeva.config.BaseWorkflowConfig 类方法）</a>
 </li>

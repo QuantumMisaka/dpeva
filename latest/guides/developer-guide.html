@@ -37,7 +37,7 @@
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="../_static/documentation_options.js?v=6acd3760"></script>
+    <script src="../_static/documentation_options.js?v=a25fec3b"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -630,6 +630,8 @@ window.runMermaid = runMermaid;</script>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Governance</span></p>
 <ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="docs-governance-quickstart.html">文档治理快速上手（开发者与 AI）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="process-asset-lifecycle.html">过程资产生命周期（AI 草案到项目文档）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../policy/README.html">Policy（制度与规范）</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../plans/governance/index.html">Doc System Planning</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../plans/governance/README.html">README</a></li>
@@ -641,7 +643,6 @@ window.runMermaid = runMermaid;</script>
 <li class="toctree-l1"><a class="reference internal" href="../architecture/decisions/README.html">README</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../architecture/decisions/2026-02-04-deepmd-dependency.html">ADR: DeepMD-kit 依赖管理策略</a></li>
 <li class="toctree-l1"><a class="reference internal" href="README.html">Guides（操作指南）</a></li>
-<li class="toctree-l1"><a class="reference internal" href="docs-governance-quickstart.html">文档治理快速上手（开发者与 AI）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="deployment.html">GitHub Actions 文档部署指南</a></li>
 <li class="toctree-l1"><a class="reference internal" href="developer/README.html">Developer Guides</a></li>
 <li class="toctree-l1"><a class="reference internal" href="developer/config-docs-maintenance.html">变量说明文档维护指南</a></li>
@@ -885,18 +886,18 @@ document.write(`
 <ul class="simple">
 <li><p>Status: active</p></li>
 <li><p>Audience: Developers</p></li>
-<li><p>Last-Updated: 2026-03-03</p></li>
+<li><p>Last-Updated: 2026-03-12</p></li>
 <li><p>Related:</p>
 <ul>
-<li><p>配置字段字典：/docs/reference/config_schema.md</p></li>
+<li><p>配置字段字典：/docs/source/api/config.rst</p></li>
 <li><p>校验规则补充：/docs/reference/validation.md</p></li>
 <li><p>上游软件与职责：/docs/reference/upstream-software.md</p></li>
 </ul>
 </li>
 </ul>
 <ul class="simple">
-<li><p><strong>版本</strong>: 0.6.3</p></li>
-<li><p><strong>生成日期</strong>: 2026-03-10</p></li>
+<li><p><strong>版本</strong>: 0.6.5</p></li>
+<li><p><strong>生成日期</strong>: 2026-03-12</p></li>
 <li><p><strong>作者</strong>: Quantum Misaka with Trae SOLO</p></li>
 </ul>
 <hr class="docutils" />
@@ -1286,7 +1287,7 @@ dpeva<span class="w"> </span>--help
 <h3>4.3 配置参数说明<a class="headerlink" href="#id5" title="Link to this heading">#</a></h3>
 <p>详细的输入参数定义、类型约束及验证规则，请参阅 API 文档：</p>
 <ul class="simple">
-<li><p><strong>参数列表</strong>: <a class="reference external" href="https://github.com/QuantumMisaka/dpeva/blob/main/docs/reference/config_schema.md">config_schema.md</a></p></li>
+<li><p><strong>参数列表</strong>: <a class="reference external" href="https://github.com/QuantumMisaka/dpeva/blob/main/docs/source/api/config.rst">config.rst</a></p></li>
 <li><p><strong>验证规则</strong>: <a class="reference external" href="https://github.com/QuantumMisaka/dpeva/blob/main/docs/reference/validation.md">validation.md</a></p></li>
 </ul>
 <p>以下仅展示标准 JSON 配置文件的基本结构概览。</p>
@@ -1327,7 +1328,7 @@ dpeva<span class="w"> </span>--help
 </ul>
 <p>参考：</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">/docs/reference/config_schema.md</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">/docs/source/api/config.rst</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">/docs/reference/validation.md</span></code></p></li>
 </ul>
 </section>
@@ -1336,7 +1337,7 @@ dpeva<span class="w"> </span>--help
 <p>Auto-UQ 用于根据数据分布自动确定筛选边界；具体的字段与约束以 Reference 文档为准，并在后续迭代中建议沉淀为独立章节以避免与算法实现脱节。</p>
 <p>参考：</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">/docs/reference/config_schema.md</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">/docs/source/api/config.rst</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">/docs/reference/validation.md</span></code></p></li>
 </ul>
 </section>
@@ -1344,12 +1345,12 @@ dpeva<span class="w"> </span>--help
 <h4>4.4.3 采样参数说明 (Sampling)<a class="headerlink" href="#sampling" title="Link to this heading">#</a></h4>
 <p>采样相关参数（DIRECT/2-direct/joint 等）属于收集工作流的核心可调维度，建议：</p>
 <ul class="simple">
-<li><p>只在 <code class="docutils literal notranslate"><span class="pre">/docs/reference/config_schema.md</span></code> 维护字段字典与默认值</p></li>
+<li><p>只在 <code class="docutils literal notranslate"><span class="pre">/docs/source/api/config.rst</span></code> 维护字段字典与默认值</p></li>
 <li><p>在指南中仅描述“如何选择参数组”的经验规则，并引用对应字段</p></li>
 </ul>
 <p>参考：</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">/docs/reference/config_schema.md</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">/docs/source/api/config.rst</span></code></p></li>
 </ul>
 </section>
 </section>
@@ -1462,6 +1463,30 @@ A: 这是预期行为。在联合模式下，<code class="docutils literal notra
 <section id="current-era-v0-6-x">
 <h4><strong>Current Era (v0.6.x)</strong><a class="headerlink" href="#current-era-v0-6-x" title="Link to this heading">#</a></h4>
 <ul class="simple">
+<li><p><strong>v0.6.5</strong> (2026-03-12):</p>
+<ul>
+<li><p><strong>[修复]</strong> 修复 Labeling integration 中 <code class="docutils literal notranslate"><span class="pre">atom_names</span></code> 顺序敏感误报，支持在元素集合一致时自动归一化顺序并完成合并。</p></li>
+<li><p><strong>[重构]</strong> 完成 Labeling workflow 三阶段解耦，提供 <code class="docutils literal notranslate"><span class="pre">run_prepare/run_execute/run_postprocess</span></code> 显式阶段入口并保留默认全流程编排。</p></li>
+<li><p><strong>[增强]</strong> <code class="docutils literal notranslate"><span class="pre">dpeva</span> <span class="pre">label</span></code> 新增 <code class="docutils literal notranslate"><span class="pre">--stage</span> <span class="pre">all|prepare|execute|postprocess</span></code> 阶段化执行能力，支持不重算 ABACUS 的后处理复用。</p></li>
+<li><p><strong>[稳定性]</strong> 增强 prepare 幂等性，执行前自动重置 <code class="docutils literal notranslate"><span class="pre">inputs</span></code> 工作区，消除重复执行时历史残留导致的任务打包冲突。</p></li>
+<li><p><strong>[可观测性]</strong> 三阶段日志独立落盘为 <code class="docutils literal notranslate"><span class="pre">labeling_prepare.log</span></code>、<code class="docutils literal notranslate"><span class="pre">labeling_execute.log</span></code>、<code class="docutils literal notranslate"><span class="pre">labeling_postprocess.log</span></code>，提升排障效率。</p></li>
+<li><p><strong>[测试]</strong> 新增并补强 integration、workflow、CLI、manager 相关单测，<code class="docutils literal notranslate"><span class="pre">pytest</span> <span class="pre">tests/unit</span></code> 全量通过。</p></li>
+<li><p><strong>[特性]</strong> 为 CLI 所有子命令实现配置文件的 Schema 前置校验，在工作流启动前即拦截无效参数。</p></li>
+<li><p><strong>[特性]</strong> Labeling 集成阶段新增 <code class="docutils literal notranslate"><span class="pre">output_format</span></code> 参数，支持自定义合并后的数据集格式（默认 <code class="docutils literal notranslate"><span class="pre">deepmd/npy</span></code>）。</p></li>
+<li><p><strong>[文档]</strong> 重构 <code class="docutils literal notranslate"><span class="pre">examples</span></code> 目录结构，移除冗余层级，并更新对应的 <code class="docutils literal notranslate"><span class="pre">README</span></code> 与用户指南。</p></li>
+<li><p><strong>[可视化]</strong> 更新品牌视觉资产（Logo），优化 PCA 绘图配色（#FFC000/#6A5ACD）及采样可视化逻辑。</p></li>
+<li><p><strong>[文档]</strong> 更新 README 展示新标识，新增可视化改进实施计划。</p></li>
+</ul>
+</li>
+<li><p><strong>v0.6.4</strong> (2026-03-11):</p>
+<ul>
+<li><p><strong>[修复]</strong> 完成 R01-R37 全量闭环，修复安全、稳定性、测试与文档一致性问题。</p></li>
+<li><p><strong>[重构]</strong> 拆分 Labeling/Collect/Analysis 工作流关键长函数，降低职责耦合并增强可测试性。</p></li>
+<li><p><strong>[测试]</strong> 新增并补强 strategy、visualization、analysis、collect 相关回归测试，保持 unit/integration 全绿。</p></li>
+<li><p><strong>[治理]</strong> 完成计划文档与评审报告归档至 <code class="docutils literal notranslate"><span class="pre">docs/archive/v0.6.4/</span></code>，同步更新活动索引与归档索引。</p></li>
+<li><p><strong>[发布]</strong> 版本号升级至 0.6.4，并同步 README 与 Sphinx 版本标识。</p></li>
+</ul>
+</li>
 <li><p><strong>v0.6.3</strong> (2026-03-10):</p>
 <ul>
 <li><p><strong>[文档]</strong> 重构归档目录结构并完善文档生命周期规范，确保历史文档有序归档。</p></li>

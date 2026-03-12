@@ -37,7 +37,7 @@
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="../_static/documentation_options.js?v=6acd3760"></script>
+    <script src="../_static/documentation_options.js?v=a25fec3b"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -194,6 +194,8 @@
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Governance</span></p>
 <ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../guides/docs-governance-quickstart.html">文档治理快速上手（开发者与 AI）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/process-asset-lifecycle.html">过程资产生命周期（AI 草案到项目文档）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="README.html">Policy（制度与规范）</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../plans/governance/index.html">Doc System Planning</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../plans/governance/README.html">README</a></li>
@@ -205,7 +207,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../architecture/decisions/README.html">README</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../architecture/decisions/2026-02-04-deepmd-dependency.html">ADR: DeepMD-kit 依赖管理策略</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../guides/README.html">Guides（操作指南）</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../guides/docs-governance-quickstart.html">文档治理快速上手（开发者与 AI）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../guides/deployment.html">GitHub Actions 文档部署指南</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../guides/developer/README.html">Developer Guides</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../guides/developer/config-docs-maintenance.html">变量说明文档维护指南</a></li>
@@ -378,6 +379,7 @@ document.write(`
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#process-asset-management">7. 过程资产管理规范 (Process Asset Management)</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#code-review-reports">7.1 代码审查报告 (Code Review Reports)</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#feature-plans-specs">7.2 功能开发细则 (Feature Plans/Specs)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#docs">7.2.1 收敛准入标准（迁入 docs）</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#archiving">7.3 文档归档 (Archiving)</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#index-maintenance">7.4 索引文件维护 (Index Maintenance)</a></li>
 </ul>
@@ -530,7 +532,8 @@ document.write(`
 <section id="code-review-reports">
 <h3>7.1 代码审查报告 (Code Review Reports)<a class="headerlink" href="#code-review-reports" title="Link to this heading">#</a></h3>
 <ul class="simple">
-<li><p><strong>落点</strong>: <code class="docutils literal notranslate"><span class="pre">docs/reports/</span></code></p></li>
+<li><p><strong>草案落点</strong>: <code class="docutils literal notranslate"><span class="pre">.trae/documents/</span></code></p></li>
+<li><p><strong>收敛落点</strong>: <code class="docutils literal notranslate"><span class="pre">docs/reports/</span></code></p></li>
 <li><p><strong>命名</strong>: <code class="docutils literal notranslate"><span class="pre">YYYY-MM-DD-Code-Review-&lt;Feature/Module&gt;.md</span></code></p></li>
 <li><p><strong>内容</strong>: 审查对象、发现的问题、修复建议、修复状态。</p></li>
 <li><p><strong>归档</strong>: 审查结束并修复闭环后，随版本发布归档至 <code class="docutils literal notranslate"><span class="pre">docs/archive/vX.Y.Z/reports/</span></code>。</p></li>
@@ -539,11 +542,21 @@ document.write(`
 <section id="feature-plans-specs">
 <h3>7.2 功能开发细则 (Feature Plans/Specs)<a class="headerlink" href="#feature-plans-specs" title="Link to this heading">#</a></h3>
 <ul class="simple">
-<li><p><strong>落点</strong>: <code class="docutils literal notranslate"><span class="pre">docs/plans/</span></code></p></li>
+<li><p><strong>草案落点</strong>: <code class="docutils literal notranslate"><span class="pre">.trae/documents/</span></code></p></li>
+<li><p><strong>收敛落点</strong>: <code class="docutils literal notranslate"><span class="pre">docs/plans/</span></code></p></li>
 <li><p><strong>命名</strong>: <code class="docutils literal notranslate"><span class="pre">YYYY-MM-DD-&lt;Feature&gt;-Plan.md</span></code> 或 <code class="docutils literal notranslate"><span class="pre">YYYY-MM-DD-&lt;Feature&gt;-Spec.md</span></code></p></li>
 <li><p><strong>内容</strong>: 目标、范围、设计方案、测试计划、任务分解。</p></li>
 <li><p><strong>归档</strong>: 功能开发完成并通过验收后，归档至 <code class="docutils literal notranslate"><span class="pre">docs/archive/vX.Y.Z/plans/</span></code>。</p></li>
 </ul>
+</section>
+<section id="docs">
+<h3>7.2.1 收敛准入标准（迁入 docs）<a class="headerlink" href="#docs" title="Link to this heading">#</a></h3>
+<p>从 <code class="docutils literal notranslate"><span class="pre">.trae/documents/</span></code> 迁入 <code class="docutils literal notranslate"><span class="pre">docs/plans/</span></code> 或 <code class="docutils literal notranslate"><span class="pre">docs/reports/</span></code> 前，需满足：</p>
+<ol class="arabic simple">
+<li><p>文档可被非当前执行者独立理解；</p></li>
+<li><p>结论具备可复核证据（测试、构建或审查依据）；</p></li>
+<li><p>内容具有后续复用价值（而非一次性调试噪音）。</p></li>
+</ol>
 </section>
 <section id="archiving">
 <h3>7.3 文档归档 (Archiving)<a class="headerlink" href="#archiving" title="Link to this heading">#</a></h3>
@@ -642,6 +655,7 @@ document.write(`
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#process-asset-management">7. 过程资产管理规范 (Process Asset Management)</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#code-review-reports">7.1 代码审查报告 (Code Review Reports)</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#feature-plans-specs">7.2 功能开发细则 (Feature Plans/Specs)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#docs">7.2.1 收敛准入标准（迁入 docs）</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#archiving">7.3 文档归档 (Archiving)</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#index-maintenance">7.4 索引文件维护 (Index Maintenance)</a></li>
 </ul>

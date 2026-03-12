@@ -37,7 +37,7 @@
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="../_static/documentation_options.js?v=6acd3760"></script>
+    <script src="../_static/documentation_options.js?v=a25fec3b"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -194,6 +194,8 @@
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Governance</span></p>
 <ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="docs-governance-quickstart.html">文档治理快速上手（开发者与 AI）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="process-asset-lifecycle.html">过程资产生命周期（AI 草案到项目文档）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../policy/README.html">Policy（制度与规范）</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../plans/governance/index.html">Doc System Planning</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../plans/governance/README.html">README</a></li>
@@ -205,7 +207,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../architecture/decisions/README.html">README</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../architecture/decisions/2026-02-04-deepmd-dependency.html">ADR: DeepMD-kit 依赖管理策略</a></li>
 <li class="toctree-l1"><a class="reference internal" href="README.html">Guides（操作指南）</a></li>
-<li class="toctree-l1"><a class="reference internal" href="docs-governance-quickstart.html">文档治理快速上手（开发者与 AI）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="deployment.html">GitHub Actions 文档部署指南</a></li>
 <li class="toctree-l1"><a class="reference internal" href="developer/README.html">Developer Guides</a></li>
 <li class="toctree-l1"><a class="reference internal" href="developer/config-docs-maintenance.html">变量说明文档维护指南</a></li>
@@ -408,7 +409,7 @@ document.write(`
 <li><p>Status: active</p></li>
 <li><p>Audience: Users / Developers / Infra</p></li>
 <li><p>Applies-To: <code class="docutils literal notranslate"><span class="pre">submission.backend=&quot;slurm&quot;</span></code></p></li>
-<li><p>Last-Updated: 2026-03-03</p></li>
+<li><p>Last-Updated: 2026-03-11</p></li>
 </ul>
 <section id="id1">
 <h2>1. 目的与范围<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
@@ -426,7 +427,7 @@ document.write(`
 <h2>3. Submission 配置结构<a class="headerlink" href="#submission" title="Link to this heading">#</a></h2>
 <p>权威字段定义：</p>
 <ul class="simple">
-<li><p>../reference/config_schema.md</p></li>
+<li><p>../source/api/config.rst</p></li>
 <li><p>../reference/validation.md</p></li>
 </ul>
 <section id="id3">
@@ -482,7 +483,7 @@ document.write(`
 <p>日志位置与命名由工作流与 JobConfig 固化（随版本可能变更，以实际产物为准）：</p>
 <ul class="simple">
 <li><p>Train：<code class="docutils literal notranslate"><span class="pre">&lt;work_dir&gt;/&lt;i&gt;/train.out</span></code></p></li>
-<li><p>Infer：<code class="docutils literal notranslate"><span class="pre">&lt;work_dir&gt;/&lt;i&gt;/&lt;task_name&gt;/test_job.log</span></code></p></li>
+<li><p>Infer：<code class="docutils literal notranslate"><span class="pre">&lt;work_dir&gt;/&lt;i&gt;/&lt;task_name&gt;/test_job.out</span></code></p></li>
 <li><p>Feature：<code class="docutils literal notranslate"><span class="pre">&lt;savedir&gt;/eval_desc.log</span></code></p></li>
 <li><p>Collect：<code class="docutils literal notranslate"><span class="pre">collect_slurm.out</span></code>（Collect 的 Slurm 自调用 worker 输出）</p></li>
 </ul>
@@ -510,7 +511,7 @@ dpeva<span class="w"> </span>collect<span class="w"> </span>configs/collect.json
 </pre></div>
 </div>
 <p>对于推理：</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>tail<span class="w"> </span>-f<span class="w"> </span><span class="m">0</span>/test_val/test_job.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-F<span class="w"> </span><span class="s2">&quot;DPEVA_TAG: WORKFLOW_FINISHED&quot;</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>tail<span class="w"> </span>-f<span class="w"> </span><span class="m">0</span>/test_val/test_job.out<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-F<span class="w"> </span><span class="s2">&quot;DPEVA_TAG: WORKFLOW_FINISHED&quot;</span>
 </pre></div>
 </div>
 </section>
@@ -555,7 +556,7 @@ dpeva<span class="w"> </span>collect<span class="w"> </span>configs/collect.json
 <h3>6.4 任务运行失败但未产出完成标记<a class="headerlink" href="#id15" title="Link to this heading">#</a></h3>
 <p>处理：</p>
 <ul class="simple">
-<li><p>直接查看对应 <code class="docutils literal notranslate"><span class="pre">.out</span></code>/<code class="docutils literal notranslate"><span class="pre">test_job.log</span></code> 的错误堆栈</p></li>
+<li><p>直接查看对应 <code class="docutils literal notranslate"><span class="pre">.out</span></code>/<code class="docutils literal notranslate"><span class="pre">test_job.out</span></code> 的错误堆栈</p></li>
 <li><p>若失败发生在 DeepMD 命令内部，优先检查输入数据、模型文件、CUDA/驱动与 DeepMD 版本</p></li>
 </ul>
 <p>排障入口：</p>
@@ -567,6 +568,7 @@ dpeva<span class="w"> </span>collect<span class="w"> </span>configs/collect.json
 <section id="id16">
 <h2>7. 变更记录<a class="headerlink" href="#id16" title="Link to this heading">#</a></h2>
 <ul class="simple">
+<li><p>2026-03-11：更新配置字段入口为 API Reference，并同步 infer 日志文件名为 <code class="docutils literal notranslate"><span class="pre">test_job.out</span></code>。</p></li>
 <li><p>2026-03-03：更新完成标记语义，明确“部分失败不输出完成标记”。</p></li>
 <li><p>2026-02-18：补齐 Slurm 配置结构、日志命名与完成标记监控建议，并纳入常见故障排查路径。</p></li>
 </ul>

@@ -2,14 +2,14 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-03-09
+last-updated: 2026-03-11
 ---
 
 # DP-EVA 集成测试最小配置模板（Slurm）
 
 - Status: active
 - Audience: Developers / Infra
-- Last-Updated: 2026-02-18
+- Last-Updated: 2026-03-11
 
 对应可直接复制的模板文件位于：
 
@@ -54,7 +54,7 @@ last-updated: 2026-03-09
 
 - 模板：`infer.json`
 - 输入：`other_dpdata_all/` + `0..3/model.ckpt.pt`
-- 输出：`0..3/test_val/` 及 `test_job.log`（含完成标记）
+- 输出：`0..3/test_val/` 及 `test_job.out`（含完成标记）
 
 ## 6. Collect（普通采样）
 
@@ -87,4 +87,5 @@ last-updated: 2026-03-09
 
 ## 10. 变更记录
 
+- 2026-03-11：同步推理日志文件名为 `test_job.out`，与当前实现保持一致。
 - 2026-02-18：建立集成测试最小配置模板索引与目录/产物约定，作为测试专题的可复用资产入口。

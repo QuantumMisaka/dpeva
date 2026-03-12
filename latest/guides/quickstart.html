@@ -37,7 +37,7 @@
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="../_static/documentation_options.js?v=6acd3760"></script>
+    <script src="../_static/documentation_options.js?v=a25fec3b"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -194,6 +194,8 @@
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Governance</span></p>
 <ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="docs-governance-quickstart.html">文档治理快速上手（开发者与 AI）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="process-asset-lifecycle.html">过程资产生命周期（AI 草案到项目文档）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../policy/README.html">Policy（制度与规范）</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../plans/governance/index.html">Doc System Planning</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../plans/governance/README.html">README</a></li>
@@ -205,7 +207,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../architecture/decisions/README.html">README</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../architecture/decisions/2026-02-04-deepmd-dependency.html">ADR: DeepMD-kit 依赖管理策略</a></li>
 <li class="toctree-l1"><a class="reference internal" href="README.html">Guides（操作指南）</a></li>
-<li class="toctree-l1"><a class="reference internal" href="docs-governance-quickstart.html">文档治理快速上手（开发者与 AI）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="deployment.html">GitHub Actions 文档部署指南</a></li>
 <li class="toctree-l1"><a class="reference internal" href="developer/README.html">Developer Guides</a></li>
 <li class="toctree-l1"><a class="reference internal" href="developer/config-docs-maintenance.html">变量说明文档维护指南</a></li>
@@ -379,7 +380,8 @@ document.write(`
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#train-n">5.2 Train（训练 N 个模型）</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#infer">5.3 Infer（候选池推理）</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#collect-uq-sampling-export">5.4 Collect（UQ + Sampling + Export）</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#analysis">5.5 Analysis（结果统计）</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#label-dft">5.5 Label（DFT 标注）</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#analysis">5.6 Analysis（结果统计）</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#quickstart-slurm">6. Quickstart：Slurm 一次跑通（链式编排）</a></li>
@@ -406,7 +408,7 @@ document.write(`
 <li><p>Status: active</p></li>
 <li><p>Audience: Users / Developers</p></li>
 <li><p>Applies-To: CLI 模式（推荐）</p></li>
-<li><p>Last-Updated: 2026-02-18</p></li>
+<li><p>Last-Updated: 2026-03-11</p></li>
 </ul>
 <section id="id1">
 <h2>1. 目的与范围<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
@@ -418,7 +420,7 @@ document.write(`
 </ul>
 <p>范围：</p>
 <ul class="simple">
-<li><p>覆盖 CLI 子命令：<code class="docutils literal notranslate"><span class="pre">train</span> <span class="pre">/</span> <span class="pre">infer</span> <span class="pre">/</span> <span class="pre">feature</span> <span class="pre">/</span> <span class="pre">collect</span> <span class="pre">/</span> <span class="pre">analysis</span></code></p></li>
+<li><p>覆盖 CLI 子命令：<code class="docutils literal notranslate"><span class="pre">train</span> <span class="pre">/</span> <span class="pre">infer</span> <span class="pre">/</span> <span class="pre">feature</span> <span class="pre">/</span> <span class="pre">collect</span> <span class="pre">/</span> <span class="pre">label</span> <span class="pre">/</span> <span class="pre">analysis</span></code></p></li>
 <li><p>给出 Local 与 Slurm 两种运行方式的最小示例</p></li>
 </ul>
 </section>
@@ -465,7 +467,7 @@ document.write(`
 <p>关键输出约定（常见）：</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">work_dir/0..N-1/</span></code>：训练输出（模型与日志）</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">work_dir/&lt;i&gt;/&lt;task_name&gt;/</span></code>：推理输出（<code class="docutils literal notranslate"><span class="pre">results.*.out</span></code> 与 <code class="docutils literal notranslate"><span class="pre">test_job.log</span></code>）</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">work_dir/&lt;i&gt;/&lt;task_name&gt;/</span></code>：推理输出（<code class="docutils literal notranslate"><span class="pre">results.*.out</span></code> 与 <code class="docutils literal notranslate"><span class="pre">test_job.out</span></code>）</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">savedir</span></code>：描述符输出目录（Feature）</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">root_savedir</span></code>：采集/筛选输出（Collect）</p></li>
 </ul>
@@ -476,7 +478,7 @@ document.write(`
 <p>参考最小配置模板：</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">examples/recipes/</span></code>：../examples/recipes/</p></li>
-<li><p>配置字段字典：../reference/config_schema.md</p></li>
+<li><p>配置字段字典：../source/api/config.rst</p></li>
 </ul>
 <section id="feature">
 <h3>5.1 Feature（生成描述符）<a class="headerlink" href="#feature" title="Link to this heading">#</a></h3>
@@ -508,7 +510,7 @@ document.write(`
 <p>验证输出：</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">0/&lt;task_name&gt;/results.e.out</span></code> 存在</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">0/&lt;task_name&gt;/test_job.log</span></code> 存在</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">0/&lt;task_name&gt;/test_job.out</span></code> 存在</p></li>
 </ul>
 </section>
 <section id="collect-uq-sampling-export">
@@ -522,8 +524,19 @@ document.write(`
 <li><p><code class="docutils literal notranslate"><span class="pre">&lt;root_savedir&gt;/dpdata/</span></code> 下导出目录存在</p></li>
 </ul>
 </section>
+<section id="label-dft">
+<h3>5.5 Label（DFT 标注）<a class="headerlink" href="#label-dft" title="Link to this heading">#</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>dpeva<span class="w"> </span>label<span class="w"> </span>configs/label.json
+</pre></div>
+</div>
+<p>验证输出：</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">work_dir/outputs/cleaned/</span></code> 存在</p></li>
+<li><p>若开启 integration，<code class="docutils literal notranslate"><span class="pre">integration_summary.json</span></code> 存在</p></li>
+</ul>
+</section>
 <section id="analysis">
-<h3>5.5 Analysis（结果统计）<a class="headerlink" href="#analysis" title="Link to this heading">#</a></h3>
+<h3>5.6 Analysis（结果统计）<a class="headerlink" href="#analysis" title="Link to this heading">#</a></h3>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>dpeva<span class="w"> </span>analysis<span class="w"> </span>configs/analysis.json
 </pre></div>
 </div>
@@ -539,7 +552,7 @@ document.write(`
 <p>建议用“完成标记 + 日志监控”的方式串联：</p>
 <ul class="simple">
 <li><p>训练日志：<code class="docutils literal notranslate"><span class="pre">&lt;work_dir&gt;/&lt;i&gt;/train.out</span></code></p></li>
-<li><p>推理日志：<code class="docutils literal notranslate"><span class="pre">&lt;work_dir&gt;/&lt;i&gt;/&lt;task_name&gt;/test_job.log</span></code></p></li>
+<li><p>推理日志：<code class="docutils literal notranslate"><span class="pre">&lt;work_dir&gt;/&lt;i&gt;/&lt;task_name&gt;/test_job.out</span></code></p></li>
 <li><p>Feature 日志：<code class="docutils literal notranslate"><span class="pre">&lt;savedir&gt;/eval_desc.log</span></code></p></li>
 <li><p>Collect 日志：<code class="docutils literal notranslate"><span class="pre">collect_slurm.out</span></code>（以具体配置/脚本输出为准）</p></li>
 </ul>
@@ -575,6 +588,7 @@ document.write(`
 <section id="id9">
 <h2>8. 变更记录<a class="headerlink" href="#id9" title="Link to this heading">#</a></h2>
 <ul class="simple">
+<li><p>2026-03-11：补齐 <code class="docutils literal notranslate"><span class="pre">label</span></code> 子命令 Quickstart 步骤，并同步推理日志文件名与配置入口。</p></li>
 <li><p>2026-02-18：补齐 Local/Slurm Quickstart 的最小链路与完成标记约定，统一链接入口。</p></li>
 </ul>
 </section>
@@ -638,7 +652,8 @@ document.write(`
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#train-n">5.2 Train（训练 N 个模型）</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#infer">5.3 Infer（候选池推理）</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#collect-uq-sampling-export">5.4 Collect（UQ + Sampling + Export）</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#analysis">5.5 Analysis（结果统计）</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#label-dft">5.5 Label（DFT 标注）</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#analysis">5.6 Analysis（结果统计）</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#quickstart-slurm">6. Quickstart：Slurm 一次跑通（链式编排）</a></li>
