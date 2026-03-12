@@ -20,6 +20,8 @@ Before running any examples, especially with `dpeva` CLI or Slurm submission:
 
 -   **`recipes/`**: The core collection of configuration templates for all DP-EVA workflows.
     -   See [recipes/README.md](recipes/README.md) for detailed usage instructions.
+-   **`scripts/`**: Executable helper scripts for recipe configurations.
+    -   See [scripts/README.md](scripts/README.md) for available entry points.
 
 ## Quick Start
 
