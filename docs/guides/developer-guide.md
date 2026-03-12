@@ -485,6 +485,9 @@ DPEVA_TAG: WORKFLOW_FINISHED
     *   **[稳定性]** 增强 prepare 幂等性，执行前自动重置 `inputs` 工作区，消除重复执行时历史残留导致的任务打包冲突。
     *   **[可观测性]** 三阶段日志独立落盘为 `labeling_prepare.log`、`labeling_execute.log`、`labeling_postprocess.log`，提升排障效率。
     *   **[测试]** 新增并补强 integration、workflow、CLI、manager 相关单测，`pytest tests/unit` 全量通过。
+    *   **[特性]** 为 CLI 所有子命令实现配置文件的 Schema 前置校验，在工作流启动前即拦截无效参数。
+    *   **[特性]** Labeling 集成阶段新增 `output_format` 参数，支持自定义合并后的数据集格式（默认 `deepmd/npy`）。
+    *   **[文档]** 重构 `examples` 目录结构，移除冗余层级，并更新对应的 `README` 与用户指南。
 
 *   **v0.6.4** (2026-03-11):
     *   **[修复]** 完成 R01-R37 全量闭环，修复安全、稳定性、测试与文档一致性问题。
