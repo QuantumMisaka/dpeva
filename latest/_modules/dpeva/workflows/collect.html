@@ -765,7 +765,15 @@ document.write(`
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">dpeva.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">CollectionConfig</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">dpeva.constants</span><span class="w"> </span><span class="kn">import</span> <span class="n">WORKFLOW_FINISHED_TAG</span><span class="p">,</span> <span class="n">COL_DESC_PREFIX</span><span class="p">,</span> <span class="n">COL_UQ_QBC</span><span class="p">,</span> <span class="n">COL_UQ_RND</span><span class="p">,</span> <span class="n">LOG_FILE_COLLECT</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dpeva.constants</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">WORKFLOW_FINISHED_TAG</span><span class="p">,</span>
+    <span class="n">COL_DESC_PREFIX</span><span class="p">,</span>
+    <span class="n">COL_UQ_QBC</span><span class="p">,</span>
+    <span class="n">COL_UQ_RND</span><span class="p">,</span>
+    <span class="n">LOG_FILE_COLLECT</span><span class="p">,</span>
+    <span class="n">FILENAME_UQ_QBC_FORCE</span><span class="p">,</span>
+    <span class="n">FILENAME_UQ_RND_FORCE</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dpeva.uncertain.visualization</span><span class="w"> </span><span class="kn">import</span> <span class="n">UQVisualizer</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dpeva.submission.manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">JobManager</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dpeva.submission.templates</span><span class="w"> </span><span class="kn">import</span> <span class="n">JobConfig</span>
@@ -932,10 +940,18 @@ document.write(`
         <span class="n">vis</span><span class="o">.</span><span class="n">plot_uq_with_trust_range</span><span class="p">(</span>
             <span class="n">uq_results</span><span class="p">[</span><span class="n">COL_UQ_QBC</span><span class="p">],</span>
             <span class="s2">&quot;UQ-QbC-force&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;UQ-QbC-force.png&quot;</span><span class="p">,</span>
+            <span class="n">FILENAME_UQ_QBC_FORCE</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">uq_manager</span><span class="o">.</span><span class="n">qbc_params</span><span class="p">[</span><span class="s2">&quot;lo&quot;</span><span class="p">],</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">uq_manager</span><span class="o">.</span><span class="n">qbc_params</span><span class="p">[</span><span class="s2">&quot;hi&quot;</span><span class="p">],</span>
         <span class="p">)</span>
+        <span class="k">if</span> <span class="n">uq_rnd_rescaled</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">vis</span><span class="o">.</span><span class="n">plot_uq_with_trust_range</span><span class="p">(</span>
+                <span class="n">uq_rnd_rescaled</span><span class="p">,</span>
+                <span class="s2">&quot;UQ-RND-force&quot;</span><span class="p">,</span>
+                <span class="n">FILENAME_UQ_RND_FORCE</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">uq_manager</span><span class="o">.</span><span class="n">rnd_params</span><span class="p">[</span><span class="s2">&quot;lo&quot;</span><span class="p">],</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">uq_manager</span><span class="o">.</span><span class="n">rnd_params</span><span class="p">[</span><span class="s2">&quot;hi&quot;</span><span class="p">],</span>
+            <span class="p">)</span>
         <span class="n">unique_system_names</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_unique_system_names</span><span class="p">(</span><span class="n">preds</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">dataname_list</span><span class="p">)</span>
         <span class="n">expected_frames</span> <span class="o">=</span> <span class="p">{</span><span class="n">sys</span><span class="p">:</span> <span class="n">preds</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">datanames_nframe</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">sys</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="k">for</span> <span class="n">sys</span> <span class="ow">in</span> <span class="n">unique_system_names</span><span class="p">}</span>
         <span class="n">desc_datanames</span><span class="p">,</span> <span class="n">desc_stru</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">io_manager</span><span class="o">.</span><span class="n">load_descriptors</span><span class="p">(</span>
@@ -973,7 +989,7 @@ document.write(`
             <span class="bp">self</span><span class="o">.</span><span class="n">uq_manager</span><span class="o">.</span><span class="n">rnd_params</span><span class="p">[</span><span class="s2">&quot;lo&quot;</span><span class="p">],</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">uq_manager</span><span class="o">.</span><span class="n">rnd_params</span><span class="p">[</span><span class="s2">&quot;hi&quot;</span><span class="p">],</span>
         <span class="p">)</span>
-        <span class="k">if</span> <span class="n">has_gt</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_should_plot_force_error</span><span class="p">(</span><span class="n">has_gt</span><span class="p">,</span> <span class="n">uq_results</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Ground Truth available. Plotting UQ vs Error...&quot;</span><span class="p">)</span>
             <span class="n">vis</span><span class="o">.</span><span class="n">plot_uq_vs_error</span><span class="p">(</span><span class="n">uq_results</span><span class="p">[</span><span class="n">COL_UQ_QBC</span><span class="p">],</span> <span class="n">uq_results</span><span class="p">[</span><span class="n">COL_UQ_RND</span><span class="p">],</span> <span class="n">uq_results</span><span class="p">[</span><span class="s2">&quot;diff_maxf_0_frame&quot;</span><span class="p">])</span>
             <span class="k">if</span> <span class="n">uq_rnd_rescaled</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -984,8 +1000,26 @@ document.write(`
                     <span class="n">rescaled</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
                 <span class="p">)</span>
                 <span class="n">vis</span><span class="o">.</span><span class="n">plot_uq_diff_parity</span><span class="p">(</span><span class="n">uq_results</span><span class="p">[</span><span class="n">COL_UQ_QBC</span><span class="p">],</span> <span class="n">uq_rnd_rescaled</span><span class="p">,</span> <span class="n">uq_results</span><span class="p">[</span><span class="s2">&quot;diff_maxf_0_frame&quot;</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Ground Truth unavailable or invalid. Skipping force-error-dependent plots.&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_log_initial_stats</span><span class="p">(</span><span class="n">desc_datanames</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">df_desc</span><span class="p">,</span> <span class="n">df_candidate</span><span class="p">,</span> <span class="n">unique_system_names</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_should_plot_force_error</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">has_gt</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">uq_results</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">has_gt</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="n">diff</span> <span class="o">=</span> <span class="n">uq_results</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;diff_maxf_0_frame&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">diff</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Missing diff_maxf_0_frame. Skipping force-error-dependent plots.&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="n">diff_arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">diff</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">diff_arr</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Empty diff_maxf_0_frame. Skipping force-error-dependent plots.&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">diff_arr</span><span class="p">)):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Non-finite diff_maxf_0_frame detected. Skipping force-error-dependent plots.&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">return</span> <span class="kc">True</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_extract_unique_system_names</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataname_list</span><span class="p">):</span>
         <span class="n">unique_system_names</span> <span class="o">=</span> <span class="p">[]</span>
