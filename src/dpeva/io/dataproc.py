@@ -172,20 +172,37 @@ class DPTestResultParser:
         Check if the data columns contain actual ground truth or are just placeholders (zeros).
         Updates self.has_ground_truth based on heuristic check of zero-values.
         """
-        is_e_zero = np.all(np.abs(self.data_e["data_e"]) < 1e-12)
-        is_e_same_as_pred = np.allclose(self.data_e["data_e"], self.data_e["pred_e"], atol=1e-12, rtol=0.0)
+        zero_tol = 1e-4
+
+        def _is_effectively_zero(values, tol=zero_tol):
+            arr = np.asarray(values, dtype=float)
+            finite_mask = np.isfinite(arr)
+            if not np.any(finite_mask):
+                return True
+            return np.all(np.abs(arr[finite_mask]) < tol)
+
+        def _is_effectively_same(values_a, values_b, tol=zero_tol):
+            arr_a = np.asarray(values_a, dtype=float)
+            arr_b = np.asarray(values_b, dtype=float)
+            finite_mask = np.isfinite(arr_a) & np.isfinite(arr_b)
+            if not np.any(finite_mask):
+                return True
+            return np.allclose(arr_a[finite_mask], arr_b[finite_mask], atol=tol, rtol=0.0)
+
+        is_e_zero = _is_effectively_zero(self.data_e["data_e"])
+        is_e_same_as_pred = _is_effectively_same(self.data_e["data_e"], self.data_e["pred_e"])
         is_f_zero = True
         is_f_same_as_pred = True
         if self.data_f is not None:
             is_f_zero = (
-                np.all(np.abs(self.data_f["data_fx"]) < 1e-12)
-                and np.all(np.abs(self.data_f["data_fy"]) < 1e-12)
-                and np.all(np.abs(self.data_f["data_fz"]) < 1e-12)
+                _is_effectively_zero(self.data_f["data_fx"])
+                and _is_effectively_zero(self.data_f["data_fy"])
+                and _is_effectively_zero(self.data_f["data_fz"])
             )
             is_f_same_as_pred = (
-                np.allclose(self.data_f["data_fx"], self.data_f["pred_fx"], atol=1e-12, rtol=0.0)
-                and np.allclose(self.data_f["data_fy"], self.data_f["pred_fy"], atol=1e-12, rtol=0.0)
-                and np.allclose(self.data_f["data_fz"], self.data_f["pred_fz"], atol=1e-12, rtol=0.0)
+                _is_effectively_same(self.data_f["data_fx"], self.data_f["pred_fx"])
+                and _is_effectively_same(self.data_f["data_fy"], self.data_f["pred_fy"])
+                and _is_effectively_same(self.data_f["data_fz"], self.data_f["pred_fz"])
             )
 
         if is_e_zero and is_f_zero:
@@ -317,4 +334,3 @@ class DPTestResultParser:
                 datanames_nframe_list.append([dataname, i, natom])
                 
         return datanames_nframe_list, datanames_nframe_dict
-
