@@ -448,5 +448,11 @@ if __name__ == "__main__":
             d_clean = sum(v["clean"] for v in types.values())
             d_filt = sum(v["filt"] for v in types.values())
             logger.info(f"  Dataset: {ds:<20} (Total={d_total}, Conv={d_conv}, Fail={d_fail}, Clean={d_clean}, Filt={d_filt})")
+            dataset_hint = self.postprocessor.build_no_contribution_hint(d_conv, d_clean)
+            if dataset_hint:
+                logger.info(f"    {dataset_hint}")
             for t, v in types.items():
                 logger.info(f"    Type: {t:<15} -> Total={v['total']}, Conv={v['conv']}, Fail={v['fail']}, Clean={v['clean']}, Filt={v['filt']}")
+                type_hint = self.postprocessor.build_no_contribution_hint(v["conv"], v["clean"])
+                if type_hint:
+                    logger.info(f"      {type_hint}")

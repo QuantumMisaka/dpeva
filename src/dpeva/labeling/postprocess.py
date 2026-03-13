@@ -212,6 +212,14 @@ class AbacusPostProcessor:
         logger.info(f"Filtered data: {len(df)} -> {len(cleaned_df)} frames")
         return cleaned_df
 
+    @staticmethod
+    def build_no_contribution_hint(conv: int, clean: int) -> Optional[str]:
+        if conv == 0:
+            return "Hint: no converged tasks, this branch contributes no training data."
+        if clean == 0:
+            return "Hint: converged tasks were fully filtered, this branch contributes no training data."
+        return None
+
     def export_data(self, systems: dpdata.MultiSystems, df_clean: pd.DataFrame, output_dir: Path, format: str = "deepmd/npy"):
         """
         Export cleaned data to disk.
