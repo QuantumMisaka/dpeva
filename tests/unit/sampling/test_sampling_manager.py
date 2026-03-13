@@ -79,8 +79,9 @@ def test_execute_sampling_joint():
         args, kwargs = mock_instance.fit_transform.call_args
         assert "n_candidates" not in kwargs, "n_candidates should not be passed to fit_transform"
         
-        # Verify filtering: indices >= 10 should be removed
+        # Verify indices: should keep all selected indices including training data (>= 10)
+        # Filtering for labeling is handled in CollectionWorkflow
         selected = res["selected_indices"]
-        assert selected == [0, 1]
+        assert selected == [0, 1, 12, 14]
         
         assert "full_pca_features" in res

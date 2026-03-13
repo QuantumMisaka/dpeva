@@ -39,7 +39,6 @@
    guides/docs-governance-quickstart
    guides/process-asset-lifecycle
    policy/README
-   plans/governance/index
 
 .. toctree::
    :maxdepth: 1
