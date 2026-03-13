@@ -52,6 +52,7 @@ class TestCollectionIOManagerFull:
         
         assert len(names) == 10
         assert data.shape == (10, 128) # Normalized descriptors, not modulo
+        np.testing.assert_allclose(np.linalg.norm(data, axis=1), np.ones(10), atol=1e-10)
 
     def test_load_descriptors_glob(self, manager, tmp_path):
         """Test loading all descriptors via glob."""
