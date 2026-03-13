@@ -69,7 +69,10 @@ class UQManager:
         if self.testdata_dir and os.path.exists(self.testdata_dir) and len(preds) > 0:
             self._verify_atom_counts_list(preds[0].dataname_list)
             
-        return preds, preds[0].has_ground_truth
+        has_ground_truth = all(pred.has_ground_truth for pred in preds)
+        if not has_ground_truth:
+            self.logger.info("At least one model lacks valid ground truth. Ground-truth-dependent plotting will be disabled.")
+        return preds, has_ground_truth
 
     def _verify_atom_counts_list(self, dataname_list: List[List]):
         """

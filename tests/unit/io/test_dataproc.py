@@ -125,6 +125,22 @@ class TestDPTestResultParser:
         
         assert results["has_ground_truth"] is False
 
+    def test_parser_no_ground_truth_when_data_equals_prediction(self, result_dir):
+        e_file = result_dir / "results.e_peratom.out"
+        f_file = result_dir / "results.f.out"
+
+        with open(e_file, "w") as f:
+            f.write("# sys1: 0\n")
+            f.write("1.23 1.23\n")
+
+        with open(f_file, "w") as f:
+            f.write("# sys1: 0\n")
+            f.write("0.11 0.22 0.33 0.11 0.22 0.33\n")
+
+        parser = DPTestResultParser(result_dir=str(result_dir))
+        results = parser.parse()
+        assert results["has_ground_truth"] is False
+
     def test_parse_missing_energy(self, result_dir):
         """Test missing energy file."""
         parser = DPTestResultParser(str(result_dir))

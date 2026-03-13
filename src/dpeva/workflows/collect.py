@@ -6,7 +6,15 @@ import pandas as pd
 import numpy as np
 
 from dpeva.config import CollectionConfig
-from dpeva.constants import WORKFLOW_FINISHED_TAG, COL_DESC_PREFIX, COL_UQ_QBC, COL_UQ_RND, LOG_FILE_COLLECT
+from dpeva.constants import (
+    WORKFLOW_FINISHED_TAG,
+    COL_DESC_PREFIX,
+    COL_UQ_QBC,
+    COL_UQ_RND,
+    LOG_FILE_COLLECT,
+    FILENAME_UQ_QBC_FORCE,
+    FILENAME_UQ_RND_FORCE,
+)
 from dpeva.uncertain.visualization import UQVisualizer
 from dpeva.submission.manager import JobManager
 from dpeva.submission.templates import JobConfig
@@ -168,10 +176,18 @@ class CollectionWorkflow:
         vis.plot_uq_with_trust_range(
             uq_results[COL_UQ_QBC],
             "UQ-QbC-force",
-            "UQ-QbC-force.png",
+            FILENAME_UQ_QBC_FORCE,
             self.uq_manager.qbc_params["lo"],
             self.uq_manager.qbc_params["hi"],
         )
+        if uq_rnd_rescaled is not None:
+            vis.plot_uq_with_trust_range(
+                uq_rnd_rescaled,
+                "UQ-RND-force",
+                FILENAME_UQ_RND_FORCE,
+                self.uq_manager.rnd_params["lo"],
+                self.uq_manager.rnd_params["hi"],
+            )
         unique_system_names = self._extract_unique_system_names(preds[0].dataname_list)
         expected_frames = {sys: preds[0].datanames_nframe.get(sys, 0) for sys in unique_system_names}
         desc_datanames, desc_stru = self.io_manager.load_descriptors(
@@ -209,7 +225,7 @@ class CollectionWorkflow:
             self.uq_manager.rnd_params["lo"],
             self.uq_manager.rnd_params["hi"],
         )
-        if has_gt:
+        if self._should_plot_force_error(has_gt, uq_results):
             self.logger.info("Ground Truth available. Plotting UQ vs Error...")
             vis.plot_uq_vs_error(uq_results[COL_UQ_QBC], uq_results[COL_UQ_RND], uq_results["diff_maxf_0_frame"])
             if uq_rnd_rescaled is not None:
@@ -220,8 +236,26 @@ class CollectionWorkflow:
                     rescaled=True,
                 )
                 vis.plot_uq_diff_parity(uq_results[COL_UQ_QBC], uq_rnd_rescaled, uq_results["diff_maxf_0_frame"])
+        else:
+            self.logger.info("Ground Truth unavailable or invalid. Skipping force-error-dependent plots.")
         self._log_initial_stats(desc_datanames)
         return df_desc, df_candidate, unique_system_names
+
+    def _should_plot_force_error(self, has_gt: bool, uq_results: Dict[str, np.ndarray]) -> bool:
+        if not has_gt:
+            return False
+        diff = uq_results.get("diff_maxf_0_frame")
+        if diff is None:
+            self.logger.warning("Missing diff_maxf_0_frame. Skipping force-error-dependent plots.")
+            return False
+        diff_arr = np.asarray(diff)
+        if diff_arr.size == 0:
+            self.logger.warning("Empty diff_maxf_0_frame. Skipping force-error-dependent plots.")
+            return False
+        if not np.all(np.isfinite(diff_arr)):
+            self.logger.warning("Non-finite diff_maxf_0_frame detected. Skipping force-error-dependent plots.")
+            return False
+        return True
 
     def _extract_unique_system_names(self, dataname_list):
         unique_system_names = []

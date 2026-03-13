@@ -172,18 +172,28 @@ class DPTestResultParser:
         Check if the data columns contain actual ground truth or are just placeholders (zeros).
         Updates self.has_ground_truth based on heuristic check of zero-values.
         """
-        # Heuristic: If all energy and force data are exactly zero, likely no ground truth.
-        is_e_zero = np.all(np.abs(self.data_e['data_e']) < 1e-12)
-        
+        is_e_zero = np.all(np.abs(self.data_e["data_e"]) < 1e-12)
+        is_e_same_as_pred = np.allclose(self.data_e["data_e"], self.data_e["pred_e"], atol=1e-12, rtol=0.0)
         is_f_zero = True
+        is_f_same_as_pred = True
         if self.data_f is not None:
-            is_f_zero = np.all(np.abs(self.data_f['data_fx']) < 1e-12) and \
-                        np.all(np.abs(self.data_f['data_fy']) < 1e-12) and \
-                        np.all(np.abs(self.data_f['data_fz']) < 1e-12)
-                        
+            is_f_zero = (
+                np.all(np.abs(self.data_f["data_fx"]) < 1e-12)
+                and np.all(np.abs(self.data_f["data_fy"]) < 1e-12)
+                and np.all(np.abs(self.data_f["data_fz"]) < 1e-12)
+            )
+            is_f_same_as_pred = (
+                np.allclose(self.data_f["data_fx"], self.data_f["pred_fx"], atol=1e-12, rtol=0.0)
+                and np.allclose(self.data_f["data_fy"], self.data_f["pred_fy"], atol=1e-12, rtol=0.0)
+                and np.allclose(self.data_f["data_fz"], self.data_f["pred_fz"], atol=1e-12, rtol=0.0)
+            )
+
         if is_e_zero and is_f_zero:
             self.has_ground_truth = False
             self.logger.info("Detected all-zero data columns. Assuming NO ground truth.")
+        elif is_e_same_as_pred and is_f_same_as_pred:
+            self.has_ground_truth = False
+            self.logger.info("Detected data columns identical to prediction columns. Assuming NO ground truth.")
         else:
             self.has_ground_truth = True
             self.logger.info("Detected non-zero data columns. Assuming ground truth exists.")
@@ -307,5 +317,4 @@ class DPTestResultParser:
                 datanames_nframe_list.append([dataname, i, natom])
                 
         return datanames_nframe_list, datanames_nframe_dict
-
 

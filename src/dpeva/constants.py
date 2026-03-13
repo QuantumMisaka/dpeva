@@ -100,6 +100,8 @@ FILENAME_SUMMARY_CSV: Final[str] = "inference_summary.csv"
 # Visualization Filenames
 FILENAME_UQ_FORCE: Final[str] = "UQ-force.png"
 FILENAME_UQ_FORCE_RESCALED: Final[str] = "UQ-force-rescaled.png"
+FILENAME_UQ_QBC_FORCE: Final[str] = "UQ-QbC-force.png"
+FILENAME_UQ_RND_FORCE: Final[str] = "UQ-RND-force.png"
 FILENAME_UQ_DIFF_UQ_PARITY: Final[str] = "UQ-diff-UQ-parity.png"
 FILENAME_UQ_DIFF_FDIFF_PARITY: Final[str] = "UQ-diff-fdiff-parity.png"
 FILENAME_UQ_FORCE_QBC_RND_FDIFF_SCATTER: Final[str] = "UQ-force-qbc-rnd-fdiff-scatter.png"

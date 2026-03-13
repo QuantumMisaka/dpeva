@@ -54,8 +54,8 @@ owner: Quantum Misaka
 | 位置 | 文档类型 | 可见性 | 生命周期 |
 |---|---|---|---|
 | `.trae/documents/` | AI 执行期草案、临时计划、阶段记录 | 工作空间内部 | 任务期内可变，不要求 Sphinx 暴露 |
-| `docs/plans/` | 团队共享的收敛计划（目标/验收/迁移策略） | 项目文档系统 | 完成后归档至 `docs/archive/vX.Y.Z/plans/` |
-| `docs/reports/` | 团队共享的收敛结论（评审/实验/发布总结） | 项目文档系统 | 发布后归档至 `docs/archive/vX.Y.Z/reports/` |
+| `docs/plans/` | 当前版本执行期草案、临时计划、阶段记录的集中存放点 | 项目文档系统 | 完成后归档至 `docs/archive/vX.Y.Z/plans/` |
+| `docs/reports/` | 当前版本代码审查报告和其他类型报告存放位置（评审/实验/发布总结） | 项目文档系统 | 发布后归档至 `docs/archive/vX.Y.Z/reports/` |
 | `docs/archive/` | 历史只读资产 | 默认不进主导航 | 长期保留，禁止覆盖式重写 |
 
 ### 2.2 Sphinx 展示策略
