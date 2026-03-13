@@ -66,6 +66,10 @@ def test_execute_sampling_joint():
             "PCAfeatures": np.zeros((15, 2))
         }
         # Need to mock pca attribute for background transform
+        mock_scaler = MagicMock()
+        mock_scaler.n_features_in_ = 5
+        mock_scaler.transform.return_value = background_features
+        mock_instance.scaler = mock_scaler
         mock_pca = MagicMock()
         mock_pca.transform.return_value = np.zeros((5, 2))
         mock_pca.pca.explained_variance_ = np.array([1.0, 0.5])
@@ -85,3 +89,129 @@ def test_execute_sampling_joint():
         assert selected == [0, 1, 12, 14]
         
         assert "full_pca_features" in res
+
+def test_execute_sampling_direct_background_uses_scaler_then_pca(sampling_manager):
+    features = np.random.rand(10, 5)
+    background_features = np.random.rand(4, 5)
+    scaled_background = np.random.rand(4, 5)
+
+    with patch("dpeva.sampling.manager.DIRECTSampler") as mock_sampler:
+        mock_instance = mock_sampler.return_value
+        mock_instance.fit_transform.return_value = {
+            "selected_indices": [0, 1],
+            "PCAfeatures": np.zeros((10, 2))
+        }
+        mock_scaler = MagicMock()
+        mock_scaler.n_features_in_ = 5
+        mock_scaler.transform.return_value = scaled_background
+        mock_instance.scaler = mock_scaler
+        mock_pca = MagicMock()
+        mock_pca.transform.return_value = np.zeros((4, 2))
+        mock_pca.pca.explained_variance_ = np.array([1.0, 0.5])
+        mock_instance.pca = mock_pca
+
+        res = sampling_manager.execute_sampling(features, background_features=background_features)
+
+        mock_scaler.transform.assert_called_once_with(background_features)
+        mock_pca.transform.assert_called_once_with(scaled_background)
+        assert res["full_pca_features"].shape == (4, 2)
+
+def test_execute_sampling_2direct_background_uses_scaler_then_pca():
+    config = {
+        "sampler_type": "2-direct",
+        "step1_n_clusters": 2,
+        "step1_threshold": 0.1,
+        "step2_n_clusters": 2,
+        "step2_threshold": 0.1,
+        "step2_k": 1,
+        "step2_selection": "smallest",
+    }
+    manager = SamplingManager(config)
+    features = np.random.rand(8, 5)
+    atom_features = [np.random.rand(2, 4) for _ in range(8)]
+    atom_counts = [2] * 8
+    background_features = np.random.rand(3, 5)
+    scaled_background = np.random.rand(3, 5)
+
+    with patch("dpeva.sampling.manager.TwoStepDIRECTSampler") as mock_sampler_cls:
+        mock_sampler = mock_sampler_cls.return_value
+        mock_sampler.fit_transform.return_value = {
+            "selected_indices": [0, 2],
+            "PCAfeatures": np.zeros((8, 2))
+        }
+        mock_scaler = MagicMock()
+        mock_scaler.n_features_in_ = 5
+        mock_scaler.transform.return_value = scaled_background
+        mock_pca = MagicMock()
+        mock_pca.transform.return_value = np.zeros((3, 2))
+        mock_pca.pca.explained_variance_ = np.array([1.0, 0.5])
+        mock_sampler.step1_sampler.scaler = mock_scaler
+        mock_sampler.step1_sampler.pca = mock_pca
+
+        res = manager.execute_sampling(
+            features,
+            atom_features=atom_features,
+            atom_counts=atom_counts,
+            background_features=background_features,
+        )
+
+        mock_scaler.transform.assert_called_once_with(background_features)
+        mock_pca.transform.assert_called_once_with(scaled_background)
+        assert res["full_pca_features"].shape == (3, 2)
+
+def test_execute_sampling_direct_background_dim_mismatch_raises(sampling_manager):
+    features = np.random.rand(10, 5)
+    background_features = np.random.rand(4, 6)
+
+    with patch("dpeva.sampling.manager.DIRECTSampler") as mock_sampler:
+        mock_instance = mock_sampler.return_value
+        mock_instance.fit_transform.return_value = {
+            "selected_indices": [0, 1],
+            "PCAfeatures": np.zeros((10, 2))
+        }
+        mock_scaler = MagicMock()
+        mock_scaler.n_features_in_ = 5
+        mock_instance.scaler = mock_scaler
+        mock_pca = MagicMock()
+        mock_pca.pca.explained_variance_ = np.array([1.0, 0.5])
+        mock_instance.pca = mock_pca
+
+        with pytest.raises(ValueError, match="Background feature dimension mismatch"):
+            sampling_manager.execute_sampling(features, background_features=background_features)
+
+def test_execute_sampling_2direct_background_dim_mismatch_raises():
+    config = {
+        "sampler_type": "2-direct",
+        "step1_n_clusters": 2,
+        "step1_threshold": 0.1,
+        "step2_n_clusters": 2,
+        "step2_threshold": 0.1,
+        "step2_k": 1,
+        "step2_selection": "smallest",
+    }
+    manager = SamplingManager(config)
+    features = np.random.rand(8, 5)
+    atom_features = [np.random.rand(2, 4) for _ in range(8)]
+    atom_counts = [2] * 8
+    background_features = np.random.rand(3, 7)
+
+    with patch("dpeva.sampling.manager.TwoStepDIRECTSampler") as mock_sampler_cls:
+        mock_sampler = mock_sampler_cls.return_value
+        mock_sampler.fit_transform.return_value = {
+            "selected_indices": [0, 2],
+            "PCAfeatures": np.zeros((8, 2))
+        }
+        mock_scaler = MagicMock()
+        mock_scaler.n_features_in_ = 5
+        mock_sampler.step1_sampler.scaler = mock_scaler
+        mock_pca = MagicMock()
+        mock_pca.pca.explained_variance_ = np.array([1.0, 0.5])
+        mock_sampler.step1_sampler.pca = mock_pca
+
+        with pytest.raises(ValueError, match="Background feature dimension mismatch"):
+            manager.execute_sampling(
+                features,
+                atom_features=atom_features,
+                atom_counts=atom_counts,
+                background_features=background_features,
+            )

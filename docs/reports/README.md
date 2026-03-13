@@ -2,7 +2,7 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-03-12
+last-updated: 2026-03-13
 owner: Docs Owner
 ---
 
@@ -10,7 +10,7 @@ owner: Docs Owner
 
 - Status: active
 - Audience: All
-- Last-Updated: 2026-03-12
+- Last-Updated: 2026-03-13
 
 本文档目录用于存放“项目级、可共享、可追溯”的技术结论，不承载执行过程草稿。
 
@@ -38,12 +38,7 @@ owner: Docs Owner
 
 ## 4. 活跃报告 (Active Reports)
 
-```{toctree}
-:maxdepth: 1
-
-2026-03-11-remediation-summary
-2026-03-12-labeling-decoupling-iteration-summary
-```
+- 当前目录无活跃报告，已归档至 `docs/archive/v0.6.6/reports/` 与历史版本目录。
 
 ## 5. 归档与索引要求
 

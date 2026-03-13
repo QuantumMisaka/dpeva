@@ -16,6 +16,7 @@
     "uq_trust_ratio": 0.50,
     "uq_trust_width": 0.15,
     
+    "sampler_type": "direct",
     "direct_n_clusters": 1000,
     "direct_k": 1,
     "direct_thr_init": 0.1,
