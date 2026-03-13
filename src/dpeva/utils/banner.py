@@ -9,7 +9,7 @@ GREEN = "\033[38;2;57;255;20m"    # Neon Green
 GRAY = "\033[90m"
 RESET = "\033[0m"
 
-'''
+r'''
 Banner Reference:
 
 ┌────────────────────────────────────────────────────────────────────────────┐
@@ -92,7 +92,7 @@ def show_banner(no_delay=False):
     # aa3_txt = " | | | | |_) |____|  _|  \ \ / /   / _ \  "
     st3_txt = "◌ SAMPLE: SAMPLING..."
     
-    aa3 = f"{BLUE} | | | | |_) |{RESET}{ORANGE}____{RESET}{ORANGE}|  _|  \ \ / /   / _ \  {RESET}"
+    aa3 = fr"{BLUE} | | | | |_) |{RESET}{ORANGE}____{RESET}{ORANGE}|  _|  \ \ / /   / _ \  {RESET}"
     st3 = f"{GRAY} {pad_status(st3_txt, W_ST-1)}{RESET}"
 
     # Row 4
@@ -100,7 +100,7 @@ def show_banner(no_delay=False):
     # aa4_txt = " | |_| |  __/_____| |___  \ V /   / ___ \ "
     st4_txt = ">> AWAKENING CHECK <<"
     
-    aa4 = f"{BLUE} | |_| |  __/{RESET}{ORANGE}_____{RESET}{ORANGE}| |___  \ V /   / ___ \ {RESET}"
+    aa4 = fr"{BLUE} | |_| |  __/{RESET}{ORANGE}_____{RESET}{ORANGE}| |___  \ V /   / ___ \ {RESET}"
     st4 = f"{GREEN} {pad_status(st4_txt, W_ST-1)}{RESET}"
 
     # Row 5
@@ -108,7 +108,7 @@ def show_banner(no_delay=False):
     # aa5_txt = " |____/|_|        |_____|  \_/   /_/   \_" 
     st5_txt = ver_text
     
-    aa5 = f"{BLUE} |____/|_|        {RESET}{ORANGE}|_____|  \_/   /_/   \_\{RESET}" # Corrected length to 42
+    aa5 = fr"{BLUE} |____/|_|        {RESET}{ORANGE}|_____|  \_/   /_/   \_\{RESET}" # Corrected length to 42
     st5 = f"{GRAY} {pad_status(st5_txt, W_ST-1)}{RESET}"
 
     banner = f"""
