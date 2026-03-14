@@ -1,0 +1,686 @@
+
+<!DOCTYPE html>
+
+
+<html lang="zh-CN" data-content_root="../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Collection Workflow 缺失 UQ-QbC/RND-ForceDiff 二维散点图修复计划 &#8212; DP-EVA Documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/sphinx-book-theme.css?v=eba8b062" />
+    <link rel="stylesheet" type="text/css" href="../../_static/autodoc_pydantic.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="../../_static/documentation_options.js?v=a25fec3b"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script src="../../_static/translations.js?v=beaddf03"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'plans/governance/2026-03-14-collection-uq-fdiff-scatter-plan';</script>
+    <link rel="index" title="索引" href="../../genindex.html" />
+    <link rel="search" title="搜索" href="../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="zh-CN"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">DP-EVA Documentation</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="搜索" aria-label="搜索" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">搜索</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../guides/installation.html">安装与环境准备（Installation）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guides/quickstart.html">Quickstart（最短路径跑通）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guides/cli.html">CLI 使用指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guides/configuration.html">配置编写指南（Configuration）</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">User Guides</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../guides/slurm.html">Slurm 使用与排障指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guides/troubleshooting.html">Troubleshooting（常见问题与排查）</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../reference/index.html">Reference</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../reference/README.html">Reference（权威参考）</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../reference/validation.html">参数校验与约束（Validation Rules）</a></li>
+
+<li class="toctree-l2"><a class="reference internal" href="../../reference/upstream-software.html">上游软件与核心依赖（Upstream Software）</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Developer Guide</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../guides/developer-guide.html">DP-EVA 项目开发文档</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../architecture/README.html">Architecture（系统结构）</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../api/config.html">Configuration Reference</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../api/config/submission.html">Common &amp; Submission Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/config/feature.html">Feature Generation Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/config/training.html">Training Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/config/inference.html">Inference Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/config/collection.html">Collection (Active Learning) Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/config/labeling.html">Labeling Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/config/analysis.html">Analysis Configuration</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/workflows.html">Workflows API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/labeling.html">Labeling API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/sampling.html">Sampling API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/uncertain.html">Uncertainty API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/submission.html">Submission API</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Governance</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../guides/docs-governance-quickstart.html">文档治理快速上手（开发者与 AI）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guides/process-asset-lifecycle.html">过程资产生命周期（AI 草案到项目文档）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../policy/README.html">Policy（制度与规范）</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../architecture/design-report.html">DP-EVA 项目设计模式与架构分析报告</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../architecture/decisions/README.html">README</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../architecture/decisions/2026-02-04-deepmd-dependency.html">ADR: DeepMD-kit 依赖管理策略</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guides/README.html">Guides（操作指南）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guides/deployment.html">GitHub Actions 文档部署指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guides/developer/README.html">Developer Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guides/developer/config-docs-maintenance.html">变量说明文档维护指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guides/testing/README.html">Testing（测试指南）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guides/testing/integration-config-templates.html">DP-EVA 集成测试最小配置模板（Slurm）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guides/testing/integration-slurm.html">DP-EVA 集成测试设计与交付报告（Slurm + Multi DataPool）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guides/testing/multi-datapool-artifacts.html">test-for-multiple-datapool 生产目录输入输出分析</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../README.html">开发计划 (Development Plans)</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="README.html">README</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="2026-03-13-collection-workflow-gt-plot-gating-v2.html">CollectionWorkflow 有无真值作图门控改进计划（V2）</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../../policy/contributing.html">文档贡献指南（Contributing）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../policy/docs-structure.html">文档结构与命名规范（Docs Structure &amp; Naming）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../policy/maintenance.html">文档版本管理与维护机制（Maintenance）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../policy/quality.html">文档质量标准（Documentation Quality Standard）</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="下载此页面">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../../_sources/plans/governance/2026-03-14-collection-uq-fdiff-scatter-plan.md" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="下载源文件"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.md</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="列印成 PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="全屏模式"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="搜索" aria-label="搜索" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Collection Workflow 缺失 UQ-QbC/RND-ForceDiff 二维散点图修复计划</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> 目录 </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#summary">Summary</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#view-ref">参考图像对齐要求（view_ref 基准）</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#current-state-analysis">Current State Analysis</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#proposed-changes">Proposed Changes</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow">1) 修复 Workflow 调用链（核心修复）</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">2) 校验并统一门控语义（最小且稳健）</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">2.1) 参考图一致性校验与最小样式修正</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow-visualizer">3) 补齐单元测试（workflow 门控 + visualizer 输出）</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">4) 可选集成测试增强（若当前测试环境稳定）</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#assumptions-decisions">Assumptions &amp; Decisions</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#verification">Verification</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="collection-workflow-uq-qbc-rnd-forcediff">
+<h1>Collection Workflow 缺失 UQ-QbC/RND-ForceDiff 二维散点图修复计划<a class="headerlink" href="#collection-workflow-uq-qbc-rnd-forcediff" title="Link to this heading">#</a></h1>
+<section id="summary">
+<h2>Summary<a class="headerlink" href="#summary" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p>目标：修复 <code class="docutils literal notranslate"><span class="pre">CollectionWorkflow</span></code> 在有 Ground Truth 的真实测试数据场景下，未输出 <code class="docutils literal notranslate"><span class="pre">UQ-force-qbc-rnd-fdiff-scatter.png</span></code>（横纵轴为两维 UQ，颜色为 Force Diff）的问题，并补齐单元测试覆盖。</p></li>
+<li><p>成功标准：运行 <code class="docutils literal notranslate"><span class="pre">collect</span></code> 后在 <code class="docutils literal notranslate"><span class="pre">view/</span></code> 目录稳定生成该图；无 Ground Truth 或 <code class="docutils literal notranslate"><span class="pre">diff_maxf_0_frame</span></code> 无效时保持不作图；新增/更新测试覆盖调用门控与输出行为。</p></li>
+</ul>
+</section>
+<section id="view-ref">
+<h2>参考图像对齐要求（view_ref 基准）<a class="headerlink" href="#view-ref" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p>参考图：<code class="docutils literal notranslate"><span class="pre">test/dpeva-iter1/view_ref/UQ-force-qbc-rnd-fdiff-scatter.png</span></code></p></li>
+<li><p>图像语义：</p>
+<ul>
+<li><p>横轴：<code class="docutils literal notranslate"><span class="pre">UQ-QbC</span> <span class="pre">Value</span></code></p></li>
+<li><p>纵轴：<code class="docutils literal notranslate"><span class="pre">UQ-RND-rescaled</span> <span class="pre">Value</span></code></p></li>
+<li><p>颜色：<code class="docutils literal notranslate"><span class="pre">diff_maxf_0_frame</span></code>（Force Diff，红色系深浅表示大小）</p></li>
+</ul>
+</li>
+<li><p>视觉要素（作为验收标准）：</p>
+<ul>
+<li><p>标题为 <code class="docutils literal notranslate"><span class="pre">UQ-QbC</span> <span class="pre">and</span> <span class="pre">UQ-RND</span> <span class="pre">vs</span> <span class="pre">Max</span> <span class="pre">Force</span> <span class="pre">Diff</span></code></p></li>
+<li><p>图例标题为 <code class="docutils literal notranslate"><span class="pre">Max</span> <span class="pre">Force</span> <span class="pre">Diff</span></code></p></li>
+<li><p>保留 scheme 边界线（黑色虚线框与紫色边界线）</p></li>
+<li><p>开启网格，且坐标下界从 0 开始（不做 [0,2] 截断子图）</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="current-state-analysis">
+<h2>Current State Analysis<a class="headerlink" href="#current-state-analysis" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">UQVisualizer</span></code> 中已存在目标作图函数 <code class="docutils literal notranslate"><span class="pre">plot_uq_fdiff_scatter</span></code>，输出文件名常量为 <code class="docutils literal notranslate"><span class="pre">FILENAME_UQ_FORCE_QBC_RND_FDIFF_SCATTER</span></code>：</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">src/dpeva/uncertain/visualization.py</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">src/dpeva/constants.py</span></code></p></li>
+</ul>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">CollectionWorkflow._run_filtered_uq_phase</span></code> 当前调用了：</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">plot_uq_identity_scatter</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">plot_uq_vs_error</span></code>（含 rescaled 分支）</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">plot_uq_diff_parity</span></code></p></li>
+</ul>
+</li>
+<li><p>但当前流程未调用 <code class="docutils literal notranslate"><span class="pre">plot_uq_fdiff_scatter</span></code>，因此即使 <code class="docutils literal notranslate"><span class="pre">has_gt=True</span></code> 且 <code class="docutils literal notranslate"><span class="pre">diff_maxf_0_frame</span></code> 有效，也不会输出该文件。</p></li>
+<li><p>现有测试现状：</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">tests/unit/workflows/test_collect_refactor.py</span></code> 已覆盖 force-error 图的 GT/有效性门控，但未覆盖 <code class="docutils literal notranslate"><span class="pre">plot_uq_fdiff_scatter</span></code> 调用。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">tests/unit/uncertain/test_visualization.py</span></code> 已有 <code class="docutils literal notranslate"><span class="pre">plot_uq_fdiff_scatter</span></code> 函数级测试，但仅断言 <code class="docutils literal notranslate"><span class="pre">savefig</span></code> 被调用，未校验输出文件名。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">tests/integration/test_slurm_multidatapool_e2e.py</span></code> 的 <code class="docutils literal notranslate"><span class="pre">view</span></code> 断言列表未包含该图。</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="proposed-changes">
+<h2>Proposed Changes<a class="headerlink" href="#proposed-changes" title="Link to this heading">#</a></h2>
+<section id="workflow">
+<h3>1) 修复 Workflow 调用链（核心修复）<a class="headerlink" href="#workflow" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p>文件：<code class="docutils literal notranslate"><span class="pre">src/dpeva/workflows/collect.py</span></code></p></li>
+<li><p>修改点：</p>
+<ul>
+<li><p>在 <code class="docutils literal notranslate"><span class="pre">if</span> <span class="pre">self._should_plot_force_error(has_gt,</span> <span class="pre">uq_results):</span></code> 分支中，补充调用 <code class="docutils literal notranslate"><span class="pre">vis.plot_uq_fdiff_scatter(...)</span></code>。</p></li>
+<li><p>使用与 identity-scatter 一致的参数来源：<code class="docutils literal notranslate"><span class="pre">df_uq</span></code>、<code class="docutils literal notranslate"><span class="pre">uq_select_scheme</span></code>、QbC/RND trust bounds。</p></li>
+</ul>
+</li>
+<li><p>设计理由：</p>
+<ul>
+<li><p>保持 GT 相关图统一受 <code class="docutils literal notranslate"><span class="pre">_should_plot_force_error</span></code> 门控。</p></li>
+<li><p>避免在无真值/无效 diff 时误生成颜色语义错误的图。</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="id1">
+<h3>2) 校验并统一门控语义（最小且稳健）<a class="headerlink" href="#id1" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p>文件：<code class="docutils literal notranslate"><span class="pre">src/dpeva/workflows/collect.py</span></code></p></li>
+<li><p>修改点：</p>
+<ul>
+<li><p>复用现有 <code class="docutils literal notranslate"><span class="pre">_should_plot_force_error</span></code> 作为唯一入口门控，不新增并行门控函数。</p></li>
+<li><p>保持 <code class="docutils literal notranslate"><span class="pre">plot_uq_fdiff_scatter</span></code> 内部 <code class="docutils literal notranslate"><span class="pre">diff_maxf_0_frame</span></code> 列检查作为防御式校验（双保险）。</p></li>
+</ul>
+</li>
+<li><p>设计理由：</p>
+<ul>
+<li><p>符合“一个明显方式（One Obvious Way）”：流程入口只在一个位置做业务门控。</p></li>
+<li><p>保持现有实现风格与错误显式处理策略。</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="id2">
+<h3>2.1) 参考图一致性校验与最小样式修正<a class="headerlink" href="#id2" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p>文件：<code class="docutils literal notranslate"><span class="pre">src/dpeva/uncertain/visualization.py</span></code></p></li>
+<li><p>修改策略：</p>
+<ul>
+<li><p>先保持现有 <code class="docutils literal notranslate"><span class="pre">plot_uq_fdiff_scatter</span></code> 主体实现不重构（当前已具备 <code class="docutils literal notranslate"><span class="pre">hue=diff_maxf_0_frame</span></code>、<code class="docutils literal notranslate"><span class="pre">palette=&quot;Reds&quot;</span></code>、<code class="docutils literal notranslate"><span class="pre">title/xlabel/ylabel</span></code>、<code class="docutils literal notranslate"><span class="pre">_setup_2d_plot_axes</span></code>、<code class="docutils literal notranslate"><span class="pre">_draw_boundary</span></code>）。</p></li>
+<li><p>仅在与参考图不一致时做最小修正，优先顺序：</p>
+<ol class="arabic simple">
+<li><p>文案一致性（标题/轴标签/图例标题）。</p></li>
+<li><p>边界绘制顺序与可见性（确保散点与边界均清晰）。</p></li>
+<li><p>点样式（<code class="docutils literal notranslate"><span class="pre">alpha</span></code>、<code class="docutils literal notranslate"><span class="pre">s</span></code>）仅在影响可读性时微调。</p></li>
+</ol>
+</li>
+</ul>
+</li>
+<li><p>设计理由：</p>
+<ul>
+<li><p>避免为“仅缺调用”问题引入不必要视觉回归。</p></li>
+<li><p>将变更面压缩在可验证的最小范围内，符合项目稳态维护策略。</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="workflow-visualizer">
+<h3>3) 补齐单元测试（workflow 门控 + visualizer 输出）<a class="headerlink" href="#workflow-visualizer" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p>文件：<code class="docutils literal notranslate"><span class="pre">tests/unit/workflows/test_collect_refactor.py</span></code></p></li>
+<li><p>新增测试：</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">has_gt=True</span> <span class="pre">且</span> <span class="pre">diff</span> <span class="pre">有效</span></code> 时，断言 <code class="docutils literal notranslate"><span class="pre">vis.plot_uq_fdiff_scatter</span></code> 被调用 1 次。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">has_gt=False</span></code> 或 <code class="docutils literal notranslate"><span class="pre">diff</span> <span class="pre">非有限</span></code> 时，断言不调用 <code class="docutils literal notranslate"><span class="pre">vis.plot_uq_fdiff_scatter</span></code>。</p></li>
+</ul>
+</li>
+<li><p>文件：<code class="docutils literal notranslate"><span class="pre">tests/unit/uncertain/test_visualization.py</span></code></p></li>
+<li><p>增强测试：</p>
+<ul>
+<li><p>对 <code class="docutils literal notranslate"><span class="pre">plot_uq_fdiff_scatter</span></code> 增加对 <code class="docutils literal notranslate"><span class="pre">savefig</span></code> 目标文件名的断言，确保输出为 <code class="docutils literal notranslate"><span class="pre">UQ-force-qbc-rnd-fdiff-scatter.png</span></code>。</p></li>
+<li><p>增加对 <code class="docutils literal notranslate"><span class="pre">sns.scatterplot</span></code> 关键参数断言：<code class="docutils literal notranslate"><span class="pre">x/y/hue/palette</span></code> 与参考图语义一致。</p></li>
+<li><p>增加对标题、坐标轴标签、图例标题调用的断言，锁定参考图的核心视觉契约。</p></li>
+</ul>
+</li>
+<li><p>设计理由：</p>
+<ul>
+<li><p>让“函数存在但调用链断开”这类回归被单元测试直接拦截。</p></li>
+<li><p>保持测试粒度：workflow 关注调用/门控，visualizer 关注输出契约。</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="id3">
+<h3>4) 可选集成测试增强（若当前测试环境稳定）<a class="headerlink" href="#id3" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p>文件：<code class="docutils literal notranslate"><span class="pre">tests/integration/test_slurm_multidatapool_e2e.py</span></code></p></li>
+<li><p>变更策略：</p>
+<ul>
+<li><p>在 Ground Truth 可用的集成场景下，将 <code class="docutils literal notranslate"><span class="pre">UQ-force-qbc-rnd-fdiff-scatter.png</span></code> 加入 <code class="docutils literal notranslate"><span class="pre">expected_plots</span></code>。</p></li>
+<li><p>若场景存在数据条件波动，则维持单元测试为主，集成仅做非阻塞增强。</p></li>
+</ul>
+</li>
+</ul>
+</section>
+</section>
+<section id="assumptions-decisions">
+<h2>Assumptions &amp; Decisions<a class="headerlink" href="#assumptions-decisions" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p>假设 A：用户给出的测试数据为有标签数据；已能生成 <code class="docutils literal notranslate"><span class="pre">UQ-force-rescaled-fdiff-parity.png</span></code>，说明 GT 门控已通过且 diff 字段有效。</p></li>
+<li><p>决策 1：缺失根因以“workflow 未调用 <code class="docutils literal notranslate"><span class="pre">plot_uq_fdiff_scatter</span></code>”为主因处理，不引入配置开关，遵循现有最小改动原则。</p></li>
+<li><p>决策 2：以 <code class="docutils literal notranslate"><span class="pre">view_ref</span></code> 参考图为 fdiff-scatter 验收基准，优先保证语义与可读性一致，不追求像素级拟合。</p></li>
+<li><p>决策 3：优先补齐单元测试作为回归防线，集成测试按稳定性选择性增强。</p></li>
+</ul>
+</section>
+<section id="verification">
+<h2>Verification<a class="headerlink" href="#verification" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p>单元测试：</p>
+<ul>
+<li><p>运行 <code class="docutils literal notranslate"><span class="pre">pytest</span> <span class="pre">tests/unit/workflows/test_collect_refactor.py</span></code></p></li>
+<li><p>运行 <code class="docutils literal notranslate"><span class="pre">pytest</span> <span class="pre">tests/unit/uncertain/test_visualization.py</span></code></p></li>
+</ul>
+</li>
+<li><p>回归检查：</p>
+<ul>
+<li><p>运行 <code class="docutils literal notranslate"><span class="pre">pytest</span> <span class="pre">tests/unit</span></code></p></li>
+<li><p>检查新增断言是否覆盖：</p>
+<ul>
+<li><p>调用链：<code class="docutils literal notranslate"><span class="pre">plot_uq_fdiff_scatter</span></code> 在应调用场景被调用</p></li>
+<li><p>门控：无 GT/无效 diff 场景不调用</p></li>
+<li><p>输出文件名：<code class="docutils literal notranslate"><span class="pre">UQ-force-qbc-rnd-fdiff-scatter.png</span></code></p></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>结果验收：</p>
+<ul>
+<li><p>在用户测试目录（<code class="docutils literal notranslate"><span class="pre">dpeva-iter1</span></code>）复现实验后，<code class="docutils literal notranslate"><span class="pre">view/</span></code> 下出现目标散点图；原有图不回退。</p></li>
+</ul>
+</li>
+</ul>
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> 目录
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#summary">Summary</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#view-ref">参考图像对齐要求（view_ref 基准）</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#current-state-analysis">Current State Analysis</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#proposed-changes">Proposed Changes</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow">1) 修复 Workflow 调用链（核心修复）</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">2) 校验并统一门控语义（最小且稳健）</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">2.1) 参考图一致性校验与最小样式修正</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow-visualizer">3) 补齐单元测试（workflow 门控 + visualizer 输出）</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">4) 可选集成测试增强（若当前测试环境稳定）</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#assumptions-decisions">Assumptions &amp; Decisions</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#verification">Verification</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+作者： DP-EVA Developers
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2026, DP-EVA Developers.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

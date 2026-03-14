@@ -993,6 +993,14 @@ document.write(`
         <span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_should_plot_force_error</span><span class="p">(</span><span class="n">has_gt</span><span class="p">,</span> <span class="n">uq_results</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Ground Truth available. Plotting UQ vs Error...&quot;</span><span class="p">)</span>
+            <span class="n">vis</span><span class="o">.</span><span class="n">plot_uq_fdiff_scatter</span><span class="p">(</span>
+                <span class="n">df_uq</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">uq_select_scheme</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">uq_manager</span><span class="o">.</span><span class="n">qbc_params</span><span class="p">[</span><span class="s2">&quot;lo&quot;</span><span class="p">],</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">uq_manager</span><span class="o">.</span><span class="n">qbc_params</span><span class="p">[</span><span class="s2">&quot;hi&quot;</span><span class="p">],</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">uq_manager</span><span class="o">.</span><span class="n">rnd_params</span><span class="p">[</span><span class="s2">&quot;lo&quot;</span><span class="p">],</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">uq_manager</span><span class="o">.</span><span class="n">rnd_params</span><span class="p">[</span><span class="s2">&quot;hi&quot;</span><span class="p">],</span>
+            <span class="p">)</span>
             <span class="n">vis</span><span class="o">.</span><span class="n">plot_uq_vs_error</span><span class="p">(</span><span class="n">uq_results</span><span class="p">[</span><span class="n">COL_UQ_QBC</span><span class="p">],</span> <span class="n">uq_results</span><span class="p">[</span><span class="n">COL_UQ_RND</span><span class="p">],</span> <span class="n">uq_results</span><span class="p">[</span><span class="s2">&quot;diff_maxf_0_frame&quot;</span><span class="p">])</span>
             <span class="k">if</span> <span class="n">uq_rnd_rescaled</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">vis</span><span class="o">.</span><span class="n">plot_uq_vs_error</span><span class="p">(</span>
