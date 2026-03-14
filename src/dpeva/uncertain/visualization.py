@@ -335,14 +335,23 @@ class UQVisualizer:
             full_features (np.ndarray, optional): PCA features for the entire dataset (including filtered out ones).
                                                   If provided, plotted as background.
         """
+        explained_variance = np.asarray(explained_variance, dtype=float)
+        if explained_variance.ndim != 1 or explained_variance.size == 0:
+            raise ValueError("explained_variance must be a non-empty 1D array")
+        if np.nanmax(explained_variance) > 1.0 + 1e-8:
+            total = np.nansum(explained_variance)
+            if total > 0:
+                explained_variance = explained_variance / total
+            else:
+                raise ValueError("Invalid explained_variance: sum must be positive")
+
         # 1. Explained Variance
         plt.figure(figsize=(8, 6))
         plt.plot(range(1, selected_PC_dim+6+1), explained_variance[:selected_PC_dim+6], "o-", color="#4c72b0")
         plt.xlabel(r"i$^{\mathrm{th}}$ PC", size=14)
-        plt.ylabel("Explained variance", size=14)
-        plt.gca().yaxis.set_major_formatter(mtick.PercentFormatter())
+        plt.ylabel("Explained Variance Ratio", size=14)
+        plt.gca().yaxis.set_major_formatter(mtick.PercentFormatter(xmax=1.0))
         plt.grid(True, linestyle='-', alpha=0.6)
-        plt.title("Explained Variance Ratio", fontsize=16)
         plt.savefig(os.path.join(self.save_dir, FILENAME_EXPLAINED_VARIANCE), dpi=self.dpi)
         plt.close()
 

@@ -184,7 +184,7 @@ class SamplingManager:
         return {
             "selected_indices": selected_indices,
             "pca_features": pca_features,
-            "explained_variance": sampler.pca.pca.explained_variance_,
+            "explained_variance": sampler.pca.pca.explained_variance_ratio_,
             "random_indices": random_indices,
             "scores_direct": scores_direct,
             "scores_random": scores_random,
@@ -217,7 +217,7 @@ class SamplingManager:
         
         res = sampler.fit_transform(features, atom_features, atom_counts)
         # 2-DIRECT uses Step 1 PCA for visualization usually
-        expl_var = sampler.step1_sampler.pca.pca.explained_variance_
+        expl_var = sampler.step1_sampler.pca.pca.explained_variance_ratio_
         
         selected_indices = res["selected_indices"]
         pca_features = res["PCAfeatures"]
