@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>CollectionWorkflow 有无真值作图门控改进计划（V2） &#8212; DP-EVA Documentation</title>
+    <title>CollectionWorkflow 单/多数据池采样未完成问题修复计划 &#8212; DP-EVA Documentation</title>
   
   
   
@@ -42,11 +42,9 @@
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
     <script src="../../_static/translations.js?v=beaddf03"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'plans/governance/2026-03-13-collection-workflow-gt-plot-gating-v2';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'plans/governance/2026-03-14-collect-single-multi-pool-fix-plan';</script>
     <link rel="index" title="索引" href="../../genindex.html" />
     <link rel="search" title="搜索" href="../../search.html" />
-    <link rel="next" title="文档贡献指南（Contributing）" href="../../policy/contributing.html" />
-    <link rel="prev" title="README" href="README.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="zh-CN"/>
   </head>
@@ -108,6 +106,8 @@
     <div class="bd-container__inner bd-page-width">
       
       
+      
+        
       
       <div class="bd-sidebar-primary bd-sidebar">
         
@@ -198,7 +198,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../guides/process-asset-lifecycle.html">过程资产生命周期（AI 草案到项目文档）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../policy/README.html">Policy（制度与规范）</a></li>
 </ul>
-<ul class="current nav bd-sidenav">
+<ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../../architecture/design-report.html">DP-EVA 项目设计模式与架构分析报告</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../architecture/decisions/README.html">README</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../architecture/decisions/2026-02-04-deepmd-dependency.html">ADR: DeepMD-kit 依赖管理策略</a></li>
@@ -210,9 +210,9 @@
 <li class="toctree-l1"><a class="reference internal" href="../../guides/testing/integration-config-templates.html">DP-EVA 集成测试最小配置模板（Slurm）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../guides/testing/integration-slurm.html">DP-EVA 集成测试设计与交付报告（Slurm + Multi DataPool）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../guides/testing/multi-datapool-artifacts.html">test-for-multiple-datapool 生产目录输入输出分析</a></li>
-<li class="toctree-l1 current active has-children"><a class="reference internal" href="../README.html">开发计划 (Development Plans)</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
-<li class="toctree-l2 current active has-children"><a class="reference internal" href="README.html">README</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
-<li class="toctree-l3 current active"><a class="current reference internal" href="#">CollectionWorkflow 有无真值作图门控改进计划（V2）</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../README.html">开发计划 (Development Plans)</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="README.html">README</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="2026-03-13-collection-workflow-gt-plot-gating-v2.html">CollectionWorkflow 有无真值作图门控改进计划（V2）</a></li>
 </ul>
 </details></li>
 </ul>
@@ -275,7 +275,7 @@
       
       
       
-      <li><a href="../../_sources/plans/governance/2026-03-13-collection-workflow-gt-plot-gating-v2.md" target="_blank"
+      <li><a href="../../_sources/plans/governance/2026-03-14-collect-single-multi-pool-fix-plan.md" target="_blank"
    class="btn btn-sm btn-download-source-button dropdown-item"
    title="下载源文件"
    data-bs-placement="left" data-bs-toggle="tooltip"
@@ -359,7 +359,7 @@ document.write(`
               
 
 <div id="jb-print-docs-body" class="onlyprint">
-    <h1>CollectionWorkflow 有无真值作图门控改进计划（V2）</h1>
+    <h1>CollectionWorkflow 单/多数据池采样未完成问题修复计划</h1>
     <!-- Table of contents -->
     <div id="print-main-content">
         <div id="jb-print-toc">
@@ -369,18 +369,16 @@ document.write(`
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">问题重述</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">目标</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">实施步骤</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">步骤 1：深挖真值判定与传播链</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">步骤 2：建立全量“图输出依赖矩阵”</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow">步骤 3：Workflow 层统一门控与调用编排</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#visualizer">步骤 4：Visualizer 层防御式校验（最小侵入）</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">步骤 5：测试策略（双向覆盖）</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">步骤 6：回归与验收</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#summary">Summary</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#current-state-analysis">Current State Analysis</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#proposed-changes">Proposed Changes</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">1) 修复目标系统路径解析（核心逻辑）</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">2) 增加针对性单元测试（防回归）</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">3) 可观测性与错误信息优化（轻量）</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id8">验收标准</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#assumptions-decisions">Assumptions &amp; Decisions</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#verification">Verification</a></li>
 </ul>
             </nav>
         </div>
@@ -392,90 +390,134 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="collectionworkflow-v2">
-<h1>CollectionWorkflow 有无真值作图门控改进计划（V2）<a class="headerlink" href="#collectionworkflow-v2" title="Link to this heading">#</a></h1>
-<section id="id1">
-<h2>问题重述<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
-<p>当前在 data pool 无参考真值场景，出现了两类并存风险：</p>
+  <section id="collectionworkflow">
+<h1>CollectionWorkflow 单/多数据池采样未完成问题修复计划<a class="headerlink" href="#collectionworkflow" title="Link to this heading">#</a></h1>
+<section id="summary">
+<h2>Summary<a class="headerlink" href="#summary" title="Link to this heading">#</a></h2>
 <ul class="simple">
-<li><p>误绘（false positive）：依赖 force 真值误差的图被错误绘制，例如 <code class="docutils literal notranslate"><span class="pre">UQ-diff-fdiff-parity.png</span></code>、<code class="docutils literal notranslate"><span class="pre">UQ-diff-UQ-parity.png</span></code>、<code class="docutils literal notranslate"><span class="pre">UQ-force-rescaled-fdiff-parity.png</span></code>。</p></li>
-<li><p>漏绘/错屏蔽（false negative）：不依赖真值误差的图可能被错误屏蔽，用户重点反馈 <code class="docutils literal notranslate"><span class="pre">UQ-QbC-force.png</span></code> 正常，但怀疑 <code class="docutils literal notranslate"><span class="pre">UQ-RND-force.png</span></code> 被错误屏蔽。</p></li>
+<li><p>目标：修复 <code class="docutils literal notranslate"><span class="pre">dpeva</span> <span class="pre">collect</span></code> 在单数据池场景下“已采样但导出为 0 帧”导致流程失败的问题，同时确保多数据池路径行为不回退。</p></li>
+<li><p>根因：<code class="docutils literal notranslate"><span class="pre">load_systems(...,</span> <span class="pre">target_systems=...)</span></code> 在目标系统名带有数据根目录前缀时，直接拼接 <code class="docutils literal notranslate"><span class="pre">data_dir/sys_name</span></code>，产生重复路径段（如 <code class="docutils literal notranslate"><span class="pre">.../other_dpdata/other_dpdata/C...</span></code>），导致导出阶段无法加载原始系统。</p></li>
+<li><p>策略：增强目标系统路径解析的鲁棒性（保留层级语义与目标名一致性），并补齐单元测试覆盖该回归场景与多池兼容场景。</p></li>
 </ul>
-<p>本次将以“全量图依赖矩阵 + 统一门控 + 双向测试（误绘/漏绘）”方式修复，确保行为与项目既有设计一致。</p>
+</section>
+<section id="current-state-analysis">
+<h2>Current State Analysis<a class="headerlink" href="#current-state-analysis" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p>复现配置：<code class="docutils literal notranslate"><span class="pre">test/dpeva-iter1/config_collect_normal.json</span></code> 中 <code class="docutils literal notranslate"><span class="pre">testdata_dir=&quot;test/dpeva-iter1/other_dpdata&quot;</span></code>、<code class="docutils literal notranslate"><span class="pre">desc_dir=&quot;.../desc_pool&quot;</span></code>，UQ+DIRECT 正常执行到采样完成。</p></li>
+<li><p>失败现象：<code class="docutils literal notranslate"><span class="pre">collection.log</span></code> 在采样后报错 <code class="docutils literal notranslate"><span class="pre">CRITICAL:</span> <span class="pre">No</span> <span class="pre">frames</span> <span class="pre">were</span> <span class="pre">exported</span> <span class="pre">despite</span> <span class="pre">candidates</span> <span class="pre">being</span> <span class="pre">selected!</span></code>，随后抛出运行时失败。</p></li>
+<li><p>关键日志证据：大量 <code class="docutils literal notranslate"><span class="pre">Data</span> <span class="pre">directory</span> <span class="pre">not</span> <span class="pre">found</span> <span class="pre">for</span> <span class="pre">system:</span> <span class="pre">other_dpdata/...</span> <span class="pre">at</span> <span class="pre">.../other_dpdata/other_dpdata/...</span></code>，说明目标系统名已含根目录前缀，拼接后路径重复。</p></li>
+<li><p>代码定位：</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">CollectionWorkflow._run_export_phase</span></code> 调用 <code class="docutils literal notranslate"><span class="pre">CollectionIOManager.export_dpdata</span></code>，当导出总帧数为 0 时强制失败。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">CollectionIOManager.export_dpdata</span></code> 将 <code class="docutils literal notranslate"><span class="pre">unique_system_names</span></code> 传给 <code class="docutils literal notranslate"><span class="pre">load_systems(testdata_dir,</span> <span class="pre">target_systems=...)</span></code>。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">load_systems</span></code> 目标分支当前仅执行 <code class="docutils literal notranslate"><span class="pre">os.path.join(data_dir,</span> <span class="pre">sys_name)</span></code>，没有处理“目标名包含根目录前缀”的情况。</p></li>
+</ul>
+</li>
+<li><p>影响范围：</p>
+<ul>
+<li><p>单数据池：若系统名来自上游数据链路并带前缀，导出必然失败。</p></li>
+<li><p>多数据池：层级名（<code class="docutils literal notranslate"><span class="pre">pool/system</span></code>）必须保持可用，不可被扁平化或误裁剪。</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="proposed-changes">
+<h2>Proposed Changes<a class="headerlink" href="#proposed-changes" title="Link to this heading">#</a></h2>
+<section id="id1">
+<h3>1) 修复目标系统路径解析（核心逻辑）<a class="headerlink" href="#id1" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p>文件：<code class="docutils literal notranslate"><span class="pre">src/dpeva/io/dataset.py</span></code></p></li>
+<li><p>改动内容：</p>
+<ul>
+<li><p>新增内部解析逻辑（函数或内联步骤），针对每个 <code class="docutils literal notranslate"><span class="pre">sys_name</span></code> 生成候选相对路径并按顺序尝试：</p>
+<ol class="arabic simple">
+<li><p>原始 <code class="docutils literal notranslate"><span class="pre">sys_name</span></code>（保持多池层级语义）；</p></li>
+<li><p>若以 <code class="docutils literal notranslate"><span class="pre">basename(data_dir)/</span></code> 开头，去掉该前缀后的相对路径；</p></li>
+<li><p>可选：重复前缀场景下进行一次“去重根段”纠偏（仅在目录存在时接受）。</p></li>
+</ol>
+</li>
+<li><p>仅当候选目录实际存在时采用，并继续把 <code class="docutils literal notranslate"><span class="pre">target_name</span></code> 保留为原始 <code class="docutils literal notranslate"><span class="pre">sys_name</span></code>（保证与 <code class="docutils literal notranslate"><span class="pre">df_final</span></code> 的 <code class="docutils literal notranslate"><span class="pre">dataname</span></code> 键一致）。</p></li>
+<li><p>当候选均不存在时，输出更可诊断的 warning（包含尝试过的候选路径）。</p></li>
+</ul>
+</li>
+<li><p>设计理由：</p>
+<ul>
+<li><p>遵循“显式优于隐式”：先用原路径，再做最小必要纠偏。</p></li>
+<li><p>不破坏多池层级：优先保留 <code class="docutils literal notranslate"><span class="pre">pool/system</span></code>，不做 basename 扁平化替换。</p></li>
+<li><p>与现有导出映射兼容：保持 <code class="docutils literal notranslate"><span class="pre">sampled_indices_map</span></code> 键空间不变。</p></li>
+</ul>
+</li>
+</ul>
 </section>
 <section id="id2">
-<h2>目标<a class="headerlink" href="#id2" title="Link to this heading">#</a></h2>
-<ol class="arabic simple">
-<li><p>完整梳理 CollectionWorkflow 里“真值判定、UQ分析、筛选、作图”的分支与触发点。</p></li>
-<li><p>明确每张图是否依赖真值误差，形成可执行的输出矩阵。</p></li>
-<li><p>修复无真值场景下的真值图误绘问题。</p></li>
-<li><p>修复或澄清非真值图错屏蔽问题（含 <code class="docutils literal notranslate"><span class="pre">UQ-RND-force</span></code> 专项核查）。</p></li>
-<li><p>通过单测和流程级回归同时覆盖误绘与漏绘。</p></li>
-</ol>
+<h3>2) 增加针对性单元测试（防回归）<a class="headerlink" href="#id2" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p>文件：<code class="docutils literal notranslate"><span class="pre">tests/unit/io/test_dataset.py</span></code></p></li>
+<li><p>新增测试点：</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">target_systems=[&quot;other_dpdata/C...&quot;]</span></code> 且 <code class="docutils literal notranslate"><span class="pre">data_dir=.../other_dpdata</span></code> 时，能够正确解析到 <code class="docutils literal notranslate"><span class="pre">.../other_dpdata/C...</span></code> 并加载成功。</p></li>
+<li><p>验证加载后 <code class="docutils literal notranslate"><span class="pre">target_name</span></code> 仍为原始目标名（含前缀），确保导出映射一致。</p></li>
+<li><p>保留并验证多池目标名（如 <code class="docutils literal notranslate"><span class="pre">poolA/sys1</span></code>）路径行为不受影响。</p></li>
+</ul>
+</li>
+<li><p>文件：<code class="docutils literal notranslate"><span class="pre">tests/unit/io/test_collection_io_full.py</span></code></p></li>
+<li><p>新增测试点：</p>
+<ul>
+<li><p>构造 <code class="docutils literal notranslate"><span class="pre">df_final.dataname</span></code> 含前缀系统名（<code class="docutils literal notranslate"><span class="pre">other_dpdata/sys1-0</span></code>）场景；</p></li>
+<li><p>mock <code class="docutils literal notranslate"><span class="pre">load_systems</span></code> 返回对应 <code class="docutils literal notranslate"><span class="pre">target_name</span></code>，断言 sampled/other 的分帧导出调用与计数正确。</p></li>
+<li><p>覆盖“有选中帧时导出总帧数&gt;0”的成功路径，确保不会触发 workflow 末端 0 导出异常。</p></li>
+</ul>
+</li>
+</ul>
 </section>
 <section id="id3">
-<h2>实施步骤<a class="headerlink" href="#id3" title="Link to this heading">#</a></h2>
-<section id="id4">
-<h3>步骤 1：深挖真值判定与传播链<a class="headerlink" href="#id4" title="Link to this heading">#</a></h3>
+<h3>3) 可观测性与错误信息优化（轻量）<a class="headerlink" href="#id3" title="Link to this heading">#</a></h3>
 <ul class="simple">
-<li><p>梳理 <code class="docutils literal notranslate"><span class="pre">cli.handle_collect</span> <span class="pre">-&gt;</span> <span class="pre">CollectionWorkflow.run</span> <span class="pre">-&gt;</span> <span class="pre">_run_filtered_uq_phase</span></code>。</p></li>
-<li><p>梳理 <code class="docutils literal notranslate"><span class="pre">UQManager.load_predictions</span></code> 的 <code class="docutils literal notranslate"><span class="pre">has_gt</span></code> 来源与传播。</p></li>
-<li><p>核查 <code class="docutils literal notranslate"><span class="pre">DPTestResultParser._check_ground_truth</span></code> 的判定鲁棒性（全零启发式误判风险）。</p></li>
-<li><p>核查多模型情形下是否仅取 model0 <code class="docutils literal notranslate"><span class="pre">has_gt</span></code>，避免单模型状态污染全局。</p></li>
+<li><p>文件：<code class="docutils literal notranslate"><span class="pre">src/dpeva/io/dataset.py</span></code>（同核心逻辑文件内完成）</p></li>
+<li><p>改动内容：</p>
+<ul>
+<li><p>对“目标系统未找到”日志补充候选路径列表摘要，便于一眼识别“重复根目录段”类配置/命名问题。</p></li>
 </ul>
-</section>
-<section id="id5">
-<h3>步骤 2：建立全量“图输出依赖矩阵”<a class="headerlink" href="#id5" title="Link to this heading">#</a></h3>
-<ul class="simple">
-<li><p>盘点 <code class="docutils literal notranslate"><span class="pre">CollectionWorkflow</span></code> 当前实际调用的所有绘图函数与文件名。</p></li>
-<li><p>盘点 <code class="docutils literal notranslate"><span class="pre">UQVisualizer</span></code> 中存在但 workflow 可能未调用的绘图函数。</p></li>
-<li><p>将图分为三类：A类（不依赖真值误差）、B类（依赖真值误差）、C类（混合/需澄清）。</p></li>
-<li><p>形成矩阵字段：<code class="docutils literal notranslate"><span class="pre">图名</span> <span class="pre">|</span> <span class="pre">函数</span> <span class="pre">|</span> <span class="pre">依赖字段</span> <span class="pre">|</span> <span class="pre">无真值期望</span> <span class="pre">|</span> <span class="pre">有真值期望</span> <span class="pre">|</span> <span class="pre">当前行为</span></code>。</p></li>
-<li><p>对 <code class="docutils literal notranslate"><span class="pre">UQ-RND-force.png</span></code> 做专项结论：应输出则补齐调用；不应输出则明确设计边界并固化测试预期。</p></li>
+</li>
+<li><p>设计理由：</p>
+<ul>
+<li><p>错误不应静默，且应可直接定位到路径映射问题。</p></li>
 </ul>
-</section>
-<section id="workflow">
-<h3>步骤 3：Workflow 层统一门控与调用编排<a class="headerlink" href="#workflow" title="Link to this heading">#</a></h3>
-<ul class="simple">
-<li><p>在 <code class="docutils literal notranslate"><span class="pre">_run_filtered_uq_phase</span></code> 建立集中化作图编排：B类统一受 <code class="docutils literal notranslate"><span class="pre">has_gt</span></code> 门控，A类显式放在非门控路径。</p></li>
-<li><p>对 <code class="docutils literal notranslate"><span class="pre">UQ-RND-force</span></code> 按步骤2结论执行：补齐对称调用或明确不输出策略。</p></li>
-<li><p>保持目录结构、命名、日志风格与现有实现一致。</p></li>
-</ul>
-</section>
-<section id="visualizer">
-<h3>步骤 4：Visualizer 层防御式校验（最小侵入）<a class="headerlink" href="#visualizer" title="Link to this heading">#</a></h3>
-<ul class="simple">
-<li><p>在 B类函数中增加最小必要输入校验，误调用时显式跳过并 warning。</p></li>
-<li><p>A类函数避免引入“无真值即跳过”的过度校验，仅做必要数据完整性校验。</p></li>
-<li><p>保持函数签名兼容，不引入新配置项。</p></li>
-</ul>
-</section>
-<section id="id6">
-<h3>步骤 5：测试策略（双向覆盖）<a class="headerlink" href="#id6" title="Link to this heading">#</a></h3>
-<ul class="simple">
-<li><p>无真值：断言 B类图不生成；A类图按期望生成（含 <code class="docutils literal notranslate"><span class="pre">UQ-RND-force</span></code> 结论路径）。</p></li>
-<li><p>有真值：断言 A/B类图都按期望生成。</p></li>
-<li><p>防御式校验：误调用 B类函数不产出伪图，且有日志信号。</p></li>
-<li><p>优先复用 <code class="docutils literal notranslate"><span class="pre">tests/unit/workflows</span></code> 与 <code class="docutils literal notranslate"><span class="pre">tests/unit/uncertain</span></code> 现有测试基建。</p></li>
-</ul>
-</section>
-<section id="id7">
-<h3>步骤 6：回归与验收<a class="headerlink" href="#id7" title="Link to this heading">#</a></h3>
-<ul class="simple">
-<li><p>先跑定向单测，再跑 <code class="docutils literal notranslate"><span class="pre">pytest</span> <span class="pre">tests/unit</span></code> 做回归兜底（资源允许时）。</p></li>
-<li><p>对比产物清单与依赖矩阵，验证“误绘消失 + 漏绘修复/澄清”。</p></li>
-<li><p>核对日志语义：无真值应明确说明跳过真值依赖图。</p></li>
+</li>
 </ul>
 </section>
 </section>
-<section id="id8">
-<h2>验收标准<a class="headerlink" href="#id8" title="Link to this heading">#</a></h2>
-<ol class="arabic simple">
-<li><p>无真值时，依赖真值误差图不再误绘（包括用户指出的三张图）。</p></li>
-<li><p>无真值时，不依赖真值误差图不被误屏蔽。</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">UQ-RND-force</span></code> 行为与项目既有设计一致（补齐或明确不输出），并有测试约束。</p></li>
-<li><p>有真值时，相关图输出不回归，整体单测通过。</p></li>
-</ol>
+<section id="assumptions-decisions">
+<h2>Assumptions &amp; Decisions<a class="headerlink" href="#assumptions-decisions" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p>决策：以“兼容单池前缀误入 + 保持多池层级原语义”为第一原则，不改变现有配置字段定义与上游 dataname 结构。</p></li>
+<li><p>决策：不在本轮引入新的配置开关，避免增加使用复杂度。</p></li>
+<li><p>假设：<code class="docutils literal notranslate"><span class="pre">dataname</span></code> 与 <code class="docutils literal notranslate"><span class="pre">target_systems</span></code> 的系统名分隔规则仍为 <code class="docutils literal notranslate"><span class="pre">&quot;{sys_name}-{frame_idx}&quot;</span></code>。</p></li>
+<li><p>假设：多池系统名中的 <code class="docutils literal notranslate"><span class="pre">/</span></code> 语义合法，后续导出路径安全由既有 <code class="docutils literal notranslate"><span class="pre">normalize_sys_name</span> <span class="pre">+</span> <span class="pre">safe_join</span></code> 继续保障。</p></li>
+</ul>
+</section>
+<section id="verification">
+<h2>Verification<a class="headerlink" href="#verification" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p>单元测试（最小回归集）：</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">pytest</span> <span class="pre">tests/unit/io/test_dataset.py</span> <span class="pre">-k</span> <span class="pre">&quot;target</span> <span class="pre">or</span> <span class="pre">duplicate</span> <span class="pre">or</span> <span class="pre">fallback&quot;</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">pytest</span> <span class="pre">tests/unit/io/test_collection_io_full.py</span> <span class="pre">-k</span> <span class="pre">&quot;export_dpdata&quot;</span></code></p></li>
+</ul>
+</li>
+<li><p>工作流级校验（若本地/环境允许）：</p>
+<ul>
+<li><p>使用给定配置再次执行 collect，确认 <code class="docutils literal notranslate"><span class="pre">collection.log</span></code> 出现 <code class="docutils literal notranslate"><span class="pre">WORKFLOW_FINISHED</span></code>，且 <code class="docutils literal notranslate"><span class="pre">dpdata/sampled_dpdata</span></code>、<code class="docutils literal notranslate"><span class="pre">dpdata/other_dpdata</span></code> 目录均有有效导出帧。</p></li>
+</ul>
+</li>
+<li><p>回归关注点：</p>
+<ul>
+<li><p>单池：不再出现 <code class="docutils literal notranslate"><span class="pre">.../other_dpdata/other_dpdata/...</span></code> 路径。</p></li>
+<li><p>多池：<code class="docutils literal notranslate"><span class="pre">pool/system</span></code> 层级导出结构保持不变。</p></li>
+<li><p>当系统确实不存在时，日志能明确显示尝试路径，便于排障。</p></li>
+</ul>
+</li>
+</ul>
 </section>
 </section>
 
@@ -490,24 +532,6 @@ document.write(`
                 <footer class="prev-next-footer d-print-none">
                   
 <div class="prev-next-area">
-    <a class="left-prev"
-       href="README.html"
-       title="previous page">
-      <i class="fa-solid fa-angle-left"></i>
-      <div class="prev-next-info">
-        <p class="prev-next-subtitle">上一页</p>
-        <p class="prev-next-title">README</p>
-      </div>
-    </a>
-    <a class="right-next"
-       href="../../policy/contributing.html"
-       title="next page">
-      <div class="prev-next-info">
-        <p class="prev-next-subtitle">下一页</p>
-        <p class="prev-next-title">文档贡献指南（Contributing）</p>
-      </div>
-      <i class="fa-solid fa-angle-right"></i>
-    </a>
 </div>
                 </footer>
               
@@ -524,18 +548,16 @@ document.write(`
   </div>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">问题重述</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">目标</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">实施步骤</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">步骤 1：深挖真值判定与传播链</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">步骤 2：建立全量“图输出依赖矩阵”</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow">步骤 3：Workflow 层统一门控与调用编排</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#visualizer">步骤 4：Visualizer 层防御式校验（最小侵入）</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">步骤 5：测试策略（双向覆盖）</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">步骤 6：回归与验收</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#summary">Summary</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#current-state-analysis">Current State Analysis</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#proposed-changes">Proposed Changes</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">1) 修复目标系统路径解析（核心逻辑）</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">2) 增加针对性单元测试（防回归）</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">3) 可观测性与错误信息优化（轻量）</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id8">验收标准</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#assumptions-decisions">Assumptions &amp; Decisions</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#verification">Verification</a></li>
 </ul>
   </nav></div>
 

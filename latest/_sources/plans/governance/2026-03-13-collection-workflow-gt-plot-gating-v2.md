@@ -1,3 +1,10 @@
+---
+status: active
+audience: developers
+last-updated: 2026-03-13
+owner: DP-EVA Developers
+---
+
 # CollectionWorkflow 有无真值作图门控改进计划（V2）
 
 ## 问题重述

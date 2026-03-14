@@ -2,7 +2,7 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-03-12
+last-updated: 2026-03-13
 owner: Docs Owner
 ---
 
@@ -10,7 +10,7 @@ owner: Docs Owner
 
 - Status: active
 - Audience: Developers
-- Last-Updated: 2026-03-12
+- Last-Updated: 2026-03-13
 
 本目录用于存放“项目级、可共享、可追溯”的开发计划文档，不承载 AI 执行期草案。
 
@@ -60,3 +60,11 @@ owner: Docs Owner
   - `python3 scripts/doc_check.py`
   - `python3 scripts/check_docs_freshness.py --days 90`
   - `make -C docs html SPHINXOPTS="-W --keep-going"`
+
+## 6. 活跃计划 (Active Plans)
+
+```{toctree}
+:maxdepth: 1
+
+governance/README
+```
