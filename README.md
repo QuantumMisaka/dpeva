@@ -19,7 +19,7 @@ DP-EVA is an active learning framework designed for efficient fine-tuning of DPA
 
 *   **Active Learning Loop**: Fully pipeline for Training -> Inference -> UQ -> Sampling -> Labeling.
 *   **Advanced UQ**: Supports Query by Committee (QbC) and Random Network Distillation (RND) with robust "Clamp-and-Clean" numerics.
-*   **Smart Sampling**: Implements 2-Step DIRECT sampling (Structure -> Atomic Environment) to select the most representative and uncertain configurations.
+*   **Smart Sampling**: Implements DIRECT sampling to select the most representative configurations in target data pool.
 *   **HPC Ready**: Built-in `JobManager` supports seamless switching between Local and Slurm backends, with optimized task packing for massive labeling jobs.
 *   **Labeling Automation**: (v0.5.1+) Integrated DFT workflow (ABACUS) for automatic input generation, error correction, and data cleaning.
 
