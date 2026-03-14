@@ -10,7 +10,8 @@
 ![Version](https://img.shields.io/badge/version-0.6.6-blue)
 ![Python](https://img.shields.io/badge/python-3.10%2B-green)
 ![License](https://img.shields.io/badge/License-LGPL_v3-blue.svg)
-[![Code Review](https://img.shields.io/badge/review-2026--03--10-important)](docs/archive/v0.6.4/reports/2026-03-10-combined-review.md)
+![Unit Test Coverage](https://img.shields.io/badge/unit%20coverage-82%25-yellowgreen)
+[![Code Review](https://img.shields.io/badge/review-2026--03--13-important)](docs/archive/v0.6.6/reports/2026-03-13-Code-Review-Collection-PCA-Background.md)
 
 DP-EVA is an active learning framework designed for efficient fine-tuning of DPA universal machine learning interatomic potential. It integrates uncertainty quantification (UQ), diverse sampling (DIRECT), and labeling workflows to minimize data annotation costs while maximizing model performance.
 
