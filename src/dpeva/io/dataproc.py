@@ -35,6 +35,8 @@ class DPTestResultParser:
         
         self.has_ground_truth = False
         self.parsed_data = {}
+        self.dataname_list: List[List] = []
+        self.datanames_nframe: Dict[str, int] = {}
 
     def parse(self) -> Dict:
         """
@@ -108,6 +110,8 @@ class DPTestResultParser:
             # Parse Data Names and Frame Info from Energy file comments
             # Pass f_file to use structure-based atom counting
             dataname_list, datanames_nframe = self._get_dataname_info(e_file, f_file)
+            self.dataname_list = dataname_list
+            self.datanames_nframe = datanames_nframe
         except Exception as e:
             self.logger.error(f"Failed to parse dataname info: {e}")
             raise
@@ -181,6 +185,13 @@ class DPTestResultParser:
                 return True
             return np.all(np.abs(arr[finite_mask]) < tol)
 
+        def _has_any_effectively_zero(values, tol=zero_tol):
+            arr = np.asarray(values, dtype=float)
+            finite_mask = np.isfinite(arr)
+            if not np.any(finite_mask):
+                return True
+            return np.any(np.abs(arr[finite_mask]) < tol)
+
         def _is_effectively_same(values_a, values_b, tol=zero_tol):
             arr_a = np.asarray(values_a, dtype=float)
             arr_b = np.asarray(values_b, dtype=float)
@@ -190,22 +201,27 @@ class DPTestResultParser:
             return np.allclose(arr_a[finite_mask], arr_b[finite_mask], atol=tol, rtol=0.0)
 
         is_e_zero = _is_effectively_zero(self.data_e["data_e"])
+        has_e_zero_frame = _has_any_effectively_zero(self.data_e["data_e"])
         is_e_same_as_pred = _is_effectively_same(self.data_e["data_e"], self.data_e["pred_e"])
         is_f_zero = True
         is_f_same_as_pred = True
         if self.data_f is not None:
+            force_data = np.atleast_1d(self.data_f)
             is_f_zero = (
-                _is_effectively_zero(self.data_f["data_fx"])
-                and _is_effectively_zero(self.data_f["data_fy"])
-                and _is_effectively_zero(self.data_f["data_fz"])
+                _is_effectively_zero(force_data["data_fx"])
+                and _is_effectively_zero(force_data["data_fy"])
+                and _is_effectively_zero(force_data["data_fz"])
             )
             is_f_same_as_pred = (
-                _is_effectively_same(self.data_f["data_fx"], self.data_f["pred_fx"])
-                and _is_effectively_same(self.data_f["data_fy"], self.data_f["pred_fy"])
-                and _is_effectively_same(self.data_f["data_fz"], self.data_f["pred_fz"])
+                _is_effectively_same(force_data["data_fx"], force_data["pred_fx"])
+                and _is_effectively_same(force_data["data_fy"], force_data["pred_fy"])
+                and _is_effectively_same(force_data["data_fz"], force_data["pred_fz"])
             )
 
-        if is_e_zero and is_f_zero:
+        if has_e_zero_frame:
+            self.has_ground_truth = False
+            self.logger.info("Detected at least one near-zero energy label frame (<1e-4). Assuming NO ground truth.")
+        elif is_e_zero and is_f_zero:
             self.has_ground_truth = False
             self.logger.info("Detected all-zero data columns. Assuming NO ground truth.")
         elif is_e_same_as_pred and is_f_same_as_pred:

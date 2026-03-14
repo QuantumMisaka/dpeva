@@ -53,6 +53,22 @@ def test_load_predictions_requires_all_models_have_ground_truth(uq_manager):
         _, has_gt = uq_manager.load_predictions()
         assert has_gt is False
 
+
+def test_load_predictions_logs_warning_when_any_model_lacks_ground_truth(uq_manager):
+    with patch("dpeva.uncertain.manager.DPTestResultParser") as mock_parser:
+        mock_parser.return_value.parse.side_effect = [
+            {"energy": [], "force": [], "virial": [], "has_ground_truth": True, "dataname_list": [], "datanames_nframe": {}},
+            {"energy": [], "force": [], "virial": [], "has_ground_truth": False, "dataname_list": [], "datanames_nframe": {}},
+            {"energy": [], "force": [], "virial": [], "has_ground_truth": True, "dataname_list": [], "datanames_nframe": {}},
+            {"energy": [], "force": [], "virial": [], "has_ground_truth": True, "dataname_list": [], "datanames_nframe": {}},
+        ]
+        with patch.object(uq_manager.logger, "warning") as mock_warning:
+            _, has_gt = uq_manager.load_predictions()
+        assert has_gt is False
+        mock_warning.assert_called_once_with(
+            "Detected missing/invalid ground truth in target pool (including near-zero energy labels <1e-4). Treating the pool as unlabeled and enabling no-label analysis/plot branches."
+        )
+
 def test_verify_atom_counts(tmp_path):
     """Test optional atom count verification logic."""
     testdata_dir = tmp_path / "testdata"

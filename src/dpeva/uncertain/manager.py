@@ -72,6 +72,7 @@ class UQManager:
         has_ground_truth = all(pred.has_ground_truth for pred in preds)
         if not has_ground_truth:
             self.logger.info("At least one model lacks valid ground truth. Ground-truth-dependent plotting will be disabled.")
+            self.logger.warning("Detected missing/invalid ground truth in target pool (including near-zero energy labels <1e-4). Treating the pool as unlabeled and enabling no-label analysis/plot branches.")
         return preds, has_ground_truth
 
     def _verify_atom_counts_list(self, dataname_list: List[List]):
