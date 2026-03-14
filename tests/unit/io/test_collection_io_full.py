@@ -65,6 +65,36 @@ class TestCollectionIOManagerFull:
         
         assert len(names) == 10
 
+    def test_load_descriptors_recursive_multi_pool(self, manager, tmp_path):
+        desc_dir = tmp_path / "desc_multi"
+        (desc_dir / "poolA").mkdir(parents=True)
+        (desc_dir / "poolB").mkdir(parents=True)
+
+        np.save(desc_dir / "poolA" / "sys1.npy", np.random.rand(3, 1, 16))
+        np.save(desc_dir / "poolB" / "sys2.npy", np.random.rand(2, 1, 16))
+
+        names, data = manager.load_descriptors(str(desc_dir))
+
+        assert len(names) == 5
+        assert "poolA/sys1-0" in names
+        assert "poolA/sys1-2" in names
+        assert "poolB/sys2-0" in names
+        assert "poolB/sys2-1" in names
+        assert data.shape == (5, 16)
+
+    def test_load_descriptors_explicit_glob_unchanged(self, manager, tmp_path):
+        desc_dir = tmp_path / "desc_glob_pattern"
+        desc_dir.mkdir()
+        np.save(desc_dir / "sysA.npy", np.random.rand(4, 1, 8))
+        np.save(desc_dir / "sysB.npy", np.random.rand(3, 1, 8))
+
+        pattern = str(desc_dir / "sysA*.npy")
+        names, data = manager.load_descriptors(pattern)
+
+        assert len(names) == 4
+        assert all(name.startswith("sysA-") for name in names)
+        assert data.shape == (4, 8)
+
     def test_load_descriptors_mismatch(self, manager, tmp_path):
         """Test handling of frame mismatch."""
         desc_dir = tmp_path / "desc_mismatch"
@@ -102,6 +132,19 @@ class TestCollectionIOManagerFull:
         
         assert len(X) == 2
         assert n == [2, 2]
+
+    def test_load_atomic_features_with_nested_system_name(self, manager, tmp_path):
+        desc_dir = tmp_path / "desc_atom_nested"
+        (desc_dir / "poolA").mkdir(parents=True)
+
+        feat = np.random.rand(2, 3, 6)
+        np.save(desc_dir / "poolA" / "sys1.npy", feat)
+
+        df = pd.DataFrame({"dataname": ["poolA/sys1-0", "poolA/sys1-1"]})
+        X, n = manager.load_atomic_features(str(desc_dir), df)
+
+        assert len(X) == 2
+        assert n == [3, 3]
 
     def test_export_dpdata(self, manager, tmp_path):
         """Test exporting to dpdata."""

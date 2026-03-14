@@ -49,6 +49,16 @@ class CollectionIOManager:
             if not os.path.exists(d):
                 os.makedirs(d)
 
+    def _resolve_descriptor_file(self, desc_dir: str, sys_name: str) -> Optional[str]:
+        path_nested = os.path.join(desc_dir, f"{sys_name}.npy")
+        path_flat = os.path.join(desc_dir, f"{os.path.basename(sys_name)}.npy")
+        if os.path.exists(path_nested):
+            return path_nested
+        if os.path.exists(path_flat):
+            self.logger.info(f"Matched descriptor via basename: {path_flat}")
+            return path_flat
+        return None
+
     def count_frames(self, data_dir: str, fmt: str = "auto") -> int:
         """Counts total frames in dataset."""
         try:
@@ -88,31 +98,31 @@ class CollectionIOManager:
         if target_names:
             self.logger.info(f"Loading {len(target_names)} specific systems based on target names.")
             for sys_name in target_names:
-                path_flat = os.path.join(desc_dir, f"{sys_name}.npy")
-                path_flat_base = os.path.join(desc_dir, f"{os.path.basename(sys_name)}.npy")
-                
-                if os.path.exists(path_flat):
-                    f = path_flat
-                elif os.path.exists(path_flat_base):
-                    self.logger.info(f"Matched descriptor via basename: {path_flat_base}")
-                    f = path_flat_base
-                else:
+                f = self._resolve_descriptor_file(desc_dir, sys_name)
+                if f is None:
                     self.logger.error(f"Descriptor file not found for system: {sys_name}")
                     raise FileNotFoundError(f"Descriptor file missing for {sys_name}")
                 
                 self._load_single_descriptor(f, sys_name, expected_frames, desc_datanames, desc_stru)
                 
         else:
-            # Glob loading
-            pattern = desc_dir if '*' in desc_dir else os.path.join(desc_dir, "*.npy")
-            desc_iter_list = sorted(glob.glob(pattern))
+            if "*" in desc_dir:
+                desc_iter_list = sorted(glob.glob(desc_dir))
+                base_dir = None
+            else:
+                desc_iter_list = sorted(glob.glob(os.path.join(desc_dir, "**", "*.npy"), recursive=True))
+                base_dir = os.path.abspath(desc_dir)
             
             if not desc_iter_list:
                 self.logger.warning(f"No {label} found in {desc_dir}")
                 return [], np.array([])
             
             for f in desc_iter_list:
-                keyname = os.path.basename(f).replace('.npy', '')
+                if base_dir is not None:
+                    rel = os.path.relpath(os.path.abspath(f), base_dir)
+                    keyname = os.path.splitext(rel)[0].replace("\\", "/")
+                else:
+                    keyname = os.path.basename(f).replace('.npy', '')
                 try:
                     self._load_single_descriptor(f, keyname, expected_frames, desc_datanames, desc_stru)
                 except Exception as e:
@@ -182,11 +192,8 @@ class CollectionIOManager:
             sys_to_frames.setdefault(sys_name, set()).add(int(idx))
             
         for sys_name, indices in sys_to_frames.items():
-            f_path = os.path.join(desc_dir, f"{sys_name}.npy")
-            if not os.path.exists(f_path):
-                f_path = os.path.join(desc_dir, f"{os.path.basename(sys_name)}.npy")
-                
-            if not os.path.exists(f_path):
+            f_path = self._resolve_descriptor_file(desc_dir, sys_name)
+            if f_path is None:
                 self.logger.warning(f"Missing atomic features for {sys_name}")
                 continue
                 
