@@ -244,3 +244,51 @@ class TestLabelingManager:
 
         assert output_marker.exists()
         assert converged_marker.exists()
+
+    @patch("dpeva.labeling.manager.logger.warning")
+    @patch("dpeva.labeling.manager.dpdata")
+    def test_mgr_010_skip_incomplete_converged_systems(self, mock_dpdata, mock_warning, manager, caplog):
+        for name in ("Conv_Task_0", "Conv_Task_1"):
+            task_dir = manager.converged_dir / "DS1" / "cluster" / name
+            task_dir.mkdir(parents=True)
+            (task_dir / "INPUT").touch()
+            (task_dir / "STRU").touch()
+            with open(task_dir / "task_meta.json", "w") as f:
+                json.dump({"dataset_name": "DS1", "stru_type": "cluster"}, f)
+
+        valid_system = MagicMock()
+        manager.postprocessor.load_data = MagicMock(side_effect=[valid_system, None])
+        df_real = pd.DataFrame({"sys_idx": [0], "frame_idx": [0], "max_force": [0.1]})
+        manager.postprocessor.compute_metrics = MagicMock(return_value=df_real)
+        manager.postprocessor.filter_data = MagicMock(return_value=df_real)
+        manager.postprocessor.export_data = MagicMock()
+
+        manager.collect_and_export()
+
+        assert manager.postprocessor.load_data.call_count == 2
+        mock_warning.assert_any_call("Skipped 1 converged directories due to incomplete parsed data.")
+
+    def test_mgr_011_extract_results_routes_bad_converged(self, manager):
+        job_dir = manager.input_dir / "N_50_0"
+        for name in ("ok_0", "bad_0", "fail_0"):
+            task_dir = job_dir / name
+            task_dir.mkdir(parents=True)
+            (task_dir / "INPUT").touch()
+
+        manager.postprocessor.classify_task_status = MagicMock(
+            side_effect=[
+                ("converged", "ok"),
+                ("bad_converged", "missing_total_force_block"),
+                ("failed", "scf_not_converged"),
+            ]
+        )
+        manager._move_task_dir = MagicMock()
+
+        converged, bad_converged, failed = manager.extract_results([job_dir])
+
+        assert len(converged) == 1
+        assert len(bad_converged) == 1
+        assert len(failed) == 1
+        assert manager._move_task_dir.call_count == 2
+        manager._move_task_dir.assert_any_call(converged[0], manager.converged_dir, "CONVERGED")
+        manager._move_task_dir.assert_any_call(bad_converged[0], manager.bad_converged_dir, "BAD_CONVERGED")

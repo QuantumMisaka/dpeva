@@ -45,6 +45,7 @@ class LabelingManager:
         self.input_dir = self.work_dir / "inputs"
         self.output_dir = self.work_dir / "outputs"
         self.converged_dir = self.work_dir / "CONVERGED"
+        self.bad_converged_dir = self.work_dir / "BAD_CONVERGED"
 
     def prepare_tasks(self, dataset_map: Dict[str, dpdata.MultiSystems], task_prefix: str = "task") -> List[Path]:
         """
@@ -175,15 +176,18 @@ if __name__ == "__main__":
         return script_content
 
     def process_results(self, packed_job_dirs: List[Path]) -> Tuple[List[Path], List[Path]]:
-        """
-        Process results from packed job directories.
-        Iterates over tasks inside packed jobs (recursive).
-        """
+        converged_tasks, _, failed_tasks = self.extract_results(packed_job_dirs)
+        return converged_tasks, failed_tasks
+
+    def extract_results(self, packed_job_dirs: List[Path]) -> Tuple[List[Path], List[Path], List[Path]]:
         logger.info("Processing results...")
         self.converged_dir.mkdir(parents=True, exist_ok=True)
+        self.bad_converged_dir.mkdir(parents=True, exist_ok=True)
         
         converged_tasks = []
+        bad_converged_tasks = []
         failed_tasks = []
+        bad_reason_counter: Dict[str, int] = {}
         
         for job_dir in packed_job_dirs:
             if not job_dir.exists():
@@ -200,63 +204,55 @@ if __name__ == "__main__":
                 task_dir = input_file.parent
                 if not task_dir.is_dir():
                     continue
-                
-                # Check convergence
-                if self.postprocessor.check_convergence(task_dir):
+
+                status, reason = self.postprocessor.classify_task_status(task_dir)
+                if status == "converged":
                     converged_tasks.append(task_dir)
-                    
-                    # Move to CONVERGED
-                    # Preserve hierarchy relative to inputs/
-                    try:
-                        # Extract sys_name from task_name (sys_name_fidx)
-                        # Warning: sys_name might contain underscores.
-                        # We know f_idx is int at end.
-                        parts = task_dir.name.rsplit('_', 1)
-                        if len(parts) == 2 and parts[1].isdigit():
-                            sys_name = parts[0]
-                            # Create subdir in CONVERGED
-                            # Use metadata if available to reconstruct dataset/type hierarchy
-                            # Or infer from task name if possible
-                            # Ideally, we should read task_meta.json here, but it's inside task_dir.
-                            
-                            # Let's try to read metadata for better restoration
-                            meta_file = task_dir / "task_meta.json"
-                            target_subpath = Path(sys_name) # Default fallback
-                            
-                            if meta_file.exists():
-                                try:
-                                    import json
-                                    with open(meta_file) as f:
-                                        meta = json.load(f)
-                                        ds = meta.get("dataset_name", "unknown")
-                                        st = meta.get("stru_type", "unknown")
-                                        tn = meta.get("task_name", task_dir.name)
-                                        target_subpath = Path(ds) / st / tn
-                                        # Note: task_dir.name usually equals tn
-                                except:
-                                    pass
-                            else:
-                                # Fallback logic
-                                parts = task_dir.name.rsplit('_', 1)
-                                if len(parts) == 2 and parts[1].isdigit():
-                                    sys_name = parts[0]
-                                    target_subpath = Path(sys_name) / task_dir.name
-                            
-                            target_parent = self.converged_dir / target_subpath.parent
-                            target_parent.mkdir(parents=True, exist_ok=True)
-                            
-                            # Move
-                            shutil.move(str(task_dir), str(self.converged_dir / target_subpath))
-                        else:
-                            # Fallback
-                            shutil.move(str(task_dir), str(self.converged_dir))
-                    except Exception as e:
-                        logger.error(f"Failed to move {task_dir} to CONVERGED: {e}")
-                else:
+                    self._move_task_dir(task_dir, self.converged_dir, "CONVERGED")
+                    continue
+                if status == "bad_converged":
+                    bad_converged_tasks.append(task_dir)
+                    bad_reason_counter[reason] = bad_reason_counter.get(reason, 0) + 1
+                    self._move_task_dir(task_dir, self.bad_converged_dir, "BAD_CONVERGED")
+                    continue
+                if status == "failed":
                     failed_tasks.append(task_dir)
-        
-        logger.info(f"Converged: {len(converged_tasks)}, Failed: {len(failed_tasks)}")
-        return converged_tasks, failed_tasks
+                    continue
+                failed_tasks.append(task_dir)
+
+        logger.info(
+            f"Converged: {len(converged_tasks)}, "
+            f"Bad-Converged: {len(bad_converged_tasks)}, Failed: {len(failed_tasks)}"
+        )
+        if bad_reason_counter:
+            for reason, count in sorted(bad_reason_counter.items()):
+                logger.warning(f"Bad-Converged reason {reason}: {count}")
+        return converged_tasks, bad_converged_tasks, failed_tasks
+
+    def _build_target_subpath(self, task_dir: Path) -> Path:
+        parts = task_dir.name.rsplit('_', 1)
+        fallback = Path(parts[0]) / task_dir.name if len(parts) == 2 and parts[1].isdigit() else Path(task_dir.name)
+        meta_file = task_dir / "task_meta.json"
+        if not meta_file.exists():
+            return fallback
+        try:
+            with open(meta_file) as f:
+                meta = json.load(f)
+            ds = meta.get("dataset_name", "unknown")
+            st = meta.get("stru_type", "unknown")
+            tn = meta.get("task_name", task_dir.name)
+            return Path(ds) / st / tn
+        except (OSError, json.JSONDecodeError, TypeError, ValueError):
+            return fallback
+
+    def _move_task_dir(self, task_dir: Path, destination_root: Path, destination_name: str):
+        try:
+            target_subpath = self._build_target_subpath(task_dir)
+            target_parent = destination_root / target_subpath.parent
+            target_parent.mkdir(parents=True, exist_ok=True)
+            shutil.move(str(task_dir), str(destination_root / target_subpath))
+        except Exception as e:
+            logger.error(f"Failed to move {task_dir} to {destination_name}: {e}")
 
     def apply_attempt_params(self, failed_tasks: List[Path], attempt: int):
         """
@@ -338,6 +334,7 @@ if __name__ == "__main__":
     def _build_metrics_data(self, task_dirs: List[Path]) -> Tuple[dpdata.MultiSystems, pd.DataFrame, pd.DataFrame]:
         systems = dpdata.MultiSystems()
         valid_systems = []
+        skipped_systems = 0
         task_registry = []
         for task_dir in task_dirs:
             labeled_system = self.postprocessor.load_data(task_dir)
@@ -350,7 +347,11 @@ if __name__ == "__main__":
                     "type": meta["type"],
                     "task_name": meta["task_name"],
                 })
+            else:
+                skipped_systems += 1
         logger.info(f"Loaded {len(valid_systems)} converged systems from {len(task_dirs)} directories.")
+        if skipped_systems > 0:
+            logger.warning(f"Skipped {skipped_systems} converged directories due to incomplete parsed data.")
         if not valid_systems:
             return systems, pd.DataFrame(), pd.DataFrame()
         for labeled_system in valid_systems:

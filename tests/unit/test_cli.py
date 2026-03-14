@@ -122,6 +122,19 @@ def test_handle_label_stage_postprocess(monkeypatch, tmp_path):
         MockWorkflow.return_value.run.assert_not_called()
 
 
+def test_handle_label_stage_extract(monkeypatch, tmp_path):
+    args = SimpleNamespace(config="config.json", stage="extract")
+    monkeypatch.setattr(cli, "load_and_resolve_config", lambda _p: _label_config_dict(tmp_path))
+
+    with patch("dpeva.workflows.labeling.LabelingWorkflow") as MockWorkflow:
+        cli.handle_label(args)
+        MockWorkflow.return_value.run_extract.assert_called_once()
+        MockWorkflow.return_value.run_prepare.assert_not_called()
+        MockWorkflow.return_value.run_execute.assert_not_called()
+        MockWorkflow.return_value.run_postprocess.assert_not_called()
+        MockWorkflow.return_value.run.assert_not_called()
+
+
 def test_handle_label_stage_all(monkeypatch, tmp_path):
     args = SimpleNamespace(config="config.json", stage="all")
     monkeypatch.setattr(cli, "load_and_resolve_config", lambda _p: _label_config_dict(tmp_path))

@@ -109,7 +109,10 @@ class TestLabelingWorkflow:
         manager = MockManager.return_value
         bundle_dir = tmp_path / "bundle"
         bundle_dir.mkdir()
+        (bundle_dir / "task_a").mkdir()
         manager.prepare_tasks.return_value = [bundle_dir]
+        manager.process_results.return_value = ([], [])
+        manager.extract_results.return_value = ([], [], [])
 
         wf = LabelingWorkflow(config)
         wf.run()
@@ -162,6 +165,18 @@ class TestLabelingWorkflow:
         )
         MockIntegrationManager.return_value.integrate.assert_called_once()
 
+    @patch("dpeva.workflows.labeling.LabelingManager")
+    def test_wf_stage_extract(self, MockManager, config, tmp_path):
+        inputs_dir = tmp_path / "inputs" / "N_50_0"
+        inputs_dir.mkdir(parents=True)
+        (inputs_dir / "task_a").mkdir()
+        MockManager.return_value.extract_results.return_value = ([], [], [])
+
+        wf = LabelingWorkflow(config)
+        wf.run_extract()
+
+        MockManager.return_value.extract_results.assert_called_once()
+
     @patch("dpeva.workflows.labeling.close_workflow_logger")
     @patch("dpeva.workflows.labeling.setup_workflow_logger")
     @patch("dpeva.workflows.labeling.load_systems")
@@ -207,3 +222,18 @@ class TestLabelingWorkflow:
 
         mock_setup_logger.assert_called_once_with("dpeva", str(config.work_dir), "labeling_postprocess.log", capture_stdout=True)
         mock_close_logger.assert_called_once_with("dpeva", str(tmp_path / "labeling_postprocess.log"))
+
+    @patch("dpeva.workflows.labeling.close_workflow_logger")
+    @patch("dpeva.workflows.labeling.setup_workflow_logger")
+    @patch("dpeva.workflows.labeling.LabelingManager")
+    def test_wf_stage_extract_creates_stage_log(self, MockManager, mock_setup_logger, mock_close_logger, config, tmp_path):
+        inputs_dir = tmp_path / "inputs" / "N_50_0"
+        inputs_dir.mkdir(parents=True)
+        (inputs_dir / "task_a").mkdir()
+        MockManager.return_value.extract_results.return_value = ([], [], [])
+
+        wf = LabelingWorkflow(config)
+        wf.run_extract()
+
+        mock_setup_logger.assert_called_once_with("dpeva", str(config.work_dir), "labeling_extract.log", capture_stdout=True)
+        mock_close_logger.assert_called_once_with("dpeva", str(tmp_path / "labeling_extract.log"))
