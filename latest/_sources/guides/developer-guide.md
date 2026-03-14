@@ -478,6 +478,12 @@ DPEVA_TAG: WORKFLOW_FINISHED
 
 #### **Current Era (v0.6.x)**
 
+*   **v0.6.7** (2026-03-14):
+    *   **[修复]** 调整 Collection 目标池无标签判据：在 `<1e-4` 阈值下，只要任意帧能量标签近零即按无 GT 处理，并在流程日志中增加 WARNING 提示。
+    *   **[修复]** 修复 Collection 导出路径重复嵌套问题，统一 UQ+DIRECT 与 DIRECT-only 导出链路，避免 `other_dpdata/other_dpdata` 与错位目录结构。
+    *   **[修复]** 修复 Labeling 分支统计错配，增强 metadata 缺失/损坏场景下的归属回退与一致性校验，确保分支统计与全局统计可对齐。
+    *   **[特性]** Labeling 新增 extract 阶段能力并完善 BAD_CONVERGED 分流，支持缺失 `TOTAL-FORCE` 的坏收敛任务隔离与可追溯分类。
+
 *   **v0.6.6** (2026-03-14):
     *   **[修复]** Collection 新增 `UQ-force-qbc-rnd-fdiff-scatter` 工作流调用，修复有真值场景下该图未输出的问题。
     *   **[可视化]** 为 `UQ-force-qbc-rnd-fdiff-scatter` 增加 Truncated `[0,2]` 出图分支，补齐超界数据截断逻辑与独立产物。

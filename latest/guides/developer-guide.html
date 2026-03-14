@@ -37,7 +37,7 @@
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="../_static/documentation_options.js?v=82ee76d0"></script>
+    <script src="../_static/documentation_options.js?v=2bae02b6"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -1465,6 +1465,14 @@ A: 这是预期行为。在联合模式下，<code class="docutils literal notra
 <section id="current-era-v0-6-x">
 <h4><strong>Current Era (v0.6.x)</strong><a class="headerlink" href="#current-era-v0-6-x" title="Link to this heading">#</a></h4>
 <ul class="simple">
+<li><p><strong>v0.6.7</strong> (2026-03-14):</p>
+<ul>
+<li><p><strong>[修复]</strong> 调整 Collection 目标池无标签判据：在 <code class="docutils literal notranslate"><span class="pre">&lt;1e-4</span></code> 阈值下，只要任意帧能量标签近零即按无 GT 处理，并在流程日志中增加 WARNING 提示。</p></li>
+<li><p><strong>[修复]</strong> 修复 Collection 导出路径重复嵌套问题，统一 UQ+DIRECT 与 DIRECT-only 导出链路，避免 <code class="docutils literal notranslate"><span class="pre">other_dpdata/other_dpdata</span></code> 与错位目录结构。</p></li>
+<li><p><strong>[修复]</strong> 修复 Labeling 分支统计错配，增强 metadata 缺失/损坏场景下的归属回退与一致性校验，确保分支统计与全局统计可对齐。</p></li>
+<li><p><strong>[特性]</strong> Labeling 新增 extract 阶段能力并完善 BAD_CONVERGED 分流，支持缺失 <code class="docutils literal notranslate"><span class="pre">TOTAL-FORCE</span></code> 的坏收敛任务隔离与可追溯分类。</p></li>
+</ul>
+</li>
 <li><p><strong>v0.6.6</strong> (2026-03-14):</p>
 <ul>
 <li><p><strong>[修复]</strong> Collection 新增 <code class="docutils literal notranslate"><span class="pre">UQ-force-qbc-rnd-fdiff-scatter</span></code> 工作流调用，修复有真值场景下该图未输出的问题。</p></li>
