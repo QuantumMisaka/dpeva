@@ -2,9 +2,15 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-03-11
+last-updated: 2026-03-13
 ---
 
 # README
 
-- 本目录当前无活跃治理计划；已完成计划已归档至 `docs/archive/v0.6.4/plans/`。
+- 本目录维护治理相关计划文档。
+
+```{toctree}
+:maxdepth: 1
+
+2026-03-13-collection-workflow-gt-plot-gating-v2
+```

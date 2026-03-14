@@ -99,3 +99,16 @@ class TestCollectionWorkflowSubmission:
             # Verify it did NOT try to self-submit (no JobManager usage)
             # And it proceeded to load descriptors
             mock_io_instance.load_descriptors.assert_called()
+
+    def test_collection_config_defaults_allow_missing_uq_scheme_in_no_filter(self, tmp_path):
+        cfg = {
+            "project": str(tmp_path),
+            "desc_dir": str(tmp_path / "desc"),
+            "testdata_dir": str(tmp_path / "testdata"),
+            "uq_trust_mode": "no_filter",
+            "sampler_type": "direct",
+            "submission": {"backend": "local"},
+        }
+        parsed = CollectionConfig(**cfg)
+        assert parsed.uq_select_scheme == "tangent_lo"
+        assert parsed.uq_trust_mode == "no_filter"

@@ -162,3 +162,26 @@ class TestCollectionIOManagerFull:
             )
             assert sampled_expected in calls
             assert other_expected in calls
+
+    def test_export_dpdata_with_prefixed_system_name(self, manager, tmp_path):
+        testdata_dir = tmp_path / "other_dpdata"
+        testdata_dir.mkdir()
+
+        sys_name = "other_dpdata/sys1"
+        df_final = pd.DataFrame({"dataname": [f"{sys_name}-0", f"{sys_name}-2"]})
+        unique_systems = [sys_name]
+
+        with patch("dpeva.io.collection.load_systems") as mock_load:
+            sys_mock = MagicMock()
+            sys_mock.target_name = sys_name
+            sys_mock.__len__.return_value = 4
+            sub_mock = MagicMock()
+            sys_mock.sub_system.return_value = sub_mock
+            mock_load.return_value = [sys_mock]
+
+            manager.ensure_dirs()
+            counts = manager.export_dpdata(str(testdata_dir), df_final, unique_systems)
+
+            sys_mock.sub_system.assert_any_call([0, 2])
+            sys_mock.sub_system.assert_any_call([1, 3])
+            assert counts == (1, 1, 2, 2)

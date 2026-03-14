@@ -1,8 +1,5 @@
 {
     "project": "./",
-    "uq_select_scheme": "tangent_lo",
-    "testing_dir": "test_results",
-    "results_prefix": "results",
     "desc_dir": "./desc_pool",
     "testdata_dir": "./other_dpdata",
     
