@@ -7,7 +7,7 @@
 
 # DP-EVA (Deep Potential EVolution Accelerator)
 
-![Version](https://img.shields.io/badge/version-0.6.6-blue)
+![Version](https://img.shields.io/badge/version-0.6.7-blue)
 ![Python](https://img.shields.io/badge/python-3.10%2B-green)
 ![License](https://img.shields.io/badge/License-LGPL_v3-blue.svg)
 ![Unit Test Coverage](https://img.shields.io/badge/unit%20coverage-82%25-yellowgreen)

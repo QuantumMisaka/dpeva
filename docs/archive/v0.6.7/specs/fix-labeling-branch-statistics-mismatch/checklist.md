@@ -1,0 +1,9 @@
+- [x] fp7 场景中，Labeling 日志的 Dataset/Type 分支统计与输入采样分布对齐
+- [x] Global 指标与所有 Dataset/Type 明细求和完全一致
+- [x] metadata 缺失或损坏时不再将 `N_50_x` 识别为 Dataset/Type
+- [x] 分支归属无法识别时进入受控 `unknown`，并有可检索告警
+- [x] execute/extract/postprocess 分阶段运行不破坏统计正确性
+- [x] 新增与变更单测全部通过
+- [x] 历史工作目录修复脚本支持单目录执行
+- [x] 历史工作目录修复脚本支持批量执行并输出失败摘要
+- [x] 修复方案与脚本使用方式已写入开发文档
