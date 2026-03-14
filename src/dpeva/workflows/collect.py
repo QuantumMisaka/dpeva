@@ -227,6 +227,14 @@ class CollectionWorkflow:
         )
         if self._should_plot_force_error(has_gt, uq_results):
             self.logger.info("Ground Truth available. Plotting UQ vs Error...")
+            vis.plot_uq_fdiff_scatter(
+                df_uq,
+                self.config.uq_select_scheme,
+                self.uq_manager.qbc_params["lo"],
+                self.uq_manager.qbc_params["hi"],
+                self.uq_manager.rnd_params["lo"],
+                self.uq_manager.rnd_params["hi"],
+            )
             vis.plot_uq_vs_error(uq_results[COL_UQ_QBC], uq_results[COL_UQ_RND], uq_results["diff_maxf_0_frame"])
             if uq_rnd_rescaled is not None:
                 vis.plot_uq_vs_error(

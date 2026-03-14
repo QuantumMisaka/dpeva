@@ -128,6 +128,7 @@ def test_filtered_phase_always_plots_rnd_and_qbc_trust_ranges(tmp_path):
     rnd_call = vis.plot_uq_with_trust_range.call_args_list[1]
     assert qbc_call.args[1] == "UQ-QbC-force"
     assert rnd_call.args[1] == "UQ-RND-force"
+    vis.plot_uq_fdiff_scatter.assert_not_called()
     vis.plot_uq_vs_error.assert_not_called()
     vis.plot_uq_diff_parity.assert_not_called()
 
@@ -139,6 +140,7 @@ def test_filtered_phase_only_plots_force_error_with_valid_ground_truth(tmp_path)
     _setup_filtered_phase_mocks(workflow, has_gt=True)
     vis = MagicMock()
     workflow._run_filtered_uq_phase(vis)
+    vis.plot_uq_fdiff_scatter.assert_called_once()
     assert vis.plot_uq_vs_error.call_count == 2
     vis.plot_uq_diff_parity.assert_called_once()
 
@@ -160,5 +162,6 @@ def test_filtered_phase_skips_force_error_plot_when_diff_invalid(tmp_path):
     )
     vis = MagicMock()
     workflow._run_filtered_uq_phase(vis)
+    vis.plot_uq_fdiff_scatter.assert_not_called()
     vis.plot_uq_vs_error.assert_not_called()
     vis.plot_uq_diff_parity.assert_not_called()

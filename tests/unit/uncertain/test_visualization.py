@@ -5,6 +5,10 @@ import numpy as np
 import pandas as pd
 from unittest.mock import MagicMock, patch
 from dpeva.uncertain.visualization import UQVisualizer
+from dpeva.constants import (
+    FILENAME_UQ_FORCE_QBC_RND_FDIFF_SCATTER,
+    FILENAME_UQ_FORCE_QBC_RND_FDIFF_SCATTER_TRUNCATED,
+)
 
 class TestUQVisualizer:
     
@@ -92,7 +96,31 @@ class TestUQVisualizer:
         visualizer.plot_uq_fdiff_scatter(df, "strict", 0.1, 0.2, 0.1, 0.2)
         
         assert mock_sns.scatterplot.called
-        assert mock_plt.savefig.called
+        scatter_kwargs = mock_sns.scatterplot.call_args.kwargs
+        assert scatter_kwargs["x"] == "uq_qbc_for"
+        assert scatter_kwargs["y"] == "uq_rnd_for_rescaled"
+        assert scatter_kwargs["hue"] == "diff_maxf_0_frame"
+        assert scatter_kwargs["palette"] == "Reds"
+        mock_plt.title.assert_called_with("UQ-QbC and UQ-RND vs Max Force Diff", fontsize=14)
+        mock_plt.xlabel.assert_called_with("UQ-QbC Value", fontsize=12)
+        mock_plt.ylabel.assert_called_with("UQ-RND-rescaled Value", fontsize=12)
+        mock_plt.legend.assert_called_with(title="Max Force Diff", fontsize=10)
+        save_path = mock_plt.savefig.call_args.args[0]
+        assert save_path.endswith(os.path.join(str(visualizer.save_dir), FILENAME_UQ_FORCE_QBC_RND_FDIFF_SCATTER))
+
+    def test_plot_uq_fdiff_scatter_with_truncation(self, visualizer, mock_plt, mock_sns):
+        df = pd.DataFrame(
+            {
+                "uq_qbc_for": [0.1, 2.5],
+                "uq_rnd_for_rescaled": [0.2, 2.6],
+                "diff_maxf_0_frame": [0.3, 0.9],
+            }
+        )
+        visualizer.plot_uq_fdiff_scatter(df, "strict", 0.1, 0.2, 0.1, 0.2)
+        assert mock_sns.scatterplot.call_count >= 2
+        save_paths = [call.args[0] for call in mock_plt.savefig.call_args_list]
+        assert any(path.endswith(os.path.join(str(visualizer.save_dir), FILENAME_UQ_FORCE_QBC_RND_FDIFF_SCATTER)) for path in save_paths)
+        assert any(path.endswith(os.path.join(str(visualizer.save_dir), FILENAME_UQ_FORCE_QBC_RND_FDIFF_SCATTER_TRUNCATED)) for path in save_paths)
 
     def test_draw_boundary(self, visualizer, mock_plt):
         """Test boundary drawing logic for different schemes."""

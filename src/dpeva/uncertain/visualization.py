@@ -8,6 +8,7 @@ import logging
 from dpeva.constants import (
     FILENAME_UQ_FORCE, FILENAME_UQ_FORCE_RESCALED, FILENAME_UQ_DIFF_UQ_PARITY,
     FILENAME_UQ_DIFF_FDIFF_PARITY, FILENAME_UQ_FORCE_QBC_RND_FDIFF_SCATTER,
+    FILENAME_UQ_FORCE_QBC_RND_FDIFF_SCATTER_TRUNCATED,
     FILENAME_UQ_FORCE_QBC_RND_IDENTITY_SCATTER, FILENAME_UQ_FORCE_QBC_RND_IDENTITY_SCATTER_TRUNCATED,
     FILENAME_UQ_QBC_CANDIDATE_FDIFF_PARITY, FILENAME_UQ_RND_CANDIDATE_FDIFF_PARITY,
     FILENAME_EXPLAINED_VARIANCE, FILENAME_COVERAGE_SCORE, FILENAME_FINAL_SAMPLED_PCAVIEW
@@ -218,6 +219,46 @@ class UQVisualizer:
         plt.legend(title="Max Force Diff", fontsize=10)
         plt.savefig(os.path.join(self.save_dir, FILENAME_UQ_FORCE_QBC_RND_FDIFF_SCATTER), dpi=self.dpi)
         plt.close()
+
+        max_qbc = df_uq["uq_qbc_for"].max()
+        max_rnd = df_uq["uq_rnd_for_rescaled"].max()
+        if max_qbc > 2.0 or max_rnd > 2.0:
+            logging.getLogger(__name__).warning("UQ-fdiff-scatter: Data exceeds [0, 2] range, truncating for visualization.")
+            df_uq_trunc = df_uq[
+                (df_uq["uq_qbc_for"] >= 0) & (df_uq["uq_qbc_for"] <= 2)
+                & (df_uq["uq_rnd_for_rescaled"] >= 0) & (df_uq["uq_rnd_for_rescaled"] <= 2)
+            ]
+            if len(df_uq_trunc) < len(df_uq):
+                logging.getLogger(__name__).warning(
+                    f"UQ-fdiff-scatter: Truncating {len(df_uq) - len(df_uq_trunc)} structures outside [0, 2] for visualization."
+                )
+            plt.figure(figsize=(8, 6))
+            sns.scatterplot(
+                data=df_uq_trunc,
+                x="uq_qbc_for",
+                y="uq_rnd_for_rescaled",
+                hue="diff_maxf_0_frame",
+                palette="Reds",
+                alpha=0.8,
+                s=60,
+            )
+            plt.title("UQ-QbC and UQ-RND vs Max Force Diff (Truncated [0, 2])", fontsize=14)
+            plt.xlabel("UQ-QbC Value", fontsize=12)
+            plt.ylabel("UQ-RND-rescaled Value", fontsize=12)
+            plt.grid(True)
+            ax = plt.gca()
+            x_major_locator = mtick.MultipleLocator(0.1)
+            y_major_locator = mtick.MultipleLocator(0.1)
+            ax.xaxis.set_major_locator(x_major_locator)
+            ax.yaxis.set_major_locator(y_major_locator)
+            self._draw_boundary(scheme, trust_lo, trust_hi, rnd_trust_lo, rnd_trust_hi)
+            plt.xlim(left=0)
+            plt.ylim(bottom=0)
+            plt.legend(title="Max Force Diff", fontsize=10)
+            plt.savefig(os.path.join(self.save_dir, FILENAME_UQ_FORCE_QBC_RND_FDIFF_SCATTER_TRUNCATED), dpi=self.dpi)
+            plt.close()
+        else:
+            logging.getLogger(__name__).info("UQ-fdiff-scatter data within [0, 2], skipping truncated plot.")
 
     def plot_uq_identity_scatter(self, df_uq, scheme, trust_lo, trust_hi, rnd_trust_lo, rnd_trust_hi):
         """Plots 2D scatter of QbC vs RND with Identity as hue."""
