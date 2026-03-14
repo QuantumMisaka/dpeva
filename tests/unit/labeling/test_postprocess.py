@@ -1,6 +1,8 @@
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+import pandas as pd
+
 from dpeva.labeling.postprocess import AbacusPostProcessor
 
 
@@ -64,3 +66,24 @@ def test_classify_task_status_bad_converged(tmp_path: Path):
     status, reason = pp.classify_task_status(task_dir)
     assert status == "bad_converged"
     assert reason == "missing_total_force_block"
+
+
+@patch("dpeva.labeling.postprocess.dpdata.MultiSystems")
+def test_export_data_uses_indexable_system_list(mock_multi_systems, tmp_path: Path):
+    pp = AbacusPostProcessor({})
+    sys0 = MagicMock()
+    sys1 = MagicMock()
+    sys0.sub_system.return_value = MagicMock()
+    sys1.sub_system.return_value = MagicMock()
+    systems = [sys0, sys1]
+    df_clean = pd.DataFrame(
+        [
+            {"sys_idx": 0, "frame_idx": 0},
+            {"sys_idx": 1, "frame_idx": 0},
+        ]
+    )
+
+    pp.export_data(systems, df_clean, tmp_path / "cleaned")
+
+    sys0.sub_system.assert_called_once()
+    sys1.sub_system.assert_called_once()

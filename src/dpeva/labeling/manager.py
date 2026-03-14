@@ -9,6 +9,7 @@ import os
 import logging
 import shutil
 import json
+import re
 from pathlib import Path
 from typing import Dict, Any, List, Optional, Union, Tuple
 
@@ -46,6 +47,7 @@ class LabelingManager:
         self.output_dir = self.work_dir / "outputs"
         self.converged_dir = self.work_dir / "CONVERGED"
         self.bad_converged_dir = self.work_dir / "BAD_CONVERGED"
+        self.identity_map_path = self.output_dir / "task_identity_map.json"
 
     def prepare_tasks(self, dataset_map: Dict[str, dpdata.MultiSystems], task_prefix: str = "task") -> List[Path]:
         """
@@ -204,6 +206,9 @@ if __name__ == "__main__":
                 task_dir = input_file.parent
                 if not task_dir.is_dir():
                     continue
+                identity = self._resolve_task_identity(task_dir, self.input_dir)
+                self._write_task_identity(task_dir, identity)
+                self._update_identity_map(task_dir, identity)
 
                 status, reason = self.postprocessor.classify_task_status(task_dir)
                 if status == "converged":
@@ -230,27 +235,17 @@ if __name__ == "__main__":
         return converged_tasks, bad_converged_tasks, failed_tasks
 
     def _build_target_subpath(self, task_dir: Path) -> Path:
-        parts = task_dir.name.rsplit('_', 1)
-        fallback = Path(parts[0]) / task_dir.name if len(parts) == 2 and parts[1].isdigit() else Path(task_dir.name)
-        meta_file = task_dir / "task_meta.json"
-        if not meta_file.exists():
-            return fallback
-        try:
-            with open(meta_file) as f:
-                meta = json.load(f)
-            ds = meta.get("dataset_name", "unknown")
-            st = meta.get("stru_type", "unknown")
-            tn = meta.get("task_name", task_dir.name)
-            return Path(ds) / st / tn
-        except (OSError, json.JSONDecodeError, TypeError, ValueError):
-            return fallback
+        meta = self._resolve_task_identity(task_dir, self.input_dir)
+        return Path(meta["dataset"]) / meta["type"] / meta["task_name"]
 
     def _move_task_dir(self, task_dir: Path, destination_root: Path, destination_name: str):
         try:
             target_subpath = self._build_target_subpath(task_dir)
             target_parent = destination_root / target_subpath.parent
             target_parent.mkdir(parents=True, exist_ok=True)
-            shutil.move(str(task_dir), str(destination_root / target_subpath))
+            final_target = destination_root / target_subpath
+            final_target = self._dedupe_target_path(final_target)
+            shutil.move(str(task_dir), str(final_target))
         except Exception as e:
             logger.error(f"Failed to move {task_dir} to {destination_name}: {e}")
 
@@ -294,7 +289,21 @@ if __name__ == "__main__":
             self._export_filtered_results(systems, df, df_clean)
         failed_tasks_info = self._collect_failed_tasks_info()
         stats = self._aggregate_stats(df, df_clean, failed_tasks_info)
-        self._log_stats(stats)
+        report = self._build_stats_report(stats, df, df_clean, failed_tasks_info)
+        self._log_stats(stats, report["consistency"])
+        self._write_stats_report(report)
+        return report
+
+    def rebuild_statistics_report(self) -> Dict[str, Any]:
+        logger.info("Rebuilding labeling statistics report...")
+        task_dirs = self._collect_converged_task_dirs()
+        _, df, df_clean = self._build_metrics_data(task_dirs)
+        failed_tasks_info = self._collect_failed_tasks_info()
+        stats = self._aggregate_stats(df, df_clean, failed_tasks_info)
+        report = self._build_stats_report(stats, df, df_clean, failed_tasks_info)
+        self._log_stats(stats, report["consistency"])
+        self._write_stats_report(report, filename="labeling_stats_report.repaired.json")
+        return report
 
     def _collect_converged_task_dirs(self) -> List[Path]:
         task_dirs = []
@@ -306,33 +315,13 @@ if __name__ == "__main__":
         return task_dirs
 
     def _read_task_meta(self, task_dir: Path, base_dir: Path) -> Dict[str, str]:
-        dataset_name = "unknown"
-        stru_type = "unknown"
-        task_name = task_dir.name
-        meta_file = task_dir / "task_meta.json"
-        if meta_file.exists():
-            try:
-                with open(meta_file) as f:
-                    meta = json.load(f)
-                    dataset_name = meta.get("dataset_name", "unknown")
-                    stru_type = meta.get("stru_type", "unknown")
-                    task_name = meta.get("task_name", task_dir.name)
-            except (OSError, json.JSONDecodeError, TypeError, ValueError) as exc:
-                logger.warning(f"Failed to read metadata from {task_dir}: {exc}")
-        else:
-            try:
-                rel_path = task_dir.relative_to(base_dir)
-                if len(rel_path.parts) >= 3:
-                    dataset_name = rel_path.parts[0]
-                    stru_type = rel_path.parts[1]
-                elif len(rel_path.parts) >= 1:
-                    dataset_name = rel_path.parts[0]
-            except ValueError:
-                pass
-        return {"dataset": dataset_name, "type": stru_type, "task_name": task_name}
+        identity = self._resolve_task_identity(task_dir, base_dir)
+        if identity["dataset"] == "unknown" or identity["type"] == "unknown":
+            logger.warning(f"Task identity unresolved, fallback to unknown branch: {task_dir}")
+        return identity
 
-    def _build_metrics_data(self, task_dirs: List[Path]) -> Tuple[dpdata.MultiSystems, pd.DataFrame, pd.DataFrame]:
-        systems = dpdata.MultiSystems()
+    def _build_metrics_data(self, task_dirs: List[Path]) -> Tuple[List[dpdata.LabeledSystem], pd.DataFrame, pd.DataFrame]:
+        systems: List[dpdata.LabeledSystem] = []
         valid_systems = []
         skipped_systems = 0
         task_registry = []
@@ -354,19 +343,39 @@ if __name__ == "__main__":
             logger.warning(f"Skipped {skipped_systems} converged directories due to incomplete parsed data.")
         if not valid_systems:
             return systems, pd.DataFrame(), pd.DataFrame()
-        for labeled_system in valid_systems:
-            systems.append(labeled_system)
-        df = self.postprocessor.compute_metrics(systems)
+        systems = list(valid_systems)
+        metrics_frames = []
+        for sys_idx, labeled_system in enumerate(valid_systems):
+            single_systems = dpdata.MultiSystems()
+            single_systems.append(labeled_system)
+            df_single = self.postprocessor.compute_metrics(single_systems)
+            if df_single.empty:
+                continue
+            df_single = df_single.copy()
+            df_single["sys_idx"] = sys_idx
+            metrics_frames.append(df_single)
+        if metrics_frames:
+            df = pd.concat(metrics_frames, ignore_index=True)
+        else:
+            df = pd.DataFrame()
         registry_df = pd.DataFrame(task_registry)
         if not registry_df.empty:
+            if registry_df["sys_idx"].duplicated().any():
+                raise ValueError("Duplicate sys_idx found in task registry.")
             df = df.merge(registry_df, on="sys_idx", how="left")
         else:
             df["dataset"] = "unknown"
             df["type"] = "unknown"
+        if "dataset" not in df.columns:
+            df["dataset"] = "unknown"
+        if "type" not in df.columns:
+            df["type"] = "unknown"
+        df["dataset"] = df["dataset"].fillna("unknown")
+        df["type"] = df["type"].fillna("unknown")
         df_clean = self.postprocessor.filter_data(df)
         return systems, df, df_clean
 
-    def _export_filtered_results(self, systems: dpdata.MultiSystems, df: pd.DataFrame, df_clean: pd.DataFrame):
+    def _export_filtered_results(self, systems: List[dpdata.LabeledSystem], df: pd.DataFrame, df_clean: pd.DataFrame):
         output_format = self.config.get("output_format", "deepmd/npy")
         cleaned_dir = self.output_dir / "cleaned"
         anomaly_dir = self.output_dir / "anomalies"
@@ -377,7 +386,7 @@ if __name__ == "__main__":
         self.postprocessor.export_data(systems, df_anomalies, anomaly_dir, format=output_format)
         self._export_anomaly_extxyz(systems, df_anomalies, anomaly_dir / "extxyz")
 
-    def _export_anomaly_extxyz(self, systems: dpdata.MultiSystems, df_anomalies: pd.DataFrame, extxyz_dir: Path):
+    def _export_anomaly_extxyz(self, systems: List[dpdata.LabeledSystem], df_anomalies: pd.DataFrame, extxyz_dir: Path):
         extxyz_dir.mkdir(exist_ok=True, parents=True)
         top_anomalies = df_anomalies.sort_values("max_force", ascending=False).head(50)
         for _, row in top_anomalies.iterrows():
@@ -434,7 +443,7 @@ if __name__ == "__main__":
                 }
         return stats
 
-    def _log_stats(self, stats: Dict[str, Dict[str, Dict[str, int]]]):
+    def _log_stats(self, stats: Dict[str, Dict[str, Dict[str, int]]], consistency: Dict[str, Any]):
         logger.info("=== Labeling Statistics Report ===")
         g_total = sum(v["total"] for ds in stats.values() for v in ds.values())
         g_conv = sum(v["conv"] for ds in stats.values() for v in ds.values())
@@ -442,6 +451,10 @@ if __name__ == "__main__":
         g_clean = sum(v["clean"] for ds in stats.values() for v in ds.values())
         g_filt = sum(v["filt"] for ds in stats.values() for v in ds.values())
         logger.info(f"Global: Total={g_total}, Converged={g_conv}, Failed={g_fail}, Cleaned={g_clean}, Filtered={g_filt}")
+        logger.info(f"Report trusted={consistency['trusted']}")
+        if not consistency["trusted"]:
+            for issue in consistency["errors"]:
+                logger.error(f"Stats consistency check failed: {issue}")
         for ds, types in stats.items():
             d_total = sum(v["total"] for v in types.values())
             d_conv = sum(v["conv"] for v in types.values())
@@ -457,3 +470,196 @@ if __name__ == "__main__":
                 type_hint = self.postprocessor.build_no_contribution_hint(v["conv"], v["clean"])
                 if type_hint:
                     logger.info(f"      {type_hint}")
+
+    @staticmethod
+    def _is_valid_identity_value(value: Any) -> bool:
+        if not isinstance(value, str):
+            return False
+        if not value.strip():
+            return False
+        return True
+
+    @staticmethod
+    def _is_packed_bundle_name(name: str) -> bool:
+        return bool(re.match(r"^N_\d+_\d+$", name))
+
+    @classmethod
+    def _normalize_identity(
+        cls,
+        dataset_name: Optional[str],
+        stru_type: Optional[str],
+        task_name: Optional[str],
+        fallback_task_name: str,
+    ) -> Dict[str, str]:
+        ds = dataset_name if cls._is_valid_identity_value(dataset_name) else "unknown"
+        st = stru_type if cls._is_valid_identity_value(stru_type) else "unknown"
+        tn = task_name if cls._is_valid_identity_value(task_name) else fallback_task_name
+        if cls._is_packed_bundle_name(ds):
+            ds = "unknown"
+        if cls._is_packed_bundle_name(st):
+            st = "unknown"
+        return {"dataset": ds, "type": st, "task_name": tn}
+
+    @staticmethod
+    def _read_json_file(path: Path) -> Optional[Dict[str, Any]]:
+        if not path.exists():
+            return None
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                loaded = json.load(f)
+                if isinstance(loaded, dict):
+                    return loaded
+        except (OSError, json.JSONDecodeError, TypeError, ValueError):
+            return None
+        return None
+
+    def _infer_identity_from_path(self, task_dir: Path, base_dir: Path) -> Dict[str, str]:
+        try:
+            rel_path = task_dir.relative_to(base_dir)
+        except ValueError:
+            return self._normalize_identity(None, None, task_dir.name, task_dir.name)
+        if len(rel_path.parts) >= 3 and not self._is_packed_bundle_name(rel_path.parts[0]):
+            return self._normalize_identity(rel_path.parts[0], rel_path.parts[1], task_dir.name, task_dir.name)
+        return self._normalize_identity(None, None, task_dir.name, task_dir.name)
+
+    def _write_task_identity(self, task_dir: Path, identity: Dict[str, str]):
+        identity_file = task_dir / "task_identity.json"
+        identity_file.write_text(json.dumps(identity, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    def _load_identity_map(self) -> Dict[str, Dict[str, str]]:
+        loaded = self._read_json_file(self.identity_map_path)
+        if loaded is None:
+            return {}
+        by_task_name = loaded.get("by_task_name")
+        if not isinstance(by_task_name, dict):
+            return {}
+        identity_map = {}
+        for k, v in by_task_name.items():
+            if not isinstance(v, dict):
+                continue
+            identity_map[k] = self._normalize_identity(
+                v.get("dataset"),
+                v.get("type"),
+                v.get("task_name", k),
+                k,
+            )
+        return identity_map
+
+    def _save_identity_map(self, identity_map: Dict[str, Dict[str, str]]):
+        self.output_dir.mkdir(parents=True, exist_ok=True)
+        payload = {"by_task_name": identity_map}
+        self.identity_map_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    def _update_identity_map(self, task_dir: Path, identity: Dict[str, str]):
+        identity_map = self._load_identity_map()
+        task_name = identity["task_name"]
+        existing = identity_map.get(task_name)
+        if existing is not None and (existing["dataset"] != identity["dataset"] or existing["type"] != identity["type"]):
+            identity_map.pop(task_name, None)
+            self._save_identity_map(identity_map)
+            return
+        identity_map[task_name] = identity
+        self._save_identity_map(identity_map)
+
+    def _resolve_task_identity(self, task_dir: Path, base_dir: Path) -> Dict[str, str]:
+        meta = self._read_json_file(task_dir / "task_meta.json")
+        if meta is not None:
+            normalized = self._normalize_identity(
+                meta.get("dataset_name"),
+                meta.get("stru_type"),
+                meta.get("task_name", task_dir.name),
+                task_dir.name,
+            )
+            if normalized["dataset"] != "unknown" and normalized["type"] != "unknown":
+                return normalized
+
+        sidecar = self._read_json_file(task_dir / "task_identity.json")
+        if sidecar is not None:
+            normalized = self._normalize_identity(
+                sidecar.get("dataset"),
+                sidecar.get("type"),
+                sidecar.get("task_name", task_dir.name),
+                task_dir.name,
+            )
+            if normalized["dataset"] != "unknown" and normalized["type"] != "unknown":
+                return normalized
+
+        inferred = self._infer_identity_from_path(task_dir, base_dir)
+        if inferred["dataset"] != "unknown" and inferred["type"] != "unknown":
+            return inferred
+
+        identity_map = self._load_identity_map()
+        mapped = identity_map.get(task_dir.name)
+        if mapped is not None:
+            return mapped
+        return self._normalize_identity(None, None, task_dir.name, task_dir.name)
+
+    @staticmethod
+    def _dedupe_target_path(target_path: Path) -> Path:
+        if not target_path.exists():
+            return target_path
+        idx = 1
+        while True:
+            candidate = target_path.parent / f"{target_path.name}_dup{idx}"
+            if not candidate.exists():
+                return candidate
+            idx += 1
+
+    def _build_stats_report(
+        self,
+        stats: Dict[str, Dict[str, Dict[str, int]]],
+        df: pd.DataFrame,
+        df_clean: pd.DataFrame,
+        failed_tasks_info: List[Dict[str, str]],
+    ) -> Dict[str, Any]:
+        global_stats = {
+            "total": sum(v["total"] for ds in stats.values() for v in ds.values()),
+            "conv": sum(v["conv"] for ds in stats.values() for v in ds.values()),
+            "fail": sum(v["fail"] for ds in stats.values() for v in ds.values()),
+            "clean": sum(v["clean"] for ds in stats.values() for v in ds.values()),
+            "filt": sum(v["filt"] for ds in stats.values() for v in ds.values()),
+        }
+        consistency = self._validate_stats_consistency(stats, df, df_clean, failed_tasks_info)
+        return {
+            "global": global_stats,
+            "branches": stats,
+            "consistency": consistency,
+        }
+
+    def _validate_stats_consistency(
+        self,
+        stats: Dict[str, Dict[str, Dict[str, int]]],
+        df: pd.DataFrame,
+        df_clean: pd.DataFrame,
+        failed_tasks_info: List[Dict[str, str]],
+    ) -> Dict[str, Any]:
+        errors = []
+        sum_total = sum(v["total"] for ds in stats.values() for v in ds.values())
+        sum_conv = sum(v["conv"] for ds in stats.values() for v in ds.values())
+        sum_fail = sum(v["fail"] for ds in stats.values() for v in ds.values())
+        sum_clean = sum(v["clean"] for ds in stats.values() for v in ds.values())
+        sum_filt = sum(v["filt"] for ds in stats.values() for v in ds.values())
+
+        expected_conv = int(len(df))
+        expected_fail = int(len(failed_tasks_info))
+        expected_clean = int(len(df_clean))
+        expected_total = expected_conv + expected_fail
+        expected_filt = expected_conv - expected_clean
+
+        if sum_total != expected_total:
+            errors.append(f"total mismatch: details={sum_total}, expected={expected_total}")
+        if sum_conv != expected_conv:
+            errors.append(f"conv mismatch: details={sum_conv}, expected={expected_conv}")
+        if sum_fail != expected_fail:
+            errors.append(f"fail mismatch: details={sum_fail}, expected={expected_fail}")
+        if sum_clean != expected_clean:
+            errors.append(f"clean mismatch: details={sum_clean}, expected={expected_clean}")
+        if sum_filt != expected_filt:
+            errors.append(f"filt mismatch: details={sum_filt}, expected={expected_filt}")
+
+        return {"trusted": len(errors) == 0, "errors": errors}
+
+    def _write_stats_report(self, report: Dict[str, Any], filename: str = "labeling_stats_report.json"):
+        self.output_dir.mkdir(parents=True, exist_ok=True)
+        report_path = self.output_dir / filename
+        report_path.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")

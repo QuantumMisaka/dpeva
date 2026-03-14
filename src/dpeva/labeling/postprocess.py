@@ -10,7 +10,7 @@ import os
 import logging
 import shutil
 from pathlib import Path
-from typing import Dict, List, Any, Optional, Tuple
+from typing import Dict, List, Any, Optional, Tuple, Sequence
 import numpy as np
 import pandas as pd
 import dpdata
@@ -300,7 +300,7 @@ class AbacusPostProcessor:
             return "Hint: converged tasks were fully filtered, this branch contributes no training data."
         return None
 
-    def export_data(self, systems: dpdata.MultiSystems, df_clean: pd.DataFrame, output_dir: Path, format: str = "deepmd/npy"):
+    def export_data(self, systems: Sequence[dpdata.LabeledSystem], df_clean: pd.DataFrame, output_dir: Path, format: str = "deepmd/npy"):
         """
         Export cleaned data to disk.
         """

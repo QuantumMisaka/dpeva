@@ -185,3 +185,7 @@ class TestCollectionIOManagerFull:
             sys_mock.sub_system.assert_any_call([0, 2])
             sys_mock.sub_system.assert_any_call([1, 3])
             assert counts == (1, 1, 2, 2)
+            out_paths = [c.args[0] for c in sub_mock.to_deepmd_npy.call_args_list]
+            assert os.path.join(manager.dpdata_savedir, "sampled_dpdata", "sys1") in out_paths
+            assert os.path.join(manager.dpdata_savedir, "other_dpdata", "sys1") in out_paths
+            assert not any("other_dpdata/other_dpdata" in p for p in out_paths)

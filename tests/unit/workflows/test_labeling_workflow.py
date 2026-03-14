@@ -177,6 +177,24 @@ class TestLabelingWorkflow:
 
         MockManager.return_value.extract_results.assert_called_once()
 
+    @patch("dpeva.workflows.labeling.LabelingManager")
+    def test_wf_stage_execute_extract_postprocess_sequence(self, MockManager, config, tmp_path):
+        inputs_dir = tmp_path / "inputs" / "N_50_0"
+        inputs_dir.mkdir(parents=True)
+        (inputs_dir / "task_a").mkdir()
+        manager = MockManager.return_value
+        manager.process_results.return_value = ([], [])
+        manager.extract_results.return_value = ([], [], [])
+
+        wf = LabelingWorkflow(config)
+        wf.run_execute()
+        wf.run_extract()
+        wf.run_postprocess()
+
+        manager.process_results.assert_called_once()
+        manager.extract_results.assert_called_once()
+        manager.collect_and_export.assert_called_once()
+
     @patch("dpeva.workflows.labeling.close_workflow_logger")
     @patch("dpeva.workflows.labeling.setup_workflow_logger")
     @patch("dpeva.workflows.labeling.load_systems")

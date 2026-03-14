@@ -49,6 +49,7 @@
    architecture/decisions/2026-02-04-deepmd-dependency
    guides/README
    guides/deployment
+   guides/labeling-stats-repair
    guides/developer/README
    guides/developer/config-docs-maintenance
    guides/testing/README

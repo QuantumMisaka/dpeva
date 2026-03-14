@@ -324,8 +324,18 @@ class CollectionWorkflow:
         return df_final
 
     def _run_export_phase(self, df_final: pd.DataFrame, unique_system_names):
-        _, _, count_sampled_frames, count_other_frames = self.io_manager.export_dpdata(
+        count_sampled_sys, count_other_sys, count_sampled_frames, count_other_frames = self.io_manager.export_dpdata(
             str(self.config.testdata_dir), df_final, unique_system_names
+        )
+        sampled_path = self.io_manager.last_export_paths.get("sampled_dpdata")
+        other_path = self.io_manager.last_export_paths.get("other_dpdata")
+        if sampled_path:
+            self.logger.info(f"Export path (sampled_dpdata): {sampled_path}")
+        if other_path:
+            self.logger.info(f"Export path (other_dpdata): {other_path}")
+        self.logger.info(
+            f"Export summary: sampled={count_sampled_sys} systems/{count_sampled_frames} frames, "
+            f"other={count_other_sys} systems/{count_other_frames} frames."
         )
         total_exported = count_sampled_frames + count_other_frames
         if total_exported == 0 and not df_final.empty:

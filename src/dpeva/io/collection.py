@@ -22,11 +22,26 @@ class CollectionIOManager:
         self.project_dir = project_dir
         self.root_savedir = root_savedir
         self.logger = logging.getLogger(__name__)
+        self.last_export_paths: Dict[str, str] = {}
         
         # Derived paths
         self.view_savedir = os.path.join(self.project_dir, self.root_savedir, "view")
         self.dpdata_savedir = os.path.join(self.project_dir, self.root_savedir, "dpdata")
         self.df_savedir = os.path.join(self.project_dir, self.root_savedir, "dataframe")
+
+    def _normalize_export_system_name(self, sys_name: str, testdata_dir: str) -> str:
+        clean_name = normalize_sys_name(sys_name)
+        data_base = normalize_sys_name(os.path.basename(os.path.normpath(testdata_dir)))
+        if not data_base:
+            return clean_name
+        if clean_name == data_base:
+            return clean_name
+        prefix = f"{data_base}/"
+        if clean_name.startswith(prefix):
+            stripped = clean_name[len(prefix):]
+            if stripped:
+                return stripped
+        return clean_name
         
     def ensure_dirs(self):
         """Creates necessary output directories."""
@@ -239,11 +254,17 @@ class CollectionIOManager:
             except ValueError:
                 pass
                 
-        # Clean dirs
-        for sub in ["sampled_dpdata", "other_dpdata"]:
-            p = os.path.join(self.dpdata_savedir, sub)
-            if os.path.exists(p): shutil.rmtree(p)
-            os.makedirs(p)
+        sampled_export_root = safe_join(self.dpdata_savedir, "sampled_dpdata")
+        other_export_root = safe_join(self.dpdata_savedir, "other_dpdata")
+        self.last_export_paths = {
+            "sampled_dpdata": sampled_export_root,
+            "other_dpdata": other_export_root,
+        }
+
+        for export_root in [sampled_export_root, other_export_root]:
+            if os.path.exists(export_root):
+                shutil.rmtree(export_root)
+            os.makedirs(export_root)
             
         test_data = load_systems(testdata_dir, fmt="auto", target_systems=unique_system_names)
         
@@ -257,7 +278,7 @@ class CollectionIOManager:
             
             # Sanitize sys_name
             try:
-                sys_name_clean = normalize_sys_name(sys_name)
+                sys_name_clean = self._normalize_export_system_name(sys_name, testdata_dir)
             except ValueError as e:
                 self.logger.error(f"Skipping system with invalid name '{sys_name}': {e}")
                 continue

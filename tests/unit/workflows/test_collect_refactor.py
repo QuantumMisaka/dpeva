@@ -51,6 +51,23 @@ def test_collect_extract_unique_system_names(tmp_path):
     assert names == ["a", "b"]
 
 
+def test_run_export_phase_logs_export_paths_and_summary(tmp_path):
+    config = _base_config(tmp_path)
+    with patch("dpeva.workflows.collect.setup_workflow_logger"):
+        workflow = CollectionWorkflow(config)
+    workflow.io_manager.export_dpdata = MagicMock(return_value=(1, 2, 3, 4))
+    workflow.io_manager.last_export_paths = {
+        "sampled_dpdata": "/tmp/sample_out",
+        "other_dpdata": "/tmp/other_out",
+    }
+    workflow.logger = MagicMock()
+    workflow._run_export_phase(pd.DataFrame({"dataname": ["sys-0"]}), ["sys"])
+    log_lines = [str(call.args[0]) for call in workflow.logger.info.call_args_list]
+    assert any("Export path (sampled_dpdata): /tmp/sample_out" in line for line in log_lines)
+    assert any("Export path (other_dpdata): /tmp/other_out" in line for line in log_lines)
+    assert any("Export summary: sampled=1 systems/3 frames, other=2 systems/4 frames." in line for line in log_lines)
+
+
 def _filtered_config(tmp_path):
     config = _base_config(tmp_path)
     config.update(
