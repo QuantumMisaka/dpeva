@@ -6,6 +6,39 @@ from typing import List, Optional, Union
 
 logger = logging.getLogger(__name__)
 
+def _resolve_target_system_dir(data_dir: str, sys_name: str):
+    data_dir_abs = os.path.abspath(data_dir)
+    data_base = os.path.basename(os.path.normpath(data_dir_abs))
+    normalized = os.path.normpath(sys_name)
+    normalized = normalized.lstrip("/\\")
+    candidates_rel = []
+    seen = set()
+
+    def add_candidate(path_rel: str):
+        path_rel_norm = os.path.normpath(path_rel).lstrip("/\\")
+        if not path_rel_norm or path_rel_norm in seen:
+            return
+        seen.add(path_rel_norm)
+        candidates_rel.append(path_rel_norm)
+
+    add_candidate(normalized)
+    prefix = f"{data_base}{os.sep}"
+    if normalized.startswith(prefix):
+        add_candidate(normalized[len(prefix):])
+
+    parts = normalized.split(os.sep)
+    if len(parts) > 1 and parts[0] == data_base:
+        add_candidate(os.path.join(*parts[1:]))
+
+    tried_paths = []
+    for rel_path in candidates_rel:
+        abs_path = os.path.join(data_dir_abs, rel_path)
+        tried_paths.append(abs_path)
+        if os.path.isdir(abs_path):
+            return abs_path, tried_paths
+
+    return None, tried_paths
+
 def _load_single_path(path, sys_name, fmt="auto"):
     """
     Helper to load a single path with format retry.
@@ -52,11 +85,13 @@ def load_systems(
     if target_systems:
         dirs_to_load = []
         for sys_name in target_systems:
-            d = os.path.join(data_dir, sys_name)
-            if not os.path.isdir(d):
-                logger.warning(f"Data directory not found for system: {sys_name} at {d}")
+            resolved_dir, tried_paths = _resolve_target_system_dir(data_dir, sys_name)
+            if resolved_dir is None:
+                logger.warning(
+                    f"Data directory not found for system: {sys_name}. Tried: {tried_paths}"
+                )
                 continue
-            dirs_to_load.append((sys_name, d))
+            dirs_to_load.append((sys_name, resolved_dir))
     else:
         # Optimization: Check if data_dir is itself a system
         try:

@@ -50,6 +50,46 @@ class TestDatasetLoader:
         assert len(systems) == 1
         assert systems[0].target_name == "sys1"
 
+    def test_load_systems_target_with_redundant_root_prefix(self, tmp_path):
+        data_dir = tmp_path / "other_dpdata"
+        (data_dir / "sys1").mkdir(parents=True)
+
+        with patch("dpeva.io.dataset._load_single_path") as mock_load:
+            mock_sys = MagicMock()
+            mock_load.return_value = mock_sys
+
+            systems = load_systems(
+                str(data_dir),
+                fmt="auto",
+                target_systems=["other_dpdata/sys1"],
+            )
+
+            assert len(systems) == 1
+            mock_load.assert_called_once()
+            call_args, _ = mock_load.call_args
+            assert call_args[0] == str(data_dir / "sys1")
+            assert call_args[1] == "other_dpdata/sys1"
+
+    def test_load_systems_target_multipool_hierarchy_preserved(self, tmp_path):
+        data_dir = tmp_path / "test_data"
+        (data_dir / "poolA" / "sys1").mkdir(parents=True)
+
+        with patch("dpeva.io.dataset._load_single_path") as mock_load:
+            mock_sys = MagicMock()
+            mock_load.return_value = mock_sys
+
+            systems = load_systems(
+                str(data_dir),
+                fmt="auto",
+                target_systems=["poolA/sys1"],
+            )
+
+            assert len(systems) == 1
+            mock_load.assert_called_once()
+            call_args, _ = mock_load.call_args
+            assert call_args[0] == str(data_dir / "poolA" / "sys1")
+            assert call_args[1] == "poolA/sys1"
+
     def test_load_systems_invalid_path(self, data_dir):
         """Test behavior with invalid path."""
         systems = load_systems(str(data_dir / "nonexistent"), fmt="auto")
