@@ -24,7 +24,7 @@ owner: Docs Owner
 
 - 文档总入口：`../README.md`
 - 开发者治理上手：`../guides/docs-governance-quickstart.md`
-- 最新执行闭环方案：`../plans/governance/2026-03-10-ci-warning-remediation-plan.md`
+- 最新执行闭环方案：`../archive/v0.6.6/plans/2026-03-14-collection-uq-fdiff-scatter-plan.md`
 - Owner 责任矩阵：`inventory/owners-matrix.md`
 
 ## 3. 稳态治理基线

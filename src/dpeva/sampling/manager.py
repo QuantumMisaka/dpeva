@@ -147,8 +147,12 @@ class SamplingManager:
             raise ValueError("background_features must be a 2D array.")
 
         expected_dim = getattr(scaler, "n_features_in_", None)
+        if not isinstance(expected_dim, (int, np.integer)):
+            expected_dim = None
         if expected_dim is None:
             expected_dim = getattr(getattr(pca, "pca", None), "n_features_in_", None)
+            if not isinstance(expected_dim, (int, np.integer)):
+                expected_dim = None
         if expected_dim is not None and background_features.shape[1] != expected_dim:
             raise ValueError(
                 f"Background feature dimension mismatch for {sampler_name}: "

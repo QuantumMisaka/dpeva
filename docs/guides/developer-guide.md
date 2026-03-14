@@ -2,21 +2,21 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-03-12
+last-updated: 2026-03-14
 ---
 
 # DP-EVA 项目开发文档
 
 - Status: active
 - Audience: Developers
-- Last-Updated: 2026-03-12
+- Last-Updated: 2026-03-14
 - Related:
   - 配置字段字典：/docs/source/api/config.rst
   - 校验规则补充：/docs/reference/validation.md
   - 上游软件与职责：/docs/reference/upstream-software.md
 
-* **版本**: 0.6.5
-* **生成日期**: 2026-03-12
+* **版本**: 0.6.6
+* **生成日期**: 2026-03-14
 * **作者**: Quantum Misaka with Trae SOLO
 
 ---
@@ -477,6 +477,15 @@ DPEVA_TAG: WORKFLOW_FINISHED
 ### 6.2 版本历史
 
 #### **Current Era (v0.6.x)**
+
+*   **v0.6.6** (2026-03-14):
+    *   **[修复]** Collection 新增 `UQ-force-qbc-rnd-fdiff-scatter` 工作流调用，修复有真值场景下该图未输出的问题。
+    *   **[可视化]** 为 `UQ-force-qbc-rnd-fdiff-scatter` 增加 Truncated `[0,2]` 出图分支，补齐超界数据截断逻辑与独立产物。
+    *   **[测试]** 增强 `test_visualization.py` 对 fdiff 散点图输出契约断言，并补充 truncated 分支测试覆盖。
+    *   **[修复]** 改进 `SamplingManager._transform_background_features` 对 mock 属性维度判断的鲁棒性，修复单测中的维度误判失败。
+    *   **[测试]** `pytest tests/unit` 全量通过（222 passed）。
+    *   **[治理]** 将 `docs/plans/governance` 下已完成计划归档至 `docs/archive/v0.6.6/plans/`，同步更新归档索引与治理入口链接。
+    *   **[发布]** 版本升级至 `0.6.6`，同步 `__init__`、`README`、Sphinx `conf.py` 与 Banner 版本标识。
 
 *   **v0.6.5** (2026-03-12):
     *   **[修复]** 修复 Labeling integration 中 `atom_names` 顺序敏感误报，支持在元素集合一致时自动归一化顺序并完成合并。

@@ -17,7 +17,7 @@ Banner Reference:
 │ |  _ \|  _ \     | ____\ \   / /   / \      ⚡ SYNCHRO: 100%               │
 │ | | | | |_) |____|  _|  \ \ / /   / _ \     ◌ SAMPLE: SAMPLING...          │
 │ | |_| |  __/_____| |___  \ V /   / ___ \    >> AWAKENING CHECK <<          │
-│ |____/|_|        |_____|  \_/   /_/   \_\   v0.6.5-Execution-Ready         │
+│ |____/|_|        |_____|  \_/   /_/   \_\   v0.6.6-Execution-Ready         │
 ├────────────────────────────────────────────────────────────────────────────┤
 │  :: LCL Sea Density ::  ......  * .  ..  .  *  .  * .  ...  * .  ..  .     │
 │  Deep Potential EVolution Accelerator          >>> [PRESS START] <<<       │
