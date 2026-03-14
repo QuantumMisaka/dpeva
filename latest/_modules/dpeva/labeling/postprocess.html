@@ -639,6 +639,7 @@ window.runMermaid = runMermaid;</script>
 <li class="toctree-l1"><a class="reference internal" href="../../../architecture/decisions/2026-02-04-deepmd-dependency.html">ADR: DeepMD-kit 依赖管理策略</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../guides/README.html">Guides（操作指南）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../guides/deployment.html">GitHub Actions 文档部署指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../guides/labeling-stats-repair.html">Labeling 历史统计修复</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../guides/developer/README.html">Developer Guides</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../guides/developer/config-docs-maintenance.html">变量说明文档维护指南</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../guides/testing/README.html">Testing（测试指南）</a></li>
@@ -770,7 +771,7 @@ document.write(`
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Sequence</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">dpdata</span>
@@ -1082,7 +1083,7 @@ document.write(`
 
 <div class="viewcode-block" id="AbacusPostProcessor.export_data">
 <a class="viewcode-back" href="../../../api/labeling.html#dpeva.labeling.AbacusPostProcessor.export_data">[文档]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">export_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">systems</span><span class="p">:</span> <span class="n">dpdata</span><span class="o">.</span><span class="n">MultiSystems</span><span class="p">,</span> <span class="n">df_clean</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="nb">format</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;deepmd/npy&quot;</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">export_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">systems</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">dpdata</span><span class="o">.</span><span class="n">LabeledSystem</span><span class="p">],</span> <span class="n">df_clean</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="nb">format</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;deepmd/npy&quot;</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Export cleaned data to disk.</span>
 <span class="sd">        &quot;&quot;&quot;</span>

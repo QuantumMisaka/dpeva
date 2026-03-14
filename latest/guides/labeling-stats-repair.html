@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>上游软件与核心依赖（Upstream Software） &#8212; DP-EVA Documentation</title>
+    <title>Labeling 历史统计修复 &#8212; DP-EVA Documentation</title>
   
   
   
@@ -42,11 +42,11 @@
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
     <script src="../_static/translations.js?v=beaddf03"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'reference/upstream-software';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'guides/labeling-stats-repair';</script>
     <link rel="index" title="索引" href="../genindex.html" />
     <link rel="search" title="搜索" href="../search.html" />
-    <link rel="next" title="DP-EVA 项目开发文档" href="../guides/developer-guide.html" />
-    <link rel="prev" title="参数校验与约束（Validation Rules）" href="validation.html" />
+    <link rel="next" title="Developer Guides" href="developer/README.html" />
+    <link rel="prev" title="GitHub Actions 文档部署指南" href="deployment.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="zh-CN"/>
   </head>
@@ -152,29 +152,29 @@
     <div class="bd-toc-item navbar-nav active">
         <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="../guides/installation.html">安装与环境准备（Installation）</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../guides/quickstart.html">Quickstart（最短路径跑通）</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../guides/cli.html">CLI 使用指南</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../guides/configuration.html">配置编写指南（Configuration）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">安装与环境准备（Installation）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart（最短路径跑通）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cli.html">CLI 使用指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="configuration.html">配置编写指南（Configuration）</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">User Guides</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="../guides/slurm.html">Slurm 使用与排障指南</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../guides/troubleshooting.html">Troubleshooting（常见问题与排查）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="slurm.html">Slurm 使用与排障指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="troubleshooting.html">Troubleshooting（常见问题与排查）</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference</span></p>
-<ul class="current nav bd-sidenav">
-<li class="toctree-l1 current active has-children"><a class="reference internal" href="index.html">Reference</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="README.html">Reference（权威参考）</a></li>
-<li class="toctree-l2"><a class="reference internal" href="validation.html">参数校验与约束（Validation Rules）</a></li>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../reference/index.html">Reference</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../reference/README.html">Reference（权威参考）</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reference/validation.html">参数校验与约束（Validation Rules）</a></li>
 
-<li class="toctree-l2 current active"><a class="current reference internal" href="#">上游软件与核心依赖（Upstream Software）</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reference/upstream-software.html">上游软件与核心依赖（Upstream Software）</a></li>
 </ul>
 </details></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Developer Guide</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="../guides/developer-guide.html">DP-EVA 项目开发文档</a></li>
+<li class="toctree-l1"><a class="reference internal" href="developer-guide.html">DP-EVA 项目开发文档</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../architecture/README.html">Architecture（系统结构）</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../api/config.html">Configuration Reference</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../api/config/submission.html">Common &amp; Submission Configuration</a></li>
@@ -194,23 +194,23 @@
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Governance</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="../guides/docs-governance-quickstart.html">文档治理快速上手（开发者与 AI）</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../guides/process-asset-lifecycle.html">过程资产生命周期（AI 草案到项目文档）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="docs-governance-quickstart.html">文档治理快速上手（开发者与 AI）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="process-asset-lifecycle.html">过程资产生命周期（AI 草案到项目文档）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../policy/README.html">Policy（制度与规范）</a></li>
 </ul>
-<ul class="nav bd-sidenav">
+<ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../architecture/design-report.html">DP-EVA 项目设计模式与架构分析报告</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../architecture/decisions/README.html">README</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../architecture/decisions/2026-02-04-deepmd-dependency.html">ADR: DeepMD-kit 依赖管理策略</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../guides/README.html">Guides（操作指南）</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../guides/deployment.html">GitHub Actions 文档部署指南</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../guides/labeling-stats-repair.html">Labeling 历史统计修复</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../guides/developer/README.html">Developer Guides</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../guides/developer/config-docs-maintenance.html">变量说明文档维护指南</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../guides/testing/README.html">Testing（测试指南）</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../guides/testing/integration-config-templates.html">DP-EVA 集成测试最小配置模板（Slurm）</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../guides/testing/integration-slurm.html">DP-EVA 集成测试设计与交付报告（Slurm + Multi DataPool）</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../guides/testing/multi-datapool-artifacts.html">test-for-multiple-datapool 生产目录输入输出分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="README.html">Guides（操作指南）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="deployment.html">GitHub Actions 文档部署指南</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Labeling 历史统计修复</a></li>
+<li class="toctree-l1"><a class="reference internal" href="developer/README.html">Developer Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="developer/config-docs-maintenance.html">变量说明文档维护指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="testing/README.html">Testing（测试指南）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="testing/integration-config-templates.html">DP-EVA 集成测试最小配置模板（Slurm）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="testing/integration-slurm.html">DP-EVA 集成测试设计与交付报告（Slurm + Multi DataPool）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="testing/multi-datapool-artifacts.html">test-for-multiple-datapool 生产目录输入输出分析</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../plans/README.html">开发计划 (Development Plans)</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../plans/governance/README.html">README</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="simple">
 </ul>
@@ -275,7 +275,7 @@
       
       
       
-      <li><a href="../_sources/reference/upstream-software.md" target="_blank"
+      <li><a href="../_sources/guides/labeling-stats-repair.md" target="_blank"
    class="btn btn-sm btn-download-source-button dropdown-item"
    title="下载源文件"
    data-bs-placement="left" data-bs-toggle="tooltip"
@@ -359,7 +359,7 @@ document.write(`
               
 
 <div id="jb-print-docs-body" class="onlyprint">
-    <h1>上游软件与核心依赖（Upstream Software）</h1>
+    <h1>Labeling 历史统计修复</h1>
     <!-- Table of contents -->
     <div id="print-main-content">
         <div id="jb-print-toc">
@@ -369,11 +369,11 @@ document.write(`
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#deepmd-kit">1. DeePMD-kit</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#dpdata">2. dpdata</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#abacus">3. ABACUS</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#ase-abacus">4. ase-abacus</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">5. 依赖分工总览</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">1. 脚本入口</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">2. 单目录修复</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">3. 批量修复</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">4. 输出与校验</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">5. 分支映射策略</a></li>
 </ul>
             </nav>
         </div>
@@ -385,95 +385,61 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="upstream-software">
-<h1>上游软件与核心依赖（Upstream Software）<a class="headerlink" href="#upstream-software" title="Link to this heading">#</a></h1>
-<ul class="simple">
-<li><p>Status: active</p></li>
-<li><p>Audience: Users / Developers</p></li>
-<li><p>Last-Updated: 2026-03-09</p></li>
-</ul>
-<p>本文档汇总 DP-EVA 的核心上游软件，说明其仓库位置与在本项目中的职责边界。</p>
-<section id="deepmd-kit">
-<h2>1. DeePMD-kit<a class="headerlink" href="#deepmd-kit" title="Link to this heading">#</a></h2>
-<ul class="simple">
-<li><p>仓库地址：https://github.com/deepmodeling/deepmd-kit/</p></li>
-<li><p>核心功能：机器学习势训练和推理平台。</p></li>
-<li><p>在 DP-EVA 中的作用：</p>
-<ul>
-<li><p>作为训练、测试与描述符评估的核心计算后端。</p></li>
-<li><p>通过 <code class="docutils literal notranslate"><span class="pre">dp</span></code> 命令参与 <code class="docutils literal notranslate"><span class="pre">train</span> <span class="pre">/</span> <span class="pre">infer</span> <span class="pre">/</span> <span class="pre">feature</span></code> 等流程。</p></li>
-</ul>
-</li>
-</ul>
-</section>
-<section id="dpdata">
-<h2>2. dpdata<a class="headerlink" href="#dpdata" title="Link to this heading">#</a></h2>
-<ul class="simple">
-<li><p>仓库地址：https://github.com/deepmodeling/dpdata</p></li>
-<li><p>核心功能：处理 <code class="docutils literal notranslate"><span class="pre">deepmd/npy</span></code>、<code class="docutils literal notranslate"><span class="pre">deepmd/npy/mixed</span></code> 等机器学习势结构数据格式。</p></li>
-<li><p>在 DP-EVA 中的作用：</p>
-<ul>
-<li><p>负责数据集加载、结构读写与多系统数据组织。</p></li>
-<li><p>为采样、标注、分析等流程提供统一的数据结构接口。</p></li>
-</ul>
-</li>
-</ul>
-</section>
-<section id="abacus">
-<h2>3. ABACUS<a class="headerlink" href="#abacus" title="Link to this heading">#</a></h2>
-<ul class="simple">
-<li><p>仓库地址：https://github.com/deepmodeling/abacus-develop</p></li>
-<li><p>核心功能：开源第一性原理计算软件。</p></li>
-<li><p>在 DP-EVA 中的作用：</p>
-<ul>
-<li><p>作为 Labeling 阶段的 DFT 计算后端。</p></li>
-<li><p>承担从候选结构到高精度标注数据的关键计算步骤。</p></li>
-</ul>
-</li>
-</ul>
-</section>
-<section id="ase-abacus">
-<h2>4. ase-abacus<a class="headerlink" href="#ase-abacus" title="Link to this heading">#</a></h2>
-<ul class="simple">
-<li><p>仓库地址：https://gitlab.com/1041176461/ase-abacus</p></li>
-<li><p>核心功能：用于 ABACUS 计算的数据预处理。</p></li>
-<li><p>在 DP-EVA 中的作用：</p>
-<ul>
-<li><p>负责 ABACUS 计算前的数据准备与输入转换。</p></li>
-<li><p>为 Labeling 工作流中的结构预处理提供支持。</p></li>
-</ul>
-</li>
-</ul>
-</section>
+  <section id="labeling">
+<h1>Labeling 历史统计修复<a class="headerlink" href="#labeling" title="Link to this heading">#</a></h1>
+<p>当历史 <code class="docutils literal notranslate"><span class="pre">labeling</span></code> 工作目录存在 <code class="docutils literal notranslate"><span class="pre">task_meta.json</span></code> 缺失或损坏时，可使用离线修复脚本重建分支统计，不触发任何重新计算任务。</p>
 <section id="id1">
-<h2>5. 依赖分工总览<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
-<div class="pst-scrollable-table-container"><table class="table">
-<thead>
-<tr class="row-odd"><th class="head"><p>依赖</p></th>
-<th class="head"><p>主要阶段</p></th>
-<th class="head"><p>角色定位</p></th>
-</tr>
-</thead>
-<tbody>
-<tr class="row-even"><td><p>DeepMD-kit</p></td>
-<td><p>Train / Infer / Feature</p></td>
-<td><p>机器学习势训练与推理核心引擎</p></td>
-</tr>
-<tr class="row-odd"><td><p>dpdata</p></td>
-<td><p>Data IO / Labeling / Analysis</p></td>
-<td><p>结构数据格式与系统组织层</p></td>
-</tr>
-<tr class="row-even"><td><p>ABACUS</p></td>
-<td><p>Labeling</p></td>
-<td><p>第一性原理计算后端</p></td>
-</tr>
-<tr class="row-odd"><td><p>ase-abacus</p></td>
-<td><p>Labeling 预处理</p></td>
-<td><p>ABACUS 输入准备与结构转换</p></td>
-</tr>
-</tbody>
-</table>
+<h2>1. 脚本入口<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">scripts/repair_labeling_stats.py</span></code></p></li>
+</ul>
+</section>
+<section id="id2">
+<h2>2. 单目录修复<a class="headerlink" href="#id2" title="Link to this heading">#</a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3<span class="w"> </span>scripts/repair_labeling_stats.py<span class="w"> </span>--workdir<span class="w"> </span>/path/to/labeling_workdir
+</pre></div>
 </div>
+<p>执行后会在目标目录写入：</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">outputs/labeling_stats_report.repaired.json</span></code></p></li>
+</ul>
+</section>
+<section id="id3">
+<h2>3. 批量修复<a class="headerlink" href="#id3" title="Link to this heading">#</a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3<span class="w"> </span>scripts/repair_labeling_stats.py<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--root<span class="w"> </span>/path/to/history_runs<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--pattern<span class="w"> </span><span class="s2">&quot;fp*&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--strict
+</pre></div>
+</div>
+<p>参数说明：</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">--workdir</span></code>：可重复传入多个目录</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--root</span></code>：批量扫描根目录</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--pattern</span></code>：根目录下匹配模式，默认 <code class="docutils literal notranslate"><span class="pre">*</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--strict</span></code>：任一目录失败或报告不可信时返回非零退出码</p></li>
+</ul>
+</section>
+<section id="id4">
+<h2>4. 输出与校验<a class="headerlink" href="#id4" title="Link to this heading">#</a></h2>
+<p>脚本会输出每个目录的修复摘要：</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">trusted</span></code>：统计一致性是否通过</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">total/conv/fail/clean/filt</span></code>：全局指标</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">report</span></code>：修复报告文件路径</p></li>
+</ul>
+<p>最终会输出统一 JSON 汇总，其中包含失败目录及原因列表，便于批处理审计。</p>
+</section>
+<section id="id5">
+<h2>5. 分支映射策略<a class="headerlink" href="#id5" title="Link to this heading">#</a></h2>
+<p>修复流程按以下优先级识别分支归属：</p>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">task_meta.json</span></code> 的 <code class="docutils literal notranslate"><span class="pre">dataset_name/stru_type</span></code></p></li>
+<li><p>提取阶段保留的 <code class="docutils literal notranslate"><span class="pre">task_identity.json</span></code></p></li>
+<li><p>历史 <code class="docutils literal notranslate"><span class="pre">outputs/task_identity_map.json</span></code></p></li>
+<li><p>受控兜底 <code class="docutils literal notranslate"><span class="pre">unknown/unknown</span></code></p></li>
+</ol>
+<p>对于打包目录 <code class="docutils literal notranslate"><span class="pre">N_50_x</span></code>，不会再将其识别为 Dataset/Type。</p>
 </section>
 </section>
 
@@ -489,20 +455,20 @@ document.write(`
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="validation.html"
+       href="deployment.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">上一页</p>
-        <p class="prev-next-title">参数校验与约束（Validation Rules）</p>
+        <p class="prev-next-title">GitHub Actions 文档部署指南</p>
       </div>
     </a>
     <a class="right-next"
-       href="../guides/developer-guide.html"
+       href="developer/README.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">下一页</p>
-        <p class="prev-next-title">DP-EVA 项目开发文档</p>
+        <p class="prev-next-title">Developer Guides</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -522,11 +488,11 @@ document.write(`
   </div>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#deepmd-kit">1. DeePMD-kit</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#dpdata">2. dpdata</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#abacus">3. ABACUS</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#ase-abacus">4. ase-abacus</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">5. 依赖分工总览</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">1. 脚本入口</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">2. 单目录修复</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">3. 批量修复</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">4. 输出与校验</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">5. 分支映射策略</a></li>
 </ul>
   </nav></div>
 
