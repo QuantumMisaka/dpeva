@@ -37,7 +37,7 @@
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="../_static/documentation_options.js?v=a25fec3b"></script>
+    <script src="../_static/documentation_options.js?v=82ee76d0"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -647,8 +647,7 @@ window.runMermaid = runMermaid;</script>
 <li class="toctree-l1"><a class="reference internal" href="testing/integration-slurm.html">DP-EVA 集成测试设计与交付报告（Slurm + Multi DataPool）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="testing/multi-datapool-artifacts.html">test-for-multiple-datapool 生产目录输入输出分析</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../plans/README.html">开发计划 (Development Plans)</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
-<li class="toctree-l2 has-children"><a class="reference internal" href="../plans/governance/README.html">README</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
-<li class="toctree-l3"><a class="reference internal" href="../plans/governance/2026-03-13-collection-workflow-gt-plot-gating-v2.html">CollectionWorkflow 有无真值作图门控改进计划（V2）</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../plans/governance/README.html">README</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="simple">
 </ul>
 </details></li>
 </ul>
@@ -888,7 +887,7 @@ document.write(`
 <ul class="simple">
 <li><p>Status: active</p></li>
 <li><p>Audience: Developers</p></li>
-<li><p>Last-Updated: 2026-03-12</p></li>
+<li><p>Last-Updated: 2026-03-14</p></li>
 <li><p>Related:</p>
 <ul>
 <li><p>配置字段字典：/docs/source/api/config.rst</p></li>
@@ -898,8 +897,8 @@ document.write(`
 </li>
 </ul>
 <ul class="simple">
-<li><p><strong>版本</strong>: 0.6.5</p></li>
-<li><p><strong>生成日期</strong>: 2026-03-12</p></li>
+<li><p><strong>版本</strong>: 0.6.6</p></li>
+<li><p><strong>生成日期</strong>: 2026-03-14</p></li>
 <li><p><strong>作者</strong>: Quantum Misaka with Trae SOLO</p></li>
 </ul>
 <hr class="docutils" />
@@ -1465,6 +1464,20 @@ A: 这是预期行为。在联合模式下，<code class="docutils literal notra
 <section id="current-era-v0-6-x">
 <h4><strong>Current Era (v0.6.x)</strong><a class="headerlink" href="#current-era-v0-6-x" title="Link to this heading">#</a></h4>
 <ul class="simple">
+<li><p><strong>v0.6.6</strong> (2026-03-14):</p>
+<ul>
+<li><p><strong>[修复]</strong> Collection 新增 <code class="docutils literal notranslate"><span class="pre">UQ-force-qbc-rnd-fdiff-scatter</span></code> 工作流调用，修复有真值场景下该图未输出的问题。</p></li>
+<li><p><strong>[可视化]</strong> 为 <code class="docutils literal notranslate"><span class="pre">UQ-force-qbc-rnd-fdiff-scatter</span></code> 增加 Truncated <code class="docutils literal notranslate"><span class="pre">[0,2]</span></code> 出图分支，补齐超界数据截断逻辑与独立产物。</p></li>
+<li><p><strong>[测试]</strong> 增强 <code class="docutils literal notranslate"><span class="pre">test_visualization.py</span></code> 对 fdiff 散点图输出契约断言，并补充 truncated 分支测试覆盖。</p></li>
+<li><p><strong>[修复]</strong> 改进 <code class="docutils literal notranslate"><span class="pre">SamplingManager._transform_background_features</span></code> 对 mock 属性维度判断的鲁棒性，修复单测中的维度误判失败。</p></li>
+<li><p><strong>[修复]</strong> Labeling 后处理新增“坏 converged”防护：电子收敛但缺失 <code class="docutils literal notranslate"><span class="pre">TOTAL-FORCE</span></code> 的任务会被识别并隔离，避免进入 postprocess 触发 <code class="docutils literal notranslate"><span class="pre">forces[0]</span></code> 越界。</p></li>
+<li><p><strong>[特性]</strong> Labeling 新增 <code class="docutils literal notranslate"><span class="pre">--stage</span> <span class="pre">extract</span></code> 阶段，支持从 <code class="docutils literal notranslate"><span class="pre">inputs/N_*</span></code> 独立提取结果并分流到 <code class="docutils literal notranslate"><span class="pre">CONVERGED</span></code>/<code class="docutils literal notranslate"><span class="pre">BAD_CONVERGED</span></code>，实现与 execute/postprocess 解耦。</p></li>
+<li><p><strong>[稳定性]</strong> <code class="docutils literal notranslate"><span class="pre">AbacusPostProcessor</span></code> 新增任务状态分类与数据完整性校验，<code class="docutils literal notranslate"><span class="pre">compute_metrics</span></code> 增强系统级/帧级容错，单坏样本不再中断整批流程。</p></li>
+<li><p><strong>[测试]</strong> 补齐 CLI、Workflow、Manager、Postprocess 回归测试，<code class="docutils literal notranslate"><span class="pre">pytest</span> <span class="pre">tests/unit</span></code> 全量通过（231 passed）。</p></li>
+<li><p><strong>[治理]</strong> 将 <code class="docutils literal notranslate"><span class="pre">docs/plans/governance</span></code> 下已完成计划归档至 <code class="docutils literal notranslate"><span class="pre">docs/archive/v0.6.6/plans/</span></code>，同步更新归档索引与治理入口链接。</p></li>
+<li><p><strong>[发布]</strong> 版本升级至 <code class="docutils literal notranslate"><span class="pre">0.6.6</span></code>，同步 <code class="docutils literal notranslate"><span class="pre">__init__</span></code>、<code class="docutils literal notranslate"><span class="pre">README</span></code>、Sphinx <code class="docutils literal notranslate"><span class="pre">conf.py</span></code> 与 Banner 版本标识。</p></li>
+</ul>
+</li>
 <li><p><strong>v0.6.5</strong> (2026-03-12):</p>
 <ul>
 <li><p><strong>[修复]</strong> 修复 Labeling integration 中 <code class="docutils literal notranslate"><span class="pre">atom_names</span></code> 顺序敏感误报，支持在元素集合一致时自动归一化顺序并完成合并。</p></li>

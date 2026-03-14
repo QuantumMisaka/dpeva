@@ -36,7 +36,7 @@
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="../../../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="../../../_static/documentation_options.js?v=a25fec3b"></script>
+    <script src="../../../_static/documentation_options.js?v=82ee76d0"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -646,8 +646,7 @@ window.runMermaid = runMermaid;</script>
 <li class="toctree-l1"><a class="reference internal" href="../../../guides/testing/integration-slurm.html">DP-EVA 集成测试设计与交付报告（Slurm + Multi DataPool）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../guides/testing/multi-datapool-artifacts.html">test-for-multiple-datapool 生产目录输入输出分析</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../../plans/README.html">开发计划 (Development Plans)</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
-<li class="toctree-l2 has-children"><a class="reference internal" href="../../../plans/governance/README.html">README</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
-<li class="toctree-l3"><a class="reference internal" href="../../../plans/governance/2026-03-13-collection-workflow-gt-plot-gating-v2.html">CollectionWorkflow 有无真值作图门控改进计划（V2）</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../plans/governance/README.html">README</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="simple">
 </ul>
 </details></li>
 </ul>
@@ -812,33 +811,68 @@ document.write(`
 <div class="viewcode-block" id="AbacusPostProcessor.check_convergence">
 <a class="viewcode-back" href="../../../api/labeling.html#dpeva.labeling.AbacusPostProcessor.check_convergence">[文档]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">check_convergence</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Check if an ABACUS calculation has converged.</span>
-<span class="sd">        Looks for &quot;charge density convergence is achieved&quot; in running_scf.log.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">task_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">task_dir</span><span class="p">)</span>
-        <span class="c1"># Find running_scf.log</span>
-        <span class="c1"># Usually in OUT.suffix/running_scf.log</span>
-        <span class="c1"># We search recursively or check standard location</span>
-        <span class="n">log_files</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">task_dir</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">&quot;OUT.*/running_scf.log&quot;</span><span class="p">))</span>
+        <span class="n">status</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">classify_task_status</span><span class="p">(</span><span class="n">task_dir</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">status</span> <span class="o">==</span> <span class="s2">&quot;converged&quot;</span></div>
+
+
+<div class="viewcode-block" id="AbacusPostProcessor.classify_task_status">
+<a class="viewcode-back" href="../../../api/labeling.html#dpeva.labeling.AbacusPostProcessor.classify_task_status">[文档]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">classify_task_status</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+        <span class="n">log_files</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">task_dir</span><span class="p">)</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">&quot;OUT.*/running_scf.log&quot;</span><span class="p">))</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">log_files</span><span class="p">:</span>
-            <span class="c1"># Fallback to abacus.out in root if running_scf not found (older versions?)</span>
-            <span class="n">log_files</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">task_dir</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">&quot;abacus.out&quot;</span><span class="p">))</span>
-        
+            <span class="n">log_files</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">task_dir</span><span class="p">)</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">&quot;abacus.out&quot;</span><span class="p">))</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">log_files</span><span class="p">:</span>
+                <span class="k">return</span> <span class="s2">&quot;failed&quot;</span><span class="p">,</span> <span class="s2">&quot;missing_log&quot;</span>
+
+        <span class="n">has_converged</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">has_not_converged</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="k">for</span> <span class="n">log_file</span> <span class="ow">in</span> <span class="n">log_files</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
-                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">log_file</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">log_file</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
                     <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">f</span><span class="p">:</span>
                         <span class="k">if</span> <span class="s2">&quot;charge density convergence is achieved&quot;</span> <span class="ow">in</span> <span class="n">line</span><span class="p">:</span>
-                            <span class="k">return</span> <span class="kc">True</span>
+                            <span class="n">has_converged</span> <span class="o">=</span> <span class="kc">True</span>
                         <span class="k">if</span> <span class="s2">&quot;convergence has not been achieved&quot;</span> <span class="ow">in</span> <span class="n">line</span><span class="p">:</span>
-                            <span class="k">return</span> <span class="kc">False</span>
+                            <span class="n">has_not_converged</span> <span class="o">=</span> <span class="kc">True</span>
             <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
                 <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error reading log file </span><span class="si">{</span><span class="n">log_file</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-                <span class="k">continue</span>
-        
-        <span class="k">return</span> <span class="kc">False</span></div>
 
+        <span class="k">if</span> <span class="n">has_not_converged</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;failed&quot;</span><span class="p">,</span> <span class="s2">&quot;scf_not_converged&quot;</span>
+        <span class="k">if</span> <span class="n">has_converged</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_has_required_output_blocks</span><span class="p">(</span><span class="n">task_dir</span><span class="p">):</span>
+            <span class="k">return</span> <span class="s2">&quot;converged&quot;</span><span class="p">,</span> <span class="s2">&quot;ok&quot;</span>
+        <span class="k">if</span> <span class="n">has_converged</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;bad_converged&quot;</span><span class="p">,</span> <span class="s2">&quot;missing_total_force_block&quot;</span>
+        <span class="k">return</span> <span class="s2">&quot;failed&quot;</span><span class="p">,</span> <span class="s2">&quot;no_converged_marker&quot;</span></div>
+
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_has_required_output_blocks</span><span class="p">(</span><span class="n">task_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="n">log_files</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">task_dir</span><span class="p">)</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">&quot;OUT.*/running_scf.log&quot;</span><span class="p">))</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">log_files</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">for</span> <span class="n">log_file</span> <span class="ow">in</span> <span class="n">log_files</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">log_file</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                    <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">f</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="s2">&quot;TOTAL-FORCE&quot;</span> <span class="ow">in</span> <span class="n">line</span><span class="p">:</span>
+                            <span class="k">return</span> <span class="kc">True</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                <span class="k">continue</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_is_labeled_system_complete</span><span class="p">(</span><span class="n">ls</span><span class="p">:</span> <span class="n">dpdata</span><span class="o">.</span><span class="n">LabeledSystem</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+        <span class="n">n_frames</span> <span class="o">=</span> <span class="n">ls</span><span class="o">.</span><span class="n">get_nframes</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">n_frames</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="s2">&quot;no_frames&quot;</span>
+        <span class="n">required_keys</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;energies&quot;</span><span class="p">,</span> <span class="s2">&quot;forces&quot;</span><span class="p">,</span> <span class="s2">&quot;virials&quot;</span><span class="p">,</span> <span class="s2">&quot;cells&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">required_keys</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">ls</span><span class="o">.</span><span class="n">data</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;missing_key:</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">ls</span><span class="p">[</span><span class="n">key</span><span class="p">])</span> <span class="o">&lt;</span> <span class="n">n_frames</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;short_array:</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">return</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;&quot;</span>
 
 <div class="viewcode-block" id="AbacusPostProcessor.load_data">
 <a class="viewcode-back" href="../../../api/labeling.html#dpeva.labeling.AbacusPostProcessor.load_data">[文档]</a>
@@ -851,6 +885,10 @@ document.write(`
             <span class="c1"># fmt=&#39;abacus/scf&#39;</span>
             <span class="n">ls</span> <span class="o">=</span> <span class="n">dpdata</span><span class="o">.</span><span class="n">LabeledSystem</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">task_dir</span><span class="p">),</span> <span class="n">fmt</span><span class="o">=</span><span class="s1">&#39;abacus/scf&#39;</span><span class="p">)</span>
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">ls</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">valid</span><span class="p">,</span> <span class="n">reason</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_labeled_system_complete</span><span class="p">(</span><span class="n">ls</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">valid</span><span class="p">:</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Skip incomplete labeled system </span><span class="si">{</span><span class="n">task_dir</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">reason</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="k">return</span> <span class="kc">None</span>
                 <span class="k">return</span> <span class="n">ls</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to load data from </span><span class="si">{</span><span class="n">task_dir</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
@@ -865,17 +903,35 @@ document.write(`
 <span class="sd">        Returns a DataFrame.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">data_list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">skipped_system_count</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">skipped_frame_count</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="k">for</span> <span class="n">si</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">systems</span><span class="p">):</span>
             <span class="n">atom_names</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="s2">&quot;atom_names&quot;</span><span class="p">]</span>
             <span class="n">atom_types</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="s2">&quot;atom_types&quot;</span><span class="p">]</span>
             <span class="n">elements</span> <span class="o">=</span> <span class="p">[</span><span class="n">atom_names</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">atom_types</span><span class="p">]</span>
             <span class="n">n_frames</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">get_nframes</span><span class="p">()</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">energies</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="s2">&quot;energies&quot;</span><span class="p">]</span>
+                <span class="n">forces_all</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="s2">&quot;forces&quot;</span><span class="p">]</span>
+                <span class="n">virials</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="s2">&quot;virials&quot;</span><span class="p">]</span>
+                <span class="n">cells_all</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="s2">&quot;cells&quot;</span><span class="p">]</span>
+            <span class="k">except</span> <span class="ne">KeyError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+                <span class="n">skipped_system_count</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Skip system </span><span class="si">{</span><span class="n">si</span><span class="si">}</span><span class="s2"> due to missing key: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="nb">min</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">energies</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">forces_all</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">virials</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">cells_all</span><span class="p">))</span> <span class="o">&lt;</span> <span class="n">n_frames</span><span class="p">:</span>
+                <span class="n">skipped_system_count</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Skip system </span><span class="si">{</span><span class="n">si</span><span class="si">}</span><span class="s2"> due to inconsistent frame arrays.&quot;</span><span class="p">)</span>
+                <span class="k">continue</span>
             
             <span class="k">for</span> <span class="n">fi</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_frames</span><span class="p">):</span>
-                <span class="n">energy</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="s2">&quot;energies&quot;</span><span class="p">][</span><span class="n">fi</span><span class="p">])</span>
-                <span class="n">forces</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="s2">&quot;forces&quot;</span><span class="p">][</span><span class="n">fi</span><span class="p">]</span>
-                <span class="n">virial</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="s2">&quot;virials&quot;</span><span class="p">][</span><span class="n">fi</span><span class="p">]</span>
-                <span class="n">cells</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="s2">&quot;cells&quot;</span><span class="p">][</span><span class="n">fi</span><span class="p">]</span>
+                <span class="n">energy</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">energies</span><span class="p">[</span><span class="n">fi</span><span class="p">])</span>
+                <span class="n">forces</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">forces_all</span><span class="p">[</span><span class="n">fi</span><span class="p">])</span>
+                <span class="n">virial</span> <span class="o">=</span> <span class="n">virials</span><span class="p">[</span><span class="n">fi</span><span class="p">]</span>
+                <span class="n">cells</span> <span class="o">=</span> <span class="n">cells_all</span><span class="p">[</span><span class="n">fi</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">forces</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">skipped_frame_count</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="k">continue</span>
                 <span class="n">volume</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">det</span><span class="p">(</span><span class="n">cells</span><span class="p">)))</span>
                 
                 <span class="c1"># Pressure (GPa)</span>
@@ -889,7 +945,11 @@ document.write(`
                     <span class="n">stress_tensor</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">))</span>
                     <span class="n">pressure_gpa</span> <span class="o">=</span> <span class="mf">0.0</span>
                 
-                <span class="n">max_force</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">forces</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
+                <span class="n">force_norm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">forces</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">force_norm</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">skipped_frame_count</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="k">continue</span>
+                <span class="n">max_force</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">force_norm</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
                 <span class="n">num_atoms</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">elements</span><span class="p">)</span>
                 <span class="n">energy_per_atom</span> <span class="o">=</span> <span class="n">energy</span> <span class="o">/</span> <span class="n">num_atoms</span>
                 
@@ -905,6 +965,28 @@ document.write(`
                     <span class="s2">&quot;volume&quot;</span><span class="p">:</span> <span class="n">volume</span>
                 <span class="p">})</span>
         
+        <span class="k">if</span> <span class="n">skipped_system_count</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">skipped_frame_count</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Skipped incomplete data during metric computation: &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;systems=</span><span class="si">{</span><span class="n">skipped_system_count</span><span class="si">}</span><span class="s2">, frames=</span><span class="si">{</span><span class="n">skipped_frame_count</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">data_list</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+                <span class="n">columns</span><span class="o">=</span><span class="p">[</span>
+                    <span class="s2">&quot;sys_idx&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;frame_idx&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;elements&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;num_atoms&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;energy&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;energy_per_atom&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;max_force&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;pressure_gpa&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;volume&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;cohesive_energy_per_atom&quot;</span><span class="p">,</span>
+                <span class="p">]</span>
+            <span class="p">)</span>
+
         <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">data_list</span><span class="p">)</span>
         
         <span class="c1"># Compute Cohesive Energy</span>
