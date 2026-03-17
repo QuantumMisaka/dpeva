@@ -63,8 +63,4 @@ owner: Docs Owner
 
 ## 6. 活跃计划 (Active Plans)
 
-```{toctree}
-:maxdepth: 1
-
-governance/README
-```
+- [文档治理计划 (Governance Plan)](../governance/README.md)
