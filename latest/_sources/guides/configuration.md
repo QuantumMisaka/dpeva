@@ -111,6 +111,8 @@ last-updated: 2026-03-11
   "work_dir": "./",
   "data_path": "./other_dpdata_all",
   "task_name": "test_val",
+  "results_prefix": "results",
+  "auto_analysis": false,
   "submission": { "backend": "slurm" }
 }
 ```
@@ -136,11 +138,31 @@ last-updated: 2026-03-11
 
 ```json
 {
+  "mode": "model_test",
   "result_dir": "0/test_val",
+  "results_prefix": "results",
+  "data_path": "sampled_dpdata",
   "output_dir": "analysis",
-  "type_map": ["Fe", "C", "O", "H"]
+  "type_map": ["Fe", "C", "O", "H"],
+  "enable_cohesive_energy": true,
+  "allow_ref_energy_lstsq_completion": false
 }
 ```
+
+Analysis 相关建议：
+
+- Inference 若自定义了 `results_prefix`，Analysis 的 `results_prefix` 必须保持一致。
+- `model_test` 模式下若需要 Cohesive Energy，请优先提供 `data_path` 指向与 `result_dir` 对应的原始数据集，以避免仅靠文件名推断组分失败。
+- `enable_cohesive_energy` 控制是否启用 Cohesive Energy 统计与作图。
+- `allow_ref_energy_lstsq_completion` 控制当 `ref_energies` 不完整时是否允许最小二乘补全缺失元素参考能。
+- `dataset` 模式若希望输出 Cohesive Energy 图，可将 `"enable_cohesive_energy": true` 并提供合理 `ref_energies`（或开启 `allow_ref_energy_lstsq_completion`）。
+- 新增图谱会额外输出：
+  - `dist_<quantity>_overlay.png`（Pred/True 叠加分布）
+  - `dist_<quantity>_with_error.png`（主分布 + 小幅 error 分布）
+  - `parity_<quantity>_enhanced.png`（含边缘分布的增强 parity）
+- 图中统计信息默认仅显示 `count/mean/std/min/max`，不再显示分位数。
+- `Error Distribution` 与 `parity_*_enhanced.png` 默认不显示统计信息框。
+- 单变量分布图默认不显示 `All Data` 图例；dataset 元素占比/存在性使用多色饼图。
 
 ### 5.6 Labeling
 
@@ -164,5 +186,6 @@ last-updated: 2026-03-11
 
 ## 7. 变更记录
 
+- 2026-03-16：Analysis 最小配置增加 `data_path`、`enable_cohesive_energy`、`allow_ref_energy_lstsq_completion`，并补充 Cohesive Energy 配置建议。
 - 2026-03-11：配置字段权威入口改为 API Reference，并补充 Labeling 最小配置示例。
 - 2026-02-18：补齐路径解析、Submission 结构与最小配置示例。

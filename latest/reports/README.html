@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Architecture（系统结构） &#8212; DP-EVA Documentation</title>
+    <title>技术报告 (Technical Reports) &#8212; DP-EVA Documentation</title>
   
   
   
@@ -42,11 +42,11 @@
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
     <script src="../_static/translations.js?v=beaddf03"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'architecture/README';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'reports/README';</script>
     <link rel="index" title="索引" href="../genindex.html" />
     <link rel="search" title="搜索" href="../search.html" />
-    <link rel="next" title="&lt;no title&gt;" href="../api/index.html" />
-    <link rel="prev" title="DP-EVA 项目开发文档" href="../guides/developer-guide.html" />
+    <link rel="next" title="文档贡献指南（Contributing）" href="../policy/contributing.html" />
+    <link rel="prev" title="README" href="../plans/governance/README.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="zh-CN"/>
   </head>
@@ -173,9 +173,9 @@
 </details></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Developer Guide</span></p>
-<ul class="current nav bd-sidenav">
+<ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../guides/developer-guide.html">DP-EVA 项目开发文档</a></li>
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">Architecture（系统结构）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../architecture/README.html">Architecture（系统结构）</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../api/config.html">Configuration Reference</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../api/config/submission.html">Common &amp; Submission Configuration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../api/config/feature.html">Feature Generation Configuration</a></li>
@@ -198,10 +198,10 @@
 <li class="toctree-l1"><a class="reference internal" href="../guides/process-asset-lifecycle.html">过程资产生命周期（AI 草案到项目文档）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../policy/README.html">Policy（制度与规范）</a></li>
 </ul>
-<ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="design-report.html">DP-EVA 项目设计模式与架构分析报告</a></li>
-<li class="toctree-l1"><a class="reference internal" href="decisions/README.html">README</a></li>
-<li class="toctree-l1"><a class="reference internal" href="decisions/2026-02-04-deepmd-dependency.html">ADR: DeepMD-kit 依赖管理策略</a></li>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../architecture/design-report.html">DP-EVA 项目设计模式与架构分析报告</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../architecture/decisions/README.html">README</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../architecture/decisions/2026-02-04-deepmd-dependency.html">ADR: DeepMD-kit 依赖管理策略</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../guides/README.html">Guides（操作指南）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../guides/deployment.html">GitHub Actions 文档部署指南</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../guides/labeling-stats-repair.html">Labeling 历史统计修复</a></li>
@@ -217,7 +217,7 @@
 </details></li>
 </ul>
 </details></li>
-<li class="toctree-l1"><a class="reference internal" href="../reports/README.html">技术报告 (Technical Reports)</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">技术报告 (Technical Reports)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../policy/contributing.html">文档贡献指南（Contributing）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../policy/docs-structure.html">文档结构与命名规范（Docs Structure &amp; Naming）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../policy/maintenance.html">文档版本管理与维护机制（Maintenance）</a></li>
@@ -276,7 +276,7 @@
       
       
       
-      <li><a href="../_sources/architecture/README.md" target="_blank"
+      <li><a href="../_sources/reports/README.md" target="_blank"
    class="btn btn-sm btn-download-source-button dropdown-item"
    title="下载源文件"
    data-bs-placement="left" data-bs-toggle="tooltip"
@@ -347,7 +347,9 @@ document.write(`
   </button>
 `);
 </script>
-
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
 </div></div>
       
     </div>
@@ -358,11 +360,19 @@ document.write(`
               
 
 <div id="jb-print-docs-body" class="onlyprint">
-    <h1>Architecture（系统结构）</h1>
+    <h1>技术报告 (Technical Reports)</h1>
     <!-- Table of contents -->
     <div id="print-main-content">
         <div id="jb-print-toc">
             
+            <div>
+                <h2> 目录 </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">活跃报告</a></li>
+</ul>
+            </nav>
         </div>
     </div>
 </div>
@@ -372,15 +382,20 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="architecture">
-<h1>Architecture（系统结构）<a class="headerlink" href="#architecture" title="Link to this heading">#</a></h1>
-<p>本目录用于存放与当前 <code class="docutils literal notranslate"><span class="pre">src/</span></code> 代码一致的系统架构说明（更新频率中等）。</p>
-<p>当前架构说明主要在：</p>
+  <section id="technical-reports">
+<h1>技术报告 (Technical Reports)<a class="headerlink" href="#technical-reports" title="Link to this heading">#</a></h1>
 <ul class="simple">
-<li><p>开发者指南的“系统架构/核心模块”章节：<a class="reference external" href="https://github.com/QuantumMisaka/dpeva/blob/main/docs/guides/developer-guide.md">developer-guide.md</a></p></li>
-<li><p>设计分析报告（含历史性内容）：<a class="reference external" href="https://github.com/QuantumMisaka/dpeva/blob/main/docs/architecture/design-report.md">design-report.md</a></p></li>
+<li><p>Status: active</p></li>
+<li><p>Audience: All</p></li>
+<li><p>Last-Updated: 2026-03-17</p></li>
 </ul>
-<p>建议后续将“当前架构概览”从报告型文档中剥离，形成稳定的 <code class="docutils literal notranslate"><span class="pre">overview.md</span></code>，并用 ADR 记录关键技术决策。</p>
+<p>本索引页用于导航项目活跃技术报告。</p>
+<section id="id1">
+<h2>活跃报告<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p>暂无活跃报告，最新报告已归档至 <code class="docutils literal notranslate"><span class="pre">../../archive/v0.6.8/reports/</span></code>。</p></li>
+</ul>
+</section>
 </section>
 
 
@@ -395,20 +410,20 @@ document.write(`
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="../guides/developer-guide.html"
+       href="../plans/governance/README.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">上一页</p>
-        <p class="prev-next-title">DP-EVA 项目开发文档</p>
+        <p class="prev-next-title">README</p>
       </div>
     </a>
     <a class="right-next"
-       href="../api/index.html"
+       href="../policy/contributing.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">下一页</p>
-        <p class="prev-next-title">&lt;no title&gt;</p>
+        <p class="prev-next-title">文档贡献指南（Contributing）</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -418,6 +433,21 @@ document.write(`
             </div>
             
             
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> 目录
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">活跃报告</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
               
             
           </div>

@@ -37,7 +37,7 @@
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="../_static/documentation_options.js?v=2bae02b6"></script>
+    <script src="../_static/documentation_options.js?v=89d9f3f1"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -653,6 +653,7 @@ window.runMermaid = runMermaid;</script>
 </details></li>
 </ul>
 </details></li>
+<li class="toctree-l1"><a class="reference internal" href="../reports/README.html">技术报告 (Technical Reports)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../policy/contributing.html">文档贡献指南（Contributing）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../policy/docs-structure.html">文档结构与命名规范（Docs Structure &amp; Naming）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../policy/maintenance.html">文档版本管理与维护机制（Maintenance）</a></li>
@@ -1465,6 +1466,15 @@ A: 这是预期行为。在联合模式下，<code class="docutils literal notra
 <section id="current-era-v0-6-x">
 <h4><strong>Current Era (v0.6.x)</strong><a class="headerlink" href="#current-era-v0-6-x" title="Link to this heading">#</a></h4>
 <ul class="simple">
+<li><p><strong>v0.6.8</strong> (2026-03-17):</p>
+<ul>
+<li><p><strong>[架构]</strong> 重构 Inference 与 Analysis 边界：<code class="docutils literal notranslate"><span class="pre">InferenceConfig</span></code> 新增 <code class="docutils literal notranslate"><span class="pre">auto_analysis</span></code> 显式开关，local 场景可链式触发 analysis，slurm 场景保持解耦执行。</p></li>
+<li><p><strong>[修复]</strong> Analysis 增加 <code class="docutils literal notranslate"><span class="pre">results_prefix</span></code> 契约并贯通读取链路，消除 <code class="docutils literal notranslate"><span class="pre">head=&quot;results&quot;</span></code> 写死导致的前缀不一致风险。</p></li>
+<li><p><strong>[重构]</strong> 新增 <code class="docutils literal notranslate"><span class="pre">dpeva.postprocess</span></code> 共享后处理入口，统一导出统计与可视化能力，降低 analysis/inference 语义耦合。</p></li>
+<li><p><strong>[治理]</strong> 完成 Analysis 相关计划/报告/规格文档归档至 <code class="docutils literal notranslate"><span class="pre">docs/archive/v0.6.8/</span></code>，同步更新 active 索引与 archive 索引。</p></li>
+<li><p><strong>[测试]</strong> 回归通过 <code class="docutils literal notranslate"><span class="pre">tests/unit/workflows/test_infer_workflow_exec.py</span></code>、<code class="docutils literal notranslate"><span class="pre">tests/unit/workflows/test_analysis_workflow.py</span></code> 及 analysis/inference 单测集。</p></li>
+</ul>
+</li>
 <li><p><strong>v0.6.7</strong> (2026-03-14):</p>
 <ul>
 <li><p><strong>[修复]</strong> 调整 Collection 目标池无标签判据：在 <code class="docutils literal notranslate"><span class="pre">&lt;1e-4</span></code> 阈值下，只要任意帧能量标签近零即按无 GT 处理，并在流程日志中增加 WARNING 提示。</p></li>

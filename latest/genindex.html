@@ -36,7 +36,7 @@
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="_static/documentation_options.js?v=2bae02b6"></script>
+    <script src="_static/documentation_options.js?v=89d9f3f1"></script>
     <script src="_static/doctools.js?v=9bcbadda"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -652,6 +652,7 @@ window.runMermaid = runMermaid;</script>
 </details></li>
 </ul>
 </details></li>
+<li class="toctree-l1"><a class="reference internal" href="reports/README.html">技术报告 (Technical Reports)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="policy/contributing.html">文档贡献指南（Contributing）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="policy/docs-structure.html">文档结构与命名规范（Docs Structure &amp; Naming）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="policy/maintenance.html">文档版本管理与维护机制（Maintenance）</a></li>
@@ -793,6 +794,8 @@ document.write(`
 </li>
       <li><a href="api/labeling.html#dpeva.labeling.AbacusPostProcessor">AbacusPostProcessor（dpeva.labeling 中的类）</a>
 </li>
+      <li><a href="api/config/analysis.html#dpeva.config.AnalysisConfig.allow_ref_energy_lstsq_completion">allow_ref_energy_lstsq_completion（dpeva.config.AnalysisConfig 属性）</a>
+</li>
       <li><a href="api/workflows.html#dpeva.workflows.AnalysisWorkflow">AnalysisWorkflow（dpeva.workflows 中的类）</a>
 </li>
   </ul></td>
@@ -802,6 +805,8 @@ document.write(`
       <li><a href="api/labeling.html#dpeva.labeling.ResubmissionStrategy.apply">apply() （dpeva.labeling.ResubmissionStrategy 方法）</a>
 </li>
       <li><a href="api/config/labeling.html#dpeva.config.LabelingConfig.attempt_params">attempt_params（dpeva.config.LabelingConfig 属性）</a>
+</li>
+      <li><a href="api/config/inference.html#dpeva.config.InferenceConfig.auto_analysis">auto_analysis（dpeva.config.InferenceConfig 属性）</a>
 </li>
   </ul></td>
 </tr></table>
@@ -914,14 +919,16 @@ document.write(`
 <h2 id="E">E</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/config/analysis.html#dpeva.config.AnalysisConfig.enable_cohesive_energy">enable_cohesive_energy（dpeva.config.AnalysisConfig 属性）</a>
+</li>
       <li><a href="api/config/submission.html#dpeva.config.SubmissionConfig.env_setup">env_setup（dpeva.config.SubmissionConfig 属性）</a>
 </li>
       <li><a href="api/submission.html#dpeva.submission.JobConfig.env_setup">env_setup（dpeva.submission.JobConfig 属性）</a>
 </li>
-      <li><a href="api/submission.html#dpeva.submission.JobConfig.error_log">error_log（dpeva.submission.JobConfig 属性）</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/submission.html#dpeva.submission.JobConfig.error_log">error_log（dpeva.submission.JobConfig 属性）</a>
+</li>
       <li><a href="api/config/labeling.html#dpeva.config.LabelingConfig.existing_training_data_path">existing_training_data_path（dpeva.config.LabelingConfig 属性）</a>
 </li>
       <li><a href="api/labeling.html#dpeva.labeling.AbacusPostProcessor.export_data">export_data() （dpeva.labeling.AbacusPostProcessor 方法）</a>
@@ -1126,6 +1133,8 @@ document.write(`
       <li><a href="api/labeling.html#dpeva.labeling.ResubmissionStrategy">ResubmissionStrategy（dpeva.labeling 中的类）</a>
 </li>
       <li><a href="api/config/analysis.html#dpeva.config.AnalysisConfig.result_dir">result_dir（dpeva.config.AnalysisConfig 属性）</a>
+</li>
+      <li><a href="api/config/analysis.html#dpeva.config.AnalysisConfig.results_prefix">results_prefix（dpeva.config.AnalysisConfig 属性）</a>
 </li>
       <li><a href="api/config/collection.html#dpeva.config.CollectionConfig.results_prefix">results_prefix（dpeva.config.CollectionConfig 属性）</a>
 </li>

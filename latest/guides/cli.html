@@ -37,7 +37,7 @@
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="../_static/documentation_options.js?v=2bae02b6"></script>
+    <script src="../_static/documentation_options.js?v=89d9f3f1"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -217,6 +217,7 @@
 </details></li>
 </ul>
 </details></li>
+<li class="toctree-l1"><a class="reference internal" href="../reports/README.html">技术报告 (Technical Reports)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../policy/contributing.html">文档贡献指南（Contributing）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../policy/docs-structure.html">文档结构与命名规范（Docs Structure &amp; Naming）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../policy/maintenance.html">文档版本管理与维护机制（Maintenance）</a></li>
@@ -378,7 +379,7 @@ document.write(`
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">4. 子命令职责、输入输出与配置</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#train">4.1 train（并行微调训练）</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#infer">4.2 infer（并行推理与误差分析）</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#infer">4.2 infer（并行推理）</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#feature">4.3 feature（描述符生成）</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#collect-uq-filtering-sampling-export">4.4 collect（UQ + Filtering + Sampling + Export）</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#label">4.5 label（标注）</a></li>
@@ -474,7 +475,7 @@ dpeva<span class="w"> </span>train<span class="w"> </span>--help
 <p>示例配置：<code class="docutils literal notranslate"><span class="pre">examples/recipes/training/config_train.json</span></code></p>
 </section>
 <section id="infer">
-<h3>4.2 infer（并行推理与误差分析）<a class="headerlink" href="#infer" title="Link to this heading">#</a></h3>
+<h3>4.2 infer（并行推理）<a class="headerlink" href="#infer" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p>输入</p>
 <ul>
@@ -487,6 +488,12 @@ dpeva<span class="w"> </span>train<span class="w"> </span>--help
 <ul>
 <li><p><code class="docutils literal notranslate"><span class="pre">work_dir/&lt;i&gt;/&lt;task_name&gt;/results.*.out</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">work_dir/&lt;i&gt;/&lt;task_name&gt;/test_job.out</span></code></p></li>
+</ul>
+</li>
+<li><p>自动分析规则</p>
+<ul>
+<li><p>仅当 <code class="docutils literal notranslate"><span class="pre">submission.backend=local</span></code> 且 <code class="docutils literal notranslate"><span class="pre">auto_analysis=true</span></code> 时触发链式分析</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">slurm</span></code> 场景建议单独执行 <code class="docutils literal notranslate"><span class="pre">dpeva</span> <span class="pre">analysis</span></code></p></li>
 </ul>
 </li>
 </ul>
@@ -569,17 +576,27 @@ dpeva<span class="w"> </span>train<span class="w"> </span>--help
 <li><p><code class="docutils literal notranslate"><span class="pre">model_test</span></code> 模式（默认）</p>
 <ul>
 <li><p>输入：<code class="docutils literal notranslate"><span class="pre">AnalysisConfig.result_dir</span></code>（例如 <code class="docutils literal notranslate"><span class="pre">0/test_val</span></code>）</p></li>
-<li><p>输出：<code class="docutils literal notranslate"><span class="pre">AnalysisConfig.output_dir</span></code>（指标、误差统计、图表）</p></li>
+<li><p>建议：若启用 Cohesive Energy，配置 <code class="docutils literal notranslate"><span class="pre">AnalysisConfig.data_path</span></code> 指向原始测试数据集，避免仅依赖文件名推断组分</p></li>
+<li><p>输出：<code class="docutils literal notranslate"><span class="pre">AnalysisConfig.output_dir</span></code>（指标、误差统计、基础图、增强图）</p></li>
 </ul>
 </li>
 <li><p><code class="docutils literal notranslate"><span class="pre">dataset</span></code> 模式</p>
 <ul>
 <li><p>输入：<code class="docutils literal notranslate"><span class="pre">AnalysisConfig.dataset_dir</span></code></p></li>
-<li><p>输出：<code class="docutils literal notranslate"><span class="pre">dataset_stats.json</span></code>、<code class="docutils literal notranslate"><span class="pre">dataset_frame_summary.csv</span></code> 与分布图</p></li>
+<li><p>输出：<code class="docutils literal notranslate"><span class="pre">dataset_stats.json</span></code>、<code class="docutils literal notranslate"><span class="pre">dataset_frame_summary.csv</span></code>、元素占比/覆盖图、分布图（可选 cohesive）</p></li>
 </ul>
 </li>
 </ul>
 <p>示例配置：<code class="docutils literal notranslate"><span class="pre">examples/recipes/analysis/config_analysis.json</span></code></p>
+<p>关键参数：</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">enable_cohesive_energy</span></code>：开启/关闭 Cohesive Energy 统计与作图</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">allow_ref_energy_lstsq_completion</span></code>：当 <code class="docutils literal notranslate"><span class="pre">ref_energies</span></code> 不完整时，是否允许最小二乘补全缺失元素参考能</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">results_prefix</span></code>：必须与推理阶段 <code class="docutils literal notranslate"><span class="pre">InferenceConfig.results_prefix</span></code> 一致</p></li>
+<li><p>图谱文件命名：<code class="docutils literal notranslate"><span class="pre">dist_&lt;quantity&gt;_overlay.png</span></code>、<code class="docutils literal notranslate"><span class="pre">dist_&lt;quantity&gt;_with_error.png</span></code>、<code class="docutils literal notranslate"><span class="pre">parity_&lt;quantity&gt;_enhanced.png</span></code></p></li>
+<li><p>统计可视化约定：分布图统计项仅 <code class="docutils literal notranslate"><span class="pre">count/mean/std/min/max</span></code>；Error Distribution 与增强 Parity 不展示统计框。</p></li>
+<li><p>标签约定：非 Pred/True 对比图默认不展示 <code class="docutils literal notranslate"><span class="pre">All</span> <span class="pre">Data</span></code> 图例；dataset 元素图使用多色饼图。</p></li>
+</ul>
 </section>
 </section>
 <section id="id7">
@@ -689,7 +706,7 @@ dpeva<span class="w"> </span>label<span class="w"> </span>config.json<span class
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">4. 子命令职责、输入输出与配置</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#train">4.1 train（并行微调训练）</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#infer">4.2 infer（并行推理与误差分析）</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#infer">4.2 infer（并行推理）</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#feature">4.3 feature（描述符生成）</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#collect-uq-filtering-sampling-export">4.4 collect（UQ + Filtering + Sampling + Export）</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#label">4.5 label（标注）</a></li>
