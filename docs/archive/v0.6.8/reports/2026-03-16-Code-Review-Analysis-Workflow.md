@@ -1,6 +1,6 @@
 ---
 title: Analysis Workflow Code Review Report
-status: active
+status: archived
 audience: developers
 last-updated: 2026-03-16
 owner: DP-EVA Maintainers

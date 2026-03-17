@@ -2,7 +2,7 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-03-16
+last-updated: 2026-03-17
 owner: Docs Owner
 ---
 
@@ -10,10 +10,10 @@ owner: Docs Owner
 
 - Status: active
 - Audience: All
-- Last-Updated: 2026-03-16
+- Last-Updated: 2026-03-17
 
 本索引页用于导航项目活跃技术报告。
 
 ## 活跃报告
 
-- [2026-03-16-Code-Review-Analysis-Workflow](../../reports/2026-03-16-Code-Review-Analysis-Workflow.md)
+- 暂无活跃报告，最新报告已归档至 `../../archive/v0.6.8/reports/`。

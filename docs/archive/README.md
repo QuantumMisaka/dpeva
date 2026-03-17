@@ -16,4 +16,4 @@ last-updated: 2026-03-14
 - 归档内容不作为现行规范来源；现行规则以 `docs/policy/`、`docs/reference/`、`docs/guides/` 为准。
 - `docs/archive/reports/` 保存历史的代码审查报告。
 - `docs/archive/specs/` 仅保存历史规格，当前执行规格统一在 `docs/plans/` 维护。
-- 最新版本归档：`docs/archive/v0.6.7/`。
+- 最新版本归档：`docs/archive/v0.6.8/`。

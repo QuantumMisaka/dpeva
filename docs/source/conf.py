@@ -7,8 +7,8 @@ from pathlib import Path
 project = 'DP-EVA'
 copyright = '2026, DP-EVA Developers'
 author = 'DP-EVA Developers'
-version = '0.6.7'
-release = '0.6.7'
+version = '0.6.8'
+release = '0.6.8'
 
 # -- Path setup --------------------------------------------------------------
 # Add src to sys.path to allow autodoc to find modules

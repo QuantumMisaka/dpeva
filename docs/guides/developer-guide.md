@@ -478,6 +478,13 @@ DPEVA_TAG: WORKFLOW_FINISHED
 
 #### **Current Era (v0.6.x)**
 
+*   **v0.6.8** (2026-03-17):
+    *   **[架构]** 重构 Inference 与 Analysis 边界：`InferenceConfig` 新增 `auto_analysis` 显式开关，local 场景可链式触发 analysis，slurm 场景保持解耦执行。
+    *   **[修复]** Analysis 增加 `results_prefix` 契约并贯通读取链路，消除 `head="results"` 写死导致的前缀不一致风险。
+    *   **[重构]** 新增 `dpeva.postprocess` 共享后处理入口，统一导出统计与可视化能力，降低 analysis/inference 语义耦合。
+    *   **[治理]** 完成 Analysis 相关计划/报告/规格文档归档至 `docs/archive/v0.6.8/`，同步更新 active 索引与 archive 索引。
+    *   **[测试]** 回归通过 `tests/unit/workflows/test_infer_workflow_exec.py`、`tests/unit/workflows/test_analysis_workflow.py` 及 analysis/inference 单测集。
+
 *   **v0.6.7** (2026-03-14):
     *   **[修复]** 调整 Collection 目标池无标签判据：在 `<1e-4` 阈值下，只要任意帧能量标签近零即按无 GT 处理，并在流程日志中增加 WARNING 提示。
     *   **[修复]** 修复 Collection 导出路径重复嵌套问题，统一 UQ+DIRECT 与 DIRECT-only 导出链路，避免 `other_dpdata/other_dpdata` 与错位目录结构。

@@ -1,6 +1,6 @@
 ---
 title: Analysis Module Repair and Enhancement Plan
-status: active
+status: archived
 audience: developers
 last-updated: 2026-03-16
 owner: DP-EVA Maintainers
