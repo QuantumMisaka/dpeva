@@ -1,7 +1,12 @@
 {
+    "mode": "model_test",
     "result_dir": "0/test_val",
+    "data_path": "sampled_dpdata",
     "output_dir": "analysis",
+    "results_prefix": "results",
     "type_map": ["Fe", "C", "O", "H"],
+    "enable_cohesive_energy": true,
+    "allow_ref_energy_lstsq_completion": false,
     "ref_energies": {
         "Fe": -3215.2791,
         "C": -156.0795,

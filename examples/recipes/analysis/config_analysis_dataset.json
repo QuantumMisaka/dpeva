@@ -1,8 +1,9 @@
 {
     "mode": "dataset",
-    "dataset_dir": "./sampled_dpdata",
+    "dataset_dir": "sampled_dpdata",
     "output_dir": "analysis_dataset",
-    "type_map": ["Fe", "C", "O", "H"],
+    "enable_cohesive_energy": true,
+    "allow_ref_energy_lstsq_completion": false,
     "ref_energies": {
         "Fe": -3215.2791,
         "C": -156.0795,

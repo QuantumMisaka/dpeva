@@ -165,14 +165,28 @@ class AnalysisConfig(BaseModel):
     result_dir: Optional[Path] = Field(None, description="Path to DP test results directory.")
     dataset_dir: Optional[Path] = Field(None, description="Path to dataset directory for dataset analysis mode.")
     output_dir: Path = Field(Path(DEFAULT_ANALYSIS_OUTPUT_DIR), description="Output directory for analysis results.")
-    type_map: List[str] = Field(..., description="Atom type map (e.g. ['Fe', 'C']).")
+    results_prefix: str = Field(
+        DEFAULT_RESULTS_PREFIX,
+        description="Prefix of DP test result files (must match inference results_prefix)."
+    )
+    type_map: Optional[List[str]] = Field(
+        None,
+        description="Atom type map (e.g. ['Fe', 'C']). Required for model_test mode when data_path is not provided."
+    )
     data_path: Optional[Path] = Field(None, description="Path to original dataset (for robust composition loading).")
     ref_energies: Dict[str, float] = Field(default_factory=dict, description="Reference energies per element for cohesive energy calculation.")
+    enable_cohesive_energy: bool = Field(True, description="Whether to enable cohesive energy statistics and plotting.")
+    allow_ref_energy_lstsq_completion: bool = Field(
+        False,
+        description="Whether to fit missing element reference energies with least squares when provided ref_energies is incomplete."
+    )
 
     @model_validator(mode='after')
     def validate_mode_paths(self):
         if self.mode == "model_test" and self.result_dir is None:
             raise ValueError("result_dir is required when mode='model_test'")
+        if self.mode == "model_test" and not self.type_map and self.data_path is None:
+            raise ValueError("type_map is required when mode='model_test' unless data_path is provided")
         if self.mode == "dataset" and self.dataset_dir is None:
             raise ValueError("dataset_dir is required when mode='dataset'")
         return self
@@ -183,6 +197,10 @@ class InferenceConfig(BaseWorkflowConfig):
     model_head: Optional[str] = Field(None, description="Model head name (optional for frozen models).")
     results_prefix: str = Field(DEFAULT_RESULTS_PREFIX, description="Output file prefix.")
     task_name: str = DEFAULT_INFER_TASK_NAME
+    auto_analysis: bool = Field(
+        False,
+        description="Whether to trigger analysis after inference execution."
+    )
     ref_energies: Dict[str, float] = Field(default_factory=dict, description="Reference energies per element for cohesive energy calculation.")
 
 class LabelingConfig(BaseWorkflowConfig):

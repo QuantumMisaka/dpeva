@@ -37,7 +37,9 @@ dpeva train examples/recipes/training/config_train.json
 ## 3. Inference (`inference/`)
 
 Located in `inference/`.
-Evaluates trained models on a test set (candidate pool) to calculate errors (RMSE) and generate parity plots.
+Evaluates trained models on a test set (candidate pool) and writes raw `dp test` outputs.
+Set `auto_analysis=true` only for local backend if you want chained analysis.
+For Slurm, run `dpeva analysis` after jobs finish.
 
 **Usage:**
 ```bash
@@ -60,15 +62,25 @@ For users who want to use the sampling algorithms directly without the full DP-E
 
 -   **Standard DIRECT (`sampling_direct/`)**:
     -   Uses structural clustering to select representative frames.
-    -   Run with `dpeva collect examples/recipes/sampling_direct/config_collect_direct.json`
+    -   Run with `dpeva collect examples/recipes/sampling_direct/config.json`
     -   Reference: `python examples/scripts/sampling_direct/run_direct.py ...`
 
 -   **2-Step DIRECT (`sampling_2direct/`)**:
     -   Two-step clustering (Structural -> Atomic) to optimize for labeling costs.
-    -   Run with `dpeva collect examples/recipes/sampling_2direct/config_collect_2direct.json`
+    -   Run with `dpeva collect examples/recipes/sampling_2direct/config.json`
     -   Reference: `python examples/scripts/sampling_2direct/run_2direct.py ...`
 
-## 6. Script Entry Points
+## 6. Analysis Recipes
+
+- **Dataset + Inference Results (`analysis/config_analysis.json`)**
+  - Inputs: `result_dir`, `results_prefix`, and optional `data_path` for composition-aware cohesive analysis.
+  - Run with `dpeva analysis examples/recipes/analysis/config_analysis.json`
+
+- **Dataset-only Analysis (`analysis/config_analysis_dataset.json`)**
+  - Inputs: `mode=dataset` + `dataset_dir`.
+  - Run with `dpeva analysis examples/recipes/analysis/config_analysis_dataset.json`
+
+## 7. Script Entry Points
 
 For programmatic workflow demos and helper scripts, use:
 

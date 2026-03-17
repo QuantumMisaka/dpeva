@@ -83,3 +83,37 @@ def test_no_models_found(tmp_path, caplog):
         with pytest.raises(WorkflowError, match="No models provided"):
             workflow.run()
         mock_error.assert_called_with("No models provided for inference.")
+
+def test_auto_analysis_runs_only_for_local(tmp_path, mock_job_manager):
+    create_mock_models(tmp_path, num_models=1)
+    data_path = tmp_path / "test_data"
+    data_path.mkdir()
+
+    config = {
+        "work_dir": str(tmp_path),
+        "data_path": str(data_path),
+        "submission": {"backend": "local"},
+        "auto_analysis": True,
+    }
+    workflow = InferenceWorkflow(config)
+    with patch.object(workflow, "analyze_results") as mock_analyze:
+        workflow.run()
+        mock_analyze.assert_called_once()
+
+def test_auto_analysis_ignored_for_non_local(tmp_path, mock_job_manager):
+    create_mock_models(tmp_path, num_models=1)
+    data_path = tmp_path / "test_data"
+    data_path.mkdir()
+
+    config = {
+        "work_dir": str(tmp_path),
+        "data_path": str(data_path),
+        "submission": {"backend": "slurm"},
+        "auto_analysis": True,
+    }
+    workflow = InferenceWorkflow(config)
+    with patch.object(workflow, "analyze_results") as mock_analyze, patch.object(workflow.logger, "warning") as mock_warning:
+        with patch.dict(os.environ, {"DPEVA_INTERNAL_BACKEND": "slurm"}):
+            workflow.run()
+        mock_analyze.assert_not_called()
+        mock_warning.assert_called_with("auto_analysis=true is ignored when backend is not local.")

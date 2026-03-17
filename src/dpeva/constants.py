@@ -96,6 +96,13 @@ WORKFLOW_FINISHED_TAG: Final[str] = "DPEVA_TAG: WORKFLOW_FINISHED"
 # Filenames
 FILENAME_STATS_JSON: Final[str] = "statistics.json"
 FILENAME_SUMMARY_CSV: Final[str] = "inference_summary.csv"
+FILENAME_METRICS_JSON: Final[str] = "metrics.json"
+FILENAME_METRICS_SUMMARY_CSV: Final[str] = "metrics_summary.csv"
+FILENAME_COHESIVE_ENERGY_PRED_STATS_JSON: Final[str] = "cohesive_energy_pred_stats.json"
+FILENAME_DATASET_STATS_JSON: Final[str] = "dataset_stats.json"
+FILENAME_DATASET_FRAME_SUMMARY_CSV: Final[str] = "dataset_frame_summary.csv"
+FILENAME_DATASET_ELEMENT_RATIO_PNG: Final[str] = "dataset_element_ratio.png"
+FILENAME_DATASET_ELEMENT_PRESENCE_PNG: Final[str] = "dataset_element_presence.png"
 
 # Visualization Filenames
 FILENAME_UQ_FORCE: Final[str] = "UQ-force.png"

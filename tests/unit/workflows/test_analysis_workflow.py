@@ -56,7 +56,7 @@ class TestAnalysisWorkflow:
         
         # Verify Interactions
         mock_setup_logger.assert_called_once()
-        mock_io.load_data.assert_called_with(config["result_dir"], config["type_map"])
+        mock_io.load_data.assert_called_with(config["result_dir"], config["type_map"], "results")
         
         mock_manager.analyze_model.assert_called()
         
@@ -89,8 +89,7 @@ class TestAnalysisWorkflow:
         config = {
             "mode": "dataset",
             "dataset_dir": str(tmp_path / "dataset"),
-            "output_dir": str(tmp_path / "analysis"),
-            "type_map": ["O", "H"]
+            "output_dir": str(tmp_path / "analysis")
         }
 
         workflow = AnalysisWorkflow(config)
@@ -98,6 +97,22 @@ class TestAnalysisWorkflow:
 
         mock_setup_logger.assert_called_once()
         MockIOManager.return_value.load_data.assert_not_called()
+        MockDatasetManager.return_value.analyze.assert_called_once()
+        mock_close_logger.assert_called_once()
+
+    @patch("dpeva.workflows.analysis.DatasetAnalysisManager")
+    @patch("dpeva.workflows.analysis.AnalysisIOManager")
+    @patch("dpeva.workflows.analysis.setup_workflow_logger")
+    @patch("dpeva.workflows.analysis.close_workflow_logger")
+    def test_run_dataset_mode_with_optional_type_map(self, mock_close_logger, mock_setup_logger, MockIOManager, MockDatasetManager, tmp_path):
+        config = {
+            "mode": "dataset",
+            "dataset_dir": str(tmp_path / "dataset"),
+            "output_dir": str(tmp_path / "analysis"),
+            "type_map": ["O", "H"]
+        }
+        workflow = AnalysisWorkflow(config)
+        workflow.run()
         MockDatasetManager.return_value.analyze.assert_called_once()
         mock_close_logger.assert_called_once()
 

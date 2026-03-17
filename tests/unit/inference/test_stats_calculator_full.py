@@ -51,7 +51,7 @@ class TestStatsCalculator:
         # -40 = 2*H -> H = -20
         # LS solution will be between -10 and -20.
         
-        calc = StatsCalculator(**basic_data)
+        calc = StatsCalculator(**basic_data, allow_ref_energy_lstsq_completion=True)
         coh_e = calc.compute_relative_energy(calc.e_pred)
         
         assert coh_e is not None
@@ -70,6 +70,38 @@ class TestStatsCalculator:
         
         assert np.isclose(coh_e[0], 0.0)
         assert np.isclose(coh_e[1], -10.0)
+
+    def test_relative_energy_partial_ref_with_lstsq_completion(self):
+        e_pred = np.array([-5.0, -6.0, -7.0])
+        atom_counts = [{"H": 1, "O": 1}, {"H": 1, "O": 2}, {"H": 1, "O": 3}]
+        atom_nums = [2, 3, 4]
+        calc = StatsCalculator(
+            energy_per_atom=e_pred,
+            force_flat=None,
+            atom_counts_list=atom_counts,
+            atom_num_list=atom_nums,
+            ref_energies={"H": -1.0},
+            allow_ref_energy_lstsq_completion=True
+        )
+        coh_pred = calc.compute_relative_energy(e_pred)
+        coh_true = calc.compute_relative_energy(e_pred - 0.1)
+        assert coh_pred is not None
+        assert coh_true is not None
+        assert len(coh_pred) == 3
+        assert np.all(np.isfinite(coh_pred))
+        assert np.all(np.isfinite(coh_true))
+
+    def test_relative_energy_partial_ref_without_completion(self):
+        calc = StatsCalculator(
+            energy_per_atom=np.array([-5.0, -6.0]),
+            force_flat=None,
+            atom_counts_list=[{"H": 1, "O": 1}, {"H": 2, "O": 1}],
+            atom_num_list=[2, 3],
+            ref_energies={"H": -1.0},
+            allow_ref_energy_lstsq_completion=False
+        )
+        coh_e = calc.compute_relative_energy(calc.e_pred)
+        assert coh_e is None
 
     def test_force_magnitude(self, basic_data):
         """Test force magnitude calculation."""

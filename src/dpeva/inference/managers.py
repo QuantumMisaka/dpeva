@@ -9,8 +9,7 @@ from collections import Counter
 from dpeva.constants import WORKFLOW_FINISHED_TAG, FILENAME_STATS_JSON
 from dpeva.submission import JobManager, JobConfig
 from dpeva.io.dataproc import DPTestResultParser
-from dpeva.inference.stats import StatsCalculator
-from dpeva.inference.visualizer import InferenceVisualizer
+from dpeva.postprocess import StatsCalculator, InferenceVisualizer
 from dpeva.io.dataset import load_systems
 from dpeva.utils.command import DPCommandBuilder
 

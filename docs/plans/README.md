@@ -67,4 +67,5 @@ owner: Docs Owner
 :maxdepth: 1
 
 governance/README
+2026-03-16-Analysis-Module-Repair-Enhancement-Plan
 ```

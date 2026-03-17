@@ -1,14 +1,11 @@
 import os
-import sys
+import json
 import logging
 from typing import Union, Dict, Optional
 
 from dpeva.config import InferenceConfig
 from dpeva.inference.managers import InferenceIOManager, InferenceExecutionManager
-from dpeva.analysis.managers import UnifiedAnalysisManager
-from dpeva.utils.command import DPCommandBuilder
-from dpeva.constants import WORKFLOW_FINISHED_TAG, LOG_FILE_INFER
-from dpeva.submission import JobManager, JobConfig
+from dpeva.constants import WORKFLOW_FINISHED_TAG, LOG_FILE_INFER, FILENAME_METRICS_JSON
 from dpeva.utils.logs import setup_workflow_logger
 from dpeva.utils.exceptions import WorkflowError
 
@@ -49,8 +46,6 @@ class InferenceWorkflow:
             dp_backend=self.config.dp_backend,
             omp_threads=self.config.omp_threads
         )
-        self.analysis_manager = UnifiedAnalysisManager(ref_energies=self.config.ref_energies)
-        
         # Models
         self.task_name = self.config.task_name
         self.head = self.config.model_head
@@ -69,7 +64,7 @@ class InferenceWorkflow:
         1. Configures workflow logging.
         2. Discovers trained models.
         3. Submits parallel inference jobs (dp test) via Slurm or Local backend.
-        4. If Local, automatically triggers analysis.
+        4. Optionally triggers analysis based on explicit config.
         """
         # Configure logging: log to inference.log, but DO NOT capture stdout (propagate=True)
         setup_workflow_logger(
@@ -105,20 +100,20 @@ class InferenceWorkflow:
             results_prefix=self.results_prefix
         )
         
-        # Optional: Auto-analyze if local and blocking
-        if self.execution_manager.backend == "local":
-            self.logger.info("Local execution completed. Starting analysis...")
+        if self.config.auto_analysis and self.execution_manager.backend == "local":
+            self.logger.info("Auto analysis enabled. Starting analysis...")
             self.analyze_results()
+        elif self.config.auto_analysis and self.execution_manager.backend != "local":
+            self.logger.warning("auto_analysis=true is ignored when backend is not local.")
+            self.logger.info("Inference jobs submitted. Run analysis workflow separately after jobs finish.")
         else:
-            self.logger.info("Slurm jobs submitted. Analysis must be run manually or wait for jobs to finish.")
+            self.logger.info("Auto analysis disabled. Run analysis workflow separately after jobs finish.")
 
     def analyze_results(self):
         """Analyze results for all models."""
         self.logger.info("Starting result analysis...")
-        
-        # Load composition info once
-        atom_counts_list, atom_num_list = self.io_manager.load_composition_info(self.data_path)
-        
+        from dpeva.workflows.analysis import AnalysisWorkflow
+
         summary_metrics = []
         failed_count = 0
         
@@ -128,28 +123,36 @@ class InferenceWorkflow:
             else:
                 job_work_dir = os.path.join(self.work_dir, str(i))
                 
-            # Check for results file (either prefix.e_peratom.out or just .out depending on prefix)
-            # DPTestResultParser handles prefix check.
-            # But we need to know if directory exists
             if not os.path.exists(job_work_dir):
                 self.logger.warning(f"Job directory not found: {job_work_dir}")
                 failed_count += 1
                 continue
                 
             try:
-                data = self.io_manager.parse_results(job_work_dir, self.results_prefix)
-                
-                # Use UnifiedAnalysisManager
-                stats_export, metrics, _, _, _ = self.analysis_manager.analyze_model(
-                    data=data,
-                    output_dir=os.path.join(job_work_dir, "analysis"),
-                    atom_counts_list=atom_counts_list,
-                    atom_num_list=atom_num_list,
-                    model_idx=i
-                )
-                
-                if metrics:
+                analysis_output_dir = os.path.join(job_work_dir, "analysis")
+                analysis_config = {
+                    "mode": "model_test",
+                    "result_dir": job_work_dir,
+                    "output_dir": analysis_output_dir,
+                    "results_prefix": self.results_prefix,
+                    "data_path": self.data_path,
+                    "ref_energies": self.config.ref_energies,
+                    "enable_cohesive_energy": True,
+                    "allow_ref_energy_lstsq_completion": False,
+                }
+                workflow = AnalysisWorkflow(analysis_config)
+                workflow.run()
+
+                metrics_path = os.path.join(analysis_output_dir, FILENAME_METRICS_JSON)
+                if os.path.exists(metrics_path):
+                    with open(metrics_path) as f:
+                        metrics = json.load(f)
+                    metrics["model_idx"] = i
                     summary_metrics.append(metrics)
+                else:
+                    self.logger.warning(
+                        f"Metrics file not found for model {i}: {metrics_path}"
+                    )
                     
             except Exception as e:
                 self.logger.error(f"Analysis failed for model {i}: {e}")

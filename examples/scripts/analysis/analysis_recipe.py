@@ -30,7 +30,7 @@ def main():
 
     if not config_path.exists():
         print(f"Config file not found: {config_path}")
-        return
+        sys.exit(1)
 
     with open(config_path, 'r', encoding='utf-8') as f:
         config_dict = json.load(f)

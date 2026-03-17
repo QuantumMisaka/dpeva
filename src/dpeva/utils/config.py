@@ -27,7 +27,8 @@ def resolve_config_paths(config: Dict[str, Any], config_file_path: str, path_key
             "input_json_path", "base_model_path", "training_data_path",
             "desc_dir", "testdata_dir", "training_desc_dir", "root_savedir",
             "output_basedir", "result_dir", "output_dir", "config_path",
-            "input_data_path", "pp_dir", "orb_dir"
+            "input_data_path", "pp_dir", "orb_dir", "dataset_dir",
+            "template_path", "existing_training_data_path", "merged_training_data_path"
         ]
         
     for key in path_keys:

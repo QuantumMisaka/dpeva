@@ -38,7 +38,7 @@ owner: Docs Owner
 
 ## 4. 活跃报告 (Active Reports)
 
-- 当前目录无活跃报告，已归档至 `docs/archive/v0.6.6/reports/` 与历史版本目录。
+- [2026-03-16-Code-Review-Analysis-Workflow.md](./2026-03-16-Code-Review-Analysis-Workflow.md)
 
 ## 5. 归档与索引要求
 

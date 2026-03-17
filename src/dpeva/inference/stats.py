@@ -18,7 +18,9 @@ class StatsCalculator:
                  virial_true: Optional[np.ndarray] = None,
                  atom_counts_list: Optional[List[Dict[str, int]]] = None,
                  atom_num_list: Optional[List[int]] = None,
-                 ref_energies: Optional[Dict[str, float]] = None):
+                 ref_energies: Optional[Dict[str, float]] = None,
+                 enable_cohesive_energy: bool = True,
+                 allow_ref_energy_lstsq_completion: bool = False):
         """
         Args:
             energy_per_atom: Predicted energy per atom.
@@ -45,6 +47,9 @@ class StatsCalculator:
         self.atom_counts_list = atom_counts_list
         self.atom_num_list = atom_num_list
         self.ref_energies = ref_energies
+        self.enable_cohesive_energy = enable_cohesive_energy
+        self.allow_ref_energy_lstsq_completion = allow_ref_energy_lstsq_completion
+        self._cohesive_ref_energies_cache: Optional[Dict[str, float]] = None
         
         self.logger = logging.getLogger(__name__)
 
@@ -111,84 +116,125 @@ class StatsCalculator:
         f_vec = force_flat.reshape(-1, 3)
         return np.linalg.norm(f_vec, axis=1)
 
-    def compute_relative_energy(self, energy: np.ndarray) -> Optional[np.ndarray]:
-        """
-        Compute relative energy (Cohesive Energy).
-        If atom composition is available, use Least Squares to fit atomic energies E0,
-        then subtract sum(N_i * E0_i).
-
-        Args:
-            energy (np.ndarray): Energy per atom.
-
-        Returns:
-            Optional[np.ndarray]: Cohesive energy per atom, or None if calculation fails.
-        """
-        if self.atom_counts_list is None or self.atom_num_list is None:
-            self.logger.warning("No atom counts info provided. Skipping relative energy calculation.")
+    def _fit_e0_by_lstsq(self, A: np.ndarray, b: np.ndarray, unknown_elements: List[str]) -> Optional[Dict[str, float]]:
+        if A.shape[1] == 0:
+            return {}
+        if A.shape[0] < A.shape[1]:
+            self.logger.warning(
+                f"Cohesive energy skipped: insufficient samples for lstsq "
+                f"(samples={A.shape[0]}, unknown_elements={A.shape[1]})."
+            )
             return None
-            
         try:
-            # 1. Collect unique elements
-            unique_elements = sorted(list(set(
-                e for counts in self.atom_counts_list for e in counts.keys()
-            )))
-            element_map = {e: i for i, e in enumerate(unique_elements)}
-            
-            n_frames = len(energy)
-            if n_frames != len(self.atom_counts_list):
-                self.logger.warning(f"Mismatch between energy length ({n_frames}) and atom counts length ({len(self.atom_counts_list)}). "
-                                    f"Likely using training set for atom counts vs test set for inference. "
-                                    f"Skipping relative energy calculation.")
+            cond_number = np.linalg.cond(A)
+            if not np.isfinite(cond_number) or cond_number > 1e12:
+                self.logger.warning(
+                    f"Cohesive energy skipped: ill-conditioned lstsq matrix (cond={cond_number:.3e})."
+                )
                 return None
-            
-            # 2. Build Matrix A and Vector b
-            # A: (N_frames, N_elements), b: Total Energy (N_frames,)
-            A = np.zeros((n_frames, len(unique_elements)))
-            b = energy * np.array(self.atom_num_list) # Total energy for fitting
-            
-            for idx, counts in enumerate(self.atom_counts_list):
-                for elem, count in counts.items():
-                    A[idx, element_map[elem]] = count
-                    
-            # 3. Determine E0
-            E0_dict = {}
-            if self.ref_energies is not None:
-                # Check coverage
-                missing = [e for e in unique_elements if e not in self.ref_energies]
-                if not missing:
-                    E0_dict = self.ref_energies
-                    self.logger.info(f"Using provided Atomic Energies (E0): {E0_dict}")
-                else:
-                    self.logger.warning(f"Ref energies missing for {missing}. Falling back to LS fitting.")
-            
-            if not E0_dict:
-                 # Solve Ax = b for E0
-                 # lstsq returns: x, residuals, rank, s
-                 x, _, _, _ = lstsq(A, b)
-                 E0_dict = {elem: float(val) for elem, val in zip(unique_elements, x)}
-                 self.logger.info(f"Fitted Atomic Energies (E0): {E0_dict}")
-            
-            # 4. Compute Reference Energy for each frame (Total Energy)
+            x, _, rank, _ = lstsq(A, b)
+            if rank < A.shape[1]:
+                self.logger.warning(
+                    f"Cohesive energy skipped: rank-deficient lstsq matrix "
+                    f"(rank={rank}, unknown_elements={A.shape[1]})."
+                )
+                return None
+            return {elem: float(val) for elem, val in zip(unknown_elements, x)}
+        except Exception as e:
+            self.logger.warning(f"Cohesive energy skipped: lstsq fitting failed ({e}).")
+            return None
+
+    def _resolve_reference_energies(self, energy: np.ndarray) -> Optional[Dict[str, float]]:
+        unique_elements = sorted(list(set(e for counts in self.atom_counts_list for e in counts.keys())))
+        element_map = {e: i for i, e in enumerate(unique_elements)}
+        n_frames = len(energy)
+        atom_nums_arr = np.asarray(self.atom_num_list, dtype=float)
+        if np.any(atom_nums_arr <= 0):
+            self.logger.warning("Cohesive energy skipped: non-positive atom count found.")
+            return None
+
+        A_full = np.zeros((n_frames, len(unique_elements)))
+        b_total = np.asarray(energy, dtype=float) * atom_nums_arr
+        for idx, counts in enumerate(self.atom_counts_list):
+            for elem, count in counts.items():
+                A_full[idx, element_map[elem]] = count
+
+        provided = self.ref_energies or {}
+        known_elements = [e for e in unique_elements if e in provided]
+        unknown_elements = [e for e in unique_elements if e not in provided]
+
+        if not unknown_elements and known_elements:
+            e0 = {e: float(provided[e]) for e in unique_elements}
+            self.logger.info(f"Using provided Atomic Energies (E0): {e0}")
+            return e0
+
+        if unknown_elements and not self.allow_ref_energy_lstsq_completion:
+            self.logger.warning(
+                f"Cohesive energy skipped: missing ref energies for {unknown_elements} "
+                "and allow_ref_energy_lstsq_completion is disabled."
+            )
+            return None
+
+        A_unknown = np.zeros((n_frames, len(unknown_elements)))
+        if known_elements:
+            b_adjusted = b_total.copy()
+            for elem in known_elements:
+                b_adjusted -= A_full[:, element_map[elem]] * float(provided[elem])
+        else:
+            b_adjusted = b_total
+
+        for idx, elem in enumerate(unknown_elements):
+            A_unknown[:, idx] = A_full[:, element_map[elem]]
+
+        fitted_unknown = self._fit_e0_by_lstsq(A_unknown, b_adjusted, unknown_elements)
+        if fitted_unknown is None:
+            return None
+
+        e0 = {elem: float(provided[elem]) for elem in known_elements}
+        e0.update(fitted_unknown)
+        self.logger.info(f"Using mixed Atomic Energies (E0): {e0}")
+        return e0
+
+    def compute_relative_energy(self, energy: np.ndarray) -> Optional[np.ndarray]:
+        """Compute cohesive energy per atom with mixed ref-energy and lstsq fallback policy."""
+        if not self.enable_cohesive_energy:
+            self.logger.info("Cohesive energy disabled by configuration.")
+            return None
+        if self.atom_counts_list is None or self.atom_num_list is None:
+            self.logger.warning("Cohesive energy skipped: no atom composition info provided.")
+            return None
+        if len(energy) != len(self.atom_counts_list) or len(self.atom_counts_list) != len(self.atom_num_list):
+            self.logger.warning(
+                f"Cohesive energy skipped: frame mismatch (energy={len(energy)}, "
+                f"composition={len(self.atom_counts_list)}, atom_nums={len(self.atom_num_list)})."
+            )
+            return None
+        finite_mask = np.isfinite(np.asarray(energy, dtype=float))
+        if not np.all(finite_mask):
+            self.logger.warning(
+                f"Cohesive energy input contains non-finite values "
+                f"({int(np.size(finite_mask) - np.count_nonzero(finite_mask))}/{np.size(finite_mask)})."
+            )
+        try:
+            if self._cohesive_ref_energies_cache is None:
+                self._cohesive_ref_energies_cache = self._resolve_reference_energies(energy)
+            e0_dict = self._cohesive_ref_energies_cache
+            if e0_dict is None:
+                return None
+            unique_elements = sorted(list(set(e for counts in self.atom_counts_list for e in counts.keys())))
             ref_energies_total = []
             for counts in self.atom_counts_list:
-                ref_e = sum(counts.get(e, 0) * E0_dict.get(e, 0.0) for e in unique_elements)
-                ref_energies_total.append(ref_e)
-            
-            ref_energies_total = np.array(ref_energies_total)
-            
-            # 5. Compute Cohesive Energy (per atom)
-            # E_coh_per_atom = (E_total_pred - E_ref_total) / N_atoms
-            # Note: energy input is per_atom, so E_total_pred = energy * N_atoms
-            
-            # Correct formula: 
-            # E_coh_per_atom = (energy * N_atoms - ref_energies_total) / N_atoms
-            #                = energy - (ref_energies_total / N_atoms)
-            
-            ref_energies_per_atom = ref_energies_total / np.array(self.atom_num_list)
-            cohesive_energy_per_atom = energy - ref_energies_per_atom
-            
+                ref_total = sum(counts.get(elem, 0) * e0_dict.get(elem, 0.0) for elem in unique_elements)
+                ref_energies_total.append(ref_total)
+            ref_energies_per_atom = np.asarray(ref_energies_total, dtype=float) / np.asarray(self.atom_num_list, dtype=float)
+            cohesive_energy_per_atom = np.asarray(energy, dtype=float) - ref_energies_per_atom
+            cohesive_finite = np.isfinite(cohesive_energy_per_atom)
+            if not np.all(cohesive_finite):
+                self.logger.warning(
+                    f"Cohesive energy contains non-finite values "
+                    f"({int(np.size(cohesive_finite) - np.count_nonzero(cohesive_finite))}/{np.size(cohesive_finite)})."
+                )
             return cohesive_energy_per_atom
-            
         except Exception as e:
             self.logger.error(f"Relative energy calculation failed: {e}", exc_info=True)
             return None
