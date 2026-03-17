@@ -25,7 +25,11 @@ extensions = [
 ]
 
 templates_path = ['_templates']
-exclude_patterns = []
+exclude_patterns = [
+    'reports/**',
+    'plans/**',
+    'archive/**',
+]
 language = 'zh_CN'
 
 # -- Options for HTML output -------------------------------------------------

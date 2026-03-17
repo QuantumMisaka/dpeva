@@ -56,8 +56,6 @@
    guides/testing/integration-config-templates
    guides/testing/integration-slurm
    guides/testing/multi-datapool-artifacts
-   plans/README
-   reports/README
    policy/contributing
    policy/docs-structure
    policy/maintenance

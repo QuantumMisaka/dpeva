@@ -15,7 +15,7 @@ from pathlib import Path
 DOCS_ROOT = Path("docs")
 IGNORE_DIRS = {
     "_templates", "_static", "assets", "img", "build", "source", 
-    ".github", "__pycache__", "logo_design", "archive", "plans",
+    ".github", "__pycache__", "logo_design", "archive", "plans", "reports",
 }
 REQUIRED_METADATA = {"status", "audience", "last-updated"}
 

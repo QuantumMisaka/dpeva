@@ -34,7 +34,7 @@ def get_git_last_commit_date(file_path):
 def check_freshness(root_dir, days_threshold=30, exclude_dirs=None):
     """Check freshness of markdown files."""
     if exclude_dirs is None:
-        exclude_dirs = ['archive', '_templates', 'plans']
+        exclude_dirs = ['archive', '_templates', 'plans', 'reports']
     
     root_path = Path(root_dir)
     now = datetime.now().astimezone()
