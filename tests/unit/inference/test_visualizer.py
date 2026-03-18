@@ -66,3 +66,11 @@ def test_enhanced_parity_does_not_render_stats_box(tmp_path):
     with patch.object(viz, "_add_stats_box") as mock_box:
         viz.plot_parity_enhanced(np.array([1.0, 2.0, 3.0]), np.array([1.1, 1.9, 3.2]), "Energy", "eV/atom")
         mock_box.assert_not_called()
+
+
+def test_enhanced_parity_includes_error_inset_render_path(tmp_path):
+    viz = InferenceVisualizer(str(tmp_path))
+    y_true = np.array([-2.0, -1.0, 0.0, 1.0, 2.0, 3.0])
+    y_pred = np.array([-1.9, -1.2, 0.1, 1.2, 1.8, 3.1])
+    viz.plot_parity_enhanced(y_true, y_pred, "Virial", "eV")
+    assert (tmp_path / "parity_virial_enhanced.png").exists()

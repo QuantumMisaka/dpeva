@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from typing import Optional
 from matplotlib import gridspec
+from matplotlib.ticker import MaxNLocator, ScalarFormatter
 from dpeva.constants import FIG_DPI
 
 class InferenceVisualizer:
@@ -93,6 +94,34 @@ class InferenceVisualizer:
             bbox={"boxstyle": "round", "facecolor": "white", "alpha": 0.8, "edgecolor": "#999999"},
         )
 
+    def _choose_density_label_anchor(self, values: np.ndarray) -> tuple[float, float, str]:
+        arr = np.asarray(values, dtype=float).reshape(-1)
+        if arr.size == 0:
+            return 0.04, 0.92, "left"
+        bins = int(np.clip(np.sqrt(arr.size), 20, 90))
+        hist, edges = np.histogram(arr, bins=bins, density=True)
+        centers = 0.5 * (edges[:-1] + edges[1:])
+        y_candidates = np.array([0.90, 0.78, 0.66, 0.54, 0.42, 0.30, 0.18], dtype=float)
+        ymin = float(np.min(arr))
+        ymax = float(np.max(arr))
+        if ymax <= ymin:
+            return 0.04, 0.92, "left"
+        data_candidates = ymin + y_candidates * (ymax - ymin)
+        local_density = np.interp(data_candidates, centers, hist, left=hist[0], right=hist[-1])
+        density_scale = float(np.max(local_density))
+        if density_scale <= 0:
+            idx = 0
+        else:
+            norm_density = local_density / density_scale
+            edge_penalty = 0.14 * np.abs(y_candidates - 0.5)
+            scores = norm_density + edge_penalty
+            idx = int(np.argmin(scores))
+        y_anchor = float(y_candidates[idx])
+        local_ratio = float(local_density[idx] / density_scale) if density_scale > 0 else 0.0
+        if local_ratio >= 0.55:
+            return 0.96, y_anchor, "right"
+        return 0.04, y_anchor, "left"
+
     def plot_parity(self, y_true: np.ndarray, y_pred: np.ndarray, 
                    label: str, unit: str, title: str = None):
         """
@@ -172,14 +201,15 @@ class InferenceVisualizer:
             4,
             4,
             figure=fig,
-            width_ratios=[1, 1, 1, 0.9],
+            width_ratios=[1, 1, 1, 1.0],
             height_ratios=[0.9, 1, 1, 1],
-            wspace=0.08,
-            hspace=0.08,
+            wspace=0.10,
+            hspace=0.14,
         )
         ax_top = fig.add_subplot(gs[0, :3])
         ax_main = fig.add_subplot(gs[1:, :3], sharex=ax_top)
         ax_right = fig.add_subplot(gs[1:, 3], sharey=ax_main)
+        ax_err = fig.add_subplot(gs[0, 3])
 
         ax_main.plot([vmin, vmax], [vmin, vmax], linestyle="--", lw=1.4, color="#374151", alpha=0.9)
         ax_main.scatter(y_true_valid, y_pred_valid, alpha=0.28, s=10, c="#2563eb", edgecolors="none", rasterized=True)
@@ -191,6 +221,7 @@ class InferenceVisualizer:
 
         sns.histplot(y_true_valid, kde=True, ax=ax_top, color="#ef4444", alpha=0.28, stat="density", element="step")
         ax_top.set_ylabel("Density")
+        ax_top.set_title("True Density", color="#ef4444", fontsize=10, pad=3)
         ax_top.grid(True, alpha=0.2)
         ax_top.tick_params(axis="x", labelbottom=False)
 
@@ -198,11 +229,28 @@ class InferenceVisualizer:
         ax_right.set_xlabel("Density")
         ax_right.grid(True, alpha=0.2)
         ax_right.tick_params(axis="y", labelleft=False)
+        _, y_anchor, _ = self._choose_density_label_anchor(y_pred_valid)
+        ax_right.text(0.98, y_anchor, "Predicted Density", transform=ax_right.transAxes, ha="right", va="top", color="#2563eb", fontsize=10)
+
+        err_values = y_pred_valid - y_true_valid
+        sns.histplot(err_values, kde=True, stat="density", color="#f59e0b", alpha=0.28, element="step", ax=ax_err)
+        ax_err.axvline(0.0, color="#374151", linestyle="--", linewidth=1.1)
+        ax_err.set_title("Error Distribution", fontsize=9, pad=2)
+        ax_err.set_xlabel("")
+        ax_err.set_ylabel("")
+        ax_err.grid(True, alpha=0.25)
+        ax_err.xaxis.set_major_locator(MaxNLocator(3))
+        ax_err.yaxis.set_major_locator(MaxNLocator(3))
+        ax_err.xaxis.set_major_formatter(ScalarFormatter(useOffset=False))
+        ax_err.ticklabel_format(axis="x", style="plain", useOffset=False)
+        ax_err.xaxis.tick_top()
+        ax_err.tick_params(axis="x", labelsize=7.8, pad=1)
+        ax_err.tick_params(axis="y", labelleft=False, length=0)
 
         if title:
-            ax_top.set_title(title)
+            fig.suptitle(title, y=0.99)
         else:
-            ax_top.set_title(f"{label} Enhanced Parity Plot")
+            fig.suptitle(f"{label} Enhanced Parity Plot", y=0.99)
 
         filename = f"parity_{label.lower().replace(' ', '_')}_enhanced.png"
         fig.savefig(os.path.join(self.output_dir, filename), dpi=self.dpi, bbox_inches="tight")
@@ -327,7 +375,7 @@ class InferenceVisualizer:
             return
 
         fig = plt.figure(figsize=(11.2, 5.8))
-        gs = gridspec.GridSpec(1, 2, width_ratios=[3.8, 1.5], wspace=0.25)
+        gs = gridspec.GridSpec(1, 2, width_ratios=[3.8, 1.5], wspace=0.34)
         ax_main = fig.add_subplot(gs[0, 0])
         ax_err = fig.add_subplot(gs[0, 1])
 
@@ -337,7 +385,7 @@ class InferenceVisualizer:
         ax_main.set_ylabel("Density")
         ax_main.set_title(f"{label} Distribution with Error")
         ax_main.grid(True, alpha=0.25)
-        ax_main.legend(loc="upper left", bbox_to_anchor=(1.02, 1.0), borderaxespad=0.0, frameon=True)
+        ax_main.legend(loc="upper right", frameon=True, framealpha=0.9)
         if show_stats:
             stats = self._stats_text(pred_values, pred_label) + "\n\n" + self._stats_text(true_values, true_label)
             self._add_stats_box(ax_main, stats, x=0.03, y=0.38)
@@ -348,7 +396,7 @@ class InferenceVisualizer:
         ax_err.set_ylabel("Density")
         ax_err.set_title("Error Distribution")
         ax_err.grid(True, alpha=0.25)
-        fig.tight_layout(rect=[0.0, 0.0, 0.92, 1.0])
+        fig.tight_layout(rect=[0.0, 0.0, 1.0, 1.0])
         filename = f"dist_{label.lower().replace(' ', '_')}_with_error.png"
         fig.savefig(os.path.join(self.output_dir, filename), dpi=self.dpi, bbox_inches="tight")
         plt.close(fig)

@@ -237,7 +237,7 @@ class UnifiedAnalysisManager:
             true_color: str,
             error_data: Optional[np.ndarray] = None,
             overlay_show_stats: bool = True,
-            with_error_show_stats: bool = True,
+            with_error_show_stats: bool = False,
         ):
             """Generate single, overlay and with-error distribution plots for one quantity."""
             safe_plot(f"dist_{pred_single_label.lower().replace(' ', '_')}", viz.plot_distribution, pred_data, pred_single_label, unit, color=pred_color)
