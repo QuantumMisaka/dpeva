@@ -37,7 +37,7 @@
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="../_static/documentation_options.js?v=89d9f3f1"></script>
+    <script src="../_static/documentation_options.js?v=20998797"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -882,7 +882,7 @@ document.write(`
 <ul class="simple">
 <li><p>Status: active</p></li>
 <li><p>Audience: Developers</p></li>
-<li><p>Last-Updated: 2026-03-14</p></li>
+<li><p>Last-Updated: 2026-03-18</p></li>
 <li><p>Related:</p>
 <ul>
 <li><p>配置字段字典：/docs/source/api/config.rst</p></li>
@@ -892,8 +892,8 @@ document.write(`
 </li>
 </ul>
 <ul class="simple">
-<li><p><strong>版本</strong>: 0.6.6</p></li>
-<li><p><strong>生成日期</strong>: 2026-03-14</p></li>
+<li><p><strong>版本</strong>: 0.6.9</p></li>
+<li><p><strong>生成日期</strong>: 2026-03-18</p></li>
 <li><p><strong>作者</strong>: Quantum Misaka with Trae SOLO</p></li>
 </ul>
 <hr class="docutils" />
@@ -1459,6 +1459,16 @@ A: 这是预期行为。在联合模式下，<code class="docutils literal notra
 <section id="current-era-v0-6-x">
 <h4><strong>Current Era (v0.6.x)</strong><a class="headerlink" href="#current-era-v0-6-x" title="Link to this heading">#</a></h4>
 <ul class="simple">
+<li><p><strong>v0.6.9</strong> (2026-03-18):</p>
+<ul>
+<li><p><strong>[特性]</strong> 新增收敛数据查看与清洗工具，提升数据预处理效率。</p></li>
+<li><p><strong>[特性]</strong> 重构分析工作流并增强可视化能力，支持更丰富的统计图表。</p></li>
+<li><p><strong>[修复]</strong> 修复分布图图例重叠问题，并针对 Parity 图进行可读性增强（调整 Alpha 值与 Marker 大小）。</p></li>
+<li><p><strong>[修复]</strong> 增强 <code class="docutils literal notranslate"><span class="pre">Collection</span></code> 模块，支持多数据池描述符目录的递归加载与匹配。</p></li>
+<li><p><strong>[治理]</strong> 按照文档治理规范完成 v0.6.9 版本文档归档，同步更新索引。</p></li>
+<li><p><strong>[发布]</strong> 版本升级至 <code class="docutils literal notranslate"><span class="pre">0.6.9</span></code>，同步元数据与版本标识。</p></li>
+</ul>
+</li>
 <li><p><strong>v0.6.8</strong> (2026-03-17):</p>
 <ul>
 <li><p><strong>[架构]</strong> 重构 Inference 与 Analysis 边界：<code class="docutils literal notranslate"><span class="pre">InferenceConfig</span></code> 新增 <code class="docutils literal notranslate"><span class="pre">auto_analysis</span></code> 显式开关，local 场景可链式触发 analysis，slurm 场景保持解耦执行。</p></li>
