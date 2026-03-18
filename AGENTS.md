@@ -34,26 +34,30 @@ DP-EVA is an active learning framework designed for efficient fine-tuning of DPA
 
 ## Validation Scenarios
 
-**Use these scenarios to verify core functionality manually.**
+**Use these scenarios to verify core functionality manually.**, all json files example are in `examples/recipes/`.
 
 ### 1. Training Workflow
-- **Command**: `dpeva train examples/recipes/training/config_train.json`
+- **Command**: `dpeva train onfig_train.json`
 - **Verify**: Check `work_dir` for `0/model.ckpt.pt` and `0/lcurve.out`.
 
 ### 2. Inference Workflow
-- **Command**: `dpeva infer examples/recipes/inference/config_infer.json`
+- **Command**: `dpeva infer config_infer.json`
 - **Verify**: Check for `results_*.out` files in the output directory.
 
-### 3. Collection (Sampling)
-- **Command**: `dpeva collect examples/recipes/collection/config_collect_normal.json`
+### 3. Feature Extraction
+- **Command**: `dpeva feature config_feature.json`
+- **Verify**: Check for `desc_pool` directory with extracted features.
+
+### 4. Collection (Sampling)
+- **Command**: `dpeva collect config_collect_normal.json`
 - **Verify**: Check for `sampled_data` directory, `collection.log` and other output information.
 
-### 4. Labeling (DFT)
-- **Command**: `dpeva label examples/recipes/labeling/config_cpu.json`
+### 5. Labeling (DFT)
+- **Command**: `dpeva label config_cpu.json`
 - **Verify**: Check for `inputs/` generation and `outputs/cleaned/` data.
 
-### 5. Analysis
-- **Command**: `dpeva analysis examples/recipes/analysis/config_analysis.json`
+### 6. Analysis
+- **Command**: `dpeva analysis config_analysis.json`
 - **Verify**: Check for plots and data stat in log file.
 
 ## Repository Structure

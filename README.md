@@ -47,11 +47,17 @@ dpeva train config_train.json
 # 2. Inference & UQ
 dpeva infer config_infer.json
 
-# 3. Collection (Sampling)
+# 3. Feature Generation
+dpeva feature config_feature.json
+
+# 4. Collection (Sampling)
 dpeva collect config_collect.json
 
-# 4. Labeling (DFT)
+# 5. Labeling (DFT)
 dpeva label config_label.json
+
+# 6. Analysis
+dpeva analysis config_analyze.json
 ```
 
 For detailed configuration examples, see `examples/recipes/`.
