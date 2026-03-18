@@ -1,6 +1,6 @@
 # DP-EVA - Deep Potential EVolution Accelerator
 
-DP-EVA is an active learning framework designed for efficient fine-tuning of DPA universial machine learning potentials. It integrates Uncertainty Quantification (UQ), Representative Sampling (DIRECT), and Automated Labeling (DFT) workflows.
+DP-EVA is an active learning framework designed for efficient fine-tuning of DPA universal machine learning interatomic potential. It integrates uncertainty quantification (UQ), representative sampling (DIRECT), and automated DFT labeling workflows to minimize data annotation costs while maximizing model performance via fully unraveling the knowledge of DPA pre-trained PES model.
 
 **Always reference these instructions first and fallback to search or bash commands only when you encounter unexpected information that does not match the info here.**
 
