@@ -2,21 +2,21 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-03-14
+last-updated: 2026-03-18
 ---
 
 # DP-EVA 项目开发文档
 
 - Status: active
 - Audience: Developers
-- Last-Updated: 2026-03-14
+- Last-Updated: 2026-03-18
 - Related:
   - 配置字段字典：/docs/source/api/config.rst
   - 校验规则补充：/docs/reference/validation.md
   - 上游软件与职责：/docs/reference/upstream-software.md
 
-* **版本**: 0.6.6
-* **生成日期**: 2026-03-14
+* **版本**: 0.6.9
+* **生成日期**: 2026-03-18
 * **作者**: Quantum Misaka with Trae SOLO
 
 ---
@@ -477,6 +477,14 @@ DPEVA_TAG: WORKFLOW_FINISHED
 ### 6.2 版本历史
 
 #### **Current Era (v0.6.x)**
+
+*   **v0.6.9** (2026-03-18):
+    *   **[特性]** 新增收敛数据查看与清洗工具，提升数据预处理效率。
+    *   **[特性]** 重构分析工作流并增强可视化能力，支持更丰富的统计图表。
+    *   **[修复]** 修复分布图图例重叠问题，并针对 Parity 图进行可读性增强（调整 Alpha 值与 Marker 大小）。
+    *   **[修复]** 增强 `Collection` 模块，支持多数据池描述符目录的递归加载与匹配。
+    *   **[治理]** 按照文档治理规范完成 v0.6.9 版本文档归档，同步更新索引。
+    *   **[发布]** 版本升级至 `0.6.9`，同步元数据与版本标识。
 
 *   **v0.6.8** (2026-03-17):
     *   **[架构]** 重构 Inference 与 Analysis 边界：`InferenceConfig` 新增 `auto_analysis` 显式开关，local 场景可链式触发 analysis，slurm 场景保持解耦执行。
