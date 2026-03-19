@@ -4,6 +4,8 @@
     "output_dir": "analysis_dataset",
     "enable_cohesive_energy": true,
     "allow_ref_energy_lstsq_completion": false,
+    "plot_level": "full",
+    "slow_plot_threshold_seconds": 60.0,
     "ref_energies": {
         "Fe": -3215.2791,
         "C": -156.0795,

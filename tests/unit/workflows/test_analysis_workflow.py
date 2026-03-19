@@ -56,14 +56,44 @@ class TestAnalysisWorkflow:
         
         # Verify Interactions
         mock_setup_logger.assert_called_once()
+        MockManager.assert_called_once_with(
+            ref_energies=config["ref_energies"],
+            enable_cohesive_energy=True,
+            allow_ref_energy_lstsq_completion=False,
+            slow_plot_threshold_seconds=60.0,
+        )
         mock_io.load_data.assert_called_with(config["result_dir"], config["type_map"], "results")
         
-        mock_manager.analyze_model.assert_called()
+        assert mock_manager.analyze_model.call_args.kwargs["plot_level"] == "full"
         
         mock_io.save_metrics.assert_called_with(mock_metrics)
         mock_io.save_summary_csv.assert_called_with(mock_metrics)
         mock_io.save_stats_desc.assert_called() # cohesive stats
         
+        mock_close_logger.assert_called_once()
+
+    @patch("dpeva.workflows.analysis.UnifiedAnalysisManager")
+    @patch("dpeva.workflows.analysis.AnalysisIOManager")
+    @patch("dpeva.workflows.analysis.setup_workflow_logger")
+    @patch("dpeva.workflows.analysis.close_workflow_logger")
+    def test_run_logs_stage_and_total_elapsed(self, mock_close_logger, mock_setup_logger, MockIOManager, MockManager, config):
+        mock_io = MockIOManager.return_value
+        mock_manager = MockManager.return_value
+        mock_parser = MagicMock()
+        mock_parser.get_composition_list.return_value = (None, None)
+        mock_io.load_data.return_value = ({"energy": {"pred_e": np.array([1.0])}}, mock_parser)
+        mock_manager.analyze_model.return_value = ({}, {"e_mae": 0.1}, MagicMock(), np.array([-0.1]), np.array([-0.2]))
+        workflow = AnalysisWorkflow(config)
+        with patch.object(workflow.logger, "info") as mock_info:
+            workflow.run()
+        logged_messages = [call.args[0] for call in mock_info.call_args_list if call.args]
+        assert any("Stage[parse] Start parsing results" in msg for msg in logged_messages)
+        assert any("Stage[parse] Finished in" in msg for msg in logged_messages)
+        assert any("Stage[composition] Start loading composition information" in msg for msg in logged_messages)
+        assert any("Stage[composition] Finished in" in msg for msg in logged_messages)
+        assert any("Stage[statistics+plot] Start statistics calculation and plotting" in msg for msg in logged_messages)
+        assert any("Stage[statistics+plot] Finished in" in msg for msg in logged_messages)
+        assert any("Analysis total elapsed time:" in msg for msg in logged_messages)
         mock_close_logger.assert_called_once()
 
     @patch("dpeva.workflows.analysis.AnalysisIOManager")
@@ -139,6 +169,46 @@ class TestAnalysisWorkflow:
         mock_io.load_composition_info.assert_called_once_with(config["data_path"])
         mock_parser.get_composition_list.assert_not_called()
         mock_close_logger.assert_called_once()
+
+    @patch("dpeva.workflows.analysis.UnifiedAnalysisManager")
+    @patch("dpeva.workflows.analysis.AnalysisIOManager")
+    @patch("dpeva.workflows.analysis.setup_workflow_logger")
+    @patch("dpeva.workflows.analysis.close_workflow_logger")
+    def test_run_passes_basic_plot_level(self, mock_close_logger, mock_setup_logger, MockIOManager, MockManager, tmp_path):
+        config = {
+            "result_dir": str(tmp_path / "results"),
+            "output_dir": str(tmp_path / "analysis"),
+            "type_map": ["O", "H"],
+            "plot_level": "basic",
+        }
+        mock_io = MockIOManager.return_value
+        mock_manager = MockManager.return_value
+        mock_parser = MagicMock()
+        mock_parser.get_composition_list.return_value = (None, None)
+        mock_io.load_data.return_value = ({"energy": {"pred_e": np.array([1.0])}}, mock_parser)
+        mock_manager.analyze_model.return_value = ({}, {"e_mae": 0.1}, MagicMock(), np.array([-0.1]), np.array([-0.2]))
+        workflow = AnalysisWorkflow(config)
+        workflow.run()
+        assert mock_manager.analyze_model.call_args.kwargs["plot_level"] == "basic"
+        mock_close_logger.assert_called_once()
+
+    @patch("dpeva.workflows.analysis.UnifiedAnalysisManager")
+    @patch("dpeva.workflows.analysis.AnalysisIOManager")
+    def test_init_passes_slow_plot_threshold_to_manager(self, MockIOManager, MockManager, tmp_path):
+        config = {
+            "result_dir": str(tmp_path / "results"),
+            "output_dir": str(tmp_path / "analysis"),
+            "type_map": ["O", "H"],
+            "slow_plot_threshold_seconds": 12.5,
+        }
+        AnalysisWorkflow(config)
+        MockIOManager.assert_called_once()
+        MockManager.assert_called_once_with(
+            ref_energies={},
+            enable_cohesive_energy=True,
+            allow_ref_energy_lstsq_completion=False,
+            slow_plot_threshold_seconds=12.5,
+        )
 
     @patch("dpeva.workflows.analysis.UnifiedAnalysisManager")
     @patch("dpeva.workflows.analysis.AnalysisIOManager")

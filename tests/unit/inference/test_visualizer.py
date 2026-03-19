@@ -74,3 +74,11 @@ def test_enhanced_parity_includes_error_inset_render_path(tmp_path):
     y_pred = np.array([-1.9, -1.2, 0.1, 1.2, 1.8, 3.1])
     viz.plot_parity_enhanced(y_true, y_pred, "Virial", "eV")
     assert (tmp_path / "parity_virial_enhanced.png").exists()
+
+
+def test_distribution_with_error_avoids_tight_layout_warning(tmp_path, recwarn):
+    viz = InferenceVisualizer(str(tmp_path))
+    y_true = np.array([0.0, 1.0, 2.0, 3.0])
+    y_pred = np.array([0.1, 0.9, 2.2, 2.9])
+    viz.plot_distribution_with_error(y_pred, y_true, y_pred - y_true, "Energy", "eV/atom")
+    assert not any("tight_layout" in str(w.message) for w in recwarn)

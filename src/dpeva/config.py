@@ -180,6 +180,15 @@ class AnalysisConfig(BaseModel):
         False,
         description="Whether to fit missing element reference energies with least squares when provided ref_energies is incomplete."
     )
+    plot_level: Literal["basic", "full"] = Field(
+        "full",
+        description="Plot output level: 'basic' for core plots, 'full' for enhanced plot family."
+    )
+    slow_plot_threshold_seconds: float = Field(
+        60.0,
+        gt=0.0,
+        description="Warning threshold for single plot elapsed time in seconds."
+    )
     submission: SubmissionConfig = Field(
         default_factory=SubmissionConfig,
         description="Submission configuration."

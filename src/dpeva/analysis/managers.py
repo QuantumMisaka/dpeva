@@ -1,6 +1,7 @@
 import os
 import json
 import logging
+import time
 import pandas as pd
 import numpy as np
 from typing import Dict, List, Tuple, Optional, Any
@@ -129,17 +130,20 @@ class UnifiedAnalysisManager:
         self,
         ref_energies: Optional[Dict[str, float]] = None,
         enable_cohesive_energy: bool = True,
-        allow_ref_energy_lstsq_completion: bool = False
+        allow_ref_energy_lstsq_completion: bool = False,
+        slow_plot_threshold_seconds: float = 60.0,
     ):
         self.ref_energies = ref_energies
         self.enable_cohesive_energy = enable_cohesive_energy
         self.allow_ref_energy_lstsq_completion = allow_ref_energy_lstsq_completion
+        self.slow_plot_threshold_seconds = slow_plot_threshold_seconds
         self.logger = logging.getLogger(__name__)
 
     def analyze_model(self, data: Dict, output_dir: str,
                      atom_counts_list: Optional[List] = None, 
                      atom_num_list: Optional[List] = None,
-                     model_idx: Optional[int] = None) -> Tuple[Dict, Optional[Dict], StatsCalculator, Optional[np.ndarray], Optional[np.ndarray]]:
+                     model_idx: Optional[int] = None,
+                     plot_level: str = "full") -> Tuple[Dict, Optional[Dict], StatsCalculator, Optional[np.ndarray], Optional[np.ndarray]]:
         """
         Analyze results for a single model.
         
@@ -211,18 +215,29 @@ class UnifiedAnalysisManager:
         )
         
         viz = InferenceVisualizer(output_dir)
+        full_plot_enabled = plot_level == "full"
 
         def safe_plot(plot_name: str, fn, *args, **kwargs):
             """Run plotting call safely and downgrade plotting errors to warnings."""
+            start = time.perf_counter()
             try:
                 fn(*args, **kwargs)
             except Exception as e:
                 self.logger.warning(f"Plot '{plot_name}' failed and was skipped: {e}")
+            finally:
+                elapsed = time.perf_counter() - start
+                if elapsed > self.slow_plot_threshold_seconds:
+                    self.logger.warning(
+                        f"Plot '{plot_name}' is slow: elapsed={elapsed:.3f}s, "
+                        f"threshold={self.slow_plot_threshold_seconds:.3f}s. "
+                        "Consider setting analysis plot_level='basic' to reduce plotting overhead."
+                    )
 
         def plot_parity_family(quantity: str, unit: str, y_true: np.ndarray, y_pred: np.ndarray):
             """Generate standard and enhanced parity plots for one quantity."""
             safe_plot(f"parity_{quantity}", viz.plot_parity, y_true, y_pred, quantity, unit)
-            safe_plot(f"parity_{quantity}_enhanced", viz.plot_parity_enhanced, y_true, y_pred, quantity, unit)
+            if full_plot_enabled:
+                safe_plot(f"parity_{quantity}_enhanced", viz.plot_parity_enhanced, y_true, y_pred, quantity, unit)
 
         def plot_distribution_family(
             quantity: str,
@@ -243,34 +258,35 @@ class UnifiedAnalysisManager:
             safe_plot(f"dist_{pred_single_label.lower().replace(' ', '_')}", viz.plot_distribution, pred_data, pred_single_label, unit, color=pred_color)
             if true_data is not None:
                 safe_plot(f"dist_{true_single_label.lower().replace(' ', '_')}", viz.plot_distribution, true_data, true_single_label, unit, color=true_color)
-                safe_plot(
-                    f"dist_{quantity.lower().replace(' ', '_')}_overlay",
-                    viz.plot_distribution_overlay,
-                    pred_data,
-                    true_data,
-                    quantity,
-                    unit,
-                    pred_label=pred_overlay_label,
-                    true_label=true_overlay_label,
-                    pred_color=pred_color,
-                    true_color=true_color,
-                    show_stats=overlay_show_stats,
-                )
-                if error_data is not None:
+                if full_plot_enabled:
                     safe_plot(
-                        f"dist_{quantity.lower().replace(' ', '_')}_with_error",
-                        viz.plot_distribution_with_error,
+                        f"dist_{quantity.lower().replace(' ', '_')}_overlay",
+                        viz.plot_distribution_overlay,
                         pred_data,
                         true_data,
-                        error_data,
                         quantity,
                         unit,
                         pred_label=pred_overlay_label,
                         true_label=true_overlay_label,
                         pred_color=pred_color,
                         true_color=true_color,
-                        show_stats=with_error_show_stats,
+                        show_stats=overlay_show_stats,
                     )
+                    if error_data is not None:
+                        safe_plot(
+                            f"dist_{quantity.lower().replace(' ', '_')}_with_error",
+                            viz.plot_distribution_with_error,
+                            pred_data,
+                            true_data,
+                            error_data,
+                            quantity,
+                            unit,
+                            pred_label=pred_overlay_label,
+                            true_label=true_overlay_label,
+                            pred_color=pred_color,
+                            true_color=true_color,
+                            show_stats=with_error_show_stats,
+                        )
         
         metrics = {}
         if data["has_ground_truth"]:

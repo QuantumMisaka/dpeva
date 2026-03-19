@@ -1,6 +1,7 @@
 import os
 import sys
 import logging
+import time
 import pandas as pd
 from typing import Dict, Any, Union
 
@@ -50,7 +51,8 @@ class AnalysisWorkflow:
         self.analysis_manager = UnifiedAnalysisManager(
             ref_energies=self.config.ref_energies,
             enable_cohesive_energy=self.config.enable_cohesive_energy,
-            allow_ref_energy_lstsq_completion=self.config.allow_ref_energy_lstsq_completion
+            allow_ref_energy_lstsq_completion=self.config.allow_ref_energy_lstsq_completion,
+            slow_plot_threshold_seconds=self.config.slow_plot_threshold_seconds,
         )
         self.dataset_analysis_manager = DatasetAnalysisManager(
             ref_energies=self.config.ref_energies,
@@ -71,6 +73,7 @@ class AnalysisWorkflow:
             filename=LOG_FILE_ANALYSIS,
             capture_stdout=False
         )
+        workflow_start = time.perf_counter()
         try:
             if self.config.mode == "dataset":
                 self._run_dataset_mode()
@@ -82,6 +85,8 @@ class AnalysisWorkflow:
             self.logger.error(f"Analysis failed: {e}", exc_info=True)
             raise
         finally:
+            total_elapsed = time.perf_counter() - workflow_start
+            self.logger.info(f"Analysis total elapsed time: {total_elapsed:.3f}s")
             close_workflow_logger("dpeva", os.path.join(output_dir, LOG_FILE_ANALYSIS))
 
     def _run_dataset_mode(self):
@@ -93,18 +98,39 @@ class AnalysisWorkflow:
     def _run_model_mode(self, output_dir: str):
         """Run model_test result analysis and export metrics/statistics."""
         result_dir = str(self.config.result_dir) if self.config.result_dir else ""
+        parse_start = time.perf_counter()
+        self.logger.info(f"Stage[parse] Start parsing results from {result_dir}")
         data, parser = self.io_manager.load_data(
             result_dir,
             self.config.type_map,
             self.config.results_prefix,
         )
+        parse_elapsed = time.perf_counter() - parse_start
+        energy_data = data.get("energy") if isinstance(data, dict) else None
+        energy_field_names = getattr(getattr(energy_data, "dtype", None), "names", None)
+        frame_count = len(energy_data["pred_e"]) if energy_field_names and "pred_e" in energy_field_names else 0
+        self.logger.info(f"Stage[parse] Finished in {parse_elapsed:.3f}s with {frame_count} frames")
+
+        composition_start = time.perf_counter()
+        self.logger.info("Stage[composition] Start loading composition information")
         atom_counts_list, atom_num_list = self._resolve_composition_info(parser)
+        composition_elapsed = time.perf_counter() - composition_start
+        composition_frames = len(atom_num_list) if atom_num_list is not None else 0
+        self.logger.info(
+            f"Stage[composition] Finished in {composition_elapsed:.3f}s with {composition_frames} composition frames"
+        )
+
+        stats_plot_start = time.perf_counter()
+        self.logger.info("Stage[statistics+plot] Start statistics calculation and plotting")
         _, metrics, _, e_rel_pred, _ = self.analysis_manager.analyze_model(
             data=data,
             output_dir=output_dir,
             atom_counts_list=atom_counts_list,
-            atom_num_list=atom_num_list
+            atom_num_list=atom_num_list,
+            plot_level=self.config.plot_level,
         )
+        stats_plot_elapsed = time.perf_counter() - stats_plot_start
+        self.logger.info(f"Stage[statistics+plot] Finished in {stats_plot_elapsed:.3f}s")
         if metrics:
             self.io_manager.save_metrics(metrics)
             self.io_manager.save_summary_csv(metrics)
@@ -115,9 +141,9 @@ class AnalysisWorkflow:
     def _resolve_composition_info(self, parser):
         """Resolve composition source from data_path first, then legacy parser fallback."""
         if self.config.data_path:
-            self.logger.info(f"Loading composition info from {self.config.data_path}...")
+            self.logger.info(f"Stage[composition] Source data_path: {self.config.data_path}")
             return self.io_manager.load_composition_info(str(self.config.data_path))
-        self.logger.info("Extracting composition info from filenames (Legacy Mode)...")
+        self.logger.info("Stage[composition] Source parser fallback: filenames (legacy mode)")
         return parser.get_composition_list()
 
     def _submit_to_slurm(self):

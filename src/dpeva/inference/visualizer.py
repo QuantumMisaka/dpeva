@@ -374,8 +374,8 @@ class InferenceVisualizer:
         if pred_values is None or true_values is None or err_values is None:
             return
 
-        fig = plt.figure(figsize=(11.2, 5.8))
-        gs = gridspec.GridSpec(1, 2, width_ratios=[3.8, 1.5], wspace=0.34)
+        fig = plt.figure(figsize=(11.6, 5.8))
+        gs = gridspec.GridSpec(1, 2, width_ratios=[3.7, 1.4], wspace=0.42)
         ax_main = fig.add_subplot(gs[0, 0])
         ax_err = fig.add_subplot(gs[0, 1])
 
@@ -385,7 +385,7 @@ class InferenceVisualizer:
         ax_main.set_ylabel("Density")
         ax_main.set_title(f"{label} Distribution with Error")
         ax_main.grid(True, alpha=0.25)
-        ax_main.legend(loc="upper right", frameon=True, framealpha=0.9)
+        ax_main.legend(loc="upper left", frameon=True, framealpha=0.9)
         if show_stats:
             stats = self._stats_text(pred_values, pred_label) + "\n\n" + self._stats_text(true_values, true_label)
             self._add_stats_box(ax_main, stats, x=0.03, y=0.38)
@@ -396,9 +396,9 @@ class InferenceVisualizer:
         ax_err.set_ylabel("Density")
         ax_err.set_title("Error Distribution")
         ax_err.grid(True, alpha=0.25)
-        fig.tight_layout(rect=[0.0, 0.0, 1.0, 1.0])
+        fig.subplots_adjust(left=0.07, right=0.98, top=0.91, bottom=0.12, wspace=0.42)
         filename = f"dist_{label.lower().replace(' ', '_')}_with_error.png"
-        fig.savefig(os.path.join(self.output_dir, filename), dpi=self.dpi, bbox_inches="tight")
+        fig.savefig(os.path.join(self.output_dir, filename), dpi=self.dpi)
         plt.close(fig)
 
     def plot_error_distribution(self, error: np.ndarray, label: str, unit: str):
