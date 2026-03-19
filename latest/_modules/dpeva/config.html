@@ -937,7 +937,7 @@ document.write(`
 <a class="viewcode-back" href="../../api/config/analysis.html#dpeva.config.AnalysisConfig">[文档]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">AnalysisConfig</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Configuration for Analysis Workflow (Post-processing).&quot;&quot;&quot;</span>
-    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s1">&#39;ignore&#39;</span><span class="p">,</span> <span class="n">populate_by_name</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s1">&#39;ignore&#39;</span><span class="p">,</span> <span class="n">populate_by_name</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">protected_namespaces</span><span class="o">=</span><span class="p">())</span>
 
     <span class="n">mode</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;model_test&quot;</span><span class="p">,</span> <span class="s2">&quot;dataset&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="s2">&quot;model_test&quot;</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Analysis mode.&quot;</span><span class="p">)</span>
     <span class="n">result_dir</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Path to DP test results directory.&quot;</span><span class="p">)</span>
@@ -958,6 +958,28 @@ document.write(`
         <span class="kc">False</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Whether to fit missing element reference energies with least squares when provided ref_energies is incomplete.&quot;</span>
     <span class="p">)</span>
+    <span class="n">submission</span><span class="p">:</span> <span class="n">SubmissionConfig</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="n">SubmissionConfig</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Submission configuration.&quot;</span>
+    <span class="p">)</span>
+    <span class="n">config_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Path to configuration file for Slurm self-submission.&quot;</span>
+    <span class="p">)</span>
+
+<div class="viewcode-block" id="AnalysisConfig.extract_flat_submission_config">
+<a class="viewcode-back" href="../../api/config/analysis.html#dpeva.config.AnalysisConfig.extract_flat_submission_config">[文档]</a>
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s1">&#39;before&#39;</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">extract_flat_submission_config</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="s2">&quot;submission&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+            <span class="n">data</span><span class="p">[</span><span class="s2">&quot;submission&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">&quot;backend&quot;</span><span class="p">:</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;backend&quot;</span><span class="p">,</span> <span class="n">DEFAULT_BACKEND</span><span class="p">),</span>
+                <span class="s2">&quot;slurm_config&quot;</span><span class="p">:</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;slurm_config&quot;</span><span class="p">,</span> <span class="p">{}),</span>
+                <span class="s2">&quot;env_setup&quot;</span><span class="p">:</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;env_setup&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+            <span class="p">}</span>
+        <span class="k">return</span> <span class="n">data</span></div>
+
 
     <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s1">&#39;after&#39;</span><span class="p">)</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">validate_mode_paths</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>

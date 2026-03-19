@@ -365,6 +365,7 @@ document.write(`
                 <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.AnalysisConfig"><code class="docutils literal notranslate"><span class="pre">AnalysisConfig</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.AnalysisConfig.allow_ref_energy_lstsq_completion"><code class="docutils literal notranslate"><span class="pre">AnalysisConfig.allow_ref_energy_lstsq_completion</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.AnalysisConfig.config_path"><code class="docutils literal notranslate"><span class="pre">AnalysisConfig.config_path</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.AnalysisConfig.data_path"><code class="docutils literal notranslate"><span class="pre">AnalysisConfig.data_path</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.AnalysisConfig.dataset_dir"><code class="docutils literal notranslate"><span class="pre">AnalysisConfig.dataset_dir</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.AnalysisConfig.enable_cohesive_energy"><code class="docutils literal notranslate"><span class="pre">AnalysisConfig.enable_cohesive_energy</span></code></a></li>
@@ -373,7 +374,9 @@ document.write(`
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.AnalysisConfig.ref_energies"><code class="docutils literal notranslate"><span class="pre">AnalysisConfig.ref_energies</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.AnalysisConfig.result_dir"><code class="docutils literal notranslate"><span class="pre">AnalysisConfig.result_dir</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.AnalysisConfig.results_prefix"><code class="docutils literal notranslate"><span class="pre">AnalysisConfig.results_prefix</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.AnalysisConfig.submission"><code class="docutils literal notranslate"><span class="pre">AnalysisConfig.submission</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.AnalysisConfig.type_map"><code class="docutils literal notranslate"><span class="pre">AnalysisConfig.type_map</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.AnalysisConfig.extract_flat_submission_config"><code class="docutils literal notranslate"><span class="pre">AnalysisConfig.extract_flat_submission_config</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -397,6 +400,12 @@ document.write(`
 <dt class="sig sig-object py" id="dpeva.config.AnalysisConfig.allow_ref_energy_lstsq_completion">
 <em class="property"><span class="pre">field</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">allow_ref_energy_lstsq_completion</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#dpeva.config.AnalysisConfig.allow_ref_energy_lstsq_completion" title="Link to this definition">#</a></dt>
 <dd><p>Whether to fit missing element reference energies with least squares when provided ref_energies is incomplete.</p>
+</dd></dl>
+
+<dl class="py attribute pydantic_field">
+<dt class="sig sig-object py" id="dpeva.config.AnalysisConfig.config_path">
+<em class="property"><span class="pre">field</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">config_path</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#dpeva.config.AnalysisConfig.config_path" title="Link to this definition">#</a></dt>
+<dd><p>Path to configuration file for Slurm self-submission.</p>
 </dd></dl>
 
 <dl class="py attribute pydantic_field">
@@ -448,10 +457,21 @@ document.write(`
 </dd></dl>
 
 <dl class="py attribute pydantic_field">
+<dt class="sig sig-object py" id="dpeva.config.AnalysisConfig.submission">
+<em class="property"><span class="pre">field</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">submission</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="submission.html#dpeva.config.SubmissionConfig" title="dpeva.config.SubmissionConfig"><span class="pre">SubmissionConfig</span></a></em><em class="property"> <span class="pre">[Optional]</span></em><a class="headerlink" href="#dpeva.config.AnalysisConfig.submission" title="Link to this definition">#</a></dt>
+<dd><p>Submission configuration.</p>
+</dd></dl>
+
+<dl class="py attribute pydantic_field">
 <dt class="sig sig-object py" id="dpeva.config.AnalysisConfig.type_map">
 <em class="property"><span class="pre">field</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">type_map</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#dpeva.config.AnalysisConfig.type_map" title="Link to this definition">#</a></dt>
 <dd><p>Atom type map (e.g. ['Fe', 'C']). Required for model_test mode when data_path is not provided.</p>
 </dd></dl>
+
+<dl class="py method pydantic_validator">
+<dt class="sig sig-object py" id="dpeva.config.AnalysisConfig.extract_flat_submission_config">
+<em class="property"><span class="pre">validator</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">extract_flat_submission_config</span></span><em class="autodoc_pydantic_validator_arrow property">&#160; <span class="pre">»</span>&#160; </em><em class="xref py py-obj"><span class="pre">all</span> <span class="pre">fields</span></em><a class="reference internal" href="../../_modules/dpeva/config.html#AnalysisConfig.extract_flat_submission_config"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#dpeva.config.AnalysisConfig.extract_flat_submission_config" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
 
 </dd></dl>
 
@@ -504,6 +524,7 @@ document.write(`
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.AnalysisConfig"><code class="docutils literal notranslate"><span class="pre">AnalysisConfig</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.AnalysisConfig.allow_ref_energy_lstsq_completion"><code class="docutils literal notranslate"><span class="pre">AnalysisConfig.allow_ref_energy_lstsq_completion</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.AnalysisConfig.config_path"><code class="docutils literal notranslate"><span class="pre">AnalysisConfig.config_path</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.AnalysisConfig.data_path"><code class="docutils literal notranslate"><span class="pre">AnalysisConfig.data_path</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.AnalysisConfig.dataset_dir"><code class="docutils literal notranslate"><span class="pre">AnalysisConfig.dataset_dir</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.AnalysisConfig.enable_cohesive_energy"><code class="docutils literal notranslate"><span class="pre">AnalysisConfig.enable_cohesive_energy</span></code></a></li>
@@ -512,7 +533,9 @@ document.write(`
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.AnalysisConfig.ref_energies"><code class="docutils literal notranslate"><span class="pre">AnalysisConfig.ref_energies</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.AnalysisConfig.result_dir"><code class="docutils literal notranslate"><span class="pre">AnalysisConfig.result_dir</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.AnalysisConfig.results_prefix"><code class="docutils literal notranslate"><span class="pre">AnalysisConfig.results_prefix</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.AnalysisConfig.submission"><code class="docutils literal notranslate"><span class="pre">AnalysisConfig.submission</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.AnalysisConfig.type_map"><code class="docutils literal notranslate"><span class="pre">AnalysisConfig.type_map</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.AnalysisConfig.extract_flat_submission_config"><code class="docutils literal notranslate"><span class="pre">AnalysisConfig.extract_flat_submission_config</span></code></a></li>
 </ul>
 </li>
 </ul>
