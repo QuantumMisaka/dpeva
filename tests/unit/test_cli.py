@@ -142,3 +142,15 @@ def test_handle_label_stage_all(monkeypatch, tmp_path):
     with patch("dpeva.workflows.labeling.LabelingWorkflow") as MockWorkflow:
         cli.handle_label(args)
         MockWorkflow.return_value.run.assert_called_once()
+
+
+def test_handle_analysis_passes_absolute_config_path(monkeypatch, tmp_path):
+    config_path = _write_config(tmp_path)
+    args = SimpleNamespace(config=config_path)
+    monkeypatch.setattr(cli, "load_and_resolve_config", lambda _p: {"mode": "dataset", "dataset_dir": str(tmp_path)})
+    with patch("dpeva.workflows.analysis.AnalysisWorkflow") as MockWorkflow:
+        cli.handle_analysis(args)
+        MockWorkflow.assert_called_once()
+        call_args = MockWorkflow.call_args
+        assert call_args.kwargs["config_path"] == str(Path(config_path).resolve())
+        MockWorkflow.return_value.run.assert_called_once()

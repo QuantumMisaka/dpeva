@@ -9,5 +9,16 @@
         "C": -156.0795,
         "O": -444.6670,
         "H": -13.5410
+    },
+    "submission": {
+        "backend": "slurm",
+        "env_setup": [],
+        "slurm_config": {
+            "partition": "CPU-MISC",
+            "qos": "rush-cpu",
+            "ntasks": 1,
+            "cpus_per_task": 4,
+            "job_name": "DPEVA-analysis"
+        }
     }
 }

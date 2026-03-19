@@ -157,3 +157,53 @@ class TestAnalysisWorkflow:
         mock_io.save_summary_csv.assert_not_called()
         mock_io.save_stats_desc.assert_not_called()
         mock_close_logger.assert_called_once()
+
+    @patch("dpeva.workflows.analysis.JobManager")
+    @patch("dpeva.workflows.analysis.setup_workflow_logger")
+    @patch("dpeva.workflows.analysis.close_workflow_logger")
+    def test_run_submits_to_slurm_when_backend_is_slurm(self, mock_close_logger, mock_setup_logger, MockJobManager, tmp_path):
+        config = {
+            "result_dir": str(tmp_path / "results"),
+            "output_dir": str(tmp_path / "analysis"),
+            "type_map": ["O", "H"],
+            "submission": {
+                "backend": "slurm",
+                "slurm_config": {"partition": "cpu"}
+            },
+        }
+        workflow = AnalysisWorkflow(config, config_path=str(tmp_path / "config.json"))
+        workflow.run()
+        MockJobManager.assert_called_once_with(mode="slurm")
+        mock_job_manager = MockJobManager.return_value
+        mock_job_manager.generate_script.assert_called_once()
+        job_config = mock_job_manager.generate_script.call_args[0][0]
+        assert "dpeva.cli analysis" in job_config.command
+        assert str(tmp_path / "config.json") in job_config.command
+        assert "export DPEVA_INTERNAL_BACKEND=local" in job_config.env_setup
+        mock_job_manager.submit.assert_called_once()
+        mock_setup_logger.assert_not_called()
+        mock_close_logger.assert_not_called()
+
+    @patch("dpeva.workflows.analysis.UnifiedAnalysisManager")
+    @patch("dpeva.workflows.analysis.AnalysisIOManager")
+    @patch("dpeva.workflows.analysis.setup_workflow_logger")
+    @patch("dpeva.workflows.analysis.close_workflow_logger")
+    def test_run_worker_mode_executes_local_even_if_config_is_slurm(self, mock_close_logger, mock_setup_logger, MockIOManager, MockManager, tmp_path):
+        config = {
+            "result_dir": str(tmp_path / "results"),
+            "output_dir": str(tmp_path / "analysis"),
+            "type_map": ["O", "H"],
+            "submission": {"backend": "slurm"},
+        }
+        mock_io = MockIOManager.return_value
+        mock_manager = MockManager.return_value
+        mock_parser = MagicMock()
+        mock_parser.get_composition_list.return_value = (None, None)
+        mock_io.load_data.return_value = ({"energy": {"pred_e": np.array([1.0])}}, mock_parser)
+        mock_manager.analyze_model.return_value = ({}, {"e_mae": 0.1}, MagicMock(), np.array([-0.1]), np.array([-0.2]))
+        with patch.dict("os.environ", {"DPEVA_INTERNAL_BACKEND": "local"}):
+            workflow = AnalysisWorkflow(config, config_path=str(tmp_path / "config.json"))
+            workflow.run()
+        mock_io.load_data.assert_called_once()
+        mock_setup_logger.assert_called_once()
+        mock_close_logger.assert_called_once()

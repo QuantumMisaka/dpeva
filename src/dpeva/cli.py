@@ -137,7 +137,7 @@ def handle_analysis(args):
     """
     from dpeva.workflows.analysis import AnalysisWorkflow
     config = load_and_resolve_config(args.config)
-    workflow = AnalysisWorkflow(config)
+    workflow = AnalysisWorkflow(config, config_path=os.path.abspath(args.config))
     workflow.run()
 
 def handle_label(args):

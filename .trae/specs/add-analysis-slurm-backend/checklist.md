@@ -1,0 +1,6 @@
+- [x] Analysis 配置支持 `submission.backend=slurm` 且本地配置保持兼容
+- [x] Analysis Workflow 可生成并提交 `submit_analysis.slurm`，执行命令正确
+- [x] Slurm worker 注入内部 backend 覆盖，避免递归二次提交
+- [x] `examples/recipes/analysis` 案例已切换为 slurm backend 且参数结构对齐 collection
+- [x] 新增/更新单元测试覆盖 Analysis Slurm 提交路径与关键参数透传
+- [x] 相关单元测试通过，未破坏现有 Analysis 本地执行分支

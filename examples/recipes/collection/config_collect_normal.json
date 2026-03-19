@@ -4,10 +4,10 @@
     "testing_dir": "test_val",
     "results_prefix": "results",
     "desc_dir": "./desc_pool",
-    "testdata_dir": "./other_dpdata_all",
+    "testdata_dir": "./other_dpdata",
     
     "fig_dpi": 300,
-    "root_savedir": "dpeva_post_multi_normal",
+    "root_savedir": "dpeva_post_normal",
 
     "uq_trust_mode": "auto",
     "uq_trust_ratio": 0.50,
@@ -20,10 +20,7 @@
 
     "submission": {
         "backend": "slurm",
-        "env_setup": [
-            "source /opt/envs/deepmd3.1.2.env",
-            "export DP_INTERFACE_PREC=high"
-        ],
+        "env_setup": [],
         "slurm_config": {
             "partition": "CPU-MISC",
             "qos": "rush-cpu",

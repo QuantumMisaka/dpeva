@@ -159,7 +159,7 @@ class FeatureConfig(BaseWorkflowConfig):
 
 class AnalysisConfig(BaseModel):
     """Configuration for Analysis Workflow (Post-processing)."""
-    model_config = ConfigDict(extra='ignore', populate_by_name=True)
+    model_config = ConfigDict(extra='ignore', populate_by_name=True, protected_namespaces=())
 
     mode: Literal["model_test", "dataset"] = Field("model_test", description="Analysis mode.")
     result_dir: Optional[Path] = Field(None, description="Path to DP test results directory.")
@@ -180,6 +180,25 @@ class AnalysisConfig(BaseModel):
         False,
         description="Whether to fit missing element reference energies with least squares when provided ref_energies is incomplete."
     )
+    submission: SubmissionConfig = Field(
+        default_factory=SubmissionConfig,
+        description="Submission configuration."
+    )
+    config_path: Optional[Path] = Field(
+        None,
+        description="Path to configuration file for Slurm self-submission."
+    )
+
+    @model_validator(mode='before')
+    @classmethod
+    def extract_flat_submission_config(cls, data: Any) -> Any:
+        if isinstance(data, dict) and "submission" not in data:
+            data["submission"] = {
+                "backend": data.get("backend", DEFAULT_BACKEND),
+                "slurm_config": data.get("slurm_config", {}),
+                "env_setup": data.get("env_setup", "")
+            }
+        return data
 
     @model_validator(mode='after')
     def validate_mode_paths(self):
