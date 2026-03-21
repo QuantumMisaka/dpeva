@@ -290,7 +290,7 @@ class UQVisualizer:
         max_rnd = df_uq["uq_rnd_for_rescaled"].max()
         
         if max_qbc > 2.0 or max_rnd > 2.0:
-            logging.getLogger(__name__).warning(f"UQ-identity-scatter: Data exceeds [0, 2] range, truncating for visualization.")
+            logging.getLogger(__name__).warning("UQ-identity-scatter: Data exceeds [0, 2] range, truncating for visualization.")
             df_uq_trunc = df_uq[(df_uq["uq_qbc_for"] >= 0) & (df_uq["uq_qbc_for"] <= 2) & 
                                 (df_uq["uq_rnd_for_rescaled"] >= 0) & (df_uq["uq_rnd_for_rescaled"] <= 2)]
             
@@ -457,7 +457,7 @@ class UQVisualizer:
             plt.scatter(PCs_alldata[direct_indices, 0], PCs_alldata[direct_indices, 1], 
                        label=f"Final Selected {len(direct_indices)}", **style_sel_new, zorder=10)
 
-        plt.title(f"PCA of UQ-DIRECT sampling", fontsize=16)
+        plt.title("PCA of UQ-DIRECT sampling", fontsize=16)
         plt.xlabel("PC1", size=14)
         plt.ylabel("PC2", size=14)
         plt.grid(True, linestyle='-', alpha=0.6)

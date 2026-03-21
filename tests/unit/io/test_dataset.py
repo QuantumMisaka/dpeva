@@ -1,6 +1,4 @@
 import pytest
-import os
-import shutil
 import numpy as np
 from unittest.mock import MagicMock, patch
 from dpeva.io.dataset import load_systems
@@ -155,7 +153,7 @@ class TestDatasetLoader:
         with patch("dpeva.io.dataset._load_single_path", side_effect=side_effect) as mock_load:
             # We also need to mock MultiSystems to fail so it goes to fallback
             with patch("dpeva.io.dataset.dpdata.MultiSystems.from_file", side_effect=Exception("Fail")):
-                systems = load_systems(str(data_dir), fmt="auto")
+                load_systems(str(data_dir), fmt="auto")
                 
                 # Should contain sys1, sys2, subsys. Should NOT contain set.000
                 # load_systems scans dirs. sys1, sys2, subsys, set.000 are in data_dir.

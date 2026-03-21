@@ -5,7 +5,6 @@ Task Packer
 Handles the distribution of tasks into subdirectories for efficient submission.
 """
 
-import os
 import logging
 import shutil
 from pathlib import Path

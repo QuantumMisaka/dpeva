@@ -1,5 +1,4 @@
-import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from dpeva.workflows.feature import FeatureWorkflow
 
 def test_feature_workflow_cli_env(tmp_path):

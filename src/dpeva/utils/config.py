@@ -1,5 +1,5 @@
 import os
-from typing import Dict, List, Any, Union
+from typing import Dict, List, Any
 
 def resolve_config_paths(config: Dict[str, Any], config_file_path: str, path_keys: List[str] = None) -> Dict[str, Any]:
     """

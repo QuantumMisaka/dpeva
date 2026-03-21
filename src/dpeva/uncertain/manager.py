@@ -2,7 +2,7 @@ import os
 import logging
 import pandas as pd
 import numpy as np
-from typing import List, Dict, Tuple, Optional
+from typing import List, Dict, Tuple
 
 from dpeva.io.dataproc import DPTestResultParser
 from dpeva.io.types import PredictionData
@@ -220,7 +220,8 @@ class UQManager:
         Returns:
             float: Clamped value.
         """
-        if value is None: return None
+        if value is None:
+            return None
         lo_min, lo_max = bounds.get("lo_min"), bounds.get("lo_max")
         if lo_min is not None and value < lo_min:
             self.logger.warning(f"{name} < {lo_min}, clamping.")

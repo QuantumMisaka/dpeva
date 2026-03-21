@@ -1,7 +1,4 @@
-import os
-import json
 import pytest
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 from dpeva.workflows.infer import InferenceWorkflow
 
@@ -41,7 +38,6 @@ def test_inference_parallel_submission(slurm_config):
     
     # Mock JobManager BEFORE initializing workflow
     with patch("dpeva.inference.managers.JobManager") as MockJobManager:
-        mock_job_manager_cls = MockJobManager.return_value
         # The JobManager() call returns an instance, we need to mock THAT instance
         mock_job_instance = MockJobManager.return_value
         

@@ -1,8 +1,7 @@
 
-import os
 import pytest
 import numpy as np # Import numpy
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 from dpeva.workflows.collect import CollectionWorkflow
 from dpeva.config import CollectionConfig
 
@@ -68,7 +67,7 @@ class TestCollectionWorkflowSubmission:
         (tmp_path / "testdata").mkdir()
     
         # Mock actual execution components to avoid running them
-        with patch("dpeva.workflows.collect.UQManager") as MockUQ, \
+        with patch("dpeva.workflows.collect.UQManager"), \
              patch("dpeva.workflows.collect.SamplingManager") as MockSampling, \
              patch("dpeva.workflows.collect.CollectionIOManager") as MockIO, \
              patch("dpeva.workflows.collect.setup_workflow_logger"):
@@ -93,7 +92,7 @@ class TestCollectionWorkflowSubmission:
             # We must patch where it is IMPORTED in dpeva.workflows.collect
             # In collect.py: "from dpeva.uncertain.visualization import UQVisualizer"
             # It uses UQVisualizer, not Visualization. My bad.
-            with patch("dpeva.workflows.collect.UQVisualizer") as MockVis:
+            with patch("dpeva.workflows.collect.UQVisualizer"):
                  workflow.run()
             
             # Verify it did NOT try to self-submit (no JobManager usage)

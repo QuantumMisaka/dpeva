@@ -26,7 +26,7 @@ import logging
 import json
 import csv
 from pathlib import Path
-from typing import List, Dict, Optional, Tuple, Any, Union
+from typing import List, Dict, Tuple, Any
 from dataclasses import dataclass, field
 from collections import Counter
 
@@ -408,7 +408,8 @@ class DataVisualizer:
         spins_by_element = {e: [] for e in unique_elements}
         has_spins = False
         for _, row in df.iterrows():
-            if row["spins"] is None: continue
+            if row["spins"] is None:
+                continue
             has_spins = True
             spins = row["spins"]
             elements = row["elements"]
@@ -416,7 +417,8 @@ class DataVisualizer:
             for elem, mag in zip(elements, mags):
                 spins_by_element[elem].append(float(mag))
         
-        if not has_spins: return
+        if not has_spins:
+            return
 
         n = len(unique_elements)
         cols = 4 if n >= 4 else n if n > 0 else 1
@@ -424,8 +426,10 @@ class DataVisualizer:
         
         fig, axes = plt.subplots(rows, cols, figsize=(4 * cols, 3.2 * rows))
         # Ensure axes is always 2D array
-        if rows == 1 and cols == 1: axes = np.array([[axes]])
-        elif rows == 1 or cols == 1: axes = np.array(axes).reshape(rows, cols)
+        if rows == 1 and cols == 1:
+            axes = np.array([[axes]])
+        elif rows == 1 or cols == 1:
+            axes = np.array(axes).reshape(rows, cols)
         
         for i, elem in enumerate(unique_elements):
             r, c = i // cols, i % cols
@@ -654,10 +658,14 @@ class DataExporter:
                     formula = Utils.sanitize_formula(atoms.get_chemical_formula())
                     bm = int(row.get("anomaly_bitmask", 0))
                     srcs = []
-                    if bm & 1: srcs.append("cohesive")
-                    if bm & 2: srcs.append("force")
-                    if bm & 4: srcs.append("stress")
-                    if bm & 8: srcs.append("atoms")
+                    if bm & 1:
+                        srcs.append("cohesive")
+                    if bm & 2:
+                        srcs.append("force")
+                    if bm & 4:
+                        srcs.append("stress")
+                    if bm & 8:
+                        srcs.append("atoms")
                     
                     rows.append({
                         "sys_idx": si, "frame_idx": fi, "num_atoms": len(atoms), "formula": formula,

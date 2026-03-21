@@ -1,8 +1,7 @@
 import numpy as np
 import pandas as pd
-from typing import Dict, Tuple, Optional, List
+from typing import Dict, Optional, List
 from scipy.linalg import lstsq
-from collections import Counter
 import logging
 
 class StatsCalculator:

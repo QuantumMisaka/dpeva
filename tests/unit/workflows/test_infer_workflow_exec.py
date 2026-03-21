@@ -1,6 +1,6 @@
 import pytest
 import os
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 from dpeva.workflows.infer import InferenceWorkflow
 
 def create_mock_models(base_dir, num_models=3):

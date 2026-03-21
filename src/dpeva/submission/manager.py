@@ -1,7 +1,7 @@
 import os
 import subprocess
 import logging
-from typing import Literal, Optional, Union
+from typing import Literal, Optional
 from .templates import TemplateEngine, JobConfig
 
 logger = logging.getLogger(__name__)

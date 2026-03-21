@@ -3,13 +3,12 @@ import json
 import logging
 import numpy as np
 import pandas as pd
-from typing import List, Dict, Optional, Union, Tuple
+from typing import List, Dict, Optional, Tuple
 from collections import Counter
 
 from dpeva.constants import WORKFLOW_FINISHED_TAG, FILENAME_STATS_JSON
 from dpeva.submission import JobManager, JobConfig
 from dpeva.io.dataproc import DPTestResultParser
-from dpeva.postprocess import StatsCalculator, InferenceVisualizer
 from dpeva.io.dataset import load_systems
 from dpeva.utils.command import DPCommandBuilder
 
@@ -84,9 +83,12 @@ class InferenceIOManager:
         """Save statistics to JSON."""
         def default(o):
             """JSON serializer for NumPy types."""
-            if isinstance(o, (np.integer, int)): return int(o)
-            if isinstance(o, (np.floating, float)): return float(o)
-            if isinstance(o, np.ndarray): return o.tolist()
+            if isinstance(o, (np.integer, int)):
+                return int(o)
+            if isinstance(o, (np.floating, float)):
+                return float(o)
+            if isinstance(o, np.ndarray):
+                return o.tolist()
             return str(o)
             
         with open(os.path.join(analysis_dir, FILENAME_STATS_JSON), "w") as f:

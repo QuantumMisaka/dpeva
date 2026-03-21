@@ -1,5 +1,4 @@
 
-import pytest
 import numpy as np
 from ase import Atoms
 from dpeva.labeling.structure import StructureAnalyzer

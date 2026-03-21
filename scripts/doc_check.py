@@ -99,7 +99,7 @@ def check_links():
                         content = f.read()
                         
                     for match in re.finditer(link_pattern, content):
-                        link_text = match.group(1)
+                        match.group(1)
                         link_target = match.group(2)
                         
                         # Skip external links, anchors only, and mailto

@@ -1,9 +1,7 @@
 
 import os
-import logging
 import json
 import pytest
-from unittest.mock import MagicMock, patch
 from dpeva.io.training import TrainingIOManager
 
 class TestTrainingIOManager:

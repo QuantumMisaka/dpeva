@@ -1,7 +1,5 @@
-import pytest
-import os
 import numpy as np
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 from dpeva.workflows.collect import CollectionWorkflow
 
 def test_collect_single_pool_routing(tmp_path):
@@ -25,7 +23,7 @@ def test_collect_single_pool_routing(tmp_path):
     }
     
     # Init workflow
-    with patch("dpeva.workflows.collect.UQManager") as MockUQ:
+    with patch("dpeva.workflows.collect.UQManager"):
         workflow = CollectionWorkflow(config)
         
         # Verify Single Pool characteristics
@@ -55,7 +53,7 @@ def test_collect_multi_pool_routing(tmp_path):
         "backend": "local"
     }
     
-    with patch("dpeva.workflows.collect.UQManager") as MockUQ:
+    with patch("dpeva.workflows.collect.UQManager"):
         workflow = CollectionWorkflow(config)
         
         # Verify separation

@@ -5,7 +5,6 @@ Usage: python scripts/release_helper.py [patch|minor|major|version_string]
 """
 import sys
 import re
-import datetime
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).parent.parent

@@ -6,7 +6,6 @@ Documentation Freshness Checker
 Checks if core documentation files have been updated within a specified threshold.
 """
 
-import os
 import sys
 import argparse
 from datetime import datetime, timedelta

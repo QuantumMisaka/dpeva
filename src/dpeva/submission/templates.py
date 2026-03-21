@@ -1,7 +1,18 @@
 import string
-import os
 from typing import Dict, Any, Optional, Union, List
 from dataclasses import dataclass, asdict
+
+from dpeva.constants import (
+    DEFAULT_SLURM_PARTITION,
+    DEFAULT_WALLTIME,
+    DEFAULT_SLURM_GPUS_PER_NODE,
+    DEFAULT_SLURM_CPUS_PER_TASK,
+    DEFAULT_SLURM_QOS,
+    DEFAULT_SLURM_NODELIST,
+    DEFAULT_SLURM_NODES,
+    DEFAULT_SLURM_NTASKS,
+    DEFAULT_SLURM_CUSTOM_HEADERS
+)
 
 # ==========================================
 # 默认模板 (Default Templates)
@@ -36,18 +47,6 @@ ${command}
 # ==========================================
 # 模板配置数据类 (Config Dataclass)
 # ==========================================
-
-from dpeva.constants import (
-    DEFAULT_SLURM_PARTITION, 
-    DEFAULT_WALLTIME,
-    DEFAULT_SLURM_GPUS_PER_NODE,
-    DEFAULT_SLURM_CPUS_PER_TASK,
-    DEFAULT_SLURM_QOS,
-    DEFAULT_SLURM_NODELIST,
-    DEFAULT_SLURM_NODES,
-    DEFAULT_SLURM_NTASKS,
-    DEFAULT_SLURM_CUSTOM_HEADERS
-)
 
 @dataclass
 class JobConfig:

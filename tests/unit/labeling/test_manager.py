@@ -1,7 +1,6 @@
 
 import pytest
-from unittest.mock import MagicMock, patch, call
-from pathlib import Path
+from unittest.mock import MagicMock, patch
 import json
 import pandas as pd
 from dpeva.labeling.manager import LabelingManager

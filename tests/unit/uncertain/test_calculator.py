@@ -1,8 +1,5 @@
 import pytest
 import numpy as np
-import pandas as pd
-import logging
-from typing import Dict, List, Optional, Any
 from dpeva.uncertain.calculator import UQCalculator
 
 # --- Test Utilities & Golden Values ---
@@ -91,9 +88,12 @@ class TestUQCalculator:
         
         f0 = np.zeros((n_total, 3))
         # Frame 0: High variance
-        f1 = np.zeros((n_total, 3)); f1[0:2] = 1.0
-        f2 = np.zeros((n_total, 3)); f2[0:2] = -1.0
-        f3 = np.zeros((n_total, 3)); f3[0:2] = 0.0
+        f1 = np.zeros((n_total, 3))
+        f1[0:2] = 1.0
+        f2 = np.zeros((n_total, 3))
+        f2[0:2] = -1.0
+        f3 = np.zeros((n_total, 3))
+        f3[0:2] = 0.0
         
         # Frame 1: Zero variance (all match f0)
         # (Already zero initialized)

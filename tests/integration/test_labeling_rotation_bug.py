@@ -3,7 +3,6 @@ import pytest
 import os
 import numpy as np
 import dpdata
-from ase import Atoms
 from dpeva.labeling.structure import StructureAnalyzer
 
 # Integration test using the provided bug example data
