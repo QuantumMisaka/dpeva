@@ -754,9 +754,20 @@ document.write(`
                   
   <h1>dpeva.submission.templates 源代码</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span><span class="w"> </span><span class="nn">string</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">List</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">asdict</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">dpeva.constants</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">DEFAULT_SLURM_PARTITION</span><span class="p">,</span>
+    <span class="n">DEFAULT_WALLTIME</span><span class="p">,</span>
+    <span class="n">DEFAULT_SLURM_GPUS_PER_NODE</span><span class="p">,</span>
+    <span class="n">DEFAULT_SLURM_CPUS_PER_TASK</span><span class="p">,</span>
+    <span class="n">DEFAULT_SLURM_QOS</span><span class="p">,</span>
+    <span class="n">DEFAULT_SLURM_NODELIST</span><span class="p">,</span>
+    <span class="n">DEFAULT_SLURM_NODES</span><span class="p">,</span>
+    <span class="n">DEFAULT_SLURM_NTASKS</span><span class="p">,</span>
+    <span class="n">DEFAULT_SLURM_CUSTOM_HEADERS</span>
+<span class="p">)</span>
 
 <span class="c1"># ==========================================</span>
 <span class="c1"># 默认模板 (Default Templates)</span>
@@ -791,18 +802,6 @@ document.write(`
 <span class="c1"># ==========================================</span>
 <span class="c1"># 模板配置数据类 (Config Dataclass)</span>
 <span class="c1"># ==========================================</span>
-
-<span class="kn">from</span><span class="w"> </span><span class="nn">dpeva.constants</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">DEFAULT_SLURM_PARTITION</span><span class="p">,</span> 
-    <span class="n">DEFAULT_WALLTIME</span><span class="p">,</span>
-    <span class="n">DEFAULT_SLURM_GPUS_PER_NODE</span><span class="p">,</span>
-    <span class="n">DEFAULT_SLURM_CPUS_PER_TASK</span><span class="p">,</span>
-    <span class="n">DEFAULT_SLURM_QOS</span><span class="p">,</span>
-    <span class="n">DEFAULT_SLURM_NODELIST</span><span class="p">,</span>
-    <span class="n">DEFAULT_SLURM_NODES</span><span class="p">,</span>
-    <span class="n">DEFAULT_SLURM_NTASKS</span><span class="p">,</span>
-    <span class="n">DEFAULT_SLURM_CUSTOM_HEADERS</span>
-<span class="p">)</span>
 
 <div class="viewcode-block" id="JobConfig">
 <a class="viewcode-back" href="../../../api/submission.html#dpeva.submission.JobConfig">[文档]</a>

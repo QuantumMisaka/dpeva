@@ -858,7 +858,7 @@ document.write(`
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#revision-history">6. 版本修订记录 (Revision History)</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#maintenance-policy">6.1 维护策略 (Maintenance Policy)</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id9">6.2 版本历史</a><ul class="nav section-nav flex-column">
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#current-era-v0-6-x"><strong>Current Era (v0.6.x)</strong></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#current-era-v0-7-x"><strong>Current Era (v0.7.x)</strong></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#legacy-era-v0-4-x"><strong>Legacy Era (v0.4.x)</strong></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#legacy-era-v2-x"><strong>Legacy Era (v2.x)</strong></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id10"><strong>Legacy Era (v2.x)</strong></a></li>
@@ -882,7 +882,7 @@ document.write(`
 <ul class="simple">
 <li><p>Status: active</p></li>
 <li><p>Audience: Developers</p></li>
-<li><p>Last-Updated: 2026-03-18</p></li>
+<li><p>Last-Updated: 2026-03-21</p></li>
 <li><p>Related:</p>
 <ul>
 <li><p>配置字段字典：/docs/source/api/config.rst</p></li>
@@ -892,8 +892,8 @@ document.write(`
 </li>
 </ul>
 <ul class="simple">
-<li><p><strong>版本</strong>: 0.6.9</p></li>
-<li><p><strong>生成日期</strong>: 2026-03-18</p></li>
+<li><p><strong>版本</strong>: 0.7.0</p></li>
+<li><p><strong>生成日期</strong>: 2026-03-21</p></li>
 <li><p><strong>作者</strong>: Quantum Misaka with Trae SOLO</p></li>
 </ul>
 <hr class="docutils" />
@@ -1456,9 +1456,19 @@ A: 这是预期行为。在联合模式下，<code class="docutils literal notra
 </section>
 <section id="id9">
 <h3>6.2 版本历史<a class="headerlink" href="#id9" title="Link to this heading">#</a></h3>
-<section id="current-era-v0-6-x">
-<h4><strong>Current Era (v0.6.x)</strong><a class="headerlink" href="#current-era-v0-6-x" title="Link to this heading">#</a></h4>
+<section id="current-era-v0-7-x">
+<h4><strong>Current Era (v0.7.x)</strong><a class="headerlink" href="#current-era-v0-7-x" title="Link to this heading">#</a></h4>
 <ul class="simple">
+<li><p><strong>v0.7.0</strong> (2026-03-21):</p>
+<ul>
+<li><p><strong>[特性]</strong> 新增基于推理误差阈值的数据清洗工作流，支持灵活的数据质量控制。</p></li>
+<li><p><strong>[特性]</strong> 为分析工作流添加 Slurm 后端支持，增强分布式计算能力。</p></li>
+<li><p><strong>[特性]</strong> 新增可视化性能分级与慢图告警机制，提升分析效率。</p></li>
+<li><p><strong>[治理]</strong> 按照 Ruff 规范完成全项目代码质量治理，修复 F401/E701/E702/E402 等 lint 问题，提升代码整洁度与可维护性。</p></li>
+<li><p><strong>[测试]</strong> 单元测试 276 个全部通过，Ruff 检查全部通过。</p></li>
+<li><p><strong>[发布]</strong> 版本升级至 <code class="docutils literal notranslate"><span class="pre">0.7.0</span></code>，同步 <code class="docutils literal notranslate"><span class="pre">__init__</span></code>、<code class="docutils literal notranslate"><span class="pre">README</span></code> 与 Banner 版本标识。</p></li>
+</ul>
+</li>
 <li><p><strong>v0.6.9</strong> (2026-03-18):</p>
 <ul>
 <li><p><strong>[特性]</strong> 新增收敛数据查看与清洗工具，提升数据预处理效率。</p></li>
@@ -1797,7 +1807,7 @@ A: 这是预期行为。在联合模式下，<code class="docutils literal notra
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#revision-history">6. 版本修订记录 (Revision History)</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#maintenance-policy">6.1 维护策略 (Maintenance Policy)</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id9">6.2 版本历史</a><ul class="nav section-nav flex-column">
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#current-era-v0-6-x"><strong>Current Era (v0.6.x)</strong></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#current-era-v0-7-x"><strong>Current Era (v0.7.x)</strong></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#legacy-era-v0-4-x"><strong>Legacy Era (v0.4.x)</strong></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#legacy-era-v2-x"><strong>Legacy Era (v2.x)</strong></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id10"><strong>Legacy Era (v2.x)</strong></a></li>

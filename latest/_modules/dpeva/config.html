@@ -759,7 +759,6 @@ document.write(`
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
 
@@ -801,6 +800,9 @@ document.write(`
     <span class="n">DEFAULT_LABELING_OUTPUT_FORMAT</span><span class="p">,</span>
     <span class="n">DEFAULT_LABELING_INTEGRATION_OUTPUT_FORMAT</span><span class="p">,</span>
     <span class="n">VALID_LABELING_OUTPUT_FORMATS</span><span class="p">,</span>
+    <span class="n">DEFAULT_CLEAN_OUTPUT_DIR</span><span class="p">,</span>
+    <span class="n">DEFAULT_CLEAN_RESULTS_PREFIX</span><span class="p">,</span>
+    <span class="n">DEFAULT_CLEAN_STRICT_ALIGNMENT</span><span class="p">,</span>
 <span class="p">)</span>
 
 <div class="viewcode-block" id="SubmissionConfig">
@@ -1000,6 +1002,38 @@ document.write(`
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;dataset_dir is required when mode=&#39;dataset&#39;&quot;</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span></div>
 
+
+<span class="k">class</span><span class="w"> </span><span class="nc">DataCleaningConfig</span><span class="p">(</span><span class="n">BaseWorkflowConfig</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Configuration for Data Cleaning Workflow.&quot;&quot;&quot;</span>
+    <span class="n">dataset_dir</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Path to labeled dataset directory (dpdata format).&quot;</span><span class="p">)</span>
+    <span class="n">result_dir</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Path to inference result directory (`*.out` files).&quot;</span><span class="p">)</span>
+    <span class="n">output_dir</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">Path</span><span class="p">(</span><span class="n">DEFAULT_CLEAN_OUTPUT_DIR</span><span class="p">),</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Output directory for cleaned dataset and summary files.&quot;</span>
+    <span class="p">)</span>
+    <span class="n">results_prefix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">DEFAULT_CLEAN_RESULTS_PREFIX</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Prefix of inference result files, e.g. `results` for `results.e_peratom.out`.&quot;</span>
+    <span class="p">)</span>
+    <span class="n">energy_diff_threshold</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="kc">None</span><span class="p">,</span>
+        <span class="n">ge</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Per-frame max allowed absolute energy difference in eV/atom. None disables this rule.&quot;</span>
+    <span class="p">)</span>
+    <span class="n">force_max_diff_threshold</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="kc">None</span><span class="p">,</span>
+        <span class="n">ge</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Per-frame max allowed atomic force difference in eV/A. None disables this rule.&quot;</span>
+    <span class="p">)</span>
+    <span class="n">stress_max_diff_threshold</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="kc">None</span><span class="p">,</span>
+        <span class="n">ge</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Per-frame max allowed virial-component difference from `v_peratom.out` or `v.out`. None disables this rule.&quot;</span>
+    <span class="p">)</span>
+    <span class="n">strict_alignment</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">DEFAULT_CLEAN_STRICT_ALIGNMENT</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Whether to require strict system/frame alignment between dataset and inference results.&quot;</span>
+    <span class="p">)</span>
 
 <div class="viewcode-block" id="InferenceConfig">
 <a class="viewcode-back" href="../../api/config/inference.html#dpeva.config.InferenceConfig">[文档]</a>
