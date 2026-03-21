@@ -1,0 +1,724 @@
+
+<!DOCTYPE html>
+
+
+<html lang="zh-CN" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>配置编写指南（Configuration） &#8212; DP-EVA Documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=eba8b062" />
+    <link rel="stylesheet" type="text/css" href="../_static/autodoc_pydantic.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="../_static/documentation_options.js?v=20998797"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script src="../_static/translations.js?v=beaddf03"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'guides/configuration';</script>
+    <link rel="index" title="索引" href="../genindex.html" />
+    <link rel="search" title="搜索" href="../search.html" />
+    <link rel="next" title="Slurm 使用与排障指南" href="slurm.html" />
+    <link rel="prev" title="CLI 使用指南" href="cli.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="zh-CN"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">DP-EVA Documentation</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="搜索" aria-label="搜索" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">搜索</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">安装与环境准备（Installation）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart（最短路径跑通）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cli.html">CLI 使用指南</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">配置编写指南（Configuration）</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">User Guides</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="slurm.html">Slurm 使用与排障指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="troubleshooting.html">Troubleshooting（常见问题与排查）</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../reference/index.html">Reference</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../reference/README.html">Reference（权威参考）</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reference/validation.html">参数校验与约束（Validation Rules）</a></li>
+
+<li class="toctree-l2"><a class="reference internal" href="../reference/upstream-software.html">上游软件与核心依赖（Upstream Software）</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Developer Guide</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="developer-guide.html">DP-EVA 项目开发文档</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../architecture/README.html">Architecture（系统结构）</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../api/config.html">Configuration Reference</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../api/config/submission.html">Common &amp; Submission Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/config/feature.html">Feature Generation Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/config/training.html">Training Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/config/inference.html">Inference Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/config/collection.html">Collection (Active Learning) Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/config/labeling.html">Labeling Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/config/analysis.html">Analysis Configuration</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/workflows.html">Workflows API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/labeling.html">Labeling API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/sampling.html">Sampling API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/uncertain.html">Uncertainty API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/submission.html">Submission API</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Governance</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="docs-governance-quickstart.html">文档治理快速上手（开发者与 AI）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="process-asset-lifecycle.html">过程资产生命周期（AI 草案到项目文档）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../policy/README.html">Policy（制度与规范）</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../architecture/design-report.html">DP-EVA 项目设计模式与架构分析报告</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../architecture/decisions/README.html">README</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../architecture/decisions/2026-02-04-deepmd-dependency.html">ADR: DeepMD-kit 依赖管理策略</a></li>
+<li class="toctree-l1"><a class="reference internal" href="README.html">Guides（操作指南）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="deployment.html">GitHub Actions 文档部署指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="labeling-stats-repair.html">Labeling 历史统计修复</a></li>
+<li class="toctree-l1"><a class="reference internal" href="developer/README.html">Developer Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="developer/config-docs-maintenance.html">变量说明文档维护指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="testing/README.html">Testing（测试指南）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="testing/integration-config-templates.html">DP-EVA 集成测试最小配置模板（Slurm）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="testing/integration-slurm.html">DP-EVA 集成测试设计与交付报告（Slurm + Multi DataPool）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="testing/multi-datapool-artifacts.html">test-for-multiple-datapool 生产目录输入输出分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../policy/contributing.html">文档贡献指南（Contributing）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../policy/docs-structure.html">文档结构与命名规范（Docs Structure &amp; Naming）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../policy/maintenance.html">文档版本管理与维护机制（Maintenance）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../policy/quality.html">文档质量标准（Documentation Quality Standard）</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="下载此页面">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../_sources/guides/configuration.md" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="下载源文件"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.md</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="列印成 PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="全屏模式"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="搜索" aria-label="搜索" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>配置编写指南（Configuration）</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> 目录 </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">1. 目的与范围</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">2. 相关方</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">3. 路径解析规则（强烈建议使用相对路径）</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">3.1 规则</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">3.2 常见路径字段</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#submission-local-slurm">4. Submission 配置（Local / Slurm）</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#local">4.1 Local 最小配置</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#slurm">4.2 Slurm 最小配置</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow">5. 各 Workflow 最小配置示例</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#feature">5.1 Feature</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#train">5.2 Train</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#infer">5.3 Infer</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#collect">5.4 Collect</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#analysis">5.5 Analysis</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#labeling">5.6 Labeling</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">6. 异常处理</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">7. 变更记录</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="configuration">
+<h1>配置编写指南（Configuration）<a class="headerlink" href="#configuration" title="Link to this heading">#</a></h1>
+<ul class="simple">
+<li><p>Status: active</p></li>
+<li><p>Audience: Users / Developers</p></li>
+<li><p>Last-Updated: 2026-03-11</p></li>
+</ul>
+<section id="id1">
+<h2>1. 目的与范围<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
+<p>本页说明“如何写配置、如何组织路径、如何最小化配置”。全量字段字典与校验规则请以 Reference 为准：</p>
+<ul class="simple">
+<li><p>../source/api/config.rst</p></li>
+<li><p>../reference/validation.md</p></li>
+</ul>
+</section>
+<section id="id2">
+<h2>2. 相关方<a class="headerlink" href="#id2" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p>使用者：编写配置并运行工作流</p></li>
+<li><p>开发者：维护配置模型、路径解析与默认值</p></li>
+<li><p>平台维护：提供 Slurm 队列/环境初始化建议</p></li>
+</ul>
+</section>
+<section id="id3">
+<h2>3. 路径解析规则（强烈建议使用相对路径）<a class="headerlink" href="#id3" title="Link to this heading">#</a></h2>
+<section id="id4">
+<h3>3.1 规则<a class="headerlink" href="#id4" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p>配置文件中推荐写相对路径，便于迁移与复现。</p></li>
+<li><p>CLI 会把相对路径按“配置文件所在目录”解析为绝对路径。</p></li>
+</ul>
+<p>参考实现：<code class="docutils literal notranslate"><span class="pre">src/dpeva/utils/config.py</span></code> 的 <code class="docutils literal notranslate"><span class="pre">resolve_config_paths</span></code>。</p>
+</section>
+<section id="id5">
+<h3>3.2 常见路径字段<a class="headerlink" href="#id5" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">work_dir</span></code>：Train/Infer/Feature/Analysis 常用的工作目录</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">project</span></code>：Collect 常用的项目目录</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">data_path</span></code>：Feature/Infer 常用输入数据目录</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">savedir</span></code>：Feature 描述符输出目录</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">root_savedir</span></code>：Collect 输出目录</p></li>
+</ul>
+</section>
+</section>
+<section id="submission-local-slurm">
+<h2>4. Submission 配置（Local / Slurm）<a class="headerlink" href="#submission-local-slurm" title="Link to this heading">#</a></h2>
+<section id="local">
+<h3>4.1 Local 最小配置<a class="headerlink" href="#local" title="Link to this heading">#</a></h3>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;submission&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;backend&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;local&quot;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="slurm">
+<h3>4.2 Slurm 最小配置<a class="headerlink" href="#slurm" title="Link to this heading">#</a></h3>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;submission&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;backend&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;slurm&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;env_setup&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">      </span><span class="s2">&quot;source /path/to/env.sh&quot;</span>
+<span class="w">    </span><span class="p">],</span>
+<span class="w">    </span><span class="nt">&quot;slurm_config&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;nodes&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;ntasks&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;walltime&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;00:30:00&quot;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>常用扩展字段：<code class="docutils literal notranslate"><span class="pre">partition/qos/gpus_per_node/cpus_per_task/account</span></code>。</p>
+</section>
+</section>
+<section id="workflow">
+<h2>5. 各 Workflow 最小配置示例<a class="headerlink" href="#workflow" title="Link to this heading">#</a></h2>
+<p>以下示例用于“快速跑通”，完整字段见 Reference。</p>
+<section id="feature">
+<h3>5.1 Feature<a class="headerlink" href="#feature" title="Link to this heading">#</a></h3>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;work_dir&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;./&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;data_path&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;./other_dpdata_all&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;model_path&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;./DPA-3.1-3M.pt&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;savedir&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;./desc_pool&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;mode&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;cli&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;submission&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;backend&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;slurm&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="train">
+<h3>5.2 Train<a class="headerlink" href="#train" title="Link to this heading">#</a></h3>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;work_dir&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;./&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;input_json_path&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;input.json&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;training_data_path&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;./sampled_dpdata&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;base_model_path&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;DPA-3.1-3M.pt&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;num_models&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;training_mode&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;init&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;submission&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;backend&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;slurm&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="infer">
+<h3>5.3 Infer<a class="headerlink" href="#infer" title="Link to this heading">#</a></h3>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;work_dir&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;./&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;data_path&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;./other_dpdata_all&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;task_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;test_val&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;results_prefix&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;results&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;auto_analysis&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;submission&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;backend&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;slurm&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="collect">
+<h3>5.4 Collect<a class="headerlink" href="#collect" title="Link to this heading">#</a></h3>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;project&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;./&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;desc_dir&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;./desc_pool&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;testdata_dir&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;./other_dpdata_all&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;testing_dir&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;test_val&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;results_prefix&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;results&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;root_savedir&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;dpeva_uq_result&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;sampler_type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;direct&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;direct_n_clusters&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">20</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;direct_k&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;submission&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;backend&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;slurm&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="analysis">
+<h3>5.5 Analysis<a class="headerlink" href="#analysis" title="Link to this heading">#</a></h3>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;mode&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;model_test&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;result_dir&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;0/test_val&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;results_prefix&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;results&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;data_path&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;sampled_dpdata&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;output_dir&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;analysis&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;type_map&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;Fe&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;C&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;O&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;H&quot;</span><span class="p">],</span>
+<span class="w">  </span><span class="nt">&quot;enable_cohesive_energy&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;allow_ref_energy_lstsq_completion&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Analysis 相关建议：</p>
+<ul class="simple">
+<li><p>Inference 若自定义了 <code class="docutils literal notranslate"><span class="pre">results_prefix</span></code>，Analysis 的 <code class="docutils literal notranslate"><span class="pre">results_prefix</span></code> 必须保持一致。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">model_test</span></code> 模式下若需要 Cohesive Energy，请优先提供 <code class="docutils literal notranslate"><span class="pre">data_path</span></code> 指向与 <code class="docutils literal notranslate"><span class="pre">result_dir</span></code> 对应的原始数据集，以避免仅靠文件名推断组分失败。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">enable_cohesive_energy</span></code> 控制是否启用 Cohesive Energy 统计与作图。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">allow_ref_energy_lstsq_completion</span></code> 控制当 <code class="docutils literal notranslate"><span class="pre">ref_energies</span></code> 不完整时是否允许最小二乘补全缺失元素参考能。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">dataset</span></code> 模式若希望输出 Cohesive Energy 图，可将 <code class="docutils literal notranslate"><span class="pre">&quot;enable_cohesive_energy&quot;:</span> <span class="pre">true</span></code> 并提供合理 <code class="docutils literal notranslate"><span class="pre">ref_energies</span></code>（或开启 <code class="docutils literal notranslate"><span class="pre">allow_ref_energy_lstsq_completion</span></code>）。</p></li>
+<li><p>新增图谱会额外输出：</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">dist_&lt;quantity&gt;_overlay.png</span></code>（Pred/True 叠加分布）</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">dist_&lt;quantity&gt;_with_error.png</span></code>（主分布 + 小幅 error 分布）</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">parity_&lt;quantity&gt;_enhanced.png</span></code>（含边缘分布的增强 parity）</p></li>
+</ul>
+</li>
+<li><p>图中统计信息默认仅显示 <code class="docutils literal notranslate"><span class="pre">count/mean/std/min/max</span></code>，不再显示分位数。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Error</span> <span class="pre">Distribution</span></code> 与 <code class="docutils literal notranslate"><span class="pre">parity_*_enhanced.png</span></code> 默认不显示统计信息框。</p></li>
+<li><p>单变量分布图默认不显示 <code class="docutils literal notranslate"><span class="pre">All</span> <span class="pre">Data</span></code> 图例；dataset 元素占比/存在性使用多色饼图。</p></li>
+</ul>
+</section>
+<section id="labeling">
+<h3>5.6 Labeling<a class="headerlink" href="#labeling" title="Link to this heading">#</a></h3>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;input_data_path&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;./candidate_dpdata&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;work_dir&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;./labeling_work&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;pp_dir&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;./abacus_pp&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;orb_dir&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;./abacus_orb&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;pp_map&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;Fe&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Fe.upf&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;C&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;C.upf&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;O&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;O.upf&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;H&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;H.upf&quot;</span><span class="w"> </span><span class="p">},</span>
+<span class="w">  </span><span class="nt">&quot;orb_map&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;Fe&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Fe.orb&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;C&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;C.orb&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;O&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;O.orb&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;H&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;H.orb&quot;</span><span class="w"> </span><span class="p">},</span>
+<span class="w">  </span><span class="nt">&quot;submission&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;backend&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;slurm&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="id6">
+<h2>6. 异常处理<a class="headerlink" href="#id6" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p>配置校验失败：对照 <code class="docutils literal notranslate"><span class="pre">/docs/reference/validation.md</span></code> 的跨字段依赖与范围约束</p></li>
+<li><p>输入路径不存在：检查相对路径是否以 config 所在目录为基准</p></li>
+<li><p>历史字段不兼容：优先以 <code class="docutils literal notranslate"><span class="pre">sampler_type</span> <span class="pre">+</span> <span class="pre">direct_*</span> <span class="pre">/</span> <span class="pre">step*_*</span></code> 的新参数体系为准</p></li>
+</ul>
+</section>
+<section id="id7">
+<h2>7. 变更记录<a class="headerlink" href="#id7" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p>2026-03-16：Analysis 最小配置增加 <code class="docutils literal notranslate"><span class="pre">data_path</span></code>、<code class="docutils literal notranslate"><span class="pre">enable_cohesive_energy</span></code>、<code class="docutils literal notranslate"><span class="pre">allow_ref_energy_lstsq_completion</span></code>，并补充 Cohesive Energy 配置建议。</p></li>
+<li><p>2026-03-11：配置字段权威入口改为 API Reference，并补充 Labeling 最小配置示例。</p></li>
+<li><p>2026-02-18：补齐路径解析、Submission 结构与最小配置示例。</p></li>
+</ul>
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="cli.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">上一页</p>
+        <p class="prev-next-title">CLI 使用指南</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="slurm.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">下一页</p>
+        <p class="prev-next-title">Slurm 使用与排障指南</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> 目录
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">1. 目的与范围</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">2. 相关方</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">3. 路径解析规则（强烈建议使用相对路径）</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">3.1 规则</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">3.2 常见路径字段</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#submission-local-slurm">4. Submission 配置（Local / Slurm）</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#local">4.1 Local 最小配置</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#slurm">4.2 Slurm 最小配置</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow">5. 各 Workflow 最小配置示例</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#feature">5.1 Feature</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#train">5.2 Train</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#infer">5.3 Infer</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#collect">5.4 Collect</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#analysis">5.5 Analysis</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#labeling">5.6 Labeling</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">6. 异常处理</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">7. 变更记录</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+作者： DP-EVA Developers
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2026, DP-EVA Developers.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

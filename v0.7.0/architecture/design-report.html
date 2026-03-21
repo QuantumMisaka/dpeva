@@ -1,0 +1,908 @@
+
+<!DOCTYPE html>
+
+
+<html lang="zh-CN" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>DP-EVA 项目设计模式与架构分析报告 &#8212; DP-EVA Documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=eba8b062" />
+    <link rel="stylesheet" type="text/css" href="../_static/autodoc_pydantic.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="../_static/documentation_options.js?v=20998797"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script src="../_static/translations.js?v=beaddf03"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'architecture/design-report';</script>
+    <link rel="index" title="索引" href="../genindex.html" />
+    <link rel="search" title="搜索" href="../search.html" />
+    <link rel="next" title="README" href="decisions/README.html" />
+    <link rel="prev" title="Policy（制度与规范）" href="../policy/README.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="zh-CN"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">DP-EVA Documentation</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="搜索" aria-label="搜索" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">搜索</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../guides/installation.html">安装与环境准备（Installation）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/quickstart.html">Quickstart（最短路径跑通）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/cli.html">CLI 使用指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/configuration.html">配置编写指南（Configuration）</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">User Guides</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../guides/slurm.html">Slurm 使用与排障指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/troubleshooting.html">Troubleshooting（常见问题与排查）</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../reference/index.html">Reference</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../reference/README.html">Reference（权威参考）</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reference/validation.html">参数校验与约束（Validation Rules）</a></li>
+
+<li class="toctree-l2"><a class="reference internal" href="../reference/upstream-software.html">上游软件与核心依赖（Upstream Software）</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Developer Guide</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../guides/developer-guide.html">DP-EVA 项目开发文档</a></li>
+<li class="toctree-l1"><a class="reference internal" href="README.html">Architecture（系统结构）</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../api/config.html">Configuration Reference</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../api/config/submission.html">Common &amp; Submission Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/config/feature.html">Feature Generation Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/config/training.html">Training Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/config/inference.html">Inference Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/config/collection.html">Collection (Active Learning) Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/config/labeling.html">Labeling Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/config/analysis.html">Analysis Configuration</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/workflows.html">Workflows API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/labeling.html">Labeling API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/sampling.html">Sampling API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/uncertain.html">Uncertainty API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/submission.html">Submission API</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Governance</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../guides/docs-governance-quickstart.html">文档治理快速上手（开发者与 AI）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/process-asset-lifecycle.html">过程资产生命周期（AI 草案到项目文档）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../policy/README.html">Policy（制度与规范）</a></li>
+</ul>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">DP-EVA 项目设计模式与架构分析报告</a></li>
+<li class="toctree-l1"><a class="reference internal" href="decisions/README.html">README</a></li>
+<li class="toctree-l1"><a class="reference internal" href="decisions/2026-02-04-deepmd-dependency.html">ADR: DeepMD-kit 依赖管理策略</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/README.html">Guides（操作指南）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/deployment.html">GitHub Actions 文档部署指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/labeling-stats-repair.html">Labeling 历史统计修复</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/developer/README.html">Developer Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/developer/config-docs-maintenance.html">变量说明文档维护指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/testing/README.html">Testing（测试指南）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/testing/integration-config-templates.html">DP-EVA 集成测试最小配置模板（Slurm）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/testing/integration-slurm.html">DP-EVA 集成测试设计与交付报告（Slurm + Multi DataPool）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/testing/multi-datapool-artifacts.html">test-for-multiple-datapool 生产目录输入输出分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../policy/contributing.html">文档贡献指南（Contributing）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../policy/docs-structure.html">文档结构与命名规范（Docs Structure &amp; Naming）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../policy/maintenance.html">文档版本管理与维护机制（Maintenance）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../policy/quality.html">文档质量标准（Documentation Quality Standard）</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="下载此页面">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../_sources/architecture/design-report.md" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="下载源文件"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.md</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="列印成 PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="全屏模式"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="搜索" aria-label="搜索" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>DP-EVA 项目设计模式与架构分析报告</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> 目录 </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#design-patterns-identification">1. 设计模式识别与分类 (Design Patterns Identification)</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#creational-patterns">1.1 创建型模式 (Creational Patterns)</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#builder-pattern"><strong>1. 建造者模式 (Builder Pattern)</strong></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#dto-configuration-object-dto"><strong>2. 配置对象/DTO 模式 (Configuration Object / DTO)</strong></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#structural-patterns">1.2 结构型模式 (Structural Patterns)</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#pipeline-pattern"><strong>3. 管道模式 (Pipeline Pattern)</strong></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#facade-pattern"><strong>4. 外观模式 (Facade Pattern)</strong></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#behavioral-patterns">1.3 行为型模式 (Behavioral Patterns)</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#strategy-pattern"><strong>5. 策略模式 (Strategy Pattern)</strong></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#command-workflow-pattern"><strong>6. 命令/工作流模式 (Command / Workflow Pattern)</strong></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#programming-paradigms">2. 编程思想总结 (Programming Paradigms)</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#oop"><strong>2.1 面向对象编程 (OOP) - 核心骨架</strong></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#data-driven-vectorization"><strong>2.2 数据驱动/向量化编程 (Data-Driven / Vectorization) - 计算核心</strong></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#declarative-configuration"><strong>2.3 声明式配置 (Declarative Configuration)</strong></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#coupling-analysis">3. 耦合度分析与解耦策略 (Coupling Analysis)</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id1"><strong>当前存在的耦合问题</strong></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id2"><strong>解耦与重构策略</strong></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#strategy-1-workflow"><strong>Strategy 1: 拆分 Workflow 职责</strong></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#strategy-2-dependency-injection"><strong>Strategy 2: 依赖注入 (Dependency Injection)</strong></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#evaluation">4. 设计模式使用评估 (Evaluation)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#best-practices">5. 最佳实践建议 (Best Practices)</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#roadmap"><strong>实施路线图 (Roadmap)</strong></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#architecture-refactoring-implemented">6. 架构重构实施 (Architecture Refactoring Implemented)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#slurm-slurm-backend-architecture">7. Slurm 后端架构与并行设计 (Slurm Backend Architecture)</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dual-mode-scheduling">7.1 双模调度架构 (Dual-Mode Scheduling)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#parallel-submission-strategy">7.2 并行投作业设计 (Parallel Submission Strategy)</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#v0-4-6"><strong>设计原则与验证 (v0.4.6+)</strong></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#trainingworkflow"><strong>TrainingWorkflow 的并行设计</strong></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#inferenceworkflow-v0-4-5"><strong>InferenceWorkflow 的并行设计 (v0.4.5 重构)</strong></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#job-monitoring">7.3 作业状态监控 (Job Monitoring)</a></li>
+</ul>
+</li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="dp-eva">
+<h1>DP-EVA 项目设计模式与架构分析报告<a class="headerlink" href="#dp-eva" title="Link to this heading">#</a></h1>
+<section id="design-patterns-identification">
+<h2>1. 设计模式识别与分类 (Design Patterns Identification)<a class="headerlink" href="#design-patterns-identification" title="Link to this heading">#</a></h2>
+<p>本项目在核心架构中应用了多种经典设计模式，有效支撑了主动学习流程的复杂性和灵活性。</p>
+<section id="creational-patterns">
+<h3>1.1 创建型模式 (Creational Patterns)<a class="headerlink" href="#creational-patterns" title="Link to this heading">#</a></h3>
+<section id="builder-pattern">
+<h4><strong>1. 建造者模式 (Builder Pattern)</strong><a class="headerlink" href="#builder-pattern" title="Link to this heading">#</a></h4>
+<ul>
+<li><p><strong>实现位置</strong>: <a class="reference external" href="https://github.com/QuantumMisaka/dpeva/blob/main/src/dpeva/utils/command.py"><code class="docutils literal notranslate"><span class="pre">src/dpeva/utils/command.py</span></code></a> - <code class="docutils literal notranslate"><span class="pre">DPCommandBuilder</span></code> 类</p></li>
+<li><p><strong>代码示例</strong>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">DPCommandBuilder</span><span class="p">:</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">train</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">input_file</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">finetune_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="n">cmd</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="n">_get_base_cmd</span><span class="p">()</span><span class="si">}</span><span class="s2"> train </span><span class="si">{</span><span class="n">input_file</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">if</span> <span class="n">finetune_path</span><span class="p">:</span> <span class="n">cmd</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot; --finetune </span><span class="si">{</span><span class="n">finetune_path</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">return</span> <span class="n">cmd</span>
+</pre></div>
+</div>
+</li>
+<li><p><strong>解决场景</strong>: DeepMD-kit 的命令行参数繁多且组合复杂（如 Backend 切换、Init Model、Freeze 选项）。Builder 模式将复杂的命令字符串构建过程封装，避免了在业务逻辑中到处拼接字符串，降低了拼写错误风险。</p></li>
+</ul>
+</section>
+<section id="dto-configuration-object-dto">
+<h4><strong>2. 配置对象/DTO 模式 (Configuration Object / DTO)</strong><a class="headerlink" href="#dto-configuration-object-dto" title="Link to this heading">#</a></h4>
+<ul class="simple">
+<li><p><strong>实现位置</strong>: <a class="reference external" href="https://github.com/QuantumMisaka/dpeva/blob/main/src/dpeva/config.py"><code class="docutils literal notranslate"><span class="pre">src/dpeva/config.py</span></code></a> - <code class="docutils literal notranslate"><span class="pre">BaseWorkflowConfig</span></code> 及其子类</p></li>
+<li><p><strong>解决场景</strong>: 使用 Pydantic 模型作为数据传输对象（DTO），集中管理配置项的定义、默认值和类型校验。这避免了使用裸字典（Dict）传递参数导致的“参数黑洞”问题。</p></li>
+</ul>
+</section>
+</section>
+<section id="structural-patterns">
+<h3>1.2 结构型模式 (Structural Patterns)<a class="headerlink" href="#structural-patterns" title="Link to this heading">#</a></h3>
+<section id="pipeline-pattern">
+<h4><strong>3. 管道模式 (Pipeline Pattern)</strong><a class="headerlink" href="#pipeline-pattern" title="Link to this heading">#</a></h4>
+<ul>
+<li><p><strong>实现位置</strong>: <a class="reference external" href="https://github.com/QuantumMisaka/dpeva/blob/main/src/dpeva/sampling/direct.py"><code class="docutils literal notranslate"><span class="pre">src/dpeva/sampling/direct.py</span></code></a> - <code class="docutils literal notranslate"><span class="pre">DIRECTSampler</span></code> 继承自 <code class="docutils literal notranslate"><span class="pre">sklearn.pipeline.Pipeline</span></code></p></li>
+<li><p><strong>代码示例</strong>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">DIRECTSampler</span><span class="p">(</span><span class="n">Pipeline</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">...</span><span class="p">):</span>
+        <span class="n">steps</span> <span class="o">=</span> <span class="p">[(</span><span class="s1">&#39;scaler&#39;</span><span class="p">,</span> <span class="n">scaler</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;pca&#39;</span><span class="p">,</span> <span class="n">pca</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;clustering&#39;</span><span class="p">,</span> <span class="n">clustering</span><span class="p">),</span> <span class="o">...</span><span class="p">]</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">steps</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+<li><p><strong>解决场景</strong>: 采样流程包含数据标准化、降维、聚类、筛选等多个连续步骤。Pipeline 模式将这些步骤串联成一个单一的逻辑单元，使得调用者只需调用 <code class="docutils literal notranslate"><span class="pre">fit_transform</span></code> 即可完成全流程，且易于替换其中任意环节（如更换聚类算法）。</p></li>
+</ul>
+</section>
+<section id="facade-pattern">
+<h4><strong>4. 外观模式 (Facade Pattern)</strong><a class="headerlink" href="#facade-pattern" title="Link to this heading">#</a></h4>
+<ul class="simple">
+<li><p><strong>实现位置</strong>: <code class="docutils literal notranslate"><span class="pre">src/dpeva/submission/job_manager.py</span></code> (推断) - <code class="docutils literal notranslate"><span class="pre">JobManager</span></code></p></li>
+<li><p><strong>解决场景</strong>: 提交任务到 Slurm 集群涉及生成脚本、环境配置、调用 <code class="docutils literal notranslate"><span class="pre">sbatch</span></code> 等复杂操作。<code class="docutils literal notranslate"><span class="pre">JobManager</span></code> 为上层工作流提供了一个统一的简易接口（如 <code class="docutils literal notranslate"><span class="pre">submit()</span></code>），屏蔽了底层调度系统的复杂性。</p></li>
+</ul>
+</section>
+</section>
+<section id="behavioral-patterns">
+<h3>1.3 行为型模式 (Behavioral Patterns)<a class="headerlink" href="#behavioral-patterns" title="Link to this heading">#</a></h3>
+<section id="strategy-pattern">
+<h4><strong>5. 策略模式 (Strategy Pattern)</strong><a class="headerlink" href="#strategy-pattern" title="Link to this heading">#</a></h4>
+<ul class="simple">
+<li><p><strong>实现位置</strong>: <a class="reference external" href="https://github.com/QuantumMisaka/dpeva/blob/main/src/dpeva/workflows/collect.py"><code class="docutils literal notranslate"><span class="pre">src/dpeva/workflows/collect.py</span></code></a> - <code class="docutils literal notranslate"><span class="pre">UQFilter</span></code> 和 <code class="docutils literal notranslate"><span class="pre">DIRECTSampler</span></code> 的选择</p></li>
+<li><p><strong>解决场景</strong>:</p>
+<ul>
+<li><p><strong>UQ 策略</strong>: 根据 <code class="docutils literal notranslate"><span class="pre">uq_select_scheme</span></code> (&quot;tangent_lo&quot;, &quot;strict&quot;) 动态选择不同的过滤算法。</p></li>
+<li><p><strong>采样策略</strong>: 根据 <code class="docutils literal notranslate"><span class="pre">sampler_type</span></code> 选择 <code class="docutils literal notranslate"><span class="pre">DIRECTSampler</span></code> 或 <code class="docutils literal notranslate"><span class="pre">TwoStepDIRECTSampler</span></code>。这允许在运行时根据配置动态切换算法实现。</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="command-workflow-pattern">
+<h4><strong>6. 命令/工作流模式 (Command / Workflow Pattern)</strong><a class="headerlink" href="#command-workflow-pattern" title="Link to this heading">#</a></h4>
+<ul class="simple">
+<li><p><strong>实现位置</strong>: <code class="docutils literal notranslate"><span class="pre">src/dpeva/workflows/*.py</span></code> - <code class="docutils literal notranslate"><span class="pre">CollectionWorkflow</span></code>, <code class="docutils literal notranslate"><span class="pre">TrainingWorkflow</span></code></p></li>
+<li><p><strong>解决场景</strong>: 将一个完整的主动学习任务（如“采集”、“训练”）封装为一个对象。该对象包含执行任务所需的所有上下文（配置、路径、状态），使得任务的执行（<code class="docutils literal notranslate"><span class="pre">run()</span></code>）与调用解耦。</p></li>
+</ul>
+</section>
+</section>
+</section>
+<hr class="docutils" />
+<section id="programming-paradigms">
+<h2>2. 编程思想总结 (Programming Paradigms)<a class="headerlink" href="#programming-paradigms" title="Link to this heading">#</a></h2>
+<section id="oop">
+<h3><strong>2.1 面向对象编程 (OOP) - 核心骨架</strong><a class="headerlink" href="#oop" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><strong>体现</strong>: 项目通过类（Classes）来组织逻辑，如 <code class="docutils literal notranslate"><span class="pre">Workflow</span></code> 类管理状态，<code class="docutils literal notranslate"><span class="pre">Config</span></code> 类管理数据。继承机制被用于复用通用配置（<code class="docutils literal notranslate"><span class="pre">BaseWorkflowConfig</span></code>）。</p></li>
+<li><p><strong>影响</strong>: 提供了良好的模块化边界，使得代码易于理解和导航。</p></li>
+</ul>
+</section>
+<section id="data-driven-vectorization">
+<h3><strong>2.2 数据驱动/向量化编程 (Data-Driven / Vectorization) - 计算核心</strong><a class="headerlink" href="#data-driven-vectorization" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><strong>体现</strong>: 在 <code class="docutils literal notranslate"><span class="pre">UQCalculator</span></code> 和 <code class="docutils literal notranslate"><span class="pre">CollectionWorkflow</span></code> 中，大量使用 NumPy 和 Pandas 进行向量化运算（如 <code class="docutils literal notranslate"><span class="pre">np.mean(axis=0)</span></code>, <code class="docutils literal notranslate"><span class="pre">df.groupby</span></code>）。</p></li>
+<li><p><strong>影响</strong>: 相比 Python 原生循环，性能提升了数个数量级，且代码更简洁（<code class="docutils literal notranslate"><span class="pre">Explicit</span> <span class="pre">&amp;</span> <span class="pre">Simple</span></code>）。</p></li>
+</ul>
+</section>
+<section id="declarative-configuration">
+<h3><strong>2.3 声明式配置 (Declarative Configuration)</strong><a class="headerlink" href="#declarative-configuration" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><strong>体现</strong>: 利用 Pydantic 的 Field 定义，声明“我们需要什么参数”及其约束，而不是编写命令式的解析代码。</p></li>
+<li><p><strong>影响</strong>: 极大提升了配置的可维护性和健壮性，减少了防御性编程的代码量。</p></li>
+</ul>
+</section>
+</section>
+<hr class="docutils" />
+<section id="coupling-analysis">
+<h2>3. 耦合度分析与解耦策略 (Coupling Analysis)<a class="headerlink" href="#coupling-analysis" title="Link to this heading">#</a></h2>
+<section id="id1">
+<h3><strong>当前存在的耦合问题</strong><a class="headerlink" href="#id1" title="Link to this heading">#</a></h3>
+<ol class="arabic simple">
+<li><p><strong>Workflows 类的“上帝对象”倾向 (High Coupling)</strong></p>
+<ul class="simple">
+<li><p><strong>问题</strong>: <code class="docutils literal notranslate"><span class="pre">CollectionWorkflow</span></code> 职责过重，同时负责了：配置加载、路径管理、日志记录、数据加载、UQ 计算调用、绘图调用、结果导出、Slurm 提交逻辑。</p></li>
+<li><p><strong>后果</strong>: 难以单独测试某一环节（如只测试“结果导出”），且代码文件庞大（~1300行）。</p></li>
+<li><p><strong>依赖图</strong>: <code class="docutils literal notranslate"><span class="pre">Workflow</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">JobManager</span></code>, <code class="docutils literal notranslate"><span class="pre">UQCalculator</span></code>, <code class="docutils literal notranslate"><span class="pre">UQVisualizer</span></code>, <code class="docutils literal notranslate"><span class="pre">DIRECTSampler</span></code>, <code class="docutils literal notranslate"><span class="pre">DPTestResultParser</span></code>, <code class="docutils literal notranslate"><span class="pre">logging</span></code>, <code class="docutils literal notranslate"><span class="pre">os</span></code>...</p></li>
+</ul>
+</li>
+<li><p><strong>硬编码的绘图逻辑</strong></p>
+<ul class="simple">
+<li><p><strong>问题</strong>: <code class="docutils literal notranslate"><span class="pre">CollectionWorkflow</span></code> 中包含大量关于绘图的控制逻辑（调用 <code class="docutils literal notranslate"><span class="pre">vis.plot_xxx</span></code>），导致业务逻辑与展示逻辑耦合。</p></li>
+</ul>
+</li>
+</ol>
+</section>
+<section id="id2">
+<h3><strong>解耦与重构策略</strong><a class="headerlink" href="#id2" title="Link to this heading">#</a></h3>
+<section id="strategy-1-workflow">
+<h4><strong>Strategy 1: 拆分 Workflow 职责</strong><a class="headerlink" href="#strategy-1-workflow" title="Link to this heading">#</a></h4>
+<ul class="simple">
+<li><p><strong>方案</strong>: 引入 <code class="docutils literal notranslate"><span class="pre">Context</span></code> 对象和 <code class="docutils literal notranslate"><span class="pre">Task</span></code> 接口。</p></li>
+<li><p><strong>实施</strong>:</p>
+<ol class="arabic simple">
+<li><p>建立 <code class="docutils literal notranslate"><span class="pre">CollectionContext</span></code> 仅存储路径和数据。</p></li>
+<li><p>将 Workflow 拆分为独立的 Task 类：<code class="docutils literal notranslate"><span class="pre">DataLoaderTask</span></code>, <code class="docutils literal notranslate"><span class="pre">UQAnalysisTask</span></code>, <code class="docutils literal notranslate"><span class="pre">SamplingTask</span></code>, <code class="docutils literal notranslate"><span class="pre">ExportTask</span></code>。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">CollectionWorkflow</span></code> 仅作为 Orchestrator（指挥者）按顺序执行这些 Task。</p></li>
+</ol>
+</li>
+</ul>
+</section>
+<section id="strategy-2-dependency-injection">
+<h4><strong>Strategy 2: 依赖注入 (Dependency Injection)</strong><a class="headerlink" href="#strategy-2-dependency-injection" title="Link to this heading">#</a></h4>
+<ul>
+<li><p><strong>方案</strong>: 不要在 Workflow 内部实例化 <code class="docutils literal notranslate"><span class="pre">UQCalculator</span></code> 或 <code class="docutils literal notranslate"><span class="pre">UQVisualizer</span></code>。</p></li>
+<li><p><strong>实施</strong>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Before</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">CollectionWorkflow</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">calculator</span> <span class="o">=</span> <span class="n">UQCalculator</span><span class="p">()</span> <span class="c1"># Hard dependency</span>
+
+<span class="c1"># After</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">CollectionWorkflow</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">calculator</span><span class="p">:</span> <span class="n">UQCalculator</span><span class="p">,</span> <span class="o">...</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">calculator</span> <span class="o">=</span> <span class="n">calculator</span>
+</pre></div>
+</div>
+<p>这将极大提升单元测试的可测性（易于 Mock）。</p>
+</li>
+</ul>
+</section>
+</section>
+</section>
+<hr class="docutils" />
+<section id="evaluation">
+<h2>4. 设计模式使用评估 (Evaluation)<a class="headerlink" href="#evaluation" title="Link to this heading">#</a></h2>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head text-left"><p>模式</p></th>
+<th class="head text-left"><p>优势 (Pros)</p></th>
+<th class="head text-left"><p>劣势 (Cons)</p></th>
+<th class="head text-left"><p>评分</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td class="text-left"><p><strong>Builder</strong></p></td>
+<td class="text-left"><p>消除魔法字符串，易于扩展新参数</p></td>
+<td class="text-left"><p>增加了一个额外的类文件</p></td>
+<td class="text-left"><p>⭐⭐⭐⭐⭐ (必选)</p></td>
+</tr>
+<tr class="row-odd"><td class="text-left"><p><strong>Pipeline</strong></p></td>
+<td class="text-left"><p>逻辑清晰，符合机器学习标准范式</p></td>
+<td class="text-left"><p>调试中间步骤（如查看 PCA 后的数据）稍显麻烦</p></td>
+<td class="text-left"><p>⭐⭐⭐⭐⭐ (推荐)</p></td>
+</tr>
+<tr class="row-even"><td class="text-left"><p><strong>Config/DTO</strong></p></td>
+<td class="text-left"><p>强类型，自动校验，IDE 提示友好</p></td>
+<td class="text-left"><p>引入了 Pydantic 依赖</p></td>
+<td class="text-left"><p>⭐⭐⭐⭐⭐ (必选)</p></td>
+</tr>
+<tr class="row-odd"><td class="text-left"><p><strong>Facade (JobManager)</strong></p></td>
+<td class="text-left"><p>简化了上层调用</p></td>
+<td class="text-left"><p>如果底层差异过大（如 Slurm vs PBS），外观类会变得臃肿</p></td>
+<td class="text-left"><p>⭐⭐⭐⭐ (良好)</p></td>
+</tr>
+<tr class="row-even"><td class="text-left"><p><strong>Workflow (God Class)</strong></p></td>
+<td class="text-left"><p>初主要逻辑集中，易于编写原型</p></td>
+<td class="text-left"><p>违反单一职责原则，维护成本随时间指数增长</p></td>
+<td class="text-left"><p>⭐⭐ (需重构)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<hr class="docutils" />
+<section id="best-practices">
+<h2>5. 最佳实践建议 (Best Practices)<a class="headerlink" href="#best-practices" title="Link to this heading">#</a></h2>
+<ol class="arabic simple">
+<li><p><strong>坚持“配置即代码”</strong>: 继续保持使用 Pydantic 管理所有新增配置，杜绝 <code class="docutils literal notranslate"><span class="pre">kwargs</span></code> 满天飞。</p></li>
+<li><p><strong>重构“上帝工作流”</strong>: 下一阶段的重构重点应是将 <code class="docutils literal notranslate"><span class="pre">CollectionWorkflow</span></code> 拆解为多个单一职责的 Service 类（如 <code class="docutils literal notranslate"><span class="pre">DataService</span></code>, <code class="docutils literal notranslate"><span class="pre">UQService</span></code>, <code class="docutils literal notranslate"><span class="pre">PlottingService</span></code>）。</p></li>
+<li><p><strong>强化接口定义</strong>: 在 <code class="docutils literal notranslate"><span class="pre">src/dpeva/interfaces.py</span></code> 中定义抽象基类（Abstract Base Classes），如 <code class="docutils literal notranslate"><span class="pre">AbstractSampler</span></code>, <code class="docutils literal notranslate"><span class="pre">AbstractUQCalculator</span></code>，强制实现类遵循统一接口，便于扩展。</p></li>
+<li><p><strong>建立工厂模式</strong>: 对于 <code class="docutils literal notranslate"><span class="pre">Sampler</span></code> 和 <code class="docutils literal notranslate"><span class="pre">UQCalculator</span></code> 的创建，可以引入简单的 Factory 函数，将对象的创建逻辑从业务逻辑中剥离。</p></li>
+</ol>
+<section id="roadmap">
+<h3><strong>实施路线图 (Roadmap)</strong><a class="headerlink" href="#roadmap" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><strong>短期 (Short-term)</strong>: 完成 <code class="docutils literal notranslate"><span class="pre">CollectionWorkflow</span></code> 的解耦重构，将数据、UQ、采样逻辑拆分为独立的 Manager 类 (<code class="docutils literal notranslate"><span class="pre">CollectionIOManager</span></code>, <code class="docutils literal notranslate"><span class="pre">UQManager</span></code>, <code class="docutils literal notranslate"><span class="pre">SamplingManager</span></code>)，并归位到 <code class="docutils literal notranslate"><span class="pre">io</span></code>, <code class="docutils literal notranslate"><span class="pre">uncertain</span></code>, <code class="docutils literal notranslate"><span class="pre">sampling</span></code> 模块中。</p></li>
+<li><p><strong>中期 (Mid-term)</strong>: 引入 <code class="docutils literal notranslate"><span class="pre">Dependency</span> <span class="pre">Injection</span></code> 容器或手动注入模式，提升测试覆盖率。</p></li>
+<li><p><strong>长期 (Long-term)</strong>: 抽象出通用的 <code class="docutils literal notranslate"><span class="pre">ActiveLearningLoop</span></code> 框架，支持插件式的 UQ 和采样算法，使 DP-EVA 成为一个开放平台。</p></li>
+</ul>
+</section>
+</section>
+<section id="architecture-refactoring-implemented">
+<h2>6. 架构重构实施 (Architecture Refactoring Implemented)<a class="headerlink" href="#architecture-refactoring-implemented" title="Link to this heading">#</a></h2>
+<p>基于上述分析，<code class="docutils literal notranslate"><span class="pre">CollectionWorkflow</span></code> 已于 <code class="docutils literal notranslate"><span class="pre">v0.2.0</span></code> 版本完成重构，实现了<strong>领域驱动的职责分离</strong>：</p>
+<ol class="arabic simple">
+<li><p><strong>数据层 (<code class="docutils literal notranslate"><span class="pre">dpeva.io.collection.CollectionIOManager</span></code>)</strong>:</p>
+<ul class="simple">
+<li><p>负责所有磁盘 I/O 操作（描述符加载、原子特征读取、结果导出）。</p></li>
+<li><p>封装了路径管理和日志配置。</p></li>
+</ul>
+</li>
+<li><p><strong>UQ 层 (<code class="docutils literal notranslate"><span class="pre">dpeva.uncertain.manager.UQManager</span></code>)</strong>:</p>
+<ul class="simple">
+<li><p>编排 UQ 计算流程（加载预测、计算方差、对齐尺度）。</p></li>
+<li><p>封装了自动阈值推导 (<code class="docutils literal notranslate"><span class="pre">auto_threshold</span></code>) 和过滤逻辑。</p></li>
+</ul>
+</li>
+<li><p><strong>采样层 (<code class="docutils literal notranslate"><span class="pre">dpeva.sampling.manager.SamplingManager</span></code>)</strong>:</p>
+<ul class="simple">
+<li><p>统一管理 DIRECT 与 2-DIRECT 策略。</p></li>
+<li><p>处理 Joint Sampling 的特征拼接逻辑。</p></li>
+</ul>
+</li>
+<li><p><strong>工作流层 (<code class="docutils literal notranslate"><span class="pre">dpeva.workflows.collect.CollectionWorkflow</span></code>)</strong>:</p>
+<ul class="simple">
+<li><p>仅保留配置注入和高层流程控制。</p></li>
+<li><p>通过组合（Composition）方式调用上述 Manager，代码量减少约 60%，逻辑清晰度显著提升。</p></li>
+</ul>
+</li>
+</ol>
+</section>
+<hr class="docutils" />
+<section id="slurm-slurm-backend-architecture">
+<h2>7. Slurm 后端架构与并行设计 (Slurm Backend Architecture)<a class="headerlink" href="#slurm-slurm-backend-architecture" title="Link to this heading">#</a></h2>
+<p>DP-EVA 专为高性能计算 (HPC) 环境设计，其核心设计目标之一是能够无缝地在本地单机 (Local) 和 Slurm 集群 (Slurm) 之间切换，且最大化集群资源的并行利用率。</p>
+<section id="dual-mode-scheduling">
+<h3>7.1 双模调度架构 (Dual-Mode Scheduling)<a class="headerlink" href="#dual-mode-scheduling" title="Link to this heading">#</a></h3>
+<p>系统通过 <code class="docutils literal notranslate"><span class="pre">JobManager</span></code> 实现了对底层计算资源的抽象：</p>
+<ul class="simple">
+<li><p><strong>Local Backend</strong>:</p>
+<ul>
+<li><p>利用 <code class="docutils literal notranslate"><span class="pre">multiprocessing</span></code> 模块在本地并发执行任务。</p></li>
+<li><p>适用于调试、小规模测试或单节点工作站。</p></li>
+</ul>
+</li>
+<li><p><strong>Slurm Backend</strong>:</p>
+<ul>
+<li><p>利用 <code class="docutils literal notranslate"><span class="pre">sbatch</span></code> 命令提交作业到集群调度器。</p></li>
+<li><p>支持 <code class="docutils literal notranslate"><span class="pre">partition</span></code>, <code class="docutils literal notranslate"><span class="pre">qos</span></code>, <code class="docutils literal notranslate"><span class="pre">nodes</span></code>, <code class="docutils literal notranslate"><span class="pre">gpus_per_node</span></code> 等高级 Slurm 参数。</p></li>
+<li><p><strong>关键特性</strong>: 生成独立的 <code class="docutils literal notranslate"><span class="pre">.slurm</span></code> 脚本文件，确保作业可追溯、可复现。</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="parallel-submission-strategy">
+<h3>7.2 并行投作业设计 (Parallel Submission Strategy)<a class="headerlink" href="#parallel-submission-strategy" title="Link to this heading">#</a></h3>
+<p>为了解决大规模主动学习任务中的吞吐量瓶颈，<strong>TrainingWorkflow</strong> 和 <strong>InferenceWorkflow</strong> (v0.4.5+) 均采用了 <strong>&quot;One-Task-One-Job&quot; (一任务一作业)</strong> 的并行策略，而非将所有任务打包进单一作业。</p>
+<section id="v0-4-6">
+<h4><strong>设计原则与验证 (v0.4.6+)</strong><a class="headerlink" href="#v0-4-6" title="Link to this heading">#</a></h4>
+<ul class="simple">
+<li><p><strong>原则</strong>: 系统必须保证 $N$ 个模型任务生成 $N$ 个独立的 Slurm 作业 ID。任何形式的串行化（如循环 subprocess 调用）或任务合并（Job Array 除外）在当前阶段均被视为反模式。</p></li>
+<li><p><strong>验证</strong>:</p>
+<ul>
+<li><p><strong>单元测试</strong>: 引入了专门的 Mock 测试 (<code class="docutils literal notranslate"><span class="pre">test_training_managers.py</span></code>, <code class="docutils literal notranslate"><span class="pre">test_inference_execution_manager.py</span></code>)，断言 <code class="docutils literal notranslate"><span class="pre">JobManager.submit</span></code> 方法的调用次数严格等于模型数量，防止逻辑退化。</p></li>
+<li><p><strong>集成测试</strong>: 在真实 Slurm 环境中，Orchestrator 通过轮询文件系统，确认每个模型目录下的日志文件（如 <code class="docutils literal notranslate"><span class="pre">work/0/test_job.out</span></code>）均独立生成并包含 <code class="docutils literal notranslate"><span class="pre">WORKFLOW_FINISHED</span></code> 标记，从而在物理层面上验证了并行执行的真实性。</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="trainingworkflow">
+<h4><strong>TrainingWorkflow 的并行设计</strong><a class="headerlink" href="#trainingworkflow" title="Link to this heading">#</a></h4>
+<p>训练阶段通常涉及同时训练 4 个（或更多）模型以构建系综 (Ensemble)。</p>
+<ul>
+<li><p><strong>并行模式</strong>: <code class="docutils literal notranslate"><span class="pre">TrainingExecutionManager</span></code> 会遍历所有模型任务，为每个模型生成一个独立的 <code class="docutils literal notranslate"><span class="pre">train.slurm</span></code> 脚本。</p></li>
+<li><p><strong>资源隔离</strong>: 每个作业独立申请 GPU 资源（例如 4 个模型申请 4 个 GPU 卡），互不干扰。</p></li>
+<li><p><strong>提交逻辑</strong>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># 伪代码逻辑</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_models</span><span class="p">):</span>
+    <span class="n">script_path</span> <span class="o">=</span> <span class="n">generate_slurm_script</span><span class="p">(</span><span class="n">task_id</span><span class="o">=</span><span class="n">i</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
+    <span class="n">JobManager</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">script_path</span><span class="p">)</span> 
+</pre></div>
+</div>
+</li>
+<li><p><strong>优势</strong>: 极大缩短了总训练时间（从 $T \times N$ 缩减为 $T$），且单个模型失败不会影响其他模型。</p></li>
+</ul>
+</section>
+<section id="inferenceworkflow-v0-4-5">
+<h4><strong>InferenceWorkflow 的并行设计 (v0.4.5 重构)</strong><a class="headerlink" href="#inferenceworkflow-v0-4-5" title="Link to this heading">#</a></h4>
+<p>推理阶段需要对每个模型在测试集上进行预测。</p>
+<ul class="simple">
+<li><p><strong>旧版问题 (v0.4.4及之前)</strong>: 采用 &quot;Self-Submission&quot; 模式，即提交一个 Slurm 作业，该作业内部再串行调用 <code class="docutils literal notranslate"><span class="pre">subprocess</span></code> 运行所有模型的推理。这导致 N 个模型的推理只能串行执行，无法利用集群并行能力。</p></li>
+<li><p><strong>新版设计 (v0.4.5+)</strong>:</p>
+<ul>
+<li><p><strong>并行化</strong>: <code class="docutils literal notranslate"><span class="pre">InferenceExecutionManager</span></code> 现已对齐 Training 的设计，直接为每个模型生成独立的 <code class="docutils literal notranslate"><span class="pre">run_test.slurm</span></code> 脚本并并行提交。</p></li>
+<li><p><strong>命令构建</strong>: 脚本内部直接调用 <code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">test</span></code> (通过 <code class="docutils literal notranslate"><span class="pre">DPCommandBuilder</span></code>)，去除了中间层的 Python 包装，降低了开销。</p></li>
+<li><p><strong>状态管理</strong>: 由于是异步提交，分析步骤 (<code class="docutils literal notranslate"><span class="pre">Analysis</span></code>) 需在作业完成后手动触发或由外部工作流编排器（如 Airflow）管理。</p></li>
+</ul>
+</li>
+</ul>
+</section>
+</section>
+<section id="job-monitoring">
+<h3>7.3 作业状态监控 (Job Monitoring)<a class="headerlink" href="#job-monitoring" title="Link to this heading">#</a></h3>
+<p>为了支持自动化工作流，所有 Slurm 作业在成功执行完核心逻辑后，都会向 stdout/日志输出标准化的结束标记：</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>DPEVA_TAG: WORKFLOW_FINISHED
+</pre></div>
+</div>
+<p>外部系统（或未来的 <code class="docutils literal notranslate"><span class="pre">MonitorWorkflow</span></code>）可以通过轮询日志文件检测此 Tag，从而精确判定任务是否完成，实现基于事件的自动化编排。</p>
+</section>
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="../policy/README.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">上一页</p>
+        <p class="prev-next-title">Policy（制度与规范）</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="decisions/README.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">下一页</p>
+        <p class="prev-next-title">README</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> 目录
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#design-patterns-identification">1. 设计模式识别与分类 (Design Patterns Identification)</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#creational-patterns">1.1 创建型模式 (Creational Patterns)</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#builder-pattern"><strong>1. 建造者模式 (Builder Pattern)</strong></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#dto-configuration-object-dto"><strong>2. 配置对象/DTO 模式 (Configuration Object / DTO)</strong></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#structural-patterns">1.2 结构型模式 (Structural Patterns)</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#pipeline-pattern"><strong>3. 管道模式 (Pipeline Pattern)</strong></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#facade-pattern"><strong>4. 外观模式 (Facade Pattern)</strong></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#behavioral-patterns">1.3 行为型模式 (Behavioral Patterns)</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#strategy-pattern"><strong>5. 策略模式 (Strategy Pattern)</strong></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#command-workflow-pattern"><strong>6. 命令/工作流模式 (Command / Workflow Pattern)</strong></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#programming-paradigms">2. 编程思想总结 (Programming Paradigms)</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#oop"><strong>2.1 面向对象编程 (OOP) - 核心骨架</strong></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#data-driven-vectorization"><strong>2.2 数据驱动/向量化编程 (Data-Driven / Vectorization) - 计算核心</strong></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#declarative-configuration"><strong>2.3 声明式配置 (Declarative Configuration)</strong></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#coupling-analysis">3. 耦合度分析与解耦策略 (Coupling Analysis)</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id1"><strong>当前存在的耦合问题</strong></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id2"><strong>解耦与重构策略</strong></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#strategy-1-workflow"><strong>Strategy 1: 拆分 Workflow 职责</strong></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#strategy-2-dependency-injection"><strong>Strategy 2: 依赖注入 (Dependency Injection)</strong></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#evaluation">4. 设计模式使用评估 (Evaluation)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#best-practices">5. 最佳实践建议 (Best Practices)</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#roadmap"><strong>实施路线图 (Roadmap)</strong></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#architecture-refactoring-implemented">6. 架构重构实施 (Architecture Refactoring Implemented)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#slurm-slurm-backend-architecture">7. Slurm 后端架构与并行设计 (Slurm Backend Architecture)</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dual-mode-scheduling">7.1 双模调度架构 (Dual-Mode Scheduling)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#parallel-submission-strategy">7.2 并行投作业设计 (Parallel Submission Strategy)</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#v0-4-6"><strong>设计原则与验证 (v0.4.6+)</strong></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#trainingworkflow"><strong>TrainingWorkflow 的并行设计</strong></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#inferenceworkflow-v0-4-5"><strong>InferenceWorkflow 的并行设计 (v0.4.5 重构)</strong></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#job-monitoring">7.3 作业状态监控 (Job Monitoring)</a></li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+作者： DP-EVA Developers
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2026, DP-EVA Developers.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

@@ -1,0 +1,671 @@
+
+<!DOCTYPE html>
+
+
+<html lang="zh-CN" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>GitHub Actions 文档部署指南 &#8212; DP-EVA Documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=eba8b062" />
+    <link rel="stylesheet" type="text/css" href="../_static/autodoc_pydantic.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="../_static/documentation_options.js?v=20998797"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script src="../_static/translations.js?v=beaddf03"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'guides/deployment';</script>
+    <link rel="index" title="索引" href="../genindex.html" />
+    <link rel="search" title="搜索" href="../search.html" />
+    <link rel="next" title="Labeling 历史统计修复" href="labeling-stats-repair.html" />
+    <link rel="prev" title="Guides（操作指南）" href="README.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="zh-CN"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">DP-EVA Documentation</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="搜索" aria-label="搜索" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">搜索</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">安装与环境准备（Installation）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart（最短路径跑通）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cli.html">CLI 使用指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="configuration.html">配置编写指南（Configuration）</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">User Guides</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="slurm.html">Slurm 使用与排障指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="troubleshooting.html">Troubleshooting（常见问题与排查）</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../reference/index.html">Reference</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../reference/README.html">Reference（权威参考）</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reference/validation.html">参数校验与约束（Validation Rules）</a></li>
+
+<li class="toctree-l2"><a class="reference internal" href="../reference/upstream-software.html">上游软件与核心依赖（Upstream Software）</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Developer Guide</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="developer-guide.html">DP-EVA 项目开发文档</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../architecture/README.html">Architecture（系统结构）</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../api/config.html">Configuration Reference</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../api/config/submission.html">Common &amp; Submission Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/config/feature.html">Feature Generation Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/config/training.html">Training Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/config/inference.html">Inference Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/config/collection.html">Collection (Active Learning) Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/config/labeling.html">Labeling Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/config/analysis.html">Analysis Configuration</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/workflows.html">Workflows API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/labeling.html">Labeling API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/sampling.html">Sampling API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/uncertain.html">Uncertainty API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/submission.html">Submission API</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Governance</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="docs-governance-quickstart.html">文档治理快速上手（开发者与 AI）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="process-asset-lifecycle.html">过程资产生命周期（AI 草案到项目文档）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../policy/README.html">Policy（制度与规范）</a></li>
+</ul>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../architecture/design-report.html">DP-EVA 项目设计模式与架构分析报告</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../architecture/decisions/README.html">README</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../architecture/decisions/2026-02-04-deepmd-dependency.html">ADR: DeepMD-kit 依赖管理策略</a></li>
+<li class="toctree-l1"><a class="reference internal" href="README.html">Guides（操作指南）</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">GitHub Actions 文档部署指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="labeling-stats-repair.html">Labeling 历史统计修复</a></li>
+<li class="toctree-l1"><a class="reference internal" href="developer/README.html">Developer Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="developer/config-docs-maintenance.html">变量说明文档维护指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="testing/README.html">Testing（测试指南）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="testing/integration-config-templates.html">DP-EVA 集成测试最小配置模板（Slurm）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="testing/integration-slurm.html">DP-EVA 集成测试设计与交付报告（Slurm + Multi DataPool）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="testing/multi-datapool-artifacts.html">test-for-multiple-datapool 生产目录输入输出分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../policy/contributing.html">文档贡献指南（Contributing）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../policy/docs-structure.html">文档结构与命名规范（Docs Structure &amp; Naming）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../policy/maintenance.html">文档版本管理与维护机制（Maintenance）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../policy/quality.html">文档质量标准（Documentation Quality Standard）</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="下载此页面">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../_sources/guides/deployment.md" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="下载源文件"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.md</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="列印成 PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="全屏模式"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="搜索" aria-label="搜索" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>GitHub Actions 文档部署指南</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> 目录 </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">1. 部署架构</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#repository-settings">2. 前置配置 (Repository Settings)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#github-workflows-docs-deploy-yml">3. 工作流文件详解 (<code class="docutils literal notranslate"><span class="pre">.github/workflows/docs-deploy.yml</span></code>)</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">3.1 完整配置</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">3.2 关键步骤说明</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">4. 多版本管理策略</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#index-html">4.1 根目录重定向 (index.html)</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">5. 本地验证</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">6. 故障排查</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">7. 后续优化</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="github-actions">
+<h1>GitHub Actions 文档部署指南<a class="headerlink" href="#github-actions" title="Link to this heading">#</a></h1>
+<p>本指南详细说明了如何使用 GitHub Actions 将 DP-EVA 的 Sphinx 文档自动构建并发布到 GitHub Pages。</p>
+<section id="id1">
+<h2>1. 部署架构<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
+<p>我们采用 <strong>GitHub Pages + GitHub Actions</strong> 的自动化部署方案。</p>
+<ul class="simple">
+<li><p><strong>触发条件</strong>:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">push</span></code> 到 <code class="docutils literal notranslate"><span class="pre">main</span></code> 分支: 部署为 <code class="docutils literal notranslate"><span class="pre">latest</span></code> 版本。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">push</span></code> 到 <code class="docutils literal notranslate"><span class="pre">v*</span></code> 标签 (Tag): 部署为对应版本号 (如 <code class="docutils literal notranslate"><span class="pre">v0.6.0</span></code>)。</p></li>
+</ul>
+</li>
+<li><p><strong>构建环境</strong>: <code class="docutils literal notranslate"><span class="pre">ubuntu-latest</span></code> + <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">3.x</span></code>。</p></li>
+<li><p><strong>发布目标</strong>: <code class="docutils literal notranslate"><span class="pre">gh-pages</span></code> 分支 (作为静态站点源)。</p></li>
+</ul>
+</section>
+<section id="repository-settings">
+<h2>2. 前置配置 (Repository Settings)<a class="headerlink" href="#repository-settings" title="Link to this heading">#</a></h2>
+<p>在 GitHub 仓库设置中，需完成以下配置：</p>
+<ol class="arabic simple">
+<li><p>进入 <strong>Settings &gt; Pages</strong>。</p></li>
+<li><p>在 <strong>Build and deployment</strong> 部分：</p>
+<ul class="simple">
+<li><p><strong>Source</strong>: 选择 <code class="docutils literal notranslate"><span class="pre">Deploy</span> <span class="pre">from</span> <span class="pre">a</span> <span class="pre">branch</span></code>。</p></li>
+<li><p><strong>Branch</strong>: 选择 <code class="docutils literal notranslate"><span class="pre">gh-pages</span></code> 分支，目录选择 <code class="docutils literal notranslate"><span class="pre">/</span> <span class="pre">(root)</span></code>。</p></li>
+</ul>
+</li>
+<li><p>确保 <code class="docutils literal notranslate"><span class="pre">GITHUB_TOKEN</span></code> 拥有写入权限 (Settings &gt; Actions &gt; General &gt; Workflow permissions &gt; Read and write permissions)。</p></li>
+</ol>
+</section>
+<section id="github-workflows-docs-deploy-yml">
+<h2>3. 工作流文件详解 (<code class="docutils literal notranslate"><span class="pre">.github/workflows/docs-deploy.yml</span></code>)<a class="headerlink" href="#github-workflows-docs-deploy-yml" title="Link to this heading">#</a></h2>
+<section id="id2">
+<h3>3.1 完整配置<a class="headerlink" href="#id2" title="Link to this heading">#</a></h3>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Deploy Docs</span>
+
+<span class="nt">on</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">push</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">branches</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">main</span>
+<span class="w">    </span><span class="nt">tags</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;v*&#39;</span>
+<span class="w">  </span><span class="nt">workflow_dispatch</span><span class="p">:</span>
+
+<span class="nt">permissions</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">contents</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">write</span>
+
+<span class="nt">jobs</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">deploy</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">runs-on</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ubuntu-latest</span>
+<span class="w">    </span><span class="nt">steps</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">actions/checkout@v4</span>
+<span class="w">        </span><span class="nt">with</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">fetch-depth</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span><span class="w"> </span><span class="c1"># 获取所有历史以支持版本信息</span>
+
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Set up Python</span>
+<span class="w">        </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">actions/setup-python@v5</span>
+<span class="w">        </span><span class="nt">with</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">python-version</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;3.10&#39;</span>
+
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Install dependencies</span>
+<span class="w">        </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
+<span class="w">          </span><span class="no">python -m pip install --upgrade pip</span>
+<span class="w">          </span><span class="no">pip install -e .[docs]</span>
+<span class="w">          </span><span class="no"># 安装 Sphinx 多版本支持插件 (如果尚未包含在 [docs] 中)</span>
+<span class="w">          </span><span class="no"># pip install sphinx-multiversion</span>
+
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Fix Links (Pre-build)</span>
+<span class="w">        </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
+<span class="w">          </span><span class="no">python docs/scripts/fix_links.py</span>
+
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Build Sphinx Docs</span>
+<span class="w">        </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
+<span class="w">          </span><span class="no">cd docs</span>
+<span class="w">          </span><span class="no">make html</span>
+
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Deploy to GitHub Pages</span>
+<span class="w">        </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">peaceiris/actions-gh-pages@v3</span>
+<span class="w">        </span><span class="nt">with</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">github_token</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${{ secrets.GITHUB_TOKEN }}</span>
+<span class="w">          </span><span class="nt">publish_dir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">./docs/build/html</span>
+<span class="w">          </span><span class="nt">destination_dir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${{ github.ref_name == &#39;main&#39; &amp;&amp; &#39;latest&#39; || github.ref_name }}</span>
+<span class="w">          </span><span class="nt">keep_files</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w"> </span><span class="c1"># 保留旧版本目录</span>
+</pre></div>
+</div>
+</section>
+<section id="id3">
+<h3>3.2 关键步骤说明<a class="headerlink" href="#id3" title="Link to this heading">#</a></h3>
+<ol class="arabic simple">
+<li><p><strong>Checkout</strong>: 使用 <code class="docutils literal notranslate"><span class="pre">fetch-depth:</span> <span class="pre">0</span></code> 确保能获取 Git 标签和提交历史，这对生成版本号至关重要。</p></li>
+<li><p><strong>Install Dependencies</strong>: 安装项目本身 (<code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">-e</span> <span class="pre">.</span></code>) 以便 <code class="docutils literal notranslate"><span class="pre">autodoc</span></code> 能导入源码生成 API 文档。</p></li>
+<li><p><strong>Fix Links</strong>: 运行我们编写的 <code class="docutils literal notranslate"><span class="pre">scripts/fix_links.py</span></code>，修正绝对路径链接，防止 404 错误。</p></li>
+<li><p><strong>Build</strong>: 执行 <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">html</span></code> 生成静态文件。</p></li>
+<li><p><strong>Deploy</strong>: 使用 <code class="docutils literal notranslate"><span class="pre">peaceiris/actions-gh-pages</span></code> 插件。</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">destination_dir</span></code>: 动态设置为 <code class="docutils literal notranslate"><span class="pre">latest</span></code> (对应 main 分支) 或 <code class="docutils literal notranslate"><span class="pre">vX.Y.Z</span></code> (对应 Tag)。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">keep_files:</span> <span class="pre">true</span></code>: 增量发布，确保推送新版本时不会删除旧版本目录。</p></li>
+</ul>
+</li>
+</ol>
+</section>
+</section>
+<section id="id4">
+<h2>4. 多版本管理策略<a class="headerlink" href="#id4" title="Link to this heading">#</a></h2>
+<p>当前采用<strong>目录隔离</strong>策略：</p>
+<ul class="simple">
+<li><p>根目录 (<code class="docutils literal notranslate"><span class="pre">/</span></code>): 可放置一个重定向页 (<code class="docutils literal notranslate"><span class="pre">index.html</span></code>)，自动跳转到 <code class="docutils literal notranslate"><span class="pre">/latest/</span></code>。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">/latest/</span></code>: 始终对应 <code class="docutils literal notranslate"><span class="pre">main</span></code> 分支的最新构建。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">/v0.6.0/</span></code>, <code class="docutils literal notranslate"><span class="pre">/v0.5.0/</span></code>: 对应发布的 Tag 版本。</p></li>
+</ul>
+<section id="index-html">
+<h3>4.1 根目录重定向 (index.html)<a class="headerlink" href="#index-html" title="Link to this heading">#</a></h3>
+<p>建议在 <code class="docutils literal notranslate"><span class="pre">gh-pages</span></code> 分支根目录手动或通过 Action 维护一个 <code class="docutils literal notranslate"><span class="pre">index.html</span></code>:</p>
+<div class="highlight-html notranslate"><div class="highlight"><pre><span></span><span class="cp">&lt;!DOCTYPE html&gt;</span>
+<span class="p">&lt;</span><span class="nt">html</span> <span class="na">lang</span><span class="o">=</span><span class="s">&quot;en&quot;</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">head</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">meta</span> <span class="na">charset</span><span class="o">=</span><span class="s">&quot;UTF-8&quot;</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">meta</span> <span class="na">http-equiv</span><span class="o">=</span><span class="s">&quot;refresh&quot;</span> <span class="na">content</span><span class="o">=</span><span class="s">&quot;0; url=latest/&quot;</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">title</span><span class="p">&gt;</span>Redirecting...<span class="p">&lt;/</span><span class="nt">title</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">head</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">body</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">p</span><span class="p">&gt;</span>Redirecting to <span class="p">&lt;</span><span class="nt">a</span> <span class="na">href</span><span class="o">=</span><span class="s">&quot;latest/&quot;</span><span class="p">&gt;</span>latest documentation<span class="p">&lt;/</span><span class="nt">a</span><span class="p">&gt;</span>...<span class="p">&lt;/</span><span class="nt">p</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">body</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">html</span><span class="p">&gt;</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="id5">
+<h2>5. 本地验证<a class="headerlink" href="#id5" title="Link to this heading">#</a></h2>
+<p>在提交 Action 前，建议在本地模拟构建：</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># 1. 清理旧构建</span>
+<span class="nb">cd</span><span class="w"> </span>docs<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>make<span class="w"> </span>clean
+
+<span class="c1"># 2. 修复链接</span>
+python<span class="w"> </span>scripts/fix_links.py
+
+<span class="c1"># 3. 构建</span>
+make<span class="w"> </span>html
+
+<span class="c1"># 4. 预览 (需 Python)</span>
+python<span class="w"> </span>-m<span class="w"> </span>http.server<span class="w"> </span>--directory<span class="w"> </span>build/html<span class="w"> </span><span class="m">8000</span>
+<span class="c1"># 访问 http://localhost:8000</span>
+</pre></div>
+</div>
+</section>
+<section id="id6">
+<h2>6. 故障排查<a class="headerlink" href="#id6" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p><strong>构建失败 (ImportError)</strong>: 检查 <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">-e</span> <span class="pre">.</span></code> 是否成功，确保 <code class="docutils literal notranslate"><span class="pre">src</span></code> 目录被正确加入 <code class="docutils literal notranslate"><span class="pre">PYTHONPATH</span></code>。</p></li>
+<li><p><strong>样式丢失</strong>: 检查 <code class="docutils literal notranslate"><span class="pre">_static</span></code> 目录是否被正确上传，通常由 <code class="docutils literal notranslate"><span class="pre">.nojekyll</span></code> 文件缺失导致 (Sphinx 主题常包含下划线开头的目录，GitHub Pages 默认会忽略它们)。</p>
+<ul>
+<li><p><em>注</em>: <code class="docutils literal notranslate"><span class="pre">peaceiris/actions-gh-pages</span></code> 会自动创建 <code class="docutils literal notranslate"><span class="pre">.nojekyll</span></code>。</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="id7">
+<h2>7. 后续优化<a class="headerlink" href="#id7" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p>集成 <code class="docutils literal notranslate"><span class="pre">sphinx-multiversion</span></code> 插件，在侧边栏自动生成版本切换下拉菜单。</p></li>
+<li><p>添加 PR 预览功能 (Deploy Preview)，利用 Netlify 或 GitHub Actions Artifacts。</p></li>
+</ul>
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="README.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">上一页</p>
+        <p class="prev-next-title">Guides（操作指南）</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="labeling-stats-repair.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">下一页</p>
+        <p class="prev-next-title">Labeling 历史统计修复</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> 目录
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">1. 部署架构</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#repository-settings">2. 前置配置 (Repository Settings)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#github-workflows-docs-deploy-yml">3. 工作流文件详解 (<code class="docutils literal notranslate"><span class="pre">.github/workflows/docs-deploy.yml</span></code>)</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">3.1 完整配置</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">3.2 关键步骤说明</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">4. 多版本管理策略</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#index-html">4.1 根目录重定向 (index.html)</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">5. 本地验证</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">6. 故障排查</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">7. 后续优化</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+作者： DP-EVA Developers
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2026, DP-EVA Developers.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>
