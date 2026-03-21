@@ -6,15 +6,12 @@ Handles the processing of ABACUS calculation results, including convergence chec
 metric calculation, and data cleaning.
 """
 
-import os
 import logging
-import shutil
 from pathlib import Path
-from typing import Dict, List, Any, Optional, Tuple, Sequence
+from typing import Dict, Any, Optional, Tuple, Sequence
 import numpy as np
 import pandas as pd
 import dpdata
-from ase import Atoms
 from collections import Counter
 from scipy.linalg import lstsq
 

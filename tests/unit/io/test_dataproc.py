@@ -1,8 +1,6 @@
 
 import pytest
-import numpy as np
 import os
-from unittest.mock import MagicMock, patch
 from dpeva.io.dataproc import DPTestResultParser
 
 def create_dummy_files(dirname, head="results", systems=None):

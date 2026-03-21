@@ -1,4 +1,3 @@
-import sys
 import time
 from dpeva import __version__
 
@@ -53,18 +52,19 @@ def show_banner(no_delay=False):
     # Gap: 2 chars
     # Status Width: 32 chars (76 - 42 - 2)
     
-    W_AA = 42
     W_ST = 32
     
     # Helper to pad status text correctly (handling emoji width)
     def pad_status(text, width=W_ST):
         # Calculate visual length (simplified for known chars)
         visual_len = len(text)
-        if "⚡" in text: visual_len += 1  # Emoji usually takes 2 spaces visually but len is 1
+        if "⚡" in text:
+            visual_len += 1  # Emoji usually takes 2 spaces visually but len is 1
         # if "◌" in text: visual_len += 1   # Dotted Circle is usually 1 char wide in monospace
         
         padding = width - visual_len
-        if padding < 0: padding = 0
+        if padding < 0:
+            padding = 0
         return text + " " * padding
 
     # Row 1

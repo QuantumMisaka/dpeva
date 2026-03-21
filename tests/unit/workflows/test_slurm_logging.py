@@ -2,7 +2,7 @@
 import pytest
 import logging
 import os
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from dpeva.workflows.collect import CollectionWorkflow
 
 @pytest.fixture
@@ -78,7 +78,7 @@ def test_local_backend_logging(base_config, reset_dpeva_logger):
     config = base_config.copy()
     config["backend"] = "local"
     
-    wf = CollectionWorkflow(config)
+    CollectionWorkflow(config)
     
     dpeva_logger = logging.getLogger("dpeva")
     # Should call configure_logging, which sets propagate=False

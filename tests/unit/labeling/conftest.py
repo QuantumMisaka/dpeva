@@ -1,9 +1,7 @@
 
 import pytest
-from unittest.mock import MagicMock, patch
-import numpy as np
+from unittest.mock import MagicMock
 from ase import Atoms
-from ase.calculators.singlepoint import SinglePointCalculator
 
 @pytest.fixture
 def mock_atoms_cluster():

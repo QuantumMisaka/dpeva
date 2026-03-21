@@ -2,21 +2,21 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-03-18
+last-updated: 2026-03-21
 ---
 
 # DP-EVA 项目开发文档
 
 - Status: active
 - Audience: Developers
-- Last-Updated: 2026-03-18
+- Last-Updated: 2026-03-21
 - Related:
   - 配置字段字典：/docs/source/api/config.rst
   - 校验规则补充：/docs/reference/validation.md
   - 上游软件与职责：/docs/reference/upstream-software.md
 
-* **版本**: 0.6.9
-* **生成日期**: 2026-03-18
+* **版本**: 0.7.0
+* **生成日期**: 2026-03-21
 * **作者**: Quantum Misaka with Trae SOLO
 
 ---
@@ -476,7 +476,15 @@ DPEVA_TAG: WORKFLOW_FINISHED
 
 ### 6.2 版本历史
 
-#### **Current Era (v0.6.x)**
+#### **Current Era (v0.7.x)**
+
+*   **v0.7.0** (2026-03-21):
+    *   **[特性]** 新增基于推理误差阈值的数据清洗工作流，支持灵活的数据质量控制。
+    *   **[特性]** 为分析工作流添加 Slurm 后端支持，增强分布式计算能力。
+    *   **[特性]** 新增可视化性能分级与慢图告警机制，提升分析效率。
+    *   **[治理]** 按照 Ruff 规范完成全项目代码质量治理，修复 F401/E701/E702/E402 等 lint 问题，提升代码整洁度与可维护性。
+    *   **[测试]** 单元测试 276 个全部通过，Ruff 检查全部通过。
+    *   **[发布]** 版本升级至 `0.7.0`，同步 `__init__`、`README` 与 Banner 版本标识。
 
 *   **v0.6.9** (2026-03-18):
     *   **[特性]** 新增收敛数据查看与清洗工具，提升数据预处理效率。

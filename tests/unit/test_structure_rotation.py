@@ -96,7 +96,7 @@ def test_proper_rotation(analyzer):
     # Create a general triclinic cell
     cell = [[10, 0, 0], [1, 10, 0], [0, 0, 10]]
     atoms = Atoms('H', cell=cell, pbc=True)
-    orig_vol = atoms.get_volume()
+    atoms.get_volume()
     # ASE volume is always positive, check determinant manually if we care about handedness
     # But ASE constructs cell vectors in standard orientation, so det is always > 0.
     # However, the transformation we applied (cyclic permutation of lengths/angles)

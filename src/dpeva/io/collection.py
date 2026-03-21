@@ -4,7 +4,7 @@ import logging
 import shutil
 import numpy as np
 import pandas as pd
-from typing import List, Tuple, Dict, Optional, Set
+from typing import List, Tuple, Dict, Optional
 
 from dpeva.io.dataset import load_systems
 from dpeva.utils.security import safe_join, normalize_sys_name

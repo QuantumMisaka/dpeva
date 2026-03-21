@@ -3,7 +3,7 @@ import os
 import pytest
 import numpy as np
 import pandas as pd
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 from dpeva.uncertain.visualization import UQVisualizer
 from dpeva.constants import (
     FILENAME_UQ_FORCE_QBC_RND_FDIFF_SCATTER,

@@ -1,14 +1,13 @@
 
 import unittest
 import warnings
+import logging
 import numpy as np
 from sklearn.exceptions import ConvergenceWarning
-import logging
+from dpeva.sampling.clustering import BirchClustering
 
 # Ensure logging is configured to see output if needed
 logging.basicConfig(level=logging.INFO)
-
-from dpeva.sampling.clustering import BirchClustering
 
 class TestBirchClustering(unittest.TestCase):
     def setUp(self):

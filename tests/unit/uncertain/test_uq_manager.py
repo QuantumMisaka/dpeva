@@ -4,7 +4,6 @@ import numpy as np
 import os
 from unittest.mock import MagicMock, patch
 from dpeva.uncertain.manager import UQManager
-from dpeva.io.types import PredictionData
 
 @pytest.fixture
 def uq_manager(tmp_path):

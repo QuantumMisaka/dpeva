@@ -2,7 +2,7 @@ import os
 import logging
 import numpy as np
 import dpdata
-from typing import List, Optional, Union
+from typing import List, Optional
 
 logger = logging.getLogger(__name__)
 

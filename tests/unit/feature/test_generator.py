@@ -1,7 +1,7 @@
 import pytest
 import os
 import numpy as np
-from unittest.mock import MagicMock, patch, call
+from unittest.mock import MagicMock, patch
 from dpeva.feature.generator import DescriptorGenerator
 
 @pytest.fixture

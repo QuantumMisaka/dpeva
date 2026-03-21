@@ -170,6 +170,19 @@ def handle_label(args):
         return
     workflow.run()
 
+def handle_clean(args):
+    """
+    Handles the 'clean' command.
+    Initializes and runs the DataCleaningWorkflow.
+
+    Args:
+        args (argparse.Namespace): Command-line arguments containing 'config'.
+    """
+    from dpeva.workflows.data_cleaning import DataCleaningWorkflow
+    config = load_and_resolve_config(args.config)
+    workflow = DataCleaningWorkflow(config)
+    workflow.run()
+
 def main():
     """
     Main entry point for the CLI.
@@ -229,6 +242,10 @@ def main():
         help="Run labeling by stage: all|prepare|execute|extract|postprocess (default: all).",
     )
     p_label.set_defaults(func=handle_label)
+
+    p_clean = subparsers.add_parser("clean", help="Run dataset cleaning by inference error thresholds")
+    p_clean.add_argument("config", type=validate_config_path, help="Path to configuration JSON")
+    p_clean.set_defaults(func=handle_clean)
 
     args = parser.parse_args()
     

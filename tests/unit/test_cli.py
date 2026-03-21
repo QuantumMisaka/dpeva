@@ -154,3 +154,17 @@ def test_handle_analysis_passes_absolute_config_path(monkeypatch, tmp_path):
         call_args = MockWorkflow.call_args
         assert call_args.kwargs["config_path"] == str(Path(config_path).resolve())
         MockWorkflow.return_value.run.assert_called_once()
+
+
+def test_handle_clean_runs_workflow(monkeypatch, tmp_path):
+    config_path = _write_config(tmp_path)
+    args = SimpleNamespace(config=config_path)
+    monkeypatch.setattr(
+        cli,
+        "load_and_resolve_config",
+        lambda _p: {"dataset_dir": str(tmp_path), "result_dir": str(tmp_path)},
+    )
+    with patch("dpeva.workflows.data_cleaning.DataCleaningWorkflow") as MockWorkflow:
+        cli.handle_clean(args)
+        MockWorkflow.assert_called_once()
+        MockWorkflow.return_value.run.assert_called_once()

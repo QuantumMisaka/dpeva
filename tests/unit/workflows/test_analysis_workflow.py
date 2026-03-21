@@ -1,11 +1,7 @@
-import os
-import shutil
 import pytest
 from unittest.mock import MagicMock, patch
 import numpy as np
-from pathlib import Path
 from dpeva.workflows.analysis import AnalysisWorkflow
-from dpeva.analysis.managers import AnalysisIOManager, UnifiedAnalysisManager
 
 class TestAnalysisWorkflow:
     

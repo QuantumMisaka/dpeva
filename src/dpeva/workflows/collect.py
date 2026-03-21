@@ -354,10 +354,12 @@ class CollectionWorkflow:
         Generates a submission script and executes sbatch.
         Requires `config_path` to be set.
         """
-        if not self.config_path: raise ValueError("Config path required for Slurm.")
+        if not self.config_path:
+            raise ValueError("Config path required for Slurm.")
         
         project_abs = os.path.abspath(self.project)
-        if not os.path.exists(project_abs): os.makedirs(project_abs)
+        if not os.path.exists(project_abs):
+            os.makedirs(project_abs)
         
         cmd = f"{sys.executable} -m dpeva.cli collect {os.path.abspath(self.config_path)}"
         

@@ -111,9 +111,12 @@ class AnalysisIOManager:
         """Save statistics description to JSON."""
         def default(o):
             """JSON serializer for NumPy types."""
-            if isinstance(o, (np.integer, int)): return int(o)
-            if isinstance(o, (np.floating, float)): return float(o)
-            if isinstance(o, np.ndarray): return o.tolist()
+            if isinstance(o, (np.integer, int)):
+                return int(o)
+            if isinstance(o, (np.floating, float)):
+                return float(o)
+            if isinstance(o, np.ndarray):
+                return o.tolist()
             return str(o)
             
         with open(os.path.join(self.output_dir, filename), "w") as f:
@@ -431,9 +434,12 @@ class UnifiedAnalysisManager:
         """Save statistics to JSON."""
         def default(o):
             """JSON serializer for NumPy types."""
-            if isinstance(o, (np.integer, int)): return int(o)
-            if isinstance(o, (np.floating, float)): return float(o)
-            if isinstance(o, np.ndarray): return o.tolist()
+            if isinstance(o, (np.integer, int)):
+                return int(o)
+            if isinstance(o, (np.floating, float)):
+                return float(o)
+            if isinstance(o, np.ndarray):
+                return o.tolist()
             return str(o)
             
         with open(os.path.join(analysis_dir, FILENAME_STATS_JSON), "w") as f:
