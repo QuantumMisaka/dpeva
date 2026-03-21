@@ -46,6 +46,9 @@ from dpeva.constants import (
     DEFAULT_LABELING_OUTPUT_FORMAT,
     DEFAULT_LABELING_INTEGRATION_OUTPUT_FORMAT,
     VALID_LABELING_OUTPUT_FORMATS,
+    DEFAULT_CLEAN_OUTPUT_DIR,
+    DEFAULT_CLEAN_RESULTS_PREFIX,
+    DEFAULT_CLEAN_STRICT_ALIGNMENT,
 )
 
 class SubmissionConfig(BaseModel):
@@ -218,6 +221,38 @@ class AnalysisConfig(BaseModel):
         if self.mode == "dataset" and self.dataset_dir is None:
             raise ValueError("dataset_dir is required when mode='dataset'")
         return self
+
+class DataCleaningConfig(BaseWorkflowConfig):
+    """Configuration for Data Cleaning Workflow."""
+    dataset_dir: Path = Field(..., description="Path to labeled dataset directory (dpdata format).")
+    result_dir: Path = Field(..., description="Path to inference result directory (`*.out` files).")
+    output_dir: Path = Field(
+        Path(DEFAULT_CLEAN_OUTPUT_DIR),
+        description="Output directory for cleaned dataset and summary files."
+    )
+    results_prefix: str = Field(
+        DEFAULT_CLEAN_RESULTS_PREFIX,
+        description="Prefix of inference result files, e.g. `results` for `results.e_peratom.out`."
+    )
+    energy_diff_threshold: Optional[float] = Field(
+        None,
+        ge=0.0,
+        description="Per-frame max allowed absolute energy difference in eV/atom. None disables this rule."
+    )
+    force_max_diff_threshold: Optional[float] = Field(
+        None,
+        ge=0.0,
+        description="Per-frame max allowed atomic force difference in eV/A. None disables this rule."
+    )
+    stress_max_diff_threshold: Optional[float] = Field(
+        None,
+        ge=0.0,
+        description="Per-frame max allowed virial-component difference from `v_peratom.out` or `v.out`. None disables this rule."
+    )
+    strict_alignment: bool = Field(
+        DEFAULT_CLEAN_STRICT_ALIGNMENT,
+        description="Whether to require strict system/frame alignment between dataset and inference results."
+    )
 
 class InferenceConfig(BaseWorkflowConfig):
     """Configuration for Inference Workflow."""

@@ -63,6 +63,7 @@ LOG_FILE_INFER: Final[str] = "inference.log"
 LOG_FILE_FEATURE: Final[str] = "feature.log"
 LOG_FILE_ANALYSIS: Final[str] = "analysis.log"
 LOG_FILE_LABEL: Final[str] = "labeling.log"
+LOG_FILE_CLEAN: Final[str] = "cleaning.log"
 
 # Visualization
 FIG_DPI: Final[int] = 300
@@ -137,3 +138,8 @@ BANNER_INDENT: Final[int] = 24
 
 # Data Processing
 DEFAULT_NUMEXPR_THREADS: Final[int] = 8
+
+# Data Cleaning Defaults
+DEFAULT_CLEAN_OUTPUT_DIR: Final[str] = "cleaned_dpdata"
+DEFAULT_CLEAN_RESULTS_PREFIX: Final[str] = DEFAULT_RESULTS_PREFIX
+DEFAULT_CLEAN_STRICT_ALIGNMENT: Final[bool] = True
