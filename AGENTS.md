@@ -32,7 +32,7 @@ DP-EVA is an active learning framework designed for efficient fine-tuning of DPA
 - **Build**: `cd docs && make html`
 - **Preview**: Open `docs/build/html/index.html`
 
-## Validation Scenarios
+## Scenarios
 
 **Use these scenarios to verify core functionality manually.**, all json files example are in `examples/recipes/`.
 
@@ -60,23 +60,9 @@ DP-EVA is an active learning framework designed for efficient fine-tuning of DPA
 - **Command**: `dpeva analysis config_analysis.json`
 - **Verify**: Check for plots and data stat in log file.
 
-## Repository Structure
-
-```text
-dpeva/
-├── src/dpeva/              # Source code
-│   ├── config.py           # Configuration models (Pydantic)
-│   ├── cli.py              # Entry point
-│   └── ...
-├── tests/                  # Test suite
-├── docs/                   # Sphinx documentation
-├── examples/recipes/       # Sample configurations
-├── .trae/skills/           # Agent development skills
-│   ├── audit-codebase      # Code quality auditing
-│   ├── code-review-skill   # PR review helper
-│   └── release-helper      # Release automation
-└── AGENTS.md               # This file
-```
+### 7. Clean
+- **Command**: `dpeva clean config_clean.json`
+- **Verify**: Check for cleaned data in `outputs/cleaned/`.
 
 ## Critical Notes
 
