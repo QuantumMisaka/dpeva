@@ -200,7 +200,8 @@ def test_filtered_phase_logs_skip_message_with_candidate_plot(tmp_path, caplog):
     caplog.set_level(logging.INFO)
     workflow._run_filtered_uq_phase(vis)
     vis.plot_candidate_vs_error.assert_not_called()
-    assert "Ground Truth unavailable or invalid. Skipping force-error-dependent plots" in caplog.text
+    assert "[COLLECT_PLOT_SKIPPED]" in caplog.text
+    assert "reason=invalid_or_missing_ground_truth" in caplog.text
     assert "candidate-vs-error" in caplog.text
 
 
@@ -228,5 +229,8 @@ def test_filtered_phase_skips_rescaled_dependent_plots_when_rescaled_rnd_missing
     assert vis.plot_uq_vs_error.call_count == 1
     vis.plot_uq_diff_parity.assert_not_called()
     vis.plot_candidate_vs_error.assert_not_called()
-    assert "Skipping rescaled-RND-dependent force-error plots" in caplog.text
+    assert "[COLLECT_UQ_FALLBACK]" in caplog.text
+    assert "reason=invalid_uq_rnd_rescaled" in caplog.text
+    assert "[COLLECT_PLOT_SKIPPED]" in caplog.text
+    assert "reason=missing_uq_rnd_rescaled" in caplog.text
     assert "candidate-vs-error" in caplog.text

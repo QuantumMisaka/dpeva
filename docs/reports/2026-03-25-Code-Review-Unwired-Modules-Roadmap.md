@@ -64,3 +64,10 @@ python3 scripts/doc_check.py
 python3 scripts/check_docs_freshness.py --days 90
 make -C docs html SPHINXOPTS="-W --keep-going"
 ```
+
+## 7. 当前进度（2026-03-25）
+
+- [x] P1-1：Collection 的 rescaled 缺失路径已统一日志标签（`COLLECT_UQ_FALLBACK`、`COLLECT_PLOT_SKIPPED`）。
+- [x] P1-2：workflow 单测已增强日志关键字断言，并覆盖 `candidate-vs-error` 跳过场景。
+- [ ] P2-1：跨报告互链段落标准化（待补充到三份报告的“关联报告”小节）。
+- [ ] P2-2：未接入模块审查表模板化（待沉淀到 docs 治理模板）。

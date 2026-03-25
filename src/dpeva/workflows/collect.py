@@ -178,8 +178,7 @@ class CollectionWorkflow:
         uq_rnd_for_filter = uq_rnd_rescaled if has_rescaled_rnd else uq_results[COL_UQ_RND]
         if not has_rescaled_rnd:
             self.logger.warning(
-                "Invalid or missing uq_rnd_rescaled. Falling back to raw RND for filtering only; "
-                "rescaled-RND-dependent plots will be skipped."
+                "[COLLECT_UQ_FALLBACK] reason=invalid_uq_rnd_rescaled action=use_raw_rnd_for_filtering_only"
             )
         self.uq_manager.log_uq_statistics(uq_results, uq_rnd_rescaled)
         self.uq_manager.run_auto_threshold(uq_results, uq_rnd_for_filter)
@@ -204,7 +203,7 @@ class CollectionWorkflow:
                 self.uq_manager.rnd_params["hi"],
             )
         else:
-            self.logger.info("Skipping UQ-RND-force plot because uq_rnd_rescaled is unavailable.")
+            self._log_skipped_plots("missing_uq_rnd_rescaled", ["UQ-RND-force"])
         unique_system_names = self._extract_unique_system_names(preds[0].dataname_list)
         expected_frames = {sys: preds[0].datanames_nframe.get(sys, 0) for sys in unique_system_names}
         desc_datanames, desc_stru = self.io_manager.load_descriptors(
@@ -244,7 +243,7 @@ class CollectionWorkflow:
                 self.uq_manager.rnd_params["hi"],
             )
         else:
-            self.logger.info("Skipping UQ identity scatter because uq_rnd_rescaled is unavailable.")
+            self._log_skipped_plots("missing_uq_rnd_rescaled", ["UQ-force-qbc-rnd-identity-scatter"])
         if self._should_plot_force_error(has_gt, uq_results):
             self.logger.info("Ground Truth available. Plotting UQ vs Error...")
             vis.plot_uq_vs_error(uq_results[COL_UQ_QBC], uq_results[COL_UQ_RND], uq_results["diff_maxf_0_frame"])
@@ -266,14 +265,24 @@ class CollectionWorkflow:
                 )
                 vis.plot_uq_diff_parity(uq_results[COL_UQ_QBC], uq_rnd_rescaled, uq_results["diff_maxf_0_frame"])
             else:
-                self.logger.info(
-                    "Skipping rescaled-RND-dependent force-error plots "
-                    "(uq-fdiff-scatter, candidate-vs-error, uq-force-rescaled-fdiff-parity, uq-diff-parity)."
+                self._log_skipped_plots(
+                    "missing_uq_rnd_rescaled",
+                    [
+                        "uq-fdiff-scatter",
+                        "candidate-vs-error",
+                        "uq-force-rescaled-fdiff-parity",
+                        "uq-diff-parity",
+                    ],
                 )
         else:
-            self.logger.info(
-                "Ground Truth unavailable or invalid. Skipping force-error-dependent plots "
-                "(uq-vs-error, uq-diff-parity, uq-fdiff-scatter, candidate-vs-error)."
+            self._log_skipped_plots(
+                "invalid_or_missing_ground_truth",
+                [
+                    "uq-vs-error",
+                    "uq-diff-parity",
+                    "uq-fdiff-scatter",
+                    "candidate-vs-error",
+                ],
             )
         self._log_initial_stats(desc_datanames)
         return df_desc, df_candidate, unique_system_names
@@ -320,6 +329,10 @@ class CollectionWorkflow:
             self.logger.warning(f"{vector_name} is empty.")
             return False
         return True
+
+    def _log_skipped_plots(self, reason: str, plots):
+        plot_list = ",".join(plots)
+        self.logger.info(f"[COLLECT_PLOT_SKIPPED] reason={reason} plots={plot_list}")
 
     def _run_sampling_phase(self, df_candidate: pd.DataFrame, df_desc: pd.DataFrame, vis: UQVisualizer) -> pd.DataFrame:
         if len(df_candidate) == 0:
