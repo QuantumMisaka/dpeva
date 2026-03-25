@@ -1,3 +1,4 @@
+import logging
 import pandas as pd
 import numpy as np
 from unittest.mock import patch, MagicMock
@@ -148,6 +149,7 @@ def test_filtered_phase_always_plots_rnd_and_qbc_trust_ranges(tmp_path):
     vis.plot_uq_fdiff_scatter.assert_not_called()
     vis.plot_uq_vs_error.assert_not_called()
     vis.plot_uq_diff_parity.assert_not_called()
+    vis.plot_candidate_vs_error.assert_not_called()
 
 
 def test_filtered_phase_only_plots_force_error_with_valid_ground_truth(tmp_path):
@@ -160,6 +162,10 @@ def test_filtered_phase_only_plots_force_error_with_valid_ground_truth(tmp_path)
     vis.plot_uq_fdiff_scatter.assert_called_once()
     assert vis.plot_uq_vs_error.call_count == 2
     vis.plot_uq_diff_parity.assert_called_once()
+    vis.plot_candidate_vs_error.assert_called_once()
+    candidate_call = vis.plot_candidate_vs_error.call_args
+    assert candidate_call.args[0] is workflow.uq_manager.run_filtering.return_value[3].get_identity_labels.return_value
+    assert candidate_call.args[1] is workflow.uq_manager.run_filtering.return_value[0]
 
 
 def test_filtered_phase_skips_force_error_plot_when_diff_invalid(tmp_path):
@@ -182,3 +188,45 @@ def test_filtered_phase_skips_force_error_plot_when_diff_invalid(tmp_path):
     vis.plot_uq_fdiff_scatter.assert_not_called()
     vis.plot_uq_vs_error.assert_not_called()
     vis.plot_uq_diff_parity.assert_not_called()
+    vis.plot_candidate_vs_error.assert_not_called()
+
+
+def test_filtered_phase_logs_skip_message_with_candidate_plot(tmp_path, caplog):
+    config = _filtered_config(tmp_path)
+    with patch("dpeva.workflows.collect.setup_workflow_logger"):
+        workflow = CollectionWorkflow(config)
+    _setup_filtered_phase_mocks(workflow, has_gt=False)
+    vis = MagicMock()
+    caplog.set_level(logging.INFO)
+    workflow._run_filtered_uq_phase(vis)
+    vis.plot_candidate_vs_error.assert_not_called()
+    assert "Ground Truth unavailable or invalid. Skipping force-error-dependent plots" in caplog.text
+    assert "candidate-vs-error" in caplog.text
+
+
+def test_filtered_phase_skips_rescaled_dependent_plots_when_rescaled_rnd_missing(tmp_path, caplog):
+    config = _filtered_config(tmp_path)
+    with patch("dpeva.workflows.collect.setup_workflow_logger"):
+        workflow = CollectionWorkflow(config)
+    _setup_filtered_phase_mocks(workflow, has_gt=True)
+    workflow.uq_manager.run_analysis = MagicMock(
+        return_value=(
+            {
+                "uq_qbc_for": np.array([0.2]),
+                "uq_rnd_for": np.array([0.3]),
+                "diff_maxf_0_frame": np.array([0.1]),
+            },
+            None,
+        )
+    )
+    vis = MagicMock()
+    caplog.set_level(logging.INFO)
+    workflow._run_filtered_uq_phase(vis)
+    assert vis.plot_uq_with_trust_range.call_count == 1
+    vis.plot_uq_identity_scatter.assert_not_called()
+    vis.plot_uq_fdiff_scatter.assert_not_called()
+    assert vis.plot_uq_vs_error.call_count == 1
+    vis.plot_uq_diff_parity.assert_not_called()
+    vis.plot_candidate_vs_error.assert_not_called()
+    assert "Skipping rescaled-RND-dependent force-error plots" in caplog.text
+    assert "candidate-vs-error" in caplog.text

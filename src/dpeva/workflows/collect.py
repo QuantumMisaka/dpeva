@@ -170,9 +170,24 @@ class CollectionWorkflow:
     def _run_filtered_uq_phase(self, vis: UQVisualizer):
         preds, has_gt = self.uq_manager.load_predictions()
         uq_results, uq_rnd_rescaled = self.uq_manager.run_analysis(preds)
+        has_rescaled_rnd = self._has_valid_uq_vector(
+            uq_rnd_rescaled,
+            len(uq_results[COL_UQ_RND]),
+            "uq_rnd_rescaled",
+        )
+        uq_rnd_for_filter = uq_rnd_rescaled if has_rescaled_rnd else uq_results[COL_UQ_RND]
+        if not has_rescaled_rnd:
+            self.logger.warning(
+                "Invalid or missing uq_rnd_rescaled. Falling back to raw RND for filtering only; "
+                "rescaled-RND-dependent plots will be skipped."
+            )
         self.uq_manager.log_uq_statistics(uq_results, uq_rnd_rescaled)
-        self.uq_manager.run_auto_threshold(uq_results, uq_rnd_rescaled)
-        vis.plot_uq_distribution(uq_results[COL_UQ_QBC], uq_results[COL_UQ_RND], uq_rnd_rescaled)
+        self.uq_manager.run_auto_threshold(uq_results, uq_rnd_for_filter)
+        vis.plot_uq_distribution(
+            uq_results[COL_UQ_QBC],
+            uq_results[COL_UQ_RND],
+            uq_rnd_rescaled if has_rescaled_rnd else None,
+        )
         vis.plot_uq_with_trust_range(
             uq_results[COL_UQ_QBC],
             "UQ-QbC-force",
@@ -180,7 +195,7 @@ class CollectionWorkflow:
             self.uq_manager.qbc_params["lo"],
             self.uq_manager.qbc_params["hi"],
         )
-        if uq_rnd_rescaled is not None:
+        if has_rescaled_rnd:
             vis.plot_uq_with_trust_range(
                 uq_rnd_rescaled,
                 "UQ-RND-force",
@@ -188,6 +203,8 @@ class CollectionWorkflow:
                 self.uq_manager.rnd_params["lo"],
                 self.uq_manager.rnd_params["hi"],
             )
+        else:
+            self.logger.info("Skipping UQ-RND-force plot because uq_rnd_rescaled is unavailable.")
         unique_system_names = self._extract_unique_system_names(preds[0].dataname_list)
         expected_frames = {sys: preds[0].datanames_nframe.get(sys, 0) for sys in unique_system_names}
         desc_datanames, desc_stru = self.io_manager.load_descriptors(
@@ -202,7 +219,7 @@ class CollectionWorkflow:
         data_dict_uq = {
             "dataname": datanames_ind_list,
             COL_UQ_QBC: uq_results[COL_UQ_QBC],
-            "uq_rnd_for_rescaled": uq_rnd_rescaled,
+            "uq_rnd_for_rescaled": uq_rnd_for_filter,
             COL_UQ_RND: uq_results[COL_UQ_RND],
         }
         if has_gt:
@@ -217,17 +234,8 @@ class CollectionWorkflow:
         df_uq = uq_filter.get_identity_labels(df_uq_raw, df_candidate, df_accurate)
         self.io_manager.save_dataframe(df_uq, "df_uq.csv")
         self.io_manager.save_dataframe(df_candidate, "df_uq_desc_sampled-UQ.csv")
-        vis.plot_uq_identity_scatter(
-            df_uq,
-            self.config.uq_select_scheme,
-            self.uq_manager.qbc_params["lo"],
-            self.uq_manager.qbc_params["hi"],
-            self.uq_manager.rnd_params["lo"],
-            self.uq_manager.rnd_params["hi"],
-        )
-        if self._should_plot_force_error(has_gt, uq_results):
-            self.logger.info("Ground Truth available. Plotting UQ vs Error...")
-            vis.plot_uq_fdiff_scatter(
+        if has_rescaled_rnd:
+            vis.plot_uq_identity_scatter(
                 df_uq,
                 self.config.uq_select_scheme,
                 self.uq_manager.qbc_params["lo"],
@@ -235,8 +243,21 @@ class CollectionWorkflow:
                 self.uq_manager.rnd_params["lo"],
                 self.uq_manager.rnd_params["hi"],
             )
+        else:
+            self.logger.info("Skipping UQ identity scatter because uq_rnd_rescaled is unavailable.")
+        if self._should_plot_force_error(has_gt, uq_results):
+            self.logger.info("Ground Truth available. Plotting UQ vs Error...")
             vis.plot_uq_vs_error(uq_results[COL_UQ_QBC], uq_results[COL_UQ_RND], uq_results["diff_maxf_0_frame"])
-            if uq_rnd_rescaled is not None:
+            if has_rescaled_rnd:
+                vis.plot_uq_fdiff_scatter(
+                    df_uq,
+                    self.config.uq_select_scheme,
+                    self.uq_manager.qbc_params["lo"],
+                    self.uq_manager.qbc_params["hi"],
+                    self.uq_manager.rnd_params["lo"],
+                    self.uq_manager.rnd_params["hi"],
+                )
+                vis.plot_candidate_vs_error(df_uq, df_candidate)
                 vis.plot_uq_vs_error(
                     uq_results[COL_UQ_QBC],
                     uq_rnd_rescaled,
@@ -244,8 +265,16 @@ class CollectionWorkflow:
                     rescaled=True,
                 )
                 vis.plot_uq_diff_parity(uq_results[COL_UQ_QBC], uq_rnd_rescaled, uq_results["diff_maxf_0_frame"])
+            else:
+                self.logger.info(
+                    "Skipping rescaled-RND-dependent force-error plots "
+                    "(uq-fdiff-scatter, candidate-vs-error, uq-force-rescaled-fdiff-parity, uq-diff-parity)."
+                )
         else:
-            self.logger.info("Ground Truth unavailable or invalid. Skipping force-error-dependent plots.")
+            self.logger.info(
+                "Ground Truth unavailable or invalid. Skipping force-error-dependent plots "
+                "(uq-vs-error, uq-diff-parity, uq-fdiff-scatter, candidate-vs-error)."
+            )
         self._log_initial_stats(desc_datanames)
         return df_desc, df_candidate, unique_system_names
 
@@ -274,6 +303,23 @@ class CollectionWorkflow:
                 seen.add(name)
                 unique_system_names.append(name)
         return unique_system_names
+
+    def _has_valid_uq_vector(self, values, expected_size: int, vector_name: str) -> bool:
+        if values is None:
+            return False
+        arr = np.asarray(values)
+        if arr.ndim != 1:
+            self.logger.warning(f"{vector_name} should be a 1D vector, got shape={arr.shape}.")
+            return False
+        if expected_size > 0 and arr.size != expected_size:
+            self.logger.warning(
+                f"{vector_name} size mismatch: expected {expected_size}, got {arr.size}."
+            )
+            return False
+        if arr.size == 0:
+            self.logger.warning(f"{vector_name} is empty.")
+            return False
+        return True
 
     def _run_sampling_phase(self, df_candidate: pd.DataFrame, df_desc: pd.DataFrame, vis: UQVisualizer) -> pd.DataFrame:
         if len(df_candidate) == 0:

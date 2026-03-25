@@ -2,8 +2,6 @@
 
 DP-EVA is an active learning framework designed for efficient fine-tuning of DPA universal machine learning interatomic potential. It integrates uncertainty quantification (UQ), representative sampling (DIRECT), and automated DFT labeling workflows to minimize data annotation costs while maximizing model performance via fully unraveling the knowledge of DPA pre-trained PES model.
 
-**Always reference these instructions first and fallback to search or bash commands only when you encounter unexpected information that does not match the info here.**
-
 ## Working Effectively
 
 ### Bootstrap and Install
@@ -32,41 +30,13 @@ DP-EVA is an active learning framework designed for efficient fine-tuning of DPA
 - **Build**: `cd docs && make html`
 - **Preview**: Open `docs/build/html/index.html`
 
-## Scenarios
+## Workflow Scenarios
 
-**Use these scenarios to verify core functionality manually.**, all json files example are in `examples/recipes/`.
-
-### 1. Training Workflow
-- **Command**: `dpeva train onfig_train.json`
-- **Verify**: Check `work_dir` for `0/model.ckpt.pt` and `0/lcurve.out`.
-
-### 2. Inference Workflow
-- **Command**: `dpeva infer config_infer.json`
-- **Verify**: Check for `results_*.out` files in the output directory.
-
-### 3. Feature Extraction
-- **Command**: `dpeva feature config_feature.json`
-- **Verify**: Check for `desc_pool` directory with extracted features.
-
-### 4. Collection (Sampling)
-- **Command**: `dpeva collect config_collect_normal.json`
-- **Verify**: Check for `sampled_data` directory, `collection.log` and other output information.
-
-### 5. Labeling (DFT)
-- **Command**: `dpeva label config_cpu.json`
-- **Verify**: Check for `inputs/` generation and `outputs/cleaned/` data.
-
-### 6. Analysis
-- **Command**: `dpeva analysis config_analysis.json`
-- **Verify**: Check for plots and data stat in log file.
-
-### 7. Clean
-- **Command**: `dpeva clean config_clean.json`
-- **Verify**: Check for cleaned data in `outputs/cleaned/`.
+All workflow scenarios and CLI calling for core functionality can be found via documents, like `dp train`, `dp infer`, `dp collect`, etc. All json files example for each workflow should be in `examples/recipes/`.
 
 ## Critical Notes
 
-- **Configuration**: DP-EVA uses strict Pydantic validation. See `src/dpeva/config.py` for definitive schema.
+- **Configuration**: DP-EVA uses strict Pydantic validation and integated variable management. See `src/dpeva/config.py` for definitive schema.
 - **Pathing**: Use absolute paths in configs to avoid ambiguity.
 - **Data**: Most workflows expect `dpdata` compatible formats.
 
@@ -76,7 +46,6 @@ DP-EVA is an active learning framework designed for efficient fine-tuning of DPA
 
 1.  **Code Review Phase**:
     - Create review reports in `docs/reports/` with naming `YYYY-MM-DD-Code-Review-<Topic>.md`.
-    - Do NOT create reports in root or `docs/archive` directly.
 
 2.  **Feature Planning Phase**:
     - Create implementation plans/specs in `docs/plans/` with naming `YYYY-MM-DD-<Feature>-Plan.md`.
@@ -92,8 +61,4 @@ DP-EVA is an active learning framework designed for efficient fine-tuning of DPA
     - When adding/moving/deleting `.md` files, YOU MUST check and update the corresponding `.rst` files in `docs/source/`.
     - Ensure `toctree` directives do not reference non-existent files.
     - Run `make html` (if available) or verify paths manually to prevent broken builds.
-
-5.  **Strict Prohibition**:
-    - NEVER create documentation files in the project root.
-    - NEVER leave orphan files without `README.md` indexing.
 

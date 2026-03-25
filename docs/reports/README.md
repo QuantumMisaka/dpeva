@@ -2,7 +2,7 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-03-17
+last-updated: 2026-03-25
 owner: Docs Owner
 ---
 
@@ -10,7 +10,7 @@ owner: Docs Owner
 
 - Status: active
 - Audience: All
-- Last-Updated: 2026-03-17
+- Last-Updated: 2026-03-25
 
 本文档目录用于存放“项目级、可共享、可追溯”的技术结论，不承载执行过程草稿。
 
@@ -38,7 +38,9 @@ owner: Docs Owner
 
 ## 4. 活跃报告 (Active Reports)
 
-- 暂无活跃报告，最新报告已归档至 `docs/archive/v0.6.8/reports/`。
+- `2026-03-25-Code-Review-Workflow-Entry-Mapping.md`：七类 workflow 命令入口映射与未接入模块候选审查。
+- `Collection Workflow 全量出图审计报告.md`：Collection 全量图像索引、可生成性状态与缺口跟踪。
+- `2026-03-25-Code-Review-Unwired-Modules-Roadmap.md`：未接入模块治理的 P0-P3 优先级路线图与门禁建议。
 
 ## 5. 归档与索引要求
 
