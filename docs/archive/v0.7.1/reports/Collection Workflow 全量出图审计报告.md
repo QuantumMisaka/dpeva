@@ -16,6 +16,11 @@ owner: Collection Workflow Maintainer
 - [无法直生图像缺口与最小复现](#gap-and-repro)
 - [回归脚本与CI接入](#ci-regression)
 
+## 关联报告
+
+- [2026-03-25-Code-Review-Workflow-Entry-Mapping.md](2026-03-25-Code-Review-Workflow-Entry-Mapping.md)：七类 workflow 入口映射与未接入模块候选证据。
+- [2026-03-25-Code-Review-Unwired-Modules-Roadmap.md](2026-03-25-Code-Review-Unwired-Modules-Roadmap.md)：未接入模块治理优先级路线图（P0-P3）。
+
 ## 出图索引总表
 
 <a id="workflow-plot-index"></a>

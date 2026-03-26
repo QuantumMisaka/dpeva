@@ -15,8 +15,8 @@ owner: DP-EVA Maintainers
 
 ## 2. 输入依据
 
-- 工作流入口映射与候选审查：`2026-03-25-Code-Review-Workflow-Entry-Mapping.md`
-- Collection 出图审计与可生成性状态：`Collection Workflow 全量出图审计报告.md`
+- 工作流入口映射与候选审查：[2026-03-25-Code-Review-Workflow-Entry-Mapping.md](2026-03-25-Code-Review-Workflow-Entry-Mapping.md)
+- Collection 出图审计与可生成性状态：[Collection Workflow 全量出图审计报告.md](Collection%20Workflow%20全量出图审计报告.md)
 - 已落地修复：Collection Candidate parity 两图已接入标准 `collect` 主链路。
 
 ## 3. 优先级分层（P0/P1/P2/P3）
@@ -69,5 +69,9 @@ make -C docs html SPHINXOPTS="-W --keep-going"
 
 - [x] P1-1：Collection 的 rescaled 缺失路径已统一日志标签（`COLLECT_UQ_FALLBACK`、`COLLECT_PLOT_SKIPPED`）。
 - [x] P1-2：workflow 单测已增强日志关键字断言，并覆盖 `candidate-vs-error` 跳过场景。
-- [ ] P2-1：跨报告互链段落标准化（待补充到三份报告的“关联报告”小节）。
-- [ ] P2-2：未接入模块审查表模板化（待沉淀到 docs 治理模板）。
+- [x] P2-1：跨报告互链段落标准化（已补充到三份报告的“关联报告”小节）。
+- [x] P2-2：未接入模块审查表模板化（已沉淀为 `docs/governance/tools/unwired-module-audit-template.md`）。
+- [x] P3-1：包级 `__init__` 职责说明已补齐（`workflows/analysis/io/labeling/sampling/uncertain`）。
+- [x] P3-2：在开发指南补充“包级导出层 vs 主链路入口”约定（已落地于 `docs/guides/developer-guide.md`）。
+
+收官总结见：[2026-03-25-Code-Review-Unwired-Modules-Closeout.md](2026-03-25-Code-Review-Unwired-Modules-Closeout.md)。

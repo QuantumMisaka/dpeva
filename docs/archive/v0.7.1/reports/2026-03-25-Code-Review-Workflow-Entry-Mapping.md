@@ -15,6 +15,11 @@ owner: DP-EVA Maintainers
   - 建立“CLI 入口 -> 配置模型 -> Workflow -> 核心实现模块”的可追溯映射
   - 识别“可能未接入主链路”的模块候选，并给出证据
 
+## 关联报告
+
+- [Collection Workflow 全量出图审计报告.md](Collection%20Workflow%20全量出图审计报告.md)：Collection 全量出图索引、可生成性状态与缺口跟踪。
+- [2026-03-25-Code-Review-Unwired-Modules-Roadmap.md](2026-03-25-Code-Review-Unwired-Modules-Roadmap.md)：未接入模块治理优先级路线图与阶段进展。
+
 ## 2. 入口到实现映射
 
 | CLI 子命令 | CLI 入口函数 | 配置模型 | Workflow 实现 | 核心实现模块（Workflow 内调用） | 关键证据 |
@@ -81,3 +86,4 @@ owner: DP-EVA Maintainers
 - 已补齐本审查报告的结构化审计清单，满足“模块位置/接入状态/证据/建议/优先级”可复核要求。
 - 已同步更新 `docs/reports/Collection Workflow 全量出图审计报告.md` 中 Candidate parity 两图的可生成性状态为“可原生生成”。
 - 已在 Collection 审计报告中移除 Candidate parity 两图的“无法直生图像缺口”条目，避免与当前实现状态冲突。
+- 已补齐候选包级模块 `__init__` 的职责说明，进一步降低“聚合导出层与主链路入口混淆”的风险。

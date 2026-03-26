@@ -2,7 +2,7 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-03-21
+last-updated: 2026-03-25
 ---
 
 # DP-EVA 项目开发文档
@@ -171,6 +171,19 @@ graph TD
     %% Optional if no another TargetPool
     OtherPool -->|Next Cycle| TargetPool
 ```
+
+### 2.3 包级导出层与主链路入口边界
+
+为避免“模块存在但未接入主链路”的认知偏差，开发时需区分两类入口：
+
+- **主链路入口（Execution Entry）**：由 `dpeva.cli` 子命令分发到具体 workflow 模块（如 `dpeva.workflows.collect`）。
+- **包级导出层（Export Surface）**：`__init__.py` 仅用于命名空间聚合、对外导出和职责声明，不作为工作流执行入口。
+
+实践约定：
+
+- 新增业务功能时，先接入 workflow/manager 主链路，再考虑是否在包级导出层暴露。
+- 包级 `__init__.py` 中不放业务编排逻辑与隐式副作用。
+- 审查“是否接线”时，证据以 CLI -> workflow -> manager -> module 的可追溯调用链为准，而非仅凭 `__init__.py` 导出关系。
 
 ---
 

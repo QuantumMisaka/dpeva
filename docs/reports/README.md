@@ -38,9 +38,8 @@ owner: Docs Owner
 
 ## 4. 活跃报告 (Active Reports)
 
-- `2026-03-25-Code-Review-Workflow-Entry-Mapping.md`：七类 workflow 命令入口映射与未接入模块候选审查。
-- `Collection Workflow 全量出图审计报告.md`：Collection 全量图像索引、可生成性状态与缺口跟踪。
-- `2026-03-25-Code-Review-Unwired-Modules-Roadmap.md`：未接入模块治理的 P0-P3 优先级路线图与门禁建议。
+- 当前暂无活跃报告。
+- 本批报告已归档至：`docs/archive/v0.7.1/reports/`。
 
 ## 5. 归档与索引要求
 
