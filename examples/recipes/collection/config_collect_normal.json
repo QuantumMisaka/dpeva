@@ -7,6 +7,7 @@
     "testdata_dir": "./other_dpdata",
     
     "fig_dpi": 300,
+    "enable_diagnostic_plots": false,
     "root_savedir": "dpeva_post_normal",
 
     "uq_trust_mode": "auto",

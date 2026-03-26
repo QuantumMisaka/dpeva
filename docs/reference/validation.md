@@ -55,6 +55,11 @@ last-updated: 2026-03-09
     *   `sampler_type="2-direct"`：使用 `step1_*` 与 `step2_*` 参数组。
 *   **规则**: 若 `direct_n_clusters` 显式给定，必须 `> 0`。
 
+#### 3.1.3 出图分层开关依赖
+*   **规则**: `enable_diagnostic_plots` 默认 `False`，仅输出 Core 层图像。
+*   **规则**: 当 `enable_diagnostic_plots=True` 时，仅在满足真值和数据前置条件时输出 Diagnostic 层 parity 图像。
+*   **可观测性**: 跳过图像必须输出统一 `reason` 字段，且生成/跳过清单在日志中可审计。
+
 ### 3.2 特征工作流 (FeatureConfig)
 
 #### 3.2.1 自动保存目录 (Auto Savedir)

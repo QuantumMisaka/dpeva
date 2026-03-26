@@ -121,6 +121,7 @@ FILENAME_UQ_RND_CANDIDATE_FDIFF_PARITY: Final[str] = "UQ-RND-Candidate-fdiff-par
 FILENAME_EXPLAINED_VARIANCE: Final[str] = "explained_variance.png"
 FILENAME_COVERAGE_SCORE: Final[str] = "coverage_score.png"
 FILENAME_FINAL_SAMPLED_PCAVIEW: Final[str] = "Final_sampled_PCAview.png"
+FILENAME_FINAL_SAMPLED_PCAVIEW_BY_POOL: Final[str] = "Final_sampled_PCAview_by_pool.png"
 
 # Column Names
 COL_DESC_PREFIX: Final[str] = "desc_stru_"

@@ -405,6 +405,15 @@ Auto-UQ 用于根据数据分布自动确定筛选边界；具体的字段与约
 
 - `/docs/source/api/config.rst`
 
+#### 4.4.4 Collection 出图分层开关 (`enable_diagnostic_plots`)
+
+- `false`（默认）：仅输出 Core 层图，Diagnostic 层 parity 图默认跳过
+- `true`：在满足 `has_gt`、`uq_rnd_rescaled` 等前置条件时输出 Diagnostic 层图像
+- 运行日志会输出统一标签：
+  - `[COLLECT_PLOT_GENERATED]`：记录已生成图像、层级与触发条件
+  - `[COLLECT_PLOT_SKIPPED]`：记录被跳过图像及 reason
+  - `[COLLECT_PLOT_AUDIT]`：汇总 generated/skipped 清单，便于回溯审计
+
 ## 5. 开发与测试 (Development)
 
 ### 5.1 代码规范

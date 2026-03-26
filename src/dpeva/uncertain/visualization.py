@@ -11,7 +11,8 @@ from dpeva.constants import (
     FILENAME_UQ_FORCE_QBC_RND_FDIFF_SCATTER_TRUNCATED,
     FILENAME_UQ_FORCE_QBC_RND_IDENTITY_SCATTER, FILENAME_UQ_FORCE_QBC_RND_IDENTITY_SCATTER_TRUNCATED,
     FILENAME_UQ_QBC_CANDIDATE_FDIFF_PARITY, FILENAME_UQ_RND_CANDIDATE_FDIFF_PARITY,
-    FILENAME_EXPLAINED_VARIANCE, FILENAME_COVERAGE_SCORE, FILENAME_FINAL_SAMPLED_PCAVIEW
+    FILENAME_EXPLAINED_VARIANCE, FILENAME_COVERAGE_SCORE, FILENAME_FINAL_SAMPLED_PCAVIEW,
+    FILENAME_FINAL_SAMPLED_PCAVIEW_BY_POOL
 )
 
 class UQVisualizer:
@@ -464,8 +465,92 @@ class UQVisualizer:
         plt.legend(frameon=True, fontsize=12, loc='best')
         plt.savefig(os.path.join(self.save_dir, FILENAME_FINAL_SAMPLED_PCAVIEW), dpi=self.dpi)
         plt.close()
+
+        if n_candidates is not None:
+            self._plot_joint_multipool_summary(
+                all_features=all_features,
+                df_uq=df_uq,
+                final_indices=final_indices,
+                full_features=full_features,
+                n_candidates=n_candidates,
+            )
         
         return pd.DataFrame(all_features[:, :2], columns=['PC1', 'PC2'])
+
+    def _plot_joint_multipool_summary(self, all_features, df_uq, final_indices, full_features=None, n_candidates=None):
+        plt.figure(figsize=(14, 10))
+        if full_features is not None:
+            plt.scatter(
+                full_features[:, 0],
+                full_features[:, 1],
+                color="#A9A9A9",
+                alpha=0.35,
+                s=15,
+                marker=".",
+                label=f"All Data in Pool {len(full_features):,}",
+                zorder=1,
+            )
+
+        if n_candidates is None:
+            n_candidates = len(df_uq)
+        candidate_features = all_features[:n_candidates]
+
+        if len(final_indices) > 0:
+            selected_positions = np.asarray(final_indices, dtype=int)
+            valid_mask = (selected_positions >= 0) & (selected_positions < len(candidate_features))
+            selected_positions = selected_positions[valid_mask]
+            selected_df = df_uq.iloc[selected_positions].copy()
+            selected_df = selected_df.reset_index(drop=True)
+            selected_df["pc1"] = candidate_features[selected_positions, 0]
+            selected_df["pc2"] = candidate_features[selected_positions, 1]
+        else:
+            selected_df = pd.DataFrame(columns=list(df_uq.columns) + ["pc1", "pc2"])
+        if not selected_df.empty:
+            selected_df["pool"] = selected_df["dataname"].map(self._pool_name_from_dataname)
+            unique_pools = sorted(selected_df["pool"].unique())
+            cmap = plt.get_cmap("tab20", max(len(unique_pools), 1))
+
+            for idx, pool_name in enumerate(unique_pools):
+                pool_df = selected_df[selected_df["pool"] == pool_name]
+                plt.scatter(
+                    pool_df["pc1"].to_numpy(),
+                    pool_df["pc2"].to_numpy(),
+                    color=cmap(idx),
+                    alpha=0.9,
+                    s=70,
+                    marker="*",
+                    edgecolors="black",
+                    linewidth=0.4,
+                    label=f"{pool_name} ({len(pool_df)})",
+                    zorder=10,
+                )
+
+        plt.title("PCA of UQ-DIRECT sampling (Sampled by Pool)", fontsize=16)
+        plt.xlabel("PC1", size=14)
+        plt.ylabel("PC2", size=14)
+        plt.grid(True, linestyle="-", alpha=0.6)
+        n_legends = selected_df["pool"].nunique() if not selected_df.empty else 0
+        legend_columns = min(max((n_legends + 9) // 10, 1), 4)
+        plt.legend(
+            frameon=True,
+            fontsize=10,
+            loc="upper left",
+            bbox_to_anchor=(1.02, 1.0),
+            ncol=legend_columns,
+            borderaxespad=0.0,
+        )
+        plt.gcf().subplots_adjust(right=0.74)
+        plt.savefig(
+            os.path.join(self.save_dir, FILENAME_FINAL_SAMPLED_PCAVIEW_BY_POOL),
+            dpi=self.dpi,
+            bbox_inches="tight",
+        )
+        plt.close()
+
+    def _pool_name_from_dataname(self, dataname):
+        sys_name = str(dataname).rsplit("-", 1)[0]
+        pool_name = os.path.dirname(sys_name)
+        return pool_name if pool_name else "root"
 
     def _plot_coverage(self, all_features, selected_indices, method, n_candidates=None):
         plt.figure(figsize=(10, 8))

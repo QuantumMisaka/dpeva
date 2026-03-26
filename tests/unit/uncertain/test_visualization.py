@@ -8,6 +8,8 @@ from dpeva.uncertain.visualization import UQVisualizer
 from dpeva.constants import (
     FILENAME_UQ_FORCE_QBC_RND_FDIFF_SCATTER,
     FILENAME_UQ_FORCE_QBC_RND_FDIFF_SCATTER_TRUNCATED,
+    FILENAME_FINAL_SAMPLED_PCAVIEW,
+    FILENAME_FINAL_SAMPLED_PCAVIEW_BY_POOL,
 )
 
 class TestUQVisualizer:
@@ -179,3 +181,66 @@ class TestUQVisualizer:
             full_features=all_features,
         )
         assert list(out_df.columns) == ["PC1", "PC2"]
+
+    def test_plot_pca_analysis_joint_mode_generates_by_pool_plot(self, visualizer, mock_plt):
+        explained_variance = np.array([0.6, 0.3, 0.05, 0.03, 0.01, 0.005, 0.003, 0.002])
+        all_features = np.array([[0.1, 0.2], [0.2, 0.3], [0.3, 0.4], [0.4, 0.5]])
+        df_uq = pd.DataFrame({"dataname": ["pool1/a-0", "pool2/b-0"]})
+        visualizer.plot_pca_analysis(
+            explained_variance=explained_variance,
+            selected_PC_dim=2,
+            all_features=all_features,
+            direct_indices=[0, 1],
+            random_indices=[0],
+            scores_direct=np.array([0.6, 0.5]),
+            scores_random=np.array([0.4, 0.3]),
+            df_uq=df_uq,
+            final_indices=[0, 1],
+            n_candidates=2,
+            full_features=all_features,
+        )
+        save_paths = [call.args[0] for call in mock_plt.savefig.call_args_list]
+        assert any(path.endswith(os.path.join(str(visualizer.save_dir), FILENAME_FINAL_SAMPLED_PCAVIEW)) for path in save_paths)
+        assert any(path.endswith(os.path.join(str(visualizer.save_dir), FILENAME_FINAL_SAMPLED_PCAVIEW_BY_POOL)) for path in save_paths)
+        assert any("bbox_to_anchor" in call.kwargs for call in mock_plt.legend.call_args_list)
+
+    def test_plot_pca_analysis_joint_mode_handles_non_range_index(self, visualizer, mock_plt):
+        explained_variance = np.array([0.6, 0.3, 0.05, 0.03, 0.01, 0.005, 0.003, 0.002])
+        all_features = np.array([[0.1, 0.2], [0.2, 0.3], [0.3, 0.4], [0.4, 0.5]])
+        df_uq = pd.DataFrame({"dataname": ["pool1/a-0", "pool2/b-0"]}, index=[100, 200])
+        visualizer.plot_pca_analysis(
+            explained_variance=explained_variance,
+            selected_PC_dim=2,
+            all_features=all_features,
+            direct_indices=[0, 1],
+            random_indices=[0],
+            scores_direct=np.array([0.6, 0.5]),
+            scores_random=np.array([0.4, 0.3]),
+            df_uq=df_uq,
+            final_indices=[0, 1],
+            n_candidates=2,
+            full_features=all_features,
+        )
+        save_paths = [call.args[0] for call in mock_plt.savefig.call_args_list]
+        assert any(path.endswith(os.path.join(str(visualizer.save_dir), FILENAME_FINAL_SAMPLED_PCAVIEW_BY_POOL)) for path in save_paths)
+
+    def test_plot_pca_analysis_normal_mode_skips_by_pool_plot(self, visualizer, mock_plt):
+        explained_variance = np.array([0.6, 0.3, 0.05, 0.03, 0.01, 0.005, 0.003, 0.002])
+        all_features = np.array([[0.1, 0.2], [0.2, 0.3]])
+        df_uq = pd.DataFrame({"dataname": ["a-0", "b-0"]})
+        visualizer.plot_pca_analysis(
+            explained_variance=explained_variance,
+            selected_PC_dim=2,
+            all_features=all_features,
+            direct_indices=[0],
+            random_indices=[1],
+            scores_direct=np.array([0.6, 0.5]),
+            scores_random=np.array([0.4, 0.3]),
+            df_uq=df_uq,
+            final_indices=[0],
+            n_candidates=None,
+            full_features=all_features,
+        )
+        save_paths = [call.args[0] for call in mock_plt.savefig.call_args_list]
+        assert any(path.endswith(os.path.join(str(visualizer.save_dir), FILENAME_FINAL_SAMPLED_PCAVIEW)) for path in save_paths)
+        assert not any(path.endswith(os.path.join(str(visualizer.save_dir), FILENAME_FINAL_SAMPLED_PCAVIEW_BY_POOL)) for path in save_paths)

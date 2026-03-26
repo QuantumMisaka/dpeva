@@ -358,6 +358,10 @@ class CollectionConfig(BaseWorkflowConfig):
     testing_dir: str = DEFAULT_TESTING_DIR
     results_prefix: str = Field(DEFAULT_RESULTS_PREFIX, description="Output file prefix.")
     fig_dpi: int = Field(FIG_DPI, description="DPI for visualization figures.")
+    enable_diagnostic_plots: bool = Field(
+        False,
+        description="Enable optional Diagnostic-layer plots (default: False, Core plots only)."
+    )
     
     # UQ Parameters
     num_models: int = Field(DEFAULT_NUM_MODELS, ge=3, description="Number of models for UQ calculation.")
