@@ -427,9 +427,10 @@ class InferenceVisualizer:
         right_gap = float(getattr(ax_main, "_dpeva_aligned_sidebar_gap", 0.022))
         width_scale = float(getattr(ax_main, "_dpeva_scatter_sidebar_width_scale", 0.2))
         desired_width = max(top_box.height, main_box.width * width_scale)
-        max_width = max(right_box.x1 - (main_box.x1 + right_gap), 0.05)
-        right_width = min(desired_width, max_width)
-        right_x0 = right_box.x1 - right_width
+        right_x1 = min(right_box.x1, main_box.x1 + right_gap + desired_width)
+        right_x0 = min(main_box.x1 + right_gap, right_x1 - 0.05)
+        right_width = min(desired_width, right_x1 - right_x0)
+        right_x0 = right_x1 - right_width
         right_height = main_box.height
         right_bottom_y0 = main_box.y0
         ax_top.set_position(
@@ -836,12 +837,13 @@ class InferenceVisualizer:
             self._align_hexbin_sidebar_axes(fig, ax_main, ax_err, ax_cbar, profile)
 
         if title:
-            fig.suptitle(title, y=profile["suptitle_y"], fontsize=fonts["title"])
+            fig.suptitle(title, y=profile["suptitle_y"], fontsize=fonts["title"], fontweight="bold")
         else:
             fig.suptitle(
                 profile["main_title"].format(label=label),
                 y=profile["suptitle_y"],
                 fontsize=fonts["title"],
+                fontweight="bold",
             )
 
         filename = f"parity_{label.lower().replace(' ', '_')}_enhanced.png"

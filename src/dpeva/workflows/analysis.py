@@ -3,7 +3,7 @@ import sys
 import logging
 import time
 import pandas as pd
-from typing import Dict, Any, Union
+from typing import Dict, Any, Union, List, Optional
 
 from dpeva.config import AnalysisConfig
 from dpeva.analysis.managers import (
@@ -155,13 +155,71 @@ class AnalysisWorkflow:
             stats_desc = pd.Series(e_rel_pred).describe().to_dict()
             self.io_manager.save_stats_desc(stats_desc, FILENAME_COHESIVE_ENERGY_PRED_STATS_JSON)
 
+    def _has_valid_composition_info(
+        self,
+        atom_counts_list: Optional[List[Dict[str, int]]],
+        atom_num_list: Optional[List[int]],
+    ) -> bool:
+        if not atom_counts_list or not atom_num_list:
+            return False
+        if len(atom_counts_list) != len(atom_num_list):
+            return False
+        return all(atom_num > 0 for atom_num in atom_num_list)
+
+    def _composition_lists_match(
+        self,
+        left_counts: List[Dict[str, int]],
+        left_nums: List[int],
+        right_counts: List[Dict[str, int]],
+        right_nums: List[int],
+    ) -> bool:
+        if len(left_counts) != len(right_counts) or len(left_nums) != len(right_nums):
+            return False
+        if left_nums != right_nums:
+            return False
+        return all(dict(left) == dict(right) for left, right in zip(left_counts, right_counts))
+
     def _resolve_composition_info(self, parser):
-        """Resolve composition source from data_path first, then legacy parser fallback."""
+        """Resolve composition info with parser order priority for model_test outputs."""
+        parser_counts, parser_nums = parser.get_composition_list()
+        parser_valid = self._has_valid_composition_info(parser_counts, parser_nums)
+
         if self.config.data_path:
             self.logger.info(f"Stage[composition] Source data_path: {self.config.data_path}")
-            return self.io_manager.load_composition_info(str(self.config.data_path))
+            data_counts, data_nums = self.io_manager.load_composition_info(str(self.config.data_path))
+            data_valid = self._has_valid_composition_info(data_counts, data_nums)
+
+            if parser_valid:
+                if data_valid:
+                    if self._composition_lists_match(parser_counts, parser_nums, data_counts, data_nums):
+                        self.logger.info(
+                            "Stage[composition] data_path composition validated against parser order."
+                        )
+                    else:
+                        self.logger.warning(
+                            "Stage[composition] data_path composition order does not match parser output order. "
+                            "Using parser-aligned composition for cohesive energy."
+                        )
+                else:
+                    self.logger.warning(
+                        "Stage[composition] data_path composition is unavailable or invalid. "
+                        "Using parser-aligned composition for cohesive energy."
+                    )
+                return parser_counts, parser_nums
+
+            if data_valid:
+                self.logger.info(
+                    "Stage[composition] Parser composition is unavailable; falling back to data_path composition."
+                )
+                return data_counts, data_nums
+
+            self.logger.warning(
+                "Stage[composition] No valid composition info found from parser or data_path."
+            )
+            return parser_counts, parser_nums
+
         self.logger.info("Stage[composition] Source parser fallback: filenames (legacy mode)")
-        return parser.get_composition_list()
+        return parser_counts, parser_nums
 
     def _submit_to_slurm(self):
         if not self.config_path:
