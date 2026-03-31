@@ -432,7 +432,7 @@ class InferenceVisualizer:
         desired_width = max(top_box.height, main_box.width * width_scale)
         right_x1 = min(right_box.x1, main_box.x1 + right_gap + desired_width)
         right_x0 = min(main_box.x1 + right_gap, right_x1 - 0.05)
-        right_width = min(desired_width, right_x1 - right_x0)
+        right_width = max(0.01, min(desired_width, right_x1 - right_x0))
         right_x0 = right_x1 - right_width
         right_height = main_box.height
         right_bottom_y0 = main_box.y0
@@ -563,7 +563,7 @@ class InferenceVisualizer:
         fig.tight_layout()
         filename = f"parity_{label.lower().replace(' ', '_')}.png"
         fig.savefig(
-            os.path.join(self.output_dir, filename), dpi=self.dpi, bbox_inches="tight"
+            os.path.join(self.output_dir, filename), dpi=self.dpi
         )
         plt.close(fig)
 
@@ -858,7 +858,7 @@ class InferenceVisualizer:
 
         filename = f"parity_{label.lower().replace(' ', '_')}_enhanced.png"
         fig.savefig(
-            os.path.join(self.output_dir, filename), dpi=self.dpi, bbox_inches="tight"
+            os.path.join(self.output_dir, filename), dpi=self.dpi
         )
         plt.close(fig)
 
