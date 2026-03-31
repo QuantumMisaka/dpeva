@@ -687,7 +687,7 @@ class UQVisualizer:
         self._apply_tick_fontsize(ax, pca_fonts["tick"])
         plt.grid(True, linestyle="-", alpha=0.6)
         plt.savefig(
-            os.path.join(self.save_dir, FILENAME_EXPLAINED_VARIANCE), dpi=self.dpi
+            os.path.join(self.save_dir, FILENAME_EXPLAINED_VARIANCE), dpi=self.dpi, bbox_inches="tight"
         )
         plt.close()
 
@@ -734,8 +734,8 @@ class UQVisualizer:
         plt.xticks(x + 0.45, x_ticks, size=pca_fonts["tick"])
         plt.yticks(np.linspace(0, 1.0, 6), size=pca_fonts["tick"])
         plt.grid(True, axis="y", linestyle="-", alpha=0.6)
-        plt.legend(shadow=True, loc="best", fontsize=pca_fonts["legend"])
-        plt.savefig(os.path.join(self.save_dir, FILENAME_COVERAGE_SCORE), dpi=self.dpi)
+        plt.legend(shadow=True, loc="best", fontsize=pca_fonts["legend"], framealpha=0.9)
+        plt.savefig(os.path.join(self.save_dir, FILENAME_COVERAGE_SCORE), dpi=self.dpi, bbox_inches="tight")
         plt.close()
 
         # 4. Final Selection in PCA Space
@@ -826,11 +826,11 @@ class UQVisualizer:
             ylabel="PC2",
             fonts=pca_fonts,
         )
-        plt.grid(True, linestyle="-", alpha=0.6)
+        plt.grid(False)
         ax = plt.gca()
         self._apply_pca_axis_layout(ax, pca_scatter_profile)
         self._apply_tick_fontsize(ax, pca_fonts["tick"])
-        plt.legend(frameon=True, fontsize=pca_fonts["legend"], loc="best")
+        plt.legend(frameon=True, fontsize=pca_fonts["legend"], loc="best", framealpha=0.9)
         plt.savefig(
             os.path.join(self.save_dir, FILENAME_FINAL_SAMPLED_PCAVIEW), dpi=self.dpi
         )
@@ -908,7 +908,7 @@ class UQVisualizer:
             ylabel="PC2",
             fonts=pca_fonts,
         )
-        plt.grid(True, linestyle="-", alpha=0.6)
+        plt.grid(False)
         ax = plt.gca()
         self._apply_pca_axis_layout(ax, self._build_pca_scatter_profile())
         self._apply_tick_fontsize(ax, pca_fonts["tick"])
@@ -1018,14 +1018,14 @@ class UQVisualizer:
                 label=f"{method} sampled {len(selected_features):,}",
             )
 
-        plt.legend(frameon=True, fontsize=coverage_fonts["legend"], loc="best")
+        plt.legend(frameon=True, fontsize=coverage_fonts["legend"], loc="best", framealpha=0.9)
         self._apply_text(
             title=f"{method} Coverage Analysis",
             xlabel="PC1",
             ylabel="PC2",
             fonts=coverage_fonts,
         )
-        plt.grid(True, linestyle="-", alpha=0.6)
+        plt.grid(False)
         ax = plt.gca()
         self._apply_pca_axis_layout(ax, active_profile)
         self._apply_tick_fontsize(ax, coverage_fonts["tick"])

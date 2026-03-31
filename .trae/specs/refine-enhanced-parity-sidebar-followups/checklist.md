@@ -1,7 +1,0 @@
-- [x] 已确认 cohesive energy 的 `Predicted Density` 横向长度增强后，与 `True Density` 和主 parity 区域形成更清晰的宽度呼应
-- [x] 已确认 scatter 右侧对齐线在加宽 `Predicted Density` 后仍保持稳定，且主 parity 区域未被压缩
-- [x] 已确认 force 的 hexbin error panel 已替换为横置 violin plot，并突出 error distribution 而非 density 计数语义
-- [x] 已确认 hexbin error panel 的零误差参考线仍与误差轴方向一致
-- [x] 已确认 hexbin color bar 已改为自下而上递增的 vertical 色条
-- [x] 已确认 color bar 宽度可独立于 error distribution 面板微调，且整体阅读路径更适合论文排版
-- [x] 已通过自动化测试与 `/tmp/dpeva_parity_verify` 代表图回归验证本轮 sidebar follow-up 优化

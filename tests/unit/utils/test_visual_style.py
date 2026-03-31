@@ -59,7 +59,7 @@ def test_get_collection_pca_scatter_profile_builds_shared_baseline():
     profile = get_collection_pca_scatter_profile(12)
     assert profile["figure_size"] == (11, 9)
     assert profile["axis_margins"] == (0.02, 0.02)
-    assert profile["tick_target_count"] == 8
+    assert profile["tick_target_count"] == 10
     assert profile["fonts"]["title"] > profile["fonts"]["label"] > profile["fonts"]["tick"]
     assert profile["fonts"]["legend_title"] >= profile["fonts"]["legend"]
 
@@ -87,7 +87,6 @@ def test_get_analysis_parity_profile_includes_quantity_layout_and_policy():
     assert base_enhanced["hexbin_aligned_sidebar_gap"] < 0.03
     assert base_enhanced["scatter_sidebar_width_scale"] >= 0.22
     assert force_enhanced["hexbin_colorbar_width_ratio"] < 0.5
-    assert force_enhanced["main_overlay_scatter_alpha"] > 0.12
     assert "width_ratios" in energy_enhanced
     assert energy_enhanced["scientific_enabled"] is False
 

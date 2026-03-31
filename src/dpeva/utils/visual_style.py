@@ -76,14 +76,14 @@ def get_collection_pca_scatter_profile(
     return {
         "figure_size": (11, 9),
         "axis_margins": (0.02, 0.02),
-        "tick_target_count": 8,
+        "tick_target_count": 10,
         "fonts": scale_font_hierarchy(
             base_fonts,
-            title_scale=1.24,
-            label_scale=1.2,
-            tick_scale=1.2,
-            legend_scale=1.08,
-            legend_title_scale=1.08,
+            title_scale=1.6,
+            label_scale=1.5,
+            tick_scale=1.4,
+            legend_scale=1.3,
+            legend_title_scale=1.3,
         ),
     }
 
