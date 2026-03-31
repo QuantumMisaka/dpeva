@@ -134,11 +134,11 @@ def get_analysis_distribution_profile(
         "stats_anchor_y": 0.66,
         "fonts": scale_font_hierarchy(
             base_fonts,
-            title_scale=1.1,
-            label_scale=1.12,
-            tick_scale=1.08,
-            legend_scale=1.04,
-            legend_title_scale=1.02,
+            title_scale=1.25,
+            label_scale=1.25,
+            tick_scale=1.15,
+            legend_scale=1.10,
+            legend_title_scale=1.05,
         ),
     }
 

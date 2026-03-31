@@ -88,7 +88,7 @@ class InferenceVisualizer:
             )
         return x_arr[valid_mask], y_arr[valid_mask]
 
-    def _stats_text(self, data: np.ndarray, name: str) -> str:
+    def _stats_text(self, data: np.ndarray, name: str, include_name: bool = True) -> str:
         values = np.asarray(data, dtype=float).reshape(-1)
         desc = {
             "count": float(values.size),
@@ -97,23 +97,26 @@ class InferenceVisualizer:
             "min": float(np.min(values)),
             "max": float(np.max(values)),
         }
-        return (
-            f"{name}\n"
-            f"count={desc['count']:.0f}\n"
-            f"mean={desc['mean']:.4f}\n"
-            f"std={desc['std']:.4f}\n"
-            f"min={desc['min']:.4f}\n"
+        lines = []
+        if include_name:
+            lines.append(name)
+        lines.extend([
+            f"count={desc['count']:.0f}",
+            f"mean={desc['mean']:.4f}",
+            f"std={desc['std']:.4f}",
+            f"min={desc['min']:.4f}",
             f"max={desc['max']:.4f}"
-        )
+        ])
+        return "\n".join(lines)
 
-    def _add_stats_box(self, ax, text: str, x: float = 0.02, y: float = 0.98, fontsize: float = 12):
+    def _add_stats_box(self, ax, text: str, x: float = 0.02, y: float = 0.98, fontsize: float = 12, ha: str = "left"):
         ax.text(
             x,
             y,
             text,
             transform=ax.transAxes,
             va="top",
-            ha="left",
+            ha=ha,
             fontsize=fontsize,
             bbox={
                 "boxstyle": "round",
@@ -917,8 +920,21 @@ class InferenceVisualizer:
             fonts=fonts,
         )
         if show_stats:
+            hist, _ = np.histogram(filtered_data, bins=10)
+            mid_idx = len(hist) // 2
+            left_density = np.max(hist[:mid_idx]) if len(hist[:mid_idx]) > 0 else 0
+            right_density = np.max(hist[mid_idx:]) if len(hist[mid_idx:]) > 0 else 0
+            
+            if left_density > right_density:
+                stats_x = 0.98
+                stats_ha = "right"
+            else:
+                stats_x = 0.02
+                stats_ha = "left"
+            
+            stats_fontsize = fonts.get("legend", 12) * 1.15
             self._add_stats_box(
-                ax, self._stats_text(filtered_data, label), x=0.70, y=0.98
+                ax, self._stats_text(filtered_data, label, include_name=False), x=stats_x, y=0.98, fontsize=stats_fontsize, ha=stats_ha
             )
 
         if show_legend:
