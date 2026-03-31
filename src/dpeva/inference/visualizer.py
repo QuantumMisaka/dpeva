@@ -724,15 +724,22 @@ class InferenceVisualizer:
         if ax_err is not None:
             error_xlabel = self._format_error_axis_label(unit, profile)
             is_hexbin_sidebar = ax_top is None and ax_right is None
+            
+            p_high = np.percentile(np.abs(err_values), 99)
+            if p_high > 0:
+                err_limit = p_high * 1.5
+                visible_err_values = err_values[(err_values >= -err_limit) & (err_values <= err_limit)]
+            else:
+                visible_err_values = err_values
+
             self._plot_histogram_with_kde(
                 ax_err,
-                err_values,
+                visible_err_values,
                 color=colors["error"],
                 orientation="vertical",
                 alpha=profile["error_hist_alpha"],
             )
             
-            p_high = np.percentile(np.abs(err_values), 99)
             if p_high > 0:
                 ax_err.set_xlim(-p_high * 1.5, p_high * 1.5)
 
