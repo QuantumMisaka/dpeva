@@ -22,11 +22,20 @@ def _base_config(tmp_path):
 def test_collect_run_orchestrates_three_phases(tmp_path):
     config = _base_config(tmp_path)
     with patch("dpeva.workflows.collect.setup_workflow_logger"), \
+         patch("dpeva.workflows.collect.UQVisualizer") as mock_visualizer, \
          patch.object(CollectionWorkflow, "_run_uq_phase", return_value=(pd.DataFrame(), pd.DataFrame(), ["s1"])) as mock_uq, \
          patch.object(CollectionWorkflow, "_run_sampling_phase", return_value=pd.DataFrame()) as mock_sampling, \
          patch.object(CollectionWorkflow, "_run_export_phase") as mock_export:
         workflow = CollectionWorkflow(config)
         workflow.run()
+    mock_visualizer.assert_called_once_with(
+        workflow.io_manager.view_savedir,
+        dpi=workflow.config.fig_dpi,
+        font_size=workflow.config.fig_base_font_size,
+        tick_target_count=workflow.config.fig_tick_target_count,
+        legend_max_rows=workflow.config.fig_legend_max_rows,
+        legend_max_cols=workflow.config.fig_legend_max_cols,
+    )
     mock_uq.assert_called_once()
     mock_sampling.assert_called_once()
     mock_export.assert_called_once()
@@ -144,8 +153,8 @@ def test_filtered_phase_always_plots_rnd_and_qbc_trust_ranges(tmp_path):
     assert vis.plot_uq_with_trust_range.call_count == 2
     qbc_call = vis.plot_uq_with_trust_range.call_args_list[0]
     rnd_call = vis.plot_uq_with_trust_range.call_args_list[1]
-    assert qbc_call.args[1] == "UQ-QbC-force"
-    assert rnd_call.args[1] == "UQ-RND-force"
+    assert qbc_call.args[1] == "UQ-QbC"
+    assert rnd_call.args[1] == "UQ-RND"
     vis.plot_uq_fdiff_scatter.assert_not_called()
     vis.plot_uq_vs_error.assert_not_called()
     vis.plot_uq_diff_parity.assert_not_called()

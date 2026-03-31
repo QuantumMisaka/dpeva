@@ -19,6 +19,20 @@ from dpeva.constants import (
 from dpeva.io.dataset import load_systems
 from collections import Counter
 
+
+def describe_analysis_plot_level(plot_level: str, mode: str = "model_test") -> str:
+    """Return a human-readable plot scope summary for Analysis."""
+    normalized_level = str(plot_level).lower()
+    normalized_mode = str(mode).lower()
+    if normalized_mode == "dataset":
+        if normalized_level == "basic":
+            return "basic: dataset核心分布图与元素统计图"
+        return "full: basic + 数据集cohesive energy分布图（条件满足时）"
+    if normalized_level == "basic":
+        return "basic: 核心parity、单变量分布与error distribution"
+    return "full: basic + overlay、with_error、enhanced parity"
+
+
 class AnalysisIOManager:
     """
     Manages IO operations for Analysis Workflow:
@@ -135,11 +149,13 @@ class UnifiedAnalysisManager:
         enable_cohesive_energy: bool = True,
         allow_ref_energy_lstsq_completion: bool = False,
         slow_plot_threshold_seconds: float = 60.0,
+        enhanced_parity_renderer: str = "auto",
     ):
         self.ref_energies = ref_energies
         self.enable_cohesive_energy = enable_cohesive_energy
         self.allow_ref_energy_lstsq_completion = allow_ref_energy_lstsq_completion
         self.slow_plot_threshold_seconds = slow_plot_threshold_seconds
+        self.enhanced_parity_renderer = enhanced_parity_renderer
         self.logger = logging.getLogger(__name__)
 
     def analyze_model(self, data: Dict, output_dir: str,
@@ -217,8 +233,14 @@ class UnifiedAnalysisManager:
             allow_ref_energy_lstsq_completion=self.allow_ref_energy_lstsq_completion
         )
         
-        viz = InferenceVisualizer(output_dir)
+        viz = InferenceVisualizer(
+            output_dir,
+            enhanced_parity_renderer=self.enhanced_parity_renderer,
+        )
         full_plot_enabled = plot_level == "full"
+        self.logger.info(
+            f"Analysis plot scope ({plot_level}): {describe_analysis_plot_level(plot_level, mode='model_test')}"
+        )
 
         def safe_plot(plot_name: str, fn, *args, **kwargs):
             """Run plotting call safely and downgrade plotting errors to warnings."""

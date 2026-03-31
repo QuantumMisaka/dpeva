@@ -67,6 +67,20 @@ def test_dataset_manager_analyze_success(mock_load_systems, MockVisualizer, tmp_
     assert "pressure_gpa" in written
 
 
+@patch("dpeva.analysis.dataset.InferenceVisualizer")
+@patch("dpeva.analysis.dataset.load_systems")
+def test_dataset_manager_basic_plot_level_skips_cohesive_distribution(mock_load_systems, MockVisualizer, tmp_path):
+    mock_load_systems.return_value = [_FakeSystem()]
+    manager = DatasetAnalysisManager(ref_energies={"H": -1.0, "O": -2.0})
+    output_dir = tmp_path / "analysis"
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    manager.analyze(tmp_path / "dataset", output_dir, plot_level="basic")
+
+    plotted_labels = [call.args[1] for call in MockVisualizer.return_value.plot_distribution.call_args_list]
+    assert "Dataset Cohesive Energy" not in plotted_labels
+
+
 @patch("dpeva.analysis.dataset.load_systems")
 def test_dataset_manager_analyze_empty(mock_load_systems, tmp_path):
     mock_load_systems.return_value = []

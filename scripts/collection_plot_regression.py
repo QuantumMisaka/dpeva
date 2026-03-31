@@ -21,6 +21,7 @@ NATIVE_FILENAMES = {
     "explained_variance.png",
     "coverage_score.png",
     "Final_sampled_PCAview.png",
+    "Final_sampled_PCAview_by_pool.png",
     "DIRECT_PCA_feature_coverage.png",
     "Random_PCA_feature_coverage.png",
 }
@@ -28,6 +29,7 @@ NATIVE_FILENAMES = {
 FIGURE_SIZE_RULES = {
     "coverage_score.png": (15, 5),
     "Final_sampled_PCAview.png": (12, 10),
+    "Final_sampled_PCAview_by_pool.png": (14, 10),
     "DIRECT_PCA_feature_coverage.png": (10, 8),
     "Random_PCA_feature_coverage.png": (10, 8),
 }

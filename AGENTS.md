@@ -1,3 +1,7 @@
+---
+alwaysApply: false
+description: 
+---
 # DP-EVA - Deep Potential EVolution Accelerator
 
 DP-EVA is an active learning framework designed for efficient fine-tuning of DPA universal machine learning interatomic potential. It integrates uncertainty quantification (UQ), representative sampling (DIRECT), and automated DFT labeling workflows to minimize data annotation costs while maximizing model performance via fully unraveling the knowledge of DPA pre-trained PES model.
@@ -44,21 +48,18 @@ All workflow scenarios and CLI calling for core functionality can be found via d
 
 **All Agents MUST adhere to the following documentation lifecycle rules:**
 
-1.  **Code Review Phase**:
-    - Create review reports in `docs/reports/` with naming `YYYY-MM-DD-Code-Review-<Topic>.md`.
-
-2.  **Feature Planning Phase**:
-    - Create implementation plans/specs in `docs/plans/` with naming `YYYY-MM-DD-<Feature>-Plan.md`.
-    - Include `status: active` and `audience: developers` in front matter.
-
-3.  **Task Completion & Archiving**:
-    - Upon feature completion or issue resolution, verify if the plan/report should be archived.
-    - Move completed plans to `docs/archive/vX.Y.Z/plans/`.
-    - Move completed reports to `docs/archive/vX.Y.Z/reports/`.
-    - Update the index file `docs/archive/vX.Y.Z/README.md` immediately.
-
-4.  **Sphinx Indexing Requirement**:
-    - When adding/moving/deleting `.md` files, YOU MUST check and update the corresponding `.rst` files in `docs/source/`.
-    - Ensure `toctree` directives do not reference non-existent files.
-    - Run `make html` (if available) or verify paths manually to prevent broken builds.
+1. **Code Review Phase**:
+   - Create review reports in `docs/reports/` with naming `YYYY-MM-DD-Code-Review-<Topic>.md`.
+2. **Feature Planning Phase**:
+   - Create implementation plans/specs in `docs/plans/` with naming `YYYY-MM-DD-<Feature>-Plan.md`.
+   - Include `status: active` and `audience: developers` in front matter.
+3. **Task Completion & Archiving**:
+   - Upon feature completion or issue resolution, verify if the plan/report should be archived.
+   - Move completed plans to `docs/archive/vX.Y.Z/plans/`.
+   - Move completed reports to `docs/archive/vX.Y.Z/reports/`.
+   - Update the index file `docs/archive/vX.Y.Z/README.md` immediately.
+4. **Sphinx Indexing Requirement**:
+   - When adding/moving/deleting `.md` files, YOU MUST check and update the corresponding `.rst` files in `docs/source/`.
+   - Ensure `toctree` directives do not reference non-existent files.
+   - Run `make html` (if available) or verify paths manually to prevent broken builds.
 

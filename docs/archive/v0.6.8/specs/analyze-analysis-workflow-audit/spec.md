@@ -9,10 +9,11 @@
 - 对照运行证据与代码实现，明确Analysis Workflow在项目中的功能职责与边界
 - 对Analysis相关代码做细致审查，覆盖功能完备性、模块耦合度、可维护性、鲁棒性与风险点
 - 输出带优先级的审查结论与可落地改进建议（短期修复与中期重构）
+- 落实分析可视化链路中“必须改 + 建议改”到 `visual_style.py` 与 `visualizer.py` 并补齐回归测试
 
 ## Impact
 - Affected specs: analysis workflow capability, observability, reliability, maintainability
-- Affected code: `src/dpeva/analysis/`, `src/dpeva/workflows/`中analysis相关入口与调度代码，`src/dpeva/cli.py` analysis命令分发，可能涉及公共I/O与日志模块
+- Affected code: `src/dpeva/analysis/`, `src/dpeva/workflows/`中analysis相关入口与调度代码，`src/dpeva/cli.py` analysis命令分发，`src/dpeva/utils/visual_style.py`，`src/dpeva/inference/visualizer.py`，以及对应测试模块
 
 ## ADDED Requirements
 ### Requirement: Analysis Workflow功能拆解
@@ -41,8 +42,17 @@
 - **THEN** 输出功能职责说明，并按“功能完备性、耦合度、风险点”给出分项审查结论与改进建议
 
 ## MODIFIED Requirements
-### Requirement: 无
-本次为新增审查型需求，不修改既有功能规范。
+### Requirement: Analysis 可视化样式契约化与布局显式化
+系统 SHALL 将 analysis 作图中的关键布局参数收敛到样式配置，并在 visualizer 中只做参数消费，避免硬编码分散。
+
+#### Scenario: 必须改（MUST）落地
+- **WHEN** `plot_distribution_with_error` 与 `plot_distribution_overlay` 进行绘制与保存
+- **THEN** `with_error` 布局参数（主次面板比例、间距、统计框锚点、零线线宽、子图边距）必须来自 `visual_style.py` 的统一 profile
+- **AND** overlay 图在外置图例场景必须启用防裁切保存策略
+
+#### Scenario: 建议改（SHOULD）落地
+- **WHEN** 图例位置策略需要随图型调整
+- **THEN** 系统应通过 profile 显式提供“图内/图外图例”切换能力，并保持默认行为与历史输出兼容
 
 ## REMOVED Requirements
 ### Requirement: 无

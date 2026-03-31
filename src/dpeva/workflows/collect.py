@@ -145,7 +145,14 @@ class CollectionWorkflow:
             self._submit_to_slurm()
             return
         self.logger.info(f"Initializing selection in {self.project} ---")
-        vis = UQVisualizer(self.io_manager.view_savedir, dpi=self.config.fig_dpi)
+        vis = UQVisualizer(
+            self.io_manager.view_savedir,
+            dpi=self.config.fig_dpi,
+            font_size=self.config.fig_base_font_size,
+            tick_target_count=self.config.fig_tick_target_count,
+            legend_max_rows=self.config.fig_legend_max_rows,
+            legend_max_cols=self.config.fig_legend_max_cols,
+        )
         df_desc, df_candidate, unique_system_names = self._run_uq_phase(vis)
         df_final = self._run_sampling_phase(df_candidate, df_desc, vis)
         self._run_export_phase(df_final, unique_system_names)
@@ -192,7 +199,7 @@ class CollectionWorkflow:
         self._log_generated_plots(["UQ-force"], layer="core", condition="uq_analysis_completed")
         vis.plot_uq_with_trust_range(
             uq_results[COL_UQ_QBC],
-            "UQ-QbC-force",
+            "UQ-QbC",
             FILENAME_UQ_QBC_FORCE,
             self.uq_manager.qbc_params["lo"],
             self.uq_manager.qbc_params["hi"],
@@ -201,7 +208,7 @@ class CollectionWorkflow:
         if has_rescaled_rnd:
             vis.plot_uq_with_trust_range(
                 uq_rnd_rescaled,
-                "UQ-RND-force",
+                "UQ-RND",
                 FILENAME_UQ_RND_FORCE,
                 self.uq_manager.rnd_params["lo"],
                 self.uq_manager.rnd_params["hi"],

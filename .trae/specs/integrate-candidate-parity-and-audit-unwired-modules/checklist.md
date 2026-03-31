@@ -1,8 +1,0 @@
-- [x] `UQ-QbC-Candidate-fdiff-parity.png` 已在 Collection 含 GT 条件下由标准 `dpeva collect` 自动生成
-- [x] `UQ-RND-Candidate-fdiff-parity.png` 已在 Collection 含 GT 条件下由标准 `dpeva collect` 自动生成
-- [x] 无 GT、缺失/空/非有限 `diff_maxf_0_frame` 场景下两张图均被正确跳过并有日志提示
-- [x] Collection 内所有主要出图函数均有“接入状态”结论（已接入/保留手动/移除）
-- [x] `train/infer/analysis/feature/collect/label/clean` 七类工作流完成未接入模块审查并有证据链
-- [x] 结构化审查报告已生成并可复核模块位置、接入状态、建议与优先级
-- [x] 相关单元测试通过，且不破坏现有 Collection 工作流行为
-- [x] 文档治理检查通过，报告索引与引用路径有效

@@ -15,6 +15,7 @@ from dpeva.constants import (
     FILENAME_DATASET_FRAME_SUMMARY_CSV,
     FILENAME_DATASET_STATS_JSON,
 )
+from dpeva.analysis.managers import describe_analysis_plot_level
 from dpeva.inference.visualizer import InferenceVisualizer
 from dpeva.inference.stats import StatsCalculator
 from dpeva.io.dataset import load_systems
@@ -35,11 +36,15 @@ class DatasetAnalysisManager:
         self.enable_cohesive_energy = enable_cohesive_energy
         self.allow_ref_energy_lstsq_completion = allow_ref_energy_lstsq_completion
 
-    def analyze(self, dataset_dir: Path, output_dir: Path) -> Dict[str, Any]:
+    def analyze(self, dataset_dir: Path, output_dir: Path, plot_level: str = "full") -> Dict[str, Any]:
         """Compute dataset statistics and export plots/summary files."""
         systems = load_systems(str(dataset_dir), fmt="auto")
         if not systems:
             raise ValueError(f"No valid systems found in dataset_dir: {dataset_dir}")
+        full_plot_enabled = plot_level == "full"
+        self.logger.info(
+            f"Dataset analysis plot scope ({plot_level}): {describe_analysis_plot_level(plot_level, mode='dataset')}"
+        )
 
         energy_per_atom: List[float] = []
         force_norm: List[float] = []
@@ -125,7 +130,7 @@ class DatasetAnalysisManager:
         if pressure_gpa:
             viz.plot_distribution(np.array(pressure_gpa), "Dataset Pressure", "GPa", color="teal")
 
-        if self.enable_cohesive_energy and energy_per_atom and frame_atom_counts and frame_atom_nums:
+        if full_plot_enabled and self.enable_cohesive_energy and energy_per_atom and frame_atom_counts and frame_atom_nums:
             calc = StatsCalculator(
                 energy_per_atom=np.array(energy_per_atom, dtype=float),
                 force_flat=np.array([], dtype=float),

@@ -2,7 +2,7 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-03-25
+last-updated: 2026-03-28
 owner: Docs Owner
 ---
 
@@ -10,7 +10,7 @@ owner: Docs Owner
 
 - Status: active
 - Audience: All
-- Last-Updated: 2026-03-25
+- Last-Updated: 2026-03-28
 
 本文档目录用于存放“项目级、可共享、可追溯”的技术结论，不承载执行过程草稿。
 
@@ -38,8 +38,9 @@ owner: Docs Owner
 
 ## 4. 活跃报告 (Active Reports)
 
-- 当前暂无活跃报告。
-- 本批报告已归档至：`docs/archive/v0.7.1/reports/`。
+- [2026-03-28-Code-Review-Collection-PCA-Font-Scale.md](./2026-03-28-Code-Review-Collection-PCA-Font-Scale.md)：解释 `Final_sampled_PCAview` 与 `DIRECT_PCA_feature_coverage` 的字号观感差异，结论为版式密度问题而非字体参数更小。
+- [2026-03-28-Developer-Report-Collection-Publication-Figure-Standardization.md](./2026-03-28-Developer-Report-Collection-Publication-Figure-Standardization.md)：基于 PCA 字号差异分析与 Collection 全量出图审计，提出主文图、机制图、补充图、诊断图四级分类，以及图片规范化与学术出版化方案。
+- 历史批次报告已归档至：`docs/archive/v0.7.1/reports/`。
 
 ## 5. 归档与索引要求
 

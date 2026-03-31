@@ -6,7 +6,11 @@ import pandas as pd
 from typing import Dict, Any, Union
 
 from dpeva.config import AnalysisConfig
-from dpeva.analysis.managers import AnalysisIOManager, UnifiedAnalysisManager
+from dpeva.analysis.managers import (
+    AnalysisIOManager,
+    UnifiedAnalysisManager,
+    describe_analysis_plot_level,
+)
 from dpeva.analysis.dataset import DatasetAnalysisManager
 from dpeva.constants import FILENAME_COHESIVE_ENERGY_PRED_STATS_JSON, WORKFLOW_FINISHED_TAG, LOG_FILE_ANALYSIS
 from dpeva.submission.manager import JobManager
@@ -53,6 +57,7 @@ class AnalysisWorkflow:
             enable_cohesive_energy=self.config.enable_cohesive_energy,
             allow_ref_energy_lstsq_completion=self.config.allow_ref_energy_lstsq_completion,
             slow_plot_threshold_seconds=self.config.slow_plot_threshold_seconds,
+            enhanced_parity_renderer=self.config.enhanced_parity_renderer,
         )
         self.dataset_analysis_manager = DatasetAnalysisManager(
             ref_energies=self.config.ref_energies,
@@ -93,7 +98,15 @@ class AnalysisWorkflow:
         """Run dataset-only statistics and plotting pipeline."""
         dataset_dir = str(self.config.dataset_dir) if self.config.dataset_dir else ""
         self.logger.info(f"Running dataset analysis mode for {dataset_dir}")
-        self.dataset_analysis_manager.analyze(self.config.dataset_dir, self.config.output_dir)
+        self.logger.info(
+            f"Plot level '{self.config.plot_level}': "
+            f"{describe_analysis_plot_level(self.config.plot_level, mode='dataset')}"
+        )
+        self.dataset_analysis_manager.analyze(
+            self.config.dataset_dir,
+            self.config.output_dir,
+            plot_level=self.config.plot_level,
+        )
 
     def _run_model_mode(self, output_dir: str):
         """Run model_test result analysis and export metrics/statistics."""
@@ -122,6 +135,10 @@ class AnalysisWorkflow:
 
         stats_plot_start = time.perf_counter()
         self.logger.info("Stage[statistics+plot] Start statistics calculation and plotting")
+        self.logger.info(
+            f"Plot level '{self.config.plot_level}': "
+            f"{describe_analysis_plot_level(self.config.plot_level, mode='model_test')}"
+        )
         _, metrics, _, e_rel_pred, _ = self.analysis_manager.analyze_model(
             data=data,
             output_dir=output_dir,

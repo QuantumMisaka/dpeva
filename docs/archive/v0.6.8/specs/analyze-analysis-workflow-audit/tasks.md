@@ -24,8 +24,15 @@
   - [x] SubTask 5.2: 重跑 `config_analysis.json` 并记录退出码与关键日志
   - [x] SubTask 5.3: 复核失败原因并同步任务勾选状态
 
+- [x] Task 6: 落实Analysis可视化“必须改+建议改”并完成回归验证
+  - [x] SubTask 6.1: 在 `visual_style.py` 提取 with_error 与 overlay 的关键布局参数
+  - [x] SubTask 6.2: 在 `visualizer.py` 消费 profile 参数并移除对应硬编码
+  - [x] SubTask 6.3: 补充 `test_visualizer.py` 覆盖图例防裁切与布局参数透传行为
+  - [x] SubTask 6.4: 运行相关 pytest 并记录结果
+
 # Task Dependencies
 - Task 2 depends on Task 1
 - Task 3 depends on Task 1 and Task 2
 - Task 4 depends on Task 3
 - Task 5 depends on Task 4
+- Task 6 depends on Task 5
