@@ -106,7 +106,7 @@ class InferenceVisualizer:
             f"max={desc['max']:.4f}"
         )
 
-    def _add_stats_box(self, ax, text: str, x: float = 0.02, y: float = 0.98):
+    def _add_stats_box(self, ax, text: str, x: float = 0.02, y: float = 0.98, fontsize: float = 12):
         ax.text(
             x,
             y,
@@ -114,7 +114,7 @@ class InferenceVisualizer:
             transform=ax.transAxes,
             va="top",
             ha="left",
-            fontsize=9,
+            fontsize=fontsize,
             bbox={
                 "boxstyle": "round",
                 "facecolor": "white",
@@ -178,33 +178,6 @@ class InferenceVisualizer:
             sns.histplot(y=data, **histplot_kwargs)
         else:
             sns.histplot(data, **histplot_kwargs)
-
-    def _plot_violin_distribution(
-        self,
-        ax,
-        data: np.ndarray,
-        *,
-        color: str,
-        profile: dict,
-    ):
-        violin = ax.violinplot(
-            [np.asarray(data, dtype=float)],
-            positions=[0.0],
-            orientation="horizontal",
-            widths=profile.get("hexbin_violin_width", 0.72),
-            showmeans=False,
-            showmedians=True,
-            showextrema=False,
-        )
-        for body in violin["bodies"]:
-            body.set_facecolor(color)
-            body.set_edgecolor(color)
-            body.set_alpha(profile.get("hexbin_violin_alpha", 0.32))
-            body.set_linewidth(profile.get("hexbin_violin_linewidth", 1.0))
-        violin["cmedians"].set_color(profile.get("identity_color", "#374151"))
-        violin["cmedians"].set_linewidth(profile.get("error_zero_linewidth", 1.1))
-        ax.set_yticks([])
-        ax.set_ylim(-0.6, 0.6)
 
     def _resolve_parity_quantity(self, label: str) -> str:
         normalized = label.strip().lower().replace("-", " ").replace("_", " ")
@@ -343,19 +316,6 @@ class InferenceVisualizer:
             density_norm = self._build_density_norm(profile, density_artist)
             if density_norm is not None:
                 density_artist.set_norm(density_norm)
-            if profile.get("main_overlay_scatter_enabled", False):
-                ax.scatter(
-                    y_true_valid,
-                    y_pred_valid,
-                    alpha=profile.get("main_overlay_scatter_alpha", 0.08),
-                    s=profile.get("main_overlay_scatter_size", 6.0),
-                    c=profile.get(
-                        "main_overlay_scatter_color",
-                        profile.get("scatter_color", "#1d4ed8"),
-                    ),
-                    edgecolors="none",
-                    rasterized=True,
-                )
             return density_artist
         ax.scatter(
             y_true_valid,
@@ -470,7 +430,7 @@ class InferenceVisualizer:
         max_width = max(right_box.x1 - (main_box.x1 + right_gap), 0.05)
         right_width = min(desired_width, max_width)
         right_x0 = right_box.x1 - right_width
-        right_height = top_box.height
+        right_height = main_box.height
         right_bottom_y0 = main_box.y0
         ax_top.set_position(
             [main_box.x0, top_box.y0, main_box.width, top_box.height]
@@ -500,7 +460,7 @@ class InferenceVisualizer:
             cbar_width = min(max(cbar_width, 0.018), new_width)
             align = str(profile.get("hexbin_colorbar_align", "center")).lower()
             if align == "right":
-                cbar_x0 = right_x1 - cbar_width
+                cbar_x0 = right_x0 + new_width - cbar_width
             elif align == "left":
                 cbar_x0 = right_x0
             else:
@@ -582,6 +542,20 @@ class InferenceVisualizer:
             powerlimits=profile["scientific_powerlimits"],
             scientific_enabled=profile.get("scientific_enabled", True),
         )
+        
+        err_values = y_pred_valid - y_true_valid
+        max_err = np.max(np.abs(err_values))
+        p99_err = np.percentile(np.abs(err_values), 99)
+        mae = np.mean(np.abs(err_values))
+        rmse = np.sqrt(np.mean(err_values**2))
+        stats_text = (
+            f"Max Err: {max_err:.4f}\n"
+            f"99% Err: {p99_err:.4f}\n"
+            f"MAE: {mae:.4f}\n"
+            f"RMSE: {rmse:.4f}"
+        )
+        self._add_stats_box(ax, stats_text)
+        
         fig.tight_layout()
         filename = f"parity_{label.lower().replace(' ', '_')}.png"
         fig.savefig(
@@ -666,6 +640,21 @@ class InferenceVisualizer:
             powerlimits=profile["scientific_powerlimits"],
             scientific_enabled=profile.get("scientific_enabled", True),
         )
+        
+        err_values = y_pred_valid - y_true_valid
+        
+        max_err = np.max(np.abs(err_values))
+        p99_err = np.percentile(np.abs(err_values), 99)
+        mae = np.mean(np.abs(err_values))
+        rmse = np.sqrt(np.mean(err_values**2))
+        stats_text = (
+            f"Max Err: {max_err:.4f}\n"
+            f"99% Err: {p99_err:.4f}\n"
+            f"MAE: {mae:.4f}\n"
+            f"RMSE: {rmse:.4f}"
+        )
+        self._add_stats_box(ax_main, stats_text)
+        
         if ax_top is not None:
             self._plot_histogram_with_kde(
                 ax_top,
@@ -729,24 +718,20 @@ class InferenceVisualizer:
             )
 
         if ax_err is not None:
-            err_values = y_pred_valid - y_true_valid
             error_xlabel = self._format_error_axis_label(unit, profile)
             is_hexbin_sidebar = ax_top is None and ax_right is None
-            if is_hexbin_sidebar:
-                self._plot_violin_distribution(
-                    ax_err,
-                    err_values,
-                    color=colors["error"],
-                    profile=profile,
-                )
-            else:
-                self._plot_histogram_with_kde(
-                    ax_err,
-                    err_values,
-                    color=colors["error"],
-                    orientation="vertical",
-                    alpha=profile["error_hist_alpha"],
-                )
+            self._plot_histogram_with_kde(
+                ax_err,
+                err_values,
+                color=colors["error"],
+                orientation="vertical",
+                alpha=profile["error_hist_alpha"],
+            )
+            
+            p_high = np.percentile(np.abs(err_values), 99)
+            if p_high > 0:
+                ax_err.set_xlim(-p_high * 1.5, p_high * 1.5)
+
             ax_err.axvline(
                 0.0,
                 color=profile["identity_color"],
@@ -757,7 +742,7 @@ class InferenceVisualizer:
                 ax_err,
                 xlabel=(
                     (error_xlabel or profile.get("error_panel_title", "Error"))
-                    if ax_top is None and ax_right is None
+                    if is_hexbin_sidebar
                     else error_xlabel
                 ),
                 ylabel=profile.get("error_panel_ylabel", "Error Density"),
@@ -818,6 +803,7 @@ class InferenceVisualizer:
                     fontsize=panel_fonts["title"],
                     labelpad=profile.get("colorbar_label_pad", 6.0),
                 )
+                colorbar.ax.yaxis.set_label_position("left")
                 colorbar.ax.tick_params(
                     axis="x", bottom=False, labelbottom=False, length=0
                 )

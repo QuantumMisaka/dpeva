@@ -66,13 +66,20 @@ def test_error_distribution_does_not_render_stats_box(tmp_path):
         mock_box.assert_not_called()
 
 
-def test_enhanced_parity_does_not_render_stats_box(tmp_path):
-    viz = InferenceVisualizer(str(tmp_path))
-    with patch.object(viz, "_add_stats_box") as mock_box:
-        viz.plot_parity_enhanced(
-            np.array([1.0, 2.0, 3.0]), np.array([1.1, 1.9, 3.2]), "Energy", "eV/atom"
-        )
-        mock_box.assert_not_called()
+def test_enhanced_parity_renders_stats_box(tmp_path):
+        viz = InferenceVisualizer(str(tmp_path))
+        with patch.object(viz, "_add_stats_box") as mock_box:
+            viz.plot_parity_enhanced(
+                np.array([1.0, 2.0, 3.0]), np.array([1.1, 1.9, 3.2]), "Energy", "eV/atom"
+            )
+            mock_box.assert_called_once()
+            
+            # test regular parity also renders stats box
+            mock_box.reset_mock()
+            viz.plot_parity(
+                np.array([1.0, 2.0, 3.0]), np.array([1.1, 1.9, 3.2]), "Energy", "eV/atom"
+            )
+            mock_box.assert_called_once()
 
 
 def test_enhanced_parity_includes_error_inset_render_path(tmp_path):
@@ -196,8 +203,8 @@ def test_force_enhanced_profile_uses_panel_policy_and_layout_override(tmp_path):
     assert profile["colorbar_enabled"] is True
     assert profile["main_density_cmap"] == "viridis"
     assert profile["main_density_gridsize"] == 60
-    assert profile["main_density_mincnt"] == 3
-    assert profile["main_overlay_scatter_enabled"] is True
+    assert profile["main_density_mincnt"] == 1
+    assert profile["main_overlay_scatter_enabled"] is False
     assert profile["hexbin_width_ratios"][-1] < 0.3
 
 
@@ -207,23 +214,22 @@ def test_virial_enhanced_profile_matches_force_hexbin_policy(tmp_path):
     assert profile["main_density_mode"] == "hexbin"
     assert profile["main_density_cmap"] == "viridis"
     assert profile["main_density_gridsize"] == 60
-    assert profile["main_density_mincnt"] == 3
-    assert profile["main_overlay_scatter_enabled"] is True
+    assert profile["main_density_mincnt"] == 1
+    assert profile["main_overlay_scatter_enabled"] is False
 
 
-def test_plot_parity_enhanced_force_renders_violin_error_panel_only(tmp_path):
+def test_plot_parity_enhanced_force_renders_histogram_error_panel_only(tmp_path):
     viz = InferenceVisualizer(str(tmp_path))
     with patch.object(viz, "_plot_histogram_with_kde") as mock_hist, patch.object(
-        viz, "_plot_violin_distribution"
-    ) as mock_violin, patch.object(Figure, "colorbar"):
+        Figure, "colorbar"
+    ):
         viz.plot_parity_enhanced(
             np.array([0.0, 0.5, 1.0, 1.5]),
             np.array([0.1, 0.55, 0.95, 1.45]),
             "Force",
             "eV/Å",
         )
-    assert mock_hist.call_count == 0
-    assert mock_violin.call_count == 1
+    assert mock_hist.call_count == 1
 
 
 def test_plot_parity_enhanced_force_adds_colorbar_sidebar(tmp_path):
@@ -271,14 +277,14 @@ def test_plot_parity_enhanced_force_uses_sidebar_axis_labels(tmp_path):
     fig = plt.gcf()
     ax_err = fig.axes[1]
     ax_cbar = fig.axes[2]
-    assert ax_err.get_xlabel() == "Error"
+    assert ax_err.get_xlabel() == "Error Density"
     assert ax_err.get_ylabel() == ""
     assert ax_cbar.get_xlabel() == ""
     assert ax_cbar.get_ylabel() == "Counts Per Hexbin"
     plt.close(fig)
 
 
-def test_plot_parity_enhanced_force_overlays_faint_scatter_on_hexbin(tmp_path):
+def test_plot_parity_enhanced_force_no_overlay_scatter_on_hexbin(tmp_path):
     viz = InferenceVisualizer(str(tmp_path))
     mock_collection = MagicMock()
     mock_collection.get_array.return_value = np.array([1.0, 3.0, 5.0])
@@ -296,7 +302,7 @@ def test_plot_parity_enhanced_force_overlays_faint_scatter_on_hexbin(tmp_path):
             "eV/Å",
         )
     assert mock_hexbin.called
-    assert mock_scatter.called
+    assert not mock_scatter.called
     assert "C" not in mock_hexbin.call_args.kwargs
     assert "reduce_C_function" not in mock_hexbin.call_args.kwargs
 
@@ -372,7 +378,7 @@ def test_scatter_enhanced_axes_align_to_main_panel(tmp_path):
     assert abs(top_box.x0 - main_box.x0) < 1e-6
     assert abs(top_box.x1 - main_box.x1) < 1e-6
     assert abs(right_box.y0 - main_box.y0) < 1e-6
-    assert abs(right_box.height - top_box.height) < 1e-6
+    assert abs(right_box.height - main_box.height) < 1e-6
     assert abs(right_box.width - expected_width) < 1e-6
     assert abs(err_box.y1 - top_box.y1) < 1e-6
     assert abs(err_box.height - top_box.height) < 1e-6
@@ -398,8 +404,8 @@ def test_hexbin_enhanced_sidebar_moves_closer_to_main_panel(tmp_path):
     cbar_box = ax_cbar.get_position()
 
     assert cbar_box.width < err_box.width
-    assert abs(cbar_box.x1 - err_box.x1) < 1e-6
-    assert (err_box.x0 - main_box.x1) < 0.04
+    assert abs((cbar_box.x0 + cbar_box.x1) / 2 - (err_box.x0 + err_box.x1) / 2) < 1e-6
+    assert abs((err_box.x0 - main_box.x1) - 0.05) < 1e-6
     plt.close(fig)
 
 
@@ -418,20 +424,6 @@ def test_cohesive_energy_scatter_profile_uses_compact_sidebar_and_restrained_tic
     assert profile["scatter_sidebar_width_scale"] >= 0.24
 
 
-def test_plot_parity_enhanced_force_uses_violin_helper(tmp_path):
-    viz = InferenceVisualizer(str(tmp_path))
-    with patch.object(viz, "_plot_violin_distribution") as mock_violin, patch.object(
-        Figure, "colorbar"
-    ):
-        viz.plot_parity_enhanced(
-            np.array([0.0, 0.5, 1.0, 1.5]),
-            np.array([0.1, 0.55, 0.95, 1.45]),
-            "Force",
-            "eV/Å",
-        )
-    assert mock_violin.called
-
-
 def test_plot_parity_enhanced_energy_uses_axis_label_semantics(tmp_path):
     viz = InferenceVisualizer(str(tmp_path))
     with patch.object(Figure, "savefig", autospec=True), patch(
@@ -445,6 +437,7 @@ def test_plot_parity_enhanced_energy_uses_axis_label_semantics(tmp_path):
         )
     fig = plt.gcf()
     ax_top = fig.axes[0]
+    ax_main = fig.axes[1]
     ax_right = fig.axes[2]
     ax_err = fig.axes[3]
     assert ax_top.get_xlabel() == ""
@@ -453,7 +446,7 @@ def test_plot_parity_enhanced_energy_uses_axis_label_semantics(tmp_path):
     assert ax_err.get_xlabel() == ""
     assert ax_err.get_ylabel() == "Error Density"
     assert to_hex(ax_err.yaxis.label.get_color()) == to_hex(plt.rcParams["axes.labelcolor"])
-    assert abs(ax_right.get_position().height - ax_top.get_position().height) < 1e-6
+    assert abs(ax_right.get_position().height - ax_main.get_position().height) < 1e-6
     plt.close(fig)
 
 
