@@ -110,6 +110,7 @@ class CollectionWorkflow:
             self.backend = self.config.submission.backend
             
         self.slurm_config = self.config.submission.slurm_config
+        self._plot_audit_entries = []
 
         # 3. Setup Environment
         self._validate_config()
@@ -144,7 +145,14 @@ class CollectionWorkflow:
             self._submit_to_slurm()
             return
         self.logger.info(f"Initializing selection in {self.project} ---")
-        vis = UQVisualizer(self.io_manager.view_savedir, dpi=self.config.fig_dpi)
+        vis = UQVisualizer(
+            self.io_manager.view_savedir,
+            dpi=self.config.fig_dpi,
+            font_size=self.config.fig_base_font_size,
+            tick_target_count=self.config.fig_tick_target_count,
+            legend_max_rows=self.config.fig_legend_max_rows,
+            legend_max_cols=self.config.fig_legend_max_cols,
+        )
         df_desc, df_candidate, unique_system_names = self._run_uq_phase(vis)
         df_final = self._run_sampling_phase(df_candidate, df_desc, vis)
         self._run_export_phase(df_final, unique_system_names)
@@ -168,25 +176,50 @@ class CollectionWorkflow:
         return df_desc, df_candidate, unique_system_names
 
     def _run_filtered_uq_phase(self, vis: UQVisualizer):
+        self._plot_audit_entries = []
         preds, has_gt = self.uq_manager.load_predictions()
         uq_results, uq_rnd_rescaled = self.uq_manager.run_analysis(preds)
+        has_rescaled_rnd = self._has_valid_uq_vector(
+            uq_rnd_rescaled,
+            len(uq_results[COL_UQ_RND]),
+            "uq_rnd_rescaled",
+        )
+        uq_rnd_for_filter = uq_rnd_rescaled if has_rescaled_rnd else uq_results[COL_UQ_RND]
+        if not has_rescaled_rnd:
+            self.logger.warning(
+                "[COLLECT_UQ_FALLBACK] reason=invalid_uq_rnd_rescaled action=use_raw_rnd_for_filtering_only"
+            )
         self.uq_manager.log_uq_statistics(uq_results, uq_rnd_rescaled)
-        self.uq_manager.run_auto_threshold(uq_results, uq_rnd_rescaled)
-        vis.plot_uq_distribution(uq_results[COL_UQ_QBC], uq_results[COL_UQ_RND], uq_rnd_rescaled)
+        self.uq_manager.run_auto_threshold(uq_results, uq_rnd_for_filter)
+        vis.plot_uq_distribution(
+            uq_results[COL_UQ_QBC],
+            uq_results[COL_UQ_RND],
+            uq_rnd_rescaled if has_rescaled_rnd else None,
+        )
+        self._log_generated_plots(["UQ-force"], layer="core", condition="uq_analysis_completed")
         vis.plot_uq_with_trust_range(
             uq_results[COL_UQ_QBC],
-            "UQ-QbC-force",
+            "UQ-QbC",
             FILENAME_UQ_QBC_FORCE,
             self.uq_manager.qbc_params["lo"],
             self.uq_manager.qbc_params["hi"],
         )
-        if uq_rnd_rescaled is not None:
+        self._log_generated_plots(["UQ-QbC-force"], layer="core", condition="uq_analysis_completed")
+        if has_rescaled_rnd:
             vis.plot_uq_with_trust_range(
                 uq_rnd_rescaled,
-                "UQ-RND-force",
+                "UQ-RND",
                 FILENAME_UQ_RND_FORCE,
                 self.uq_manager.rnd_params["lo"],
                 self.uq_manager.rnd_params["hi"],
+            )
+            self._log_generated_plots(["UQ-RND-force"], layer="core", condition="has_rescaled_rnd=true")
+        else:
+            self._log_skipped_plots(
+                "missing_uq_rnd_rescaled",
+                ["UQ-RND-force"],
+                layer="core",
+                condition="has_rescaled_rnd=false",
             )
         unique_system_names = self._extract_unique_system_names(preds[0].dataname_list)
         expected_frames = {sys: preds[0].datanames_nframe.get(sys, 0) for sys in unique_system_names}
@@ -202,7 +235,7 @@ class CollectionWorkflow:
         data_dict_uq = {
             "dataname": datanames_ind_list,
             COL_UQ_QBC: uq_results[COL_UQ_QBC],
-            "uq_rnd_for_rescaled": uq_rnd_rescaled,
+            "uq_rnd_for_rescaled": uq_rnd_for_filter,
             COL_UQ_RND: uq_results[COL_UQ_RND],
         }
         if has_gt:
@@ -217,17 +250,8 @@ class CollectionWorkflow:
         df_uq = uq_filter.get_identity_labels(df_uq_raw, df_candidate, df_accurate)
         self.io_manager.save_dataframe(df_uq, "df_uq.csv")
         self.io_manager.save_dataframe(df_candidate, "df_uq_desc_sampled-UQ.csv")
-        vis.plot_uq_identity_scatter(
-            df_uq,
-            self.config.uq_select_scheme,
-            self.uq_manager.qbc_params["lo"],
-            self.uq_manager.qbc_params["hi"],
-            self.uq_manager.rnd_params["lo"],
-            self.uq_manager.rnd_params["hi"],
-        )
-        if self._should_plot_force_error(has_gt, uq_results):
-            self.logger.info("Ground Truth available. Plotting UQ vs Error...")
-            vis.plot_uq_fdiff_scatter(
+        if has_rescaled_rnd:
+            vis.plot_uq_identity_scatter(
                 df_uq,
                 self.config.uq_select_scheme,
                 self.uq_manager.qbc_params["lo"],
@@ -235,17 +259,118 @@ class CollectionWorkflow:
                 self.uq_manager.rnd_params["lo"],
                 self.uq_manager.rnd_params["hi"],
             )
-            vis.plot_uq_vs_error(uq_results[COL_UQ_QBC], uq_results[COL_UQ_RND], uq_results["diff_maxf_0_frame"])
-            if uq_rnd_rescaled is not None:
-                vis.plot_uq_vs_error(
-                    uq_results[COL_UQ_QBC],
-                    uq_rnd_rescaled,
-                    uq_results["diff_maxf_0_frame"],
-                    rescaled=True,
-                )
-                vis.plot_uq_diff_parity(uq_results[COL_UQ_QBC], uq_rnd_rescaled, uq_results["diff_maxf_0_frame"])
+            self._log_generated_plots(
+                ["UQ-force-qbc-rnd-identity-scatter"],
+                layer="core",
+                condition="has_rescaled_rnd=true",
+            )
         else:
-            self.logger.info("Ground Truth unavailable or invalid. Skipping force-error-dependent plots.")
+            self._log_skipped_plots(
+                "missing_uq_rnd_rescaled",
+                ["UQ-force-qbc-rnd-identity-scatter"],
+                layer="core",
+                condition="has_rescaled_rnd=false",
+            )
+        if self._should_plot_force_error(has_gt, uq_results):
+            if has_rescaled_rnd:
+                vis.plot_uq_fdiff_scatter(
+                    df_uq,
+                    self.config.uq_select_scheme,
+                    self.uq_manager.qbc_params["lo"],
+                    self.uq_manager.qbc_params["hi"],
+                    self.uq_manager.rnd_params["lo"],
+                    self.uq_manager.rnd_params["hi"],
+                )
+                self._log_generated_plots(
+                    ["uq-fdiff-scatter"],
+                    layer="core",
+                    condition="has_gt=true,has_rescaled_rnd=true",
+                )
+            else:
+                self._log_skipped_plots(
+                    "missing_uq_rnd_rescaled",
+                    [
+                        "uq-fdiff-scatter",
+                    ],
+                    layer="core",
+                    condition="has_gt=true,has_rescaled_rnd=false",
+                )
+            if self.config.enable_diagnostic_plots:
+                self.logger.info("Ground Truth available. Plotting Diagnostic-layer parity plots...")
+                vis.plot_uq_vs_error(uq_results[COL_UQ_QBC], uq_results[COL_UQ_RND], uq_results["diff_maxf_0_frame"])
+                self._log_generated_plots(
+                    ["uq-force-fdiff-parity"],
+                    layer="diagnostic",
+                    condition="enable_diagnostic_plots=true",
+                )
+                if has_rescaled_rnd:
+                    vis.plot_candidate_vs_error(df_uq, df_candidate)
+                    self._log_generated_plots(
+                        ["UQ-QbC-Candidate-fdiff-parity", "UQ-RND-Candidate-fdiff-parity"],
+                        layer="diagnostic",
+                        condition="enable_diagnostic_plots=true,has_rescaled_rnd=true",
+                    )
+                    vis.plot_uq_vs_error(
+                        uq_results[COL_UQ_QBC],
+                        uq_rnd_rescaled,
+                        uq_results["diff_maxf_0_frame"],
+                        rescaled=True,
+                    )
+                    self._log_generated_plots(
+                        ["uq-force-rescaled-fdiff-parity"],
+                        layer="diagnostic",
+                        condition="enable_diagnostic_plots=true,has_rescaled_rnd=true",
+                    )
+                    vis.plot_uq_diff_parity(uq_results[COL_UQ_QBC], uq_rnd_rescaled, uq_results["diff_maxf_0_frame"])
+                    self._log_generated_plots(
+                        ["uq-diff-parity"],
+                        layer="diagnostic",
+                        condition="enable_diagnostic_plots=true,has_rescaled_rnd=true",
+                    )
+                else:
+                    self._log_skipped_plots(
+                        "missing_uq_rnd_rescaled",
+                        [
+                            "candidate-vs-error",
+                            "uq-force-rescaled-fdiff-parity",
+                            "uq-diff-parity",
+                        ],
+                        layer="diagnostic",
+                        condition="enable_diagnostic_plots=true,has_rescaled_rnd=false",
+                    )
+            else:
+                self._log_skipped_plots(
+                    "diagnostic_plots_disabled",
+                    [
+                        "uq-vs-error",
+                        "candidate-vs-error",
+                        "uq-force-rescaled-fdiff-parity",
+                        "uq-diff-parity",
+                    ],
+                    layer="diagnostic",
+                    condition="enable_diagnostic_plots=false",
+                )
+        else:
+            self._log_skipped_plots(
+                "invalid_or_missing_ground_truth",
+                [
+                    "uq-fdiff-scatter",
+                ],
+                layer="core",
+                condition="has_gt=false_or_invalid",
+            )
+            self._log_skipped_plots(
+                "invalid_or_missing_ground_truth",
+                [
+                    "uq-vs-error",
+                    "candidate-vs-error",
+                    "uq-force-rescaled-fdiff-parity",
+                    "uq-diff-parity",
+                ],
+                layer="diagnostic",
+                condition="has_gt=false_or_invalid",
+            )
+        self._log_plot_audit_summary()
         self._log_initial_stats(desc_datanames)
         return df_desc, df_candidate, unique_system_names
 
@@ -274,6 +399,72 @@ class CollectionWorkflow:
                 seen.add(name)
                 unique_system_names.append(name)
         return unique_system_names
+
+    def _has_valid_uq_vector(self, values, expected_size: int, vector_name: str) -> bool:
+        if values is None:
+            return False
+        arr = np.asarray(values)
+        if arr.ndim != 1:
+            self.logger.warning(f"{vector_name} should be a 1D vector, got shape={arr.shape}.")
+            return False
+        if expected_size > 0 and arr.size != expected_size:
+            self.logger.warning(
+                f"{vector_name} size mismatch: expected {expected_size}, got {arr.size}."
+            )
+            return False
+        if arr.size == 0:
+            self.logger.warning(f"{vector_name} is empty.")
+            return False
+        return True
+
+    def _log_generated_plots(self, plots, layer: str, condition: str):
+        plot_list = ",".join(plots)
+        self.logger.info(
+            f"[COLLECT_PLOT_GENERATED] layer={layer} condition={condition} plots={plot_list}"
+        )
+        self._plot_audit_entries.append(
+            {
+                "status": "generated",
+                "layer": layer,
+                "condition": condition,
+                "reason": "",
+                "plots": list(plots),
+            }
+        )
+
+    def _log_skipped_plots(self, reason: str, plots, layer: str = "core", condition: str = ""):
+        plot_list = ",".join(plots)
+        self.logger.info(
+            f"[COLLECT_PLOT_SKIPPED] layer={layer} reason={reason} condition={condition} plots={plot_list}"
+        )
+        self._plot_audit_entries.append(
+            {
+                "status": "skipped",
+                "layer": layer,
+                "condition": condition,
+                "reason": reason,
+                "plots": list(plots),
+            }
+        )
+
+    def _log_plot_audit_summary(self):
+        generated = []
+        skipped = []
+        for entry in self._plot_audit_entries:
+            for plot in entry["plots"]:
+                text = (
+                    f"{plot}|layer={entry['layer']}|condition={entry['condition']}"
+                    f"|reason={entry['reason']}"
+                )
+                if entry["status"] == "generated":
+                    generated.append(text)
+                else:
+                    skipped.append(text)
+        generated_text = ",".join(generated) if generated else "none"
+        skipped_text = ",".join(skipped) if skipped else "none"
+        self.logger.info(
+            f"[COLLECT_PLOT_AUDIT] generated={generated_text} skipped={skipped_text}"
+        )
 
     def _run_sampling_phase(self, df_candidate: pd.DataFrame, df_desc: pd.DataFrame, vis: UQVisualizer) -> pd.DataFrame:
         if len(df_candidate) == 0:
@@ -321,6 +512,24 @@ class CollectionWorkflow:
             n_candidates=n_candidates if use_joint else None,
             full_features=full_pca_features,
         )
+        self._log_generated_plots(
+            ["Final_sampled_PCAview"],
+            layer="core",
+            condition=f"use_joint={str(use_joint).lower()}",
+        )
+        if use_joint:
+            self._log_generated_plots(
+                ["Final_sampled_PCAview_by_pool"],
+                layer="core",
+                condition="use_joint=true",
+            )
+        else:
+            self._log_skipped_plots(
+                "joint_mode_disabled",
+                ["Final_sampled_PCAview_by_pool"],
+                layer="core",
+                condition="use_joint=false",
+            )
         return df_final
 
     def _run_export_phase(self, df_final: pd.DataFrame, unique_system_names):

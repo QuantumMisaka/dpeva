@@ -3,10 +3,14 @@ import sys
 import logging
 import time
 import pandas as pd
-from typing import Dict, Any, Union
+from typing import Dict, Any, Union, List, Optional
 
 from dpeva.config import AnalysisConfig
-from dpeva.analysis.managers import AnalysisIOManager, UnifiedAnalysisManager
+from dpeva.analysis.managers import (
+    AnalysisIOManager,
+    UnifiedAnalysisManager,
+    describe_analysis_plot_level,
+)
 from dpeva.analysis.dataset import DatasetAnalysisManager
 from dpeva.constants import FILENAME_COHESIVE_ENERGY_PRED_STATS_JSON, WORKFLOW_FINISHED_TAG, LOG_FILE_ANALYSIS
 from dpeva.submission.manager import JobManager
@@ -53,6 +57,7 @@ class AnalysisWorkflow:
             enable_cohesive_energy=self.config.enable_cohesive_energy,
             allow_ref_energy_lstsq_completion=self.config.allow_ref_energy_lstsq_completion,
             slow_plot_threshold_seconds=self.config.slow_plot_threshold_seconds,
+            enhanced_parity_renderer=self.config.enhanced_parity_renderer,
         )
         self.dataset_analysis_manager = DatasetAnalysisManager(
             ref_energies=self.config.ref_energies,
@@ -93,7 +98,15 @@ class AnalysisWorkflow:
         """Run dataset-only statistics and plotting pipeline."""
         dataset_dir = str(self.config.dataset_dir) if self.config.dataset_dir else ""
         self.logger.info(f"Running dataset analysis mode for {dataset_dir}")
-        self.dataset_analysis_manager.analyze(self.config.dataset_dir, self.config.output_dir)
+        self.logger.info(
+            f"Plot level '{self.config.plot_level}': "
+            f"{describe_analysis_plot_level(self.config.plot_level, mode='dataset')}"
+        )
+        self.dataset_analysis_manager.analyze(
+            self.config.dataset_dir,
+            self.config.output_dir,
+            plot_level=self.config.plot_level,
+        )
 
     def _run_model_mode(self, output_dir: str):
         """Run model_test result analysis and export metrics/statistics."""
@@ -122,6 +135,10 @@ class AnalysisWorkflow:
 
         stats_plot_start = time.perf_counter()
         self.logger.info("Stage[statistics+plot] Start statistics calculation and plotting")
+        self.logger.info(
+            f"Plot level '{self.config.plot_level}': "
+            f"{describe_analysis_plot_level(self.config.plot_level, mode='model_test')}"
+        )
         _, metrics, _, e_rel_pred, _ = self.analysis_manager.analyze_model(
             data=data,
             output_dir=output_dir,
@@ -138,13 +155,71 @@ class AnalysisWorkflow:
             stats_desc = pd.Series(e_rel_pred).describe().to_dict()
             self.io_manager.save_stats_desc(stats_desc, FILENAME_COHESIVE_ENERGY_PRED_STATS_JSON)
 
+    def _has_valid_composition_info(
+        self,
+        atom_counts_list: Optional[List[Dict[str, int]]],
+        atom_num_list: Optional[List[int]],
+    ) -> bool:
+        if not atom_counts_list or not atom_num_list:
+            return False
+        if len(atom_counts_list) != len(atom_num_list):
+            return False
+        return all(atom_num > 0 for atom_num in atom_num_list)
+
+    def _composition_lists_match(
+        self,
+        left_counts: List[Dict[str, int]],
+        left_nums: List[int],
+        right_counts: List[Dict[str, int]],
+        right_nums: List[int],
+    ) -> bool:
+        if len(left_counts) != len(right_counts) or len(left_nums) != len(right_nums):
+            return False
+        if left_nums != right_nums:
+            return False
+        return all(dict(left) == dict(right) for left, right in zip(left_counts, right_counts))
+
     def _resolve_composition_info(self, parser):
-        """Resolve composition source from data_path first, then legacy parser fallback."""
+        """Resolve composition info with parser order priority for model_test outputs."""
+        parser_counts, parser_nums = parser.get_composition_list()
+        parser_valid = self._has_valid_composition_info(parser_counts, parser_nums)
+
         if self.config.data_path:
             self.logger.info(f"Stage[composition] Source data_path: {self.config.data_path}")
-            return self.io_manager.load_composition_info(str(self.config.data_path))
+            data_counts, data_nums = self.io_manager.load_composition_info(str(self.config.data_path))
+            data_valid = self._has_valid_composition_info(data_counts, data_nums)
+
+            if parser_valid:
+                if data_valid:
+                    if self._composition_lists_match(parser_counts, parser_nums, data_counts, data_nums):
+                        self.logger.info(
+                            "Stage[composition] data_path composition validated against parser order."
+                        )
+                    else:
+                        self.logger.warning(
+                            "Stage[composition] data_path composition order does not match parser output order. "
+                            "Using parser-aligned composition for cohesive energy."
+                        )
+                else:
+                    self.logger.warning(
+                        "Stage[composition] data_path composition is unavailable or invalid. "
+                        "Using parser-aligned composition for cohesive energy."
+                    )
+                return parser_counts, parser_nums
+
+            if data_valid:
+                self.logger.info(
+                    "Stage[composition] Parser composition is unavailable; falling back to data_path composition."
+                )
+                return data_counts, data_nums
+
+            self.logger.warning(
+                "Stage[composition] No valid composition info found from parser or data_path."
+            )
+            return parser_counts, parser_nums
+
         self.logger.info("Stage[composition] Source parser fallback: filenames (legacy mode)")
-        return parser.get_composition_list()
+        return parser_counts, parser_nums
 
     def _submit_to_slurm(self):
         if not self.config_path:

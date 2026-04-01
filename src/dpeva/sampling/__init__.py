@@ -1,5 +1,7 @@
-"""Package implementing direct sampling methods, copyed from maml package in 2025-01-09."""
+"""Sampling package namespace.
 
-if __name__ == '__main__':
-    ...
-    
+This package hosts DIRECT/2-DIRECT sampling implementations and helpers
+used by `SamplingManager` in collection workflows.
+"""
+
+__all__: list[str] = []

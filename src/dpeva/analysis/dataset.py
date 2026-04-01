@@ -15,6 +15,7 @@ from dpeva.constants import (
     FILENAME_DATASET_FRAME_SUMMARY_CSV,
     FILENAME_DATASET_STATS_JSON,
 )
+from dpeva.analysis.managers import describe_analysis_plot_level
 from dpeva.inference.visualizer import InferenceVisualizer
 from dpeva.inference.stats import StatsCalculator
 from dpeva.io.dataset import load_systems
@@ -35,11 +36,15 @@ class DatasetAnalysisManager:
         self.enable_cohesive_energy = enable_cohesive_energy
         self.allow_ref_energy_lstsq_completion = allow_ref_energy_lstsq_completion
 
-    def analyze(self, dataset_dir: Path, output_dir: Path) -> Dict[str, Any]:
+    def analyze(self, dataset_dir: Path, output_dir: Path, plot_level: str = "full") -> Dict[str, Any]:
         """Compute dataset statistics and export plots/summary files."""
         systems = load_systems(str(dataset_dir), fmt="auto")
         if not systems:
             raise ValueError(f"No valid systems found in dataset_dir: {dataset_dir}")
+        full_plot_enabled = plot_level == "full"
+        self.logger.info(
+            f"Dataset analysis plot scope ({plot_level}): {describe_analysis_plot_level(plot_level, mode='dataset')}"
+        )
 
         energy_per_atom: List[float] = []
         force_norm: List[float] = []
@@ -125,7 +130,7 @@ class DatasetAnalysisManager:
         if pressure_gpa:
             viz.plot_distribution(np.array(pressure_gpa), "Dataset Pressure", "GPa", color="teal")
 
-        if self.enable_cohesive_energy and energy_per_atom and frame_atom_counts and frame_atom_nums:
+        if full_plot_enabled and self.enable_cohesive_energy and energy_per_atom and frame_atom_counts and frame_atom_nums:
             calc = StatsCalculator(
                 energy_per_atom=np.array(energy_per_atom, dtype=float),
                 force_flat=np.array([], dtype=float),
@@ -197,19 +202,31 @@ class DatasetAnalysisManager:
             vals = [ratios[e] for e in elems]
             fig, ax = plt.subplots(figsize=(8.0, 5.2))
             colors = sns.color_palette("Set2", n_colors=len(elems))
+            
+            n_elems = len(elems)
+            if n_elems <= 3:
+                pct_fontsize = 14
+                title_fontsize = 18
+            elif n_elems <= 6:
+                pct_fontsize = 12
+                title_fontsize = 16
+            else:
+                pct_fontsize = 10
+                title_fontsize = 14
+
             wedges, _, autotexts = ax.pie(
                 vals,
                 colors=colors,
                 autopct="%1.1f%%",
                 startangle=120,
                 wedgeprops={"edgecolor": "white", "linewidth": 1.0},
-                textprops={"fontsize": 9},
+                textprops={"fontsize": pct_fontsize},
             )
             for wedge, elem, value, pct_text in zip(wedges, elems, vals, autotexts):
                 pct_text.set_text(f"{elem}\n{value * 100:.1f}%")
-                pct_text.set_fontsize(10)
+                pct_text.set_fontsize(pct_fontsize + 1)
                 pct_text.set_weight("semibold")
-            ax.set_title("Dataset Element Ratio by Atom")
+            ax.set_title("Dataset Element Ratio by Atom", fontsize=title_fontsize, weight="bold")
             ax.axis("equal")
             fig.tight_layout()
             fig.savefig(output_dir / FILENAME_DATASET_ELEMENT_RATIO_PNG, dpi=dpi)
@@ -222,6 +239,21 @@ class DatasetAnalysisManager:
             fig, axes = plt.subplots(rows, cols, figsize=(8.5, 3.8 * rows))
             axes_arr = np.atleast_1d(axes).flatten()
             colors = sns.color_palette("tab10", n_colors=max(len(elems), 3))
+            
+            n_elems_pres = len(elems)
+            if n_elems_pres <= 4:
+                center_fontsize = 13
+                subtitle_fontsize = 14
+                suptitle_fontsize = 18
+            elif n_elems_pres <= 8:
+                center_fontsize = 11
+                subtitle_fontsize = 12
+                suptitle_fontsize = 16
+            else:
+                center_fontsize = 10
+                subtitle_fontsize = 11
+                suptitle_fontsize = 14
+
             for idx, elem in enumerate(elems):
                 ax = axes_arr[idx]
                 present_count = int(frame_presence[elem]["frame_count"])
@@ -240,14 +272,14 @@ class DatasetAnalysisManager:
                     f"{elem}\n{present_ratio * 100:.1f}%\n{present_count}/{n_frames}",
                     ha="center",
                     va="center",
-                    fontsize=10,
+                    fontsize=center_fontsize,
                     weight="semibold",
                 )
-                ax.set_title(f"{elem} Frame Presence", fontsize=10)
+                ax.set_title(f"{elem} Frame Presence", fontsize=subtitle_fontsize, weight="normal")
                 ax.axis("equal")
             for j in range(len(elems), len(axes_arr)):
                 axes_arr[j].axis("off")
-            fig.suptitle("Dataset Element Frame Presence", fontsize=14, y=0.99)
+            fig.suptitle("Dataset Element Frame Presence", fontsize=suptitle_fontsize, weight="bold", y=0.99)
             fig.tight_layout()
             fig.savefig(output_dir / FILENAME_DATASET_ELEMENT_PRESENCE_PNG, dpi=dpi)
             plt.close(fig)

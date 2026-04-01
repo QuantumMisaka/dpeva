@@ -30,6 +30,7 @@
 
    guides/developer-guide
    architecture/README
+   plans/README
    api/index
 
 .. toctree::
@@ -56,6 +57,7 @@
    guides/testing/integration-config-templates
    guides/testing/integration-slurm
    guides/testing/multi-datapool-artifacts
+   plans/README
    policy/contributing
    policy/docs-structure
    policy/maintenance

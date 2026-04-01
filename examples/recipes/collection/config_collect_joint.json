@@ -10,6 +10,7 @@
     "training_desc_dir": "./desc_train",
     
     "fig_dpi": 300,
+    "enable_diagnostic_plots": false,
     "root_savedir": "dpeva_post_joint",
 
     "uq_trust_mode": "auto",

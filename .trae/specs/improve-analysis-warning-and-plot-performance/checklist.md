@@ -1,7 +1,0 @@
-- [x] `analysis_slurm.err` 中不再出现 tight_layout 兼容性 warning
-- [x] analysis 日志包含阶段耗时与总耗时，能定位主要慢点
-- [x] `plot_level=basic` 下成功减少高成本图输出且流程成功结束
-- [x] 默认配置下关键图表（Energy/Force/Virial 基础图）仍完整输出
-- [x] `plot_level` 与慢图阈值参数可被配置解析并在运行时生效
-- [x] 单图耗时超过 60s 时日志出现 warning 且包含 basic 模式建议
-- [x] 单元测试与回归验证通过，未破坏现有 model_test/dataset 分支

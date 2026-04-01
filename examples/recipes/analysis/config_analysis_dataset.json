@@ -5,6 +5,7 @@
     "enable_cohesive_energy": true,
     "allow_ref_energy_lstsq_completion": false,
     "plot_level": "full",
+    "enhanced_parity_renderer": "auto",
     "slow_plot_threshold_seconds": 60.0,
     "ref_energies": {
         "Fe": -3215.2791,

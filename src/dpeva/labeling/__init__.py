@@ -1,14 +1,8 @@
 """
-DP-EVA Labeling Module
-======================
+Labeling package public exports.
 
-This module handles the labeling process for Active Learning, specifically for
-First Principles (FP) calculations (e.g., ABACUS).
-
-It includes:
-- Input Generation (Generator)
-- Resubmission Strategy (Strategy)
-- Post-processing (PostProcessor)
+This package provides reusable labeling components consumed by
+`LabelingWorkflow` and related orchestration modules.
 """
 
 from .generator import AbacusGenerator

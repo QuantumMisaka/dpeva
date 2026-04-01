@@ -184,7 +184,20 @@ class AnalysisConfig(BaseModel):
     )
     plot_level: Literal["basic", "full"] = Field(
         "full",
-        description="Plot output level: 'basic' for core plots, 'full' for enhanced plot family."
+        description=(
+            "Plot output level. 'basic' keeps the daily core scope "
+            "(parity, single distributions, error distributions, dataset element statistics), "
+            "while 'full' adds publication/supplement plots "
+            "(enhanced parity, overlay, with_error, and dataset cohesive-energy distribution when available)."
+        )
+    )
+    enhanced_parity_renderer: Literal["auto", "scatter", "hexbin"] = Field(
+        "auto",
+        description=(
+            "Renderer policy for enhanced parity main panels. "
+            "'auto' keeps quantity-aware defaults, while 'scatter' and 'hexbin' "
+            "force the same main renderer across enhanced parity plots."
+        ),
     )
     slow_plot_threshold_seconds: float = Field(
         60.0,
@@ -358,6 +371,34 @@ class CollectionConfig(BaseWorkflowConfig):
     testing_dir: str = DEFAULT_TESTING_DIR
     results_prefix: str = Field(DEFAULT_RESULTS_PREFIX, description="Output file prefix.")
     fig_dpi: int = Field(FIG_DPI, description="DPI for visualization figures.")
+    fig_base_font_size: int = Field(
+        12,
+        ge=8,
+        le=24,
+        description="Base font size for Collection figures; title, label, tick, and legend sizes are derived from this value."
+    )
+    fig_tick_target_count: int = Field(
+        6,
+        ge=3,
+        le=12,
+        description="Approximate number of major ticks used when linking x/y tick spacing in Collection 2D plots."
+    )
+    fig_legend_max_rows: int = Field(
+        8,
+        ge=1,
+        le=20,
+        description="Maximum preferred legend rows before Collection legends flow into multiple columns."
+    )
+    fig_legend_max_cols: int = Field(
+        4,
+        ge=1,
+        le=8,
+        description="Maximum legend columns used by Collection multi-pool summary figures."
+    )
+    enable_diagnostic_plots: bool = Field(
+        False,
+        description="Enable optional Diagnostic-layer plots (default: False, Core plots only)."
+    )
     
     # UQ Parameters
     num_models: int = Field(DEFAULT_NUM_MODELS, ge=3, description="Number of models for UQ calculation.")

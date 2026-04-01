@@ -145,7 +145,8 @@ last-updated: 2026-03-11
   "output_dir": "analysis",
   "type_map": ["Fe", "C", "O", "H"],
   "enable_cohesive_energy": true,
-  "allow_ref_energy_lstsq_completion": false
+  "allow_ref_energy_lstsq_completion": false,
+  "enhanced_parity_renderer": "auto"
 }
 ```
 
@@ -155,6 +156,10 @@ Analysis 相关建议：
 - `model_test` 模式下若需要 Cohesive Energy，请优先提供 `data_path` 指向与 `result_dir` 对应的原始数据集，以避免仅靠文件名推断组分失败。
 - `enable_cohesive_energy` 控制是否启用 Cohesive Energy 统计与作图。
 - `allow_ref_energy_lstsq_completion` 控制当 `ref_energies` 不完整时是否允许最小二乘补全缺失元素参考能。
+- `enhanced_parity_renderer` 控制 enhanced parity 主图区渲染入口：
+  - `auto`：沿用 quantity-aware 默认策略，energy/cohesive 使用 scatter，force/virial 使用 hexbin。
+  - `scatter`：强制 enhanced parity 主图区全部使用 scatter。
+  - `hexbin`：强制 enhanced parity 主图区全部使用 hexbin。
 - `dataset` 模式若希望输出 Cohesive Energy 图，可将 `"enable_cohesive_energy": true` 并提供合理 `ref_energies`（或开启 `allow_ref_energy_lstsq_completion`）。
 - 新增图谱会额外输出：
   - `dist_<quantity>_overlay.png`（Pred/True 叠加分布）
@@ -163,6 +168,7 @@ Analysis 相关建议：
 - 图中统计信息默认仅显示 `count/mean/std/min/max`，不再显示分位数。
 - `Error Distribution` 与 `parity_*_enhanced.png` 默认不显示统计信息框。
 - 单变量分布图默认不显示 `All Data` 图例；dataset 元素占比/存在性使用多色饼图。
+- quantity-aware 默认下，Force / Virial 的 hexbin enhanced parity 会在右侧信息栏同时展示 Error Density 与 colorbar，colorbar 表示每个 hexbin 中样本数量。
 
 ### 5.6 Labeling
 
@@ -186,6 +192,7 @@ Analysis 相关建议：
 
 ## 7. 变更记录
 
+- 2026-03-30：Analysis 配置新增 `enhanced_parity_renderer`，并补充 quantity-aware parity 渲染策略说明。
 - 2026-03-16：Analysis 最小配置增加 `data_path`、`enable_cohesive_energy`、`allow_ref_energy_lstsq_completion`，并补充 Cohesive Energy 配置建议。
 - 2026-03-11：配置字段权威入口改为 API Reference，并补充 Labeling 最小配置示例。
 - 2026-02-18：补齐路径解析、Submission 结构与最小配置示例。

@@ -2,7 +2,7 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-03-21
+last-updated: 2026-03-25
 ---
 
 # DP-EVA 项目开发文档
@@ -15,8 +15,8 @@ last-updated: 2026-03-21
   - 校验规则补充：/docs/reference/validation.md
   - 上游软件与职责：/docs/reference/upstream-software.md
 
-* **版本**: 0.7.0
-* **生成日期**: 2026-03-21
+* **版本**: 0.7.1
+* **生成日期**: 2026-04-01
 * **作者**: Quantum Misaka with Trae SOLO
 
 ---
@@ -171,6 +171,19 @@ graph TD
     %% Optional if no another TargetPool
     OtherPool -->|Next Cycle| TargetPool
 ```
+
+### 2.3 包级导出层与主链路入口边界
+
+为避免“模块存在但未接入主链路”的认知偏差，开发时需区分两类入口：
+
+- **主链路入口（Execution Entry）**：由 `dpeva.cli` 子命令分发到具体 workflow 模块（如 `dpeva.workflows.collect`）。
+- **包级导出层（Export Surface）**：`__init__.py` 仅用于命名空间聚合、对外导出和职责声明，不作为工作流执行入口。
+
+实践约定：
+
+- 新增业务功能时，先接入 workflow/manager 主链路，再考虑是否在包级导出层暴露。
+- 包级 `__init__.py` 中不放业务编排逻辑与隐式副作用。
+- 审查“是否接线”时，证据以 CLI -> workflow -> manager -> module 的可追溯调用链为准，而非仅凭 `__init__.py` 导出关系。
 
 ---
 
@@ -392,6 +405,15 @@ Auto-UQ 用于根据数据分布自动确定筛选边界；具体的字段与约
 
 - `/docs/source/api/config.rst`
 
+#### 4.4.4 Collection 出图分层开关 (`enable_diagnostic_plots`)
+
+- `false`（默认）：仅输出 Core 层图，Diagnostic 层 parity 图默认跳过
+- `true`：在满足 `has_gt`、`uq_rnd_rescaled` 等前置条件时输出 Diagnostic 层图像
+- 运行日志会输出统一标签：
+  - `[COLLECT_PLOT_GENERATED]`：记录已生成图像、层级与触发条件
+  - `[COLLECT_PLOT_SKIPPED]`：记录被跳过图像及 reason
+  - `[COLLECT_PLOT_AUDIT]`：汇总 generated/skipped 清单，便于回溯审计
+
 ## 5. 开发与测试 (Development)
 
 ### 5.1 代码规范
@@ -477,6 +499,18 @@ DPEVA_TAG: WORKFLOW_FINISHED
 ### 6.2 版本历史
 
 #### **Current Era (v0.7.x)**
+
+*   **v0.7.1** (2026-04-01):
+    *   **[特性]** 提升 Parity Plots 可读性：全局基础字号由 12 增大至 16，同步调大统计框 (Stats Box) 字号。
+    *   **[特性]** 优化图像元素尺寸：增大 Scatter 散点和 Hexbin 六边形大小，Hexbin `gridsize` 由 60 降至 50 以突出重点。
+    *   **[修复]** 解决布局重叠：将 Error Density 顶部刻度标签向上微调 (`error_tick_pad` 1.0)，防止与曲线重叠。
+    *   **[修复]** 统一出图尺寸：移除 `bbox_inches="tight"`，严格遵循预设 `figsize`，确保跨图视觉一致性。
+    *   **[修复]** 消除 KDE 伪影：在绘制误差分布前对离群点进行过滤，修复由于网格稀疏导致的“倒三角”尖角伪影。
+    *   **[特性]** 新增多数据池采样总结图 (`Final_sampled_PCAview_by_pool`)，支持多 Pool 场景下的特征覆盖可视化。
+    *   **[特性]** 引入出图分层控制 (`enable_diagnostic_plots`)，默认仅生成核心图表，减少冗余产出。
+    *   **[特性]** 接入 Candidate Parity 图，支持在采样阶段对候选集进行误差预审。
+    *   **[治理]** 完成 `v0.7.1` 周期文档归档，同步更新归档索引与包级模块文档。
+    *   **[发布]** 版本升级至 `0.7.1`，同步 `__init__`、`README`、Sphinx `conf.py` 与 Banner 版本标识。
 
 *   **v0.7.0** (2026-03-21):
     *   **[特性]** 新增基于推理误差阈值的数据清洗工作流，支持灵活的数据质量控制。

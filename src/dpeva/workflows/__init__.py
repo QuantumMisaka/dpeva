@@ -1,3 +1,9 @@
+"""Workflow public exports.
+
+This module provides package-level re-exports for workflow classes.
+CLI entry dispatch imports concrete workflow modules directly.
+"""
+
 from dpeva.workflows.feature import FeatureWorkflow
 from dpeva.workflows.infer import InferenceWorkflow
 from dpeva.workflows.train import TrainingWorkflow

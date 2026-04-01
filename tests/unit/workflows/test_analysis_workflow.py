@@ -57,6 +57,7 @@ class TestAnalysisWorkflow:
             enable_cohesive_energy=True,
             allow_ref_energy_lstsq_completion=False,
             slow_plot_threshold_seconds=60.0,
+            enhanced_parity_renderer="auto",
         )
         mock_io.load_data.assert_called_with(config["result_dir"], config["type_map"], "results")
         
@@ -115,7 +116,7 @@ class TestAnalysisWorkflow:
         config = {
             "mode": "dataset",
             "dataset_dir": str(tmp_path / "dataset"),
-            "output_dir": str(tmp_path / "analysis")
+            "output_dir": str(tmp_path / "analysis"),
         }
 
         workflow = AnalysisWorkflow(config)
@@ -123,7 +124,11 @@ class TestAnalysisWorkflow:
 
         mock_setup_logger.assert_called_once()
         MockIOManager.return_value.load_data.assert_not_called()
-        MockDatasetManager.return_value.analyze.assert_called_once()
+        MockDatasetManager.return_value.analyze.assert_called_once_with(
+            workflow.config.dataset_dir,
+            workflow.config.output_dir,
+            plot_level="full",
+        )
         mock_close_logger.assert_called_once()
 
     @patch("dpeva.workflows.analysis.DatasetAnalysisManager")
@@ -135,18 +140,23 @@ class TestAnalysisWorkflow:
             "mode": "dataset",
             "dataset_dir": str(tmp_path / "dataset"),
             "output_dir": str(tmp_path / "analysis"),
-            "type_map": ["O", "H"]
+            "type_map": ["O", "H"],
+            "plot_level": "basic",
         }
         workflow = AnalysisWorkflow(config)
         workflow.run()
-        MockDatasetManager.return_value.analyze.assert_called_once()
+        MockDatasetManager.return_value.analyze.assert_called_once_with(
+            workflow.config.dataset_dir,
+            workflow.config.output_dir,
+            plot_level="basic",
+        )
         mock_close_logger.assert_called_once()
 
     @patch("dpeva.workflows.analysis.UnifiedAnalysisManager")
     @patch("dpeva.workflows.analysis.AnalysisIOManager")
     @patch("dpeva.workflows.analysis.setup_workflow_logger")
     @patch("dpeva.workflows.analysis.close_workflow_logger")
-    def test_run_uses_data_path_composition(self, mock_close_logger, mock_setup_logger, MockIOManager, MockManager, tmp_path):
+    def test_run_prefers_parser_aligned_composition_when_data_path_order_mismatches(self, mock_close_logger, mock_setup_logger, MockIOManager, MockManager, tmp_path):
         config = {
             "result_dir": str(tmp_path / "results"),
             "output_dir": str(tmp_path / "analysis"),
@@ -158,12 +168,39 @@ class TestAnalysisWorkflow:
         mock_manager = MockManager.return_value
         mock_parser = MagicMock()
         mock_io.load_data.return_value = ({"energy": {"pred_e": np.array([1.0])}}, mock_parser)
-        mock_io.load_composition_info.return_value = ([{"O": 1, "H": 2}], [3])
+        mock_parser.get_composition_list.return_value = ([{"O": 1, "H": 2}], [3])
+        mock_io.load_composition_info.return_value = ([{"O": 2, "H": 1}], [3])
         mock_manager.analyze_model.return_value = ({}, {"e_mae": 0.1}, MagicMock(), np.array([-0.1]), np.array([-0.2]))
         workflow = AnalysisWorkflow(config)
         workflow.run()
         mock_io.load_composition_info.assert_called_once_with(config["data_path"])
-        mock_parser.get_composition_list.assert_not_called()
+        assert mock_manager.analyze_model.call_args.kwargs["atom_counts_list"] == [{"O": 1, "H": 2}]
+        assert mock_manager.analyze_model.call_args.kwargs["atom_num_list"] == [3]
+        mock_close_logger.assert_called_once()
+
+    @patch("dpeva.workflows.analysis.UnifiedAnalysisManager")
+    @patch("dpeva.workflows.analysis.AnalysisIOManager")
+    @patch("dpeva.workflows.analysis.setup_workflow_logger")
+    @patch("dpeva.workflows.analysis.close_workflow_logger")
+    def test_run_falls_back_to_data_path_composition_when_parser_counts_invalid(self, mock_close_logger, mock_setup_logger, MockIOManager, MockManager, tmp_path):
+        config = {
+            "result_dir": str(tmp_path / "results"),
+            "output_dir": str(tmp_path / "analysis"),
+            "type_map": ["O", "H"],
+            "data_path": str(tmp_path / "dpdata"),
+            "ref_energies": {"O": -10.0, "H": -5.0},
+        }
+        mock_io = MockIOManager.return_value
+        mock_manager = MockManager.return_value
+        mock_parser = MagicMock()
+        mock_io.load_data.return_value = ({"energy": {"pred_e": np.array([1.0])}}, mock_parser)
+        mock_parser.get_composition_list.return_value = ([{}], [0])
+        mock_io.load_composition_info.return_value = ([{"O": 1, "H": 2}], [3])
+        mock_manager.analyze_model.return_value = ({}, {"e_mae": 0.1}, MagicMock(), np.array([-0.1]), np.array([-0.2]))
+        workflow = AnalysisWorkflow(config)
+        workflow.run()
+        assert mock_manager.analyze_model.call_args.kwargs["atom_counts_list"] == [{"O": 1, "H": 2}]
+        assert mock_manager.analyze_model.call_args.kwargs["atom_num_list"] == [3]
         mock_close_logger.assert_called_once()
 
     @patch("dpeva.workflows.analysis.UnifiedAnalysisManager")
@@ -190,6 +227,30 @@ class TestAnalysisWorkflow:
 
     @patch("dpeva.workflows.analysis.UnifiedAnalysisManager")
     @patch("dpeva.workflows.analysis.AnalysisIOManager")
+    @patch("dpeva.workflows.analysis.setup_workflow_logger")
+    @patch("dpeva.workflows.analysis.close_workflow_logger")
+    def test_run_logs_plot_level_scope(self, mock_close_logger, mock_setup_logger, MockIOManager, MockManager, tmp_path):
+        config = {
+            "result_dir": str(tmp_path / "results"),
+            "output_dir": str(tmp_path / "analysis"),
+            "type_map": ["O", "H"],
+            "plot_level": "full",
+        }
+        mock_io = MockIOManager.return_value
+        mock_manager = MockManager.return_value
+        mock_parser = MagicMock()
+        mock_parser.get_composition_list.return_value = (None, None)
+        mock_io.load_data.return_value = ({"energy": {"pred_e": np.array([1.0])}}, mock_parser)
+        mock_manager.analyze_model.return_value = ({}, {"e_mae": 0.1}, MagicMock(), np.array([-0.1]), np.array([-0.2]))
+        workflow = AnalysisWorkflow(config)
+        with patch.object(workflow.logger, "info") as mock_info:
+            workflow.run()
+        logged_messages = [call.args[0] for call in mock_info.call_args_list if call.args]
+        assert any("Plot level 'full': full: basic + overlay、with_error、enhanced parity" in msg for msg in logged_messages)
+        mock_close_logger.assert_called_once()
+
+    @patch("dpeva.workflows.analysis.UnifiedAnalysisManager")
+    @patch("dpeva.workflows.analysis.AnalysisIOManager")
     def test_init_passes_slow_plot_threshold_to_manager(self, MockIOManager, MockManager, tmp_path):
         config = {
             "result_dir": str(tmp_path / "results"),
@@ -204,6 +265,28 @@ class TestAnalysisWorkflow:
             enable_cohesive_energy=True,
             allow_ref_energy_lstsq_completion=False,
             slow_plot_threshold_seconds=12.5,
+            enhanced_parity_renderer="auto",
+        )
+
+    @patch("dpeva.workflows.analysis.UnifiedAnalysisManager")
+    @patch("dpeva.workflows.analysis.AnalysisIOManager")
+    def test_init_passes_enhanced_parity_renderer_to_manager(
+        self, MockIOManager, MockManager, tmp_path
+    ):
+        config = {
+            "result_dir": str(tmp_path / "results"),
+            "output_dir": str(tmp_path / "analysis"),
+            "type_map": ["O", "H"],
+            "enhanced_parity_renderer": "scatter",
+        }
+        AnalysisWorkflow(config)
+        MockIOManager.assert_called_once()
+        MockManager.assert_called_once_with(
+            ref_energies={},
+            enable_cohesive_energy=True,
+            allow_ref_energy_lstsq_completion=False,
+            slow_plot_threshold_seconds=60.0,
+            enhanced_parity_renderer="scatter",
         )
 
     @patch("dpeva.workflows.analysis.UnifiedAnalysisManager")
@@ -237,8 +320,9 @@ class TestAnalysisWorkflow:
                 "slurm_config": {"partition": "cpu"}
             },
         }
-        workflow = AnalysisWorkflow(config, config_path=str(tmp_path / "config.json"))
-        workflow.run()
+        with patch.dict("os.environ", {}, clear=True):
+            workflow = AnalysisWorkflow(config, config_path=str(tmp_path / "config.json"))
+            workflow.run()
         MockJobManager.assert_called_once_with(mode="slurm")
         mock_job_manager = MockJobManager.return_value
         mock_job_manager.generate_script.assert_called_once()
