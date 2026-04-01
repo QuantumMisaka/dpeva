@@ -37,7 +37,7 @@
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="../_static/documentation_options.js?v=20998797"></script>
+    <script src="../_static/documentation_options.js?v=0e02e724"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -363,7 +363,6 @@ document.write(`
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#dp-eva-labeling-module">DP-EVA Labeling Module</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.labeling.AbacusGenerator"><code class="docutils literal notranslate"><span class="pre">AbacusGenerator</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.labeling.AbacusGenerator.generate"><code class="docutils literal notranslate"><span class="pre">AbacusGenerator.generate()</span></code></a></li>
 </ul>
@@ -396,15 +395,9 @@ document.write(`
                   
   <section id="module-dpeva.labeling">
 <span id="labeling-api"></span><h1>Labeling API<a class="headerlink" href="#module-dpeva.labeling" title="Link to this heading">#</a></h1>
-<section id="dp-eva-labeling-module">
-<h2>DP-EVA Labeling Module<a class="headerlink" href="#dp-eva-labeling-module" title="Link to this heading">#</a></h2>
-<p>This module handles the labeling process for Active Learning, specifically for
-First Principles (FP) calculations (e.g., ABACUS).</p>
-<p>It includes:
-- Input Generation (Generator)
-- Resubmission Strategy (Strategy)
-- Post-processing (PostProcessor)</p>
-</section>
+<p>Labeling package public exports.</p>
+<p>This package provides reusable labeling components consumed by
+<cite>LabelingWorkflow</cite> and related orchestration modules.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="dpeva.labeling.AbacusGenerator">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dpeva.labeling.</span></span><span class="sig-name descname"><span class="pre">AbacusGenerator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dpeva/labeling/generator.html#AbacusGenerator"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#dpeva.labeling.AbacusGenerator" title="Link to this definition">#</a></dt>
@@ -558,7 +551,6 @@ based on the attempt index.</p>
   </div>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#dp-eva-labeling-module">DP-EVA Labeling Module</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.labeling.AbacusGenerator"><code class="docutils literal notranslate"><span class="pre">AbacusGenerator</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.labeling.AbacusGenerator.generate"><code class="docutils literal notranslate"><span class="pre">AbacusGenerator.generate()</span></code></a></li>
 </ul>

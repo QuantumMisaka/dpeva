@@ -37,7 +37,7 @@
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="../_static/documentation_options.js?v=20998797"></script>
+    <script src="../_static/documentation_options.js?v=0e02e724"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -813,6 +813,7 @@ document.write(`
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#architecture">2. 系统架构 (Architecture)</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">2.1 目录结构</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#data-flow">2.2 数据流图 (Data Flow)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">2.3 包级导出层与主链路入口边界</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#modules">3. 核心模块详解 (Modules)</a><ul class="nav section-nav flex-column">
@@ -835,33 +836,34 @@ document.write(`
 </ul>
 </li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#python-api-recipes">4.2 Python API (Recipes)</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">4.3 配置参数说明</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">4.3 配置参数说明</a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#train-config">4.3.1 训练配置 (Train Config)</a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">4.3.2 其他配置</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">4.3.2 其他配置</a></li>
 </ul>
 </li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#uq">4.4 UQ 与采样配置要点</a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#uq-trust-mode">4.4.1 <code class="docutils literal notranslate"><span class="pre">uq_trust_mode</span></code> 配置说明</a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#auto-uq-uq-auto-bounds">4.4.2 Auto-UQ 边界控制 (<code class="docutils literal notranslate"><span class="pre">uq_auto_bounds</span></code>)</a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#sampling">4.4.3 采样参数说明 (Sampling)</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#collection-enable-diagnostic-plots">4.4.4 Collection 出图分层开关 (<code class="docutils literal notranslate"><span class="pre">enable_diagnostic_plots</span></code>)</a></li>
 </ul>
 </li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#development">5. 开发与测试 (Development)</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">5.1 代码规范</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id8">5.2 验证测试</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id8">5.1 代码规范</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id9">5.2 验证测试</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#faq">5.3 常见问题 (FAQ)</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow-monitoring">5.4 工作流监控标准 (Workflow Monitoring)</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#revision-history">6. 版本修订记录 (Revision History)</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#maintenance-policy">6.1 维护策略 (Maintenance Policy)</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id9">6.2 版本历史</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id10">6.2 版本历史</a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#current-era-v0-7-x"><strong>Current Era (v0.7.x)</strong></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#legacy-era-v0-4-x"><strong>Legacy Era (v0.4.x)</strong></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#legacy-era-v2-x"><strong>Legacy Era (v2.x)</strong></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id10"><strong>Legacy Era (v2.x)</strong></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id11"><strong>Legacy Era (v2.x)</strong></a></li>
 </ul>
 </li>
 </ul>
@@ -892,8 +894,8 @@ document.write(`
 </li>
 </ul>
 <ul class="simple">
-<li><p><strong>版本</strong>: 0.7.0</p></li>
-<li><p><strong>生成日期</strong>: 2026-03-21</p></li>
+<li><p><strong>版本</strong>: 0.7.1</p></li>
+<li><p><strong>生成日期</strong>: 2026-04-01</p></li>
 <li><p><strong>作者</strong>: Quantum Misaka with Trae SOLO</p></li>
 </ul>
 <hr class="docutils" />
@@ -1072,6 +1074,20 @@ document.write(`
     %% Optional if no another TargetPool
     OtherPool --&gt;|Next Cycle| TargetPool
     </pre></section>
+<section id="id5">
+<h3>2.3 包级导出层与主链路入口边界<a class="headerlink" href="#id5" title="Link to this heading">#</a></h3>
+<p>为避免“模块存在但未接入主链路”的认知偏差，开发时需区分两类入口：</p>
+<ul class="simple">
+<li><p><strong>主链路入口（Execution Entry）</strong>：由 <code class="docutils literal notranslate"><span class="pre">dpeva.cli</span></code> 子命令分发到具体 workflow 模块（如 <code class="docutils literal notranslate"><span class="pre">dpeva.workflows.collect</span></code>）。</p></li>
+<li><p><strong>包级导出层（Export Surface）</strong>：<code class="docutils literal notranslate"><span class="pre">__init__.py</span></code> 仅用于命名空间聚合、对外导出和职责声明，不作为工作流执行入口。</p></li>
+</ul>
+<p>实践约定：</p>
+<ul class="simple">
+<li><p>新增业务功能时，先接入 workflow/manager 主链路，再考虑是否在包级导出层暴露。</p></li>
+<li><p>包级 <code class="docutils literal notranslate"><span class="pre">__init__.py</span></code> 中不放业务编排逻辑与隐式副作用。</p></li>
+<li><p>审查“是否接线”时，证据以 CLI -&gt; workflow -&gt; manager -&gt; module 的可追溯调用链为准，而非仅凭 <code class="docutils literal notranslate"><span class="pre">__init__.py</span></code> 导出关系。</p></li>
+</ul>
+</section>
 </section>
 <hr class="docutils" />
 <section id="modules">
@@ -1279,8 +1295,8 @@ dpeva<span class="w"> </span>--help
 </pre></div>
 </div>
 </section>
-<section id="id5">
-<h3>4.3 配置参数说明<a class="headerlink" href="#id5" title="Link to this heading">#</a></h3>
+<section id="id6">
+<h3>4.3 配置参数说明<a class="headerlink" href="#id6" title="Link to this heading">#</a></h3>
 <p>详细的输入参数定义、类型约束及验证规则，请参阅 API 文档：</p>
 <ul class="simple">
 <li><p><strong>参数列表</strong>: <a class="reference external" href="https://github.com/QuantumMisaka/dpeva/blob/main/docs/source/api/config.rst">config.rst</a></p></li>
@@ -1306,8 +1322,8 @@ dpeva<span class="w"> </span>--help
 </pre></div>
 </div>
 </section>
-<section id="id6">
-<h4>4.3.2 其他配置<a class="headerlink" href="#id6" title="Link to this heading">#</a></h4>
+<section id="id7">
+<h4>4.3.2 其他配置<a class="headerlink" href="#id7" title="Link to this heading">#</a></h4>
 <p>请参考 <code class="docutils literal notranslate"><span class="pre">examples/recipes/</span></code> 目录下的示例文件以及上述 API 文档。</p>
 </section>
 </section>
@@ -1349,12 +1365,26 @@ dpeva<span class="w"> </span>--help
 <li><p><code class="docutils literal notranslate"><span class="pre">/docs/source/api/config.rst</span></code></p></li>
 </ul>
 </section>
+<section id="collection-enable-diagnostic-plots">
+<h4>4.4.4 Collection 出图分层开关 (<code class="docutils literal notranslate"><span class="pre">enable_diagnostic_plots</span></code>)<a class="headerlink" href="#collection-enable-diagnostic-plots" title="Link to this heading">#</a></h4>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">false</span></code>（默认）：仅输出 Core 层图，Diagnostic 层 parity 图默认跳过</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">true</span></code>：在满足 <code class="docutils literal notranslate"><span class="pre">has_gt</span></code>、<code class="docutils literal notranslate"><span class="pre">uq_rnd_rescaled</span></code> 等前置条件时输出 Diagnostic 层图像</p></li>
+<li><p>运行日志会输出统一标签：</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">[COLLECT_PLOT_GENERATED]</span></code>：记录已生成图像、层级与触发条件</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">[COLLECT_PLOT_SKIPPED]</span></code>：记录被跳过图像及 reason</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">[COLLECT_PLOT_AUDIT]</span></code>：汇总 generated/skipped 清单，便于回溯审计</p></li>
+</ul>
+</li>
+</ul>
+</section>
 </section>
 </section>
 <section id="development">
 <h2>5. 开发与测试 (Development)<a class="headerlink" href="#development" title="Link to this heading">#</a></h2>
-<section id="id7">
-<h3>5.1 代码规范<a class="headerlink" href="#id7" title="Link to this heading">#</a></h3>
+<section id="id8">
+<h3>5.1 代码规范<a class="headerlink" href="#id8" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p><strong>日志</strong>: 禁止在 <code class="docutils literal notranslate"><span class="pre">src/dpeva</span></code> 库文件中调用 <code class="docutils literal notranslate"><span class="pre">logging.basicConfig()</span></code>。仅在 <code class="docutils literal notranslate"><span class="pre">runner</span></code> 脚本中配置全局日志。</p></li>
 <li><p><strong>路径</strong>: 所有文件操作应使用绝对路径 (<code class="docutils literal notranslate"><span class="pre">os.path.abspath</span></code>)。</p></li>
@@ -1363,8 +1393,8 @@ dpeva<span class="w"> </span>--help
 <li><p><strong>变量命名</strong>: 统一输入数据路径变量名为 <code class="docutils literal notranslate"><span class="pre">data_path</span></code> (Feature/Inference Workflow)。</p></li>
 </ul>
 </section>
-<section id="id8">
-<h3>5.2 验证测试<a class="headerlink" href="#id8" title="Link to this heading">#</a></h3>
+<section id="id9">
+<h3>5.2 验证测试<a class="headerlink" href="#id9" title="Link to this heading">#</a></h3>
 <p>在开发阶段，你可以通过<code class="docutils literal notranslate"><span class="pre">conda</span> <span class="pre">activate</span> <span class="pre">dpeva-dev</span></code> 加载所需环境，并在项目目录下运行 <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">--upgrade</span> <span class="pre">.</span></code> 更新开发依赖，确保测试环境与开发环境保持一致。</p>
 <p>用户自行开展单元测试时，需要自行配置好 Python 环境，确保 <code class="docutils literal notranslate"><span class="pre">dpeva</span></code> 命令在环境内并处于最新状态，且 <code class="docutils literal notranslate"><span class="pre">pytest</span></code> 已安装。</p>
 <ul>
@@ -1454,11 +1484,25 @@ A: 这是预期行为。在联合模式下，<code class="docutils literal notra
 </li>
 </ol>
 </section>
-<section id="id9">
-<h3>6.2 版本历史<a class="headerlink" href="#id9" title="Link to this heading">#</a></h3>
+<section id="id10">
+<h3>6.2 版本历史<a class="headerlink" href="#id10" title="Link to this heading">#</a></h3>
 <section id="current-era-v0-7-x">
 <h4><strong>Current Era (v0.7.x)</strong><a class="headerlink" href="#current-era-v0-7-x" title="Link to this heading">#</a></h4>
 <ul class="simple">
+<li><p><strong>v0.7.1</strong> (2026-04-01):</p>
+<ul>
+<li><p><strong>[特性]</strong> 提升 Parity Plots 可读性：全局基础字号由 12 增大至 16，同步调大统计框 (Stats Box) 字号。</p></li>
+<li><p><strong>[特性]</strong> 优化图像元素尺寸：增大 Scatter 散点和 Hexbin 六边形大小，Hexbin <code class="docutils literal notranslate"><span class="pre">gridsize</span></code> 由 60 降至 50 以突出重点。</p></li>
+<li><p><strong>[修复]</strong> 解决布局重叠：将 Error Density 顶部刻度标签向上微调 (<code class="docutils literal notranslate"><span class="pre">error_tick_pad</span></code> 1.0)，防止与曲线重叠。</p></li>
+<li><p><strong>[修复]</strong> 统一出图尺寸：移除 <code class="docutils literal notranslate"><span class="pre">bbox_inches=&quot;tight&quot;</span></code>，严格遵循预设 <code class="docutils literal notranslate"><span class="pre">figsize</span></code>，确保跨图视觉一致性。</p></li>
+<li><p><strong>[修复]</strong> 消除 KDE 伪影：在绘制误差分布前对离群点进行过滤，修复由于网格稀疏导致的“倒三角”尖角伪影。</p></li>
+<li><p><strong>[特性]</strong> 新增多数据池采样总结图 (<code class="docutils literal notranslate"><span class="pre">Final_sampled_PCAview_by_pool</span></code>)，支持多 Pool 场景下的特征覆盖可视化。</p></li>
+<li><p><strong>[特性]</strong> 引入出图分层控制 (<code class="docutils literal notranslate"><span class="pre">enable_diagnostic_plots</span></code>)，默认仅生成核心图表，减少冗余产出。</p></li>
+<li><p><strong>[特性]</strong> 接入 Candidate Parity 图，支持在采样阶段对候选集进行误差预审。</p></li>
+<li><p><strong>[治理]</strong> 完成 <code class="docutils literal notranslate"><span class="pre">v0.7.1</span></code> 周期文档归档，同步更新归档索引与包级模块文档。</p></li>
+<li><p><strong>[发布]</strong> 版本升级至 <code class="docutils literal notranslate"><span class="pre">0.7.1</span></code>，同步 <code class="docutils literal notranslate"><span class="pre">__init__</span></code>、<code class="docutils literal notranslate"><span class="pre">README</span></code>、Sphinx <code class="docutils literal notranslate"><span class="pre">conf.py</span></code> 与 Banner 版本标识。</p></li>
+</ul>
+</li>
 <li><p><strong>v0.7.0</strong> (2026-03-21):</p>
 <ul>
 <li><p><strong>[特性]</strong> 新增基于推理误差阈值的数据清洗工作流，支持灵活的数据质量控制。</p></li>
@@ -1690,8 +1734,8 @@ A: 这是预期行为。在联合模式下，<code class="docutils literal notra
 </li>
 </ul>
 </section>
-<section id="id10">
-<h4><strong>Legacy Era (v2.x)</strong><a class="headerlink" href="#id10" title="Link to this heading">#</a></h4>
+<section id="id11">
+<h4><strong>Legacy Era (v2.x)</strong><a class="headerlink" href="#id11" title="Link to this heading">#</a></h4>
 <p><em>(2026-01-28 ~ 2026-02-14)</em></p>
 <p>在此阶段，项目完成了从单一脚本到模块化架构的蜕变。主要成就包括：</p>
 <ul class="simple">
@@ -1762,6 +1806,7 @@ A: 这是预期行为。在联合模式下，<code class="docutils literal notra
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#architecture">2. 系统架构 (Architecture)</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">2.1 目录结构</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#data-flow">2.2 数据流图 (Data Flow)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">2.3 包级导出层与主链路入口边界</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#modules">3. 核心模块详解 (Modules)</a><ul class="nav section-nav flex-column">
@@ -1784,33 +1829,34 @@ A: 这是预期行为。在联合模式下，<code class="docutils literal notra
 </ul>
 </li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#python-api-recipes">4.2 Python API (Recipes)</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">4.3 配置参数说明</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">4.3 配置参数说明</a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#train-config">4.3.1 训练配置 (Train Config)</a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">4.3.2 其他配置</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">4.3.2 其他配置</a></li>
 </ul>
 </li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#uq">4.4 UQ 与采样配置要点</a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#uq-trust-mode">4.4.1 <code class="docutils literal notranslate"><span class="pre">uq_trust_mode</span></code> 配置说明</a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#auto-uq-uq-auto-bounds">4.4.2 Auto-UQ 边界控制 (<code class="docutils literal notranslate"><span class="pre">uq_auto_bounds</span></code>)</a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#sampling">4.4.3 采样参数说明 (Sampling)</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#collection-enable-diagnostic-plots">4.4.4 Collection 出图分层开关 (<code class="docutils literal notranslate"><span class="pre">enable_diagnostic_plots</span></code>)</a></li>
 </ul>
 </li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#development">5. 开发与测试 (Development)</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">5.1 代码规范</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id8">5.2 验证测试</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id8">5.1 代码规范</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id9">5.2 验证测试</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#faq">5.3 常见问题 (FAQ)</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow-monitoring">5.4 工作流监控标准 (Workflow Monitoring)</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#revision-history">6. 版本修订记录 (Revision History)</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#maintenance-policy">6.1 维护策略 (Maintenance Policy)</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id9">6.2 版本历史</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id10">6.2 版本历史</a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#current-era-v0-7-x"><strong>Current Era (v0.7.x)</strong></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#legacy-era-v0-4-x"><strong>Legacy Era (v0.4.x)</strong></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#legacy-era-v2-x"><strong>Legacy Era (v2.x)</strong></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id10"><strong>Legacy Era (v2.x)</strong></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id11"><strong>Legacy Era (v2.x)</strong></a></li>
 </ul>
 </li>
 </ul>

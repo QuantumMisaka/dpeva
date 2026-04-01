@@ -36,7 +36,7 @@
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="../../../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="../../../_static/documentation_options.js?v=20998797"></script>
+    <script src="../../../_static/documentation_options.js?v=0e02e724"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -867,6 +867,7 @@ document.write(`
             <span class="bp">self</span><span class="o">.</span><span class="n">backend</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">backend</span>
             
         <span class="bp">self</span><span class="o">.</span><span class="n">slurm_config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">slurm_config</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_plot_audit_entries</span> <span class="o">=</span> <span class="p">[]</span>
 
         <span class="c1"># 3. Setup Environment</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_validate_config</span><span class="p">()</span>
@@ -903,7 +904,14 @@ document.write(`
             <span class="bp">self</span><span class="o">.</span><span class="n">_submit_to_slurm</span><span class="p">()</span>
             <span class="k">return</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Initializing selection in </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">project</span><span class="si">}</span><span class="s2"> ---&quot;</span><span class="p">)</span>
-        <span class="n">vis</span> <span class="o">=</span> <span class="n">UQVisualizer</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">io_manager</span><span class="o">.</span><span class="n">view_savedir</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">fig_dpi</span><span class="p">)</span>
+        <span class="n">vis</span> <span class="o">=</span> <span class="n">UQVisualizer</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">io_manager</span><span class="o">.</span><span class="n">view_savedir</span><span class="p">,</span>
+            <span class="n">dpi</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">fig_dpi</span><span class="p">,</span>
+            <span class="n">font_size</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">fig_base_font_size</span><span class="p">,</span>
+            <span class="n">tick_target_count</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">fig_tick_target_count</span><span class="p">,</span>
+            <span class="n">legend_max_rows</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">fig_legend_max_rows</span><span class="p">,</span>
+            <span class="n">legend_max_cols</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">fig_legend_max_cols</span><span class="p">,</span>
+        <span class="p">)</span>
         <span class="n">df_desc</span><span class="p">,</span> <span class="n">df_candidate</span><span class="p">,</span> <span class="n">unique_system_names</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_run_uq_phase</span><span class="p">(</span><span class="n">vis</span><span class="p">)</span>
         <span class="n">df_final</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_run_sampling_phase</span><span class="p">(</span><span class="n">df_candidate</span><span class="p">,</span> <span class="n">df_desc</span><span class="p">,</span> <span class="n">vis</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_run_export_phase</span><span class="p">(</span><span class="n">df_final</span><span class="p">,</span> <span class="n">unique_system_names</span><span class="p">)</span></div>
@@ -928,25 +936,50 @@ document.write(`
         <span class="k">return</span> <span class="n">df_desc</span><span class="p">,</span> <span class="n">df_candidate</span><span class="p">,</span> <span class="n">unique_system_names</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_run_filtered_uq_phase</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vis</span><span class="p">:</span> <span class="n">UQVisualizer</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_plot_audit_entries</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">preds</span><span class="p">,</span> <span class="n">has_gt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">uq_manager</span><span class="o">.</span><span class="n">load_predictions</span><span class="p">()</span>
         <span class="n">uq_results</span><span class="p">,</span> <span class="n">uq_rnd_rescaled</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">uq_manager</span><span class="o">.</span><span class="n">run_analysis</span><span class="p">(</span><span class="n">preds</span><span class="p">)</span>
+        <span class="n">has_rescaled_rnd</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_has_valid_uq_vector</span><span class="p">(</span>
+            <span class="n">uq_rnd_rescaled</span><span class="p">,</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">uq_results</span><span class="p">[</span><span class="n">COL_UQ_RND</span><span class="p">]),</span>
+            <span class="s2">&quot;uq_rnd_rescaled&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">uq_rnd_for_filter</span> <span class="o">=</span> <span class="n">uq_rnd_rescaled</span> <span class="k">if</span> <span class="n">has_rescaled_rnd</span> <span class="k">else</span> <span class="n">uq_results</span><span class="p">[</span><span class="n">COL_UQ_RND</span><span class="p">]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">has_rescaled_rnd</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="s2">&quot;[COLLECT_UQ_FALLBACK] reason=invalid_uq_rnd_rescaled action=use_raw_rnd_for_filtering_only&quot;</span>
+            <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">uq_manager</span><span class="o">.</span><span class="n">log_uq_statistics</span><span class="p">(</span><span class="n">uq_results</span><span class="p">,</span> <span class="n">uq_rnd_rescaled</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">uq_manager</span><span class="o">.</span><span class="n">run_auto_threshold</span><span class="p">(</span><span class="n">uq_results</span><span class="p">,</span> <span class="n">uq_rnd_rescaled</span><span class="p">)</span>
-        <span class="n">vis</span><span class="o">.</span><span class="n">plot_uq_distribution</span><span class="p">(</span><span class="n">uq_results</span><span class="p">[</span><span class="n">COL_UQ_QBC</span><span class="p">],</span> <span class="n">uq_results</span><span class="p">[</span><span class="n">COL_UQ_RND</span><span class="p">],</span> <span class="n">uq_rnd_rescaled</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">uq_manager</span><span class="o">.</span><span class="n">run_auto_threshold</span><span class="p">(</span><span class="n">uq_results</span><span class="p">,</span> <span class="n">uq_rnd_for_filter</span><span class="p">)</span>
+        <span class="n">vis</span><span class="o">.</span><span class="n">plot_uq_distribution</span><span class="p">(</span>
+            <span class="n">uq_results</span><span class="p">[</span><span class="n">COL_UQ_QBC</span><span class="p">],</span>
+            <span class="n">uq_results</span><span class="p">[</span><span class="n">COL_UQ_RND</span><span class="p">],</span>
+            <span class="n">uq_rnd_rescaled</span> <span class="k">if</span> <span class="n">has_rescaled_rnd</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log_generated_plots</span><span class="p">([</span><span class="s2">&quot;UQ-force&quot;</span><span class="p">],</span> <span class="n">layer</span><span class="o">=</span><span class="s2">&quot;core&quot;</span><span class="p">,</span> <span class="n">condition</span><span class="o">=</span><span class="s2">&quot;uq_analysis_completed&quot;</span><span class="p">)</span>
         <span class="n">vis</span><span class="o">.</span><span class="n">plot_uq_with_trust_range</span><span class="p">(</span>
             <span class="n">uq_results</span><span class="p">[</span><span class="n">COL_UQ_QBC</span><span class="p">],</span>
-            <span class="s2">&quot;UQ-QbC-force&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;UQ-QbC&quot;</span><span class="p">,</span>
             <span class="n">FILENAME_UQ_QBC_FORCE</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">uq_manager</span><span class="o">.</span><span class="n">qbc_params</span><span class="p">[</span><span class="s2">&quot;lo&quot;</span><span class="p">],</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">uq_manager</span><span class="o">.</span><span class="n">qbc_params</span><span class="p">[</span><span class="s2">&quot;hi&quot;</span><span class="p">],</span>
         <span class="p">)</span>
-        <span class="k">if</span> <span class="n">uq_rnd_rescaled</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log_generated_plots</span><span class="p">([</span><span class="s2">&quot;UQ-QbC-force&quot;</span><span class="p">],</span> <span class="n">layer</span><span class="o">=</span><span class="s2">&quot;core&quot;</span><span class="p">,</span> <span class="n">condition</span><span class="o">=</span><span class="s2">&quot;uq_analysis_completed&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">has_rescaled_rnd</span><span class="p">:</span>
             <span class="n">vis</span><span class="o">.</span><span class="n">plot_uq_with_trust_range</span><span class="p">(</span>
                 <span class="n">uq_rnd_rescaled</span><span class="p">,</span>
-                <span class="s2">&quot;UQ-RND-force&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;UQ-RND&quot;</span><span class="p">,</span>
                 <span class="n">FILENAME_UQ_RND_FORCE</span><span class="p">,</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">uq_manager</span><span class="o">.</span><span class="n">rnd_params</span><span class="p">[</span><span class="s2">&quot;lo&quot;</span><span class="p">],</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">uq_manager</span><span class="o">.</span><span class="n">rnd_params</span><span class="p">[</span><span class="s2">&quot;hi&quot;</span><span class="p">],</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_log_generated_plots</span><span class="p">([</span><span class="s2">&quot;UQ-RND-force&quot;</span><span class="p">],</span> <span class="n">layer</span><span class="o">=</span><span class="s2">&quot;core&quot;</span><span class="p">,</span> <span class="n">condition</span><span class="o">=</span><span class="s2">&quot;has_rescaled_rnd=true&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_log_skipped_plots</span><span class="p">(</span>
+                <span class="s2">&quot;missing_uq_rnd_rescaled&quot;</span><span class="p">,</span>
+                <span class="p">[</span><span class="s2">&quot;UQ-RND-force&quot;</span><span class="p">],</span>
+                <span class="n">layer</span><span class="o">=</span><span class="s2">&quot;core&quot;</span><span class="p">,</span>
+                <span class="n">condition</span><span class="o">=</span><span class="s2">&quot;has_rescaled_rnd=false&quot;</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="n">unique_system_names</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_unique_system_names</span><span class="p">(</span><span class="n">preds</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">dataname_list</span><span class="p">)</span>
         <span class="n">expected_frames</span> <span class="o">=</span> <span class="p">{</span><span class="n">sys</span><span class="p">:</span> <span class="n">preds</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">datanames_nframe</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">sys</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="k">for</span> <span class="n">sys</span> <span class="ow">in</span> <span class="n">unique_system_names</span><span class="p">}</span>
@@ -962,7 +995,7 @@ document.write(`
         <span class="n">data_dict_uq</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s2">&quot;dataname&quot;</span><span class="p">:</span> <span class="n">datanames_ind_list</span><span class="p">,</span>
             <span class="n">COL_UQ_QBC</span><span class="p">:</span> <span class="n">uq_results</span><span class="p">[</span><span class="n">COL_UQ_QBC</span><span class="p">],</span>
-            <span class="s2">&quot;uq_rnd_for_rescaled&quot;</span><span class="p">:</span> <span class="n">uq_rnd_rescaled</span><span class="p">,</span>
+            <span class="s2">&quot;uq_rnd_for_rescaled&quot;</span><span class="p">:</span> <span class="n">uq_rnd_for_filter</span><span class="p">,</span>
             <span class="n">COL_UQ_RND</span><span class="p">:</span> <span class="n">uq_results</span><span class="p">[</span><span class="n">COL_UQ_RND</span><span class="p">],</span>
         <span class="p">}</span>
         <span class="k">if</span> <span class="n">has_gt</span><span class="p">:</span>
@@ -977,17 +1010,8 @@ document.write(`
         <span class="n">df_uq</span> <span class="o">=</span> <span class="n">uq_filter</span><span class="o">.</span><span class="n">get_identity_labels</span><span class="p">(</span><span class="n">df_uq_raw</span><span class="p">,</span> <span class="n">df_candidate</span><span class="p">,</span> <span class="n">df_accurate</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">io_manager</span><span class="o">.</span><span class="n">save_dataframe</span><span class="p">(</span><span class="n">df_uq</span><span class="p">,</span> <span class="s2">&quot;df_uq.csv&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">io_manager</span><span class="o">.</span><span class="n">save_dataframe</span><span class="p">(</span><span class="n">df_candidate</span><span class="p">,</span> <span class="s2">&quot;df_uq_desc_sampled-UQ.csv&quot;</span><span class="p">)</span>
-        <span class="n">vis</span><span class="o">.</span><span class="n">plot_uq_identity_scatter</span><span class="p">(</span>
-            <span class="n">df_uq</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">uq_select_scheme</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">uq_manager</span><span class="o">.</span><span class="n">qbc_params</span><span class="p">[</span><span class="s2">&quot;lo&quot;</span><span class="p">],</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">uq_manager</span><span class="o">.</span><span class="n">qbc_params</span><span class="p">[</span><span class="s2">&quot;hi&quot;</span><span class="p">],</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">uq_manager</span><span class="o">.</span><span class="n">rnd_params</span><span class="p">[</span><span class="s2">&quot;lo&quot;</span><span class="p">],</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">uq_manager</span><span class="o">.</span><span class="n">rnd_params</span><span class="p">[</span><span class="s2">&quot;hi&quot;</span><span class="p">],</span>
-        <span class="p">)</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_should_plot_force_error</span><span class="p">(</span><span class="n">has_gt</span><span class="p">,</span> <span class="n">uq_results</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Ground Truth available. Plotting UQ vs Error...&quot;</span><span class="p">)</span>
-            <span class="n">vis</span><span class="o">.</span><span class="n">plot_uq_fdiff_scatter</span><span class="p">(</span>
+        <span class="k">if</span> <span class="n">has_rescaled_rnd</span><span class="p">:</span>
+            <span class="n">vis</span><span class="o">.</span><span class="n">plot_uq_identity_scatter</span><span class="p">(</span>
                 <span class="n">df_uq</span><span class="p">,</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">uq_select_scheme</span><span class="p">,</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">uq_manager</span><span class="o">.</span><span class="n">qbc_params</span><span class="p">[</span><span class="s2">&quot;lo&quot;</span><span class="p">],</span>
@@ -995,17 +1019,118 @@ document.write(`
                 <span class="bp">self</span><span class="o">.</span><span class="n">uq_manager</span><span class="o">.</span><span class="n">rnd_params</span><span class="p">[</span><span class="s2">&quot;lo&quot;</span><span class="p">],</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">uq_manager</span><span class="o">.</span><span class="n">rnd_params</span><span class="p">[</span><span class="s2">&quot;hi&quot;</span><span class="p">],</span>
             <span class="p">)</span>
-            <span class="n">vis</span><span class="o">.</span><span class="n">plot_uq_vs_error</span><span class="p">(</span><span class="n">uq_results</span><span class="p">[</span><span class="n">COL_UQ_QBC</span><span class="p">],</span> <span class="n">uq_results</span><span class="p">[</span><span class="n">COL_UQ_RND</span><span class="p">],</span> <span class="n">uq_results</span><span class="p">[</span><span class="s2">&quot;diff_maxf_0_frame&quot;</span><span class="p">])</span>
-            <span class="k">if</span> <span class="n">uq_rnd_rescaled</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">vis</span><span class="o">.</span><span class="n">plot_uq_vs_error</span><span class="p">(</span>
-                    <span class="n">uq_results</span><span class="p">[</span><span class="n">COL_UQ_QBC</span><span class="p">],</span>
-                    <span class="n">uq_rnd_rescaled</span><span class="p">,</span>
-                    <span class="n">uq_results</span><span class="p">[</span><span class="s2">&quot;diff_maxf_0_frame&quot;</span><span class="p">],</span>
-                    <span class="n">rescaled</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                <span class="p">)</span>
-                <span class="n">vis</span><span class="o">.</span><span class="n">plot_uq_diff_parity</span><span class="p">(</span><span class="n">uq_results</span><span class="p">[</span><span class="n">COL_UQ_QBC</span><span class="p">],</span> <span class="n">uq_rnd_rescaled</span><span class="p">,</span> <span class="n">uq_results</span><span class="p">[</span><span class="s2">&quot;diff_maxf_0_frame&quot;</span><span class="p">])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_log_generated_plots</span><span class="p">(</span>
+                <span class="p">[</span><span class="s2">&quot;UQ-force-qbc-rnd-identity-scatter&quot;</span><span class="p">],</span>
+                <span class="n">layer</span><span class="o">=</span><span class="s2">&quot;core&quot;</span><span class="p">,</span>
+                <span class="n">condition</span><span class="o">=</span><span class="s2">&quot;has_rescaled_rnd=true&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Ground Truth unavailable or invalid. Skipping force-error-dependent plots.&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_log_skipped_plots</span><span class="p">(</span>
+                <span class="s2">&quot;missing_uq_rnd_rescaled&quot;</span><span class="p">,</span>
+                <span class="p">[</span><span class="s2">&quot;UQ-force-qbc-rnd-identity-scatter&quot;</span><span class="p">],</span>
+                <span class="n">layer</span><span class="o">=</span><span class="s2">&quot;core&quot;</span><span class="p">,</span>
+                <span class="n">condition</span><span class="o">=</span><span class="s2">&quot;has_rescaled_rnd=false&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_should_plot_force_error</span><span class="p">(</span><span class="n">has_gt</span><span class="p">,</span> <span class="n">uq_results</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">has_rescaled_rnd</span><span class="p">:</span>
+                <span class="n">vis</span><span class="o">.</span><span class="n">plot_uq_fdiff_scatter</span><span class="p">(</span>
+                    <span class="n">df_uq</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">uq_select_scheme</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">uq_manager</span><span class="o">.</span><span class="n">qbc_params</span><span class="p">[</span><span class="s2">&quot;lo&quot;</span><span class="p">],</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">uq_manager</span><span class="o">.</span><span class="n">qbc_params</span><span class="p">[</span><span class="s2">&quot;hi&quot;</span><span class="p">],</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">uq_manager</span><span class="o">.</span><span class="n">rnd_params</span><span class="p">[</span><span class="s2">&quot;lo&quot;</span><span class="p">],</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">uq_manager</span><span class="o">.</span><span class="n">rnd_params</span><span class="p">[</span><span class="s2">&quot;hi&quot;</span><span class="p">],</span>
+                <span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_log_generated_plots</span><span class="p">(</span>
+                    <span class="p">[</span><span class="s2">&quot;uq-fdiff-scatter&quot;</span><span class="p">],</span>
+                    <span class="n">layer</span><span class="o">=</span><span class="s2">&quot;core&quot;</span><span class="p">,</span>
+                    <span class="n">condition</span><span class="o">=</span><span class="s2">&quot;has_gt=true,has_rescaled_rnd=true&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_log_skipped_plots</span><span class="p">(</span>
+                    <span class="s2">&quot;missing_uq_rnd_rescaled&quot;</span><span class="p">,</span>
+                    <span class="p">[</span>
+                        <span class="s2">&quot;uq-fdiff-scatter&quot;</span><span class="p">,</span>
+                    <span class="p">],</span>
+                    <span class="n">layer</span><span class="o">=</span><span class="s2">&quot;core&quot;</span><span class="p">,</span>
+                    <span class="n">condition</span><span class="o">=</span><span class="s2">&quot;has_gt=true,has_rescaled_rnd=false&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">enable_diagnostic_plots</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Ground Truth available. Plotting Diagnostic-layer parity plots...&quot;</span><span class="p">)</span>
+                <span class="n">vis</span><span class="o">.</span><span class="n">plot_uq_vs_error</span><span class="p">(</span><span class="n">uq_results</span><span class="p">[</span><span class="n">COL_UQ_QBC</span><span class="p">],</span> <span class="n">uq_results</span><span class="p">[</span><span class="n">COL_UQ_RND</span><span class="p">],</span> <span class="n">uq_results</span><span class="p">[</span><span class="s2">&quot;diff_maxf_0_frame&quot;</span><span class="p">])</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_log_generated_plots</span><span class="p">(</span>
+                    <span class="p">[</span><span class="s2">&quot;uq-force-fdiff-parity&quot;</span><span class="p">],</span>
+                    <span class="n">layer</span><span class="o">=</span><span class="s2">&quot;diagnostic&quot;</span><span class="p">,</span>
+                    <span class="n">condition</span><span class="o">=</span><span class="s2">&quot;enable_diagnostic_plots=true&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="k">if</span> <span class="n">has_rescaled_rnd</span><span class="p">:</span>
+                    <span class="n">vis</span><span class="o">.</span><span class="n">plot_candidate_vs_error</span><span class="p">(</span><span class="n">df_uq</span><span class="p">,</span> <span class="n">df_candidate</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_log_generated_plots</span><span class="p">(</span>
+                        <span class="p">[</span><span class="s2">&quot;UQ-QbC-Candidate-fdiff-parity&quot;</span><span class="p">,</span> <span class="s2">&quot;UQ-RND-Candidate-fdiff-parity&quot;</span><span class="p">],</span>
+                        <span class="n">layer</span><span class="o">=</span><span class="s2">&quot;diagnostic&quot;</span><span class="p">,</span>
+                        <span class="n">condition</span><span class="o">=</span><span class="s2">&quot;enable_diagnostic_plots=true,has_rescaled_rnd=true&quot;</span><span class="p">,</span>
+                    <span class="p">)</span>
+                    <span class="n">vis</span><span class="o">.</span><span class="n">plot_uq_vs_error</span><span class="p">(</span>
+                        <span class="n">uq_results</span><span class="p">[</span><span class="n">COL_UQ_QBC</span><span class="p">],</span>
+                        <span class="n">uq_rnd_rescaled</span><span class="p">,</span>
+                        <span class="n">uq_results</span><span class="p">[</span><span class="s2">&quot;diff_maxf_0_frame&quot;</span><span class="p">],</span>
+                        <span class="n">rescaled</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                    <span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_log_generated_plots</span><span class="p">(</span>
+                        <span class="p">[</span><span class="s2">&quot;uq-force-rescaled-fdiff-parity&quot;</span><span class="p">],</span>
+                        <span class="n">layer</span><span class="o">=</span><span class="s2">&quot;diagnostic&quot;</span><span class="p">,</span>
+                        <span class="n">condition</span><span class="o">=</span><span class="s2">&quot;enable_diagnostic_plots=true,has_rescaled_rnd=true&quot;</span><span class="p">,</span>
+                    <span class="p">)</span>
+                    <span class="n">vis</span><span class="o">.</span><span class="n">plot_uq_diff_parity</span><span class="p">(</span><span class="n">uq_results</span><span class="p">[</span><span class="n">COL_UQ_QBC</span><span class="p">],</span> <span class="n">uq_rnd_rescaled</span><span class="p">,</span> <span class="n">uq_results</span><span class="p">[</span><span class="s2">&quot;diff_maxf_0_frame&quot;</span><span class="p">])</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_log_generated_plots</span><span class="p">(</span>
+                        <span class="p">[</span><span class="s2">&quot;uq-diff-parity&quot;</span><span class="p">],</span>
+                        <span class="n">layer</span><span class="o">=</span><span class="s2">&quot;diagnostic&quot;</span><span class="p">,</span>
+                        <span class="n">condition</span><span class="o">=</span><span class="s2">&quot;enable_diagnostic_plots=true,has_rescaled_rnd=true&quot;</span><span class="p">,</span>
+                    <span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_log_skipped_plots</span><span class="p">(</span>
+                        <span class="s2">&quot;missing_uq_rnd_rescaled&quot;</span><span class="p">,</span>
+                        <span class="p">[</span>
+                            <span class="s2">&quot;candidate-vs-error&quot;</span><span class="p">,</span>
+                            <span class="s2">&quot;uq-force-rescaled-fdiff-parity&quot;</span><span class="p">,</span>
+                            <span class="s2">&quot;uq-diff-parity&quot;</span><span class="p">,</span>
+                        <span class="p">],</span>
+                        <span class="n">layer</span><span class="o">=</span><span class="s2">&quot;diagnostic&quot;</span><span class="p">,</span>
+                        <span class="n">condition</span><span class="o">=</span><span class="s2">&quot;enable_diagnostic_plots=true,has_rescaled_rnd=false&quot;</span><span class="p">,</span>
+                    <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_log_skipped_plots</span><span class="p">(</span>
+                    <span class="s2">&quot;diagnostic_plots_disabled&quot;</span><span class="p">,</span>
+                    <span class="p">[</span>
+                        <span class="s2">&quot;uq-vs-error&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;candidate-vs-error&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;uq-force-rescaled-fdiff-parity&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;uq-diff-parity&quot;</span><span class="p">,</span>
+                    <span class="p">],</span>
+                    <span class="n">layer</span><span class="o">=</span><span class="s2">&quot;diagnostic&quot;</span><span class="p">,</span>
+                    <span class="n">condition</span><span class="o">=</span><span class="s2">&quot;enable_diagnostic_plots=false&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_log_skipped_plots</span><span class="p">(</span>
+                <span class="s2">&quot;invalid_or_missing_ground_truth&quot;</span><span class="p">,</span>
+                <span class="p">[</span>
+                    <span class="s2">&quot;uq-fdiff-scatter&quot;</span><span class="p">,</span>
+                <span class="p">],</span>
+                <span class="n">layer</span><span class="o">=</span><span class="s2">&quot;core&quot;</span><span class="p">,</span>
+                <span class="n">condition</span><span class="o">=</span><span class="s2">&quot;has_gt=false_or_invalid&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_log_skipped_plots</span><span class="p">(</span>
+                <span class="s2">&quot;invalid_or_missing_ground_truth&quot;</span><span class="p">,</span>
+                <span class="p">[</span>
+                    <span class="s2">&quot;uq-vs-error&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;candidate-vs-error&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;uq-force-rescaled-fdiff-parity&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;uq-diff-parity&quot;</span><span class="p">,</span>
+                <span class="p">],</span>
+                <span class="n">layer</span><span class="o">=</span><span class="s2">&quot;diagnostic&quot;</span><span class="p">,</span>
+                <span class="n">condition</span><span class="o">=</span><span class="s2">&quot;has_gt=false_or_invalid&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log_plot_audit_summary</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_log_initial_stats</span><span class="p">(</span><span class="n">desc_datanames</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">df_desc</span><span class="p">,</span> <span class="n">df_candidate</span><span class="p">,</span> <span class="n">unique_system_names</span>
 
@@ -1034,6 +1159,72 @@ document.write(`
                 <span class="n">seen</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
                 <span class="n">unique_system_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">unique_system_names</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_has_valid_uq_vector</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">,</span> <span class="n">expected_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">vector_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">values</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="n">arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">arr</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">vector_name</span><span class="si">}</span><span class="s2"> should be a 1D vector, got shape=</span><span class="si">{</span><span class="n">arr</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="n">expected_size</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">arr</span><span class="o">.</span><span class="n">size</span> <span class="o">!=</span> <span class="n">expected_size</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">vector_name</span><span class="si">}</span><span class="s2"> size mismatch: expected </span><span class="si">{</span><span class="n">expected_size</span><span class="si">}</span><span class="s2">, got </span><span class="si">{</span><span class="n">arr</span><span class="o">.</span><span class="n">size</span><span class="si">}</span><span class="s2">.&quot;</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="n">arr</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">vector_name</span><span class="si">}</span><span class="s2"> is empty.&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_log_generated_plots</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">plots</span><span class="p">,</span> <span class="n">layer</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">condition</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">plot_list</span> <span class="o">=</span> <span class="s2">&quot;,&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">plots</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;[COLLECT_PLOT_GENERATED] layer=</span><span class="si">{</span><span class="n">layer</span><span class="si">}</span><span class="s2"> condition=</span><span class="si">{</span><span class="n">condition</span><span class="si">}</span><span class="s2"> plots=</span><span class="si">{</span><span class="n">plot_list</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_plot_audit_entries</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="s2">&quot;generated&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;layer&quot;</span><span class="p">:</span> <span class="n">layer</span><span class="p">,</span>
+                <span class="s2">&quot;condition&quot;</span><span class="p">:</span> <span class="n">condition</span><span class="p">,</span>
+                <span class="s2">&quot;reason&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;plots&quot;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">plots</span><span class="p">),</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_log_skipped_plots</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reason</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">plots</span><span class="p">,</span> <span class="n">layer</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;core&quot;</span><span class="p">,</span> <span class="n">condition</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">):</span>
+        <span class="n">plot_list</span> <span class="o">=</span> <span class="s2">&quot;,&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">plots</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;[COLLECT_PLOT_SKIPPED] layer=</span><span class="si">{</span><span class="n">layer</span><span class="si">}</span><span class="s2"> reason=</span><span class="si">{</span><span class="n">reason</span><span class="si">}</span><span class="s2"> condition=</span><span class="si">{</span><span class="n">condition</span><span class="si">}</span><span class="s2"> plots=</span><span class="si">{</span><span class="n">plot_list</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_plot_audit_entries</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="s2">&quot;skipped&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;layer&quot;</span><span class="p">:</span> <span class="n">layer</span><span class="p">,</span>
+                <span class="s2">&quot;condition&quot;</span><span class="p">:</span> <span class="n">condition</span><span class="p">,</span>
+                <span class="s2">&quot;reason&quot;</span><span class="p">:</span> <span class="n">reason</span><span class="p">,</span>
+                <span class="s2">&quot;plots&quot;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">plots</span><span class="p">),</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_log_plot_audit_summary</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">generated</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">skipped</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_plot_audit_entries</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">plot</span> <span class="ow">in</span> <span class="n">entry</span><span class="p">[</span><span class="s2">&quot;plots&quot;</span><span class="p">]:</span>
+                <span class="n">text</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">plot</span><span class="si">}</span><span class="s2">|layer=</span><span class="si">{</span><span class="n">entry</span><span class="p">[</span><span class="s1">&#39;layer&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">|condition=</span><span class="si">{</span><span class="n">entry</span><span class="p">[</span><span class="s1">&#39;condition&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;|reason=</span><span class="si">{</span><span class="n">entry</span><span class="p">[</span><span class="s1">&#39;reason&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+                <span class="k">if</span> <span class="n">entry</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;generated&quot;</span><span class="p">:</span>
+                    <span class="n">generated</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">skipped</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+        <span class="n">generated_text</span> <span class="o">=</span> <span class="s2">&quot;,&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">generated</span><span class="p">)</span> <span class="k">if</span> <span class="n">generated</span> <span class="k">else</span> <span class="s2">&quot;none&quot;</span>
+        <span class="n">skipped_text</span> <span class="o">=</span> <span class="s2">&quot;,&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">skipped</span><span class="p">)</span> <span class="k">if</span> <span class="n">skipped</span> <span class="k">else</span> <span class="s2">&quot;none&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;[COLLECT_PLOT_AUDIT] generated=</span><span class="si">{</span><span class="n">generated_text</span><span class="si">}</span><span class="s2"> skipped=</span><span class="si">{</span><span class="n">skipped_text</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_run_sampling_phase</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df_candidate</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">df_desc</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">vis</span><span class="p">:</span> <span class="n">UQVisualizer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">df_candidate</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
@@ -1081,6 +1272,24 @@ document.write(`
             <span class="n">n_candidates</span><span class="o">=</span><span class="n">n_candidates</span> <span class="k">if</span> <span class="n">use_joint</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
             <span class="n">full_features</span><span class="o">=</span><span class="n">full_pca_features</span><span class="p">,</span>
         <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log_generated_plots</span><span class="p">(</span>
+            <span class="p">[</span><span class="s2">&quot;Final_sampled_PCAview&quot;</span><span class="p">],</span>
+            <span class="n">layer</span><span class="o">=</span><span class="s2">&quot;core&quot;</span><span class="p">,</span>
+            <span class="n">condition</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;use_joint=</span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">use_joint</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">use_joint</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_log_generated_plots</span><span class="p">(</span>
+                <span class="p">[</span><span class="s2">&quot;Final_sampled_PCAview_by_pool&quot;</span><span class="p">],</span>
+                <span class="n">layer</span><span class="o">=</span><span class="s2">&quot;core&quot;</span><span class="p">,</span>
+                <span class="n">condition</span><span class="o">=</span><span class="s2">&quot;use_joint=true&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_log_skipped_plots</span><span class="p">(</span>
+                <span class="s2">&quot;joint_mode_disabled&quot;</span><span class="p">,</span>
+                <span class="p">[</span><span class="s2">&quot;Final_sampled_PCAview_by_pool&quot;</span><span class="p">],</span>
+                <span class="n">layer</span><span class="o">=</span><span class="s2">&quot;core&quot;</span><span class="p">,</span>
+                <span class="n">condition</span><span class="o">=</span><span class="s2">&quot;use_joint=false&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
         <span class="k">return</span> <span class="n">df_final</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_run_export_phase</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df_final</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">unique_system_names</span><span class="p">):</span>

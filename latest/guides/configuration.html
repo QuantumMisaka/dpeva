@@ -37,7 +37,7 @@
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="../_static/documentation_options.js?v=20998797"></script>
+    <script src="../_static/documentation_options.js?v=0e02e724"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -543,7 +543,8 @@ document.write(`
 <span class="w">  </span><span class="nt">&quot;output_dir&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;analysis&quot;</span><span class="p">,</span>
 <span class="w">  </span><span class="nt">&quot;type_map&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;Fe&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;C&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;O&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;H&quot;</span><span class="p">],</span>
 <span class="w">  </span><span class="nt">&quot;enable_cohesive_energy&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;allow_ref_energy_lstsq_completion&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span>
+<span class="w">  </span><span class="nt">&quot;allow_ref_energy_lstsq_completion&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;enhanced_parity_renderer&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;auto&quot;</span>
 <span class="p">}</span>
 </pre></div>
 </div>
@@ -553,6 +554,13 @@ document.write(`
 <li><p><code class="docutils literal notranslate"><span class="pre">model_test</span></code> 模式下若需要 Cohesive Energy，请优先提供 <code class="docutils literal notranslate"><span class="pre">data_path</span></code> 指向与 <code class="docutils literal notranslate"><span class="pre">result_dir</span></code> 对应的原始数据集，以避免仅靠文件名推断组分失败。</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">enable_cohesive_energy</span></code> 控制是否启用 Cohesive Energy 统计与作图。</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">allow_ref_energy_lstsq_completion</span></code> 控制当 <code class="docutils literal notranslate"><span class="pre">ref_energies</span></code> 不完整时是否允许最小二乘补全缺失元素参考能。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">enhanced_parity_renderer</span></code> 控制 enhanced parity 主图区渲染入口：</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">auto</span></code>：沿用 quantity-aware 默认策略，energy/cohesive 使用 scatter，force/virial 使用 hexbin。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">scatter</span></code>：强制 enhanced parity 主图区全部使用 scatter。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">hexbin</span></code>：强制 enhanced parity 主图区全部使用 hexbin。</p></li>
+</ul>
+</li>
 <li><p><code class="docutils literal notranslate"><span class="pre">dataset</span></code> 模式若希望输出 Cohesive Energy 图，可将 <code class="docutils literal notranslate"><span class="pre">&quot;enable_cohesive_energy&quot;:</span> <span class="pre">true</span></code> 并提供合理 <code class="docutils literal notranslate"><span class="pre">ref_energies</span></code>（或开启 <code class="docutils literal notranslate"><span class="pre">allow_ref_energy_lstsq_completion</span></code>）。</p></li>
 <li><p>新增图谱会额外输出：</p>
 <ul>
@@ -564,6 +572,7 @@ document.write(`
 <li><p>图中统计信息默认仅显示 <code class="docutils literal notranslate"><span class="pre">count/mean/std/min/max</span></code>，不再显示分位数。</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">Error</span> <span class="pre">Distribution</span></code> 与 <code class="docutils literal notranslate"><span class="pre">parity_*_enhanced.png</span></code> 默认不显示统计信息框。</p></li>
 <li><p>单变量分布图默认不显示 <code class="docutils literal notranslate"><span class="pre">All</span> <span class="pre">Data</span></code> 图例；dataset 元素占比/存在性使用多色饼图。</p></li>
+<li><p>quantity-aware 默认下，Force / Virial 的 hexbin enhanced parity 会在右侧信息栏同时展示 Error Density 与 colorbar，colorbar 表示每个 hexbin 中样本数量。</p></li>
 </ul>
 </section>
 <section id="labeling">
@@ -592,6 +601,7 @@ document.write(`
 <section id="id7">
 <h2>7. 变更记录<a class="headerlink" href="#id7" title="Link to this heading">#</a></h2>
 <ul class="simple">
+<li><p>2026-03-30：Analysis 配置新增 <code class="docutils literal notranslate"><span class="pre">enhanced_parity_renderer</span></code>，并补充 quantity-aware parity 渲染策略说明。</p></li>
 <li><p>2026-03-16：Analysis 最小配置增加 <code class="docutils literal notranslate"><span class="pre">data_path</span></code>、<code class="docutils literal notranslate"><span class="pre">enable_cohesive_energy</span></code>、<code class="docutils literal notranslate"><span class="pre">allow_ref_energy_lstsq_completion</span></code>，并补充 Cohesive Energy 配置建议。</p></li>
 <li><p>2026-03-11：配置字段权威入口改为 API Reference，并补充 Labeling 最小配置示例。</p></li>
 <li><p>2026-02-18：补齐路径解析、Submission 结构与最小配置示例。</p></li>

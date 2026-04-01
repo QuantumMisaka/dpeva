@@ -36,7 +36,7 @@
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="../../../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="../../../_static/documentation_options.js?v=20998797"></script>
+    <script src="../../../_static/documentation_options.js?v=0e02e724"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -758,10 +758,14 @@ document.write(`
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">dpeva.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">AnalysisConfig</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">dpeva.analysis.managers</span><span class="w"> </span><span class="kn">import</span> <span class="n">AnalysisIOManager</span><span class="p">,</span> <span class="n">UnifiedAnalysisManager</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dpeva.analysis.managers</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">AnalysisIOManager</span><span class="p">,</span>
+    <span class="n">UnifiedAnalysisManager</span><span class="p">,</span>
+    <span class="n">describe_analysis_plot_level</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dpeva.analysis.dataset</span><span class="w"> </span><span class="kn">import</span> <span class="n">DatasetAnalysisManager</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dpeva.constants</span><span class="w"> </span><span class="kn">import</span> <span class="n">FILENAME_COHESIVE_ENERGY_PRED_STATS_JSON</span><span class="p">,</span> <span class="n">WORKFLOW_FINISHED_TAG</span><span class="p">,</span> <span class="n">LOG_FILE_ANALYSIS</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dpeva.submission.manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">JobManager</span>
@@ -810,6 +814,7 @@ document.write(`
             <span class="n">enable_cohesive_energy</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">enable_cohesive_energy</span><span class="p">,</span>
             <span class="n">allow_ref_energy_lstsq_completion</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">allow_ref_energy_lstsq_completion</span><span class="p">,</span>
             <span class="n">slow_plot_threshold_seconds</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">slow_plot_threshold_seconds</span><span class="p">,</span>
+            <span class="n">enhanced_parity_renderer</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">enhanced_parity_renderer</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">dataset_analysis_manager</span> <span class="o">=</span> <span class="n">DatasetAnalysisManager</span><span class="p">(</span>
             <span class="n">ref_energies</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">ref_energies</span><span class="p">,</span>
@@ -853,7 +858,15 @@ document.write(`
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Run dataset-only statistics and plotting pipeline.&quot;&quot;&quot;</span>
         <span class="n">dataset_dir</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">dataset_dir</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">dataset_dir</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Running dataset analysis mode for </span><span class="si">{</span><span class="n">dataset_dir</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">dataset_analysis_manager</span><span class="o">.</span><span class="n">analyze</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">dataset_dir</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">output_dir</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Plot level &#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">plot_level</span><span class="si">}</span><span class="s2">&#39;: &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">describe_analysis_plot_level</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">plot_level</span><span class="p">,</span><span class="w"> </span><span class="n">mode</span><span class="o">=</span><span class="s1">&#39;dataset&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dataset_analysis_manager</span><span class="o">.</span><span class="n">analyze</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">dataset_dir</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">output_dir</span><span class="p">,</span>
+            <span class="n">plot_level</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">plot_level</span><span class="p">,</span>
+        <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_run_model_mode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Run model_test result analysis and export metrics/statistics.&quot;&quot;&quot;</span>
@@ -882,6 +895,10 @@ document.write(`
 
         <span class="n">stats_plot_start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Stage[statistics+plot] Start statistics calculation and plotting&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Plot level &#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">plot_level</span><span class="si">}</span><span class="s2">&#39;: &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">describe_analysis_plot_level</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">plot_level</span><span class="p">,</span><span class="w"> </span><span class="n">mode</span><span class="o">=</span><span class="s1">&#39;model_test&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
         <span class="n">_</span><span class="p">,</span> <span class="n">metrics</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">e_rel_pred</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">analysis_manager</span><span class="o">.</span><span class="n">analyze_model</span><span class="p">(</span>
             <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span>
             <span class="n">output_dir</span><span class="o">=</span><span class="n">output_dir</span><span class="p">,</span>
@@ -898,13 +915,71 @@ document.write(`
             <span class="n">stats_desc</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">e_rel_pred</span><span class="p">)</span><span class="o">.</span><span class="n">describe</span><span class="p">()</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">io_manager</span><span class="o">.</span><span class="n">save_stats_desc</span><span class="p">(</span><span class="n">stats_desc</span><span class="p">,</span> <span class="n">FILENAME_COHESIVE_ENERGY_PRED_STATS_JSON</span><span class="p">)</span>
 
+    <span class="k">def</span><span class="w"> </span><span class="nf">_has_valid_composition_info</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">atom_counts_list</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]],</span>
+        <span class="n">atom_num_list</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">atom_counts_list</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">atom_num_list</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">atom_counts_list</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">atom_num_list</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">return</span> <span class="nb">all</span><span class="p">(</span><span class="n">atom_num</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">atom_num</span> <span class="ow">in</span> <span class="n">atom_num_list</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_composition_lists_match</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">left_counts</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]],</span>
+        <span class="n">left_nums</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+        <span class="n">right_counts</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]],</span>
+        <span class="n">right_nums</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">left_counts</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">right_counts</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">left_nums</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">right_nums</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="n">left_nums</span> <span class="o">!=</span> <span class="n">right_nums</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">return</span> <span class="nb">all</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">left</span><span class="p">)</span> <span class="o">==</span> <span class="nb">dict</span><span class="p">(</span><span class="n">right</span><span class="p">)</span> <span class="k">for</span> <span class="n">left</span><span class="p">,</span> <span class="n">right</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">left_counts</span><span class="p">,</span> <span class="n">right_counts</span><span class="p">))</span>
+
     <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_composition_info</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parser</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Resolve composition source from data_path first, then legacy parser fallback.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Resolve composition info with parser order priority for model_test outputs.&quot;&quot;&quot;</span>
+        <span class="n">parser_counts</span><span class="p">,</span> <span class="n">parser_nums</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">get_composition_list</span><span class="p">()</span>
+        <span class="n">parser_valid</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_has_valid_composition_info</span><span class="p">(</span><span class="n">parser_counts</span><span class="p">,</span> <span class="n">parser_nums</span><span class="p">)</span>
+
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">data_path</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Stage[composition] Source data_path: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">data_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">io_manager</span><span class="o">.</span><span class="n">load_composition_info</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">data_path</span><span class="p">))</span>
+            <span class="n">data_counts</span><span class="p">,</span> <span class="n">data_nums</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">io_manager</span><span class="o">.</span><span class="n">load_composition_info</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">data_path</span><span class="p">))</span>
+            <span class="n">data_valid</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_has_valid_composition_info</span><span class="p">(</span><span class="n">data_counts</span><span class="p">,</span> <span class="n">data_nums</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">parser_valid</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">data_valid</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_composition_lists_match</span><span class="p">(</span><span class="n">parser_counts</span><span class="p">,</span> <span class="n">parser_nums</span><span class="p">,</span> <span class="n">data_counts</span><span class="p">,</span> <span class="n">data_nums</span><span class="p">):</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                            <span class="s2">&quot;Stage[composition] data_path composition validated against parser order.&quot;</span>
+                        <span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                            <span class="s2">&quot;Stage[composition] data_path composition order does not match parser output order. &quot;</span>
+                            <span class="s2">&quot;Using parser-aligned composition for cohesive energy.&quot;</span>
+                        <span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                        <span class="s2">&quot;Stage[composition] data_path composition is unavailable or invalid. &quot;</span>
+                        <span class="s2">&quot;Using parser-aligned composition for cohesive energy.&quot;</span>
+                    <span class="p">)</span>
+                <span class="k">return</span> <span class="n">parser_counts</span><span class="p">,</span> <span class="n">parser_nums</span>
+
+            <span class="k">if</span> <span class="n">data_valid</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                    <span class="s2">&quot;Stage[composition] Parser composition is unavailable; falling back to data_path composition.&quot;</span>
+                <span class="p">)</span>
+                <span class="k">return</span> <span class="n">data_counts</span><span class="p">,</span> <span class="n">data_nums</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="s2">&quot;Stage[composition] No valid composition info found from parser or data_path.&quot;</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="n">parser_counts</span><span class="p">,</span> <span class="n">parser_nums</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Stage[composition] Source parser fallback: filenames (legacy mode)&quot;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">parser</span><span class="o">.</span><span class="n">get_composition_list</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">parser_counts</span><span class="p">,</span> <span class="n">parser_nums</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_submit_to_slurm</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">config_path</span><span class="p">:</span>

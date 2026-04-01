@@ -37,7 +37,7 @@
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="../../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="../../_static/documentation_options.js?v=20998797"></script>
+    <script src="../../_static/documentation_options.js?v=0e02e724"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -369,7 +369,12 @@ document.write(`
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.direct_k"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.direct_k</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.direct_n_clusters"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.direct_n_clusters</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.direct_thr_init"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.direct_thr_init</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.enable_diagnostic_plots"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.enable_diagnostic_plots</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.fig_base_font_size"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.fig_base_font_size</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.fig_dpi"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.fig_dpi</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.fig_legend_max_cols"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.fig_legend_max_cols</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.fig_legend_max_rows"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.fig_legend_max_rows</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.fig_tick_target_count"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.fig_tick_target_count</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.num_models"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.num_models</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.project"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.project</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.results_prefix"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.results_prefix</span></code></a></li>
@@ -445,9 +450,39 @@ document.write(`
 <dd></dd></dl>
 
 <dl class="py attribute pydantic_field">
+<dt class="sig sig-object py" id="dpeva.config.CollectionConfig.enable_diagnostic_plots">
+<em class="property"><span class="pre">field</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">enable_diagnostic_plots</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#dpeva.config.CollectionConfig.enable_diagnostic_plots" title="Link to this definition">#</a></dt>
+<dd><p>Enable optional Diagnostic-layer plots (default: False, Core plots only).</p>
+</dd></dl>
+
+<dl class="py attribute pydantic_field">
+<dt class="sig sig-object py" id="dpeva.config.CollectionConfig.fig_base_font_size">
+<em class="property"><span class="pre">field</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">fig_base_font_size</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">12</span></em><a class="headerlink" href="#dpeva.config.CollectionConfig.fig_base_font_size" title="Link to this definition">#</a></dt>
+<dd><p>Base font size for Collection figures; title, label, tick, and legend sizes are derived from this value.</p>
+</dd></dl>
+
+<dl class="py attribute pydantic_field">
 <dt class="sig sig-object py" id="dpeva.config.CollectionConfig.fig_dpi">
 <em class="property"><span class="pre">field</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">fig_dpi</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">300</span></em><a class="headerlink" href="#dpeva.config.CollectionConfig.fig_dpi" title="Link to this definition">#</a></dt>
 <dd><p>DPI for visualization figures.</p>
+</dd></dl>
+
+<dl class="py attribute pydantic_field">
+<dt class="sig sig-object py" id="dpeva.config.CollectionConfig.fig_legend_max_cols">
+<em class="property"><span class="pre">field</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">fig_legend_max_cols</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">4</span></em><a class="headerlink" href="#dpeva.config.CollectionConfig.fig_legend_max_cols" title="Link to this definition">#</a></dt>
+<dd><p>Maximum legend columns used by Collection multi-pool summary figures.</p>
+</dd></dl>
+
+<dl class="py attribute pydantic_field">
+<dt class="sig sig-object py" id="dpeva.config.CollectionConfig.fig_legend_max_rows">
+<em class="property"><span class="pre">field</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">fig_legend_max_rows</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">8</span></em><a class="headerlink" href="#dpeva.config.CollectionConfig.fig_legend_max_rows" title="Link to this definition">#</a></dt>
+<dd><p>Maximum preferred legend rows before Collection legends flow into multiple columns.</p>
+</dd></dl>
+
+<dl class="py attribute pydantic_field">
+<dt class="sig sig-object py" id="dpeva.config.CollectionConfig.fig_tick_target_count">
+<em class="property"><span class="pre">field</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">fig_tick_target_count</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">6</span></em><a class="headerlink" href="#dpeva.config.CollectionConfig.fig_tick_target_count" title="Link to this definition">#</a></dt>
+<dd><p>Approximate number of major ticks used when linking x/y tick spacing in Collection 2D plots.</p>
 </dd></dl>
 
 <dl class="py attribute pydantic_field">
@@ -656,7 +691,12 @@ document.write(`
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.direct_k"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.direct_k</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.direct_n_clusters"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.direct_n_clusters</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.direct_thr_init"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.direct_thr_init</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.enable_diagnostic_plots"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.enable_diagnostic_plots</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.fig_base_font_size"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.fig_base_font_size</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.fig_dpi"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.fig_dpi</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.fig_legend_max_cols"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.fig_legend_max_cols</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.fig_legend_max_rows"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.fig_legend_max_rows</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.fig_tick_target_count"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.fig_tick_target_count</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.num_models"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.num_models</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.project"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.project</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.results_prefix"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.results_prefix</span></code></a></li>

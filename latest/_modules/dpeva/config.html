@@ -36,7 +36,7 @@
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="../../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="../../_static/documentation_options.js?v=20998797"></script>
+    <script src="../../_static/documentation_options.js?v=0e02e724"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -962,7 +962,20 @@ document.write(`
     <span class="p">)</span>
     <span class="n">plot_level</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;basic&quot;</span><span class="p">,</span> <span class="s2">&quot;full&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="s2">&quot;full&quot;</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Plot output level: &#39;basic&#39; for core plots, &#39;full&#39; for enhanced plot family.&quot;</span>
+        <span class="n">description</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;Plot output level. &#39;basic&#39; keeps the daily core scope &quot;</span>
+            <span class="s2">&quot;(parity, single distributions, error distributions, dataset element statistics), &quot;</span>
+            <span class="s2">&quot;while &#39;full&#39; adds publication/supplement plots &quot;</span>
+            <span class="s2">&quot;(enhanced parity, overlay, with_error, and dataset cohesive-energy distribution when available).&quot;</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">enhanced_parity_renderer</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;auto&quot;</span><span class="p">,</span> <span class="s2">&quot;scatter&quot;</span><span class="p">,</span> <span class="s2">&quot;hexbin&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="s2">&quot;auto&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;Renderer policy for enhanced parity main panels. &quot;</span>
+            <span class="s2">&quot;&#39;auto&#39; keeps quantity-aware defaults, while &#39;scatter&#39; and &#39;hexbin&#39; &quot;</span>
+            <span class="s2">&quot;force the same main renderer across enhanced parity plots.&quot;</span>
+        <span class="p">),</span>
     <span class="p">)</span>
     <span class="n">slow_plot_threshold_seconds</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="mf">60.0</span><span class="p">,</span>
@@ -1154,6 +1167,34 @@ document.write(`
     <span class="n">testing_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">DEFAULT_TESTING_DIR</span>
     <span class="n">results_prefix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">DEFAULT_RESULTS_PREFIX</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Output file prefix.&quot;</span><span class="p">)</span>
     <span class="n">fig_dpi</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">FIG_DPI</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;DPI for visualization figures.&quot;</span><span class="p">)</span>
+    <span class="n">fig_base_font_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="mi">12</span><span class="p">,</span>
+        <span class="n">ge</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+        <span class="n">le</span><span class="o">=</span><span class="mi">24</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Base font size for Collection figures; title, label, tick, and legend sizes are derived from this value.&quot;</span>
+    <span class="p">)</span>
+    <span class="n">fig_tick_target_count</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="mi">6</span><span class="p">,</span>
+        <span class="n">ge</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+        <span class="n">le</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Approximate number of major ticks used when linking x/y tick spacing in Collection 2D plots.&quot;</span>
+    <span class="p">)</span>
+    <span class="n">fig_legend_max_rows</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="mi">8</span><span class="p">,</span>
+        <span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="n">le</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Maximum preferred legend rows before Collection legends flow into multiple columns.&quot;</span>
+    <span class="p">)</span>
+    <span class="n">fig_legend_max_cols</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="mi">4</span><span class="p">,</span>
+        <span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="n">le</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Maximum legend columns used by Collection multi-pool summary figures.&quot;</span>
+    <span class="p">)</span>
+    <span class="n">enable_diagnostic_plots</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="kc">False</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Enable optional Diagnostic-layer plots (default: False, Core plots only).&quot;</span>
+    <span class="p">)</span>
     
     <span class="c1"># UQ Parameters</span>
     <span class="n">num_models</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">DEFAULT_NUM_MODELS</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Number of models for UQ calculation.&quot;</span><span class="p">)</span>

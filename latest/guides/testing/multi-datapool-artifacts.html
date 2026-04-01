@@ -37,7 +37,7 @@
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="../../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="../../_static/documentation_options.js?v=20998797"></script>
+    <script src="../../_static/documentation_options.js?v=0e02e724"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -392,7 +392,7 @@ document.write(`
 <ul class="simple">
 <li><p>Status: active</p></li>
 <li><p>Audience: Developers</p></li>
-<li><p>Last-Updated: 2026-02-18</p></li>
+<li><p>Last-Updated: 2026-03-26</p></li>
 </ul>
 <p>目标目录：<code class="docutils literal notranslate"><span class="pre">/test/test-for-multiple-datapool</span></code> (File missing)</p>
 <p>本文档用于把生产级运行产物拆解为“输入资产 / 输出资产”，并将其映射到 DP-EVA 各 Workflow 的配置字段（对照 <a class="reference external" href="https://github.com/QuantumMisaka/dpeva/tree/main/examples/recipes">examples/recipes</a>）。</p>
@@ -566,6 +566,7 @@ document.write(`
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">&lt;root_savedir&gt;/dataframe/*.csv</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">&lt;root_savedir&gt;/view/*.png</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;root_savedir&gt;/view/Final_sampled_PCAview_by_pool.png</span></code>（仅 <code class="docutils literal notranslate"><span class="pre">training_desc_dir</span></code> 启用的 joint 模式生成；灰色全集背景 + sampled 按 pool 区分 + 图外多列图注）</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">&lt;root_savedir&gt;/dpdata/sampled_dpdata/&lt;Pool&gt;/&lt;System&gt;/...</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">&lt;root_savedir&gt;/dpdata/other_dpdata/&lt;Pool&gt;/&lt;System&gt;/...</span></code></p></li>
 </ul>
@@ -621,6 +622,7 @@ document.write(`
 <section id="id5">
 <h2>5. 变更记录<a class="headerlink" href="#id5" title="Link to this heading">#</a></h2>
 <ul class="simple">
+<li><p>2026-03-26：补充 joint 多数据池新增总结图 <code class="docutils literal notranslate"><span class="pre">Final_sampled_PCAview_by_pool.png</span></code> 的触发条件与输出约定。</p></li>
 <li><p>2026-02-18：补齐生产目录 I/O 拆解与 Workflow 配置映射，并作为集成测试专题附录。</p></li>
 </ul>
 </section>

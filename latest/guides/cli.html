@@ -37,7 +37,7 @@
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="../_static/documentation_options.js?v=20998797"></script>
+    <script src="../_static/documentation_options.js?v=0e02e724"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -586,9 +586,11 @@ dpeva<span class="w"> </span>train<span class="w"> </span>--help
 <li><p><code class="docutils literal notranslate"><span class="pre">enable_cohesive_energy</span></code>：开启/关闭 Cohesive Energy 统计与作图</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">allow_ref_energy_lstsq_completion</span></code>：当 <code class="docutils literal notranslate"><span class="pre">ref_energies</span></code> 不完整时，是否允许最小二乘补全缺失元素参考能</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">results_prefix</span></code>：必须与推理阶段 <code class="docutils literal notranslate"><span class="pre">InferenceConfig.results_prefix</span></code> 一致</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">plot_level</span></code>：<code class="docutils literal notranslate"><span class="pre">basic</span></code> 生成日常分析核心图（parity、单变量分布、error distribution、dataset 元素统计）；<code class="docutils literal notranslate"><span class="pre">full</span></code> 在此基础上增加论文/补充图（enhanced parity、overlay、with_error，以及条件满足时的 dataset cohesive energy 分布）</p></li>
 <li><p>图谱文件命名：<code class="docutils literal notranslate"><span class="pre">dist_&lt;quantity&gt;_overlay.png</span></code>、<code class="docutils literal notranslate"><span class="pre">dist_&lt;quantity&gt;_with_error.png</span></code>、<code class="docutils literal notranslate"><span class="pre">parity_&lt;quantity&gt;_enhanced.png</span></code></p></li>
-<li><p>统计可视化约定：分布图统计项仅 <code class="docutils literal notranslate"><span class="pre">count/mean/std/min/max</span></code>；Error Distribution 与增强 Parity 不展示统计框。</p></li>
+<li><p>统计可视化约定：Analysis 分布图统一采用轻量 histogram + KDE 模板；统计项仅 <code class="docutils literal notranslate"><span class="pre">count/mean/std/min/max</span></code>；Error Distribution 与增强 Parity 不展示统计框。</p></li>
 <li><p>标签约定：非 Pred/True 对比图默认不展示 <code class="docutils literal notranslate"><span class="pre">All</span> <span class="pre">Data</span></code> 图例；dataset 元素图使用多色饼图。</p></li>
+<li><p>推荐取舍：<code class="docutils literal notranslate"><span class="pre">parity_*_enhanced</span></code> 与关键 <code class="docutils literal notranslate"><span class="pre">dist_*_with_error</span></code> 优先作为论文主文候选；<code class="docutils literal notranslate"><span class="pre">dist_*_overlay</span></code> 与 <code class="docutils literal notranslate"><span class="pre">dist_dataset_cohesive_energy</span></code> 更适合作为补充图；基础 <code class="docutils literal notranslate"><span class="pre">parity_*</span></code>、单变量 <code class="docutils literal notranslate"><span class="pre">dist_*</span></code>、<code class="docutils literal notranslate"><span class="pre">error_dist_*</span></code> 与 dataset 元素统计图保留为日常诊断图。</p></li>
 </ul>
 </section>
 </section>
