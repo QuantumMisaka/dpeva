@@ -38,9 +38,7 @@ owner: Docs Owner
 
 ## 4. 活跃报告 (Active Reports)
 
-- [2026-03-28-Code-Review-Collection-PCA-Font-Scale.md](./2026-03-28-Code-Review-Collection-PCA-Font-Scale.md)：解释 `Final_sampled_PCAview` 与 `DIRECT_PCA_feature_coverage` 的字号观感差异，结论为版式密度问题而非字体参数更小。
-- [2026-03-28-Developer-Report-Collection-Publication-Figure-Standardization.md](./2026-03-28-Developer-Report-Collection-Publication-Figure-Standardization.md)：基于 PCA 字号差异分析与 Collection 全量出图审计，提出主文图、机制图、补充图、诊断图四级分类，以及图片规范化与学术出版化方案。
-- 历史批次报告已归档至：`docs/archive/v0.7.1/reports/`。
+- (暂无活跃报告，历史批次报告已归档至 `docs/archive/v0.7.1/reports/`)
 
 ## 5. 归档与索引要求
 

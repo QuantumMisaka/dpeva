@@ -2,7 +2,7 @@
 title: Archived Document
 status: archived
 audience: Historians
-last-updated: 2026-03-25
+last-updated: 2026-04-01
 ---
 
 # Archive（归档文档）
@@ -17,4 +17,4 @@ last-updated: 2026-03-25
 - `docs/archive/reports/` 保存历史的代码审查报告。
 - `docs/archive/specs/` 仅保存历史规格，当前执行规格统一在 `docs/plans/` 维护。
 - 最新版本归档：`docs/archive/v0.7.1/`。
-- 历史版本：`docs/archive/v0.6.9/`、`docs/archive/v0.6.8/`。
+- 历史版本：`docs/archive/v0.7.0/`、`docs/archive/v0.6.9/`、`docs/archive/v0.6.8/`。

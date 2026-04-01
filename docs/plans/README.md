@@ -66,4 +66,3 @@ owner: Docs Owner
 - [文档治理计划 (Governance Plan)](../governance/README.md)
 - [Enhanced Parity Plot 可读性改进计划](./2026-03-18-enhanced-parity-plot-usability-plan.md)
 - [Enhanced Parity Plot 布局与标注优化计划](./2026-03-18-enhanced-parity-plot-layout-polish-plan.md)
-- [Enhanced Parity Plot 设计规划](./2026-03-30-enhanced-parity-plot-design-plan.md)

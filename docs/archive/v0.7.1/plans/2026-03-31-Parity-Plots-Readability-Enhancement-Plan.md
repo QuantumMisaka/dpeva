@@ -18,7 +18,7 @@ audience: developers
 
 ### A. 优化视觉配置文件 (`src/dpeva/utils/visual_style.py`)
 1. **全局字号增大**：将 `get_analysis_parity_profile` 的函数签名默认参数由 `font_size: int | float = 12` 修改为 `16`（原定为14，根据用户反馈进一步增大）。这会使所有基础字号大幅提升。
-2. **同步增大标题字号**：为了让主标题在大字号下更具视觉层级，将 `enhanced_fonts` 中的 `title_scale` 由 `1.14` 略微提升至 `1.20`，配合基础字号 `16`，使大标题更加醒目、重点突出。
+2. **同步增大标题字号**：为了让主标题在大字号下更具视觉层级，将 `enhanced_fonts` 中的 `title_scale`由 `1.14` 略微提升至 `1.20`，配合基础字号 `16`，使大标题更加醒目、重点突出。
 3. **防重叠 (Tick Pad)**：将 `enhanced` 配置中的 `error_tick_pad` 从 `-3.0` 修改为 `1.0`。正向的 pad 值会将顶部坐标轴的刻度标签向上推，从而完全避开刻度线与图表内容。
 4. **增大散点与六边形 (Marker Size & Grid Size)**：
    - 将基础 `scatter_size` 由 15.0 增至 20.0，`main_scatter_size` 由 15.5 增至 20.0。
