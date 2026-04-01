@@ -457,9 +457,22 @@ class InferenceVisualizer:
         right_x1 = ax_cbar.get_position().x1 if ax_cbar is not None else err_box.x1
         right_x0 = min(main_box.x1 + gap, right_x1 - 0.05)
         new_width = right_x1 - right_x0
-        ax_err.set_position([right_x0, err_box.y0, new_width, err_box.height])
+        
         if ax_cbar is not None:
-            cbar_box = ax_cbar.get_position()
+            height_ratios = profile.get("hexbin_sidebar_height_ratios", [0.35, 0.65])
+            hspace = profile.get("hexbin_sidebar_hspace", 0.25)
+            r0, r1 = height_ratios[0], height_ratios[1]
+            total_r = r0 + r1
+            base_h = main_box.height / (total_r + hspace * total_r / 2)
+            
+            h1 = r0 * base_h
+            h2 = r1 * base_h
+            
+            err_y0 = main_box.y1 - h1
+            cbar_y0 = main_box.y0
+            
+            ax_err.set_position([right_x0, err_y0, new_width, h1])
+            
             cbar_width = new_width * float(profile.get("hexbin_colorbar_width_ratio", 1.0))
             cbar_width = min(max(cbar_width, 0.018), new_width)
             align = str(profile.get("hexbin_colorbar_align", "center")).lower()
@@ -469,7 +482,9 @@ class InferenceVisualizer:
                 cbar_x0 = right_x0
             else:
                 cbar_x0 = right_x0 + (new_width - cbar_width) / 2
-            ax_cbar.set_position([cbar_x0, cbar_box.y0, cbar_width, cbar_box.height])
+            ax_cbar.set_position([cbar_x0, cbar_y0, cbar_width, h2])
+        else:
+            ax_err.set_position([right_x0, main_box.y1 - err_box.height, new_width, err_box.height])
 
     def plot_parity(
         self,
@@ -558,7 +573,7 @@ class InferenceVisualizer:
             f"MAE: {mae:.4f}\n"
             f"RMSE: {rmse:.4f}"
         )
-        self._add_stats_box(ax, stats_text)
+        self._add_stats_box(ax, stats_text, fontsize=fonts["label"])
         
         fig.tight_layout()
         filename = f"parity_{label.lower().replace(' ', '_')}.png"
@@ -657,7 +672,7 @@ class InferenceVisualizer:
             f"MAE: {mae:.4f}\n"
             f"RMSE: {rmse:.4f}"
         )
-        self._add_stats_box(ax_main, stats_text)
+        self._add_stats_box(ax_main, stats_text, fontsize=fonts["label"])
         
         if ax_top is not None:
             self._plot_histogram_with_kde(
