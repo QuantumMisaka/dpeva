@@ -2,15 +2,15 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-03-28
+last-updated: 2026-04-01
 owner: Docs Owner
 ---
 
-# 技术报告 (Technical Reports)
+# 技术报告（Technical Reports）
 
 - Status: active
 - Audience: All
-- Last-Updated: 2026-03-28
+- Last-Updated: 2026-04-01
 
 本文档目录用于存放“项目级、可共享、可追溯”的技术结论，不承载执行过程草稿。
 
@@ -38,14 +38,14 @@ owner: Docs Owner
 
 ## 4. 活跃报告 (Active Reports)
 
-- (暂无活跃报告，历史批次报告已归档至 `docs/archive/v0.7.1/reports/`)
+- [2026-04-01-Code-Review-Repository-Audit.md](2026-04-01-Code-Review-Repository-Audit.md)：基于本轮真实仓库审查结果重写，覆盖八维度评估、严重级别、优先级、行动项、证据与验证记录。
 
 ## 5. 归档与索引要求
 
 - 报告归档时，必须同步更新：
-  - 当前目录 `toctree`
+  - 当前目录 `README.md` 活跃报告列表
   - 目标归档版本 `docs/archive/vX.Y.Z/README.md`
-  - 若涉及导航入口，更新 `docs/source/index.rst` 或对应子索引
+  - 若导航策略发生变化，更新 `docs/source/index.rst` 或对应子索引说明
 - 提交前必须通过：
   - `python3 scripts/doc_check.py`
   - `python3 scripts/check_docs_freshness.py --days 90`
