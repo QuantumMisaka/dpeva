@@ -32,7 +32,7 @@ owner: Docs Owner
 | 1. 源码与测试 | `src/`、`tests/` | 架构边界总体清晰，但存在静默吞错与测试便携性问题 | [cli.py](../../src/dpeva/cli.py)、[collect.py](../../src/dpeva/workflows/collect.py)、[analysis.py](../../src/dpeva/workflows/analysis.py)、[test_labeling_rotation_bug.py](../../tests/integration/test_labeling_rotation_bug.py) |
 | 2. 文档与项目元信息 | `docs/`、`README.md`、`AGENTS.md`、`pyproject.toml` | 文档规范已定义，但入口文档与治理策略执行强度失配 | [README.md](../../README.md)、[quality.md](../policy/quality.md)、[AGENTS.md](../../AGENTS.md)、[pyproject.toml](../../pyproject.toml) |
 | 3. 脚本与 `.trae/skills` | `scripts/`、`.trae/skills/` | 治理脚本存在活跃目录豁免，发布辅助说明与当前版本纪元不一致 | [doc_check.py](../../scripts/doc_check.py)、[check_docs_freshness.py](../../scripts/check_docs_freshness.py)、[release_helper.py](../../scripts/release_helper.py)、[release-helper/SKILL.md](../../.trae/skills/release-helper/SKILL.md) |
-| 4. CI/CD | `.github/workflows/` | 只有文档相关工作流，没有源码质量主线；文档工作流还有重复与职责分裂 | [docs-check.yml](../../.github/workflows/docs-check.yml)、[doc-lint.yml](../../.github/workflows/doc-lint.yml)、[docs.yml](../../.github/workflows/docs.yml)、[docs-deploy.yml](../../.github/workflows/docs-deploy.yml) |
+| 4. CI/CD | `.github/workflows/` | 只有文档相关工作流，没有源码质量主线；文档工作流还有重复与职责分裂 | [docs-check.yml](../../.github/workflows/docs-check.yml)、[doc-lint.yml](../../.github/workflows/doc-lint.yml)、[docs-deploy.yml](../../.github/workflows/docs-deploy.yml) |
 
 ## 3. 八维度评估总览
 
@@ -41,11 +41,11 @@ owner: Docs Owner
 | 1. 代码风格与规范一致性 | 仓库已声明 `ruff`、`mypy`、`pytest` 作为开发基线，但声明尚未进入 CI 实际门禁 | High | P1 | [pyproject.toml](../../pyproject.toml)、[AGENTS.md](../../AGENTS.md)、[docs-check.yml](../../.github/workflows/docs-check.yml) |
 | 2. 架构设计与模块边界 | CLI → Workflow → Manager 的主链路边界清晰；局部初始化阶段仍有静默异常 | Medium | P2 | [cli.py](../../src/dpeva/cli.py)、[collect.py](../../src/dpeva/workflows/collect.py)、[analysis.py](../../src/dpeva/workflows/analysis.py) |
 | 3. 安全与外部命令执行 | 路径安全工具与安全测试存在，当前未见新的命令注入级问题 | Low | P3 | [security.py](../../src/dpeva/utils/security.py)、[command.py](../../src/dpeva/utils/command.py)、[test_path_traversal.py](../../tests/security/test_path_traversal.py) |
-| 4. 性能与执行效率 | 核心工作流未见新的明显性能阻断；CI 与文档构建存在重复安装/重复构建开销 | Medium | P2 | [docs.yml](../../.github/workflows/docs.yml)、[docs-check.yml](../../.github/workflows/docs-check.yml)、[docs-deploy.yml](../../.github/workflows/docs-deploy.yml) |
+| 4. 性能与执行效率 | 核心工作流未见新的明显性能阻断；CI 与文档构建存在重复安装/重复构建开销 | Medium | P2 | [docs-check.yml](../../.github/workflows/docs-check.yml)、[docs-deploy.yml](../../.github/workflows/docs-deploy.yml) |
 | 5. 测试完整性与覆盖率 | 测试目录完整，但真实门禁、便携性与覆盖率承诺之间存在明显缺口 | High | P1 | [tests/unit](../../tests/unit)、[tests/integration](../../tests/integration)、[UNIT_TESTS.md](../../tests/unit/UNIT_TESTS.md) |
 | 6. 文档准确性与完整性 | 规范文档存在，但 README 入口、治理脚本豁免与部分版本叙述已发生漂移 | High | P1 | [README.md](../../README.md)、[quality.md](../policy/quality.md)、[developer-guide.md](../guides/developer-guide.md) |
 | 7. 脚本可维护性与技能一致性 | 脚本与技能文档之间存在事实漂移，部分辅助脚本未接入任何流水线 | Medium | P2 | [gate.sh](../../scripts/gate.sh)、[verify_docs.sh](../../scripts/verify_docs.sh)、[release_helper.py](../../scripts/release_helper.py)、[release-helper/SKILL.md](../../.trae/skills/release-helper/SKILL.md) |
-| 8. CI/CD 配置正确性与效率 | 当前 Actions 只覆盖 docs 治理，且对根 README、`.trae/skills`、一般源码改动缺少对应质量触发器 | High | P1 | [doc-lint.yml](../../.github/workflows/doc-lint.yml)、[docs-check.yml](../../.github/workflows/docs-check.yml)、[docs.yml](../../.github/workflows/docs.yml) |
+| 8. CI/CD 配置正确性与效率 | 当前 Actions 只覆盖 docs 治理，且对根 README、`.trae/skills`、一般源码改动缺少对应质量触发器 | High | P1 | [doc-lint.yml](../../.github/workflows/doc-lint.yml)、[docs-check.yml](../../.github/workflows/docs-check.yml)、[docs-deploy.yml](../../.github/workflows/docs-deploy.yml) |
 
 ## 4. 分级问题清单
 
@@ -58,7 +58,7 @@ owner: Docs Owner
 | F5 | 发布辅助知识漂移：`.trae/skills/release-helper` 仍指向 `Current Era (v0.4.x)`，与当前开发指南 `v0.7.x` 不一致 | Medium | P2 | `.trae/skills`、发布流程、维护培训 | [release-helper/SKILL.md](../../.trae/skills/release-helper/SKILL.md) 仍要求定位 `Current Era (v0.4.x)`；[developer-guide.md](../guides/developer-guide.md) 当前版本历史标题已为 `Current Era (v0.7.x)` |
 | F6 | 发布与质量脚本未形成闭环：`gate.sh`、`verify_docs.sh`、`audit.py` 存在，但未被任何现有工作流调用 | Medium | P2 | `scripts/`、团队执行路径、CI 一致性 | [gate.sh](../../scripts/gate.sh)、[verify_docs.sh](../../scripts/verify_docs.sh)、[audit.py](../../scripts/audit.py) 在 `.github/workflows/` 中均无引用 |
 | F7 | `collect` / `analysis` 在回填 `config_path` 时使用静默 `except Exception: pass` | Medium | P2 | `src/dpeva/workflows`、Slurm 自提交、故障定位 | [collect.py](../../src/dpeva/workflows/collect.py)、[analysis.py](../../src/dpeva/workflows/analysis.py) 的初始化阶段直接吞掉异常 |
-| F8 | 文档工作流职责重叠：`docs.yml` 构建并上传 artifact，`docs-deploy.yml` 再次安装依赖并构建发布，维护面分裂 | Medium | P2 | `.github/workflows`、CI 耗时、发布稳定性 | [docs.yml](../../.github/workflows/docs.yml) 与 [docs-deploy.yml](../../.github/workflows/docs-deploy.yml) 都执行 docs 构建，但发布链路不同 |
+| F8 | 文档工作流职责重叠：文档检查与部署链路同时承担构建职责，维护面分裂 | Medium | P2 | `.github/workflows`、CI 耗时、发布稳定性 | [docs-check.yml](../../.github/workflows/docs-check.yml) 与 [docs-deploy.yml](../../.github/workflows/docs-deploy.yml) 都执行 docs 构建，但目标职责不同 |
 
 ## 5. 优先级与行动项
 

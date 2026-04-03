@@ -75,15 +75,15 @@ def get_collection_pca_scatter_profile(
     base_fonts = get_publication_font_hierarchy(font_size)
     return {
         "figure_size": (11, 9),
-        "axis_margins": (0.02, 0.02),
+        "axis_margins": (0.08, 0.08),
         "tick_target_count": 10,
         "fonts": scale_font_hierarchy(
             base_fonts,
-            title_scale=1.6,
-            label_scale=1.5,
-            tick_scale=1.4,
-            legend_scale=1.3,
-            legend_title_scale=1.3,
+            title_scale=1.73,
+            label_scale=1.65,
+            tick_scale=1.57,
+            legend_scale=1.60,
+            legend_title_scale=1.60,
         ),
     }
 

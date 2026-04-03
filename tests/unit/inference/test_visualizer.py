@@ -202,7 +202,7 @@ def test_force_enhanced_profile_uses_panel_policy_and_layout_override(tmp_path):
     assert profile["main_density_mode"] == "hexbin"
     assert profile["colorbar_enabled"] is True
     assert profile["main_density_cmap"] == "viridis"
-    assert profile["main_density_gridsize"] == 60
+    assert profile["main_density_gridsize"] == 50
     assert profile["main_density_mincnt"] == 1
     assert profile["main_overlay_scatter_enabled"] is False
     assert profile["hexbin_width_ratios"][-1] < 0.3
@@ -213,7 +213,7 @@ def test_virial_enhanced_profile_matches_force_hexbin_policy(tmp_path):
     profile = viz._get_parity_profile("Virial", enhanced=True)
     assert profile["main_density_mode"] == "hexbin"
     assert profile["main_density_cmap"] == "viridis"
-    assert profile["main_density_gridsize"] == 60
+    assert profile["main_density_gridsize"] == 50
     assert profile["main_density_mincnt"] == 1
     assert profile["main_overlay_scatter_enabled"] is False
 
@@ -277,7 +277,7 @@ def test_plot_parity_enhanced_force_uses_sidebar_axis_labels(tmp_path):
     fig = plt.gcf()
     ax_err = fig.axes[1]
     ax_cbar = fig.axes[2]
-    assert ax_err.get_xlabel() == "Error"
+    assert ax_err.get_xlabel() == "Error Density"
     assert ax_err.get_ylabel() == ""
     assert ax_cbar.get_xlabel() == ""
     assert ax_cbar.get_ylabel() == "Counts Per Hexbin"
@@ -416,10 +416,10 @@ def test_cohesive_energy_scatter_profile_uses_compact_sidebar_and_restrained_tic
     assert profile["width_ratios"][-1] == 0.27
     assert profile["density_tick_count"] == 2
     assert abs(profile["panel_title_y"] - 1.015) < 1e-6
-    assert profile["top_panel_ylabel"] == "True"
-    assert profile["right_panel_xlabel"] == "Predicted"
+    assert profile["top_panel_ylabel"] == "True Density"
+    assert profile["right_panel_xlabel"] == "Predicted Density"
     assert profile["error_panel_xlabel_template"] == ""
-    assert profile["error_panel_ylabel"] == "Error"
+    assert profile["error_panel_ylabel"] == "Error Density"
     assert profile["aligned_sidebar_gap"] <= 0.04
     assert profile["scatter_sidebar_width_scale"] >= 0.24
 
@@ -441,10 +441,10 @@ def test_plot_parity_enhanced_energy_uses_axis_label_semantics(tmp_path):
     ax_right = fig.axes[2]
     ax_err = fig.axes[3]
     assert ax_top.get_xlabel() == ""
-    assert ax_top.get_ylabel() == "True"
-    assert ax_right.get_xlabel() == "Predicted"
+    assert ax_top.get_ylabel() == "True Density"
+    assert ax_right.get_xlabel() == "Predicted Density"
     assert ax_err.get_xlabel() == ""
-    assert ax_err.get_ylabel() == "Error"
+    assert ax_err.get_ylabel() == "Error Density"
     assert to_hex(ax_err.yaxis.label.get_color()) == to_hex(plt.rcParams["axes.labelcolor"])
     assert abs(ax_right.get_position().height - ax_main.get_position().height) < 1e-6
     plt.close(fig)

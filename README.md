@@ -66,15 +66,15 @@ For detailed configuration examples, see `examples/recipes/`.
 
 > 📘 **Latest Documentation**
 >
-> The full, automatically generated documentation is available online:
-> [**Latest Docs**](https://dpeva.readthedocs.io) (Placeholder Link) | [**Config Reference**](docs/source/api/config.rst)
+> Start from the repository documentation index:
+> [**Docs Index**](docs/README.md) | [**Guides**](docs/guides/README.md) | [**Reports**](docs/reports/README.md)
 
 *   **Getting Started**: [Quickstart](docs/guides/quickstart.md) | [Installation](docs/guides/installation.md)
-*   **Reference**: [Configuration (SSOT)](docs/source/api/config.rst) | [CLI](docs/guides/cli.md)
+*   **Reference**: [Reference Index](docs/reference/README.md) | [CLI](docs/guides/cli.md)
 *   **Upstream**: [Upstream Software](docs/reference/upstream-software.md)
 *   **Developer**: [Developer Guide](docs/guides/developer-guide.md) | [Architecture](docs/architecture/README.md)
-*   **Governance**: [Policy](docs/policy/README.md) | [Roadmap](docs/plans/docs-governance-roadmap.md)
-*   **Review**: [Combined Code Review 2026-03-10](docs/archive/v0.6.4/reports/2026-03-10-combined-review.md) | [Remediation Summary 2026-03-11](docs/reports/2026-03-11-remediation-summary.md) | [Labeling Iteration Summary 2026-03-12](docs/reports/2026-03-12-labeling-decoupling-iteration-summary.md)
+*   **Governance**: [Policy](docs/policy/README.md) | [Plans](docs/plans/README.md)
+*   **Review**: [Repository Audit 2026-04-01](docs/reports/2026-04-01-Code-Review-Repository-Audit.md) | [Reports Index](docs/reports/README.md) | [Archive Index](docs/archive/README.md)
 
 ## License
 

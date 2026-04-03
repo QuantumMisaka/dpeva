@@ -25,7 +25,7 @@ DP-EVA is an active learning framework designed for efficient fine-tuning of DPA
 
 ### Lint and Format
 
-- **Check**: `ruff check .`
+- **Check**: `ruff check src tests scripts`
 - **Format**: `ruff format .`
 - **Rule**: Always run linting/formatting before committing.
 
@@ -62,4 +62,3 @@ All workflow scenarios and CLI calling for core functionality can be found via d
    - When adding/moving/deleting `.md` files, YOU MUST check and update the corresponding `.rst` files in `docs/source/`.
    - Ensure `toctree` directives do not reference non-existent files.
    - Run `make html` (if available) or verify paths manually to prevent broken builds.
-

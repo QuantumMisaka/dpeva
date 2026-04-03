@@ -104,16 +104,16 @@ pytest tests/unit --cov=dpeva --cov-report=term-missing
 
 ## 6. 覆盖率阈值与质量门禁
 
-本项目对核心模块实施严格的质量门禁：
+当前仓库已接入 `pytest tests/unit` 作为 CI 基线，但下表中的覆盖率阈值仍属于维护目标，尚未在 CI 中自动阻断：
 
 | 模块 | 最低行覆盖率 (Line Cov) | 失败策略 |
 | :--- | :--- | :--- |
-| `dpeva.uncertain` | **100%** | CI 阻断 (Block Merge) |
-| `dpeva.workflows` | **85%** | CI 警告 |
-| `dpeva.sampling` | **90%** | CI 警告 |
-| `dpeva.io` | **85%** | CI 警告 |
-| `dpeva.feature` | **90%** | CI 警告 |
-| `dpeva.submission` | **95%** | CI 警告 |
+| `dpeva.uncertain` | **100%** | 维护目标，当前未自动阻断 |
+| `dpeva.workflows` | **85%** | 维护目标，当前未自动阻断 |
+| `dpeva.sampling` | **90%** | 维护目标，当前未自动阻断 |
+| `dpeva.io` | **85%** | 维护目标，当前未自动阻断 |
+| `dpeva.feature` | **90%** | 维护目标，当前未自动阻断 |
+| `dpeva.submission` | **95%** | 维护目标，当前未自动阻断 |
 
 ## 7. 维护规范
 

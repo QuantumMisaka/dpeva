@@ -64,5 +64,4 @@ owner: Docs Owner
 ## 6. 活跃计划 (Active Plans)
 
 - [文档治理计划 (Governance Plan)](../governance/README.md)
-- [Enhanced Parity Plot 可读性改进计划](./2026-03-18-enhanced-parity-plot-usability-plan.md)
-- [Enhanced Parity Plot 布局与标注优化计划](./2026-03-18-enhanced-parity-plot-layout-polish-plan.md)
+- 当前无额外活跃计划；历史计划请查看 [v0.6.9 归档计划索引](../archive/v0.6.9/plans/README.md) 与 [v0.7.1 归档计划索引](../archive/v0.7.1/plans/README.md)

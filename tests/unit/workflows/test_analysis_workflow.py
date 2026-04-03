@@ -1,9 +1,31 @@
 import pytest
 from unittest.mock import MagicMock, patch
 import numpy as np
-from dpeva.workflows.analysis import AnalysisWorkflow
+from dpeva.workflows.analysis import AnalysisWorkflow, _set_config_path_if_missing
 
-class TestAnalysisWorkflow:
+
+class _FrozenConfig:
+    def __init__(self):
+        self._config_path = None
+
+    @property
+    def config_path(self):
+        return self._config_path
+
+    @config_path.setter
+    def config_path(self, _value):
+        raise TypeError("frozen")
+
+
+def test_set_config_path_if_missing_logs_warning_for_frozen_config():
+    config = _FrozenConfig()
+    logger = MagicMock()
+    _set_config_path_if_missing(config, "/tmp/config.json", logger)
+    logger.warning.assert_called_once()
+    assert config.config_path is None
+
+
+
     
     @pytest.fixture
     def config(self, tmp_path):

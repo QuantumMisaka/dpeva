@@ -1,233 +1,229 @@
 #!/usr/bin/env python3
-"""
-DP-EVA Documentation Governance Auditor.
-Checks for:
-1. Directory Structure: Every active directory must have a README.md.
-2. Front Matter: Every Markdown file must have valid YAML metadata.
-3. Link Integrity: Internal relative links must be valid.
-"""
+import argparse
 import os
 import re
 import sys
-import yaml
 from pathlib import Path
 
-DOCS_ROOT = Path("docs")
+import yaml
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+DOCS_ROOT = PROJECT_ROOT / "docs"
 IGNORE_DIRS = {
-    "_templates", "_static", "assets", "img", "build", "source", 
-    ".github", "__pycache__", "logo_design", "archive", "plans", "reports",
+    "_templates",
+    "_static",
+    "assets",
+    "img",
+    "build",
+    "source",
+    ".github",
+    "__pycache__",
+    "logo_design",
+    "archive",
 }
 REQUIRED_METADATA = {"status", "audience", "last-updated"}
 
+
 def parse_front_matter(content):
-    """Extract and parse YAML front matter from markdown content."""
     pattern = r"^---\s*\n(.*?)\n---\s*\n"
     match = re.search(pattern, content, re.DOTALL)
-    if match:
-        try:
-            return yaml.safe_load(match.group(1))
-        except yaml.YAMLError:
-            return None
-    return None
+    if not match:
+        return None
+    try:
+        return yaml.safe_load(match.group(1))
+    except yaml.YAMLError:
+        return None
 
-def check_structure():
-    """Check if all directories have README.md."""
-    missing_readmes = []
-    for root, dirs, files in os.walk(DOCS_ROOT):
+
+def should_skip(path):
+    return any(part in IGNORE_DIRS for part in path.parts) or path.name.startswith(".")
+
+
+def iter_doc_dirs(docs_root):
+    for root, dirs, files in os.walk(docs_root):
         path = Path(root)
-        # Skip ignored directories
-        if any(part in IGNORE_DIRS for part in path.parts) or path.name.startswith("."):
+        if should_skip(path):
+            dirs[:] = []
             continue
-            
-        # Check for README.md (case insensitive)
-        has_readme = any(f.lower() == "readme.md" for f in files)
-        if not has_readme:
+        yield path, files
+
+
+def iter_markdown_files(docs_root):
+    for path, files in iter_doc_dirs(docs_root):
+        for file in files:
+            if file.endswith(".md"):
+                yield path / file
+
+
+def read_text(file_path):
+    return file_path.read_text(encoding="utf-8")
+
+
+def resolve_link_target(file_path, link_target):
+    target_path_str = link_target.split("#")[0]
+    if not target_path_str:
+        return None
+    if target_path_str.startswith("/"):
+        return (PROJECT_ROOT / target_path_str.lstrip("/")).resolve()
+    return (file_path.parent / target_path_str).resolve()
+
+
+def check_structure(docs_root):
+    missing_readmes = []
+    for path, files in iter_doc_dirs(docs_root):
+        if not any(f.lower() == "readme.md" for f in files):
             missing_readmes.append(path)
-            
     return missing_readmes
 
-def check_front_matter():
-    """Check if markdown files have valid front matter."""
+
+def check_front_matter(docs_root):
     invalid_files = []
-    for root, dirs, files in os.walk(DOCS_ROOT):
-        path = Path(root)
-        if any(part in IGNORE_DIRS for part in path.parts) or path.name.startswith("."):
-            continue
-        if "archive" in path.parts:
-            continue
-        if "archive" in path.parts:
-            continue
-            
-        for file in files:
-            if file.endswith(".md"):
-                file_path = path / file
-                try:
-                    with open(file_path, "r", encoding="utf-8") as f:
-                        content = f.read()
-                    
-                    meta = parse_front_matter(content)
-                    if not meta:
-                        invalid_files.append((file_path, "Missing or invalid YAML front matter"))
-                        continue
-                        
-                    missing_keys = REQUIRED_METADATA - set(meta.keys())
-                    if missing_keys:
-                        invalid_files.append((file_path, f"Missing keys: {missing_keys}"))
-                        
-                except Exception as e:
-                    invalid_files.append((file_path, f"Error reading file: {e}"))
-                    
+    for file_path in iter_markdown_files(docs_root):
+        try:
+            meta = parse_front_matter(read_text(file_path))
+            if not meta:
+                invalid_files.append((file_path, "Missing or invalid YAML front matter"))
+                continue
+            missing_keys = REQUIRED_METADATA - set(meta.keys())
+            if missing_keys:
+                invalid_files.append((file_path, f"Missing keys: {missing_keys}"))
+        except Exception as exc:
+            invalid_files.append((file_path, f"Error reading file: {exc}"))
     return invalid_files
 
-def check_links():
-    """Check for broken internal relative links."""
+
+def check_links(docs_root):
     broken_links = []
     link_pattern = r"\[([^\]]+)\]\(([^)]+)\)"
-    
-    for root, dirs, files in os.walk(DOCS_ROOT):
-        path = Path(root)
-        if any(part in IGNORE_DIRS for part in path.parts) or path.name.startswith("."):
-            continue
-        if "archive" in path.parts:
-            continue
-            
-        for file in files:
-            if file.endswith(".md"):
-                file_path = path / file
-                try:
-                    with open(file_path, "r", encoding="utf-8") as f:
-                        content = f.read()
-                        
-                    for match in re.finditer(link_pattern, content):
-                        match.group(1)
-                        link_target = match.group(2)
-                        
-                        # Skip external links, anchors only, and mailto
-                        if link_target.startswith(("http", "https", "mailto:", "#")):
-                            continue
-                            
-                        # Remove anchor from target
-                        target_path_str = link_target.split("#")[0]
-                        if not target_path_str:
-                            continue
-                            
-                        # Resolve path
-                        if target_path_str.startswith("/"):
-                            target_full_path = (Path.cwd() / target_path_str.lstrip("/")).resolve()
-                        else:
-                            target_full_path = (file_path.parent / target_path_str).resolve()
-                            
-                        if not target_full_path.exists():
-                            broken_links.append((file_path, link_target, "File not found"))
-                            
-                except Exception as e:
-                    broken_links.append((file_path, "Error", str(e)))
-                    
+    for file_path in iter_markdown_files(docs_root):
+        try:
+            content = read_text(file_path)
+            for match in re.finditer(link_pattern, content):
+                link_target = match.group(2).strip()
+                if link_target.startswith(("http", "https", "mailto:", "#")):
+                    continue
+                target_full_path = resolve_link_target(file_path, link_target)
+                if target_full_path is not None and not target_full_path.exists():
+                    broken_links.append((file_path, link_target, "File not found"))
+        except Exception as exc:
+            broken_links.append((file_path, "Error", str(exc)))
     return broken_links
 
-def check_forbidden_links():
+
+def check_forbidden_links(docs_root):
     forbidden_links = []
     link_pattern = r"\[([^\]]+)\]\(([^)]+)\)"
-    for root, dirs, files in os.walk(DOCS_ROOT):
-        path = Path(root)
-        if any(part in IGNORE_DIRS for part in path.parts) or path.name.startswith("."):
-            continue
-        for file in files:
-            if file.endswith(".md"):
-                file_path = path / file
-                try:
-                    with open(file_path, "r", encoding="utf-8") as f:
-                        content = f.read()
-                    for match in re.finditer(link_pattern, content):
-                        link_target = match.group(2).strip()
-                        if link_target.startswith(("/home/", "\\home\\")):
-                            forbidden_links.append((file_path, link_target, "Filesystem absolute path is forbidden"))
-                        if re.match(r"^[A-Za-z]:[\\/]", link_target):
-                            forbidden_links.append((file_path, link_target, "Windows absolute path is forbidden"))
-                except Exception as e:
-                    forbidden_links.append((file_path, "Error", str(e)))
+    for file_path in iter_markdown_files(docs_root):
+        try:
+            content = read_text(file_path)
+            for match in re.finditer(link_pattern, content):
+                link_target = match.group(2).strip()
+                if link_target.startswith(("/home/", "\\home\\")):
+                    forbidden_links.append((file_path, link_target, "Filesystem absolute path is forbidden"))
+                if re.match(r"^[A-Za-z]:[\\/]", link_target):
+                    forbidden_links.append((file_path, link_target, "Windows absolute path is forbidden"))
+        except Exception as exc:
+            forbidden_links.append((file_path, "Error", str(exc)))
     return forbidden_links
 
-def check_owner_metadata():
+
+def matches_owner_scope(file_path, docs_root, owner_dirs):
+    if not owner_dirs:
+        return True
+    rel_parts = file_path.relative_to(docs_root).parts
+    return any(part in owner_dirs for part in rel_parts)
+
+
+def check_owner_metadata(docs_root, owner_dirs=None):
     missing_owner = []
-    for root, dirs, files in os.walk(DOCS_ROOT):
-        path = Path(root)
-        if any(part in IGNORE_DIRS for part in path.parts) or path.name.startswith("."):
+    for file_path in iter_markdown_files(docs_root):
+        try:
+            meta = parse_front_matter(read_text(file_path))
+            if not meta:
+                continue
+            if not matches_owner_scope(file_path, docs_root, owner_dirs or []):
+                continue
+            if str(meta.get("status", "")).strip().lower() == "active":
+                if "owner" not in meta and "owners" not in meta:
+                    missing_owner.append(file_path)
+        except Exception:
             continue
-        for file in files:
-            if file.endswith(".md"):
-                file_path = path / file
-                try:
-                    with open(file_path, "r", encoding="utf-8") as f:
-                        content = f.read()
-                    meta = parse_front_matter(content)
-                    if not meta:
-                        continue
-                    if str(meta.get("status", "")).strip().lower() == "active":
-                        if "owner" not in meta and "owners" not in meta:
-                            missing_owner.append(file_path)
-                except Exception:
-                    continue
     return missing_owner
 
+
+def parse_args():
+    parser = argparse.ArgumentParser(description="Run documentation governance checks.")
+    parser.add_argument("--strict-owner", action="store_true", help="Fail when active docs miss owner metadata.")
+    parser.add_argument(
+        "--strict-owner-dir",
+        action="append",
+        default=[],
+        help="Directory name to enforce owner coverage on. Can be provided multiple times.",
+    )
+    return parser.parse_args()
+
+
 def main():
+    args = parse_args()
     print("🔍 Starting Documentation Governance Audit...\n")
-    
-    # 1. Structure Check
+
     print("📂 Checking Directory Structure...")
-    missing_readmes = check_structure()
+    missing_readmes = check_structure(DOCS_ROOT)
     if missing_readmes:
         print("❌ Missing README.md in:")
-        for p in missing_readmes:
-            print(f"  - {p}")
+        for path in missing_readmes:
+            print(f"  - {path}")
     else:
         print("✅ Structure OK")
-        
-    # 2. Front Matter Check
+
     print("\n📝 Checking Front Matter...")
-    invalid_meta = check_front_matter()
+    invalid_meta = check_front_matter(DOCS_ROOT)
     if invalid_meta:
         print("❌ Invalid Metadata in:")
-        for f, reason in invalid_meta:
-            print(f"  - {f}: {reason}")
+        for file_path, reason in invalid_meta:
+            print(f"  - {file_path}: {reason}")
     else:
         print("✅ Metadata OK")
 
-    # 3. Link Check
     print("\n🔗 Checking Internal Links...")
-    broken_links = check_links()
+    broken_links = check_links(DOCS_ROOT)
     if broken_links:
         print("❌ Broken Links Found:")
-        for f, target, reason in broken_links:
-            print(f"  - {f} -> {target} ({reason})")
+        for file_path, target, reason in broken_links:
+            print(f"  - {file_path} -> {target} ({reason})")
     else:
         print("✅ Links OK")
 
     print("\n⛔ Checking Forbidden Absolute Paths...")
-    forbidden_links = check_forbidden_links()
+    forbidden_links = check_forbidden_links(DOCS_ROOT)
     if forbidden_links:
         print("❌ Forbidden Links Found:")
-        for f, target, reason in forbidden_links:
-            print(f"  - {f} -> {target} ({reason})")
+        for file_path, target, reason in forbidden_links:
+            print(f"  - {file_path} -> {target} ({reason})")
     else:
         print("✅ Forbidden Path Check OK")
 
-    print("\n👤 Checking Owner Coverage (non-blocking)...")
-    missing_owner = check_owner_metadata()
+    print(f"\n👤 Checking Owner Coverage ({'blocking' if args.strict_owner else 'non-blocking'})...")
+    missing_owner = check_owner_metadata(DOCS_ROOT, args.strict_owner_dir)
     if missing_owner:
-        print("⚠️ Missing owner/owners in active docs:")
-        for f in missing_owner:
-            print(f"  - {f}")
+        prefix = "❌" if args.strict_owner else "⚠️"
+        print(f"{prefix} Missing owner/owners in active docs:")
+        for file_path in missing_owner:
+            print(f"  - {file_path}")
     else:
         print("✅ Owner Coverage OK")
-        
-    # Summary
-    if missing_readmes or invalid_meta or broken_links or forbidden_links:
+
+    failed = bool(missing_readmes or invalid_meta or broken_links or forbidden_links)
+    if args.strict_owner and missing_owner:
+        failed = True
+
+    if failed:
         print("\n🚫 Audit FAILED. Please fix the issues above.")
         sys.exit(1)
-    else:
-        print("\n✨ Audit PASSED. Documentation system is healthy.")
-        sys.exit(0)
+
+    print("\n✨ Audit PASSED. Documentation system is healthy.")
+    sys.exit(0)
+
 
 if __name__ == "__main__":
     main()

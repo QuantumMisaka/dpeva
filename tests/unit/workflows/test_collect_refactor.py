@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from unittest.mock import patch, MagicMock
 
-from dpeva.workflows.collect import CollectionWorkflow
+from dpeva.workflows.collect import CollectionWorkflow, _set_config_path_if_missing
 
 
 def _base_config(tmp_path):
@@ -17,6 +17,27 @@ def _base_config(tmp_path):
         "uq_trust_mode": "no_filter",
         "backend": "local",
     }
+
+
+class _FrozenConfig:
+    def __init__(self):
+        self._config_path = None
+
+    @property
+    def config_path(self):
+        return self._config_path
+
+    @config_path.setter
+    def config_path(self, _value):
+        raise TypeError("frozen")
+
+
+def test_set_config_path_if_missing_logs_warning_for_frozen_config():
+    config = _FrozenConfig()
+    logger = MagicMock()
+    _set_config_path_if_missing(config, "/tmp/config.json", logger)
+    logger.warning.assert_called_once()
+    assert config.config_path is None
 
 
 def test_collect_run_orchestrates_three_phases(tmp_path):
@@ -282,7 +303,7 @@ def test_run_sampling_phase_logs_multipool_summary_generated_in_joint_mode(tmp_p
     )
     vis = MagicMock()
     df_candidate = pd.DataFrame(
-        {"dataname": ["pool/sys1-0"], "desc_stru_0": [1.0], "desc_stru_1": [2.0]}
+        {"dataname": ["pool1/sys1-0", "pool2/sys2-0"], "desc_stru_0": [1.0, 1.1], "desc_stru_1": [2.0, 2.1]}
     )
     df_desc = df_candidate.copy()
     workflow._run_sampling_phase(df_candidate, df_desc, vis)
