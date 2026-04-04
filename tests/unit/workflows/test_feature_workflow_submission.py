@@ -98,3 +98,25 @@ class TestFeatureWorkflowSubmission:
             # That instance is passed to run_local_python_recursion
             
             assert mock_recursion.call_count == 1
+
+    @patch("dpeva.feature.managers.JobManager")
+    def test_run_python_mode_slurm_uses_worker_submission(self, MockJobManager, config):
+        config["mode"] = "python"
+        workflow = FeatureWorkflow(config)
+
+        workflow.run()
+
+        workflow.execution_manager.job_manager.submit_python_script.assert_called_once()
+        workflow.execution_manager.job_manager.submit.assert_not_called()
+
+    @patch("dpeva.feature.managers.JobManager")
+    def test_cli_mode_passes_empty_sub_pools_when_single_pool(self, MockJobManager, config):
+        config["mode"] = "cli"
+        with patch("dpeva.workflows.feature.FeatureIOManager") as mock_io_cls:
+            mock_io_cls.return_value.detect_multi_pool_structure.return_value = []
+            workflow = FeatureWorkflow(config)
+            workflow.run()
+
+        job_config = workflow.execution_manager.job_manager.generate_script.call_args[0][0]
+        assert "eval-desc" in job_config.command
+        assert "DPEVA_TAG: WORKFLOW_FINISHED" in job_config.command

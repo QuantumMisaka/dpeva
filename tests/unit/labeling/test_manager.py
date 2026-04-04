@@ -145,16 +145,8 @@ class TestLabelingManager:
         (manager.input_dir / "DS1" / "cluster" / "Running" / "OUT.ABACUS").mkdir(parents=True)
         (manager.input_dir / "DS1" / "cluster" / "Running" / "OUT.ABACUS" / "INPUT").touch()
         
-        # Use a method to scan or verify collect_and_export logic part
-        # Since logic is inside collect_and_export, we run it and expect log or internal state
-        # But collect_and_export prints logs.
-        # We can patch os.walk or Path.rglob?
-        # The logic uses rglob("INPUT")
-        
-        # Let's trust integration in collect_and_export or extract the scanner if needed.
-        # Here we verify that collect_and_export doesn't crash and hopefully counts correctly.
-        # Ideally, we should capture logs to verify "Fail=1".
-        pass 
+        failed_tasks_info = manager._collect_failed_tasks_info()
+        assert failed_tasks_info == [{"dataset": "DS1", "type": "cluster"}]
 
     def test_mgr_005_runner_script_avoids_shell_true(self, manager, tmp_path):
         script = manager.generate_runner_script(tmp_path)

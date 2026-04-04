@@ -104,7 +104,7 @@ pytest tests/unit --cov=dpeva --cov-report=term-missing
 
 ## 6. 覆盖率阈值与质量门禁
 
-当前仓库已接入 `pytest tests/unit` 作为 CI 基线，但下表中的覆盖率阈值仍属于维护目标，尚未在 CI 中自动阻断：
+当前仓库已接入 `pytest tests/unit` 作为 CI 基线，并新增了整体覆盖率门禁：CI 会执行 `pytest tests/unit --cov=src/dpeva --cov-branch --cov-report=json:coverage-unit.json --cov-fail-under=80`。下表中的分模块阈值仍属于维护目标，当前未按模块自动阻断：
 
 | 模块 | 最低行覆盖率 (Line Cov) | 失败策略 |
 | :--- | :--- | :--- |

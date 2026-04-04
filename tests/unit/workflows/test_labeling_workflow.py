@@ -71,6 +71,27 @@ class TestLabelingWorkflow:
         assert len(dataset_map) == 2
 
     @patch("dpeva.workflows.labeling.load_systems")
+    @patch("dpeva.workflows.labeling.LabelingManager")
+    def test_wf_single_pool_dataset_routing(self, MockManager, mock_load, config, tmp_path):
+        data_dir = tmp_path / "data"
+        pool_dir = data_dir / "pool1"
+        data_dir.mkdir()
+        pool_dir.mkdir()
+        (pool_dir / "type.raw").touch()
+
+        import dpdata
+
+        mock_sys = MagicMock(spec=dpdata.System)
+        mock_load.return_value = [mock_sys]
+        MockManager.return_value.prepare_tasks.return_value = []
+
+        wf = LabelingWorkflow(config)
+        wf.run()
+
+        dataset_map = MockManager.return_value.prepare_tasks.call_args[0][0]
+        assert list(dataset_map.keys()) == ["data"]
+
+    @patch("dpeva.workflows.labeling.load_systems")
     def test_wf_003_empty_directory(self, mock_load, config, tmp_path):
         """
         WF-003: Test handling of empty input directory.
@@ -83,6 +104,11 @@ class TestLabelingWorkflow:
         wf = LabelingWorkflow(config)
         with pytest.raises(ValueError, match="No valid systems found"):
             wf.run()
+
+    def test_wf_load_dataset_map_raises_for_missing_input_path(self, config, tmp_path):
+        wf = LabelingWorkflow(config)
+        with pytest.raises(FileNotFoundError, match="Input path not found"):
+            wf._load_dataset_map()
 
     @patch("dpeva.workflows.labeling.DataIntegrationManager")
     @patch("dpeva.workflows.labeling.load_systems")
@@ -194,6 +220,74 @@ class TestLabelingWorkflow:
         manager.process_results.assert_called_once()
         manager.extract_results.assert_called_once()
         manager.collect_and_export.assert_called_once()
+
+    @patch("dpeva.workflows.labeling.logger.warning")
+    @patch("dpeva.workflows.labeling.LabelingManager")
+    def test_wf_execute_warns_when_attempt_params_empty(self, MockManager, mock_warning, config, tmp_path):
+        inputs_dir = tmp_path / "inputs" / "N_50_0"
+        inputs_dir.mkdir(parents=True)
+        (inputs_dir / "task_a").mkdir()
+        config.attempt_params = []
+        MockManager.return_value.process_results.return_value = ([], [])
+
+        wf = LabelingWorkflow(config)
+        wf.run_execute()
+
+        assert any("No attempt_params defined" in call.args[0] for call in mock_warning.call_args_list)
+
+    @patch("dpeva.workflows.labeling.LabelingManager")
+    def test_collect_active_job_dirs_only_returns_non_empty_bundles(self, MockManager, config, tmp_path):
+        active = tmp_path / "inputs" / "N_10_0"
+        inactive = tmp_path / "inputs" / "N_20_0"
+        active.mkdir(parents=True)
+        inactive.mkdir(parents=True)
+        (active / "task_a").mkdir()
+
+        result = LabelingWorkflow._collect_active_job_dirs([active, inactive])
+
+        assert result == [active]
+
+    @patch("dpeva.workflows.labeling.logger.error")
+    @patch("dpeva.workflows.labeling.LabelingManager")
+    def test_submit_job_dirs_continues_after_partial_failure(self, MockManager, mock_error, config, tmp_path):
+        job_a = tmp_path / "N_10_0"
+        job_b = tmp_path / "N_20_0"
+        job_a.mkdir()
+        job_b.mkdir()
+        manager = MockManager.return_value
+        manager.generate_runner_script.side_effect = ["print('a')", "print('b')"]
+
+        wf = LabelingWorkflow(config)
+        wf.job_manager.submit_python_script = MagicMock(side_effect=["123", RuntimeError("submit failed")])
+
+        job_ids = wf._submit_job_dirs([job_a, job_b], attempt=0)
+
+        assert job_ids == ["123"]
+        mock_error.assert_called_once()
+
+    @patch("dpeva.workflows.labeling.time.sleep")
+    @patch("dpeva.workflows.labeling.subprocess.run", side_effect=RuntimeError("squeue down"))
+    @patch("dpeva.workflows.labeling.logger.error")
+    def test_monitor_slurm_jobs_logs_query_failure_and_continues(self, mock_error, mock_run, mock_sleep, config):
+        wf = LabelingWorkflow(config)
+        with patch.object(wf, "_monitor_slurm_jobs", wraps=wf._monitor_slurm_jobs) as wrapped:
+            # Stop after one failure cycle by raising from sleep
+            mock_sleep.side_effect = RuntimeError("stop-loop")
+            with pytest.raises(RuntimeError, match="stop-loop"):
+                wrapped(["job-123"], interval=1)
+
+        mock_error.assert_called_once()
+
+    @patch("dpeva.workflows.labeling.logger.info")
+    @patch("dpeva.workflows.labeling.LabelingManager")
+    def test_run_execute_short_circuits_when_all_tasks_converged(self, MockManager, mock_info, config, tmp_path):
+        inputs_dir = tmp_path / "inputs" / "N_50_0"
+        inputs_dir.mkdir(parents=True)
+        # no subdirs -> no active jobs
+        wf = LabelingWorkflow(config)
+        wf.run_execute()
+
+        assert any("All tasks converged." in call.args[0] for call in mock_info.call_args_list)
 
     @patch("dpeva.workflows.labeling.close_workflow_logger")
     @patch("dpeva.workflows.labeling.setup_workflow_logger")

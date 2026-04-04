@@ -145,3 +145,57 @@ class TestDescriptorGenerator:
             
             assert result.shape == (2, 4)
             assert np.all(result == 1)
+
+    @patch("dpeva.feature.generator._DEEPMD_AVAILABLE", False)
+    def test_init_without_deepmd_sets_model_to_none(self):
+        generator = DescriptorGenerator(model_path="model.pt")
+        assert generator.model is None
+
+    @patch("dpeva.feature.generator.load_systems", return_value=[])
+    @patch("dpeva.feature.generator._DEEPMD_AVAILABLE", True)
+    def test_compute_descriptors_raises_for_empty_systems(self, mock_load_systems, mock_deep_pot):
+        generator = DescriptorGenerator(model_path="model.pt")
+        generator.model = MagicMock()
+
+        with pytest.raises(ValueError, match="No valid systems found"):
+            generator.compute_descriptors("empty_path")
+
+    @patch("dpeva.feature.generator.load_systems")
+    @patch("dpeva.feature.generator._DEEPMD_AVAILABLE", True)
+    def test_compute_descriptors_returns_empty_array_when_batches_empty(
+        self, mock_load_systems, mock_deep_pot
+    ):
+        generator = DescriptorGenerator(model_path="model.pt")
+        generator.model = MagicMock()
+        mock_sys = MagicMock()
+        mock_sys.data = {"nopbc": False}
+        mock_sys.__len__.return_value = 0
+        mock_load_systems.return_value = [mock_sys]
+
+        with patch.object(generator, "_get_desc_by_batch", return_value=[]):
+            result = generator.compute_descriptors("dummy_path")
+
+        assert isinstance(result, np.ndarray)
+        assert result.size == 0
+
+    @patch("dpeva.feature.generator._DEEPMD_AVAILABLE", True)
+    def test_descriptor_from_model_uses_none_cells_when_nopbc(self, mock_deep_pot):
+        generator = DescriptorGenerator(model_path="model.pt")
+        generator.model = MagicMock()
+        generator.model.get_type_map.return_value = ["H", "O"]
+        generator.model.eval_descriptor.return_value = np.ones((1, 2, 4))
+        mock_system = MagicMock()
+        mock_system.data = {
+            "coords": np.ones((1, 2, 3)),
+            "cells": np.ones((1, 3, 3)),
+            "atom_names": ["H", "O"],
+            "atom_types": np.array([0, 1]),
+        }
+
+        result = generator._descriptor_from_model(mock_system, nopbc=True)
+
+        generator.model.eval_descriptor.assert_called_once()
+        _, cells, atypes = generator.model.eval_descriptor.call_args.args
+        assert cells is None
+        assert atypes == [0, 1]
+        assert result.shape == (1, 2, 4)

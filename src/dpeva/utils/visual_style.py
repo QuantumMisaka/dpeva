@@ -82,8 +82,8 @@ def get_collection_pca_scatter_profile(
             title_scale=1.73,
             label_scale=1.65,
             tick_scale=1.57,
-            legend_scale=1.60,
-            legend_title_scale=1.60,
+            legend_scale=1.75,
+            legend_title_scale=1.75,
         ),
     }
 
@@ -505,6 +505,7 @@ def set_visual_style(
             "axes.labelsize": fonts["label"],
             "axes.titlesize": fonts["title"],
             "axes.titleweight": "semibold",
+            "axes.titlepad": 12.0,
             "xtick.labelsize": fonts["tick"],
             "ytick.labelsize": fonts["tick"],
             "legend.fontsize": fonts["legend"],
