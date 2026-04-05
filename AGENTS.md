@@ -21,13 +21,11 @@ DP-EVA is an active learning framework designed for efficient fine-tuning of DPA
 
 - **Unit Tests**: `pytest tests/unit` -- Fast, mocked tests. **Run this first.**
 - **Integration Tests**: `pytest tests/integration` -- Slower, requires real environment.
-- **Single Test**: `pytest tests/unit/utils/test_config_paths.py` -- Run specific test file.
 
 ### Lint and Format
 
 - **Check**: `ruff check src tests scripts`
 - **Format**: `ruff format .`
-- **Rule**: Always run linting/formatting before committing.
 
 ### Build Documentation
 
@@ -41,7 +39,6 @@ All workflow scenarios and CLI calling for core functionality can be found via d
 ## Critical Notes
 
 - **Configuration**: DP-EVA uses strict Pydantic validation and integated variable management. See `src/dpeva/config.py` for definitive schema.
-- **Pathing**: Use absolute paths in configs to avoid ambiguity.
 - **Data**: Most workflows expect `dpdata` compatible formats.
 
 ## Agent Documentation Protocol

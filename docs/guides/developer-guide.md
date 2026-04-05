@@ -2,21 +2,21 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-03-25
+last-updated: 2026-04-05
 ---
 
 # DP-EVA 项目开发文档
 
 - Status: active
 - Audience: Developers
-- Last-Updated: 2026-03-21
+- Last-Updated: 2026-04-05
 - Related:
   - 配置字段字典：/docs/source/api/config.rst
   - 校验规则补充：/docs/reference/validation.md
   - 上游软件与职责：/docs/reference/upstream-software.md
 
-* **版本**: 0.7.1
-* **生成日期**: 2026-04-01
+* **版本**: 0.7.2
+* **生成日期**: 2026-04-05
 * **作者**: Quantum Misaka with Trae SOLO
 
 ---
@@ -505,6 +505,13 @@ DPEVA_TAG: WORKFLOW_FINISHED
 ### 6.2 版本历史
 
 #### **Current Era (v0.7.x)**
+
+*   **v0.7.2** (2026-04-05):
+    *   **[测试]** 围绕核心功能模块开展单元测试集中攻坚，补强 `labeling/postprocess`、`analysis/managers`、`inference/managers`、`workflows/feature` 与 `workflows/labeling` 的关键正向、异常与边界分支覆盖。
+    *   **[质量]** 修复 `test_analysis_workflow.py` 中因缩进导致的隐藏未收集测试，清理空测试并将共享随机 fixture 固定为确定性生成，降低测试波动性。
+    *   **[CI/CD]** 为单元测试接入覆盖率门禁与 `coverage-unit.json` 产物上传，当前单测回归为 `373 passed`，总覆盖率提升至 `83.92%`。
+    *   **[文档]** 新增单元测试专项审查报告与集中攻坚计划，沉淀覆盖率短板、整改路径与回归验证基线。
+    *   **[发布]** 版本升级至 `0.7.2`，同步 `__init__`、`README`、Sphinx `conf.py` 与开发文档中的版本标识。
 
 *   **v0.7.1** (2026-04-01):
     *   **[特性]** 提升 Parity Plots 可读性：全局基础字号由 12 增大至 16，同步调大统计框 (Stats Box) 字号。
