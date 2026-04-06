@@ -74,7 +74,7 @@ work/
 参考最小配置模板：
 
 - `examples/recipes/`：../examples/recipes/
-- 配置字段字典：../source/api/config.rst
+- 配置字段字典：API Reference（Sphinx 生成的配置字段文档）
 
 ### 5.1 Feature（生成描述符）
 

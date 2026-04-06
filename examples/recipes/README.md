@@ -98,10 +98,4 @@ For programmatic workflow demos and helper scripts, use:
   - Inputs: labeled `dataset_dir` + inference `result_dir`, with energy/force/stress thresholds.
   - Run with `dpeva clean examples/recipes/data_cleaning/config_clean_all_thresholds.json`
 
-- **Force-only threshold (`data_cleaning/config_clean_force_only.json`)**
-  - Inputs: same dataset/result pair, only `force_max_diff_threshold` enabled.
-  - Run with `dpeva clean examples/recipes/data_cleaning/config_clean_force_only.json`
-
-- **Passthrough mode (`data_cleaning/config_clean_passthrough.json`)**
-  - Inputs: no thresholds enabled; keeps all structures and only exports reports.
-  - Run with `dpeva clean examples/recipes/data_cleaning/config_clean_passthrough.json`
+- 当前仓库仅维护这一份数据清洗模板；如需 force-only 或 passthrough 变体，请在该文件基础上裁剪阈值字段。

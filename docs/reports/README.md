@@ -2,7 +2,7 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-04-02
+last-updated: 2026-04-05
 owner: Docs Owner
 ---
 
@@ -10,7 +10,7 @@ owner: Docs Owner
 
 - Status: active
 - Audience: All
-- Last-Updated: 2026-04-02
+- Last-Updated: 2026-04-05
 
 本文档目录用于存放“项目级、可共享、可追溯”的技术结论，不承载执行过程草稿。
 
@@ -38,6 +38,7 @@ owner: Docs Owner
 
 ## 4. 活跃报告 (Active Reports)
 
+- [2026-04-05-Code-Review-Agents-Docs-Governance.md](2026-04-05-Code-Review-Agents-Docs-Governance.md)：交叉审阅 `docs/`、`examples/recipes/` 与 `src/`，核查工程规范落实度、修复 active 文档偏差，并沉淀 `AGENTS.md` 目录化改造的证据基线。
 - [2026-04-01-Code-Review-Repository-Audit.md](2026-04-01-Code-Review-Repository-Audit.md)：基于本轮真实仓库审查结果重写，覆盖八维度评估、严重级别、优先级、行动项、证据与验证记录。
 - [2026-04-02-Code-Review-Unit-Test-Audit.md](2026-04-02-Code-Review-Unit-Test-Audit.md)：基于 `docs/`、`src/` 与 `tests/` 的单元测试深度审查结果，覆盖覆盖率、Mock、命名、性能、Lint、类型检查与回归步骤。
 
