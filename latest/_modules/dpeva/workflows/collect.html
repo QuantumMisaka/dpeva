@@ -36,7 +36,7 @@
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="../../../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="../../../_static/documentation_options.js?v=0e02e724"></script>
+    <script src="../../../_static/documentation_options.js?v=2eb37dcf"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -602,7 +602,6 @@ window.runMermaid = runMermaid;</script>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../../reference/index.html">Reference</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../../reference/README.html">Reference（权威参考）</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../reference/validation.html">参数校验与约束（Validation Rules）</a></li>
-
 <li class="toctree-l2"><a class="reference internal" href="../../../reference/upstream-software.html">上游软件与核心依赖（Upstream Software）</a></li>
 </ul>
 </details></li>
@@ -780,14 +779,30 @@ document.write(`
 <span class="kn">from</span><span class="w"> </span><span class="nn">dpeva.uncertain.manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">UQManager</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dpeva.sampling.manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">SamplingManager</span>
 
+
 <span class="k">def</span><span class="w"> </span><span class="nf">get_sys_name</span><span class="p">(</span><span class="n">dataname</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Extracts system name from data name.&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">dataname</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
 
 <span class="k">def</span><span class="w"> </span><span class="nf">get_pool_name</span><span class="p">(</span><span class="n">sys_name</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Extracts pool name from system name.&quot;&quot;&quot;</span>
     <span class="n">d</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">sys_name</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">d</span> <span class="k">if</span> <span class="n">d</span> <span class="k">else</span> <span class="s2">&quot;root&quot;</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_set_config_path_if_missing</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">config_path</span><span class="p">,</span> <span class="n">logger</span><span class="p">):</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">config_path</span> <span class="ow">or</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="s2">&quot;config_path&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">config</span><span class="o">.</span><span class="n">config_path</span> <span class="o">=</span> <span class="n">config_path</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">AttributeError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">)</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+            <span class="s2">&quot;Failed to attach config_path=</span><span class="si">%s</span><span class="s2"> to CollectionWorkflow config: </span><span class="si">%s</span><span class="s2">: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">config_path</span><span class="p">,</span>
+            <span class="n">exc</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+            <span class="n">exc</span><span class="p">,</span>
+        <span class="p">)</span>
 
 <div class="viewcode-block" id="CollectionWorkflow">
 <a class="viewcode-back" href="../../../api/workflows.html#dpeva.workflows.CollectionWorkflow">[文档]</a>
@@ -817,11 +832,7 @@ document.write(`
             <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">CollectionConfig</span><span class="p">(</span><span class="o">**</span><span class="n">config</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">config</span>
-            <span class="k">if</span> <span class="n">config_path</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">config_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="k">try</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">config_path</span> <span class="o">=</span> <span class="n">config_path</span>
-                <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-                    <span class="k">pass</span>
+            <span class="n">_set_config_path_if_missing</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">,</span> <span class="n">config_path</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="p">)</span>
                     
         <span class="bp">self</span><span class="o">.</span><span class="n">config_path</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">config_path</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">config_path</span> <span class="k">else</span> <span class="kc">None</span>
         
@@ -1277,18 +1288,28 @@ document.write(`
             <span class="n">layer</span><span class="o">=</span><span class="s2">&quot;core&quot;</span><span class="p">,</span>
             <span class="n">condition</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;use_joint=</span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">use_joint</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="k">if</span> <span class="n">use_joint</span><span class="p">:</span>
+        
+        <span class="k">def</span><span class="w"> </span><span class="nf">pool_name_from_dataname</span><span class="p">(</span><span class="n">dataname</span><span class="p">):</span>
+            <span class="n">sys_name</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">dataname</span><span class="p">)</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">pool_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">sys_name</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">pool_name</span> <span class="k">if</span> <span class="n">pool_name</span> <span class="k">else</span> <span class="s2">&quot;root&quot;</span>
+            
+        <span class="n">pools</span> <span class="o">=</span> <span class="n">df_candidate</span><span class="p">[</span><span class="s2">&quot;dataname&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">pool_name_from_dataname</span><span class="p">)</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span>
+        <span class="n">is_multipool</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">pools</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span>
+
+        <span class="k">if</span> <span class="n">use_joint</span> <span class="ow">and</span> <span class="n">is_multipool</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_log_generated_plots</span><span class="p">(</span>
                 <span class="p">[</span><span class="s2">&quot;Final_sampled_PCAview_by_pool&quot;</span><span class="p">],</span>
                 <span class="n">layer</span><span class="o">=</span><span class="s2">&quot;core&quot;</span><span class="p">,</span>
-                <span class="n">condition</span><span class="o">=</span><span class="s2">&quot;use_joint=true&quot;</span><span class="p">,</span>
+                <span class="n">condition</span><span class="o">=</span><span class="s2">&quot;use_joint=true,multipool=true&quot;</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
+            <span class="n">reason</span> <span class="o">=</span> <span class="s2">&quot;joint_mode_disabled&quot;</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">use_joint</span> <span class="k">else</span> <span class="s2">&quot;single_pool_detected&quot;</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_log_skipped_plots</span><span class="p">(</span>
-                <span class="s2">&quot;joint_mode_disabled&quot;</span><span class="p">,</span>
+                <span class="n">reason</span><span class="p">,</span>
                 <span class="p">[</span><span class="s2">&quot;Final_sampled_PCAview_by_pool&quot;</span><span class="p">],</span>
                 <span class="n">layer</span><span class="o">=</span><span class="s2">&quot;core&quot;</span><span class="p">,</span>
-                <span class="n">condition</span><span class="o">=</span><span class="s2">&quot;use_joint=false&quot;</span><span class="p">,</span>
+                <span class="n">condition</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;use_joint=</span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">use_joint</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="si">}</span><span class="s2">,multipool=</span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">is_multipool</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="k">return</span> <span class="n">df_final</span>
 

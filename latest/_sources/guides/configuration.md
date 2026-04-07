@@ -2,21 +2,22 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-03-11
+last-updated: 2026-04-05
+owner: Docs Owner
 ---
 
 # 配置编写指南（Configuration）
 
 - Status: active
 - Audience: Users / Developers
-- Last-Updated: 2026-03-11
+- Last-Updated: 2026-04-05
 
 ## 1. 目的与范围
 
 本页说明“如何写配置、如何组织路径、如何最小化配置”。全量字段字典与校验规则请以 Reference 为准：
 
-- ../source/api/config.rst
-- ../reference/validation.md
+- `API Reference`（Sphinx 生成的配置字段文档）
+- `../reference/validation.md`
 
 ## 2. 相关方
 

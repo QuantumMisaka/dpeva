@@ -30,7 +30,6 @@
 
    guides/developer-guide
    architecture/README
-   plans/README
    api/index
 
 .. toctree::
@@ -40,6 +39,8 @@
    guides/docs-governance-quickstart
    guides/process-asset-lifecycle
    policy/README
+
+项目级审查与实验报告保留在仓库 ``docs/reports/`` 目录中，作为可复盘资产按需访问，不纳入主导航的稳定入口。
 
 .. toctree::
    :maxdepth: 1
@@ -57,7 +58,6 @@
    guides/testing/integration-config-templates
    guides/testing/integration-slurm
    guides/testing/multi-datapool-artifacts
-   plans/README
    policy/contributing
    policy/docs-structure
    policy/maintenance

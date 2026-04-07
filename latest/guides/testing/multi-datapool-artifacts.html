@@ -37,7 +37,7 @@
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="../../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="../../_static/documentation_options.js?v=0e02e724"></script>
+    <script src="../../_static/documentation_options.js?v=2eb37dcf"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -167,7 +167,6 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../reference/index.html">Reference</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../reference/README.html">Reference（权威参考）</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../reference/validation.html">参数校验与约束（Validation Rules）</a></li>
-
 <li class="toctree-l2"><a class="reference internal" href="../../reference/upstream-software.html">上游软件与核心依赖（Upstream Software）</a></li>
 </ul>
 </details></li>
@@ -394,8 +393,8 @@ document.write(`
 <li><p>Audience: Developers</p></li>
 <li><p>Last-Updated: 2026-03-26</p></li>
 </ul>
-<p>目标目录：<code class="docutils literal notranslate"><span class="pre">/test/test-for-multiple-datapool</span></code> (File missing)</p>
-<p>本文档用于把生产级运行产物拆解为“输入资产 / 输出资产”，并将其映射到 DP-EVA 各 Workflow 的配置字段（对照 <a class="reference external" href="https://github.com/QuantumMisaka/dpeva/tree/main/examples/recipes">examples/recipes</a>）。</p>
+<p>目标目录：以仓库内多数据池测试资产为参照，例如 <code class="docutils literal notranslate"><span class="pre">tests/</span></code> 中的相关集成测试输入输出目录。</p>
+<p>本文档用于把生产级运行产物拆解为“输入资产 / 输出资产”，并将其映射到 DP-EVA 各 Workflow 的配置字段（对照 <code class="docutils literal notranslate"><span class="pre">examples/recipes/</span></code>）。</p>
 <section id="id1">
 <h2>0. 相关方<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
 <ul class="simple">
@@ -490,7 +489,7 @@ document.write(`
 </ul>
 <p>参考配置：</p>
 <ul class="simple">
-<li><p><a class="reference external" href="https://github.com/QuantumMisaka/dpeva/blob/main/examples/recipes/feature_generation/config_feature.json">config_feature.json</a></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">examples/recipes/feature_generation/config_feature.json</span></code></p></li>
 </ul>
 </section>
 <section id="trainingworkflow-ensemble">
@@ -518,7 +517,7 @@ document.write(`
 </ul>
 <p>参考配置：</p>
 <ul class="simple">
-<li><p><a class="reference external" href="https://github.com/QuantumMisaka/dpeva/blob/main/examples/recipes/training/config_train.json">config_train.json</a></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">examples/recipes/training/config_train.json</span></code></p></li>
 </ul>
 </section>
 <section id="inferenceworkflow">
@@ -542,7 +541,7 @@ document.write(`
 </ul>
 <p>参考配置：</p>
 <ul class="simple">
-<li><p><a class="reference external" href="https://github.com/QuantumMisaka/dpeva/blob/main/examples/recipes/inference/config_infer.json">config_infer.json</a></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">examples/recipes/inference/config_infer.json</span></code></p></li>
 </ul>
 </section>
 <section id="collectionworkflow-uq-filtering-sampling-export">
@@ -572,8 +571,8 @@ document.write(`
 </ul>
 <p>参考配置：</p>
 <ul class="simple">
-<li><p>普通模式：<code class="docutils literal notranslate"><span class="pre">/examples/recipes/collection/config_multi_normal.json</span></code> (File missing)</p></li>
-<li><p>联合模式：<code class="docutils literal notranslate"><span class="pre">/examples/recipes/collection/config_multi_joint.json</span></code> (File missing)</p></li>
+<li><p>普通模式：<code class="docutils literal notranslate"><span class="pre">examples/recipes/collection/config_collect_normal.json</span></code></p></li>
+<li><p>联合模式：<code class="docutils literal notranslate"><span class="pre">examples/recipes/collection/config_collect_joint.json</span></code></p></li>
 </ul>
 </section>
 <section id="analysisworkflow">
@@ -589,7 +588,7 @@ document.write(`
 </ul>
 <p>参考配置：</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">/examples/recipes/analysis/config.json</span></code> (File missing)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">examples/recipes/analysis/config_analysis.json</span></code></p></li>
 </ul>
 </section>
 </section>

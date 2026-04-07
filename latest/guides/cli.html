@@ -37,7 +37,7 @@
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="../_static/documentation_options.js?v=0e02e724"></script>
+    <script src="../_static/documentation_options.js?v=2eb37dcf"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -167,7 +167,6 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="../reference/index.html">Reference</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../reference/README.html">Reference（权威参考）</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../reference/validation.html">参数校验与约束（Validation Rules）</a></li>
-
 <li class="toctree-l2"><a class="reference internal" href="../reference/upstream-software.html">上游软件与核心依赖（Upstream Software）</a></li>
 </ul>
 </details></li>
@@ -377,6 +376,7 @@ document.write(`
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#collect-uq-filtering-sampling-export">4.4 collect（UQ + Filtering + Sampling + Export）</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#label">4.5 label（标注）</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#analysis">4.6 analysis（双模式分析）</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#clean">4.7 clean（基于推理误差阈值的数据清洗）</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">5. 完成标记与链式编排</a></li>
@@ -399,14 +399,14 @@ document.write(`
 <li><p>Status: active</p></li>
 <li><p>Audience: Users / Developers</p></li>
 <li><p>Applies-To: CLI 模式（推荐）</p></li>
-<li><p>Last-Updated: 2026-03-12</p></li>
+<li><p>Last-Updated: 2026-04-05</p></li>
 </ul>
 <section id="id1">
 <h2>1. 目的与范围<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
 <p>本页说明 DP-EVA 的统一命令行入口、子命令职责、配置文件约定、输出与失败定位方式。</p>
 <p>范围：</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">dpeva</span> <span class="pre">train</span> <span class="pre">/</span> <span class="pre">infer</span> <span class="pre">/</span> <span class="pre">feature</span> <span class="pre">/</span> <span class="pre">collect</span> <span class="pre">/</span> <span class="pre">label</span> <span class="pre">/</span> <span class="pre">analysis</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">dpeva</span> <span class="pre">train</span> <span class="pre">/</span> <span class="pre">infer</span> <span class="pre">/</span> <span class="pre">feature</span> <span class="pre">/</span> <span class="pre">collect</span> <span class="pre">/</span> <span class="pre">label</span> <span class="pre">/</span> <span class="pre">analysis</span> <span class="pre">/</span> <span class="pre">clean</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">--no-banner</span></code></p></li>
 </ul>
 </section>
@@ -444,7 +444,7 @@ dpeva<span class="w"> </span>train<span class="w"> </span>--help
 <h2>4. 子命令职责、输入输出与配置<a class="headerlink" href="#id6" title="Link to this heading">#</a></h2>
 <p>所有子命令的第一个参数均为配置 JSON 路径。配置字段的权威查表入口：</p>
 <ul class="simple">
-<li><p>../source/api/config.rst</p></li>
+<li><p>API Reference（Sphinx 生成的配置字段文档）</p></li>
 <li><p>../reference/validation.md</p></li>
 </ul>
 <section id="train">
@@ -525,13 +525,13 @@ dpeva<span class="w"> </span>train<span class="w"> </span>--help
 </li>
 <li><p>输出</p>
 <ul>
-<li><p><code class="docutils literal notranslate"><span class="pre">root_savedir/dataframe/*.csv</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">root_savedir/dataframe/*.csv</span></code>，关键结果通常包括 <code class="docutils literal notranslate"><span class="pre">df_uq_desc.csv</span></code>、<code class="docutils literal notranslate"><span class="pre">df_uq.csv</span></code>、<code class="docutils literal notranslate"><span class="pre">final_df.csv</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">root_savedir/view/*.png</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">root_savedir/dpdata/*</span></code>（导出 dpdata）</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">root_savedir/dpdata/sampled_dpdata/*</span></code> 与 <code class="docutils literal notranslate"><span class="pre">root_savedir/dpdata/other_dpdata/*</span></code></p></li>
 </ul>
 </li>
 </ul>
-<p>示例配置：<code class="docutils literal notranslate"><span class="pre">examples/recipes/collection/config_multi_normal.json</span></code>、<code class="docutils literal notranslate"><span class="pre">examples/recipes/collection/config_multi_joint.json</span></code></p>
+<p>示例配置：<code class="docutils literal notranslate"><span class="pre">examples/recipes/collection/config_collect_normal.json</span></code>、<code class="docutils literal notranslate"><span class="pre">examples/recipes/collection/config_collect_joint.json</span></code></p>
 </section>
 <section id="label">
 <h3>4.5 label（标注）<a class="headerlink" href="#label" title="Link to this heading">#</a></h3>
@@ -556,9 +556,10 @@ dpeva<span class="w"> </span>train<span class="w"> </span>--help
 </li>
 <li><p>输出</p>
 <ul>
-<li><p><code class="docutils literal notranslate"><span class="pre">labeled_data</span></code>（包含 DFT 计算结果的新数据集）</p></li>
-<li><p>当 <code class="docutils literal notranslate"><span class="pre">integration_enabled=true</span></code> 时，额外输出 <code class="docutils literal notranslate"><span class="pre">outputs/merged_training_data</span></code>（或 <code class="docutils literal notranslate"><span class="pre">merged_training_data_path</span></code> 指定路径）</p></li>
-<li><p>整合统计文件：<code class="docutils literal notranslate"><span class="pre">integration_summary.json</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">work_dir/outputs/cleaned</span></code>（主清洗结果）</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">work_dir/outputs/anomalies</span></code>（异常或被筛出结果）</p></li>
+<li><p>当 <code class="docutils literal notranslate"><span class="pre">integration_enabled=true</span></code> 时，额外输出 <code class="docutils literal notranslate"><span class="pre">merged_training_data_path</span></code>（未指定时默认 <code class="docutils literal notranslate"><span class="pre">work_dir/outputs/merged_training_data</span></code>）</p></li>
+<li><p>整合统计文件：<code class="docutils literal notranslate"><span class="pre">&lt;merged_training_data_path&gt;/integration_summary.json</span></code></p></li>
 </ul>
 </li>
 </ul>
@@ -581,6 +582,27 @@ dpeva<span class="w"> </span>train<span class="w"> </span>--help
 </li>
 </ul>
 <p>示例配置：<code class="docutils literal notranslate"><span class="pre">examples/recipes/analysis/config_analysis.json</span></code></p>
+</section>
+<section id="clean">
+<h3>4.7 clean（基于推理误差阈值的数据清洗）<a class="headerlink" href="#clean" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p>输入</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">DataCleaningConfig.dataset_dir</span></code>（带标注数据集）</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">DataCleaningConfig.result_dir</span></code>（与数据集对应的推理结果目录）</p></li>
+<li><p>可选阈值：<code class="docutils literal notranslate"><span class="pre">energy_diff_threshold</span></code>、<code class="docutils literal notranslate"><span class="pre">force_max_diff_threshold</span></code>、<code class="docutils literal notranslate"><span class="pre">stress_max_diff_threshold</span></code></p></li>
+</ul>
+</li>
+<li><p>输出</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">output_dir/cleaned_dpdata</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">output_dir/filtered_out_dpdata</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">output_dir/frame_metrics.csv</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">output_dir/cleaning_summary.json</span></code></p></li>
+</ul>
+</li>
+</ul>
+<p>示例配置：<code class="docutils literal notranslate"><span class="pre">examples/recipes/data_cleaning/config_clean_all_thresholds.json</span></code></p>
 <p>关键参数：</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">enable_cohesive_energy</span></code>：开启/关闭 Cohesive Energy 统计与作图</p></li>
@@ -596,11 +618,16 @@ dpeva<span class="w"> </span>train<span class="w"> </span>--help
 </section>
 <section id="id7">
 <h2>5. 完成标记与链式编排<a class="headerlink" href="#id7" title="Link to this heading">#</a></h2>
-<p>DP-EVA 在核心工作流成功结束时会输出统一标记：</p>
+<p>DP-EVA 在多数核心工作流及其实际执行日志中会输出统一标记：</p>
 <div class="highlight-text notranslate"><div class="highlight"><pre><span></span>DPEVA_TAG: WORKFLOW_FINISHED
 </pre></div>
 </div>
 <p>建议外部编排器通过监控日志出现该标记推进下一步（尤其是 Slurm 场景）。</p>
+<p>说明：</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">train</span></code>、<code class="docutils literal notranslate"><span class="pre">collect</span></code>、<code class="docutils literal notranslate"><span class="pre">label</span></code> 等主流程会在成功结束时输出该标记。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">infer</span></code> 在 <code class="docutils literal notranslate"><span class="pre">auto_analysis=true</span></code> 且本地链式分析完成时会由分析阶段输出该标记；Slurm 场景更稳妥的推进锚点仍是各模型 <code class="docutils literal notranslate"><span class="pre">test_job.out</span></code> 完成后再显式执行 <code class="docutils literal notranslate"><span class="pre">dpeva</span> <span class="pre">analysis</span></code>。</p></li>
+</ul>
 </section>
 <section id="id8">
 <h2>6. 异常处理与退出码<a class="headerlink" href="#id8" title="Link to this heading">#</a></h2>
@@ -643,6 +670,7 @@ dpeva<span class="w"> </span>label<span class="w"> </span>config.json<span class
 <li><p>2026-03-11：更新配置权威入口为 API Reference，并同步 infer 日志文件名为 <code class="docutils literal notranslate"><span class="pre">test_job.out</span></code>。</p></li>
 <li><p>2026-03-08：补充 analysis 双模式与 labeling integration 输出说明。</p></li>
 <li><p>2026-02-18：补齐子命令 I/O、完成标记与退出码说明，并建立与 recipes/api 的权威链接。</p></li>
+<li><p>2026-04-05：补充 <code class="docutils literal notranslate"><span class="pre">clean</span></code> 子命令，修正 collection recipe 文件名，并对齐 labeling 输出与 infer 完成标记语义。</p></li>
 </ul>
 </section>
 </section>
@@ -706,6 +734,7 @@ dpeva<span class="w"> </span>label<span class="w"> </span>config.json<span class
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#collect-uq-filtering-sampling-export">4.4 collect（UQ + Filtering + Sampling + Export）</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#label">4.5 label（标注）</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#analysis">4.6 analysis（双模式分析）</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#clean">4.7 clean（基于推理误差阈值的数据清洗）</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">5. 完成标记与链式编排</a></li>

@@ -37,7 +37,7 @@
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="../_static/documentation_options.js?v=0e02e724"></script>
+    <script src="../_static/documentation_options.js?v=2eb37dcf"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -603,7 +603,6 @@ window.runMermaid = runMermaid;</script>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../reference/index.html">Reference</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../reference/README.html">Reference（权威参考）</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../reference/validation.html">参数校验与约束（Validation Rules）</a></li>
-
 <li class="toctree-l2"><a class="reference internal" href="../reference/upstream-software.html">上游软件与核心依赖（Upstream Software）</a></li>
 </ul>
 </details></li>
@@ -799,6 +798,7 @@ document.write(`
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#read-first">0. 开发者快速入口 (Read First)</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#overview">1. 项目概述 (Overview)</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">1.1 项目简介</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#the-zen-of-dp-eva">1.2 核心哲学 (The Zen of DP-EVA)</a><ul class="nav section-nav flex-column">
@@ -808,12 +808,28 @@ document.write(`
 </li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#roadmap">1.3 优化方向与路线图 (Roadmap)</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#development-process-standard">1.4 开发流程标准 (Development Process Standard)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core-engineering-contracts">1.5 核心工程契约 (Core Engineering Contracts)</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">1.5.1 配置中心化</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">1.5.2 路径显式解析</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">1.5.3 工作流独立可执行</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">1.5.4 执行入口与导出入口分离</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id8">1.5.5 对外契约联动更新</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id9">1.5.6 数据格式约束</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lifecycle-and-gates">1.6 文档生命周期与质量门禁 (Lifecycle and Gates)</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id10">1.6.1 过程资产放置规则</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id11">1.6.2 文档联动要求</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id12">1.6.3 提交前质量门禁</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#agents">1.6.4 AGENTS 与开发文档的治理边界</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#architecture">2. 系统架构 (Architecture)</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">2.1 目录结构</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id13">2.1 目录结构</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#data-flow">2.2 数据流图 (Data Flow)</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">2.3 包级导出层与主链路入口边界</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id14">2.3 包级导出层与主链路入口边界</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#modules">3. 核心模块详解 (Modules)</a><ul class="nav section-nav flex-column">
@@ -832,13 +848,15 @@ document.write(`
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#collect">4.1.3 数据采集 (Collect)</a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#feature">4.1.4 特征生成 (Feature)</a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#analysis">4.1.5 分析 (Analysis)</a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#label-integration">4.1.6 标注后自动整合 (Label Integration)</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#label">4.1.6 标注 (Label)</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#clean">4.1.7 数据清洗 (Clean)</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#label-integration">4.1.8 标注后自动整合 (Label Integration)</a></li>
 </ul>
 </li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#python-api-recipes">4.2 Python API (Recipes)</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">4.3 配置参数说明</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id15">4.3 配置参数说明</a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#train-config">4.3.1 训练配置 (Train Config)</a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">4.3.2 其他配置</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id16">4.3.2 其他配置</a></li>
 </ul>
 </li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#uq">4.4 UQ 与采样配置要点</a><ul class="nav section-nav flex-column">
@@ -851,19 +869,20 @@ document.write(`
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#development">5. 开发与测试 (Development)</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id8">5.1 代码规范</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id9">5.2 验证测试</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id17">5.1 代码规范</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id18">5.2 验证测试</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#faq">5.3 常见问题 (FAQ)</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow-monitoring">5.4 工作流监控标准 (Workflow Monitoring)</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#revision-history">6. 版本修订记录 (Revision History)</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#maintenance-policy">6.1 维护策略 (Maintenance Policy)</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id10">6.2 版本历史</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#release-helper">6.1.1 Release Helper 使用约定</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id19">6.2 版本历史</a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#current-era-v0-7-x"><strong>Current Era (v0.7.x)</strong></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#legacy-era-v0-4-x"><strong>Legacy Era (v0.4.x)</strong></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#legacy-era-v2-x"><strong>Legacy Era (v2.x)</strong></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id11"><strong>Legacy Era (v2.x)</strong></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id20"><strong>Legacy Era (v2.x)</strong></a></li>
 </ul>
 </li>
 </ul>
@@ -884,20 +903,34 @@ document.write(`
 <ul class="simple">
 <li><p>Status: active</p></li>
 <li><p>Audience: Developers</p></li>
-<li><p>Last-Updated: 2026-03-21</p></li>
+<li><p>Last-Updated: 2026-04-06</p></li>
 <li><p>Related:</p>
 <ul>
-<li><p>配置字段字典：/docs/source/api/config.rst</p></li>
-<li><p>校验规则补充：/docs/reference/validation.md</p></li>
-<li><p>上游软件与职责：/docs/reference/upstream-software.md</p></li>
+<li><p>配置字段字典：<code class="docutils literal notranslate"><span class="pre">API</span> <span class="pre">Reference</span></code>（由 <code class="docutils literal notranslate"><span class="pre">src/dpeva/config.py</span></code> 自动生成）</p></li>
+<li><p>校验规则补充：<code class="docutils literal notranslate"><span class="pre">docs/reference/validation.md</span></code></p></li>
+<li><p>上游软件与职责：<code class="docutils literal notranslate"><span class="pre">docs/reference/upstream-software.md</span></code></p></li>
 </ul>
 </li>
 </ul>
 <ul class="simple">
-<li><p><strong>版本</strong>: 0.7.1</p></li>
-<li><p><strong>生成日期</strong>: 2026-04-01</p></li>
+<li><p><strong>版本</strong>: 0.7.2</p></li>
+<li><p><strong>生成日期</strong>: 2026-04-05</p></li>
 <li><p><strong>作者</strong>: Quantum Misaka with Trae SOLO</p></li>
 </ul>
+<hr class="docutils" />
+<section id="read-first">
+<h2>0. 开发者快速入口 (Read First)<a class="headerlink" href="#read-first" title="Link to this heading">#</a></h2>
+<p>如果你只需要在最短时间内建立项目心智模型，请先读 <code class="docutils literal notranslate"><span class="pre">AGENTS.md</span></code>。如果你需要完整的开发规范、工程契约、流程边界与提交前验证，请继续阅读本页。</p>
+<p>建议阅读顺序：</p>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">AGENTS.md</span></code>：项目最小入口</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">docs/guides/developer-guide.md</span></code>：开发主手册</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">docs/guides/cli.md</span></code>：CLI 契约与输出边界</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">docs/guides/configuration.md</span></code>：配置与路径约定</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">docs/guides/docs-governance-quickstart.md</span></code>：文档治理最小闭环</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">examples/recipes/README.md</span></code>：配置模板与示例入口</p></li>
+</ol>
+</section>
 <hr class="docutils" />
 <section id="overview">
 <h2>1. 项目概述 (Overview)<a class="headerlink" href="#overview" title="Link to this heading">#</a></h2>
@@ -974,19 +1007,111 @@ document.write(`
 </li>
 </ol>
 </section>
+<section id="core-engineering-contracts">
+<h3>1.5 核心工程契约 (Core Engineering Contracts)<a class="headerlink" href="#core-engineering-contracts" title="Link to this heading">#</a></h3>
+<p>以下契约是开发 DP-EVA 时应优先遵守的项目级约束。<code class="docutils literal notranslate"><span class="pre">AGENTS.md</span></code> 只保留其超短摘要，而本节负责承接开发者所需的解释与落点。</p>
+<section id="id4">
+<h4>1.5.1 配置中心化<a class="headerlink" href="#id4" title="Link to this heading">#</a></h4>
+<ul class="simple">
+<li><p>配置、默认值与约束以 <code class="docutils literal notranslate"><span class="pre">src/dpeva/config.py</span></code> 为中心。</p></li>
+<li><p>字段查表与类型说明以 <code class="docutils literal notranslate"><span class="pre">API</span> <span class="pre">Reference</span></code> 为准。</p></li>
+<li><p>校验补充与跨字段约束以 <code class="docutils literal notranslate"><span class="pre">docs/reference/validation.md</span></code> 为准。</p></li>
+</ul>
+</section>
+<section id="id5">
+<h4>1.5.2 路径显式解析<a class="headerlink" href="#id5" title="Link to this heading">#</a></h4>
+<ul class="simple">
+<li><p>配置中的相对路径按配置文件所在目录解析，而不是按当前 shell 工作目录解析。</p></li>
+<li><p>该语义由 <code class="docutils literal notranslate"><span class="pre">src/dpeva/utils/config.py</span></code> 统一承接。</p></li>
+<li><p>编写 recipes 和指南时，应优先使用相对路径并避免环境绑定写法。</p></li>
+</ul>
+</section>
+<section id="id6">
+<h4>1.5.3 工作流独立可执行<a class="headerlink" href="#id6" title="Link to this heading">#</a></h4>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">train</span> <span class="pre">/</span> <span class="pre">infer</span> <span class="pre">/</span> <span class="pre">feature</span> <span class="pre">/</span> <span class="pre">collect</span> <span class="pre">/</span> <span class="pre">label</span> <span class="pre">/</span> <span class="pre">analysis</span> <span class="pre">/</span> <span class="pre">clean</span></code> 都是正式 CLI 入口。</p></li>
+<li><p>各工作流可以独立启动，但高频能力应复用共享底层模块，而不是在 workflow 中复制逻辑。</p></li>
+<li><p>对外行为边界以 <code class="docutils literal notranslate"><span class="pre">docs/guides/cli.md</span></code> 与 <code class="docutils literal notranslate"><span class="pre">examples/recipes/README.md</span></code> 为准。</p></li>
+</ul>
+</section>
+<section id="id7">
+<h4>1.5.4 执行入口与导出入口分离<a class="headerlink" href="#id7" title="Link to this heading">#</a></h4>
+<ul class="simple">
+<li><p>实际执行主链路以 <code class="docutils literal notranslate"><span class="pre">src/dpeva/cli.py</span> <span class="pre">-&gt;</span> <span class="pre">src/dpeva/workflows/*.py</span></code> 为准。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">src/dpeva/workflows/__init__.py</span></code> 只承担命名空间导出，不承担业务接线职责。</p></li>
+<li><p>审查“功能是否真正接入”时，应以可追溯调用链为证据，而不是只看导出关系。</p></li>
+</ul>
+</section>
+<section id="id8">
+<h4>1.5.5 对外契约联动更新<a class="headerlink" href="#id8" title="Link to this heading">#</a></h4>
+<ul class="simple">
+<li><p>CLI、配置字段、输出目录、日志锚点、完成标记、<code class="docutils literal notranslate"><span class="pre">examples/recipes/</span></code> 的变化，必须在同一 PR 同步更新文档。</p></li>
+<li><p>涉及接口或流程变更时，至少同步检查 <code class="docutils literal notranslate"><span class="pre">developer-guide.md</span></code>、<code class="docutils literal notranslate"><span class="pre">cli.md</span></code>、<code class="docutils literal notranslate"><span class="pre">configuration.md</span></code>、<code class="docutils literal notranslate"><span class="pre">examples/recipes/README.md</span></code> 与相关 reference/policy 文档。</p></li>
+</ul>
+</section>
+<section id="id9">
+<h4>1.5.6 数据格式约束<a class="headerlink" href="#id9" title="Link to this heading">#</a></h4>
+<ul class="simple">
+<li><p>多数工作流默认面向 <code class="docutils literal notranslate"><span class="pre">dpdata</span></code> 兼容数据组织。</p></li>
+<li><p>上游软件分工与依赖职责以 <code class="docutils literal notranslate"><span class="pre">docs/reference/upstream-software.md</span></code> 为准。</p></li>
+</ul>
+</section>
+</section>
+<section id="lifecycle-and-gates">
+<h3>1.6 文档生命周期与质量门禁 (Lifecycle and Gates)<a class="headerlink" href="#lifecycle-and-gates" title="Link to this heading">#</a></h3>
+<p>本节承接 <code class="docutils literal notranslate"><span class="pre">AGENTS.md</span></code> 中不再展开的开发规范性内容，给出开发者视角的最小执行框架。</p>
+<section id="id10">
+<h4>1.6.1 过程资产放置规则<a class="headerlink" href="#id10" title="Link to this heading">#</a></h4>
+<ul class="simple">
+<li><p>审阅结论放 <code class="docutils literal notranslate"><span class="pre">docs/reports/</span></code>，命名为 <code class="docutils literal notranslate"><span class="pre">YYYY-MM-DD-Code-Review-&lt;Topic&gt;.md</span></code></p></li>
+<li><p>收敛计划放 <code class="docutils literal notranslate"><span class="pre">docs/plans/</span></code>，命名为 <code class="docutils literal notranslate"><span class="pre">YYYY-MM-DD-&lt;Feature&gt;-Plan.md</span></code></p></li>
+<li><p>执行期草案默认放 <code class="docutils literal notranslate"><span class="pre">.trae/documents/</span></code>，仅在稳定后迁入 <code class="docutils literal notranslate"><span class="pre">docs/plans/</span></code> 或 <code class="docutils literal notranslate"><span class="pre">docs/reports/</span></code></p></li>
+<li><p>任务闭环后归档到 <code class="docutils literal notranslate"><span class="pre">docs/archive/vX.Y.Z/{plans,reports}/</span></code>，并更新对应索引</p></li>
+</ul>
+</section>
+<section id="id11">
+<h4>1.6.2 文档联动要求<a class="headerlink" href="#id11" title="Link to this heading">#</a></h4>
+<ul class="simple">
+<li><p>增删改 <code class="docutils literal notranslate"><span class="pre">.md</span></code> 时，必须检查 <code class="docutils literal notranslate"><span class="pre">docs/source/</span></code> 的 Sphinx 索引与引用，避免失效 <code class="docutils literal notranslate"><span class="pre">toctree</span></code></p></li>
+<li><p>文档治理细则以 <code class="docutils literal notranslate"><span class="pre">docs/guides/process-asset-lifecycle.md</span></code>、<code class="docutils literal notranslate"><span class="pre">docs/policy/contributing.md</span></code>、<code class="docutils literal notranslate"><span class="pre">docs/policy/maintenance.md</span></code> 为准</p></li>
+<li><p>首次参与贡献时，建议先阅读 <code class="docutils literal notranslate"><span class="pre">docs/guides/docs-governance-quickstart.md</span></code></p></li>
+</ul>
+</section>
+<section id="id12">
+<h4>1.6.3 提交前质量门禁<a class="headerlink" href="#id12" title="Link to this heading">#</a></h4>
+<ul class="simple">
+<li><p>代码质量：<code class="docutils literal notranslate"><span class="pre">ruff</span> <span class="pre">check</span> <span class="pre">src</span> <span class="pre">tests</span> <span class="pre">scripts</span></code></p></li>
+<li><p>单元测试优先：<code class="docutils literal notranslate"><span class="pre">pytest</span> <span class="pre">tests/unit</span></code></p></li>
+<li><p>文档治理：<code class="docutils literal notranslate"><span class="pre">python3</span> <span class="pre">scripts/doc_check.py</span></code></p></li>
+<li><p>文档新鲜度：<code class="docutils literal notranslate"><span class="pre">python3</span> <span class="pre">scripts/check_docs_freshness.py</span> <span class="pre">--days</span> <span class="pre">90</span></code></p></li>
+<li><p>Sphinx 构建：<code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">-C</span> <span class="pre">docs</span> <span class="pre">html</span> <span class="pre">SPHINXOPTS=&quot;-W</span> <span class="pre">--keep-going&quot;</span></code></p></li>
+</ul>
+</section>
+<section id="agents">
+<h4>1.6.4 AGENTS 与开发文档的治理边界<a class="headerlink" href="#agents" title="Link to this heading">#</a></h4>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">AGENTS.md</span></code> 只承担项目开发最小入口职责，用于帮助 AI 与人类开发者快速建立项目心智模型。</p></li>
+<li><p>若某项内容可以在本页完整说明，就不应继续保留在 <code class="docutils literal notranslate"><span class="pre">AGENTS.md</span></code> 中；<code class="docutils literal notranslate"><span class="pre">AGENTS.md</span></code> 不再充当第二份开发手册。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">.trae/rules/project_rules.md</span></code> 负责 AI 行为规则，不应在 <code class="docutils literal notranslate"><span class="pre">AGENTS.md</span></code> 中重复。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">docs/reference/*</span></code> 负责字段字典与校验正文，不应在 <code class="docutils literal notranslate"><span class="pre">AGENTS.md</span></code> 或本页中重复复制。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">docs/guides/*</span></code>、<code class="docutils literal notranslate"><span class="pre">docs/policy/*</span></code>、<code class="docutils literal notranslate"><span class="pre">docs/governance/*</span></code> 负责完整流程与治理细则，<code class="docutils literal notranslate"><span class="pre">AGENTS.md</span></code> 只保留跳转与最小摘要。</p></li>
+</ul>
+</section>
+</section>
 </section>
 <hr class="docutils" />
 <section id="architecture">
 <h2>2. 系统架构 (Architecture)<a class="headerlink" href="#architecture" title="Link to this heading">#</a></h2>
-<section id="id4">
-<h3>2.1 目录结构<a class="headerlink" href="#id4" title="Link to this heading">#</a></h3>
+<section id="id13">
+<h3>2.1 目录结构<a class="headerlink" href="#id13" title="Link to this heading">#</a></h3>
 <p>项目代码组织在 <code class="docutils literal notranslate"><span class="pre">src/dpeva</span></code> 包下，结构清晰：</p>
 <div class="highlight-text notranslate"><div class="highlight"><pre><span></span>dpeva/
-├── examples/recipes/       # [API范例] Python 调用示例 (Recipes)
-│   ├── training/           # 训练脚本范例
-│   ├── inference/          # 推理脚本范例
-│   ├── collection/         # 采集脚本范例
+├── examples/recipes/       # [配置模板] 各工作流 JSON 配置示例
+│   ├── training/           # 训练配置模板
+│   ├── inference/          # 推理配置模板
+│   ├── collection/         # 采集配置模板
 │   └── ...
+├── examples/scripts/       # [脚本示例] Python / Shell 调用示例
 ├── scripts/                # [项目维护] 自动化与 CI/CD 脚本 (CI/CD, Release, Audit)
 │   ├── gate.sh             # 质量门禁入口
 │   ├── audit.py            # 代码静态分析工具
@@ -1002,20 +1127,19 @@ document.write(`
 │   │   ├── train.py        # 训练工作流 (TrainingWorkflow)
 │   │   ├── infer.py        # 推理与分析工作流 (InferenceWorkflow)
 │   │   ├── collect.py      # 数据采集工作流 (CollectionWorkflow) - 现已重构为编排器
-│   │   └── feature.py      # 特征生成工作流 (FeatureWorkflow)
-│   ├── services/           # [服务层] (概念上) 领域逻辑服务
-│   │   ├── io.collection   # 数据IO服务 (CollectionIOManager)
-│   │   ├── uncertain.manager # UQ编排服务 (UQManager)
-│   │   └── sampling.manager  # 采样编排服务 (SamplingManager)
+│   │   ├── feature.py      # 特征生成工作流 (FeatureWorkflow)
+│   │   ├── labeling.py     # 标注工作流 (LabelingWorkflow)
+│   │   └── data_cleaning.py # 数据清洗工作流 (DataCleaningWorkflow)
 │   ├── training/           # 训练模块 (ParallelTrainer)
 │   ├── inference/          # 推理模块 (StatsCalculator, Visualizer)
 │   ├── uncertain/          # 不确定度模块 (UQCalculator, UQFilter, Visualizer)
 │   ├── sampling/           # 采样模块 (DIRECT, PCA, Clustering)
 │   ├── feature/            # 特征生成模块 (DescriptorGenerator)
+│   ├── labeling/           # 标注模块 (Generator, Strategy, Postprocess, Integration)
 │   ├── submission/         # 任务提交抽象层 (JobManager, JobConfig, Templates)
-│   ├── io/                 # 数据读写辅助 (DPTestResultParser, PredictionData, types)
+│   ├── io/                 # 数据读写辅助 (DPTestResultParser, PredictionData, CollectionIOManager 等)
 │   └── utils/              # 通用工具
-└── test/                   # [开发专用] 单元测试与回归测试脚本
+└── tests/                  # [开发专用] 单元测试与集成测试
 </pre></div>
 </div>
 </section>
@@ -1074,8 +1198,8 @@ document.write(`
     %% Optional if no another TargetPool
     OtherPool --&gt;|Next Cycle| TargetPool
     </pre></section>
-<section id="id5">
-<h3>2.3 包级导出层与主链路入口边界<a class="headerlink" href="#id5" title="Link to this heading">#</a></h3>
+<section id="id14">
+<h3>2.3 包级导出层与主链路入口边界<a class="headerlink" href="#id14" title="Link to this heading">#</a></h3>
 <p>为避免“模块存在但未接入主链路”的认知偏差，开发时需区分两类入口：</p>
 <ul class="simple">
 <li><p><strong>主链路入口（Execution Entry）</strong>：由 <code class="docutils literal notranslate"><span class="pre">dpeva.cli</span></code> 子命令分发到具体 workflow 模块（如 <code class="docutils literal notranslate"><span class="pre">dpeva.workflows.collect</span></code>）。</p></li>
@@ -1238,13 +1362,13 @@ dpeva<span class="w"> </span>--help
 </section>
 <section id="infer">
 <h4>4.1.2 推理与分析 (Infer)<a class="headerlink" href="#infer" title="Link to this heading">#</a></h4>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>dpeva<span class="w"> </span>infer<span class="w"> </span>config_test.json
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>dpeva<span class="w"> </span>infer<span class="w"> </span>config_infer.json
 </pre></div>
 </div>
 </section>
 <section id="collect">
 <h4>4.1.3 数据采集 (Collect)<a class="headerlink" href="#collect" title="Link to this heading">#</a></h4>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>dpeva<span class="w"> </span>collect<span class="w"> </span>config_collect.json
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>dpeva<span class="w"> </span>collect<span class="w"> </span>config_collect_normal.json
 </pre></div>
 </div>
 </section>
@@ -1259,6 +1383,19 @@ dpeva<span class="w"> </span>--help
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>dpeva<span class="w"> </span>analysis<span class="w"> </span>config_analysis.json
 </pre></div>
 </div>
+</section>
+<section id="label">
+<h4>4.1.6 标注 (Label)<a class="headerlink" href="#label" title="Link to this heading">#</a></h4>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>dpeva<span class="w"> </span>label<span class="w"> </span>config_label.json
+dpeva<span class="w"> </span>label<span class="w"> </span>config_label.json<span class="w"> </span>--stage<span class="w"> </span>extract
+</pre></div>
+</div>
+</section>
+<section id="clean">
+<h4>4.1.7 数据清洗 (Clean)<a class="headerlink" href="#clean" title="Link to this heading">#</a></h4>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>dpeva<span class="w"> </span>clean<span class="w"> </span>config_clean_all_thresholds.json
+</pre></div>
+</div>
 <p><code class="docutils literal notranslate"><span class="pre">analysis</span></code> 支持两种模式：</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">model_test</span></code>：读取 <code class="docutils literal notranslate"><span class="pre">result_dir</span></code> 分析推理结果（默认）。</p></li>
@@ -1266,7 +1403,7 @@ dpeva<span class="w"> </span>--help
 </ul>
 </section>
 <section id="label-integration">
-<h4>4.1.6 标注后自动整合 (Label Integration)<a class="headerlink" href="#label-integration" title="Link to this heading">#</a></h4>
+<h4>4.1.8 标注后自动整合 (Label Integration)<a class="headerlink" href="#label-integration" title="Link to this heading">#</a></h4>
 <p>在 <code class="docutils literal notranslate"><span class="pre">label</span></code> 配置中启用 <code class="docutils literal notranslate"><span class="pre">integration_enabled=true</span></code> 后，工作流会在 <code class="docutils literal notranslate"><span class="pre">collect_and_export</span></code> 结束后自动执行数据整合：</p>
 <ul class="simple">
 <li><p>输入：<code class="docutils literal notranslate"><span class="pre">outputs/cleaned</span></code> + 可选 <code class="docutils literal notranslate"><span class="pre">existing_training_data_path</span></code></p></li>
@@ -1278,7 +1415,7 @@ dpeva<span class="w"> </span>--help
 <section id="python-api-recipes">
 <h3>4.2 Python API (Recipes)<a class="headerlink" href="#python-api-recipes" title="Link to this heading">#</a></h3>
 <p>对于需要动态生成配置或集成到复杂 Python 流程中的场景，可以直接调用 <code class="docutils literal notranslate"><span class="pre">dpeva.workflows</span></code> 中的 Workflow 类。
-示例脚本位于 <code class="docutils literal notranslate"><span class="pre">examples/recipes/</span></code> 目录下。</p>
+可执行示例脚本位于 <code class="docutils literal notranslate"><span class="pre">examples/scripts/</span></code>，而 <code class="docutils literal notranslate"><span class="pre">examples/recipes/</span></code> 主要保存 JSON 配置模板。</p>
 <p><strong>示例 (Training)</strong>:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">dpeva.workflows.train</span><span class="w"> </span><span class="kn">import</span> <span class="n">TrainingWorkflow</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dpeva.utils.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">resolve_config_paths</span>
@@ -1295,42 +1432,42 @@ dpeva<span class="w"> </span>--help
 </pre></div>
 </div>
 </section>
-<section id="id6">
-<h3>4.3 配置参数说明<a class="headerlink" href="#id6" title="Link to this heading">#</a></h3>
+<section id="id15">
+<h3>4.3 配置参数说明<a class="headerlink" href="#id15" title="Link to this heading">#</a></h3>
 <p>详细的输入参数定义、类型约束及验证规则，请参阅 API 文档：</p>
 <ul class="simple">
-<li><p><strong>参数列表</strong>: <a class="reference external" href="https://github.com/QuantumMisaka/dpeva/blob/main/docs/source/api/config.rst">config.rst</a></p></li>
-<li><p><strong>验证规则</strong>: <a class="reference external" href="https://github.com/QuantumMisaka/dpeva/blob/main/docs/reference/validation.md">validation.md</a></p></li>
+<li><p><strong>参数列表</strong>: <code class="docutils literal notranslate"><span class="pre">API</span> <span class="pre">Reference</span></code>（Sphinx 生成的配置字段文档）</p></li>
+<li><p><strong>验证规则</strong>: <code class="docutils literal notranslate"><span class="pre">docs/reference/validation.md</span></code></p></li>
 </ul>
 <p>以下仅展示标准 JSON 配置文件的基本结构概览。</p>
 <section id="train-config">
 <h4>4.3.1 训练配置 (Train Config)<a class="headerlink" href="#train-config" title="Link to this heading">#</a></h4>
 <p><strong>参考文件</strong>: <code class="docutils literal notranslate"><span class="pre">examples/recipes/training/config_train.json</span></code></p>
 <div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
-<span class="w">    </span><span class="nt">&quot;project&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;./training_task&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;base_model_path&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;frozen_model.pb&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;work_dir&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;./training_task&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;base_model_path&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;DPA-3.1-3M.pt&quot;</span><span class="p">,</span>
 <span class="w">    </span><span class="nt">&quot;num_models&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">4</span><span class="p">,</span>
 <span class="w">    </span><span class="nt">&quot;training_mode&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;cont&quot;</span><span class="p">,</span>
 <span class="w">    </span><span class="nt">&quot;model_head&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ferro&quot;</span><span class="p">,</span>
 <span class="w">    </span><span class="nt">&quot;input_json_path&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;input.json&quot;</span><span class="p">,</span>
 <span class="w">    </span><span class="nt">&quot;training_data_path&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;data&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;omp_threads&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">4</span><span class="p">,</span>
 <span class="w">    </span><span class="nt">&quot;submission&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="nt">&quot;backend&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;local&quot;</span><span class="p">,</span>
-<span class="w">        </span><span class="nt">&quot;omp_threads&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">4</span>
+<span class="w">        </span><span class="nt">&quot;backend&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;local&quot;</span>
 <span class="w">    </span><span class="p">}</span>
 <span class="p">}</span>
 </pre></div>
 </div>
 </section>
-<section id="id7">
-<h4>4.3.2 其他配置<a class="headerlink" href="#id7" title="Link to this heading">#</a></h4>
+<section id="id16">
+<h4>4.3.2 其他配置<a class="headerlink" href="#id16" title="Link to this heading">#</a></h4>
 <p>请参考 <code class="docutils literal notranslate"><span class="pre">examples/recipes/</span></code> 目录下的示例文件以及上述 API 文档。</p>
 </section>
 </section>
 <hr class="docutils" />
 <section id="uq">
 <h3>4.4 UQ 与采样配置要点<a class="headerlink" href="#uq" title="Link to this heading">#</a></h3>
-<p>本节补充 UQ 与采样相关的关键配置语义；完整字段列表与约束以 <code class="docutils literal notranslate"><span class="pre">/docs/reference/*</span></code> 为准。</p>
+<p>本节补充 UQ 与采样相关的关键配置语义；完整字段列表与约束以 Reference 文档为准。</p>
 <section id="uq-trust-mode">
 <h4>4.4.1 <code class="docutils literal notranslate"><span class="pre">uq_trust_mode</span></code> 配置说明<a class="headerlink" href="#uq-trust-mode" title="Link to this heading">#</a></h4>
 <ul class="simple">
@@ -1340,8 +1477,8 @@ dpeva<span class="w"> </span>--help
 </ul>
 <p>参考：</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">/docs/source/api/config.rst</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">/docs/reference/validation.md</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">API</span> <span class="pre">Reference</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">docs/reference/validation.md</span></code></p></li>
 </ul>
 </section>
 <section id="auto-uq-uq-auto-bounds">
@@ -1349,20 +1486,20 @@ dpeva<span class="w"> </span>--help
 <p>Auto-UQ 用于根据数据分布自动确定筛选边界；具体的字段与约束以 Reference 文档为准，并在后续迭代中建议沉淀为独立章节以避免与算法实现脱节。</p>
 <p>参考：</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">/docs/source/api/config.rst</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">/docs/reference/validation.md</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">API</span> <span class="pre">Reference</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">docs/reference/validation.md</span></code></p></li>
 </ul>
 </section>
 <section id="sampling">
 <h4>4.4.3 采样参数说明 (Sampling)<a class="headerlink" href="#sampling" title="Link to this heading">#</a></h4>
 <p>采样相关参数（DIRECT/2-direct/joint 等）属于收集工作流的核心可调维度，建议：</p>
 <ul class="simple">
-<li><p>只在 <code class="docutils literal notranslate"><span class="pre">/docs/source/api/config.rst</span></code> 维护字段字典与默认值</p></li>
+<li><p>只在 <code class="docutils literal notranslate"><span class="pre">API</span> <span class="pre">Reference</span></code> 中维护字段字典与默认值</p></li>
 <li><p>在指南中仅描述“如何选择参数组”的经验规则，并引用对应字段</p></li>
 </ul>
 <p>参考：</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">/docs/source/api/config.rst</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">API</span> <span class="pre">Reference</span></code></p></li>
 </ul>
 </section>
 <section id="collection-enable-diagnostic-plots">
@@ -1383,8 +1520,8 @@ dpeva<span class="w"> </span>--help
 </section>
 <section id="development">
 <h2>5. 开发与测试 (Development)<a class="headerlink" href="#development" title="Link to this heading">#</a></h2>
-<section id="id8">
-<h3>5.1 代码规范<a class="headerlink" href="#id8" title="Link to this heading">#</a></h3>
+<section id="id17">
+<h3>5.1 代码规范<a class="headerlink" href="#id17" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p><strong>日志</strong>: 禁止在 <code class="docutils literal notranslate"><span class="pre">src/dpeva</span></code> 库文件中调用 <code class="docutils literal notranslate"><span class="pre">logging.basicConfig()</span></code>。仅在 <code class="docutils literal notranslate"><span class="pre">runner</span></code> 脚本中配置全局日志。</p></li>
 <li><p><strong>路径</strong>: 所有文件操作应使用绝对路径 (<code class="docutils literal notranslate"><span class="pre">os.path.abspath</span></code>)。</p></li>
@@ -1393,8 +1530,8 @@ dpeva<span class="w"> </span>--help
 <li><p><strong>变量命名</strong>: 统一输入数据路径变量名为 <code class="docutils literal notranslate"><span class="pre">data_path</span></code> (Feature/Inference Workflow)。</p></li>
 </ul>
 </section>
-<section id="id9">
-<h3>5.2 验证测试<a class="headerlink" href="#id9" title="Link to this heading">#</a></h3>
+<section id="id18">
+<h3>5.2 验证测试<a class="headerlink" href="#id18" title="Link to this heading">#</a></h3>
 <p>在开发阶段，你可以通过<code class="docutils literal notranslate"><span class="pre">conda</span> <span class="pre">activate</span> <span class="pre">dpeva-dev</span></code> 加载所需环境，并在项目目录下运行 <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">--upgrade</span> <span class="pre">.</span></code> 更新开发依赖，确保测试环境与开发环境保持一致。</p>
 <p>用户自行开展单元测试时，需要自行配置好 Python 环境，确保 <code class="docutils literal notranslate"><span class="pre">dpeva</span></code> 命令在环境内并处于最新状态，且 <code class="docutils literal notranslate"><span class="pre">pytest</span></code> 已安装。</p>
 <ul>
@@ -1477,18 +1614,35 @@ A: 这是预期行为。在联合模式下，<code class="docutils literal notra
 </li>
 <li><p><strong>当前纪元 (Current Era)</strong>：</p>
 <ul class="simple">
-<li><p>当前主版本系列（v0.4.x）必须保持<strong>完整</strong>的记录链条。</p></li>
+<li><p>当前主版本系列（v0.7.x）必须保持<strong>完整</strong>的记录链条。</p></li>
 <li><p><strong>追加式记录 (Append-only)</strong>：新版本记录应始终添加在列表顶部，严禁覆盖或修改旧版本的历史条目。</p></li>
 <li><p><strong>中间版本找回</strong>：若因误操作导致记录丢失，必须基于 git log 进行回溯与补全。</p></li>
 </ul>
 </li>
 </ol>
 </section>
-<section id="id10">
-<h3>6.2 版本历史<a class="headerlink" href="#id10" title="Link to this heading">#</a></h3>
+<section id="release-helper">
+<h3>6.1.1 Release Helper 使用约定<a class="headerlink" href="#release-helper" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">scripts/release_helper.py</span></code> 只负责同步 <code class="docutils literal notranslate"><span class="pre">src/dpeva/__init__.py</span></code> 与 <code class="docutils literal notranslate"><span class="pre">README.md</span></code> 中的版本号。</p></li>
+<li><p>发布说明的权威写入位置始终是本文件的 <code class="docutils literal notranslate"><span class="pre">###</span> <span class="pre">6.2</span> <span class="pre">版本历史</span></code>，脚本不会自动追加版本条目。</p></li>
+<li><p>使用脚本完成版本号更新后，必须手动在 <code class="docutils literal notranslate"><span class="pre">####</span> <span class="pre">Current</span> <span class="pre">Era</span> <span class="pre">(v0.7.x)</span></code> 顶部追加新版本记录，再执行提交与打 tag。</p></li>
+</ul>
+</section>
+<section id="id19">
+<h3>6.2 版本历史<a class="headerlink" href="#id19" title="Link to this heading">#</a></h3>
 <section id="current-era-v0-7-x">
 <h4><strong>Current Era (v0.7.x)</strong><a class="headerlink" href="#current-era-v0-7-x" title="Link to this heading">#</a></h4>
 <ul class="simple">
+<li><p><strong>v0.7.2</strong> (2026-04-05):</p>
+<ul>
+<li><p><strong>[测试]</strong> 围绕核心功能模块开展单元测试集中攻坚，补强 <code class="docutils literal notranslate"><span class="pre">labeling/postprocess</span></code>、<code class="docutils literal notranslate"><span class="pre">analysis/managers</span></code>、<code class="docutils literal notranslate"><span class="pre">inference/managers</span></code>、<code class="docutils literal notranslate"><span class="pre">workflows/feature</span></code> 与 <code class="docutils literal notranslate"><span class="pre">workflows/labeling</span></code> 的关键正向、异常与边界分支覆盖。</p></li>
+<li><p><strong>[质量]</strong> 修复 <code class="docutils literal notranslate"><span class="pre">test_analysis_workflow.py</span></code> 中因缩进导致的隐藏未收集测试，清理空测试并将共享随机 fixture 固定为确定性生成，降低测试波动性。</p></li>
+<li><p><strong>[CI/CD]</strong> 为单元测试接入覆盖率门禁与 <code class="docutils literal notranslate"><span class="pre">coverage-unit.json</span></code> 产物上传，当前单测回归为 <code class="docutils literal notranslate"><span class="pre">373</span> <span class="pre">passed</span></code>，总覆盖率提升至 <code class="docutils literal notranslate"><span class="pre">83.92%</span></code>。</p></li>
+<li><p><strong>[文档]</strong> 新增单元测试专项审查报告与集中攻坚计划，沉淀覆盖率短板、整改路径与回归验证基线。</p></li>
+<li><p><strong>[发布]</strong> 版本升级至 <code class="docutils literal notranslate"><span class="pre">0.7.2</span></code>，同步 <code class="docutils literal notranslate"><span class="pre">__init__</span></code>、<code class="docutils literal notranslate"><span class="pre">README</span></code>、Sphinx <code class="docutils literal notranslate"><span class="pre">conf.py</span></code> 与开发文档中的版本标识。</p></li>
+</ul>
+</li>
 <li><p><strong>v0.7.1</strong> (2026-04-01):</p>
 <ul>
 <li><p><strong>[特性]</strong> 提升 Parity Plots 可读性：全局基础字号由 12 增大至 16，同步调大统计框 (Stats Box) 字号。</p></li>
@@ -1734,8 +1888,8 @@ A: 这是预期行为。在联合模式下，<code class="docutils literal notra
 </li>
 </ul>
 </section>
-<section id="id11">
-<h4><strong>Legacy Era (v2.x)</strong><a class="headerlink" href="#id11" title="Link to this heading">#</a></h4>
+<section id="id20">
+<h4><strong>Legacy Era (v2.x)</strong><a class="headerlink" href="#id20" title="Link to this heading">#</a></h4>
 <p><em>(2026-01-28 ~ 2026-02-14)</em></p>
 <p>在此阶段，项目完成了从单一脚本到模块化架构的蜕变。主要成就包括：</p>
 <ul class="simple">
@@ -1792,6 +1946,7 @@ A: 这是预期行为。在联合模式下，<code class="docutils literal notra
   </div>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#read-first">0. 开发者快速入口 (Read First)</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#overview">1. 项目概述 (Overview)</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">1.1 项目简介</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#the-zen-of-dp-eva">1.2 核心哲学 (The Zen of DP-EVA)</a><ul class="nav section-nav flex-column">
@@ -1801,12 +1956,28 @@ A: 这是预期行为。在联合模式下，<code class="docutils literal notra
 </li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#roadmap">1.3 优化方向与路线图 (Roadmap)</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#development-process-standard">1.4 开发流程标准 (Development Process Standard)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core-engineering-contracts">1.5 核心工程契约 (Core Engineering Contracts)</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">1.5.1 配置中心化</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">1.5.2 路径显式解析</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">1.5.3 工作流独立可执行</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">1.5.4 执行入口与导出入口分离</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id8">1.5.5 对外契约联动更新</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id9">1.5.6 数据格式约束</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lifecycle-and-gates">1.6 文档生命周期与质量门禁 (Lifecycle and Gates)</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id10">1.6.1 过程资产放置规则</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id11">1.6.2 文档联动要求</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id12">1.6.3 提交前质量门禁</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#agents">1.6.4 AGENTS 与开发文档的治理边界</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#architecture">2. 系统架构 (Architecture)</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">2.1 目录结构</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id13">2.1 目录结构</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#data-flow">2.2 数据流图 (Data Flow)</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">2.3 包级导出层与主链路入口边界</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id14">2.3 包级导出层与主链路入口边界</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#modules">3. 核心模块详解 (Modules)</a><ul class="nav section-nav flex-column">
@@ -1825,13 +1996,15 @@ A: 这是预期行为。在联合模式下，<code class="docutils literal notra
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#collect">4.1.3 数据采集 (Collect)</a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#feature">4.1.4 特征生成 (Feature)</a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#analysis">4.1.5 分析 (Analysis)</a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#label-integration">4.1.6 标注后自动整合 (Label Integration)</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#label">4.1.6 标注 (Label)</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#clean">4.1.7 数据清洗 (Clean)</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#label-integration">4.1.8 标注后自动整合 (Label Integration)</a></li>
 </ul>
 </li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#python-api-recipes">4.2 Python API (Recipes)</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">4.3 配置参数说明</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id15">4.3 配置参数说明</a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#train-config">4.3.1 训练配置 (Train Config)</a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">4.3.2 其他配置</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id16">4.3.2 其他配置</a></li>
 </ul>
 </li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#uq">4.4 UQ 与采样配置要点</a><ul class="nav section-nav flex-column">
@@ -1844,19 +2017,20 @@ A: 这是预期行为。在联合模式下，<code class="docutils literal notra
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#development">5. 开发与测试 (Development)</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id8">5.1 代码规范</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id9">5.2 验证测试</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id17">5.1 代码规范</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id18">5.2 验证测试</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#faq">5.3 常见问题 (FAQ)</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow-monitoring">5.4 工作流监控标准 (Workflow Monitoring)</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#revision-history">6. 版本修订记录 (Revision History)</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#maintenance-policy">6.1 维护策略 (Maintenance Policy)</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id10">6.2 版本历史</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#release-helper">6.1.1 Release Helper 使用约定</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id19">6.2 版本历史</a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#current-era-v0-7-x"><strong>Current Era (v0.7.x)</strong></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#legacy-era-v0-4-x"><strong>Legacy Era (v0.4.x)</strong></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#legacy-era-v2-x"><strong>Legacy Era (v2.x)</strong></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id11"><strong>Legacy Era (v2.x)</strong></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id20"><strong>Legacy Era (v2.x)</strong></a></li>
 </ul>
 </li>
 </ul>
