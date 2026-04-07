@@ -17,6 +17,21 @@ from dpeva.submission.manager import JobManager
 from dpeva.submission.templates import JobConfig
 from dpeva.utils.logs import setup_workflow_logger, close_workflow_logger
 
+
+def _set_config_path_if_missing(config, config_path, logger):
+    if not config_path or getattr(config, "config_path", None) is not None:
+        return
+    try:
+        config.config_path = config_path
+    except (AttributeError, TypeError, ValueError) as exc:
+        logger.warning(
+            "Failed to attach config_path=%s to AnalysisWorkflow config: %s: %s",
+            config_path,
+            exc.__class__.__name__,
+            exc,
+        )
+
+
 class AnalysisWorkflow:
     """
     Workflow for analyzing DeepMD test results.
@@ -30,17 +45,14 @@ class AnalysisWorkflow:
         Args:
             config: AnalysisConfig object or dictionary.
         """
+        self.logger = logging.getLogger(__name__)
         if isinstance(config, dict):
             if config_path and "config_path" not in config:
                 config["config_path"] = config_path
             self.config = AnalysisConfig(**config)
         else:
             self.config = config
-            if config_path and self.config.config_path is None:
-                try:
-                    self.config.config_path = config_path
-                except Exception:
-                    pass
+            _set_config_path_if_missing(self.config, config_path, self.logger)
 
         self.config_path = str(self.config.config_path) if self.config.config_path else None
         env_backend = os.environ.get("DPEVA_INTERNAL_BACKEND")
@@ -49,8 +61,7 @@ class AnalysisWorkflow:
         else:
             self.backend = self.config.submission.backend
         self.slurm_config = self.config.submission.slurm_config
-            
-        self.logger = logging.getLogger(__name__)
+
         self.io_manager = AnalysisIOManager(str(self.config.output_dir))
         self.analysis_manager = UnifiedAnalysisManager(
             ref_energies=self.config.ref_energies,

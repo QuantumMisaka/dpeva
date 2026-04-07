@@ -1,0 +1,5 @@
+- [x] `get_collection_pca_scatter_profile` uses updated scales (1.73, 1.65, 1.57, 1.90)
+- [x] `_plot_joint_multipool_summary` returns early when `len(unique_pools) <= 1`
+- [x] `_run_sampling_phase` in `collect.py` logs `Final_sampled_PCAview_by_pool` as generated only when `use_joint and is_multipool` is true
+- [x] `_run_sampling_phase` in `collect.py` logs the plot as skipped with reason `single_pool_detected` when `use_joint` is true but `is_multipool` is false
+- [x] Unit tests pass after modifications

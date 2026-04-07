@@ -2,18 +2,18 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-03-30
+last-updated: 2026-04-05
 ---
 
 # Plans（开发计划）
 
 本页用于给 Sphinx 文档系统提供开发计划导航入口。计划的规范落盘位置仍然是 `docs/plans/`。
 
-## 当前关注主题
+## 当前状态
 
-- Enhanced Parity Plot 设计规划
-  - 核心内容：解释为何 `parity_cohesive_energy_enhanced` 与 `parity_force_enhanced` 在当前版本中出现明显视觉差异，并将这种差异沉淀为 quantity-aware 设计契约。
-  - 规范文档：`docs/plans/2026-03-30-enhanced-parity-plot-design-plan.md`
+- 当前正式计划以 `docs/plans/README.md` 为准。
+- 若无新增 active 计划，本页仅承担 Sphinx 导航占位，不重复维护计划正文。
+- 历史计划请查看 `docs/archive/v0.6.9/plans/README.md` 与 `docs/archive/v0.7.1/plans/README.md`。
 
 ## 维护说明
 

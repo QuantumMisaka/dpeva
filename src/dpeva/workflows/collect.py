@@ -25,14 +25,30 @@ from dpeva.io.collection import CollectionIOManager
 from dpeva.uncertain.manager import UQManager
 from dpeva.sampling.manager import SamplingManager
 
+
 def get_sys_name(dataname):
     """Extracts system name from data name."""
     return dataname.rsplit("-", 1)[0]
+
 
 def get_pool_name(sys_name):
     """Extracts pool name from system name."""
     d = os.path.dirname(sys_name)
     return d if d else "root"
+
+
+def _set_config_path_if_missing(config, config_path, logger):
+    if not config_path or getattr(config, "config_path", None) is not None:
+        return
+    try:
+        config.config_path = config_path
+    except (AttributeError, TypeError, ValueError) as exc:
+        logger.warning(
+            "Failed to attach config_path=%s to CollectionWorkflow config: %s: %s",
+            config_path,
+            exc.__class__.__name__,
+            exc,
+        )
 
 class CollectionWorkflow:
     """
@@ -60,11 +76,7 @@ class CollectionWorkflow:
             self.config = CollectionConfig(**config)
         else:
             self.config = config
-            if config_path and self.config.config_path is None:
-                try:
-                    self.config.config_path = config_path
-                except Exception:
-                    pass
+            _set_config_path_if_missing(self.config, config_path, self.logger)
                     
         self.config_path = str(self.config.config_path) if self.config.config_path else None
         
@@ -517,18 +529,28 @@ class CollectionWorkflow:
             layer="core",
             condition=f"use_joint={str(use_joint).lower()}",
         )
-        if use_joint:
+        
+        def pool_name_from_dataname(dataname):
+            sys_name = str(dataname).rsplit("-", 1)[0]
+            pool_name = os.path.dirname(sys_name)
+            return pool_name if pool_name else "root"
+            
+        pools = df_candidate["dataname"].apply(pool_name_from_dataname).unique()
+        is_multipool = len(pools) > 1
+
+        if use_joint and is_multipool:
             self._log_generated_plots(
                 ["Final_sampled_PCAview_by_pool"],
                 layer="core",
-                condition="use_joint=true",
+                condition="use_joint=true,multipool=true",
             )
         else:
+            reason = "joint_mode_disabled" if not use_joint else "single_pool_detected"
             self._log_skipped_plots(
-                "joint_mode_disabled",
+                reason,
                 ["Final_sampled_PCAview_by_pool"],
                 layer="core",
-                condition="use_joint=false",
+                condition=f"use_joint={str(use_joint).lower()},multipool={str(is_multipool).lower()}",
             )
         return df_final
 

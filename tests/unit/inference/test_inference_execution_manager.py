@@ -1,6 +1,7 @@
 
 import pytest
 from unittest.mock import patch
+
 from dpeva.inference.managers import InferenceExecutionManager
 
 class TestInferenceExecutionManager:
@@ -192,3 +193,78 @@ class TestInferenceExecutionManager:
 
         # Verify submit was called 2 times
         assert manager_local.job_manager.submit.call_count == 2
+
+    def test_submit_jobs_uses_default_env_setup_for_local_backend(self, manager_local, tmp_path):
+        work_dir = tmp_path / "work"
+        work_dir.mkdir()
+        model = work_dir / "model_0.pt"
+        model.touch()
+
+        manager_local.submit_jobs(
+            models_paths=[str(model)],
+            data_path=str(tmp_path / "data"),
+            work_dir=str(work_dir),
+            task_name="task",
+            head="head",
+            results_prefix="res",
+        )
+
+        job_config = manager_local.job_manager.generate_script.call_args[0][0]
+        assert job_config.env_setup == "export OMP_NUM_THREADS=4"
+
+    def test_submit_jobs_skips_missing_models_and_logs_warning(self, manager_local, tmp_path):
+        work_dir = tmp_path / "work"
+        work_dir.mkdir()
+        valid_model = work_dir / "model_0.pt"
+        valid_model.touch()
+        missing_model = work_dir / "model_1.pt"
+
+        with patch.object(manager_local.logger, "warning") as mock_warning:
+            manager_local.submit_jobs(
+                models_paths=[str(valid_model), str(missing_model)],
+                data_path=str(tmp_path / "data"),
+                work_dir=str(work_dir),
+                task_name="task",
+                head="head",
+                results_prefix="res",
+            )
+
+        assert manager_local.job_manager.generate_script.call_count == 1
+        assert manager_local.job_manager.submit.call_count == 1
+        mock_warning.assert_called_once()
+
+    def test_submit_jobs_without_task_name_uses_model_index_directory(self, manager_local, tmp_path):
+        work_dir = tmp_path / "work"
+        work_dir.mkdir()
+        model = work_dir / "model_0.pt"
+        model.touch()
+
+        manager_local.submit_jobs(
+            models_paths=[str(model)],
+            data_path=str(tmp_path / "data"),
+            work_dir=str(work_dir),
+            task_name="",
+            head="head",
+            results_prefix="res",
+        )
+
+        submit_kwargs = manager_local.job_manager.submit.call_args.kwargs
+        assert submit_kwargs["working_dir"] == str(work_dir / "0")
+
+    def test_submit_jobs_generates_local_shell_script(self, manager_local, tmp_path):
+        work_dir = tmp_path / "work"
+        work_dir.mkdir()
+        model = work_dir / "model_0.pt"
+        model.touch()
+
+        manager_local.submit_jobs(
+            models_paths=[str(model)],
+            data_path=str(tmp_path / "data"),
+            work_dir=str(work_dir),
+            task_name="task",
+            head="head",
+            results_prefix="res",
+        )
+
+        script_path = manager_local.job_manager.generate_script.call_args[0][1]
+        assert script_path.endswith("run_test.sh")

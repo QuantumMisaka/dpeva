@@ -26,7 +26,7 @@ last-updated: 2026-03-11
 
 权威字段定义：
 
-- ../source/api/config.rst
+- API Reference（Sphinx 生成的配置字段文档）
 - ../reference/validation.md
 
 ### 3.1 最小 Slurm 配置

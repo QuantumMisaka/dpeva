@@ -1,65 +1,26 @@
 ---
 alwaysApply: false
-description: 
+description: DP-EVA 项目开发最小入口
 ---
-# DP-EVA - Deep Potential EVolution Accelerator
+# DP-EVA
 
-DP-EVA is an active learning framework designed for efficient fine-tuning of DPA large atomistic model. It integrates uncertainty quantification (UQ), representative sampling (DIRECT), and automated DFT labeling workflows to minimize data annotation costs while maximizing model performance via fully unraveling the pre-trained knowledge.
+DP-EVA 是面向 DPA 大模型高效微调的主动学习框架。主链路由训练、推理、特征、采集、标注、分析、清洗等独立工作流构成，目标是在尽量降低数据标注成本的前提下提升模型性能。
 
-## Working Effectively
+本文件只保留项目开发的最小入口。详细规范、门禁、生命周期与架构说明统一进入 `docs/guides/developer-guide.md`。
 
-### Bootstrap and Install
+## Read First
 
-- **Install**: `pip install -e .[dev]` -- Installs package in editable mode with dev dependencies.
-- **External Dependencies**:
-  - `dp`: DeepMD-kit (Required for Train/Infer/Feature).
-  - `abacus`: ABACUS (Required for Labeling).
-  - `sbatch`: Slurm (Optional, for HPC submission).
-- **Verification**: `dpeva --help` -- Should return exit code 0.
+- 项目总入口：`docs/README.md`
+- 开发主手册：`docs/guides/developer-guide.md`
+- CLI 契约：`docs/guides/cli.md`
+- 配置与路径：`docs/guides/configuration.md`
+- 文档治理快速上手：`docs/guides/docs-governance-quickstart.md`
+- 配置模板：`examples/recipes/README.md`
 
-### Test Repository
+## Key Signals
 
-- **Unit Tests**: `pytest tests/unit` -- Fast, mocked tests. **Run this first.**
-- **Integration Tests**: `pytest tests/integration` -- Slower, requires real environment.
-- **Single Test**: `pytest tests/unit/utils/test_config_paths.py` -- Run specific test file.
-
-### Lint and Format
-
-- **Check**: `ruff check .`
-- **Format**: `ruff format .`
-- **Rule**: Always run linting/formatting before committing.
-
-### Build Documentation
-
-- **Build**: `cd docs && make html`
-- **Preview**: Open `docs/build/html/index.html`
-
-## Workflow Scenarios
-
-All workflow scenarios and CLI calling for core functionality can be found via documents, like `dp train`, `dp infer`, `dp collect`, etc. All json files example for each workflow should be in `examples/recipes/`.
-
-## Critical Notes
-
-- **Configuration**: DP-EVA uses strict Pydantic validation and integated variable management. See `src/dpeva/config.py` for definitive schema.
-- **Pathing**: Use absolute paths in configs to avoid ambiguity.
-- **Data**: Most workflows expect `dpdata` compatible formats.
-
-## Agent Documentation Protocol
-
-**All Agents MUST adhere to the following documentation lifecycle rules:**
-
-1. **Code Review Phase**:
-   - Create review reports in `docs/reports/` with naming `YYYY-MM-DD-Code-Review-<Topic>.md`.
-2. **Feature Planning Phase**:
-   - Create implementation plans/specs in `docs/plans/` with naming `YYYY-MM-DD-<Feature>-Plan.md`.
-   - Include `status: active` and `audience: developers` in front matter.
-3. **Task Completion & Archiving**:
-   - Upon feature completion or issue resolution, verify if the plan/report should be archived.
-   - Move completed plans to `docs/archive/vX.Y.Z/plans/`.
-   - Move completed reports to `docs/archive/vX.Y.Z/reports/`.
-   - Update the index file `docs/archive/vX.Y.Z/README.md` immediately.
-4. **Sphinx Indexing Requirement**:
-   - When adding/moving/deleting `.md` files, YOU MUST check and update the corresponding `.rst` files in `docs/source/`.
-   - Ensure `toctree` directives do not reference non-existent files.
-   - Run `make html` (if available) or verify paths manually to prevent broken builds.
-
+- 配置以 `src/dpeva/config.py` 与 Reference 为准
+- 主链路以 `src/dpeva/cli.py -> src/dpeva/workflows/*.py` 为准
+- 工作流可独立启动，但应共享底层模块，不在 workflow 层复制逻辑
+- 对外契约变化必须在同一 PR 同步更新文档与 `examples/recipes/`
+- 详细工程契约、文档生命周期与质量门禁统一进入 `docs/guides/developer-guide.md`

@@ -1,4 +1,7 @@
 from unittest.mock import patch
+import pytest
+
+from dpeva.utils.exceptions import WorkflowError
 from dpeva.workflows.feature import FeatureWorkflow
 
 def test_feature_workflow_cli_env(tmp_path):
@@ -78,3 +81,64 @@ def test_feature_workflow_python_mode(tmp_path):
             
             # Verify run_local_python_recursion called
             exec_instance.run_local_python_recursion.assert_called()
+
+
+def test_feature_workflow_raises_when_data_path_missing(tmp_path):
+    config_dict = {
+        "data_path": str(tmp_path / "missing"),
+        "model_path": str(tmp_path / "model.pt"),
+        "model_head": "OC20M",
+        "mode": "cli",
+        "savedir": str(tmp_path / "savedir"),
+        "submission": {"backend": "local"},
+    }
+    (tmp_path / "model.pt").touch()
+
+    with patch("dpeva.workflows.feature.FeatureExecutionManager"), patch(
+        "dpeva.workflows.feature.FeatureIOManager"
+    ):
+        workflow = FeatureWorkflow(config_dict)
+        with pytest.raises(WorkflowError, match="Data path not found"):
+            workflow.run()
+
+
+def test_feature_workflow_uses_default_savedir_when_missing(tmp_path):
+    data_dir = tmp_path / "my-data"
+    data_dir.mkdir()
+    model_path = tmp_path / "model.pt"
+    model_path.touch()
+    config_dict = {
+        "data_path": str(data_dir),
+        "model_path": str(model_path),
+        "model_head": "OC20M",
+        "mode": "cli",
+        "submission": {"backend": "local"},
+    }
+
+    with patch("dpeva.workflows.feature.FeatureExecutionManager"), patch(
+        "dpeva.workflows.feature.FeatureIOManager"
+    ):
+        workflow = FeatureWorkflow(config_dict)
+
+    assert workflow.output_dir == "desc-model-my-data"
+
+
+def test_feature_workflow_runtime_unknown_mode_raises_workflow_error(tmp_path):
+    config_dict = {
+        "data_path": str(tmp_path / "data"),
+        "model_path": str(tmp_path / "model.pt"),
+        "model_head": "OC20M",
+        "mode": "cli",
+        "savedir": str(tmp_path / "savedir"),
+        "submission": {"backend": "local"},
+    }
+    (tmp_path / "data").mkdir()
+    (tmp_path / "model.pt").touch()
+
+    with patch("dpeva.workflows.feature.FeatureExecutionManager"), patch(
+        "dpeva.workflows.feature.FeatureIOManager"
+    ):
+        workflow = FeatureWorkflow(config_dict)
+        workflow.mode = "invalid"
+        with pytest.raises(WorkflowError, match="Unknown mode"):
+            workflow.run()

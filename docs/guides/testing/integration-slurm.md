@@ -94,7 +94,7 @@ Collect 阶段也必须具备统一完成锚点。当前已在 [collect.py](http
 
 参考：
 
-- /source/api/config.rst
+- API Reference（Sphinx 生成的配置字段文档）
 
 ## 6. 运行说明（面向 Slurm 环境）
 

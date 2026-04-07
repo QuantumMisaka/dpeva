@@ -2,46 +2,55 @@ name: Documentation Governance
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main", "develop"]
     paths:
-      - 'docs/**'
-      - 'scripts/doc_check.py'
-      - 'scripts/check_docs_freshness.py'
-      - '.github/workflows/doc-lint.yml'
-      - '.github/PULL_REQUEST_TEMPLATE.md'
-      - '.github/CODEOWNERS'
+      - "docs/**"
+      - "README.md"
+      - "scripts/doc_check.py"
+      - "scripts/check_docs_freshness.py"
+      - ".github/workflows/doc-lint.yml"
+      - ".github/CODEOWNERS"
   pull_request:
-    branches: [ "main" ]
+    branches: ["main", "develop"]
     paths:
-      - 'docs/**'
-      - 'scripts/doc_check.py'
-      - 'scripts/check_docs_freshness.py'
-      - '.github/workflows/doc-lint.yml'
-      - '.github/PULL_REQUEST_TEMPLATE.md'
-      - '.github/CODEOWNERS'
+      - "docs/**"
+      - "README.md"
+      - "scripts/doc_check.py"
+      - "scripts/check_docs_freshness.py"
+      - ".github/workflows/doc-lint.yml"
+      - ".github/CODEOWNERS"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: doc-lint-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   doc-lint:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Needed for git history checks
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: "3.10"
+          cache: "pip"
 
       - name: Install dependencies
         run: |
+          python -m pip install --upgrade pip
           pip install pyyaml
 
-      - name: Run Governance Check (Structure & Metadata)
+      - name: Run governance check
         run: |
-          python3 scripts/doc_check.py
+          python3 scripts/doc_check.py --strict-owner --strict-owner-dir plans --strict-owner-dir reports
 
-      - name: Run Freshness Check
+      - name: Run freshness check
         run: |
-          # Check for docs older than 90 days, excluding archives
           python3 scripts/check_docs_freshness.py --days 90

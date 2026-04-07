@@ -1,0 +1,7 @@
+- [x] 已覆盖 `src`、`tests`、`docs`、`.trae/skills`、`scripts`、`.github`、`AGENTS.md`、`README.md`、`pyproject.toml`
+- [x] 已对八个审查维度分别形成结论或问题说明
+- [x] 已为每个问题标注严重级别、影响范围与修复建议
+- [x] 已输出改进优先级与可执行的后续行动项
+- [x] 已生成符合命名规范的审查报告并放入 `docs/reports/`
+- [x] 如新增或更新文档索引需求存在，已同步检查 `docs/source/` 的引用完整性
+- [x] 审查结论已基于代码、配置、测试或静态分析证据

@@ -8,8 +8,8 @@ description: "Automates version bumping and documentation synchronization for DP
 This skill automates the release process by:
 1.  **Fetching Changes**: Retrieves git commit history since the last version tag.
 2.  **Summarizing Updates**: Combines git logs with current session changes to generate a release summary.
-3.  **Updating Documentation**: Appends the new release note to `docs/guides/developer-guide.md` following the "Current Era" maintenance policy.
-4.  **Bumping Version**: Updates `src/dpeva/__init__.py` and `README.md` metadata.
+3.  **Bumping Version**: Updates `src/dpeva/__init__.py` and `README.md` metadata.
+4.  **Guiding Documentation Updates**: Points maintainers to the canonical release-note location in `docs/guides/developer-guide.md`.
 
 ## Usage
 
@@ -32,11 +32,11 @@ python scripts/release_helper.py minor
 ```
 
 ### 3. Update Developer Guide
-**CRITICAL**: You must manually update `docs/guides/developer-guide.md` after running the script. The script bumps the version number in the header, but you need to append the detailed release note.
+**CRITICAL**: You must manually update `docs/guides/developer-guide.md` after running the script. The script only updates version metadata in `src/dpeva/__init__.py` and `README.md`.
 
 **Action**:
 1.  Open `docs/guides/developer-guide.md`.
-2.  Locate the `## 6. 版本修订记录` -> `### 6.2 版本历史` -> `#### Current Era (v0.4.x)` 章节。
+2.  Locate the `## 6. 版本修订记录` -> `### 6.2 版本历史` -> `#### Current Era (v0.7.x)` 章节。
 3.  **Insert** the new version entry at the **TOP** of the list (below the header).
 4.  Format the entry as follows:
     ```markdown

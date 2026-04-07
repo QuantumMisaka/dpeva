@@ -1,16 +1,16 @@
 
 import pytest
 import os
+from pathlib import Path
 import numpy as np
 import dpdata
 from dpeva.labeling.structure import StructureAnalyzer
 
-# Integration test using the provided bug example data
-# Path: /home/pku-jianghong/liuzhaoqing/work/ft2dp-dpeva/dpeva/test/labeling_bug_example/layer-swap-check/origin/Fe51C0O50H1
+REPO_ROOT = Path(__file__).resolve().parents[2]
+DEFAULT_DATA_PATH = REPO_ROOT / "test" / "labeling_bug_example" / "layer-swap-check" / "origin" / "Fe51C0O50H1"
+DATA_PATH = Path(os.environ.get("DPEVA_LABELING_ROTATION_BUG_DATA", DEFAULT_DATA_PATH))
 
-DATA_PATH = "/home/pku-jianghong/liuzhaoqing/work/ft2dp-dpeva/dpeva/test/labeling_bug_example/layer-swap-check/origin/Fe51C0O50H1"
-
-@pytest.mark.skipif(not os.path.exists(DATA_PATH), reason="Bug reproduction data not found")
+@pytest.mark.skipif(not DATA_PATH.exists(), reason="Bug reproduction data not found. Set DPEVA_LABELING_ROTATION_BUG_DATA to enable this regression test.")
 def test_rotation_bug_fix_integration():
     """
     Regression test for labeling workflow lattice rotation bug.
@@ -18,7 +18,7 @@ def test_rotation_bug_fix_integration():
     atomic distances and C-component integrity.
     """
     try:
-        sys = dpdata.System(DATA_PATH, fmt='deepmd/npy')
+        sys = dpdata.System(str(DATA_PATH), fmt='deepmd/npy')
     except Exception as e:
         pytest.skip(f"Failed to load data: {e}")
         
