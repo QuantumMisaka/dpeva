@@ -14,14 +14,17 @@ def check_deepmd_version():
         # dp --version output example: "DeePMD-kit v2.2.9" or "DeePMD-kit 3.0.0"
         out = subprocess.check_output(["dp", "--version"], text=True, stderr=subprocess.STDOUT).strip()
         
-        # Robust parsing: extract the first version-like string
-        # Regex looks for patterns like "1.2.3", "v1.2.3", "2.0.0-beta.1"
-        match = re.search(r"v?(\d+\.\d+\.\d+([.\-]\w+)?)", out)
+        # Robust parsing: extract the first PEP 440-ish version-like string.
+        # Source builds may report versions such as "0.1.dev1+g27a18b604".
+        match = re.search(r"v?(\d+(?:\.\d+)+(?:[A-Za-z0-9_.!+\-]*)?)", out)
         
         if match:
             v_str = match.group(1)
             current_ver = version.parse(v_str)
             min_ver = version.parse(MIN_DEEPMD_VERSION)
+
+            if current_ver.is_devrelease:
+                return
             
             if current_ver < min_ver:
                 warnings.warn(

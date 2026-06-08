@@ -107,3 +107,15 @@ dpeva/
     - NEVER create documentation files in the project root.
     - NEVER leave orphan files without `README.md` indexing.
 
+## Project Contract
+
+- 配置以 `src/dpeva/config.py` 与 Reference 为准
+- 主链路以 `src/dpeva/cli.py -> src/dpeva/workflows/*.py` 为准
+- 工作流可独立启动，但应共享底层模块，不在 workflow 层复制逻辑
+- 对外契约变化必须在同一 PR 同步更新文档与 `examples/recipes/`
+- 详细工程契约、文档生命周期与质量门禁统一进入 `docs/guides/developer-guide.md`
+
+## Developing Environment
+
+- 项目测试机器：SAI超算，可调用`sai-user-guide` skill 获取更多信息。
+- 项目测试环境：`dpeva-dev` conda env.
