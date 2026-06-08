@@ -38,6 +38,8 @@ owner: Docs Owner
 
 ## 4. 活跃报告 (Active Reports)
 
+- [2026-06-08-DPA4-Neo-Air-Plus-Sampling-Comparison.md](2026-06-08-DPA4-Neo-Air-Plus-Sampling-Comparison.md)：归档 DPA4 Neo / Air / Plus 的 HTML 互比报告与配套 CSV，给出采样量、PCA、coverage、novelty、重叠度的可复核汇总。
+- [2026-06-07-DPA4-Mini-MACE-Sampling-Comparison.md](2026-06-07-DPA4-Mini-MACE-Sampling-Comparison.md)：基于同一 DPA4 Mini UQ candidate 集合，对 DPA4 Mini、MACE small、MACE medium 的 DP-EVA feature + collect 结果做定量对比，并附带 HTML/CSV 结果归档。
 - [2026-04-05-Code-Review-Agents-Docs-Governance.md](2026-04-05-Code-Review-Agents-Docs-Governance.md)：交叉审阅 `docs/`、`examples/recipes/` 与 `src/`，核查工程规范落实度、修复 active 文档偏差，并沉淀 `AGENTS.md` 目录化改造的证据基线。
 - [2026-04-01-Code-Review-Repository-Audit.md](2026-04-01-Code-Review-Repository-Audit.md)：基于本轮真实仓库审查结果重写，覆盖八维度评估、严重级别、优先级、行动项、证据与验证记录。
 - [2026-04-02-Code-Review-Unit-Test-Audit.md](2026-04-02-Code-Review-Unit-Test-Audit.md)：基于 `docs/`、`src/` 与 `tests/` 的单元测试深度审查结果，覆盖覆盖率、Mock、命名、性能、Lint、类型检查与回归步骤。

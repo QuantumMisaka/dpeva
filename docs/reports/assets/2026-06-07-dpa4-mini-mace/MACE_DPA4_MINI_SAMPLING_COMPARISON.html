@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>MACE 与 DPA4 Mini DP-EVA 采样对比</title>
+  <style>
+    body { font-family: Arial, "Noto Sans CJK SC", sans-serif; margin: 28px; line-height: 1.55; color: #202124; }
+    h1, h2 { color: #111827; }
+    .note { background: #f3f6f8; border-left: 4px solid #4b5563; padding: 12px 16px; margin: 16px 0; }
+    .data-table { border-collapse: collapse; width: 100%; margin: 12px 0 24px; font-size: 13px; }
+    .data-table th, .data-table td { border: 1px solid #d1d5db; padding: 7px 9px; text-align: right; }
+    .data-table th:first-child, .data-table td:first-child, .data-table td:nth-child(2) { text-align: left; }
+    .data-table th { background: #e5e7eb; }
+    code { background: #f3f4f6; padding: 1px 4px; }
+  </style>
+</head>
+<body>
+  <h1>MACE small/medium 与 DPA4 Mini 的 DP-EVA 采样行为对比</h1>
+  <div class="note">
+    本报告复用 DPA4 Mini 的 UQ candidate 结果，在同一候选集合和同一 DIRECT 参数下比较 descriptor 表征对采样结果的影响。
+    MACE small/medium 未重新计算模型不确定度，因此结论只对应 “Mini UQ + 各模型 descriptor + DIRECT” 的采样效率。
+    MACE 的 BIRCH collect 使用子样本 threshold 预探测并以 CF-tree subclusters 作为 clusters，以避免 MACE 256 维 descriptor 在原始 threshold=0.03 下的全局 BIRCH 聚类长时间不可完成；表中记录了 effective threshold 和实际 cluster 数。
+  </div>
+
+  <h2>关键结论</h2>
+  <ul>
+    <li>最少采样帧数：MACE small，87 frames。</li>
+    <li>最高 DIRECT coverage：MACE small，mean=0.9070。</li>
+    <li>最高相对训练集 novelty：DPA4 Mini，mean NN distance=2.8893。</li>
+  </ul>
+
+  <h2>统一标尺指标</h2>
+  <table class="dataframe data-table">
+  <thead>
+    <tr style="text-align: right;">
+      <th>Model</th>
+      <th>UQ source</th>
+      <th>Descriptor dim</th>
+      <th>Candidates</th>
+      <th>Selected frames</th>
+      <th>Selected systems</th>
+      <th>Sample rate</th>
+      <th>Important PCs</th>
+      <th>Retained variance</th>
+      <th>PC1 dominance</th>
+      <th>Top3 dominance</th>
+      <th>DIRECT coverage</th>
+      <th>Random coverage</th>
+      <th>Novelty to train</th>
+      <th>Diversity</th>
+      <th>Effective threshold</th>
+      <th>BIRCH clusters</th>
+      <th>Export sampled</th>
+      <th>Export other</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>DPA4 Mini</td>
+      <td>dpa4_mini</td>
+      <td>32</td>
+      <td>22605</td>
+      <td>359</td>
+      <td>181</td>
+      <td>1.59%</td>
+      <td>6</td>
+      <td>84.69%</td>
+      <td>39.55%</td>
+      <td>71.22%</td>
+      <td>0.8927</td>
+      <td>0.7087</td>
+      <td>2.8893</td>
+      <td>0.4450</td>
+      <td></td>
+      <td></td>
+      <td>181 / 359</td>
+      <td>1093 / 67642</td>
+    </tr>
+    <tr>
+      <td>MACE small</td>
+      <td>dpa4_mini</td>
+      <td>256</td>
+      <td>22605</td>
+      <td>87</td>
+      <td>76</td>
+      <td>0.38%</td>
+      <td>18</td>
+      <td>96.33%</td>
+      <td>29.94%</td>
+      <td>65.86%</td>
+      <td>0.9070</td>
+      <td>0.6692</td>
+      <td>0.4567</td>
+      <td>0.5818</td>
+      <td>0.3105</td>
+      <td>757</td>
+      <td>76 / 87</td>
+      <td>1094 / 67914</td>
+    </tr>
+    <tr>
+      <td>MACE medium</td>
+      <td>dpa4_mini</td>
+      <td>256</td>
+      <td>22605</td>
+      <td>142</td>
+      <td>113</td>
+      <td>0.63%</td>
+      <td>16</td>
+      <td>96.31%</td>
+      <td>25.52%</td>
+      <td>62.49%</td>
+      <td>0.9031</td>
+      <td>0.6677</td>
+      <td>0.4746</td>
+      <td>0.5980</td>
+      <td>0.2967</td>
+      <td>765</td>
+      <td>113 / 142</td>
+      <td>1092 / 67859</td>
+    </tr>
+  </tbody>
+</table>
+
+  <h2>Selection overlap</h2>
+  <table class="dataframe data-table">
+  <thead>
+    <tr style="text-align: right;">
+      <th>left</th>
+      <th>right</th>
+      <th>intersection</th>
+      <th>union</th>
+      <th>jaccard</th>
+      <th>left_only</th>
+      <th>right_only</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>DPA4 Mini</td>
+      <td>MACE small</td>
+      <td>7</td>
+      <td>439</td>
+      <td>0.015945</td>
+      <td>352</td>
+      <td>80</td>
+    </tr>
+    <tr>
+      <td>DPA4 Mini</td>
+      <td>MACE medium</td>
+      <td>11</td>
+      <td>490</td>
+      <td>0.022449</td>
+      <td>348</td>
+      <td>131</td>
+    </tr>
+    <tr>
+      <td>MACE small</td>
+      <td>MACE medium</td>
+      <td>14</td>
+      <td>215</td>
+      <td>0.065116</td>
+      <td>73</td>
+      <td>128</td>
+    </tr>
+  </tbody>
+</table>
+
+  <h2>口径说明</h2>
+  <p>重要 PC 数使用 DP-EVA 当前实现的 Kaiser rule：标准化特征 PCA 后，保留特征值大于 1 的 PC。</p>
+  <p>MACE descriptor 使用 <code>MACECalculator.get_descriptors(..., invariants_only=True, num_layers=-1)</code>，单帧形状为 <code>n_atom x 256</code>，再按 DP-EVA collect 口径进行原子平均与 L2 归一化。</p>
+</body>
+</html>

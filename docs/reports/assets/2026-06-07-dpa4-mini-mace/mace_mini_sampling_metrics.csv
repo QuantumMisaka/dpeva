@@ -1,0 +1,4 @@
+Model,UQ source,Descriptor dim,Candidates,Selected frames,Selected systems,Sample rate,Important PCs,Retained variance,PC1 dominance,Top3 dominance,DIRECT coverage,Random coverage,Novelty to train,Diversity,Effective threshold,BIRCH clusters,Export sampled,Export other
+DPA4 Mini,dpa4_mini,32,22605,359,181,1.59%,6,84.69%,39.55%,71.22%,0.8927,0.7087,2.8893,0.4450,,,181 / 359,1093 / 67642
+MACE small,dpa4_mini,256,22605,87,76,0.38%,18,96.33%,29.94%,65.86%,0.9070,0.6692,0.4567,0.5818,0.3105,757,76 / 87,1094 / 67914
+MACE medium,dpa4_mini,256,22605,142,113,0.63%,16,96.31%,25.52%,62.49%,0.9031,0.6677,0.4746,0.5980,0.2967,765,113 / 142,1092 / 67859

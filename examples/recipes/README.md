@@ -29,6 +29,12 @@ Standard configuration for fine-tuning DeepMD models using DP-EVA's parallel tra
 -   **Input**: `input.json` (DeepMD config), training data.
 -   **Output**: Trained models in `work_dir/0..N-1/`.
 
+Variant-specific DPA4 templates are provided under `training/dpa4/`:
+
+- `training/dpa4/air/input.json`
+- `training/dpa4/neo/input.json`
+- `training/dpa4/mini/input.json`
+
 **Usage:**
 ```bash
 dpeva train examples/recipes/training/config_train.json
