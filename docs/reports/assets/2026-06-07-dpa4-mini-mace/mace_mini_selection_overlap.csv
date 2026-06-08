@@ -1,0 +1,4 @@
+left,right,intersection,union,jaccard,left_only,right_only
+DPA4 Mini,MACE small,7,439,0.015945330296127564,352,80
+DPA4 Mini,MACE medium,11,490,0.022448979591836733,348,131
+MACE small,MACE medium,14,215,0.06511627906976744,73,128

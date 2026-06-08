@@ -1,0 +1,38 @@
+{
+  "model": "mace_small",
+  "uq_source": "dpa4_mini",
+  "candidate_count": 22605,
+  "training_descriptor_count": 12105,
+  "descriptor_dim": 256,
+  "direct_n_clusters": 2000,
+  "direct_k": 1,
+  "direct_thr_init": 0.03,
+  "effective_birch_threshold": 0.3104990873215879,
+  "birch_clusters": 757,
+  "selected_frames": 87,
+  "selected_systems": 76,
+  "sample_rate": 0.0038487060384870602,
+  "n_pcs": 18,
+  "cum_variance_retained": 0.9632624734350453,
+  "pc1_variance": 0.29936318553475905,
+  "top3_variance": 0.6586484574961533,
+  "direct_coverage": {
+    "mean": 0.9069788740863802,
+    "median": 0.9074468085106383,
+    "min": 0.7959183673469388,
+    "max": 1.0
+  },
+  "random_coverage": {
+    "mean": 0.6691601123438377,
+    "median": 0.6465306122448979,
+    "min": 0.41304347826086957,
+    "max": 0.9387755102040817
+  },
+  "selected_diversity_mean_pairwise": 0.5817997598369261,
+  "selected_novelty_to_train_mean_nn": 0.45669854921097147,
+  "export_sampled_systems": 76,
+  "export_sampled_frames": 87,
+  "export_other_systems": 1094,
+  "export_other_frames": 67914,
+  "export_total_frames": 68001
+}
