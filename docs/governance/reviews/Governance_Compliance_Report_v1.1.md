@@ -2,7 +2,8 @@
 title: 文档治理合规性报告 (Governance Compliance Report)
 status: active
 audience: Developers / Maintainers
-last-updated: 2026-03-09
+last-updated: 2026-06-10
+owner: Docs Owner
 ---
 
 # 文档治理合规性报告 (Governance Compliance Report)

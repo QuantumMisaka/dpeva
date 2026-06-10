@@ -2,7 +2,8 @@
 title: 变量说明文档维护指南
 status: active
 audience: Developers
-last-updated: 2026-03-10
+last-updated: 2026-06-10
+owner: Workflow Owner
 ---
 
 # 变量说明文档维护指南

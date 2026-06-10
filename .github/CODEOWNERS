@@ -4,6 +4,8 @@ docs/policy/* @QuantumMisaka
 docs/governance/* @QuantumMisaka
 docs/reference/* @QuantumMisaka
 docs/guides/* @QuantumMisaka
+docs/plans/* @QuantumMisaka
+docs/reports/* @QuantumMisaka
 
 scripts/doc_check.py @QuantumMisaka
 scripts/check_docs_freshness.py @QuantumMisaka

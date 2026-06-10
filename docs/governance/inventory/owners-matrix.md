@@ -2,7 +2,7 @@
 title: 文档 Owner 覆盖矩阵
 status: active
 audience: Maintainers
-last-updated: 2026-03-10
+last-updated: 2026-06-10
 owner: Docs Owner
 ---
 
@@ -20,6 +20,7 @@ owner: Docs Owner
 | `docs/policy/*` | 治理制度与标准 | Docs Owner | Project Lead |
 | `docs/governance/*` | 审计、追踪、库存 | Docs Owner | Maintainers |
 | `docs/plans/*` | 执行方案与里程碑 | Feature Owner | Tech Lead |
+| `docs/reports/*` | 项目级审查报告与实验结论 | Auditor / Researcher | Tech Lead |
 
 ## 2. 稳态化验收要求
 
@@ -31,3 +32,4 @@ owner: Docs Owner
 
 - 每周增量更新：新增 active 文档时同步补 Owner 字段
 - 每月全量复核：对照 `scripts/doc_check.py` 与 CODEOWNERS 校验覆盖率
+- 新增 active 报告或变更报告状态时，必须同步检查 Owner 覆盖与 `docs/reports/README.md` 索引。

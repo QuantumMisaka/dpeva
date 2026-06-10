@@ -2,14 +2,15 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-03-11
+last-updated: 2026-06-10
+owner: Docs Owner
 ---
 
 # 工作流-契约测试矩阵（Workflow Contract ↔ Tests）
 
 - Status: active
 - Audience: Maintainers / Developers
-- Last-Updated: 2026-03-11
+- Last-Updated: 2026-06-10
 
 本矩阵把“对外可观测契约”（产物路径、日志完成标记、失败定位入口）映射到“可执行测试”（unit / integration），用于：
 

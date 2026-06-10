@@ -2,7 +2,7 @@
 title: v0.7.1 Archive
 status: active
 audience: Developers
-last-updated: 2026-04-01
+last-updated: 2026-06-10
 owner: Docs Owner
 ---
 
@@ -10,7 +10,7 @@ owner: Docs Owner
 
 - Status: active
 - Audience: Developers
-- Last-Updated: 2026-04-01
+- Last-Updated: 2026-06-10
 
 本文档目录用于存放 v0.7.1 周期归档文档。
 
@@ -23,5 +23,6 @@ owner: Docs Owner
 
 - **[治理]** 归档 Collection Workflow 全量出图审计报告及模块接入审查报告。
 - **[治理]** 归档未接入模块治理路线图与收官总结报告。
+- **[治理]** 归档 2026-04-05 文档治理与 AGENTS 阶段性闭环记录。
 - **[可视化]** 归档 Parity Plots 可读性增强计划、布局优化计划及视觉对齐调研报告。
 - **[性能]** 归档误差密度图伪影修复计划及可视化性能分级结论。

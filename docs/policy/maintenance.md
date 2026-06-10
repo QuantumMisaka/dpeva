@@ -2,7 +2,7 @@
 title: 文档版本管理与维护机制 (Maintenance)
 status: active
 audience: Maintainers
-last-updated: 2026-03-12
+last-updated: 2026-06-10
 owner: Docs Owner
 ---
 

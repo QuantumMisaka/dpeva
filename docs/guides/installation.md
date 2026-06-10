@@ -2,14 +2,15 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-03-09
+last-updated: 2026-06-10
+owner: Workflow Owner
 ---
 
 # 安装与环境准备（Installation）
 
 - Status: active
 - Audience: Users / Developers
-- Last-Updated: 2026-02-19
+- Last-Updated: 2026-06-10
 
 ## 1. 目的与范围
 

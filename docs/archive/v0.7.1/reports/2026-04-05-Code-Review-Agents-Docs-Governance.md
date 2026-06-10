@@ -1,12 +1,14 @@
 ---
 title: Code Review - AGENTS and Docs Governance
-status: active
+status: archived
 audience: developers
-last-updated: 2026-04-05
+last-updated: 2026-06-10
 owner: Docs Owner
 ---
 
 # DP-EVA 文档治理与 AGENTS 审阅报告
+
+> 历史治理记录：本文档记录 2026-04-05 阶段性治理闭环，不作为现行规范来源。当前规则入口以 [developer-guide.md](../../../guides/developer-guide.md)、[docs-governance-quickstart.md](../../../guides/docs-governance-quickstart.md) 与 [maintenance.md](../../../policy/maintenance.md) 为准。
 
 ## 1. 范围与方法
 

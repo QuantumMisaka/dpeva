@@ -4,6 +4,7 @@ status: active
 audience: Developers / Maintainers
 last-updated: 2026-04-02
 owner: Docs Owner
+parent-report: 2026-04-01-Code-Review-Repository-Audit.md
 ---
 
 # 2026-04-02 单元测试深度审查报告（Unit Test Audit）
@@ -11,6 +12,9 @@ owner: Docs Owner
 - Status: active
 - Audience: Developers / Maintainers
 - Last-Updated: 2026-04-02
+- Parent Report: [2026-04-01-Code-Review-Repository-Audit.md](2026-04-01-Code-Review-Repository-Audit.md)
+
+本报告是 2026-04-01 仓库总审查中的测试专题展开，用于保存单元测试与覆盖率的细粒度证据，不单独代表全仓库总体结论。
 
 ## 1. 审查结论
 

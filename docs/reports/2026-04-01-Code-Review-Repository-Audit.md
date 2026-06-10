@@ -4,6 +4,8 @@ status: active
 audience: Developers / Maintainers
 last-updated: 2026-04-01
 owner: Docs Owner
+related:
+  - 2026-04-02-Code-Review-Unit-Test-Audit.md
 ---
 
 # 2026-04-01 仓库质量审查报告（Repository Audit）
@@ -11,8 +13,9 @@ owner: Docs Owner
 - Status: active
 - Audience: Developers / Maintainers
 - Last-Updated: 2026-04-01
+- Related Focused Report: [2026-04-02-Code-Review-Unit-Test-Audit.md](2026-04-02-Code-Review-Unit-Test-Audit.md)
 
-本文档整合本轮四份分域审查结果：`源码与测试`、`文档与项目元信息`、`脚本与 .trae/skills`、`CI/CD`。所有结论均回落到当前磁盘中的实际文件证据，覆盖 `src/`、`tests/`、`docs/`、`.trae/skills/`、`scripts/`、`.github/workflows/`、`README.md`、`AGENTS.md`、`pyproject.toml` 以及规格任务追踪。
+本文档整合本轮四份分域审查结果：`源码与测试`、`文档与项目元信息`、`脚本与 .trae/skills`、`CI/CD`。所有结论均回落到当前磁盘中的实际文件证据，覆盖 `src/`、`tests/`、`docs/`、`.trae/skills/`、`scripts/`、`.github/workflows/`、`README.md`、`AGENTS.md`、`pyproject.toml` 以及规格任务追踪。测试细节证据见 [2026-04-02 单元测试深度审查报告](2026-04-02-Code-Review-Unit-Test-Audit.md)，该报告作为本总审查的测试专题展开。
 
 ## 1. 综合结论
 

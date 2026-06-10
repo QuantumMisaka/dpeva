@@ -2,7 +2,8 @@
 title: Docs Scripts
 status: active
 audience: Maintainers
-last-updated: 2026-03-10
+last-updated: 2026-06-10
+owner: Docs Owner
 ---
 
 # Docs Scripts

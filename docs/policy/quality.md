@@ -2,7 +2,8 @@
 title: 文档质量标准 (Documentation Quality Standard)
 status: active
 audience: Maintainers
-last-updated: 2026-03-10
+last-updated: 2026-06-10
+owner: Docs Owner
 ---
 
 # 文档质量标准（Documentation Quality Standard）

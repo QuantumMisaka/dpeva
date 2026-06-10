@@ -2,7 +2,7 @@
 title: 过程资产生命周期（AI 草案到项目文档）
 status: active
 audience: Developers / Maintainers
-last-updated: 2026-03-12
+last-updated: 2026-06-10
 owner: Docs Owner
 ---
 
