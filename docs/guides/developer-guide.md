@@ -16,8 +16,8 @@ owner: Docs Owner
   - 校验规则补充：`docs/reference/validation.md`
   - 上游软件与职责：`docs/reference/upstream-software.md`
 
-* **版本**: 0.7.2
-* **生成日期**: 2026-04-05
+* **版本**: 0.8.0
+* **生成日期**: 2026-06-10
 * **作者**: Quantum Misaka with Trae SOLO
 
 ---
@@ -580,7 +580,7 @@ DPEVA_TAG: WORKFLOW_FINISHED
 1.  **历史归档 (Historical Archive)**：
     *   对于重大版本重置（如 v2.x -> v0.4.x）之前的历史记录，不再保留详细条目，仅进行概要性总结。
 2.  **当前纪元 (Current Era)**：
-    *   当前主版本系列（v0.7.x）必须保持**完整**的记录链条。
+    *   当前主版本系列（v0.8.x）必须保持**完整**的记录链条。
     *   **追加式记录 (Append-only)**：新版本记录应始终添加在列表顶部，严禁覆盖或修改旧版本的历史条目。
     *   **中间版本找回**：若因误操作导致记录丢失，必须基于 git log 进行回溯与补全。
 
@@ -588,11 +588,21 @@ DPEVA_TAG: WORKFLOW_FINISHED
 
 - `scripts/release_helper.py` 只负责同步 `src/dpeva/__init__.py` 与 `README.md` 中的版本号。
 - 发布说明的权威写入位置始终是本文件的 `### 6.2 版本历史`，脚本不会自动追加版本条目。
-- 使用脚本完成版本号更新后，必须手动在 `#### Current Era (v0.7.x)` 顶部追加新版本记录，再执行提交与打 tag。
+- 使用脚本完成版本号更新后，必须手动在 `#### Current Era (v0.8.x)` 顶部追加新版本记录，再执行提交与打 tag。
 
 ### 6.2 版本历史
 
-#### **Current Era (v0.7.x)**
+#### **Current Era (v0.8.x)**
+
+*   **v0.8.0** (2026-06-10):
+    *   **[版本]** 开启 v0.8.0 开发周期，后续开发聚焦移除 Labeling 对 GitLab `ase-abacus` fork 的运行时绑定，并以可选 backend 方式接入 `atst-tools` exploration 能力。
+    *   **[特性准备]** 将 v0.7.2 之后已并入的模型对比报告生成器纳入 v0.8.0 变更范围，保留其单测基线与 DPA 模型对比报告产物生成能力。
+    *   **[修复]** 纳入 DeepMD 开发版本号解析兼容修复，允许 `0.1.dev*+g...` 等开发构建版本被环境检查正确识别。
+    *   **[治理]** 纳入 docs/reports 去冗余治理：明确总报告、专题报告、系列实验报告与归档报告的生命周期边界，并将 2026-04-05 阶段性治理闭环记录迁入归档。
+    *   **[自动化]** 纳入文档治理自动化加固：`doc_check.py` 默认阻断 active 文档缺 owner，`check_docs_freshness.py` 以 front matter `last-updated` 为主，`verify_docs.sh` 统一串联治理、freshness 与 Sphinx 构建。
+    *   **[准备]** 将 `2026-06-10-v0.8.0-atst-integration-plan.md` 作为 v0.8.0 后续实现入口；当前阶段只完成版本与文档准备，不实现内部 ABACUS writer、exploration 抽象层或 `ATSTToolsBackend`。
+
+#### **Previous Era (v0.7.x)**
 
 *   **v0.7.2** (2026-04-05):
     *   **[测试]** 围绕核心功能模块开展单元测试集中攻坚，补强 `labeling/postprocess`、`analysis/managers`、`inference/managers`、`workflows/feature` 与 `workflows/labeling` 的关键正向、异常与边界分支覆盖。

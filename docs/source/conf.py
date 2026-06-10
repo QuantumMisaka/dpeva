@@ -6,8 +6,8 @@ from pathlib import Path
 project = 'DP-EVA'
 copyright = '2026, DP-EVA Developers'
 author = 'DP-EVA Developers'
-version = '0.7.2'
-release = '0.7.2'
+version = '0.8.0'
+release = '0.8.0'
 
 # -- Path setup --------------------------------------------------------------
 # Add src to sys.path to allow autodoc to find modules
@@ -30,6 +30,13 @@ exclude_patterns = [
     'archive/**',
 ]
 language = 'zh_CN'
+
+# Optional scientific backends are runtime dependencies for specific workflows,
+# but docs must build in a lightweight environment.
+autodoc_mock_imports = [
+    'ase.io.abacus',
+    'deepmd',
+]
 
 # -- Options for HTML output -------------------------------------------------
 html_theme = 'sphinx_book_theme'
