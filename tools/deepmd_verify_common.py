@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import logging
-import os
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -16,8 +15,6 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 SRC_DIR = REPO_ROOT / "src"
 if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
-
-from dpeva.io.dataset import load_systems
 
 
 @dataclass
@@ -37,6 +34,8 @@ def discover_system_names(data_dir: str) -> List[str]:
 
 
 def load_system_map(data_dir: str, fmt: str) -> Dict[str, dpdata.System]:
+    from dpeva.io.dataset import load_systems
+
     names = discover_system_names(data_dir)
     logging.getLogger("dpeva.io.dataset").setLevel(logging.ERROR)
     systems = load_systems(data_dir, fmt=fmt, target_systems=names if names else None)

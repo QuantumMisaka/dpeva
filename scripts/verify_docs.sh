@@ -5,17 +5,14 @@ echo "=========================================="
 echo "DP-EVA Documentation Verification Script"
 echo "=========================================="
 
-# 1. Check Dependencies
 if ! command -v sphinx-build &> /dev/null; then
-    echo "Sphinx not found. Installing doc dependencies..."
-    pip install -e .[docs]
+    echo "Sphinx not found. Install documentation dependencies first: pip install -e .[docs]"
+    exit 1
 fi
 
-# 2. Build Docs
 echo "Building HTML documentation..."
 cd docs
 make clean
-# Use -W to turn warnings into errors
 if make html SPHINXOPTS="-W --keep-going"; then
     echo "✅ Documentation built successfully."
 else
@@ -23,7 +20,6 @@ else
     exit 1
 fi
 
-# 3. Verify Artifacts
 echo "Verifying output artifacts..."
 REQUIRED_FILES=(
     "build/html/index.html"

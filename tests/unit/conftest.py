@@ -1,12 +1,9 @@
 import pytest
 import numpy as np
-import os
-import json
-import shutil
 from pathlib import Path
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Any
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 # Project Root Calculation
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
@@ -100,6 +97,7 @@ def mock_dptest_output_dir(tmp_path):
     """
     dest_dir = tmp_path / "dptest_results"
     dest_dir.mkdir(parents=True, exist_ok=True)
+    rng = np.random.default_rng(0)
     
     n_frames = 10
     n_atoms = 5
@@ -109,34 +107,34 @@ def mock_dptest_output_dir(tmp_path):
     # 2 cols: data_e, pred_e
     with open(dest_dir / "results.e_peratom.out", "w") as f:
         # Add system info comment
-        f.write(f"# /mock/pool/sys: 0\n")
+        f.write("# /mock/pool/sys: 0\n")
         for _ in range(n_lines_peratom):
-            f.write(f"{np.random.rand():.4f} {np.random.rand():.4f}\n")
+            f.write(f"{rng.random():.4f} {rng.random():.4f}\n")
 
     # 2. Force (Used for loading data_f)
     # 6 cols: data_fx, data_fy, data_fz, pred_fx, pred_fy, pred_fz
     with open(dest_dir / "results.f.out", "w") as f:
         f.write("# Mock Force\n")
         for _ in range(n_lines_peratom): 
-            f.write(" ".join([f"{np.random.rand():.4f}" for _ in range(6)]) + "\n")
+            f.write(" ".join([f"{value:.4f}" for value in rng.random(6)]) + "\n")
 
     # 3. Virial Per Atom (Used for loading data_v if present)
     # 18 cols: 9 data, 9 pred
     with open(dest_dir / "results.v_peratom.out", "w") as f:
          f.write("# Mock V Per Atom\n")
          for _ in range(n_lines_peratom):
-             f.write(" ".join([f"{np.random.rand():.4f}" for _ in range(18)]) + "\n")
+             f.write(" ".join([f"{value:.4f}" for value in rng.random(18)]) + "\n")
 
     # Create other files just in case, though parser seems to prioritize above
     with open(dest_dir / "results.e.out", "w") as f:
         f.write("# Mock E Frame\n")
         for _ in range(n_frames):
-            f.write(f"{np.random.rand():.4f} {np.random.rand():.4f}\n")
+            f.write(f"{rng.random():.4f} {rng.random():.4f}\n")
 
     with open(dest_dir / "results.v.out", "w") as f:
         f.write("# Mock V Frame\n")
         for _ in range(n_frames):
-            f.write(" ".join([f"{np.random.rand():.4f}" for _ in range(18)]) + "\n")
+            f.write(" ".join([f"{value:.4f}" for value in rng.random(18)]) + "\n")
                  
     return dest_dir
 
@@ -146,4 +144,3 @@ def mock_job_manager():
     with patch("dpeva.inference.managers.JobManager") as mock_cls:
         manager_instance = mock_cls.return_value
         yield manager_instance
-

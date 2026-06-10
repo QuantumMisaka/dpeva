@@ -7,7 +7,12 @@ docs/guides/* @QuantumMisaka
 
 scripts/doc_check.py @QuantumMisaka
 scripts/check_docs_freshness.py @QuantumMisaka
+scripts/audit.py @QuantumMisaka
+scripts/gate.sh @QuantumMisaka
+scripts/verify_docs.sh @QuantumMisaka
 
+.github/workflows/python-quality.yml @QuantumMisaka
 .github/workflows/docs-check.yml @QuantumMisaka
 .github/workflows/doc-lint.yml @QuantumMisaka
+.github/workflows/docs-deploy.yml @QuantumMisaka
 .github/PULL_REQUEST_TEMPLATE.md @QuantumMisaka

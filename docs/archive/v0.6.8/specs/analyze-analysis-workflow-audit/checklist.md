@@ -1,0 +1,10 @@
+- [x] 已完成Analysis Workflow功能点拆解，覆盖输入、阶段处理、输出与异常路径
+- [x] 已使用 `test/s-head-huber/config_analysis_dataset.json` 执行analysis并保留关键日志证据
+- [x] 已使用 `test/s-head-huber/config_analysis.json` 执行analysis并保留关键日志证据
+- [x] 已对两次运行输出进行对比并形成职责边界判定依据
+- [x] 已完成Analysis相关代码审查并覆盖功能完备性、耦合度与风险点
+- [x] 已给出按优先级排序的改进建议并关联到具体模块职责
+- [x] 最终结论已明确Analysis Workflow在DP-EVA中的功能职责范围
+- [x] 已将 Analysis 可视化“必须改”项落地到 `src/dpeva/utils/visual_style.py` 与 `src/dpeva/inference/visualizer.py`
+- [x] 已将 Analysis 可视化“建议改”项（图例内外策略显式化）落地并保持兼容默认行为
+- [x] 已补充 visualizer 相关单元测试并完成目标 pytest 回归

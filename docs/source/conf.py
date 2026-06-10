@@ -1,5 +1,4 @@
 # Configuration file for the Sphinx documentation builder.
-import os
 import sys
 from pathlib import Path
 
@@ -7,8 +6,8 @@ from pathlib import Path
 project = 'DP-EVA'
 copyright = '2026, DP-EVA Developers'
 author = 'DP-EVA Developers'
-version = '0.6.5'
-release = '0.6.5'
+version = '0.7.2'
+release = '0.7.2'
 
 # -- Path setup --------------------------------------------------------------
 # Add src to sys.path to allow autodoc to find modules
@@ -25,7 +24,11 @@ extensions = [
 ]
 
 templates_path = ['_templates']
-exclude_patterns = []
+exclude_patterns = [
+    'reports/**',
+    'plans/**',
+    'archive/**',
+]
 language = 'zh_CN'
 
 # -- Options for HTML output -------------------------------------------------

@@ -1,11 +1,30 @@
 {
+    "mode": "model_test",
     "result_dir": "0/test_val",
+    "data_path": "sampled_dpdata",
     "output_dir": "analysis",
+    "results_prefix": "results",
     "type_map": ["Fe", "C", "O", "H"],
+    "enable_cohesive_energy": true,
+    "allow_ref_energy_lstsq_completion": false,
+    "plot_level": "full",
+    "enhanced_parity_renderer": "auto",
+    "slow_plot_threshold_seconds": 60.0,
     "ref_energies": {
         "Fe": -3215.2791,
         "C": -156.0795,
         "O": -444.6670,
         "H": -13.5410
+    },
+    "submission": {
+        "backend": "slurm",
+        "env_setup": [],
+        "slurm_config": {
+            "partition": "CPU-MISC",
+            "qos": "rush-cpu",
+            "ntasks": 1,
+            "cpus_per_task": 8,
+            "job_name": "DPEVA-analysis"
+        }
     }
 }

@@ -1,7 +1,6 @@
 import pytest
-import os
 import subprocess
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 from dpeva.submission.manager import JobManager
 from dpeva.submission.templates import JobConfig
 

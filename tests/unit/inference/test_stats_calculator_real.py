@@ -1,4 +1,3 @@
-import pytest
 import numpy as np
 import os
 import shutil
@@ -89,7 +88,7 @@ def test_inference_workflow_analyze(mock_dptest_output_dir, tmp_path):
     workflow.models_paths = [str(tmp_path / "0" / "model.ckpt.pt")] 
     
     # Mock matplotlib in visualizer
-    with patch("dpeva.inference.visualizer.plt") as mock_plt:
+    with patch("dpeva.inference.visualizer.plt"):
          workflow.analyze_results()
          
     # Check if analysis output exists

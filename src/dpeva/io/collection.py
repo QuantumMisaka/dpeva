@@ -4,7 +4,7 @@ import logging
 import shutil
 import numpy as np
 import pandas as pd
-from typing import List, Tuple, Dict, Optional, Set
+from typing import List, Tuple, Dict, Optional
 
 from dpeva.io.dataset import load_systems
 from dpeva.utils.security import safe_join, normalize_sys_name
@@ -22,17 +22,42 @@ class CollectionIOManager:
         self.project_dir = project_dir
         self.root_savedir = root_savedir
         self.logger = logging.getLogger(__name__)
+        self.last_export_paths: Dict[str, str] = {}
         
         # Derived paths
         self.view_savedir = os.path.join(self.project_dir, self.root_savedir, "view")
         self.dpdata_savedir = os.path.join(self.project_dir, self.root_savedir, "dpdata")
         self.df_savedir = os.path.join(self.project_dir, self.root_savedir, "dataframe")
+
+    def _normalize_export_system_name(self, sys_name: str, testdata_dir: str) -> str:
+        clean_name = normalize_sys_name(sys_name)
+        data_base = normalize_sys_name(os.path.basename(os.path.normpath(testdata_dir)))
+        if not data_base:
+            return clean_name
+        if clean_name == data_base:
+            return clean_name
+        prefix = f"{data_base}/"
+        if clean_name.startswith(prefix):
+            stripped = clean_name[len(prefix):]
+            if stripped:
+                return stripped
+        return clean_name
         
     def ensure_dirs(self):
         """Creates necessary output directories."""
         for d in [self.view_savedir, self.dpdata_savedir, self.df_savedir]:
             if not os.path.exists(d):
                 os.makedirs(d)
+
+    def _resolve_descriptor_file(self, desc_dir: str, sys_name: str) -> Optional[str]:
+        path_nested = os.path.join(desc_dir, f"{sys_name}.npy")
+        path_flat = os.path.join(desc_dir, f"{os.path.basename(sys_name)}.npy")
+        if os.path.exists(path_nested):
+            return path_nested
+        if os.path.exists(path_flat):
+            self.logger.info(f"Matched descriptor via basename: {path_flat}")
+            return path_flat
+        return None
 
     def count_frames(self, data_dir: str, fmt: str = "auto") -> int:
         """Counts total frames in dataset."""
@@ -73,31 +98,31 @@ class CollectionIOManager:
         if target_names:
             self.logger.info(f"Loading {len(target_names)} specific systems based on target names.")
             for sys_name in target_names:
-                path_flat = os.path.join(desc_dir, f"{sys_name}.npy")
-                path_flat_base = os.path.join(desc_dir, f"{os.path.basename(sys_name)}.npy")
-                
-                if os.path.exists(path_flat):
-                    f = path_flat
-                elif os.path.exists(path_flat_base):
-                    self.logger.info(f"Matched descriptor via basename: {path_flat_base}")
-                    f = path_flat_base
-                else:
+                f = self._resolve_descriptor_file(desc_dir, sys_name)
+                if f is None:
                     self.logger.error(f"Descriptor file not found for system: {sys_name}")
                     raise FileNotFoundError(f"Descriptor file missing for {sys_name}")
                 
                 self._load_single_descriptor(f, sys_name, expected_frames, desc_datanames, desc_stru)
                 
         else:
-            # Glob loading
-            pattern = desc_dir if '*' in desc_dir else os.path.join(desc_dir, "*.npy")
-            desc_iter_list = sorted(glob.glob(pattern))
+            if "*" in desc_dir:
+                desc_iter_list = sorted(glob.glob(desc_dir))
+                base_dir = None
+            else:
+                desc_iter_list = sorted(glob.glob(os.path.join(desc_dir, "**", "*.npy"), recursive=True))
+                base_dir = os.path.abspath(desc_dir)
             
             if not desc_iter_list:
                 self.logger.warning(f"No {label} found in {desc_dir}")
                 return [], np.array([])
             
             for f in desc_iter_list:
-                keyname = os.path.basename(f).replace('.npy', '')
+                if base_dir is not None:
+                    rel = os.path.relpath(os.path.abspath(f), base_dir)
+                    keyname = os.path.splitext(rel)[0].replace("\\", "/")
+                else:
+                    keyname = os.path.basename(f).replace('.npy', '')
                 try:
                     self._load_single_descriptor(f, keyname, expected_frames, desc_datanames, desc_stru)
                 except Exception as e:
@@ -167,11 +192,8 @@ class CollectionIOManager:
             sys_to_frames.setdefault(sys_name, set()).add(int(idx))
             
         for sys_name, indices in sys_to_frames.items():
-            f_path = os.path.join(desc_dir, f"{sys_name}.npy")
-            if not os.path.exists(f_path):
-                f_path = os.path.join(desc_dir, f"{os.path.basename(sys_name)}.npy")
-                
-            if not os.path.exists(f_path):
+            f_path = self._resolve_descriptor_file(desc_dir, sys_name)
+            if f_path is None:
                 self.logger.warning(f"Missing atomic features for {sys_name}")
                 continue
                 
@@ -239,11 +261,17 @@ class CollectionIOManager:
             except ValueError:
                 pass
                 
-        # Clean dirs
-        for sub in ["sampled_dpdata", "other_dpdata"]:
-            p = os.path.join(self.dpdata_savedir, sub)
-            if os.path.exists(p): shutil.rmtree(p)
-            os.makedirs(p)
+        sampled_export_root = safe_join(self.dpdata_savedir, "sampled_dpdata")
+        other_export_root = safe_join(self.dpdata_savedir, "other_dpdata")
+        self.last_export_paths = {
+            "sampled_dpdata": sampled_export_root,
+            "other_dpdata": other_export_root,
+        }
+
+        for export_root in [sampled_export_root, other_export_root]:
+            if os.path.exists(export_root):
+                shutil.rmtree(export_root)
+            os.makedirs(export_root)
             
         test_data = load_systems(testdata_dir, fmt="auto", target_systems=unique_system_names)
         
@@ -257,7 +285,7 @@ class CollectionIOManager:
             
             # Sanitize sys_name
             try:
-                sys_name_clean = normalize_sys_name(sys_name)
+                sys_name_clean = self._normalize_export_system_name(sys_name, testdata_dir)
             except ValueError as e:
                 self.logger.error(f"Skipping system with invalid name '{sys_name}': {e}")
                 continue

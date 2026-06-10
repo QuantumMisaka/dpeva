@@ -324,13 +324,13 @@ def main():
     parser = argparse.ArgumentParser(description="Verify descriptor consistency between Mixed and NPY DeepMD formats.")
     
     parser.add_argument("--mixed_dir", type=str, default=DEFAULT_MIXED_DIR,
-                        help=f"Directory containing Mixed format dpdata")
+                        help="Directory containing Mixed format dpdata")
     parser.add_argument("--npy_dir", type=str, default=DEFAULT_NPY_DIR,
-                        help=f"Directory containing NPY format dpdata")
+                        help="Directory containing NPY format dpdata")
     parser.add_argument("--desc_mixed", type=str, default=DEFAULT_DESC_MIXED_DIR,
-                        help=f"Directory containing descriptors for Mixed data")
+                        help="Directory containing descriptors for Mixed data")
     parser.add_argument("--desc_npy", type=str, default=DEFAULT_DESC_NPY_DIR,
-                        help=f"Directory containing descriptors for NPY data")
+                        help="Directory containing descriptors for NPY data")
     parser.add_argument("--tolerance", type=float, default=1e-5,
                         help="Tolerance for floating point comparison of descriptors (default: 1e-5)")
 

@@ -1,11 +1,10 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Dict, List, Optional, Tuple, Any
+from typing import TYPE_CHECKING, Dict, List, Optional, Tuple
 
 import numpy as np
 from scipy.stats import gaussian_kde
-from sklearn.preprocessing import RobustScaler
 
 if TYPE_CHECKING:
     from dpeva.io.types import PredictionData

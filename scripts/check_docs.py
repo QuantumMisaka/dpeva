@@ -3,7 +3,6 @@
 DP-EVA Documentation Consistency Checker.
 Checks if CLI commands and options are documented in docs/guides/cli.md.
 """
-import argparse
 import subprocess
 import re
 import sys

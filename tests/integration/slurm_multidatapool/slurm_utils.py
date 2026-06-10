@@ -6,7 +6,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional, Sequence, Mapping
 
-from ..utils.logs import wait_for_text_in_file
 
 
 @dataclass(frozen=True)

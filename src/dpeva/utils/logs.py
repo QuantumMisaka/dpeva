@@ -2,7 +2,6 @@ import os
 import sys
 import logging
 from logging.handlers import RotatingFileHandler
-from typing import Optional
 from dpeva.constants import DEFAULT_LOG_MAX_BYTES, DEFAULT_LOG_BACKUP_COUNT
 
 def setup_workflow_logger(logger_name: str, work_dir: str, filename: str, capture_stdout: bool = True):

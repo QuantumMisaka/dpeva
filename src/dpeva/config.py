@@ -4,7 +4,6 @@ Centralized Configuration Management using Pydantic V2.
 from __future__ import annotations
 
 import os
-import warnings
 from pathlib import Path
 from typing import Any, Dict, List, Literal, Optional, Union
 
@@ -46,6 +45,9 @@ from dpeva.constants import (
     DEFAULT_LABELING_OUTPUT_FORMAT,
     DEFAULT_LABELING_INTEGRATION_OUTPUT_FORMAT,
     VALID_LABELING_OUTPUT_FORMATS,
+    DEFAULT_CLEAN_OUTPUT_DIR,
+    DEFAULT_CLEAN_RESULTS_PREFIX,
+    DEFAULT_CLEAN_STRICT_ALIGNMENT,
 )
 
 class SubmissionConfig(BaseModel):
@@ -159,23 +161,110 @@ class FeatureConfig(BaseWorkflowConfig):
 
 class AnalysisConfig(BaseModel):
     """Configuration for Analysis Workflow (Post-processing)."""
-    model_config = ConfigDict(extra='ignore', populate_by_name=True)
+    model_config = ConfigDict(extra='ignore', populate_by_name=True, protected_namespaces=())
 
     mode: Literal["model_test", "dataset"] = Field("model_test", description="Analysis mode.")
     result_dir: Optional[Path] = Field(None, description="Path to DP test results directory.")
     dataset_dir: Optional[Path] = Field(None, description="Path to dataset directory for dataset analysis mode.")
     output_dir: Path = Field(Path(DEFAULT_ANALYSIS_OUTPUT_DIR), description="Output directory for analysis results.")
-    type_map: List[str] = Field(..., description="Atom type map (e.g. ['Fe', 'C']).")
+    results_prefix: str = Field(
+        DEFAULT_RESULTS_PREFIX,
+        description="Prefix of DP test result files (must match inference results_prefix)."
+    )
+    type_map: Optional[List[str]] = Field(
+        None,
+        description="Atom type map (e.g. ['Fe', 'C']). Required for model_test mode when data_path is not provided."
+    )
     data_path: Optional[Path] = Field(None, description="Path to original dataset (for robust composition loading).")
     ref_energies: Dict[str, float] = Field(default_factory=dict, description="Reference energies per element for cohesive energy calculation.")
+    enable_cohesive_energy: bool = Field(True, description="Whether to enable cohesive energy statistics and plotting.")
+    allow_ref_energy_lstsq_completion: bool = Field(
+        False,
+        description="Whether to fit missing element reference energies with least squares when provided ref_energies is incomplete."
+    )
+    plot_level: Literal["basic", "full"] = Field(
+        "full",
+        description=(
+            "Plot output level. 'basic' keeps the daily core scope "
+            "(parity, single distributions, error distributions, dataset element statistics), "
+            "while 'full' adds publication/supplement plots "
+            "(enhanced parity, overlay, with_error, and dataset cohesive-energy distribution when available)."
+        )
+    )
+    enhanced_parity_renderer: Literal["auto", "scatter", "hexbin"] = Field(
+        "auto",
+        description=(
+            "Renderer policy for enhanced parity main panels. "
+            "'auto' keeps quantity-aware defaults, while 'scatter' and 'hexbin' "
+            "force the same main renderer across enhanced parity plots."
+        ),
+    )
+    slow_plot_threshold_seconds: float = Field(
+        60.0,
+        gt=0.0,
+        description="Warning threshold for single plot elapsed time in seconds."
+    )
+    submission: SubmissionConfig = Field(
+        default_factory=SubmissionConfig,
+        description="Submission configuration."
+    )
+    config_path: Optional[Path] = Field(
+        None,
+        description="Path to configuration file for Slurm self-submission."
+    )
+
+    @model_validator(mode='before')
+    @classmethod
+    def extract_flat_submission_config(cls, data: Any) -> Any:
+        if isinstance(data, dict) and "submission" not in data:
+            data["submission"] = {
+                "backend": data.get("backend", DEFAULT_BACKEND),
+                "slurm_config": data.get("slurm_config", {}),
+                "env_setup": data.get("env_setup", "")
+            }
+        return data
 
     @model_validator(mode='after')
     def validate_mode_paths(self):
         if self.mode == "model_test" and self.result_dir is None:
             raise ValueError("result_dir is required when mode='model_test'")
+        if self.mode == "model_test" and not self.type_map and self.data_path is None:
+            raise ValueError("type_map is required when mode='model_test' unless data_path is provided")
         if self.mode == "dataset" and self.dataset_dir is None:
             raise ValueError("dataset_dir is required when mode='dataset'")
         return self
+
+class DataCleaningConfig(BaseWorkflowConfig):
+    """Configuration for Data Cleaning Workflow."""
+    dataset_dir: Path = Field(..., description="Path to labeled dataset directory (dpdata format).")
+    result_dir: Path = Field(..., description="Path to inference result directory (`*.out` files).")
+    output_dir: Path = Field(
+        Path(DEFAULT_CLEAN_OUTPUT_DIR),
+        description="Output directory for cleaned dataset and summary files."
+    )
+    results_prefix: str = Field(
+        DEFAULT_CLEAN_RESULTS_PREFIX,
+        description="Prefix of inference result files, e.g. `results` for `results.e_peratom.out`."
+    )
+    energy_diff_threshold: Optional[float] = Field(
+        None,
+        ge=0.0,
+        description="Per-frame max allowed absolute energy difference in eV/atom. None disables this rule."
+    )
+    force_max_diff_threshold: Optional[float] = Field(
+        None,
+        ge=0.0,
+        description="Per-frame max allowed atomic force difference in eV/A. None disables this rule."
+    )
+    stress_max_diff_threshold: Optional[float] = Field(
+        None,
+        ge=0.0,
+        description="Per-frame max allowed virial-component difference from `v_peratom.out` or `v.out`. None disables this rule."
+    )
+    strict_alignment: bool = Field(
+        DEFAULT_CLEAN_STRICT_ALIGNMENT,
+        description="Whether to require strict system/frame alignment between dataset and inference results."
+    )
 
 class InferenceConfig(BaseWorkflowConfig):
     """Configuration for Inference Workflow."""
@@ -183,6 +272,10 @@ class InferenceConfig(BaseWorkflowConfig):
     model_head: Optional[str] = Field(None, description="Model head name (optional for frozen models).")
     results_prefix: str = Field(DEFAULT_RESULTS_PREFIX, description="Output file prefix.")
     task_name: str = DEFAULT_INFER_TASK_NAME
+    auto_analysis: bool = Field(
+        False,
+        description="Whether to trigger analysis after inference execution."
+    )
     ref_energies: Dict[str, float] = Field(default_factory=dict, description="Reference energies per element for cohesive energy calculation.")
 
 class LabelingConfig(BaseWorkflowConfig):
@@ -278,6 +371,34 @@ class CollectionConfig(BaseWorkflowConfig):
     testing_dir: str = DEFAULT_TESTING_DIR
     results_prefix: str = Field(DEFAULT_RESULTS_PREFIX, description="Output file prefix.")
     fig_dpi: int = Field(FIG_DPI, description="DPI for visualization figures.")
+    fig_base_font_size: int = Field(
+        12,
+        ge=8,
+        le=24,
+        description="Base font size for Collection figures; title, label, tick, and legend sizes are derived from this value."
+    )
+    fig_tick_target_count: int = Field(
+        6,
+        ge=3,
+        le=12,
+        description="Approximate number of major ticks used when linking x/y tick spacing in Collection 2D plots."
+    )
+    fig_legend_max_rows: int = Field(
+        8,
+        ge=1,
+        le=20,
+        description="Maximum preferred legend rows before Collection legends flow into multiple columns."
+    )
+    fig_legend_max_cols: int = Field(
+        4,
+        ge=1,
+        le=8,
+        description="Maximum legend columns used by Collection multi-pool summary figures."
+    )
+    enable_diagnostic_plots: bool = Field(
+        False,
+        description="Enable optional Diagnostic-layer plots (default: False, Core plots only)."
+    )
     
     # UQ Parameters
     num_models: int = Field(DEFAULT_NUM_MODELS, ge=3, description="Number of models for UQ calculation.")

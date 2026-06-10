@@ -12,6 +12,7 @@ def test_resolve_config_paths_resolves_relative_paths(tmp_path):
         "data_path": "data",
         "model_path": "/abs/model.pt",
         "work_dir": "./work",
+        "dataset_dir": "dataset",
         "empty": "",
     }
 
@@ -20,6 +21,7 @@ def test_resolve_config_paths_resolves_relative_paths(tmp_path):
     assert out is cfg
     assert out["data_path"] == os.path.join(str(config_path.parent), "data")
     assert out["work_dir"] == os.path.join(str(config_path.parent), "work")
+    assert out["dataset_dir"] == os.path.join(str(config_path.parent), "dataset")
     assert out["model_path"] == "/abs/model.pt"
     assert out["empty"] == ""
 
@@ -29,4 +31,3 @@ def test_resolve_config_paths_without_config_file_path_returns_input_unchanged()
     out = resolve_config_paths(cfg, "")
     assert out is cfg
     assert out["data_path"] == "data"
-

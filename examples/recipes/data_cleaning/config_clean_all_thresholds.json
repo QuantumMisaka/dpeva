@@ -1,0 +1,10 @@
+{
+    "dataset_dir": "sampled_dpdata",
+    "result_dir": "test_trn",
+    "output_dir": "./clean_output",
+    "results_prefix": "results",
+    "strict_alignment": true,
+    "energy_diff_threshold": 0.05,
+    "force_max_diff_threshold": 0.30,
+    "stress_max_diff_threshold": null
+}

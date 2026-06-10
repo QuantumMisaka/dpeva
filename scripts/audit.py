@@ -19,7 +19,7 @@ import os
 import re
 import sys
 import argparse
-from typing import List, Tuple, Dict, Any
+from typing import List
 
 # Configuration
 DEFAULT_SRC_DIR = "src/dpeva"
@@ -143,7 +143,7 @@ def run_audit(directory: str, strict: bool = False) -> bool:
     all_violations.sort(key=lambda x: (severity_order.get(x.severity, 3), x.file, x.line))
 
     # Print Report
-    print(f"\n=== Audit Summary ===")
+    print("\n=== Audit Summary ===")
     print(f"Scanned: {stats['files']} files, {stats['lines']} lines")
     print(f"Total Violations: {len(all_violations)}")
     

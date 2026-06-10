@@ -63,6 +63,7 @@ LOG_FILE_INFER: Final[str] = "inference.log"
 LOG_FILE_FEATURE: Final[str] = "feature.log"
 LOG_FILE_ANALYSIS: Final[str] = "analysis.log"
 LOG_FILE_LABEL: Final[str] = "labeling.log"
+LOG_FILE_CLEAN: Final[str] = "cleaning.log"
 
 # Visualization
 FIG_DPI: Final[int] = 300
@@ -96,13 +97,23 @@ WORKFLOW_FINISHED_TAG: Final[str] = "DPEVA_TAG: WORKFLOW_FINISHED"
 # Filenames
 FILENAME_STATS_JSON: Final[str] = "statistics.json"
 FILENAME_SUMMARY_CSV: Final[str] = "inference_summary.csv"
+FILENAME_METRICS_JSON: Final[str] = "metrics.json"
+FILENAME_METRICS_SUMMARY_CSV: Final[str] = "metrics_summary.csv"
+FILENAME_COHESIVE_ENERGY_PRED_STATS_JSON: Final[str] = "cohesive_energy_pred_stats.json"
+FILENAME_DATASET_STATS_JSON: Final[str] = "dataset_stats.json"
+FILENAME_DATASET_FRAME_SUMMARY_CSV: Final[str] = "dataset_frame_summary.csv"
+FILENAME_DATASET_ELEMENT_RATIO_PNG: Final[str] = "dataset_element_ratio.png"
+FILENAME_DATASET_ELEMENT_PRESENCE_PNG: Final[str] = "dataset_element_presence.png"
 
 # Visualization Filenames
 FILENAME_UQ_FORCE: Final[str] = "UQ-force.png"
 FILENAME_UQ_FORCE_RESCALED: Final[str] = "UQ-force-rescaled.png"
+FILENAME_UQ_QBC_FORCE: Final[str] = "UQ-QbC-force.png"
+FILENAME_UQ_RND_FORCE: Final[str] = "UQ-RND-force.png"
 FILENAME_UQ_DIFF_UQ_PARITY: Final[str] = "UQ-diff-UQ-parity.png"
 FILENAME_UQ_DIFF_FDIFF_PARITY: Final[str] = "UQ-diff-fdiff-parity.png"
 FILENAME_UQ_FORCE_QBC_RND_FDIFF_SCATTER: Final[str] = "UQ-force-qbc-rnd-fdiff-scatter.png"
+FILENAME_UQ_FORCE_QBC_RND_FDIFF_SCATTER_TRUNCATED: Final[str] = "UQ-force-qbc-rnd-fdiff-scatter-truncated.png"
 FILENAME_UQ_FORCE_QBC_RND_IDENTITY_SCATTER: Final[str] = "UQ-force-qbc-rnd-identity-scatter.png"
 FILENAME_UQ_FORCE_QBC_RND_IDENTITY_SCATTER_TRUNCATED: Final[str] = "UQ-force-qbc-rnd-identity-scatter-truncated.png"
 FILENAME_UQ_QBC_CANDIDATE_FDIFF_PARITY: Final[str] = "UQ-QbC-Candidate-fdiff-parity.png"
@@ -110,6 +121,7 @@ FILENAME_UQ_RND_CANDIDATE_FDIFF_PARITY: Final[str] = "UQ-RND-Candidate-fdiff-par
 FILENAME_EXPLAINED_VARIANCE: Final[str] = "explained_variance.png"
 FILENAME_COVERAGE_SCORE: Final[str] = "coverage_score.png"
 FILENAME_FINAL_SAMPLED_PCAVIEW: Final[str] = "Final_sampled_PCAview.png"
+FILENAME_FINAL_SAMPLED_PCAVIEW_BY_POOL: Final[str] = "Final_sampled_PCAview_by_pool.png"
 
 # Column Names
 COL_DESC_PREFIX: Final[str] = "desc_stru_"
@@ -127,3 +139,8 @@ BANNER_INDENT: Final[int] = 24
 
 # Data Processing
 DEFAULT_NUMEXPR_THREADS: Final[int] = 8
+
+# Data Cleaning Defaults
+DEFAULT_CLEAN_OUTPUT_DIR: Final[str] = "cleaned_dpdata"
+DEFAULT_CLEAN_RESULTS_PREFIX: Final[str] = DEFAULT_RESULTS_PREFIX
+DEFAULT_CLEAN_STRICT_ALIGNMENT: Final[bool] = True

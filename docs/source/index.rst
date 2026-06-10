@@ -39,7 +39,8 @@
    guides/docs-governance-quickstart
    guides/process-asset-lifecycle
    policy/README
-   plans/governance/index
+
+项目级审查与实验报告保留在仓库 ``docs/reports/`` 目录中，作为可复盘资产按需访问，不纳入主导航的稳定入口。
 
 .. toctree::
    :maxdepth: 1
@@ -50,13 +51,13 @@
    architecture/decisions/2026-02-04-deepmd-dependency
    guides/README
    guides/deployment
+   guides/labeling-stats-repair
    guides/developer/README
    guides/developer/config-docs-maintenance
    guides/testing/README
    guides/testing/integration-config-templates
    guides/testing/integration-slurm
    guides/testing/multi-datapool-artifacts
-   plans/README
    policy/contributing
    policy/docs-structure
    policy/maintenance

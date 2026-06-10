@@ -44,7 +44,7 @@ owner: Quantum Misaka
 - `docs/governance/`：文档治理交付物（规划、审计、追踪矩阵、工具配置）。
 - `docs/plans/`：项目级“已收敛计划”（可复盘、可归档、面向团队共享）。
 - `docs/reports/`：项目级“已收敛结论”（里程碑总结、评审结论、发布总结）。
-- `docs/logo_design/`：项目 logo 设计与相关文档。
+- `docs/assets/logo_design/`：项目 logo 设计与相关文档。
 - `docs/archive/`：历史与弃用文档（只读）。必须在文件头显式标注适用版本与是否已落地。
 
 ### 2.1 AI 执行文档与项目文档边界
@@ -54,8 +54,8 @@ owner: Quantum Misaka
 | 位置 | 文档类型 | 可见性 | 生命周期 |
 |---|---|---|---|
 | `.trae/documents/` | AI 执行期草案、临时计划、阶段记录 | 工作空间内部 | 任务期内可变，不要求 Sphinx 暴露 |
-| `docs/plans/` | 团队共享的收敛计划（目标/验收/迁移策略） | 项目文档系统 | 完成后归档至 `docs/archive/vX.Y.Z/plans/` |
-| `docs/reports/` | 团队共享的收敛结论（评审/实验/发布总结） | 项目文档系统 | 发布后归档至 `docs/archive/vX.Y.Z/reports/` |
+| `docs/plans/` | 团队共享、可复盘、可发布的收敛计划 | 项目文档系统 | 完成后归档至 `docs/archive/vX.Y.Z/plans/` |
+| `docs/reports/` | 当前版本代码审查报告和其他类型报告存放位置（评审/实验/发布总结） | 项目文档系统 | 发布后归档至 `docs/archive/vX.Y.Z/reports/` |
 | `docs/archive/` | 历史只读资产 | 默认不进主导航 | 长期保留，禁止覆盖式重写 |
 
 ### 2.2 Sphinx 展示策略

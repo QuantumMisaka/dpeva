@@ -2,7 +2,7 @@
 title: Guides（操作指南导航）
 status: active
 audience: Developers / Users
-last-updated: 2026-03-12
+last-updated: 2026-03-14
 owner: Docs Owner
 ---
 
@@ -25,6 +25,7 @@ owner: Docs Owner
 - 配置编写：`configuration.md`
 - Slurm 指南：`slurm.md`
 - 排障指南：`troubleshooting.md`
+- Labeling 历史统计修复：`labeling-stats-repair.md`
 - 测试指南：`testing/README.md`
 
 ## 3. 文档治理开发约定

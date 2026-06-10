@@ -29,7 +29,7 @@ owner: Docs Owner
 - 禁止文件系统绝对路径链接：禁止 `/home/...`、`C:\...`；引用仓库代码文件请使用仓库 URL。
 
 ## 4. 文档类型与落点
-- 分类与落点以 [docs-structure.md](https://github.com/QuantumMisaka/dpeva/blob/main/docs/policy/docs-structure.md) 为准。
+- 分类与落点以 `docs/source/policy/docs-structure.md` 为准。
 
 常见落点：
 
@@ -60,7 +60,7 @@ owner: Docs Owner
 
 ## 6. Review 与验收
 
-验收标准以 [quality.md](https://github.com/QuantumMisaka/dpeva/blob/main/docs/policy/quality.md) 为准。
+验收标准以 `docs/source/policy/quality.md` 为准。
 
 建议的 PR 自检：
 

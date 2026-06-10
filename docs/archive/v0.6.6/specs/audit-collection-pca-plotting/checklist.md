@@ -1,0 +1,8 @@
+- [x] 已确认并复现实战现象：All Data in Pool 灰色背景与 Candidate 分布不匹配
+- [x] 已定位根因并给出可验证证据链（包含调用链与变换链）
+- [x] 已交付审查报告到 docs/reports，命名符合项目规范
+- [x] 已交付计划文档到 docs/plans，包含状态与受众信息
+- [x] 修复后背景点不再异常塌缩到 (0,0) 附近
+- [x] 修复后背景点与 Candidate 处于同一 PCA 坐标尺度
+- [x] DIRECT 路径验证通过（必要时含 2-DIRECT 路径）
+- [x] docs/source 对应 toctree 已更新且无失效引用

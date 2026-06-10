@@ -1,8 +1,7 @@
 
-import os
 import pytest
 import numpy as np # Import numpy
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 from dpeva.workflows.collect import CollectionWorkflow
 from dpeva.config import CollectionConfig
 
@@ -68,7 +67,7 @@ class TestCollectionWorkflowSubmission:
         (tmp_path / "testdata").mkdir()
     
         # Mock actual execution components to avoid running them
-        with patch("dpeva.workflows.collect.UQManager") as MockUQ, \
+        with patch("dpeva.workflows.collect.UQManager"), \
              patch("dpeva.workflows.collect.SamplingManager") as MockSampling, \
              patch("dpeva.workflows.collect.CollectionIOManager") as MockIO, \
              patch("dpeva.workflows.collect.setup_workflow_logger"):
@@ -93,9 +92,22 @@ class TestCollectionWorkflowSubmission:
             # We must patch where it is IMPORTED in dpeva.workflows.collect
             # In collect.py: "from dpeva.uncertain.visualization import UQVisualizer"
             # It uses UQVisualizer, not Visualization. My bad.
-            with patch("dpeva.workflows.collect.UQVisualizer") as MockVis:
+            with patch("dpeva.workflows.collect.UQVisualizer"):
                  workflow.run()
             
             # Verify it did NOT try to self-submit (no JobManager usage)
             # And it proceeded to load descriptors
             mock_io_instance.load_descriptors.assert_called()
+
+    def test_collection_config_defaults_allow_missing_uq_scheme_in_no_filter(self, tmp_path):
+        cfg = {
+            "project": str(tmp_path),
+            "desc_dir": str(tmp_path / "desc"),
+            "testdata_dir": str(tmp_path / "testdata"),
+            "uq_trust_mode": "no_filter",
+            "sampler_type": "direct",
+            "submission": {"backend": "local"},
+        }
+        parsed = CollectionConfig(**cfg)
+        assert parsed.uq_select_scheme == "tangent_lo"
+        assert parsed.uq_trust_mode == "no_filter"

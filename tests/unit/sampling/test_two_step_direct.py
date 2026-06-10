@@ -1,7 +1,6 @@
 import pytest
 import numpy as np
 from dpeva.sampling.two_step_direct import TwoStepDIRECTSampler
-from dpeva.sampling.direct import BirchClustering
 
 class TestTwoStepDIRECTSampler:
     

@@ -1,7 +1,6 @@
-import pytest
 import os
 import json
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from dpeva.workflows.train import TrainingWorkflow
 
 def test_training_workflow_init_multi_model(tmp_path):

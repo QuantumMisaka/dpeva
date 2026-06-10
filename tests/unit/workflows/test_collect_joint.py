@@ -199,3 +199,57 @@ class TestCollectionWorkflowJoint:
             # Verify fit_transform (normal) called, not fit_transform_joint
             mock_sampler_instance.fit_transform.assert_called()
             mock_sampler_instance.fit_transform_joint.assert_not_called()
+
+    @patch("dpeva.io.collection.CollectionIOManager.export_dpdata")
+    @patch("dpeva.sampling.manager.SamplingManager.execute_sampling")
+    @patch("dpeva.workflows.collect.UQVisualizer")
+    def test_joint_sampling_normalizes_candidate_and_training_descriptors(
+        self,
+        mock_visualizer,
+        mock_execute_sampling,
+        mock_export_dpdata,
+        tmp_path,
+    ):
+        project_dir = tmp_path / "project"
+        desc_dir = tmp_path / "candidate_desc"
+        training_desc_dir = tmp_path / "training_desc"
+        testdata_dir = tmp_path / "testdata"
+        project_dir.mkdir()
+        desc_dir.mkdir()
+        training_desc_dir.mkdir()
+        testdata_dir.mkdir()
+
+        candidate_raw = np.array([[[3.0, 4.0], [0.0, 0.0]]], dtype=float)
+        training_raw = np.array([[[0.0, 5.0], [0.0, 5.0]]], dtype=float)
+        np.save(desc_dir / "cand_sys.npy", candidate_raw)
+        np.save(training_desc_dir / "train_sys.npy", training_raw)
+
+        config = {
+            "project": str(project_dir),
+            "desc_dir": str(desc_dir),
+            "training_desc_dir": str(training_desc_dir),
+            "testdata_dir": str(testdata_dir),
+            "uq_trust_mode": "no_filter",
+            "select_n": 1,
+        }
+
+        mock_execute_sampling.return_value = {
+            "selected_indices": [0],
+            "pca_features": np.array([[0.0, 0.0], [1.0, 1.0]]),
+            "explained_variance": np.array([1.0, 0.5]),
+            "random_indices": np.array([1]),
+            "scores_direct": np.array([1.0, 1.0]),
+            "scores_random": np.array([0.5, 0.5]),
+            "full_pca_features": np.array([[0.0, 0.0]]),
+        }
+        mock_export_dpdata.return_value = (1, 0, 1, 0)
+        mock_visualizer.return_value = MagicMock()
+
+        wf = CollectionWorkflow(config)
+        wf.run()
+
+        features = mock_execute_sampling.call_args.args[0]
+        assert features.shape == (2, 2)
+        np.testing.assert_allclose(features[0], np.array([0.6, 0.8]), atol=1e-10)
+        np.testing.assert_allclose(features[1], np.array([0.0, 1.0]), atol=1e-10)
+        np.testing.assert_allclose(np.linalg.norm(features, axis=1), np.ones(2), atol=1e-10)

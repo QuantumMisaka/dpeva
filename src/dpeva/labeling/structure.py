@@ -7,7 +7,7 @@ and preprocessing them for DFT calculations.
 """
 
 import logging
-from typing import List, Tuple, Optional
+from typing import List, Tuple
 import numpy as np
 from ase import Atoms
 
@@ -141,9 +141,12 @@ class StructureAnalyzer:
         # (1,2)->3 (alpha), (0,2)->4 (beta), (0,1)->5 (gamma)
         def get_angle_index(i, j):
             pair = tuple(sorted((i, j)))
-            if pair == (1, 2): return 3
-            if pair == (0, 2): return 4
-            if pair == (0, 1): return 5
+            if pair == (1, 2):
+                return 3
+            if pair == (0, 2):
+                return 4
+            if pair == (0, 1):
+                return 5
             return -1
             
         # New alpha (angle between New[1] and New[2])

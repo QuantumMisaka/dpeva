@@ -2,18 +2,19 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-03-09
+last-updated: 2026-03-26
+owner: Docs Owner
 ---
 
 # test-for-multiple-datapool 生产目录输入输出分析
 
 - Status: active
 - Audience: Developers
-- Last-Updated: 2026-02-18
+- Last-Updated: 2026-03-26
 
-目标目录：`/test/test-for-multiple-datapool` (File missing)
+目标目录：以仓库内多数据池测试资产为参照，例如 `tests/` 中的相关集成测试输入输出目录。
 
-本文档用于把生产级运行产物拆解为“输入资产 / 输出资产”，并将其映射到 DP-EVA 各 Workflow 的配置字段（对照 [examples/recipes](https://github.com/QuantumMisaka/dpeva/tree/main/examples/recipes)）。
+本文档用于把生产级运行产物拆解为“输入资产 / 输出资产”，并将其映射到 DP-EVA 各 Workflow 的配置字段（对照 `examples/recipes/`）。
 
 ## 0. 相关方
 
@@ -72,7 +73,7 @@ last-updated: 2026-03-09
 
 参考配置：
 
-- [config_feature.json](https://github.com/QuantumMisaka/dpeva/blob/main/examples/recipes/feature_generation/config_feature.json)
+- `examples/recipes/feature_generation/config_feature.json`
 
 ### 2.2 TrainingWorkflow（Ensemble 训练）
 
@@ -93,7 +94,7 @@ last-updated: 2026-03-09
 
 参考配置：
 
-- [config_train.json](https://github.com/QuantumMisaka/dpeva/blob/main/examples/recipes/training/config_train.json)
+- `examples/recipes/training/config_train.json`
 
 ### 2.3 InferenceWorkflow（候选集合推理）
 
@@ -113,7 +114,7 @@ last-updated: 2026-03-09
 
 参考配置：
 
-- [config_infer.json](https://github.com/QuantumMisaka/dpeva/blob/main/examples/recipes/inference/config_infer.json)
+- `examples/recipes/inference/config_infer.json`
 
 ### 2.4 CollectionWorkflow（UQ + Filtering + Sampling + Export）
 
@@ -136,13 +137,14 @@ last-updated: 2026-03-09
 
 - `<root_savedir>/dataframe/*.csv`
 - `<root_savedir>/view/*.png`
+- `<root_savedir>/view/Final_sampled_PCAview_by_pool.png`（仅 `training_desc_dir` 启用的 joint 模式生成；灰色全集背景 + sampled 按 pool 区分 + 图外多列图注）
 - `<root_savedir>/dpdata/sampled_dpdata/<Pool>/<System>/...`
 - `<root_savedir>/dpdata/other_dpdata/<Pool>/<System>/...`
 
 参考配置：
 
-- 普通模式：`/examples/recipes/collection/config_multi_normal.json` (File missing)
-- 联合模式：`/examples/recipes/collection/config_multi_joint.json` (File missing)
+- 普通模式：`examples/recipes/collection/config_collect_normal.json`
+- 联合模式：`examples/recipes/collection/config_collect_joint.json`
 
 ### 2.5 AnalysisWorkflow（结果统计与可视化）
 
@@ -157,7 +159,7 @@ last-updated: 2026-03-09
 
 参考配置：
 
-- `/examples/recipes/analysis/config.json` (File missing)
+- `examples/recipes/analysis/config_analysis.json`
 
 ## 3. 用于集成测试编排的关键观察
 
@@ -177,4 +179,5 @@ last-updated: 2026-03-09
 
 ## 5. 变更记录
 
+- 2026-03-26：补充 joint 多数据池新增总结图 `Final_sampled_PCAview_by_pool.png` 的触发条件与输出约定。
 - 2026-02-18：补齐生产目录 I/O 拆解与 Workflow 配置映射，并作为集成测试专题附录。

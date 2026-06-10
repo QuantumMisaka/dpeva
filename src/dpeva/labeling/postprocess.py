@@ -6,15 +6,12 @@ Handles the processing of ABACUS calculation results, including convergence chec
 metric calculation, and data cleaning.
 """
 
-import os
 import logging
-import shutil
 from pathlib import Path
-from typing import Dict, List, Any, Optional, Tuple
+from typing import Dict, Any, Optional, Tuple, Sequence
 import numpy as np
 import pandas as pd
 import dpdata
-from ase import Atoms
 from collections import Counter
 from scipy.linalg import lstsq
 
@@ -47,32 +44,64 @@ class AbacusPostProcessor:
         self.ref_energies = config.get("ref_energies", {})
 
     def check_convergence(self, task_dir: Path) -> bool:
-        """
-        Check if an ABACUS calculation has converged.
-        Looks for "charge density convergence is achieved" in running_scf.log.
-        """
-        task_dir = Path(task_dir)
-        # Find running_scf.log
-        # Usually in OUT.suffix/running_scf.log
-        # We search recursively or check standard location
-        log_files = list(task_dir.glob("OUT.*/running_scf.log"))
+        status, _ = self.classify_task_status(task_dir)
+        return status == "converged"
+
+    def classify_task_status(self, task_dir: Path) -> Tuple[str, str]:
+        log_files = list(Path(task_dir).glob("OUT.*/running_scf.log"))
         if not log_files:
-            # Fallback to abacus.out in root if running_scf not found (older versions?)
-            log_files = list(task_dir.glob("abacus.out"))
-        
+            log_files = list(Path(task_dir).glob("abacus.out"))
+            if not log_files:
+                return "failed", "missing_log"
+
+        has_converged = False
+        has_not_converged = False
         for log_file in log_files:
             try:
-                with open(log_file, 'r') as f:
+                with open(log_file, "r") as f:
                     for line in f:
                         if "charge density convergence is achieved" in line:
-                            return True
+                            has_converged = True
                         if "convergence has not been achieved" in line:
-                            return False
+                            has_not_converged = True
             except Exception as e:
                 logger.warning(f"Error reading log file {log_file}: {e}")
+
+        if has_not_converged:
+            return "failed", "scf_not_converged"
+        if has_converged and self._has_required_output_blocks(task_dir):
+            return "converged", "ok"
+        if has_converged:
+            return "bad_converged", "missing_total_force_block"
+        return "failed", "no_converged_marker"
+
+    @staticmethod
+    def _has_required_output_blocks(task_dir: Path) -> bool:
+        log_files = list(Path(task_dir).glob("OUT.*/running_scf.log"))
+        if not log_files:
+            return False
+        for log_file in log_files:
+            try:
+                with open(log_file, "r") as f:
+                    for line in f:
+                        if "TOTAL-FORCE" in line:
+                            return True
+            except Exception:
                 continue
-        
         return False
+
+    @staticmethod
+    def _is_labeled_system_complete(ls: dpdata.LabeledSystem) -> Tuple[bool, str]:
+        n_frames = ls.get_nframes()
+        if n_frames <= 0:
+            return False, "no_frames"
+        required_keys = ("energies", "forces", "virials", "cells")
+        for key in required_keys:
+            if key not in ls.data:
+                return False, f"missing_key:{key}"
+            if len(ls[key]) < n_frames:
+                return False, f"short_array:{key}"
+        return True, ""
 
     def load_data(self, task_dir: Path) -> Optional[dpdata.LabeledSystem]:
         """
@@ -83,6 +112,10 @@ class AbacusPostProcessor:
             # fmt='abacus/scf'
             ls = dpdata.LabeledSystem(str(task_dir), fmt='abacus/scf')
             if len(ls) > 0:
+                valid, reason = self._is_labeled_system_complete(ls)
+                if not valid:
+                    logger.warning(f"Skip incomplete labeled system {task_dir}: {reason}")
+                    return None
                 return ls
         except Exception as e:
             logger.error(f"Failed to load data from {task_dir}: {e}")
@@ -94,17 +127,35 @@ class AbacusPostProcessor:
         Returns a DataFrame.
         """
         data_list = []
+        skipped_system_count = 0
+        skipped_frame_count = 0
         for si, s in enumerate(systems):
             atom_names = s["atom_names"]
             atom_types = s["atom_types"]
             elements = [atom_names[t] for t in atom_types]
             n_frames = s.get_nframes()
+            try:
+                energies = s["energies"]
+                forces_all = s["forces"]
+                virials = s["virials"]
+                cells_all = s["cells"]
+            except KeyError as exc:
+                skipped_system_count += 1
+                logger.warning(f"Skip system {si} due to missing key: {exc}")
+                continue
+            if min(len(energies), len(forces_all), len(virials), len(cells_all)) < n_frames:
+                skipped_system_count += 1
+                logger.warning(f"Skip system {si} due to inconsistent frame arrays.")
+                continue
             
             for fi in range(n_frames):
-                energy = float(s["energies"][fi])
-                forces = s["forces"][fi]
-                virial = s["virials"][fi]
-                cells = s["cells"][fi]
+                energy = float(energies[fi])
+                forces = np.asarray(forces_all[fi])
+                virial = virials[fi]
+                cells = cells_all[fi]
+                if forces.size == 0:
+                    skipped_frame_count += 1
+                    continue
                 volume = float(np.abs(np.linalg.det(cells)))
                 
                 # Pressure (GPa)
@@ -118,7 +169,11 @@ class AbacusPostProcessor:
                     stress_tensor = np.zeros((3,3))
                     pressure_gpa = 0.0
                 
-                max_force = float(np.linalg.norm(forces, axis=1).max())
+                force_norm = np.linalg.norm(forces, axis=1)
+                if force_norm.size == 0:
+                    skipped_frame_count += 1
+                    continue
+                max_force = float(force_norm.max())
                 num_atoms = len(elements)
                 energy_per_atom = energy / num_atoms
                 
@@ -134,6 +189,28 @@ class AbacusPostProcessor:
                     "volume": volume
                 })
         
+        if skipped_system_count > 0 or skipped_frame_count > 0:
+            logger.warning(
+                f"Skipped incomplete data during metric computation: "
+                f"systems={skipped_system_count}, frames={skipped_frame_count}"
+            )
+
+        if not data_list:
+            return pd.DataFrame(
+                columns=[
+                    "sys_idx",
+                    "frame_idx",
+                    "elements",
+                    "num_atoms",
+                    "energy",
+                    "energy_per_atom",
+                    "max_force",
+                    "pressure_gpa",
+                    "volume",
+                    "cohesive_energy_per_atom",
+                ]
+            )
+
         df = pd.DataFrame(data_list)
         
         # Compute Cohesive Energy
@@ -212,7 +289,15 @@ class AbacusPostProcessor:
         logger.info(f"Filtered data: {len(df)} -> {len(cleaned_df)} frames")
         return cleaned_df
 
-    def export_data(self, systems: dpdata.MultiSystems, df_clean: pd.DataFrame, output_dir: Path, format: str = "deepmd/npy"):
+    @staticmethod
+    def build_no_contribution_hint(conv: int, clean: int) -> Optional[str]:
+        if conv == 0:
+            return "Hint: no converged tasks, this branch contributes no training data."
+        if clean == 0:
+            return "Hint: converged tasks were fully filtered, this branch contributes no training data."
+        return None
+
+    def export_data(self, systems: Sequence[dpdata.LabeledSystem], df_clean: pd.DataFrame, output_dir: Path, format: str = "deepmd/npy"):
         """
         Export cleaned data to disk.
         """

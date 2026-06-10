@@ -35,6 +35,8 @@ class DPTestResultParser:
         
         self.has_ground_truth = False
         self.parsed_data = {}
+        self.dataname_list: List[List] = []
+        self.datanames_nframe: Dict[str, int] = {}
 
     def parse(self) -> Dict:
         """
@@ -108,6 +110,8 @@ class DPTestResultParser:
             # Parse Data Names and Frame Info from Energy file comments
             # Pass f_file to use structure-based atom counting
             dataname_list, datanames_nframe = self._get_dataname_info(e_file, f_file)
+            self.dataname_list = dataname_list
+            self.datanames_nframe = datanames_nframe
         except Exception as e:
             self.logger.error(f"Failed to parse dataname info: {e}")
             raise
@@ -172,18 +176,57 @@ class DPTestResultParser:
         Check if the data columns contain actual ground truth or are just placeholders (zeros).
         Updates self.has_ground_truth based on heuristic check of zero-values.
         """
-        # Heuristic: If all energy and force data are exactly zero, likely no ground truth.
-        is_e_zero = np.all(np.abs(self.data_e['data_e']) < 1e-12)
-        
+        zero_tol = 1e-4
+
+        def _is_effectively_zero(values, tol=zero_tol):
+            arr = np.asarray(values, dtype=float)
+            finite_mask = np.isfinite(arr)
+            if not np.any(finite_mask):
+                return True
+            return np.all(np.abs(arr[finite_mask]) < tol)
+
+        def _has_any_effectively_zero(values, tol=zero_tol):
+            arr = np.asarray(values, dtype=float)
+            finite_mask = np.isfinite(arr)
+            if not np.any(finite_mask):
+                return True
+            return np.any(np.abs(arr[finite_mask]) < tol)
+
+        def _is_effectively_same(values_a, values_b, tol=zero_tol):
+            arr_a = np.asarray(values_a, dtype=float)
+            arr_b = np.asarray(values_b, dtype=float)
+            finite_mask = np.isfinite(arr_a) & np.isfinite(arr_b)
+            if not np.any(finite_mask):
+                return True
+            return np.allclose(arr_a[finite_mask], arr_b[finite_mask], atol=tol, rtol=0.0)
+
+        is_e_zero = _is_effectively_zero(self.data_e["data_e"])
+        has_e_zero_frame = _has_any_effectively_zero(self.data_e["data_e"])
+        is_e_same_as_pred = _is_effectively_same(self.data_e["data_e"], self.data_e["pred_e"])
         is_f_zero = True
+        is_f_same_as_pred = True
         if self.data_f is not None:
-            is_f_zero = np.all(np.abs(self.data_f['data_fx']) < 1e-12) and \
-                        np.all(np.abs(self.data_f['data_fy']) < 1e-12) and \
-                        np.all(np.abs(self.data_f['data_fz']) < 1e-12)
-                        
-        if is_e_zero and is_f_zero:
+            force_data = np.atleast_1d(self.data_f)
+            is_f_zero = (
+                _is_effectively_zero(force_data["data_fx"])
+                and _is_effectively_zero(force_data["data_fy"])
+                and _is_effectively_zero(force_data["data_fz"])
+            )
+            is_f_same_as_pred = (
+                _is_effectively_same(force_data["data_fx"], force_data["pred_fx"])
+                and _is_effectively_same(force_data["data_fy"], force_data["pred_fy"])
+                and _is_effectively_same(force_data["data_fz"], force_data["pred_fz"])
+            )
+
+        if has_e_zero_frame:
+            self.has_ground_truth = False
+            self.logger.info("Detected at least one near-zero energy label frame (<1e-4). Assuming NO ground truth.")
+        elif is_e_zero and is_f_zero:
             self.has_ground_truth = False
             self.logger.info("Detected all-zero data columns. Assuming NO ground truth.")
+        elif is_e_same_as_pred and is_f_same_as_pred:
+            self.has_ground_truth = False
+            self.logger.info("Detected data columns identical to prediction columns. Assuming NO ground truth.")
         else:
             self.has_ground_truth = True
             self.logger.info("Detected non-zero data columns. Assuming ground truth exists.")
@@ -307,5 +350,3 @@ class DPTestResultParser:
                 datanames_nframe_list.append([dataname, i, natom])
                 
         return datanames_nframe_list, datanames_nframe_dict
-
-

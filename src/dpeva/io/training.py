@@ -4,7 +4,6 @@ import json
 import logging
 from typing import Dict, Any
 
-from dpeva.constants import LOG_FILE_TRAIN
 
 class TrainingIOManager:
     """

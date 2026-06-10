@@ -2,14 +2,15 @@
 title: Upstream Software
 status: active
 audience: Users / Developers
-last-updated: 2026-03-09
+last-updated: 2026-04-05
+owner: Docs Owner
 ---
 
 # 上游软件与核心依赖（Upstream Software）
 
 - Status: active
 - Audience: Users / Developers
-- Last-Updated: 2026-03-09
+- Last-Updated: 2026-04-05
 
 本文档汇总 DP-EVA 的核心上游软件，说明其仓库位置与在本项目中的职责边界。
 

@@ -1,8 +1,6 @@
 
 import pytest
-import numpy as np
 import os
-from unittest.mock import MagicMock, patch
 from dpeva.io.dataproc import DPTestResultParser
 
 def create_dummy_files(dirname, head="results", systems=None):
@@ -123,6 +121,77 @@ class TestDPTestResultParser:
         parser = DPTestResultParser(result_dir=str(result_dir))
         results = parser.parse()
         
+        assert results["has_ground_truth"] is False
+
+    def test_parser_no_ground_truth_when_any_energy_frame_is_zero(self, result_dir):
+        e_file = result_dir / "results.e_peratom.out"
+        f_file = result_dir / "results.f.out"
+
+        with open(e_file, "w") as f:
+            f.write("# sys1: 0\n")
+            f.write("0.0 1.0\n")
+            f.write("0.8 1.0\n")
+
+        with open(f_file, "w") as f:
+            f.write("# sys1: 0\n")
+            f.write("0.2 0.2 0.2 0.3 0.3 0.3\n")
+            f.write("0.4 0.4 0.4 0.5 0.5 0.5\n")
+
+        parser = DPTestResultParser(result_dir=str(result_dir))
+        results = parser.parse()
+
+        assert results["has_ground_truth"] is False
+
+    def test_parser_keeps_strict_less_than_threshold_for_zero(self, result_dir):
+        e_file = result_dir / "results.e_peratom.out"
+        f_file = result_dir / "results.f.out"
+
+        with open(e_file, "w") as f:
+            f.write("# sys1: 0\n")
+            f.write("0.0001 1.0\n")
+
+        with open(f_file, "w") as f:
+            f.write("# sys1: 0\n")
+            f.write("0.1 0.2 0.3 0.2 0.3 0.4\n")
+
+        parser = DPTestResultParser(result_dir=str(result_dir))
+        results = parser.parse()
+
+        assert results["has_ground_truth"] is True
+
+    def test_parser_keeps_ground_truth_when_only_part_force_is_near_zero(self, result_dir):
+        e_file = result_dir / "results.e_peratom.out"
+        f_file = result_dir / "results.f.out"
+
+        with open(e_file, "w") as f:
+            f.write("# sys1: 0\n")
+            f.write("0.8 1.0\n")
+            f.write("0.9 1.0\n")
+
+        with open(f_file, "w") as f:
+            f.write("# sys1: 0\n")
+            f.write("0.0 0.0 0.0 0.2 0.2 0.2\n")
+            f.write("0.3 0.4 0.5 0.2 0.3 0.4\n")
+
+        parser = DPTestResultParser(result_dir=str(result_dir))
+        results = parser.parse()
+
+        assert results["has_ground_truth"] is True
+
+    def test_parser_no_ground_truth_when_data_equals_prediction(self, result_dir):
+        e_file = result_dir / "results.e_peratom.out"
+        f_file = result_dir / "results.f.out"
+
+        with open(e_file, "w") as f:
+            f.write("# sys1: 0\n")
+            f.write("1.23 1.23\n")
+
+        with open(f_file, "w") as f:
+            f.write("# sys1: 0\n")
+            f.write("0.11 0.22 0.33 0.11 0.22 0.33\n")
+
+        parser = DPTestResultParser(result_dir=str(result_dir))
+        results = parser.parse()
         assert results["has_ground_truth"] is False
 
     def test_parse_missing_energy(self, result_dir):

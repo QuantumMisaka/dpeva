@@ -1,6 +1,6 @@
 import pytest
 import warnings
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from dpeva.utils.env_check import check_deepmd_version
 
 class TestEnvCheck:

@@ -29,6 +29,12 @@ Standard configuration for fine-tuning DeepMD models using DP-EVA's parallel tra
 -   **Input**: `input.json` (DeepMD config), training data.
 -   **Output**: Trained models in `work_dir/0..N-1/`.
 
+Variant-specific DPA4 templates are provided under `training/dpa4/`:
+
+- `training/dpa4/air/input.json`
+- `training/dpa4/neo/input.json`
+- `training/dpa4/mini/input.json`
+
 **Usage:**
 ```bash
 dpeva train examples/recipes/training/config_train.json
@@ -37,7 +43,9 @@ dpeva train examples/recipes/training/config_train.json
 ## 3. Inference (`inference/`)
 
 Located in `inference/`.
-Evaluates trained models on a test set (candidate pool) to calculate errors (RMSE) and generate parity plots.
+Evaluates trained models on a test set (candidate pool) and writes raw `dp test` outputs.
+Set `auto_analysis=true` only for local backend if you want chained analysis.
+For Slurm, run `dpeva analysis` after jobs finish.
 
 **Usage:**
 ```bash
@@ -60,15 +68,25 @@ For users who want to use the sampling algorithms directly without the full DP-E
 
 -   **Standard DIRECT (`sampling_direct/`)**:
     -   Uses structural clustering to select representative frames.
-    -   Run with `dpeva collect examples/recipes/sampling_direct/config_collect_direct.json`
+    -   Run with `dpeva collect examples/recipes/sampling_direct/config.json`
     -   Reference: `python examples/scripts/sampling_direct/run_direct.py ...`
 
 -   **2-Step DIRECT (`sampling_2direct/`)**:
     -   Two-step clustering (Structural -> Atomic) to optimize for labeling costs.
-    -   Run with `dpeva collect examples/recipes/sampling_2direct/config_collect_2direct.json`
+    -   Run with `dpeva collect examples/recipes/sampling_2direct/config.json`
     -   Reference: `python examples/scripts/sampling_2direct/run_2direct.py ...`
 
-## 6. Script Entry Points
+## 6. Analysis Recipes
+
+- **Dataset + Inference Results (`analysis/config_analysis.json`)**
+  - Inputs: `result_dir`, `results_prefix`, and optional `data_path` for composition-aware cohesive analysis.
+  - Run with `dpeva analysis examples/recipes/analysis/config_analysis.json`
+
+- **Dataset-only Analysis (`analysis/config_analysis_dataset.json`)**
+  - Inputs: `mode=dataset` + `dataset_dir`.
+  - Run with `dpeva analysis examples/recipes/analysis/config_analysis_dataset.json`
+
+## 7. Script Entry Points
 
 For programmatic workflow demos and helper scripts, use:
 
@@ -79,3 +97,11 @@ For programmatic workflow demos and helper scripts, use:
 - `examples/scripts/collection/collect_recipe.py`
 - `examples/scripts/analysis/analysis_recipe.py`
 - `examples/scripts/labeling/run_labeling.sh`
+
+## 8. Data Cleaning Recipes (`data_cleaning/`)
+
+- **All thresholds enabled (`data_cleaning/config_clean_all_thresholds.json`)**
+  - Inputs: labeled `dataset_dir` + inference `result_dir`, with energy/force/stress thresholds.
+  - Run with `dpeva clean examples/recipes/data_cleaning/config_clean_all_thresholds.json`
+
+- 当前仓库仅维护这一份数据清洗模板；如需 force-only 或 passthrough 变体，请在该文件基础上裁剪阈值字段。

@@ -1,5 +1,9 @@
-"""Package implementing IO of dpeva"""
+"""I/O package public exports.
+
+This package collects reusable I/O helpers shared by multiple workflows.
+Workflow execution paths import concrete modules directly.
+"""
+
 from .dataproc import DPTestResultParser
 
-if __name__ == '__main__':
-    pass
+__all__ = ["DPTestResultParser"]

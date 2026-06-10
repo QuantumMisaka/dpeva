@@ -140,6 +140,28 @@ class SamplingManager:
         
         return random_indices, scores_direct, scores_random
 
+    def _transform_background_features(self, background_features, scaler, pca, sampler_name: str):
+        if background_features is None:
+            return None
+        if background_features.ndim != 2:
+            raise ValueError("background_features must be a 2D array.")
+
+        expected_dim = getattr(scaler, "n_features_in_", None)
+        if not isinstance(expected_dim, (int, np.integer)):
+            expected_dim = None
+        if expected_dim is None:
+            expected_dim = getattr(getattr(pca, "pca", None), "n_features_in_", None)
+            if not isinstance(expected_dim, (int, np.integer)):
+                expected_dim = None
+        if expected_dim is not None and background_features.shape[1] != expected_dim:
+            raise ValueError(
+                f"Background feature dimension mismatch for {sampler_name}: "
+                f"expected {expected_dim}, got {background_features.shape[1]}."
+            )
+
+        scaled_background = scaler.transform(background_features) if scaler is not None else background_features
+        return pca.transform(scaled_background)
+
     def _run_direct(self, features, background_features=None):
         """
         Execute Standard DIRECT Sampling.
@@ -176,15 +198,17 @@ class SamplingManager:
         )
         
         # Transform background features if provided
-        full_pca_features = None
-        if background_features is not None:
-            # Transform background using the fitted PCA from the pipeline
-            full_pca_features = sampler.pca.transform(background_features)
+        full_pca_features = self._transform_background_features(
+            background_features=background_features,
+            scaler=sampler.scaler,
+            pca=sampler.pca,
+            sampler_name="DIRECT",
+        )
         
         return {
             "selected_indices": selected_indices,
             "pca_features": pca_features,
-            "explained_variance": sampler.pca.pca.explained_variance_,
+            "explained_variance": sampler.pca.pca.explained_variance_ratio_,
             "random_indices": random_indices,
             "scores_direct": scores_direct,
             "scores_random": scores_random,
@@ -217,7 +241,7 @@ class SamplingManager:
         
         res = sampler.fit_transform(features, atom_features, atom_counts)
         # 2-DIRECT uses Step 1 PCA for visualization usually
-        expl_var = sampler.step1_sampler.pca.pca.explained_variance_
+        expl_var = sampler.step1_sampler.pca.pca.explained_variance_ratio_
         
         selected_indices = res["selected_indices"]
         pca_features = res["PCAfeatures"]
@@ -227,11 +251,12 @@ class SamplingManager:
             features, pca_features, selected_indices
         )
 
-        # Transform background features if provided
-        # 2-DIRECT structure is complex, usually step1_sampler does PCA
-        full_pca_features = None
-        if background_features is not None:
-             full_pca_features = sampler.step1_sampler.pca.transform(background_features)
+        full_pca_features = self._transform_background_features(
+            background_features=background_features,
+            scaler=sampler.step1_sampler.scaler,
+            pca=sampler.step1_sampler.pca,
+            sampler_name="2-DIRECT",
+        )
             
         return {
             "selected_indices": selected_indices,

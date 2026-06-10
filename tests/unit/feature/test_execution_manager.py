@@ -1,9 +1,7 @@
 import pytest
-import pytest
 import numpy as np
 from unittest.mock import MagicMock, patch
 from dpeva.feature.managers import FeatureExecutionManager, FeatureIOManager
-from dpeva.submission import JobConfig
 
 @pytest.fixture
 def mock_job_manager():

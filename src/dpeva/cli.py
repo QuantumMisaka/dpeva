@@ -19,7 +19,7 @@ from dpeva.utils.banner import show_banner
 # Lazy imports for workflows to improve CLI startup time
 # Workflows are imported inside handler functions
 
-LABEL_STAGE_TOKENS = {"prepare", "execute", "postprocess"}
+LABEL_STAGE_TOKENS = {"prepare", "execute", "extract", "postprocess"}
 
 
 class CLIUserInputError(ValueError):
@@ -137,7 +137,7 @@ def handle_analysis(args):
     """
     from dpeva.workflows.analysis import AnalysisWorkflow
     config = load_and_resolve_config(args.config)
-    workflow = AnalysisWorkflow(config)
+    workflow = AnalysisWorkflow(config, config_path=os.path.abspath(args.config))
     workflow.run()
 
 def handle_label(args):
@@ -165,6 +165,22 @@ def handle_label(args):
     if stage == "postprocess":
         workflow.run_postprocess()
         return
+    if stage == "extract":
+        workflow.run_extract()
+        return
+    workflow.run()
+
+def handle_clean(args):
+    """
+    Handles the 'clean' command.
+    Initializes and runs the DataCleaningWorkflow.
+
+    Args:
+        args (argparse.Namespace): Command-line arguments containing 'config'.
+    """
+    from dpeva.workflows.data_cleaning import DataCleaningWorkflow
+    config = load_and_resolve_config(args.config)
+    workflow = DataCleaningWorkflow(config)
     workflow.run()
 
 def main():
@@ -213,6 +229,7 @@ def main():
             "  dpeva label config.json\n"
             "  dpeva label config.json --stage prepare\n"
             "  dpeva label config.json --stage execute\n"
+            "  dpeva label config.json --stage extract\n"
             "  dpeva label config.json --stage postprocess"
         ),
         formatter_class=argparse.RawTextHelpFormatter,
@@ -220,11 +237,15 @@ def main():
     p_label.add_argument("config", type=validate_config_path, help="Path to configuration JSON")
     p_label.add_argument(
         "--stage",
-        choices=["all", "prepare", "execute", "postprocess"],
+        choices=["all", "prepare", "execute", "extract", "postprocess"],
         default="all",
-        help="Run labeling by stage: all|prepare|execute|postprocess (default: all).",
+        help="Run labeling by stage: all|prepare|execute|extract|postprocess (default: all).",
     )
     p_label.set_defaults(func=handle_label)
+
+    p_clean = subparsers.add_parser("clean", help="Run dataset cleaning by inference error thresholds")
+    p_clean.add_argument("config", type=validate_config_path, help="Path to configuration JSON")
+    p_clean.set_defaults(func=handle_clean)
 
     args = parser.parse_args()
     

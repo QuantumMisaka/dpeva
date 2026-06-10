@@ -5,13 +5,12 @@ Usage: python scripts/release_helper.py [patch|minor|major|version_string]
 """
 import sys
 import re
-import datetime
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).parent.parent
 INIT_FILE = PROJECT_ROOT / "src" / "dpeva" / "__init__.py"
 README_FILE = PROJECT_ROOT / "README.md"
-DEV_GUIDE = PROJECT_ROOT / "docs" / "source" / "guides" / "developer-guide.md"
+DEV_GUIDE = PROJECT_ROOT / "docs" / "guides" / "developer-guide.md"
 
 def get_current_version():
     with open(INIT_FILE, "r") as f:

@@ -54,6 +54,7 @@ class LabelingWorkflow:
             logger.info(WORKFLOW_FINISHED_TAG)
             return
         self.run_execute(packed_job_dirs=packed_job_dirs)
+        self.run_extract(packed_job_dirs=packed_job_dirs)
         self.run_postprocess()
         logger.info(WORKFLOW_FINISHED_TAG)
 
@@ -131,6 +132,25 @@ class LabelingWorkflow:
                 existing_training_data_path=self.config.existing_training_data_path,
             )
             logger.info(f"Data integration finished: {summary}")
+
+    def run_extract(self, packed_job_dirs: Optional[List[Path]] = None) -> List[Path]:
+        return self._run_with_stage_logging("extract", self._run_extract_impl, packed_job_dirs)
+
+    def _run_extract_impl(self, packed_job_dirs: Optional[List[Path]] = None) -> List[Path]:
+        prepared_job_dirs = packed_job_dirs if packed_job_dirs is not None else self._resolve_packed_job_dirs()
+        if not prepared_job_dirs:
+            raise ValueError(
+                f"No packed jobs found under {(Path(self.config.work_dir) / 'inputs')}. "
+                "Please run prepare stage first."
+            )
+        converged_tasks, bad_converged_tasks, failed_tasks = self.manager.extract_results(prepared_job_dirs)
+        logger.info(
+            "Extraction summary: "
+            f"converged={len(converged_tasks)}, "
+            f"bad_converged={len(bad_converged_tasks)}, failed={len(failed_tasks)}"
+        )
+        self._packed_job_dirs = prepared_job_dirs
+        return prepared_job_dirs
 
     def _run_with_stage_logging(self, stage_name: str, stage_func, *args):
         log_filename = f"labeling_{stage_name}.log"

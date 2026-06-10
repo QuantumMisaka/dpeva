@@ -1,6 +1,5 @@
 import pytest
 import numpy as np
-import pandas as pd
 import os
 from unittest.mock import MagicMock, patch
 from dpeva.workflows.collect import CollectionWorkflow

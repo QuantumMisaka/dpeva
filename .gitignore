@@ -14,3 +14,4 @@ examples/uncertain/models/
 coverage.xml
 htmlcov/
 test/
+.*cache/

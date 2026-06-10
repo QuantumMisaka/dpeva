@@ -5,9 +5,8 @@ Abacus Input Generator
 Handles the generation of ABACUS input files (INPUT, STRU, KPT) from atomic structures.
 """
 
-import os
 import logging
-from typing import Dict, List, Optional, Any, Union
+from typing import Dict, List, Any, Union
 from copy import deepcopy
 from pathlib import Path
 

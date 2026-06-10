@@ -7,14 +7,12 @@ Usage:
 """
 
 import json
+import importlib.util
 import logging
-import os
 import sys
 from pathlib import Path
 
-try:
-    import dpeva
-except ImportError:
+if importlib.util.find_spec("dpeva") is None:
     print("Please install dpeva first: pip install -e .")
     sys.exit(1)
 
@@ -30,7 +28,7 @@ def main():
 
     if not config_path.exists():
         print(f"Config file not found: {config_path}")
-        return
+        sys.exit(1)
 
     with open(config_path, 'r', encoding='utf-8') as f:
         config_dict = json.load(f)

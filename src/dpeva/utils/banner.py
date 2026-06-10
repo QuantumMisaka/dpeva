@@ -1,4 +1,3 @@
-import sys
 import time
 from dpeva import __version__
 
@@ -9,7 +8,7 @@ GREEN = "\033[38;2;57;255;20m"    # Neon Green
 GRAY = "\033[90m"
 RESET = "\033[0m"
 
-'''
+r'''
 Banner Reference:
 
 ┌────────────────────────────────────────────────────────────────────────────┐
@@ -17,7 +16,7 @@ Banner Reference:
 │ |  _ \|  _ \     | ____\ \   / /   / \      ⚡ SYNCHRO: 100%               │
 │ | | | | |_) |____|  _|  \ \ / /   / _ \     ◌ SAMPLE: SAMPLING...          │
 │ | |_| |  __/_____| |___  \ V /   / ___ \    >> AWAKENING CHECK <<          │
-│ |____/|_|        |_____|  \_/   /_/   \_\   v0.6.5-Execution-Ready         │
+│ |____/|_|        |_____|  \_/   /_/   \_\   v0.6.6-Execution-Ready         │
 ├────────────────────────────────────────────────────────────────────────────┤
 │  :: LCL Sea Density ::  ......  * .  ..  .  *  .  * .  ...  * .  ..  .     │
 │  Deep Potential EVolution Accelerator          >>> [PRESS START] <<<       │
@@ -53,18 +52,19 @@ def show_banner(no_delay=False):
     # Gap: 2 chars
     # Status Width: 32 chars (76 - 42 - 2)
     
-    W_AA = 42
     W_ST = 32
     
     # Helper to pad status text correctly (handling emoji width)
     def pad_status(text, width=W_ST):
         # Calculate visual length (simplified for known chars)
         visual_len = len(text)
-        if "⚡" in text: visual_len += 1  # Emoji usually takes 2 spaces visually but len is 1
+        if "⚡" in text:
+            visual_len += 1  # Emoji usually takes 2 spaces visually but len is 1
         # if "◌" in text: visual_len += 1   # Dotted Circle is usually 1 char wide in monospace
         
         padding = width - visual_len
-        if padding < 0: padding = 0
+        if padding < 0:
+            padding = 0
         return text + " " * padding
 
     # Row 1
@@ -92,7 +92,7 @@ def show_banner(no_delay=False):
     # aa3_txt = " | | | | |_) |____|  _|  \ \ / /   / _ \  "
     st3_txt = "◌ SAMPLE: SAMPLING..."
     
-    aa3 = f"{BLUE} | | | | |_) |{RESET}{ORANGE}____{RESET}{ORANGE}|  _|  \ \ / /   / _ \  {RESET}"
+    aa3 = fr"{BLUE} | | | | |_) |{RESET}{ORANGE}____{RESET}{ORANGE}|  _|  \ \ / /   / _ \  {RESET}"
     st3 = f"{GRAY} {pad_status(st3_txt, W_ST-1)}{RESET}"
 
     # Row 4
@@ -100,7 +100,7 @@ def show_banner(no_delay=False):
     # aa4_txt = " | |_| |  __/_____| |___  \ V /   / ___ \ "
     st4_txt = ">> AWAKENING CHECK <<"
     
-    aa4 = f"{BLUE} | |_| |  __/{RESET}{ORANGE}_____{RESET}{ORANGE}| |___  \ V /   / ___ \ {RESET}"
+    aa4 = fr"{BLUE} | |_| |  __/{RESET}{ORANGE}_____{RESET}{ORANGE}| |___  \ V /   / ___ \ {RESET}"
     st4 = f"{GREEN} {pad_status(st4_txt, W_ST-1)}{RESET}"
 
     # Row 5
@@ -108,7 +108,7 @@ def show_banner(no_delay=False):
     # aa5_txt = " |____/|_|        |_____|  \_/   /_/   \_" 
     st5_txt = ver_text
     
-    aa5 = f"{BLUE} |____/|_|        {RESET}{ORANGE}|_____|  \_/   /_/   \_\{RESET}" # Corrected length to 42
+    aa5 = fr"{BLUE} |____/|_|        {RESET}{ORANGE}|_____|  \_/   /_/   \_\{RESET}" # Corrected length to 42
     st5 = f"{GRAY} {pad_status(st5_txt, W_ST-1)}{RESET}"
 
     banner = f"""

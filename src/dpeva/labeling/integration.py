@@ -29,11 +29,14 @@ class DataIntegrationManager:
         existing_count = 0
         new_count = 0
         compatibility_issues = 0
+        existing_frames = 0
+        new_frames = 0
 
         reference_atom_names = None
         if existing_training_data_path is not None and existing_training_data_path.exists():
             existing_systems = load_systems(str(existing_training_data_path), fmt="auto")
             existing_count = len(existing_systems)
+            existing_frames = self._count_total_frames(existing_systems)
             for idx, system in enumerate(existing_systems):
                 reference_atom_names = self._ensure_compatible_atom_order(
                     system=system,
@@ -47,6 +50,7 @@ class DataIntegrationManager:
 
         new_systems = load_systems(str(new_labeled_data_path), fmt="auto")
         new_count = len(new_systems)
+        new_frames = self._count_total_frames(new_systems)
         for idx, system in enumerate(new_systems):
             try:
                 reference_atom_names = self._ensure_compatible_atom_order(
@@ -64,6 +68,9 @@ class DataIntegrationManager:
             merged = self._deduplicate(merged)
         after_dedup = len(merged)
         filtered_count = before_dedup - after_dedup
+        merged_frames_before_dedup = existing_frames + new_frames
+        merged_frames_after_dedup = self._count_total_frames(merged)
+        filtered_frames = merged_frames_before_dedup - merged_frames_after_dedup
 
         merged_output_path.mkdir(parents=True, exist_ok=True)
         merged.to(self.output_format, str(merged_output_path))
@@ -73,6 +80,11 @@ class DataIntegrationManager:
             "merged_system_count_before_dedup": before_dedup,
             "merged_system_count_after_dedup": after_dedup,
             "filtered_system_count": filtered_count,
+            "existing_frame_count": existing_frames,
+            "new_frame_count": new_frames,
+            "merged_frame_count_before_dedup": merged_frames_before_dedup,
+            "merged_frame_count_after_dedup": merged_frames_after_dedup,
+            "filtered_frame_count": filtered_frames,
             "deduplicate_enabled": self.deduplicate,
             "output_format": self.output_format,
             "reference_atom_names": reference_atom_names,
@@ -82,11 +94,18 @@ class DataIntegrationManager:
         with open(merged_output_path / "integration_summary.json", "w") as f:
             json.dump(summary, f, indent=4)
         logger.info(
-            "Integration summary: existing=%s, new=%s, merged_before_dedup=%s, merged_after_dedup=%s",
+            "Integration summary: existing=%s, new=%s, merged_before_de-dup=%s, merged_after_de-dup=%s",
             existing_count,
             new_count,
             before_dedup,
             after_dedup,
+        )
+        logger.info(
+            "Integration frame summary: existing=%s, new=%s, merged_before_de-dup=%s, merged_after_de-dup=%s",
+            existing_frames,
+            new_frames,
+            merged_frames_before_dedup,
+            merged_frames_after_dedup,
         )
         logger.info(f"Integrated dataset exported to {merged_output_path}")
         return summary
@@ -135,7 +154,6 @@ class DataIntegrationManager:
         for system in systems:
             coords = np.array(system.data.get("coords", []), dtype=float)
             if coords.size == 0:
-                deduped.append(system)
                 continue
             signature = hashlib.sha1(coords.tobytes()).hexdigest()
             if signature in seen:
@@ -143,3 +161,17 @@ class DataIntegrationManager:
             seen.add(signature)
             deduped.append(system)
         return deduped
+
+    @staticmethod
+    def _count_frames(system) -> int:
+        get_nframes = getattr(system, "get_nframes", None)
+        if callable(get_nframes):
+            return int(get_nframes())
+        coords = np.array(system.data.get("coords", []), dtype=float)
+        if coords.ndim >= 1:
+            return int(coords.shape[0])
+        return 0
+
+    @classmethod
+    def _count_total_frames(cls, systems) -> int:
+        return sum(cls._count_frames(system) for system in systems)

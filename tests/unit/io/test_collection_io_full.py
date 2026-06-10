@@ -1,6 +1,5 @@
 
 import os
-import shutil
 import pytest
 import numpy as np
 import pandas as pd
@@ -52,6 +51,7 @@ class TestCollectionIOManagerFull:
         
         assert len(names) == 10
         assert data.shape == (10, 128) # Normalized descriptors, not modulo
+        np.testing.assert_allclose(np.linalg.norm(data, axis=1), np.ones(10), atol=1e-10)
 
     def test_load_descriptors_glob(self, manager, tmp_path):
         """Test loading all descriptors via glob."""
@@ -63,6 +63,36 @@ class TestCollectionIOManagerFull:
         names, data = manager.load_descriptors(str(desc_dir))
         
         assert len(names) == 10
+
+    def test_load_descriptors_recursive_multi_pool(self, manager, tmp_path):
+        desc_dir = tmp_path / "desc_multi"
+        (desc_dir / "poolA").mkdir(parents=True)
+        (desc_dir / "poolB").mkdir(parents=True)
+
+        np.save(desc_dir / "poolA" / "sys1.npy", np.random.rand(3, 1, 16))
+        np.save(desc_dir / "poolB" / "sys2.npy", np.random.rand(2, 1, 16))
+
+        names, data = manager.load_descriptors(str(desc_dir))
+
+        assert len(names) == 5
+        assert "poolA/sys1-0" in names
+        assert "poolA/sys1-2" in names
+        assert "poolB/sys2-0" in names
+        assert "poolB/sys2-1" in names
+        assert data.shape == (5, 16)
+
+    def test_load_descriptors_explicit_glob_unchanged(self, manager, tmp_path):
+        desc_dir = tmp_path / "desc_glob_pattern"
+        desc_dir.mkdir()
+        np.save(desc_dir / "sysA.npy", np.random.rand(4, 1, 8))
+        np.save(desc_dir / "sysB.npy", np.random.rand(3, 1, 8))
+
+        pattern = str(desc_dir / "sysA*.npy")
+        names, data = manager.load_descriptors(pattern)
+
+        assert len(names) == 4
+        assert all(name.startswith("sysA-") for name in names)
+        assert data.shape == (4, 8)
 
     def test_load_descriptors_mismatch(self, manager, tmp_path):
         """Test handling of frame mismatch."""
@@ -101,6 +131,19 @@ class TestCollectionIOManagerFull:
         
         assert len(X) == 2
         assert n == [2, 2]
+
+    def test_load_atomic_features_with_nested_system_name(self, manager, tmp_path):
+        desc_dir = tmp_path / "desc_atom_nested"
+        (desc_dir / "poolA").mkdir(parents=True)
+
+        feat = np.random.rand(2, 3, 6)
+        np.save(desc_dir / "poolA" / "sys1.npy", feat)
+
+        df = pd.DataFrame({"dataname": ["poolA/sys1-0", "poolA/sys1-1"]})
+        X, n = manager.load_atomic_features(str(desc_dir), df)
+
+        assert len(X) == 2
+        assert n == [3, 3]
 
     def test_export_dpdata(self, manager, tmp_path):
         """Test exporting to dpdata."""
@@ -161,3 +204,30 @@ class TestCollectionIOManagerFull:
             )
             assert sampled_expected in calls
             assert other_expected in calls
+
+    def test_export_dpdata_with_prefixed_system_name(self, manager, tmp_path):
+        testdata_dir = tmp_path / "other_dpdata"
+        testdata_dir.mkdir()
+
+        sys_name = "other_dpdata/sys1"
+        df_final = pd.DataFrame({"dataname": [f"{sys_name}-0", f"{sys_name}-2"]})
+        unique_systems = [sys_name]
+
+        with patch("dpeva.io.collection.load_systems") as mock_load:
+            sys_mock = MagicMock()
+            sys_mock.target_name = sys_name
+            sys_mock.__len__.return_value = 4
+            sub_mock = MagicMock()
+            sys_mock.sub_system.return_value = sub_mock
+            mock_load.return_value = [sys_mock]
+
+            manager.ensure_dirs()
+            counts = manager.export_dpdata(str(testdata_dir), df_final, unique_systems)
+
+            sys_mock.sub_system.assert_any_call([0, 2])
+            sys_mock.sub_system.assert_any_call([1, 3])
+            assert counts == (1, 1, 2, 2)
+            out_paths = [c.args[0] for c in sub_mock.to_deepmd_npy.call_args_list]
+            assert os.path.join(manager.dpdata_savedir, "sampled_dpdata", "sys1") in out_paths
+            assert os.path.join(manager.dpdata_savedir, "other_dpdata", "sys1") in out_paths
+            assert not any("other_dpdata/other_dpdata" in p for p in out_paths)

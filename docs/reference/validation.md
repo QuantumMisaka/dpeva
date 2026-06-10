@@ -2,20 +2,17 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-03-09
+last-updated: 2026-04-05
+owner: Docs Owner
 ---
 
 # 参数校验与约束（Validation Rules）
 
 - Status: active
 - Audience: Developers
-- Last-Updated: 2026-02-18
+- Last-Updated: 2026-04-05
 
 本文件用于作为参数校验规则的单一权威来源。
-
----
-
-# 参数验证规则 (Validation Rules)
 
 本文档说明了 DP-EVA 系统中各参数的校验逻辑和约束条件，这些规则由 Pydantic 验证器在运行时强制执行。
 
@@ -55,6 +52,11 @@ last-updated: 2026-03-09
     *   `sampler_type="2-direct"`：使用 `step1_*` 与 `step2_*` 参数组。
 *   **规则**: 若 `direct_n_clusters` 显式给定，必须 `> 0`。
 
+#### 3.1.3 出图分层开关依赖
+*   **规则**: `enable_diagnostic_plots` 默认 `False`，仅输出 Core 层图像。
+*   **规则**: 当 `enable_diagnostic_plots=True` 时，仅在满足真值和数据前置条件时输出 Diagnostic 层 parity 图像。
+*   **可观测性**: 跳过图像必须输出统一 `reason` 字段，且生成/跳过清单在日志中可审计。
+
 ### 3.2 特征工作流 (FeatureConfig)
 
 #### 3.2.1 自动保存目录 (Auto Savedir)
@@ -65,7 +67,8 @@ last-updated: 2026-03-09
 
 #### 3.3.1 环境变量格式化
 *   **规则**: `env_setup` 字段支持字符串或字符串列表。
-*   **转换**: 如果输入为列表 `["cmd1", "cmd2"]`，会自动转换为多行字符串 `"cmd1\ncmd2"`。
+*   **转换**: 如果输入为列表 `["cmd1", "cmd2"]`，会自动转换为多行字符串 `"cmd1
+cmd2"`。
 
 ## 4. 路径存在性校验
 以下参数在初始化时会检查文件/目录是否存在，若不存在将抛出 `ValidationError` (或后续运行时错误)：

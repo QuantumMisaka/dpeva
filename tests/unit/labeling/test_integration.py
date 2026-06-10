@@ -80,6 +80,26 @@ def test_integration_manager_deduplicate(mock_load_systems, tmp_path):
 
 @patch("dpeva.labeling.integration.dpdata.MultiSystems", _FakeMultiSystems)
 @patch("dpeva.labeling.integration.load_systems")
+def test_integration_manager_deduplicate_drops_empty_coords(mock_load_systems, tmp_path):
+    new_dir = tmp_path / "new_cleaned"
+    out_dir = tmp_path / "merged"
+    new_dir.mkdir()
+
+    mock_load_systems.side_effect = [[_FakeSystem([])]]
+
+    manager = DataIntegrationManager(deduplicate=True)
+    result = manager.integrate(
+        new_labeled_data_path=new_dir,
+        merged_output_path=out_dir,
+    )
+
+    assert result["merged_system_count_before_dedup"] == 1
+    assert result["merged_system_count_after_dedup"] == 0
+    assert result["filtered_system_count"] == 1
+
+
+@patch("dpeva.labeling.integration.dpdata.MultiSystems", _FakeMultiSystems)
+@patch("dpeva.labeling.integration.load_systems")
 def test_integration_manager_custom_output_format(mock_load_systems, tmp_path):
     new_dir = tmp_path / "new_cleaned"
     out_dir = tmp_path / "merged"

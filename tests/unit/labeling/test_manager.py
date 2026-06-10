@@ -1,7 +1,6 @@
 
 import pytest
-from unittest.mock import MagicMock, patch, call
-from pathlib import Path
+from unittest.mock import MagicMock, patch
 import json
 import pandas as pd
 from dpeva.labeling.manager import LabelingManager
@@ -131,7 +130,7 @@ class TestLabelingManager:
         # Assert
         # We can't easily assert log output without caplog fixture, but we can verify execution flow
         manager.postprocessor.load_data.assert_called_once()
-        manager.postprocessor.compute_metrics.assert_called_once()
+        assert manager.postprocessor.compute_metrics.call_count >= 1
         manager.postprocessor.export_data.assert_called()
 
     def test_mgr_004_failed_task_scanning(self, manager):
@@ -146,16 +145,8 @@ class TestLabelingManager:
         (manager.input_dir / "DS1" / "cluster" / "Running" / "OUT.ABACUS").mkdir(parents=True)
         (manager.input_dir / "DS1" / "cluster" / "Running" / "OUT.ABACUS" / "INPUT").touch()
         
-        # Use a method to scan or verify collect_and_export logic part
-        # Since logic is inside collect_and_export, we run it and expect log or internal state
-        # But collect_and_export prints logs.
-        # We can patch os.walk or Path.rglob?
-        # The logic uses rglob("INPUT")
-        
-        # Let's trust integration in collect_and_export or extract the scanner if needed.
-        # Here we verify that collect_and_export doesn't crash and hopefully counts correctly.
-        # Ideally, we should capture logs to verify "Fail=1".
-        pass 
+        failed_tasks_info = manager._collect_failed_tasks_info()
+        assert failed_tasks_info == [{"dataset": "DS1", "type": "cluster"}]
 
     def test_mgr_005_runner_script_avoids_shell_true(self, manager, tmp_path):
         script = manager.generate_runner_script(tmp_path)
@@ -188,7 +179,7 @@ class TestLabelingManager:
         manager.collect_and_export()
 
         manager.postprocessor.load_data.assert_called_once()
-        manager.postprocessor.compute_metrics.assert_called_once()
+        assert manager.postprocessor.compute_metrics.call_count >= 1
 
     def test_mgr_007_aggregate_stats(self, manager):
         df = pd.DataFrame(
@@ -244,3 +235,151 @@ class TestLabelingManager:
 
         assert output_marker.exists()
         assert converged_marker.exists()
+
+    @patch("dpeva.labeling.manager.logger.warning")
+    @patch("dpeva.labeling.manager.dpdata")
+    def test_mgr_010_skip_incomplete_converged_systems(self, mock_dpdata, mock_warning, manager, caplog):
+        for name in ("Conv_Task_0", "Conv_Task_1"):
+            task_dir = manager.converged_dir / "DS1" / "cluster" / name
+            task_dir.mkdir(parents=True)
+            (task_dir / "INPUT").touch()
+            (task_dir / "STRU").touch()
+            with open(task_dir / "task_meta.json", "w") as f:
+                json.dump({"dataset_name": "DS1", "stru_type": "cluster"}, f)
+
+        valid_system = MagicMock()
+        manager.postprocessor.load_data = MagicMock(side_effect=[valid_system, None])
+        df_real = pd.DataFrame({"sys_idx": [0], "frame_idx": [0], "max_force": [0.1]})
+        manager.postprocessor.compute_metrics = MagicMock(return_value=df_real)
+        manager.postprocessor.filter_data = MagicMock(return_value=df_real)
+        manager.postprocessor.export_data = MagicMock()
+
+        manager.collect_and_export()
+
+        assert manager.postprocessor.load_data.call_count == 2
+        mock_warning.assert_any_call("Skipped 1 converged directories due to incomplete parsed data.")
+
+    def test_mgr_011_extract_results_routes_bad_converged(self, manager):
+        job_dir = manager.input_dir / "N_50_0"
+        for name in ("ok_0", "bad_0", "fail_0"):
+            task_dir = job_dir / name
+            task_dir.mkdir(parents=True)
+            (task_dir / "INPUT").touch()
+
+        manager.postprocessor.classify_task_status = MagicMock(
+            side_effect=[
+                ("converged", "ok"),
+                ("bad_converged", "missing_total_force_block"),
+                ("failed", "scf_not_converged"),
+            ]
+        )
+        manager._move_task_dir = MagicMock()
+
+        converged, bad_converged, failed = manager.extract_results([job_dir])
+
+        assert len(converged) == 1
+        assert len(bad_converged) == 1
+        assert len(failed) == 1
+        assert manager._move_task_dir.call_count == 2
+        manager._move_task_dir.assert_any_call(converged[0], manager.converged_dir, "CONVERGED")
+        manager._move_task_dir.assert_any_call(bad_converged[0], manager.bad_converged_dir, "BAD_CONVERGED")
+
+    def test_mgr_012_metadata_missing_in_packed_dir_falls_to_unknown(self, manager):
+        task_dir = manager.input_dir / "N_50_0" / "task_x"
+        task_dir.mkdir(parents=True)
+        (task_dir / "INPUT").touch()
+        info = manager._collect_failed_tasks_info()
+        assert info == [{"dataset": "unknown", "type": "unknown"}]
+
+    def test_mgr_013_metadata_damaged_falls_back_to_sidecar(self, manager):
+        task_dir = manager.converged_dir / "N_50_0" / "task_x"
+        task_dir.mkdir(parents=True)
+        (task_dir / "task_meta.json").write_text("{bad json")
+        (task_dir / "task_identity.json").write_text(
+            json.dumps({"dataset": "DSX", "type": "cluster", "task_name": "task_x"})
+        )
+        meta = manager._read_task_meta(task_dir, manager.converged_dir)
+        assert meta["dataset"] == "DSX"
+        assert meta["type"] == "cluster"
+
+    def test_mgr_014_extract_results_persists_identity_mapping(self, manager):
+        job_dir = manager.input_dir / "N_50_0"
+        task_dir = job_dir / "ok_0"
+        task_dir.mkdir(parents=True)
+        (task_dir / "INPUT").touch()
+        (task_dir / "task_meta.json").write_text(
+            json.dumps({"dataset_name": "DS1", "stru_type": "cluster", "task_name": "ok_0"})
+        )
+        manager.postprocessor.classify_task_status = MagicMock(return_value=("converged", "ok"))
+
+        manager.extract_results([job_dir])
+
+        moved_task = manager.converged_dir / "DS1" / "cluster" / "ok_0"
+        assert moved_task.exists()
+        assert (moved_task / "task_identity.json").exists()
+        identity_map = json.loads(manager.identity_map_path.read_text())
+        assert identity_map["by_task_name"]["ok_0"]["dataset"] == "DS1"
+
+    def test_mgr_015_consistency_check_detects_mismatch(self, manager):
+        stats = {"DS1": {"cluster": {"total": 3, "conv": 2, "fail": 1, "clean": 2, "filt": 0}}}
+        df = pd.DataFrame([{"dataset": "DS1", "type": "cluster"}])
+        df_clean = pd.DataFrame([{"dataset": "DS1", "type": "cluster"}])
+        failed = [{"dataset": "DS1", "type": "cluster"}]
+        consistency = manager._validate_stats_consistency(stats, df, df_clean, failed)
+        assert consistency["trusted"] is False
+        assert len(consistency["errors"]) > 0
+
+    @patch("dpeva.labeling.manager.dpdata")
+    def test_mgr_016_rebuild_statistics_report_outputs_repaired_file(self, mock_dpdata, manager):
+        task_dir = manager.converged_dir / "DS1" / "cluster" / "Conv_Task"
+        task_dir.mkdir(parents=True)
+        (task_dir / "INPUT").touch()
+        (task_dir / "STRU").touch()
+        (task_dir / "task_meta.json").write_text(
+            json.dumps({"dataset_name": "DS1", "stru_type": "cluster", "task_name": "Conv_Task"})
+        )
+        manager.postprocessor.load_data = MagicMock(return_value=MagicMock())
+        df = pd.DataFrame([{"sys_idx": 0, "frame_idx": 0, "max_force": 0.1}])
+        manager.postprocessor.compute_metrics = MagicMock(return_value=df)
+        manager.postprocessor.filter_data = MagicMock(side_effect=lambda x: x.copy())
+
+        report = manager.rebuild_statistics_report()
+
+        assert report["consistency"]["trusted"] is True
+        assert (manager.output_dir / "labeling_stats_report.repaired.json").exists()
+
+    @patch("dpeva.labeling.manager.dpdata")
+    def test_mgr_017_fp7_style_branch_alignment_stays_stable(self, mock_dpdata, manager):
+        task_a = manager.converged_dir / "DeepCNT" / "cluster" / "C108Fe55_0"
+        task_b = manager.converged_dir / "oc22-FeCOH" / "bulk" / "C20Fe20_0"
+        for task_dir, dataset, stru_type, task_name in (
+            (task_a, "DeepCNT", "cluster", "C108Fe55_0"),
+            (task_b, "oc22-FeCOH", "bulk", "C20Fe20_0"),
+        ):
+            task_dir.mkdir(parents=True)
+            (task_dir / "INPUT").touch()
+            (task_dir / "STRU").touch()
+            (task_dir / "task_meta.json").write_text(
+                json.dumps(
+                    {
+                        "dataset_name": dataset,
+                        "stru_type": stru_type,
+                        "task_name": task_name,
+                    }
+                )
+            )
+
+        manager.postprocessor.load_data = MagicMock(side_effect=[MagicMock(), MagicMock()])
+        manager.postprocessor.compute_metrics = MagicMock(
+            return_value=pd.DataFrame([{"sys_idx": 99, "frame_idx": 0, "max_force": 0.1}])
+        )
+        manager.postprocessor.filter_data = MagicMock(side_effect=lambda x: x.copy())
+        manager.postprocessor.export_data = MagicMock()
+
+        report = manager.rebuild_statistics_report()
+
+        assert report["consistency"]["trusted"] is True
+        assert report["branches"]["DeepCNT"]["cluster"]["conv"] == 1
+        assert report["branches"]["oc22-FeCOH"]["bulk"]["conv"] == 1
+        assert report["global"]["conv"] == 2
+        assert manager.postprocessor.compute_metrics.call_count == 2

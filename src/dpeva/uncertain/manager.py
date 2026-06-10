@@ -2,7 +2,7 @@ import os
 import logging
 import pandas as pd
 import numpy as np
-from typing import List, Dict, Tuple, Optional
+from typing import List, Dict, Tuple
 
 from dpeva.io.dataproc import DPTestResultParser
 from dpeva.io.types import PredictionData
@@ -69,7 +69,11 @@ class UQManager:
         if self.testdata_dir and os.path.exists(self.testdata_dir) and len(preds) > 0:
             self._verify_atom_counts_list(preds[0].dataname_list)
             
-        return preds, preds[0].has_ground_truth
+        has_ground_truth = all(pred.has_ground_truth for pred in preds)
+        if not has_ground_truth:
+            self.logger.info("At least one model lacks valid ground truth. Ground-truth-dependent plotting will be disabled.")
+            self.logger.warning("Detected missing/invalid ground truth in target pool (including near-zero energy labels <1e-4). Treating the pool as unlabeled and enabling no-label analysis/plot branches.")
+        return preds, has_ground_truth
 
     def _verify_atom_counts_list(self, dataname_list: List[List]):
         """
@@ -216,7 +220,8 @@ class UQManager:
         Returns:
             float: Clamped value.
         """
-        if value is None: return None
+        if value is None:
+            return None
         lo_min, lo_max = bounds.get("lo_min"), bounds.get("lo_max")
         if lo_min is not None and value < lo_min:
             self.logger.warning(f"{name} < {lo_min}, clamping.")

@@ -3,6 +3,8 @@
     "work_dir": "./",
     "task_name": "test_val",
     "model_head": "OC22",
+    "results_prefix": "results",
+    "auto_analysis": false,
     "omp_threads": 2,
     "submission": {
         "backend": "slurm",

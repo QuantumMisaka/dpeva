@@ -2,7 +2,7 @@ import os
 import glob
 import logging
 import numpy as np
-from typing import List, Optional, Dict, Union
+from typing import List, Dict
 
 from dpeva.constants import WORKFLOW_FINISHED_TAG
 from dpeva.submission import JobManager, JobConfig

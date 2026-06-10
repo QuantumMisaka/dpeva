@@ -10,22 +10,21 @@
     "training_desc_dir": "./desc_train",
     
     "fig_dpi": 300,
-    "root_savedir": "dpeva_post_multi_joint",
+    "enable_diagnostic_plots": false,
+    "root_savedir": "dpeva_post_joint",
 
     "uq_trust_mode": "auto",
     "uq_trust_ratio": 0.50,
     "uq_trust_width": 0.15,
     
+    "sampler_type": "direct",
     "direct_n_clusters": 1000,
     "direct_k": 1,
     "direct_thr_init": 0.1,
 
     "submission": {
         "backend": "slurm",
-        "env_setup": [
-            "source /opt/envs/deepmd3.1.2.env",
-            "export DP_INTERFACE_PREC=high"
-        ],
+        "env_setup": [],
         "slurm_config": {
             "partition": "CPU-MISC",
             "qos": "rush-cpu",

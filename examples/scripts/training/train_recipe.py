@@ -6,13 +6,12 @@ Usage:
 """
 
 import json
+import importlib.util
 import logging
 import sys
 from pathlib import Path
 
-try:
-    import dpeva
-except ImportError:
+if importlib.util.find_spec("dpeva") is None:
     print("Please install dpeva first: pip install -e .")
     sys.exit(1)
 
