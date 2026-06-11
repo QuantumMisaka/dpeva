@@ -2,7 +2,7 @@
 
 The STRU/KPT/INPUT formatting in this module follows the subset used by
 ATST-Tools' vendored abacuslite implementation at
-``test/atst-tools/src/atst_tools/external/ASE_interface/abacuslite/io/generalio.py``
+``atst-tools/src/atst_tools/external/ASE_interface/abacuslite/io/generalio.py``
 from reference commit ``7812291``. This is not a full abacuslite replacement;
 it only covers the DPEVA Labeling prepare path.
 """
