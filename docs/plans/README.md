@@ -2,7 +2,7 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-06-10
+last-updated: 2026-06-11
 owner: Docs Owner
 ---
 
@@ -10,7 +10,7 @@ owner: Docs Owner
 
 - Status: active
 - Audience: Developers
-- Last-Updated: 2026-06-10
+- Last-Updated: 2026-06-11
 
 本目录用于存放“项目级、可共享、可追溯”的开发计划文档，不承载 AI 执行期草案。
 
@@ -64,6 +64,5 @@ owner: Docs Owner
 ## 6. 活跃计划 (Active Plans)
 
 - [文档治理计划 (Governance Plan)](../governance/README.md)
-- [2026-06-10-v0.8.0-atst-integration-plan.md](2026-06-10-v0.8.0-atst-integration-plan.md)：v0.8.0 开发周期入口，承接 ATST integration 实施计划，明确去 `ase-abacus`、内部 ABACUS writer、可选 `atst-tools` exploration backend 的后续开发边界。
-- [2026-04-05-AGENTS-Docs-Governance-Plan.md](2026-04-05-AGENTS-Docs-Governance-Plan.md)：基于最新交叉审阅结果，定义 `AGENTS.md` 向目录型项目规范入口收敛的目标结构、内容边界与文档联动方案。
-- 历史计划请查看 [v0.6.9 归档计划索引](../archive/v0.6.9/plans/README.md) 与 [v0.7.1 归档计划索引](../archive/v0.7.1/plans/README.md)
+- v0.8.0 已闭环计划请查看 [v0.8.0 归档计划索引](../archive/v0.8.0/plans/README.md)。
+- 历史计划请查看 [v0.6.9 归档计划索引](../archive/v0.6.9/plans/README.md)、[v0.7.1 归档计划索引](../archive/v0.7.1/plans/README.md) 与 [v0.8.0 归档计划索引](../archive/v0.8.0/plans/README.md)。

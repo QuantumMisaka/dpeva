@@ -1,6 +1,6 @@
 ---
 title: Unit Test Audit
-status: active
+status: archived
 audience: Developers / Maintainers
 last-updated: 2026-04-02
 owner: Docs Owner
@@ -9,7 +9,7 @@ parent-report: 2026-04-01-Code-Review-Repository-Audit.md
 
 # 2026-04-02 单元测试深度审查报告（Unit Test Audit）
 
-- Status: active
+- Status: archived
 - Audience: Developers / Maintainers
 - Last-Updated: 2026-04-02
 - Parent Report: [2026-04-01-Code-Review-Repository-Audit.md](2026-04-01-Code-Review-Repository-Audit.md)

@@ -1,6 +1,6 @@
 ---
 title: Repository Audit
-status: active
+status: archived
 audience: Developers / Maintainers
 last-updated: 2026-04-01
 owner: Docs Owner
@@ -10,7 +10,7 @@ related:
 
 # 2026-04-01 仓库质量审查报告（Repository Audit）
 
-- Status: active
+- Status: archived
 - Audience: Developers / Maintainers
 - Last-Updated: 2026-04-01
 - Related Focused Report: [2026-04-02-Code-Review-Unit-Test-Audit.md](2026-04-02-Code-Review-Unit-Test-Audit.md)

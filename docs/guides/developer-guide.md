@@ -2,7 +2,7 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-04-06
+last-updated: 2026-06-10
 owner: Docs Owner
 ---
 
@@ -10,7 +10,7 @@ owner: Docs Owner
 
 - Status: active
 - Audience: Developers
-- Last-Updated: 2026-04-06
+- Last-Updated: 2026-06-10
 - Related:
   - 配置字段字典：`API Reference`（由 `src/dpeva/config.py` 自动生成）
   - 校验规则补充：`docs/reference/validation.md`
@@ -595,12 +595,18 @@ DPEVA_TAG: WORKFLOW_FINISHED
 #### **Current Era (v0.8.x)**
 
 *   **v0.8.0** (2026-06-10):
-    *   **[版本]** 开启 v0.8.0 开发周期，后续开发聚焦移除 Labeling 对 GitLab `ase-abacus` fork 的运行时绑定，并以可选 backend 方式接入 `atst-tools` exploration 能力。
+    *   **[版本]** 开启 v0.8.0 开发周期，移除 Labeling 对 GitLab `ase-abacus` fork 的运行时绑定，并以可选 backend 方式接入 `atst-tools` exploration 能力。
+    *   **[依赖]** 将核心 ASE 下限提升至 `ase>=3.28.0`，与 `atst-tools` 运行环境对齐；`atst-tools>=2.1.0` 仅通过 `dpeva[explore]` 可选安装。
+    *   **[Labeling]** 新增内部 ABACUS INPUT/KPT/STRU writer，参考 `atst-tools` vendored `abacuslite` 的当前写入子集，标准 ASE 环境下不再依赖 `ase.io.abacus`。
+    *   **[测试]** 为 ABACUS writer 固化 `INPUT/KPT/STRU` golden baseline，防止 Labeling prepare 输出格式漂移。
+    *   **[Exploration]** 新增 `dpeva.exploration` 抽象层、`ATSTToolsBackend` 与 `dpeva explore` CLI，首版支持 `md` 与 `relax`。
+    *   **[Exploration]** `ATSTToolsBackend` 新增 DPEVA 侧输入结构快照与 `dpeva_exploration_result.json` manifest，统一记录成功和失败结果。
+    *   **[CI/CD]** 新增 `dpeva[explore]` optional extra smoke check，覆盖 `dpeva explore --help` 与 `atst --help`。
     *   **[特性准备]** 将 v0.7.2 之后已并入的模型对比报告生成器纳入 v0.8.0 变更范围，保留其单测基线与 DPA 模型对比报告产物生成能力。
     *   **[修复]** 纳入 DeepMD 开发版本号解析兼容修复，允许 `0.1.dev*+g...` 等开发构建版本被环境检查正确识别。
     *   **[治理]** 纳入 docs/reports 去冗余治理：明确总报告、专题报告、系列实验报告与归档报告的生命周期边界，并将 2026-04-05 阶段性治理闭环记录迁入归档。
     *   **[自动化]** 纳入文档治理自动化加固：`doc_check.py` 默认阻断 active 文档缺 owner，`check_docs_freshness.py` 以 front matter `last-updated` 为主，`verify_docs.sh` 统一串联治理、freshness 与 Sphinx 构建。
-    *   **[准备]** 将 `2026-06-10-v0.8.0-atst-integration-plan.md` 作为 v0.8.0 后续实现入口；当前阶段只完成版本与文档准备，不实现内部 ABACUS writer、exploration 抽象层或 `ATSTToolsBackend`。
+    *   **[计划]** 将 `docs/archive/v0.8.0/plans/2026-06-10-v0.8.0-atst-integration-plan.md` 归档为 v0.8.0 ATST integration 的计划入口与验收索引。
 
 #### **Previous Era (v0.7.x)**
 

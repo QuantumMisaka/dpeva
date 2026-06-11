@@ -2,7 +2,7 @@
 title: Technical Reports
 status: active
 audience: Developers
-last-updated: 2026-06-10
+last-updated: 2026-06-11
 owner: Docs Owner
 ---
 
@@ -10,7 +10,7 @@ owner: Docs Owner
 
 - Status: active
 - Audience: All
-- Last-Updated: 2026-06-10
+- Last-Updated: 2026-06-11
 
 本文档目录用于存放“项目级、可共享、可追溯”的技术结论，不承载执行过程草稿。
 
@@ -40,19 +40,11 @@ owner: Docs Owner
 
 ## 4. Active Summary Reports
 
-- [2026-04-01-Code-Review-Repository-Audit.md](2026-04-01-Code-Review-Repository-Audit.md)
-  - Type: Summary Report
-  - Status: active
-  - Related Focused Report: [2026-04-02-Code-Review-Unit-Test-Audit.md](2026-04-02-Code-Review-Unit-Test-Audit.md)
-  - Archive Policy: 闭环后随版本发布归档到 `docs/archive/vX.Y.Z/reports/`
+- 当前无 active summary report。已闭环审查报告请查看 [v0.8.0 归档报告索引](../archive/v0.8.0/reports/README.md)。
 
 ## 5. Active Focused Reports
 
-- [2026-04-02-Code-Review-Unit-Test-Audit.md](2026-04-02-Code-Review-Unit-Test-Audit.md)
-  - Type: Focused Report
-  - Status: active
-  - Parent Report: [2026-04-01-Code-Review-Repository-Audit.md](2026-04-01-Code-Review-Repository-Audit.md)
-  - Archive Policy: 随父报告闭环或失效时同步归档
+- 当前无 active focused report。已闭环专题报告请查看 [v0.8.0 归档报告索引](../archive/v0.8.0/reports/README.md)。
 
 ## 6. Active Experiment Series
 
@@ -71,6 +63,19 @@ owner: Docs Owner
 
 ## 7. Recently Archived
 
+- [docs/archive/v0.8.0/reports/2026-06-11-v0.8.0-atst-integration-progress-audit.md](../archive/v0.8.0/reports/2026-06-11-v0.8.0-atst-integration-progress-audit.md)
+  - Type: Archived Focused Report
+  - Status: archived
+  - Reason: v0.8.0 ATST integration 最小验收闭环完成
+  - Related Plan: [docs/archive/v0.8.0/plans/2026-06-10-v0.8.0-atst-integration-plan.md](../archive/v0.8.0/plans/2026-06-10-v0.8.0-atst-integration-plan.md)
+- [docs/archive/v0.8.0/reports/2026-04-01-Code-Review-Repository-Audit.md](../archive/v0.8.0/reports/2026-04-01-Code-Review-Repository-Audit.md)
+  - Type: Archived Summary Report
+  - Status: archived
+  - Reason: 仓库审查结论已被后续治理与 v0.8.0 门禁收口承接
+- [docs/archive/v0.8.0/reports/2026-04-02-Code-Review-Unit-Test-Audit.md](../archive/v0.8.0/reports/2026-04-02-Code-Review-Unit-Test-Audit.md)
+  - Type: Archived Focused Report
+  - Status: archived
+  - Reason: 单元测试审查结论已被后续测试与 CI 门禁收口承接
 - [docs/archive/v0.7.1/reports/2026-04-05-Code-Review-Agents-Docs-Governance.md](../archive/v0.7.1/reports/2026-04-05-Code-Review-Agents-Docs-Governance.md)
   - Type: Archived Report
   - Status: archived

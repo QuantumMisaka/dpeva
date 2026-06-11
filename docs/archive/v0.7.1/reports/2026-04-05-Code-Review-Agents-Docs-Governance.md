@@ -268,4 +268,4 @@ owner: Docs Owner
 
 ## 8. 相关交付物
 
-- AGENTS 改造方案：`docs/plans/2026-04-05-AGENTS-Docs-Governance-Plan.md`
+- AGENTS 改造方案：`docs/archive/v0.8.0/plans/2026-04-05-AGENTS-Docs-Governance-Plan.md`

@@ -36,6 +36,12 @@ cd dpeva
 pip install -e .
 ```
 
+Optional trajectory exploration through `atst-tools` is installed separately:
+
+```bash
+pip install -e '.[explore]'
+```
+
 ### Usage
 
 DP-EVA provides a unified CLI `dpeva` for all workflows. See [CLI Guide](docs/guides/cli.md) for more details.
@@ -58,6 +64,9 @@ dpeva label config_label.json
 
 # 6. Analysis
 dpeva analysis config_analyze.json
+
+# Optional: trajectory exploration backend
+dpeva explore examples/recipes/exploration/config_explore_relax.json
 ```
 
 For detailed configuration examples, see `examples/recipes/`.
@@ -74,7 +83,7 @@ For detailed configuration examples, see `examples/recipes/`.
 *   **Upstream**: [Upstream Software](docs/reference/upstream-software.md)
 *   **Developer**: [Developer Guide](docs/guides/developer-guide.md) | [Architecture](docs/architecture/README.md)
 *   **Governance**: [Policy](docs/policy/README.md) | [Plans](docs/plans/README.md)
-*   **Review**: [Repository Audit 2026-04-01](docs/reports/2026-04-01-Code-Review-Repository-Audit.md) | [Reports Index](docs/reports/README.md) | [Archive Index](docs/archive/README.md)
+*   **Review**: [Repository Audit 2026-04-01](docs/archive/v0.8.0/reports/2026-04-01-Code-Review-Repository-Audit.md) | [Reports Index](docs/reports/README.md) | [Archive Index](docs/archive/README.md)
 
 ## License
 

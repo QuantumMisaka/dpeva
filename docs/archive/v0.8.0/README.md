@@ -1,0 +1,26 @@
+---
+title: v0.8.0 Archive
+status: archived
+audience: Historians
+last-updated: 2026-06-11
+owner: Docs Owner
+---
+
+# v0.8.0 归档 (Archive)
+
+- Status: archived
+- Audience: Historians
+- Last-Updated: 2026-06-11
+
+本文档目录用于存放 v0.8.0 周期已闭环的计划与报告。
+
+## 目录结构
+
+- `plans/`: 已完成的实施计划与治理计划。
+- `reports/`: 已完成的审查、验收与技术报告。
+
+## 本次归档摘要
+
+- **[ATST Integration]** 归档 v0.8.0 ATST integration 计划与进度审查，记录去 `ase-abacus`、内部 ABACUS writer、可选 `atst-tools` exploration backend 与最小集成验收闭环。
+- **[文档治理]** 归档 AGENTS 文档治理计划。
+- **[代码审查]** 归档 2026-04-01 仓库质量审查与 2026-04-02 单元测试专题审查。
