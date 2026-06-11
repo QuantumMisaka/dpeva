@@ -2,7 +2,7 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-04-05
+last-updated: 2026-06-10
 owner: Docs Owner
 ---
 
@@ -10,7 +10,7 @@ owner: Docs Owner
 
 - Status: active
 - Audience: Users / Developers
-- Last-Updated: 2026-04-05
+- Last-Updated: 2026-06-10
 
 ## 1. 目的与范围
 
@@ -185,6 +185,22 @@ Analysis 相关建议：
 }
 ```
 
+### 5.7 Exploration
+
+```json
+{
+  "work_dir": "./explore_work",
+  "backend": "atst-tools",
+  "workflow_type": "md",
+  "backend_config_path": "./atst_md.yaml",
+  "result_structure_paths": ["./explore_work/result.extxyz"]
+}
+```
+
+Exploration 是可选能力。使用 `backend: "atst-tools"` 前需安装 `dpeva[explore]`，首版仅支持 `workflow_type` 为 `md` 或 `relax`。`backend_config_path` 保持后端原生格式，DPEVA 不重写 ATST YAML。
+
+运行完成后，DPEVA 会在 `work_dir/dpeva_exploration_result.json` 写入标准 manifest。若配置了 `input_structure_paths`，这些结构会作为可追溯输入快照写入 `work_dir/dpeva_inputs/`；若配置了 `result_structure_paths`，这些路径必须在 backend 成功后存在并可由 ASE 读取。
+
 ## 6. 异常处理
 
 - 配置校验失败：对照 `/docs/reference/validation.md` 的跨字段依赖与范围约束
@@ -193,6 +209,8 @@ Analysis 相关建议：
 
 ## 7. 变更记录
 
+- 2026-06-11：补充 Exploration manifest、输入结构快照与结果结构校验契约。
+- 2026-06-10：新增 Exploration 最小配置示例，明确 `atst-tools` 为可选 backend。
 - 2026-03-30：Analysis 配置新增 `enhanced_parity_renderer`，并补充 quantity-aware parity 渲染策略说明。
 - 2026-03-16：Analysis 最小配置增加 `data_path`、`enable_cohesive_energy`、`allow_ref_energy_lstsq_completion`，并补充 Cohesive Energy 配置建议。
 - 2026-03-11：配置字段权威入口改为 API Reference，并补充 Labeling 最小配置示例。

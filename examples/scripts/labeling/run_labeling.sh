@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Example script to run DP-EVA Labeling Workflow
-# Ensure your environment has ase-abacus and dpeva.
+# Ensure your environment has dpeva and ABACUS runtime resources.
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 RECIPE_DIR="$(cd "${SCRIPT_DIR}/../../recipes/labeling" && pwd)"

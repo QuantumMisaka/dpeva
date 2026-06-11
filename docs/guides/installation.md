@@ -51,6 +51,26 @@ dpeva --help
 python -m pip install -e '.[dev]'
 ```
 
+### 4.3 Exploration 可选依赖
+
+`dpeva explore` 通过可选 `atst-tools` backend 调用轨迹探索工作流。该依赖不进入核心安装，需要时单独启用：
+
+```bash
+python -m pip install -e '.[explore]'
+```
+
+验证：
+
+```bash
+dpeva explore --help
+atst --help
+```
+
+说明：
+
+- `dpeva[explore]` 只安装 DP-EVA 的 exploration backend 依赖。
+- ABACUS、DeePMD 模型文件、赝势和轨道文件仍由具体 ATST 配置与运行环境提供。
+
 ## 5. 外部依赖：DeepMD-kit
 
 DP-EVA 的多数 Workflow 依赖 DeepMD-kit 的 `dp` 命令（例如 `dp train/test/eval-desc`）。

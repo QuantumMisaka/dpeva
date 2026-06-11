@@ -20,9 +20,9 @@ class TestAbacusGenerator:
         }
         return AbacusGenerator(config)
 
-    @patch("dpeva.labeling.generator.write_input")
-    @patch("dpeva.labeling.generator.write_abacus")
-    def test_gen_001_cluster_identification(self, mock_write_abacus, mock_write_input, generator, mock_atoms_cluster, tmp_path):
+    @patch("dpeva.labeling.generator.write_input_file")
+    @patch("dpeva.labeling.generator.write_stru_file")
+    def test_gen_001_cluster_identification(self, mock_write_stru_file, mock_write_input_file, generator, mock_atoms_cluster, tmp_path):
         """
         GEN-001: Test cluster identification and K-point generation.
         """
@@ -41,18 +41,18 @@ class TestAbacusGenerator:
         content = kpt_file.read_text()
         assert "1 1 1 0 0 0" in content
         
-        # Verify write_input called with correct parameters
-        mock_write_input.assert_called_once()
-        call_args = mock_write_input.call_args[1]
-        params = call_args['parameters']
+        # Verify write_input_file called with correct parameters
+        mock_write_input_file.assert_called_once()
+        call_args = mock_write_input_file.call_args[0]
+        params = call_args[1]
         assert params['gamma_only'] == 1
         
-        # Verify write_abacus called
-        mock_write_abacus.assert_called_once()
+        # Verify write_stru_file called
+        mock_write_stru_file.assert_called_once()
 
-    @patch("dpeva.labeling.generator.write_input")
-    @patch("dpeva.labeling.generator.write_abacus")
-    def test_gen_002_layer_identification(self, mock_write_abacus, mock_write_input, generator, mock_atoms_layer, tmp_path):
+    @patch("dpeva.labeling.generator.write_input_file")
+    @patch("dpeva.labeling.generator.write_stru_file")
+    def test_gen_002_layer_identification(self, mock_write_stru_file, mock_write_input_file, generator, mock_atoms_layer, tmp_path):
         """
         GEN-002: Test layer identification and dipole correction.
         """
@@ -69,8 +69,8 @@ class TestAbacusGenerator:
         assert stru_type == "layer"
         
         # Verify write_input parameters for layer
-        mock_write_input.assert_called_once()
-        params = mock_write_input.call_args[1]['parameters']
+        mock_write_input_file.assert_called_once()
+        params = mock_write_input_file.call_args[0][1]
         
         # Check dipole correction flags
         assert params.get('efield_flag') == 1
@@ -78,9 +78,9 @@ class TestAbacusGenerator:
         # Vacuum in Z means efield_dir should be 2
         assert params.get('efield_dir') == 2
 
-    @patch("dpeva.labeling.generator.write_input")
-    @patch("dpeva.labeling.generator.write_abacus")
-    def test_gen_003_metadata_injection(self, mock_write_abacus, mock_write_input, generator, mock_atoms_bulk, tmp_path):
+    @patch("dpeva.labeling.generator.write_input_file")
+    @patch("dpeva.labeling.generator.write_stru_file")
+    def test_gen_003_metadata_injection(self, mock_write_stru_file, mock_write_input_file, generator, mock_atoms_bulk, tmp_path):
         """
         GEN-003: Verify task_meta.json generation with system_name.
         """
@@ -108,9 +108,9 @@ class TestAbacusGenerator:
         assert meta["frame_idx"] == 0
         assert meta["stru_type"] is not None # Should be analyzed
 
-    @patch("dpeva.labeling.generator.write_input")
-    @patch("dpeva.labeling.generator.write_abacus")
-    def test_gen_004_magmom_setting(self, mock_write_abacus, mock_write_input, generator, mock_atoms_bulk, tmp_path):
+    @patch("dpeva.labeling.generator.write_input_file")
+    @patch("dpeva.labeling.generator.write_stru_file")
+    def test_gen_004_magmom_setting(self, mock_write_stru_file, mock_write_input_file, generator, mock_atoms_bulk, tmp_path):
         """
         GEN-004: Verify magnetic moments setting.
         """
@@ -120,10 +120,16 @@ class TestAbacusGenerator:
         generator.generate(mock_atoms_bulk, output_dir, "task_mag")
         
         # Assert
-        # Check if atoms object passed to write_abacus has magmoms
-        mock_write_abacus.assert_called_once()
-        atoms_arg = mock_write_abacus.call_args[0][1] # 2nd positional arg is atoms
+        # Check if atoms object passed to write_stru_file has magmoms
+        mock_write_stru_file.assert_called_once()
+        atoms_arg = mock_write_stru_file.call_args[0][1] # 2nd positional arg is atoms
         
         magmoms = atoms_arg.get_initial_magnetic_moments()
         # mock_atoms_bulk has 2 Fe atoms. Config has Fe: 5.0
         assert all(m == 5.0 for m in magmoms)
+
+
+def test_labeling_package_imports_without_ase_abacus_plugin():
+    import dpeva.labeling as labeling
+
+    assert labeling.AbacusGenerator is AbacusGenerator

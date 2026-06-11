@@ -1,0 +1,7 @@
+INPUT_PARAMETERS
+ecutwfc 100
+gamma_only 1
+pseudo_dir /data/pp
+basis_dir /data/orb
+orbital_dir /data/orb
+

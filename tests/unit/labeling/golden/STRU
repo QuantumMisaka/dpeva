@@ -1,0 +1,37 @@
+ATOMIC_SPECIES
+C 12.011 C.upf 
+Pt 195.084 Pt.upf 
+H 1.008 H.upf 
+
+NUMERICAL_ORBITAL
+C.orb
+Pt.orb
+H.orb
+
+LATTICE_CONSTANT
+1.8897261258369282
+
+LATTICE_VECTORS
+10.0 0.0 0.0
+0.0 10.0 0.0
+0.0 0.0 10.0
+
+ATOMIC_POSITIONS
+Cartesian
+
+C
+0.0
+2
+0.0 0.0 0.0 m 1 1 1 v 0.0 0.0 0.0 mag 1.0
+0.0 0.0 3.0 m 1 1 1 v 0.0 0.0 0.0 mag 3.0
+
+Pt
+0.0
+1
+0.0 0.0 1.0 m 1 1 1 v 0.0 0.0 0.0 mag 2.0
+
+H
+0.0
+2
+0.0 0.0 2.0 m 1 1 1 v 0.0 0.0 0.0
+0.0 0.0 4.0 m 1 1 1 v 0.0 0.0 0.0

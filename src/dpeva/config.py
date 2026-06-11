@@ -159,6 +159,41 @@ class FeatureConfig(BaseWorkflowConfig):
             self.savedir = Path(f"desc-{model_name}-{data_name}")
         return self
 
+
+class ExplorationConfig(BaseModel):
+    """Configuration for optional trajectory exploration backends."""
+
+    model_config = ConfigDict(extra='ignore', populate_by_name=True, protected_namespaces=())
+
+    work_dir: Path = Field(
+        default_factory=Path.cwd,
+        description="Working directory.",
+    )
+    backend: Literal["atst-tools"] = Field(
+        "atst-tools",
+        description="Exploration backend name.",
+    )
+    workflow_type: Literal["md", "relax"] = Field(
+        ...,
+        description="Exploration workflow type supported by the first ATST backend.",
+    )
+    backend_config_path: Path = Field(
+        ...,
+        description="Path to the backend-native configuration file.",
+    )
+    input_structure_paths: List[Path] = Field(
+        default_factory=list,
+        description="Optional input structures to pass through the exploration request.",
+    )
+    result_structure_paths: List[Path] = Field(
+        default_factory=list,
+        description="Optional result structures to collect after backend execution.",
+    )
+    metadata: Dict[str, Any] = Field(
+        default_factory=dict,
+        description="Backend-specific metadata carried through the request.",
+    )
+
 class AnalysisConfig(BaseModel):
     """Configuration for Analysis Workflow (Post-processing)."""
     model_config = ConfigDict(extra='ignore', populate_by_name=True, protected_namespaces=())

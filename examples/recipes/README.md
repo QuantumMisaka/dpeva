@@ -98,7 +98,14 @@ For programmatic workflow demos and helper scripts, use:
 - `examples/scripts/analysis/analysis_recipe.py`
 - `examples/scripts/labeling/run_labeling.sh`
 
-## 8. Data Cleaning Recipes (`data_cleaning/`)
+## 8. Exploration Recipes (`exploration/`)
+
+- **ATST relax wrapper (`exploration/config_explore_relax.json`)**
+  - Inputs: a DP-EVA wrapper JSON plus a backend-native ATST YAML.
+  - Install with `python -m pip install -e '.[explore]'`.
+  - Run with `dpeva explore examples/recipes/exploration/config_explore_relax.json`.
+
+## 9. Data Cleaning Recipes (`data_cleaning/`)
 
 - **All thresholds enabled (`data_cleaning/config_clean_all_thresholds.json`)**
   - Inputs: labeled `dataset_dir` + inference `result_dir`, with energy/force/stress thresholds.

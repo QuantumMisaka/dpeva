@@ -1,0 +1,13 @@
+{
+  "work_dir": "./explore_work",
+  "backend": "atst-tools",
+  "workflow_type": "relax",
+  "backend_config_path": "./atst_relax.yaml",
+  "input_structure_paths": [],
+  "result_structure_paths": [
+    "./explore_work/final_relaxed.traj"
+  ],
+  "metadata": {
+    "purpose": "Minimal DP-EVA wrapper for an ATST relax workflow"
+  }
+}

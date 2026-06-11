@@ -34,7 +34,6 @@ language = 'zh_CN'
 # Optional scientific backends are runtime dependencies for specific workflows,
 # but docs must build in a lightweight environment.
 autodoc_mock_imports = [
-    'ase.io.abacus',
     'deepmd',
 ]
 
