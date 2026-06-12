@@ -11,6 +11,7 @@ The `collect` workflow is the heart of DP-EVA, handling Uncertainty Quantificati
 | :--- | :--- | :--- |
 | **`config_collect_normal.json`** | **Normal Sampling** | Selects new data purely based on the candidate pool's descriptor distribution. Suitable for initial exploration or when no training set is available/relevant. |
 | **`config_collect_joint.json`** | **Joint Sampling** | Considers both the candidate pool and an existing training set (`training_data_dir`). Ensures new samples cover the "blind spots" of the current model relative to the training data. |
+| **`config_collect_llpr_dpose.json`** | **Energy LLPR / DPOSE** | Uses DeepMD last-layer features for analytic energy LLPR and, when real last-layer weights plus base energy are provided, writes `energy_ensemble.npy` and samples by ensemble std per atom. |
 
 **Note**:
 -   **Data Pool Structure**: DP-EVA automatically detects whether your data is a single pool (one system) or multi-pool (multiple systems/trajectories) based on the directory structure. You do not need separate config files for this.

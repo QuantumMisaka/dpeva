@@ -1,0 +1,41 @@
+{
+    "project": "./",
+    "uq_backend": "llpr",
+    "uq_select_scheme": "tangent_lo",
+    "desc_dir": "./desc_pool",
+    "testdata_dir": "./other_dpdata",
+
+    "llpr_train_feature_dir": "./train_last_layer",
+    "llpr_candidate_feature_dir": "./candidate_last_layer",
+    "llpr_feature_normalization": "mean",
+    "llpr_regularizer": 1e-8,
+    "llpr_num_ensemble_members": 8,
+    "llpr_last_layer_weights_path": "./last_layer_weights.npy",
+    "llpr_candidate_energy_path": "./candidate_energy.npy",
+    "llpr_collect_score": "energy_ensemble_std_per_atom",
+
+    "fig_dpi": 300,
+    "enable_diagnostic_plots": false,
+    "root_savedir": "dpeva_post_llpr_dpose",
+
+    "uq_trust_mode": "auto",
+    "uq_trust_ratio": 0.50,
+    "uq_trust_width": 0.15,
+
+    "sampler_type": "direct",
+    "direct_n_clusters": 1000,
+    "direct_k": 1,
+    "direct_thr_init": 0.1,
+
+    "submission": {
+        "backend": "slurm",
+        "env_setup": [],
+        "slurm_config": {
+            "partition": "CPU-MISC",
+            "qos": "rush-cpu",
+            "ntasks": 1,
+            "cpus_per_task": 4,
+            "job_name": "DPEVA-collect-llpr"
+        }
+    }
+}

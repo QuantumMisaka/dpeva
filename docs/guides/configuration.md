@@ -2,7 +2,7 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-06-10
+last-updated: 2026-06-12
 owner: Docs Owner
 ---
 
@@ -10,7 +10,7 @@ owner: Docs Owner
 
 - Status: active
 - Audience: Users / Developers
-- Last-Updated: 2026-06-10
+- Last-Updated: 2026-06-12
 
 ## 1. 目的与范围
 
@@ -135,6 +135,28 @@ owner: Docs Owner
 }
 ```
 
+LLPR / energy DPOSE 可作为 Collect UQ backend 使用。最小 energy LLPR 只需要训练集与候选集 last-layer feature 目录；请求 shallow ensemble 时必须提供真实最后一层权重和候选 base energy，默认 strict parity 不会用 synthetic weights 冒充 DPOSE：
+
+```json
+{
+  "uq_backend": "llpr",
+  "llpr_train_feature_dir": "./train_last_layer",
+  "llpr_candidate_feature_dir": "./candidate_last_layer",
+  "llpr_feature_normalization": "mean",
+  "llpr_num_ensemble_members": 8,
+  "llpr_last_layer_weights_path": "./last_layer_weights.npy",
+  "llpr_candidate_energy_path": "./candidate_energy.npy",
+  "llpr_collect_score": "energy_ensemble_std_per_atom"
+}
+```
+
+可选字段：
+
+- `llpr_model_path` / `llpr_model_head`：未显式提供 `llpr_last_layer_weights_path` 时，从 PyTorch checkpoint/state_dict 按 feature dimension 解析 energy fitting last linear weight。
+- `llpr_state_path` / `llpr_save_state_path`：复用或保存 LLPR covariance/Cholesky/alpha 状态。
+- `llpr_ensemble_output_path`：自定义 `energy_ensemble.npy` 输出路径；未设置时写到 Collect 输出根目录下。
+- `llpr_collect_score`：支持 `energy_uncertainty_per_atom`（默认）、`energy_ensemble_std_per_atom`、`force_uncertainty_max`。当前 detached feature workflow 只支持 energy；force DPOSE 仍需要可微 DeepMD PyTorch graph adapter。
+
 ### 5.5 Analysis
 
 ```json
@@ -209,6 +231,7 @@ Exploration 是可选能力。使用 `backend: "atst-tools"` 前需安装 `dpeva
 
 ## 7. 变更记录
 
+- 2026-06-12：补充 Collect LLPR / energy DPOSE ensemble 配置字段、状态复用和 strict parity 约束。
 - 2026-06-11：补充 Exploration manifest、输入结构快照与结果结构校验契约。
 - 2026-06-10：新增 Exploration 最小配置示例，明确 `atst-tools` 为可选 backend。
 - 2026-03-30：Analysis 配置新增 `enhanced_parity_renderer`，并补充 quantity-aware parity 渲染策略说明。

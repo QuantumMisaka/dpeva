@@ -1,0 +1,523 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DP-EVA Energy-Level DPOSE / LLPR 审查看板</title>
+  <style>
+    :root {
+      --ink: #1f2933;
+      --muted: #5f6b7a;
+      --line: #d8dee8;
+      --paper: #fbfcfe;
+      --band: #eef4f7;
+      --accent: #0f766e;
+      --accent-2: #7c3aed;
+      --warn: #b45309;
+      --bad: #b91c1c;
+      --good: #047857;
+      --code: #102a43;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--paper);
+      font: 15px/1.55 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      background: #12343b;
+      color: white;
+      padding: 28px clamp(18px, 4vw, 56px) 20px;
+    }
+    header h1 {
+      margin: 0 0 8px;
+      font-size: clamp(26px, 4vw, 42px);
+      line-height: 1.16;
+      letter-spacing: 0;
+      max-width: 1180px;
+    }
+    header p { max-width: 1120px; margin: 8px 0; color: #d9e7ea; }
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding: 10px clamp(12px, 3vw, 40px);
+      background: rgba(251, 252, 254, 0.96);
+      border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(8px);
+    }
+    nav a {
+      white-space: nowrap;
+      color: var(--ink);
+      text-decoration: none;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 6px 10px;
+      background: white;
+      font-size: 13px;
+    }
+    main { padding: 22px clamp(16px, 4vw, 56px) 56px; }
+    section { max-width: 1220px; margin: 0 auto 34px; }
+    h2 { font-size: 26px; margin: 0 0 14px; letter-spacing: 0; }
+    h3 { font-size: 18px; margin: 18px 0 8px; letter-spacing: 0; }
+    p { margin: 8px 0; }
+    .grid { display: grid; gap: 14px; }
+    .grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .grid.four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .card {
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 15px;
+    }
+    .band {
+      background: var(--band);
+      border-block: 1px solid var(--line);
+      padding: 24px clamp(16px, 4vw, 56px);
+      max-width: none;
+    }
+    .band > .inner { max-width: 1220px; margin: 0 auto; }
+    .status {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      border-radius: 999px;
+      padding: 2px 9px;
+      font-size: 12px;
+      font-weight: 650;
+      border: 1px solid transparent;
+    }
+    .ok { color: var(--good); background: #e9f8f2; border-color: #b7e5d1; }
+    .partial { color: var(--warn); background: #fff7ed; border-color: #fed7aa; }
+    .gap { color: var(--bad); background: #fef2f2; border-color: #fecaca; }
+    .info { color: #075985; background: #eef7ff; border-color: #bae6fd; }
+    .pillrow { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0; }
+    .metric {
+      display: grid;
+      gap: 4px;
+      min-height: 122px;
+      align-content: start;
+    }
+    .metric b { font-size: 21px; color: var(--accent); }
+    .muted { color: var(--muted); }
+    .small { font-size: 13px; }
+    code, pre {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      color: var(--code);
+    }
+    pre {
+      overflow-x: auto;
+      background: #f6f8fb;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      font-size: 13px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    th, td {
+      border-bottom: 1px solid var(--line);
+      padding: 10px 11px;
+      vertical-align: top;
+      text-align: left;
+    }
+    th { background: #f1f5f9; font-size: 13px; }
+    tr:last-child td { border-bottom: 0; }
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .step {
+      background: white;
+      border: 1px solid var(--line);
+      border-left: 4px solid var(--accent);
+      border-radius: 8px;
+      padding: 12px;
+      min-height: 148px;
+    }
+    .step strong { display: block; margin-bottom: 5px; }
+    .callout {
+      border-left: 5px solid var(--accent-2);
+      background: #f6f3ff;
+      padding: 12px 14px;
+      border-radius: 6px;
+      margin: 12px 0;
+    }
+    .warning { border-left-color: var(--warn); background: #fff7ed; }
+    .danger { border-left-color: var(--bad); background: #fef2f2; }
+    .source-list li { margin: 6px 0; }
+    a { color: #0f5f7a; }
+    @media (max-width: 900px) {
+      .grid.two, .grid.three, .grid.four, .flow { grid-template-columns: 1fr; }
+      header { padding-top: 22px; }
+      th, td { min-width: 180px; }
+      table { display: block; overflow-x: auto; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>DP-EVA Energy-Level DPOSE / LLPR 审查看板</h1>
+    <p>目标：以 lab-cosmo 团队的 DPOSE 论文和 metatrain LLPR 实现为主线，说明算法目标与运作逻辑，并审查 DP-EVA 当前基于 deepmd-kit fitting last-layer feature 的实现是否对齐。</p>
+    <p class="small">生成日期：2026-06-12。范围：energy-level DPOSE/LLPR collect 闭环；force-level DPOSE 和 proper-scoring shallow ensemble 训练作为边界与后续项单独标注。</p>
+  </header>
+
+  <nav>
+    <a href="#headline">结论</a>
+    <a href="#paper">论文主线</a>
+    <a href="#algorithm">算法运作</a>
+    <a href="#metatrain">metatrain 证据</a>
+    <a href="#dpeva">DP-EVA 实现</a>
+    <a href="#review">审查矩阵</a>
+    <a href="#applications">应用场景</a>
+    <a href="#risks">边界与风险</a>
+    <a href="#sources">证据索引</a>
+  </nav>
+
+  <main>
+    <section id="headline">
+      <h2>一页结论</h2>
+      <div class="grid four">
+        <div class="card metric">
+          <span class="status ok">已对齐</span>
+          <b>Last-layer LLPR</b>
+          <span>DP-EVA 使用 DeepMD fitting last-layer feature 构建 <code>F^T F + λI</code>、Cholesky 和解析 uncertainty。</span>
+        </div>
+        <div class="card metric">
+          <span class="status ok">已对齐</span>
+          <b>Energy shallow ensemble</b>
+          <span>当提供真实最后线性层权重和 base energy 时，按 <code>α²Σ⁻¹</code> 采样 ensemble weights，并将 ensemble mean 重居中到 base energy。</span>
+        </div>
+        <div class="card metric">
+          <span class="status partial">部分对齐</span>
+          <b>Propagation</b>
+          <span>DP-EVA 输出 <code>energy_ensemble.npy</code> 和 per-frame summary，可用于后处理传播；尚未内置 PET-MAD cookbook 那种在线 MD / i-PI 传播工作流。</span>
+        </div>
+        <div class="card metric">
+          <span class="status gap">未完成</span>
+          <b>Force DPOSE</b>
+          <span>DeepPot last-layer API 返回 detached feature。DP-EVA 当前对 force-level DPOSE fail-fast，只保留 differentiable adapter 抽象。</span>
+        </div>
+      </div>
+      <div class="callout">
+        <strong>审查判断：</strong>当前 DP-EVA 实现可以称为“基于 deepmd-kit fitting last-layer feature 的 energy-level DPOSE/LLPR 后端”。它不是完整 metatrain LLPR wrapper 的逐字移植，也不是 force-level DPOSE；但在 energy uncertainty、last-layer posterior sampling、ensemble re-centering、strict parity guard、collect CSV/NPY 输出这些关键点上，已经遵循 lab-cosmo DPOSE 方案的核心语义。
+      </div>
+    </section>
+
+    <section id="paper" class="band">
+      <div class="inner">
+        <h2>以文章为主线：DPOSE 到底要解决什么</h2>
+        <div class="grid two">
+          <div class="card">
+            <h3>论文提出的四个 UQ 要求</h3>
+            <p>文章明确说，好的 UQ 框架应当同时满足四点：误差估计和真实误差相关、计算开销低、易于加到任意 regression 模型上、能直接而稳健地传播到派生量。这个定位见 DPOSE 论文 <code>full.md:63-73</code>。</p>
+            <p>DPOSE 的关键不是“又一个 ensemble”，而是找到一个可用于原子模拟实际后处理的 ensemble 表达，使误差能穿过总能、平均量、热物性和主动学习筛选。</p>
+          </div>
+          <div class="card">
+            <h3>为什么不能只给一个 σ</h3>
+            <p>原子模拟经常不是直接消费模型输出，而是消费输出的组合：结构总能、force、轨迹平均、空位形成能、热容等。文章指出这些任务需要能组合 uncertainty 的方法，尤其在 MLIP 轨迹中，误差估计必须能对平均值和派生量传播，见 <code>full.md:69-73</code>、<code>full.md:420-422</code>。</p>
+          </div>
+          <div class="card">
+            <h3>DPOSE 的核心折中</h3>
+            <p>它使用共享 backbone、只扰动/训练最后层权重的 shallow ensemble。相比深 ensemble，训练和推理更便宜；相比单点 variance 预测，它能保留成员相关性并直接传播成员预测。</p>
+          </div>
+          <div class="card">
+            <h3>主动学习语境</h3>
+            <p>论文用 water surface 和 QM9 inconsistent structures 展示 OOD 检测：DPOSE 的 uncertainty 能区分高误差结构，并通过加入少量结构改善预测和校准，见 <code>full.md:395-414</code>。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="algorithm">
+      <h2>DPOSE / LLPR 具体运作逻辑</h2>
+      <div class="flow">
+        <div class="step">
+          <strong>1. 训练一个 base 模型</strong>
+          <span>保留主体网络表示。对 DP-EVA 来说，这个 base 模型是 DeepMD/DPA 模型。</span>
+        </div>
+        <div class="step">
+          <strong>2. 抽取 last-layer feature</strong>
+          <span>对每个结构得到最后线性层之前的特征 <code>f(A)</code>。这是 LLPR 的统计对象，不应混同于普通 descriptor。</span>
+        </div>
+        <div class="step">
+          <strong>3. 构建后验尺度</strong>
+          <span>累积训练集 <code>F^T F</code>，加入正则 <code>λI</code>，用 Cholesky 或 inverse 表达最后层权重的不确定性。</span>
+        </div>
+        <div class="step">
+          <strong>4. 校准全局倍率</strong>
+          <span>用 validation residual 对 uncertainty 乘一个 <code>α</code>。metatrain 支持 squared residuals、absolute residuals、CRPS。</span>
+        </div>
+        <div class="step">
+          <strong>5. 生成/使用 ensemble</strong>
+          <span>围绕真实最后层权重采样 shallow ensemble，预测后重居中到 base 模型输出，再用成员 spread 做传播。</span>
+        </div>
+      </div>
+
+      <h3>数学对象的最小闭环</h3>
+      <pre><code>训练特征: F = [f(A_1), ..., f(A_N)]^T
+LLPR covariance: C = F^T F + λ I
+解析 uncertainty: σ(A*) = α sqrt(f(A*)^T C^{-1} f(A*))
+ensemble weights: w_k = w_base + ε_k,  ε_k ~ N(0, α² C^{-1})
+raw ensemble: y_k(A*) = f(A*) · w_k
+re-centered ensemble: y_k' = y_k - mean_k(y_k) + y_base(A*)</code></pre>
+
+      <div class="callout warning">
+        <strong>DP-EVA 适配点：</strong>DeepMD 的公开路径给出的是 fitting last-layer feature；force DPOSE 需要 ensemble energy 对坐标保持可微并求梯度。当前 DP-EVA energy 路径是严格可用的，force 路径不能从 detached feature 推导，因此保持 fail-fast。
+      </div>
+    </section>
+
+    <section id="metatrain" class="band">
+      <div class="inner">
+        <h2>metatrain 实现证据：DP-EVA 对齐的对象是什么</h2>
+        <table>
+          <thead>
+            <tr><th>metatrain 设计点</th><th>代码证据</th><th>语义</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>wrapped model 必须暴露 last-layer feature size 和 last-layer features</td>
+              <td><code>metatrain/llpr/model.py:61-75</code></td>
+              <td>LLPR 不是 generic descriptor UQ；它依赖最后线性层输入特征和最后层权重。</td>
+            </tr>
+            <tr>
+              <td>注册 covariance、Cholesky、multiplier</td>
+              <td><code>model.py:163-183</code></td>
+              <td>状态包括 <code>C</code>、Cholesky 和校准倍率 <code>α</code>。</td>
+            </tr>
+            <tr>
+              <td>ensemble 输出命名为 <code>energy_ensemble</code></td>
+              <td><code>model.py:187-231</code></td>
+              <td>LLPR wrapper 可以产生可导出的 ensemble 输出，而不仅是 uncertainty 标量。</td>
+            </tr>
+            <tr>
+              <td>system-level feature 用原子数归一化</td>
+              <td><code>model.py:653-656</code></td>
+              <td>对 system target，metatrain 用 per-atom averaged last-layer feature 构建 covariance。</td>
+            </tr>
+            <tr>
+              <td>ensemble mean 重居中到原模型输出</td>
+              <td><code>model.py:539-550</code></td>
+              <td>这是 DPOSE 语义的关键：ensemble spread 表示不确定性，mean 与 base prediction 保持一致。</td>
+            </tr>
+            <tr>
+              <td>训练顺序：covariance → Cholesky → calibrate → generate ensemble</td>
+              <td><code>trainer.py:157-173</code></td>
+              <td>这是 DP-EVA energy-level 闭环复刻的主流程。</td>
+            </tr>
+            <tr>
+              <td>CRPS 校准用 root_scalar/brentq</td>
+              <td><code>calibration.py:273-318</code></td>
+              <td>DP-EVA 的 CRPS alpha 求解也优先使用 SciPy brentq。</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="dpeva">
+      <h2>DP-EVA 当前实现怎么落地</h2>
+      <div class="grid two">
+        <div class="card">
+          <h3>核心数值层：<code>src/dpeva/uncertain/llpr.py</code></h3>
+          <p><code>LLPRState.from_training_features</code> 聚合 last-layer feature，构建 <code>F^T F + λI</code> 并做 Cholesky（<code>llpr.py:36-60</code>）。<code>predict_uncertainty</code> 用 Cholesky solve 计算 <code>sqrt(f^T C^-1 f)</code> 并乘 <code>α</code>（<code>llpr.py:62-74</code>）。状态可保存/加载（<code>llpr.py:86-117</code>）。</p>
+          <p>校准实现覆盖 squared residuals、absolute residuals、CRPS，并新增 NLL/CRPS/coverage benchmark（<code>llpr.py:120-166</code>、<code>llpr.py:233-304</code>）。</p>
+        </div>
+        <div class="card">
+          <h3>ensemble 层：<code>src/dpeva/uncertain/dpose.py</code></h3>
+          <p><code>DPOSEEnsemble.sampled_weights</code> 校验真实权重维度，并从 <code>α² C^-1</code> 采样最后层权重（<code>dpose.py:33-49</code>）。<code>sample_energy_ensemble</code> 计算成员能量并重居中到 base energy（<code>dpose.py:51-62</code>）。</p>
+          <p><code>resolve_last_layer_weights</code> 支持显式 <code>.npy</code> 权重，也能从 PyTorch checkpoint/state_dict 按 feature dimension 和 head 匹配 2D weight；无匹配时列出候选 shape（<code>dpose.py:142-217</code>）。</p>
+        </div>
+        <div class="card">
+          <h3>workflow 层：<code>collect.py</code></h3>
+          <p>当 <code>uq_backend="llpr"</code> 时，collect 加载训练和候选 last-layer feature，按 dataname 对齐候选池（<code>collect.py:214-249</code>）。请求 ensemble 时加载 base energy、解析权重、设置默认 <code>energy_ensemble.npy</code> 路径（<code>collect.py:250-284</code>）。</p>
+          <p>输出 CSV 包含 analytic LLPR 和 DPOSE summary columns，并允许按 <code>energy_ensemble_std_per_atom</code> 采样（<code>collect.py:292-328</code>、<code>collect.py:405-417</code>）。</p>
+        </div>
+        <div class="card">
+          <h3>配置层：<code>src/dpeva/config.py</code></h3>
+          <p>新增字段覆盖模型路径、head、权重路径、base energy、状态复用、ensemble 输出和 collect score（<code>config.py:470-497</code>）。strict parity 校验要求 ensemble 请求必须提供 base energy 与真实权重来源（<code>config.py:528-548</code>）。</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="review" class="band">
+      <div class="inner">
+        <h2>代码审查矩阵：lab-cosmo DPOSE 要求 vs DP-EVA 当前状态</h2>
+        <table>
+          <thead>
+            <tr><th>能力</th><th>DP-EVA 状态</th><th>证据</th><th>审查判断</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>使用 last-layer feature，而不是 descriptor proxy</td>
+              <td><span class="status ok">已实现</span></td>
+              <td><code>tests/integration/test_real_deepmd_llpr_dpose.py:66-77</code> 使用 <code>DeepPot.eval_fitting_last_layer</code> 并断言 3D feature shape。</td>
+              <td>符合方案 A：DeepMD fitting-net last-layer features 是 LLPR 输入。</td>
+            </tr>
+            <tr>
+              <td>LLPR covariance / Cholesky / alpha 状态</td>
+              <td><span class="status ok">已实现</span></td>
+              <td><code>llpr.py:36-84</code>、<code>tests/unit/uncertain/test_llpr.py:99-125</code></td>
+              <td>数值结构与 metatrain buffer 语义一致；DP-EVA 用 NumPy 状态对象承载。</td>
+            </tr>
+            <tr>
+              <td>metatrain 风格校准</td>
+              <td><span class="status ok">已实现</span></td>
+              <td><code>llpr.py:120-166</code>、<code>llpr.py:233-304</code></td>
+              <td>squared/absolute/CRPS 三类 alpha 已覆盖；CRPS 用 brentq 优先。</td>
+            </tr>
+            <tr>
+              <td>真实 last-layer weight shallow ensemble</td>
+              <td><span class="status ok">已实现</span></td>
+              <td><code>dpose.py:33-62</code>、<code>manager.py:282-329</code></td>
+              <td>请求 ensemble 时 strict parity 默认拒绝无真实权重/无 base energy 的伪实现。</td>
+            </tr>
+            <tr>
+              <td>ensemble mean 重居中</td>
+              <td><span class="status ok">已实现</span></td>
+              <td><code>dpose.py:61-62</code>；真实集成测试在 <code>test_real_deepmd_llpr_dpose.py:204-211</code> 校验 mean 对齐 base energy。</td>
+              <td>这是与 metatrain <code>model.py:539-550</code> 对齐的关键证据。</td>
+            </tr>
+            <tr>
+              <td>collect 输出可审计 summary</td>
+              <td><span class="status ok">已实现</span></td>
+              <td><code>collect.py:292-328</code>、<code>tests/unit/workflows/test_collect_workflow_routing.py:217-229</code></td>
+              <td>CSV 和 <code>energy_ensemble.npy</code> 对齐，可用于采样和后处理。</td>
+            </tr>
+            <tr>
+              <td>force ensemble / force uncertainty</td>
+              <td><span class="status gap">未实现</span></td>
+              <td><code>manager.py:191-195</code> 对 detached feature force 请求抛错；<code>dpose.py:65-131</code> 仅提供 adapter 抽象。</td>
+              <td>这是正确的保守实现。没有可微 DeepMD graph 时不能宣称 force DPOSE。</td>
+            </tr>
+            <tr>
+              <td>proper-scoring shallow ensemble training</td>
+              <td><span class="status gap">未实现</span></td>
+              <td>metatrain 对应 <code>trainer.py:175-186</code> 和 loss docs；DP-EVA 当前只生成 analytic ensemble。</td>
+              <td>可作为增强项，不能作为当前 energy collect 闭环的阻塞。</td>
+            </tr>
+            <tr>
+              <td>在线 MD / i-PI uncertainty propagation</td>
+              <td><span class="status partial">部分可用</span></td>
+              <td>DP-EVA 输出 <code>energy_ensemble.npy</code>；cookbook PET-MAD-UQ 需要模拟时直接请求 ensemble。</td>
+              <td>DP-EVA 现在适合 candidate pool 审计和离线传播；在线 MD 需要额外 calculator/driver 集成。</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="applications">
+      <h2>与文章和 Atomistic Cookbook 应用场景的对应关系</h2>
+      <div class="grid three">
+        <div class="card">
+          <h3>主动学习 / 采样</h3>
+          <p>文章强调 DPOSE 可识别 OOD 高误差结构并驱动 active learning（<code>full.md:407-414</code>）。DP-EVA 的 collect workflow 已能按 <code>energy_uncertainty_per_atom</code> 或 <code>energy_ensemble_std_per_atom</code> 过滤候选，结合现有 DIRECT/2-DIRECT 采样。</p>
+          <p class="small muted">适配程度：高。当前 DP-EVA 最自然的落点就是主动学习候选池筛选。</p>
+        </div>
+        <div class="card">
+          <h3>训练一个带 UQ 的势</h3>
+          <p>cookbook <code>llpr-from-scratch</code> 明确展示“训练 baseline potential 并装备 LLPR 与 shallow last-layer ensemble”（<code>llpr-from-scratch.md:10-20</code>）。DP-EVA 的实现对应后半段：在 DeepMD base 模型和 last-layer feature 已存在时，构建 LLPR state 与 ensemble。</p>
+          <p class="small muted">适配程度：中高。DP-EVA 侧还需把 feature 生成、base energy、权重导出打通成更完整 recipe。</p>
+        </div>
+        <div class="card">
+          <h3>空位形成能 / 派生量传播</h3>
+          <p>PET-MAD-UQ recipe 包含 vacancy formation energy uncertainty（<code>pet-mad-uq.md:19-24</code>）。DP-EVA 输出的 <code>energy_ensemble.npy</code> 可以离线传播到 <code>E_vac - E_bulk + μ</code> 这类组合量，只要所有结构行顺序和 ensemble member 对齐。</p>
+          <p class="small muted">适配程度：中。需要一个小的后处理工具把多个结构集合的 ensemble 做组合。</p>
+        </div>
+        <div class="card">
+          <h3>MD 轨迹平均与热物性</h3>
+          <p>文章和 PET-MAD-UQ 都强调对 MD 平均量、reweighting、i-PI 的不确定度传播（<code>full.md:385-391</code>、<code>pet-mad-uq.md:21-28</code>）。DP-EVA 目前没有在线 calculator，但 ensemble 文件能支撑离线轨迹帧级统计。</p>
+          <p class="small muted">适配程度：中低。下一步应提供 trajectory-level aggregation/reweighting 脚本。</p>
+        </div>
+        <div class="card">
+          <h3>样本选择与结构多样性</h3>
+          <p>cookbook sample-selection 使用 FPS/CUR 在 descriptor 空间选样（<code>sample-selection.md:10-25</code>）。DP-EVA 可以把结构多样性采样和 DPOSE uncertainty 结合：先用 UQ 选高风险区间，再用 DIRECT 保持结构覆盖。</p>
+          <p class="small muted">适配程度：高。DP-EVA 原本就有 descriptor sampling，LLPR/DPOSE 是任务相关 UQ 轴。</p>
+        </div>
+        <div class="card">
+          <h3>OOD 审计</h3>
+          <p>文章的 water surface、QM9 inconsistent structures 都是 OOD 审计示例。DP-EVA 的 CSV summary 可以对每个候选 frame 输出 uncertainty range、ensemble std、identity 分类，适合写审计报告。</p>
+          <p class="small muted">适配程度：高。需要真实标注后用 <code>calibration_benchmark</code> 评估 residual/uncertainty 对齐。</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="risks" class="band">
+      <div class="inner">
+        <h2>边界、风险和建议讨论点</h2>
+        <div class="grid two">
+          <div class="card">
+            <h3>1. Feature 语义必须保持 last-layer</h3>
+            <p>如果用户把普通 descriptor 当作 <code>llpr_train_feature_dir</code> 输入，代码仍能计算矩阵，但语义会退化为 descriptor-space density proxy。建议在 feature generator 的输出 manifest 中写入 <code>feature_kind=fitting_last_layer</code> 并在 collect 读取时校验。</p>
+          </div>
+          <div class="card">
+            <h3>2. Weight resolver 依赖 checkpoint 内部结构</h3>
+            <p>显式 <code>llpr_last_layer_weights_path</code> 最稳。自动从 checkpoint 按 shape/head 匹配是工程便利，但 DeepMD PyTorch checkpoint 字段不是稳定公开 API。建议 GPU 集成测试覆盖每个目标 DPA3/DPA4 fixture。</p>
+          </div>
+          <div class="card">
+            <h3>3. Energy ensemble 不等于 force ensemble</h3>
+            <p>当前 <code>energy_ensemble.npy</code> 是 frame-level energy ensemble。force-level DPOSE 必须通过可微 PyTorch graph 对每个 ensemble energy 求坐标梯度。detached feature 路径不能推导 force uncertainty。</p>
+          </div>
+          <div class="card">
+            <h3>4. 校准需要真实 residual</h3>
+            <p>LLPR raw uncertainty 可用于排序；要把它解释成可信误差条，需要 labeled validation residual。DP-EVA 已有 <code>LLPRCalibrator</code> 和 benchmark，但 collect 的自动校准数据接入仍应单独补。</p>
+          </div>
+          <div class="card">
+            <h3>5. 系统大小归一化要随目标语义确认</h3>
+            <p>metatrain 对 system target 用原子数归一化 features；DP-EVA 支持 <code>llpr_feature_normalization="mean"</code> 并默认使用。不同 DeepMD head/输出若语义不同，应在真实 benchmark 中确认。</p>
+          </div>
+          <div class="card">
+            <h3>6. Proper scoring ensemble training 仍缺</h3>
+            <p>文章和 metatrain 支持 NLL/CRPS 训练 ensemble 权重。DP-EVA 当前是 analytic LLPR-sampled ensemble；对需要更强校准的生产应用，应规划 frozen-backbone shallow trainer。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="sources">
+      <h2>证据索引</h2>
+      <div class="grid two">
+        <div class="card">
+          <h3>lab-cosmo / DPOSE / cookbook</h3>
+          <ul class="source-list">
+            <li>DPOSE 论文 markdown：<code>test/lab-cosmo/UQ-direct-propagation-of-shallow-ensembles-papers/full.md:63-73</code>、<code>395-422</code></li>
+            <li>metatrain LLPR wrapper：<code>test/lab-cosmo/metatrain/src/metatrain/llpr/model.py:61-75</code>、<code>163-231</code>、<code>539-550</code>、<code>604-700</code></li>
+            <li>metatrain calibration：<code>test/lab-cosmo/metatrain/src/metatrain/llpr/calibration.py:10-81</code>、<code>84-123</code>、<code>273-318</code></li>
+            <li>metatrain trainer：<code>test/lab-cosmo/metatrain/src/metatrain/llpr/trainer.py:157-186</code>、<code>664-688</code></li>
+            <li>Cookbook LLPR：<code>test/lab-cosmo/atomistic-cookbooks/recipes/llpr-from-scratch.md:10-20</code></li>
+            <li>Cookbook PET-MAD-UQ：<code>test/lab-cosmo/atomistic-cookbooks/recipes/pet-mad-uq.md:10-28</code></li>
+            <li>Cookbook sample selection：<code>test/lab-cosmo/atomistic-cookbooks/recipes/sample-selection.md:10-25</code></li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>DP-EVA 实现与测试</h3>
+          <ul class="source-list">
+            <li>LLPR state / calibration：<code>src/dpeva/uncertain/llpr.py:36-117</code>、<code>120-166</code>、<code>233-304</code></li>
+            <li>DPOSE ensemble / resolver：<code>src/dpeva/uncertain/dpose.py:33-62</code>、<code>142-217</code></li>
+            <li>UQ manager：<code>src/dpeva/uncertain/manager.py:168-341</code></li>
+            <li>Collect workflow：<code>src/dpeva/workflows/collect.py:214-328</code>、<code>350-417</code></li>
+            <li>Config guard：<code>src/dpeva/config.py:470-548</code></li>
+            <li>Unit tests：<code>tests/unit/uncertain/test_llpr.py</code>、<code>tests/unit/uncertain/test_llpr_manager.py</code>、<code>tests/unit/workflows/test_collect_workflow_routing.py</code></li>
+            <li>Real DeepMD opt-in tests：<code>tests/integration/test_real_deepmd_llpr_dpose.py:31-214</code></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
