@@ -34,6 +34,7 @@ class FeatureWorkflow:
         self.model_path = str(self.config.model_path)
         self.head = self.config.model_head
         self.output_mode = self.config.output_mode
+        self.feature_kind = self.config.feature_kind
         self.batch_size = self.config.batch_size
         self.mode = self.config.mode
         
@@ -85,6 +86,11 @@ class FeatureWorkflow:
             raise WorkflowError(f"Data path not found: {self.data_path}")
 
         if self.mode == "cli":
+            if self.feature_kind != "descriptor":
+                raise WorkflowError(
+                    "feature_kind='fitting_last_layer' requires mode='python'; "
+                    "deepmd-kit does not provide a dp eval-lastlayer CLI."
+                )
             # CLI Mode: Use dp eval-desc
             # Detect multi-pool structure
             sub_pools = self.io_manager.detect_multi_pool_structure(self.data_path)
@@ -114,7 +120,8 @@ class FeatureWorkflow:
                         generator,
                         data_path=self.data_path,
                         output_dir=self.output_dir,
-                        output_mode=self.output_mode
+                        output_mode=self.output_mode,
+                        feature_kind=self.feature_kind,
                     )
                     self.logger.info(WORKFLOW_FINISHED_TAG)
                     
@@ -133,7 +140,8 @@ class FeatureWorkflow:
                     model_path=self.model_path,
                     head=self.head,
                     batch_size=self.batch_size,
-                    output_mode=self.output_mode
+                    output_mode=self.output_mode,
+                    feature_kind=self.feature_kind,
                 )
         else:
             self.logger.error(f"Unknown mode: {self.mode}")

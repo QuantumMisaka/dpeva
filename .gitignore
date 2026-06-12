@@ -15,3 +15,7 @@ coverage.xml
 htmlcov/
 test/
 .*cache/
+
+# Large DeePMD pretrained models are external integration-test fixtures.
+tests/integration/data/*.pt
+!tests/integration/data/README.md

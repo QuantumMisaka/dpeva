@@ -34,6 +34,7 @@ dependencies = [
     "seaborn>=0.11.0",
     "pydantic>=2.0.0",
     "ase>=3.28.0",
+    "deepmd-kit",
 ]
 requires-python = ">=3.10"
 
@@ -54,6 +55,9 @@ docs = [
 ]
 explore = [
     "atst-tools>=2.1.0",
+]
+dpose = [
+    "torch",
 ]
 
 [project.urls]
