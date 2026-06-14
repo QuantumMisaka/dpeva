@@ -198,7 +198,7 @@ if __name__ == "__main__":
             
             # Recursive scan for tasks (contain INPUT)
             # Use same logic as packer to identify tasks
-            for input_file in job_dir.rglob("INPUT"):
+            for input_file in list(job_dir.rglob("INPUT")):
                 # Skip if INPUT is in an output directory (e.g. OUT.ABACUS/INPUT)
                 if "OUT." in input_file.parent.name:
                     continue
