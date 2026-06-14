@@ -2,7 +2,7 @@
 title: Archived Plans
 status: archived
 audience: Historians
-last-updated: 2026-06-11
+last-updated: 2026-06-14
 owner: Docs Owner
 ---
 
@@ -10,9 +10,12 @@ owner: Docs Owner
 
 - Status: archived
 - Audience: Historians
-- Last-Updated: 2026-06-11
+- Last-Updated: 2026-06-14
 
 本文档目录归档了 v0.8.0 周期已闭环的计划。
 
 - `2026-04-05-AGENTS-Docs-Governance-Plan.md`
 - `2026-06-10-v0.8.0-atst-integration-plan.md`
+- `2026-06-11-DP-EVA-DPOSE-full.md`
+- `2026-06-11-dpeva-native-dpose-llpr-plan.md`
+- `2026-06-13-dpa4-mini-uq-correlation.md`

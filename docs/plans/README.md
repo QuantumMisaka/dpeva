@@ -2,7 +2,7 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-06-11
+last-updated: 2026-06-14
 owner: Docs Owner
 ---
 
@@ -10,7 +10,7 @@ owner: Docs Owner
 
 - Status: active
 - Audience: Developers
-- Last-Updated: 2026-06-11
+- Last-Updated: 2026-06-14
 
 本目录用于存放“项目级、可共享、可追溯”的开发计划文档，不承载 AI 执行期草案。
 
@@ -64,5 +64,5 @@ owner: Docs Owner
 ## 6. 活跃计划 (Active Plans)
 
 - [文档治理计划 (Governance Plan)](../governance/README.md)
-- v0.8.0 已闭环计划请查看 [v0.8.0 归档计划索引](../archive/v0.8.0/plans/README.md)。
+- v0.8.0 已闭环计划请查看 [v0.8.0 归档计划索引](../archive/v0.8.0/plans/README.md)，其中包括 ATST integration、native LLPR/DPOSE、DPA4 Mini UQ correlation 等计划。
 - 历史计划请查看 [v0.6.9 归档计划索引](../archive/v0.6.9/plans/README.md)、[v0.7.1 归档计划索引](../archive/v0.7.1/plans/README.md) 与 [v0.8.0 归档计划索引](../archive/v0.8.0/plans/README.md)。

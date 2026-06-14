@@ -1,8 +1,8 @@
 ---
 title: AGENTS and Docs Governance Plan
-status: active
+status: archived
 audience: developers
-last-updated: 2026-04-05
+last-updated: 2026-06-14
 owner: Docs Owner
 ---
 

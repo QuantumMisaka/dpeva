@@ -1,3 +1,11 @@
+---
+title: DPA4 Mini UQ-Error Correlation Experiment Plan
+status: archived
+audience: Developers
+last-updated: 2026-06-14
+owner: Maintainers
+---
+
   # DPA4 Mini UQ-Error Correlation Experiment Plan
 
   ## Summary

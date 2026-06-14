@@ -1,12 +1,16 @@
 ---
 title: DP-EVA Native DPOSE/LLPR Plan
-status: active
+status: archived
 audience: Developers
-last-updated: 2026-06-11
+last-updated: 2026-06-14
 owner: Maintainers
 ---
 
 # DP-EVA Native DPOSE/LLPR Plan
+
+- Status: archived
+- Audience: Developers
+- Last-Updated: 2026-06-14
 
 ## Context
 

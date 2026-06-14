@@ -1,3 +1,11 @@
+---
+title: DP-EVA DPOSE/Metatrain-Parity LLPR Implementation Plan
+status: archived
+audience: Developers
+last-updated: 2026-06-14
+owner: Maintainers
+---
+
   # DP-EVA DPOSE/Metatrain-Parity LLPR Implementation Plan
 
   ## Summary
