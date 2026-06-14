@@ -1,8 +1,6 @@
 import numpy as np
 import pytest
 
-torch = None
-
 from dpeva.uncertain.dpose import DeepMDTorchDPOSEAdapter, DPOSEEnsemble, resolve_last_layer_weights
 from dpeva.uncertain.llpr import LLPRState
 
@@ -31,7 +29,6 @@ class FakeEnergyOnlyDeepMDAdapter(DeepMDTorchDPOSEAdapter):
 
 
 def test_dpose_adapter_force_ensemble_matches_autograd_for_fake_model():
-    global torch
     torch = pytest.importorskip("torch")
     coords = torch.tensor(
         [
@@ -65,7 +62,6 @@ def test_dpose_adapter_force_ensemble_matches_autograd_for_fake_model():
 
 
 def test_dpose_adapter_rejects_force_for_non_differentiable_model():
-    global torch
     torch = pytest.importorskip("torch")
     state = LLPRState.from_training_features(
         np.array([[[1.0, 0.0], [0.0, 1.0]]]),
@@ -98,7 +94,6 @@ def test_resolve_last_layer_weights_loads_explicit_npy(tmp_path):
 
 
 def test_resolve_last_layer_weights_matches_checkpoint_by_feature_dimension(tmp_path):
-    global torch
     torch = pytest.importorskip("torch")
     path = tmp_path / "model.pt"
     torch.save(
@@ -121,7 +116,6 @@ def test_resolve_last_layer_weights_matches_checkpoint_by_feature_dimension(tmp_
 
 
 def test_resolve_last_layer_weights_falls_back_when_head_key_is_absent(tmp_path):
-    global torch
     torch = pytest.importorskip("torch")
     path = tmp_path / "model.pt"
     torch.save(
@@ -146,7 +140,6 @@ def test_resolve_last_layer_weights_falls_back_when_head_key_is_absent(tmp_path)
 
 
 def test_resolve_last_layer_weights_reports_candidates_when_missing(tmp_path):
-    global torch
     torch = pytest.importorskip("torch")
     path = tmp_path / "model.pt"
     torch.save({"state_dict": {"fitting.energy.weight": torch.ones((1, 4))}}, path)
