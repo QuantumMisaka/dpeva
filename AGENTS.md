@@ -1,5 +1,5 @@
 ---
-alwaysApply: false
+alwaysApply: true
 description: DP-EVA 项目开发最小入口
 ---
 # DP-EVA
