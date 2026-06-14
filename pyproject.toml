@@ -45,6 +45,7 @@ dev = [
     "black>=22.0",
     "ruff>=0.1.0",
     "mypy>=1.0",
+    "tomli>=1.1.0; python_version < '3.11'",
 ]
 docs = [
     "sphinx>=5.0",

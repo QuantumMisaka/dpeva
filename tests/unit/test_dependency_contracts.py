@@ -1,5 +1,9 @@
 from pathlib import Path
-import tomllib
+
+try:
+    import tomllib
+except ModuleNotFoundError:  # Python 3.10 CI fallback.
+    import tomli as tomllib
 
 
 def test_core_ase_dependency_matches_atst_tools_baseline() -> None:
