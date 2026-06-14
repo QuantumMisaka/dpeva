@@ -1,0 +1,31 @@
+{
+  "data_path": "../../sampled_dpdata",
+  "model_path": "../work/dpa4_mini_ensemble/0/model.ckpt.pt",
+  "savedir": "../outputs/features/train_last_layer",
+  "model_head": "RANDOM",
+  "feature_kind": "fitting_last_layer",
+  "output_mode": "structural",
+  "batch_size": 1000,
+  "mode": "python",
+  "dp_backend": "pt",
+  "omp_threads": 2,
+  "submission": {
+    "backend": "slurm",
+    "env_setup": [
+      "set -euo pipefail",
+      "nvidia-smi dmon -s pucvmte -o T > nvdmon_job-${SLURM_JOB_ID}.log &",
+      "source /opt/devtools/anaconda3/etc/profile.d/conda.sh",
+      "conda activate dpeva-dpa4-test",
+      "export DP_INTERFACE_PREC=high",
+      "export OMP_NUM_THREADS=2"
+    ],
+    "slurm_config": {
+      "partition": "4V100PX",
+      "nodes": 1,
+      "ntasks": 1,
+      "gpus_per_node": 1,
+      "qos": "rush-1o2gpu",
+      "walltime": "24:00:00"
+    }
+  }
+}
