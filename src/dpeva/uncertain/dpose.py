@@ -158,7 +158,8 @@ def resolve_last_layer_weights(
     checkpoint = torch.load(model_path, map_location="cpu")
     state_dict = _extract_state_dict(checkpoint)
     candidates: list[tuple[str, tuple[int, ...], np.ndarray]] = []
-    matches: list[tuple[str, np.ndarray]] = []
+    head_matches: list[tuple[str, np.ndarray]] = []
+    fallback_matches: list[tuple[str, np.ndarray]] = []
     for key, value in state_dict.items():
         if hasattr(value, "detach"):
             arr = value.detach().cpu().numpy()
@@ -167,13 +168,15 @@ def resolve_last_layer_weights(
         if arr.ndim != 2:
             continue
         candidates.append((key, tuple(arr.shape), arr))
-        if model_head and model_head not in key:
-            continue
         try:
-            matches.append((key, _coerce_weight_vector(arr, feature_dimension, key)))
+            match = (key, _coerce_weight_vector(arr, feature_dimension, key))
         except ValueError:
             continue
+        fallback_matches.append(match)
+        if model_head and model_head in key:
+            head_matches.append(match)
 
+    matches = head_matches if head_matches else fallback_matches
     if len(matches) == 1:
         return matches[0][1]
     if len(matches) > 1:

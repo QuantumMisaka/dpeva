@@ -23,42 +23,62 @@ class TrainingConfigManager:
 
     def resolve_data_path(self, config: Dict[str, Any], task_idx: int, override_path: Optional[str] = None):
         """Resolves absolute paths for training data."""
-        if "training" in config and "training_data" in config["training"]:
-             data_config = config["training"]["training_data"]
-             
-             # 0. Override systems path if provided
-             if override_path:
-                 data_config["systems"] = override_path
-                 self.logger.info(f"Task {task_idx}: Overridden data path with '{override_path}'")
-             
-             if "systems" in data_config:
-                 original_path = data_config["systems"]
-                 
-                 # 1. Resolve relative path to absolute
-                 if isinstance(original_path, str) and not os.path.isabs(original_path):
-                     # Resolve relative to the base_config_path directory
-                     base_dir = os.path.dirname(self.base_config_path)
-                     abs_path = os.path.abspath(os.path.join(base_dir, original_path))
-                     data_config["systems"] = abs_path
-                     self.logger.info(f"Task {task_idx}: Resolved data path '{original_path}' -> '{abs_path}'")
-                 
-                 # 2. Expand directory if it's a container folder
-                 current_systems_path = data_config["systems"]
-                 if isinstance(current_systems_path, str) and os.path.isdir(current_systems_path):
-                     # Check if this directory is ITSELF a system (has type.raw)
-                     if not os.path.exists(os.path.join(current_systems_path, "type.raw")):
-                         # It's likely a container directory. Scan for subdirectories.
-                         sub_dirs = [
-                             os.path.join(current_systems_path, d) 
-                             for d in os.listdir(current_systems_path) 
-                             if os.path.isdir(os.path.join(current_systems_path, d))
-                         ]
-                         if sub_dirs:
-                             sub_dirs.sort()
-                             data_config["systems"] = sub_dirs
-                             self.logger.info(f"Task {task_idx}: Auto-expanded data path '{current_systems_path}' into {len(sub_dirs)} sub-systems")
-                         else:
-                             self.logger.warning(f"Task {task_idx}: Path '{current_systems_path}' is a directory but contains no subdirectories and no type.raw.")
+        if "training" not in config:
+            return
+
+        def resolve_section(section_name: str, section_override_path: Optional[str] = None):
+            if section_name not in config["training"]:
+                return
+            data_config = config["training"][section_name]
+
+            # 0. Override systems path if provided
+            if section_override_path:
+                data_config["systems"] = section_override_path
+                self.logger.info(
+                    f"Task {task_idx}: Overridden {section_name} path with '{section_override_path}'"
+                )
+
+            if "systems" not in data_config:
+                return
+
+            original_path = data_config["systems"]
+
+            # 1. Resolve relative path to absolute
+            if isinstance(original_path, str) and not os.path.isabs(original_path):
+                # Resolve relative to the base_config_path directory
+                base_dir = os.path.dirname(self.base_config_path)
+                abs_path = os.path.abspath(os.path.join(base_dir, original_path))
+                data_config["systems"] = abs_path
+                self.logger.info(
+                    f"Task {task_idx}: Resolved {section_name} path '{original_path}' -> '{abs_path}'"
+                )
+
+            # 2. Expand directory if it's a container folder
+            current_systems_path = data_config["systems"]
+            if isinstance(current_systems_path, str) and os.path.isdir(current_systems_path):
+                # Check if this directory is ITSELF a system (has type.raw)
+                if not os.path.exists(os.path.join(current_systems_path, "type.raw")):
+                    # It's likely a container directory. Scan for subdirectories.
+                    sub_dirs = [
+                        os.path.join(current_systems_path, d)
+                        for d in os.listdir(current_systems_path)
+                        if os.path.isdir(os.path.join(current_systems_path, d))
+                    ]
+                    if sub_dirs:
+                        sub_dirs.sort()
+                        data_config["systems"] = sub_dirs
+                        self.logger.info(
+                            f"Task {task_idx}: Auto-expanded {section_name} path "
+                            f"'{current_systems_path}' into {len(sub_dirs)} sub-systems"
+                        )
+                    else:
+                        self.logger.warning(
+                            f"Task {task_idx}: Path '{current_systems_path}' is a directory "
+                            "but contains no subdirectories and no type.raw."
+                        )
+
+        resolve_section("training_data", override_path)
+        resolve_section("validation_data")
 
     def generate_seeds(self, num_models: int, user_seeds: Optional[List[int]] = None) -> List[int]:
         """Generate seeds for training."""

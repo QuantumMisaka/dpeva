@@ -120,6 +120,31 @@ def test_resolve_last_layer_weights_matches_checkpoint_by_feature_dimension(tmp_
     np.testing.assert_allclose(weights, np.array([0.5, 1.5, 2.5]))
 
 
+def test_resolve_last_layer_weights_falls_back_when_head_key_is_absent(tmp_path):
+    global torch
+    torch = pytest.importorskip("torch")
+    path = tmp_path / "model.pt"
+    torch.save(
+        {
+            "state_dict": {
+                "model.Default.atomic_model.descriptor.blocks.0.weight": torch.ones((3, 3)),
+                "model.Default.atomic_model.fitting_net.output_layer.matrix": torch.tensor(
+                    [[0.5], [1.5], [2.5]]
+                ),
+            }
+        },
+        path,
+    )
+
+    weights = resolve_last_layer_weights(
+        feature_dimension=3,
+        model_path=path,
+        model_head="RANDOM",
+    )
+
+    np.testing.assert_allclose(weights, np.array([0.5, 1.5, 2.5]))
+
+
 def test_resolve_last_layer_weights_reports_candidates_when_missing(tmp_path):
     global torch
     torch = pytest.importorskip("torch")
