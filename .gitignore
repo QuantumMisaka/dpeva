@@ -12,6 +12,7 @@ examples/uncertain/models/
 .pytest_cache/
 .coverage
 coverage.xml
+coverage-unit.json
 htmlcov/
 test/
 .*cache/

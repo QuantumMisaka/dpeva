@@ -2,7 +2,7 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-06-10
+last-updated: 2026-06-16
 owner: Docs Owner
 ---
 
@@ -17,7 +17,7 @@ owner: Docs Owner
   - 上游软件与职责：`docs/reference/upstream-software.md`
 
 * **版本**: 0.8.0
-* **生成日期**: 2026-06-10
+* **生成日期**: 2026-06-16
 * **作者**: Quantum Misaka with Trae SOLO
 
 ---
@@ -523,7 +523,8 @@ Auto-UQ 用于根据数据分布自动确定筛选边界；具体的字段与约
     pytest tests/unit
     
     # 带覆盖率报告的运行 (推荐)
-    pytest tests/unit --cov=dpeva --cov-report=term-missing
+    mkdir -p build/coverage
+    pytest tests/unit --cov=src/dpeva --cov-branch --cov-report=term --cov-report=json:build/coverage/coverage-unit.json --cov-fail-under=80
     ```
     *   **规范**:
         *   **Mock 外部依赖**: 所有对 `dp`, `dpdata`, `slurm` 的调用必须被 Mock，严禁在单元测试中产生实际的文件 I/O 或进程提交。
@@ -613,7 +614,7 @@ DPEVA_TAG: WORKFLOW_FINISHED
 *   **v0.7.2** (2026-04-05):
     *   **[测试]** 围绕核心功能模块开展单元测试集中攻坚，补强 `labeling/postprocess`、`analysis/managers`、`inference/managers`、`workflows/feature` 与 `workflows/labeling` 的关键正向、异常与边界分支覆盖。
     *   **[质量]** 修复 `test_analysis_workflow.py` 中因缩进导致的隐藏未收集测试，清理空测试并将共享随机 fixture 固定为确定性生成，降低测试波动性。
-    *   **[CI/CD]** 为单元测试接入覆盖率门禁与 `coverage-unit.json` 产物上传，当前单测回归为 `373 passed`，总覆盖率提升至 `83.92%`。
+    *   **[CI/CD]** 为单元测试接入覆盖率门禁与 `build/coverage/coverage-unit.json` 产物上传，当前单测回归为 `373 passed`，总覆盖率提升至 `83.92%`。
     *   **[文档]** 新增单元测试专项审查报告与集中攻坚计划，沉淀覆盖率短板、整改路径与回归验证基线。
     *   **[发布]** 版本升级至 `0.7.2`，同步 `__init__`、`README`、Sphinx `conf.py` 与开发文档中的版本标识。
 
