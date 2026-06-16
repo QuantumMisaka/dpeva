@@ -1,0 +1,41 @@
+cff-version: 1.2.0
+message: "If you use DP-EVA, please cite the following article."
+title: "DP-EVA"
+type: software
+authors:
+  - family-names: Liu
+    given-names: Zhaoqing
+  - family-names: Deng
+    given-names: Zhe
+  - family-names: Zhao
+    given-names: Huabo
+  - family-names: Wang
+    given-names: Han
+  - family-names: Chen
+    given-names: Mohan
+  - family-names: Jiang
+    given-names: Hong
+repository-code: "https://github.com/QuantumMisaka/dpeva"
+url: "https://doi.org/10.1093/ce/zkag029"
+license: LGPL-3.0-only
+preferred-citation:
+  type: article
+  authors:
+    - family-names: Liu
+      given-names: Zhaoqing
+    - family-names: Deng
+      given-names: Zhe
+    - family-names: Zhao
+      given-names: Huabo
+    - family-names: Wang
+      given-names: Han
+    - family-names: Chen
+      given-names: Mohan
+    - family-names: Jiang
+      given-names: Hong
+  title: "DP-EVA: Data-Efficient Fine-Tuning Framework via Maximizing Pre-Trained Knowledge of Large Atomistic Models for Developing Domain-Specific Machine Learning Interatomic Potentials"
+  journal: "Clean Energy"
+  year: 2026
+  pages: "zkag029"
+  doi: "10.1093/ce/zkag029"
+  url: "https://doi.org/10.1093/ce/zkag029"

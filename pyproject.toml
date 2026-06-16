@@ -63,6 +63,7 @@ dpose = [
 
 [project.urls]
 Homepage = "https://github.com/QuantumMisaka/dpeva"
+Paper = "https://doi.org/10.1093/ce/zkag029"
 
 [project.scripts]
 dpeva = "dpeva.cli:main"

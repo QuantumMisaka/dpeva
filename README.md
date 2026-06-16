@@ -85,6 +85,24 @@ For detailed configuration examples, see `examples/recipes/`.
 *   **Governance**: [Policy](docs/policy/README.md) | [Plans](docs/plans/README.md)
 *   **Review**: [Repository Audit 2026-04-01](docs/archive/v0.8.0/reports/2026-04-01-Code-Review-Repository-Audit.md) | [Reports Index](docs/reports/README.md) | [Archive Index](docs/archive/README.md)
 
+## Citation
+
+If you use DP-EVA, please cite the project article:
+
+Zhaoqing Liu, Zhe Deng, Huabo Zhao, Han Wang, Mohan Chen, Hong Jiang, DP-EVA: Data-Efficient Fine-Tuning Framework via Maximizing Pre-Trained Knowledge of Large Atomistic Models for Developing Domain-Specific Machine Learning Interatomic Potentials, *Clean Energy*, 2026, zkag029, https://doi.org/10.1093/ce/zkag029.
+
+```bibtex
+@article{liu2026dpeva,
+  author = {Liu, Zhaoqing and Deng, Zhe and Zhao, Huabo and Wang, Han and Chen, Mohan and Jiang, Hong},
+  title = {DP-EVA: Data-Efficient Fine-Tuning Framework via Maximizing Pre-Trained Knowledge of Large Atomistic Models for Developing Domain-Specific Machine Learning Interatomic Potentials},
+  journal = {Clean Energy},
+  year = {2026},
+  pages = {zkag029},
+  doi = {10.1093/ce/zkag029},
+  url = {https://doi.org/10.1093/ce/zkag029},
+}
+```
+
 ## License
 
 LGPL-v3 License
