@@ -2,7 +2,7 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-04-05
+last-updated: 2026-06-14
 owner: Docs Owner
 ---
 
@@ -10,7 +10,7 @@ owner: Docs Owner
 
 - Status: active
 - Audience: Maintainers / Developers
-- Last-Updated: 2026-04-05
+- Last-Updated: 2026-06-14
 
 本矩阵用于把“对外功能点”（CLI/配置/工作流输出约定）映射到文档章节，作为发布前的强制核对清单。
 
@@ -24,6 +24,14 @@ owner: Docs Owner
 | `dpeva feature` | `/src/dpeva/cli.py` | `/docs/guides/cli.md`、`/docs/guides/quickstart.md` |
 | `dpeva collect` | `/src/dpeva/cli.py` | `/docs/guides/cli.md`、`/docs/guides/quickstart.md` |
 | `dpeva analysis` | `/src/dpeva/cli.py` | `/docs/guides/cli.md`、`/docs/guides/quickstart.md` |
+
+## 1.1 v0.8.0 归档功能与实验交付
+
+| 功能点 | 代码/实验入口 | 文档入口 |
+|---|---|---|
+| ATST integration 与可选 `atst-tools` exploration backend | `/src/dpeva/exploration`、`/examples/recipes/` | `/docs/archive/v0.8.0/plans/2026-06-10-v0.8.0-atst-integration-plan.md`、`/docs/archive/v0.8.0/reports/2026-06-11-v0.8.0-atst-integration-progress-audit.md` |
+| DeepMD fitting last-layer LLPR/DPOSE energy UQ | `/src/dpeva/uncertain/llpr.py`、`/src/dpeva/uncertain/dpose.py`、`/src/dpeva/uncertain/manager.py` | `/docs/archive/v0.8.0/plans/2026-06-11-dpeva-native-dpose-llpr-plan.md`、`/docs/archive/v0.8.0/plans/2026-06-11-DP-EVA-DPOSE-full.md`、`/docs/archive/v0.8.0/reports/2026-06-12-dpose-llpr-dashboard.html` |
+| DPA4 Mini UQ-error correlation practice | `/practices/uq_correlation/` | `/docs/archive/v0.8.0/plans/2026-06-13-dpa4-mini-uq-correlation.md`、`/docs/archive/v0.8.0/reports/2026-06-12-dpose-llpr-dashboard.html` |
 
 ## 2. 配置模型（Pydantic）
 

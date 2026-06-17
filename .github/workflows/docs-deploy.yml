@@ -34,7 +34,6 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e .[docs]
-          pip install git+https://gitlab.com/1041176461/ase-abacus.git
 
       - name: Build Sphinx docs
         run: |

@@ -1,12 +1,26 @@
 #!/usr/bin/env python3
 import argparse
+import re
 import subprocess
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 
+import yaml
+
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-DEFAULT_EXCLUDE_DIRS = ["archive", "_templates"]
+DEFAULT_EXCLUDE_DIRS = ["archive", "_templates", "assets", "build", "img", "source"]
+
+
+def parse_front_matter(content):
+    pattern = r"^---\s*\n(.*?)\n---\s*\n"
+    match = re.search(pattern, content, re.DOTALL)
+    if not match:
+        return None
+    try:
+        return yaml.safe_load(match.group(1)) or {}
+    except yaml.YAMLError:
+        return None
 
 def get_git_last_commit_date(file_path):
     try:
@@ -20,6 +34,24 @@ def get_git_last_commit_date(file_path):
     except subprocess.CalledProcessError:
         return None
     except ValueError:
+        return None
+
+
+def get_front_matter_last_updated(file_path, tzinfo):
+    try:
+        meta = parse_front_matter(file_path.read_text(encoding="utf-8"))
+        if not meta:
+            return None
+        value = meta.get("last-updated")
+        if not value:
+            return None
+        if hasattr(value, "isoformat"):
+            value = value.isoformat()
+        parsed = datetime.fromisoformat(str(value))
+        if parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=tzinfo)
+        return parsed
+    except (OSError, ValueError, TypeError):
         return None
 
 
@@ -39,7 +71,9 @@ def check_freshness(root_dir, days_threshold=30, exclude_dirs=None):
         if any(part in exclude_dirs for part in rel_path.parts):
             continue
 
-        last_modified = get_git_last_commit_date(file_path)
+        last_modified = get_front_matter_last_updated(file_path, now.tzinfo)
+        if last_modified is None:
+            last_modified = get_git_last_commit_date(file_path)
         if last_modified:
             age = now - last_modified
             if age > threshold:

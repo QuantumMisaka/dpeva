@@ -2,14 +2,15 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-03-09
+last-updated: 2026-06-10
+owner: Docs Owner
 ---
 
 # 文档治理审查 (Documentation Governance Reviews)
 
 - Status: active
 - Audience: Maintainers
-- Last-Updated: 2026-03-09
+- Last-Updated: 2026-06-10
 
 本文档目录用于存放文档系统的定期审查报告，包括结构完整性、治理合规性与内容有效性的评估结果。
 

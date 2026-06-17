@@ -143,7 +143,7 @@ class FeatureExecutionManager:
         self.job_manager.submit(script_path, working_dir=abs_output_dir)
 
     def submit_python_slurm_job(self, data_path: str, output_dir: str, model_path: str, head: str, 
-                               batch_size: int, output_mode: str):
+                               batch_size: int, output_mode: str, feature_kind: str = "descriptor"):
         """
         Submit a Python script job to Slurm.
         """
@@ -185,7 +185,8 @@ def main():
         generator, 
         "{abs_data_path}", 
         "{abs_output_dir}", 
-        output_mode="{output_mode}"
+        output_mode="{output_mode}",
+        feature_kind="{feature_kind}"
     )
     
     print("{WORKFLOW_FINISHED_TAG}")
@@ -216,7 +217,14 @@ if __name__ == "__main__":
             working_dir=abs_output_dir
         )
 
-    def run_local_python_recursion(self, generator, data_path: str, output_dir: str, output_mode: str = "atomic"):
+    def run_local_python_recursion(
+        self,
+        generator,
+        data_path: str,
+        output_dir: str,
+        output_mode: str = "atomic",
+        feature_kind: str = "descriptor",
+    ):
         """
         Execute Python descriptor generation recursively in the local process.
         """
@@ -233,9 +241,11 @@ if __name__ == "__main__":
             if io_manager.is_leaf_system(current_path):
                 sys_name = os.path.basename(current_path)
                 try:
-                    desc = generator.compute_descriptors(
+                    desc = self._compute_feature(
+                        generator,
                         data_path=current_path,
-                        output_mode=output_mode
+                        output_mode=output_mode,
+                        feature_kind=feature_kind,
                     )
                     # Logic: If current_path matches data_path (root is system), save as basename.npy
                     # If current_path is subdir, save as subdir.npy in parent output
@@ -263,7 +273,7 @@ if __name__ == "__main__":
         # Initial call
         if io_manager.is_leaf_system(abs_data_path):
             # Single system
-            desc = generator.compute_descriptors(abs_data_path, output_mode)
+            desc = self._compute_feature(generator, abs_data_path, output_mode, feature_kind)
             out_file = os.path.join(abs_output_dir, os.path.basename(abs_data_path) + ".npy")
             np.save(out_file, desc)
             self.logger.info(f"Saved descriptors to {out_file}")
@@ -272,3 +282,10 @@ if __name__ == "__main__":
             subdirs = [d for d in os.listdir(abs_data_path) if os.path.isdir(os.path.join(abs_data_path, d))]
             for d in subdirs:
                 process_recursive(os.path.join(abs_data_path, d), os.path.join(abs_output_dir, d))
+
+    def _compute_feature(self, generator, data_path: str, output_mode: str, feature_kind: str):
+        if feature_kind == "descriptor":
+            return generator.compute_descriptors(data_path, output_mode)
+        if feature_kind == "fitting_last_layer":
+            return generator.compute_fitting_last_layer(data_path, output_mode)
+        raise ValueError(f"Unsupported feature kind: {feature_kind}")

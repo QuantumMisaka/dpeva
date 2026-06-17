@@ -1,6 +1,8 @@
 name: Documentation Governance
 
 on:
+  schedule:
+    - cron: "0 2 * * 1"
   push:
     branches: ["main", "develop"]
     paths:
@@ -49,7 +51,7 @@ jobs:
 
       - name: Run governance check
         run: |
-          python3 scripts/doc_check.py --strict-owner --strict-owner-dir plans --strict-owner-dir reports
+          python3 scripts/doc_check.py
 
       - name: Run freshness check
         run: |

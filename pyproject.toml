@@ -33,7 +33,8 @@ dependencies = [
     "matplotlib>=3.5.0",
     "seaborn>=0.11.0",
     "pydantic>=2.0.0",
-    "ase>=3.22.1",
+    "ase>=3.28.0",
+    "deepmd-kit",
 ]
 requires-python = ">=3.10"
 
@@ -44,6 +45,7 @@ dev = [
     "black>=22.0",
     "ruff>=0.1.0",
     "mypy>=1.0",
+    "tomli>=1.1.0; python_version < '3.11'",
 ]
 docs = [
     "sphinx>=5.0",
@@ -52,9 +54,16 @@ docs = [
     "autodoc-pydantic",
     "sphinxcontrib-mermaid",
 ]
+explore = [
+    "atst-tools>=2.1.0",
+]
+dpose = [
+    "torch",
+]
 
 [project.urls]
 Homepage = "https://github.com/QuantumMisaka/dpeva"
+Paper = "https://doi.org/10.1093/ce/zkag029"
 
 [project.scripts]
 dpeva = "dpeva.cli:main"

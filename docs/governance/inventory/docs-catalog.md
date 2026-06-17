@@ -2,14 +2,15 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-03-11
+last-updated: 2026-06-10
+owner: Docs Owner
 ---
 
 # DP-EVA 文档目录清单（结构化摘要与标签）
 
 - Status: active
 - Audience: Maintainers
-- Last-Updated: 2026-03-11
+- Last-Updated: 2026-06-10
 
 本清单用于逐份记录 `docs/` 下文档的主题、功能、受众与关键信息点，并作为后续分类归档与补全的依据。
 

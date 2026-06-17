@@ -12,15 +12,12 @@ from pathlib import Path
 
 import numpy as np
 from ase import Atoms
-try:
-    from ase.io.abacus import write_input, write_abacus
-except ImportError:
-    raise ImportError(
-        "Could not import ase.io.abacus. This module requires the 'ase-abacus' plugin.\n"
-        "Please install it via:\n"
-        "  pip install git+https://gitlab.com/1041176461/ase-abacus.git"
-    )
 
+from dpeva.labeling.abacus_io import (
+    write_input_file,
+    write_kpt_file,
+    write_stru_file,
+)
 from dpeva.labeling.structure import StructureAnalyzer
 
 # Configure logging
@@ -99,12 +96,6 @@ class AbacusGenerator:
                     kpoints[dim] = int(self.kpt_criteria / length) + 1
         return kpoints
 
-    def _write_kpt_file(self, filename: str, kpoints: List[int]):
-        """Write KPT file."""
-        with open(filename, 'w') as f:
-            f.write("K_POINTS\n0\nGamma\n")
-            f.write(f"{kpoints[0]} {kpoints[1]} {kpoints[2]} 0 0 0\n")
-
     def generate(self, atoms: Atoms, output_dir: Union[str, Path], task_name: str, 
                  stru_type: str = None, vacuum_status: List[bool] = None, dataset_name: str = "unknown", system_name: str = "unknown"):
         """
@@ -175,24 +166,17 @@ class AbacusGenerator:
         self._set_magmom(atoms)
         
         # Write Files
-        input_params['pp'] = self.pp_map
-        input_params['basis'] = self.orb_map
         input_params['pseudo_dir'] = self.pp_dir
         input_params['basis_dir'] = self.orb_dir 
-        
-        with open(output_dir / "INPUT", "w") as f:
-            write_input(f, parameters=input_params)
-            if 'orbital_dir' not in input_params and self.orb_dir:
-                 f.write(f"orbital_dir {self.orb_dir}\n")
+        if 'orbital_dir' not in input_params and self.orb_dir:
+            input_params['orbital_dir'] = self.orb_dir
 
-        with open(output_dir / "STRU", "w") as f:
-            write_abacus(f, atoms, pp=self.pp_map, basis=self.orb_map)
-            
-        self._write_kpt_file(output_dir / "KPT", kpoints)
+        write_input_file(output_dir / "INPUT", input_params)
+        write_stru_file(output_dir / "STRU", atoms, self.pp_map, self.orb_map)
+        write_kpt_file(output_dir / "KPT", kpoints)
         
         # Dump viz files
         atoms.write(output_dir / f"{task_name}.cif")
         atoms.write(output_dir / f"{task_name}.extxyz")
         
         return stru_type
-

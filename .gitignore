@@ -12,6 +12,25 @@ examples/uncertain/models/
 .pytest_cache/
 .coverage
 coverage.xml
+coverage-unit.json
 htmlcov/
 test/
 .*cache/
+logs/
+
+# Local experiment data and heavy runtime artifacts.
+practices/sampled_dpdata/
+practices/other_dpdata/
+practices/uq_correlation/work/
+practices/uq_correlation/outputs/features/
+practices/uq_correlation/outputs/figures/
+practices/uq_correlation/outputs/*.npy
+practices/uq_correlation/outputs/candidate_energy.csv
+practices/uq_correlation/outputs/llpr_energy_uq.csv
+practices/uq_correlation/outputs/qbc_force_frame_table.csv
+practices/uq_correlation/outputs/tangent_lo_frame_table.csv
+practices/uq_correlation/outputs/uq_error_frame_table.csv
+
+# Large DeePMD pretrained models are external integration-test fixtures.
+tests/integration/data/*.pt
+!tests/integration/data/README.md

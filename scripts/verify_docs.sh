@@ -5,10 +5,18 @@ echo "=========================================="
 echo "DP-EVA Documentation Verification Script"
 echo "=========================================="
 
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
 if ! command -v sphinx-build &> /dev/null; then
     echo "Sphinx not found. Install documentation dependencies first: pip install -e .[docs]"
     exit 1
 fi
+
+cd "$PROJECT_ROOT"
+
+echo "Running documentation governance checks..."
+python3 scripts/doc_check.py
+python3 scripts/check_docs_freshness.py --days 90
 
 echo "Building HTML documentation..."
 cd docs

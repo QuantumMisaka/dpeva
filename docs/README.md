@@ -2,7 +2,7 @@
 title: DP-EVA 文档导航 (Docs Index)
 status: active
 audience: Users / Developers
-last-updated: 2026-03-12
+last-updated: 2026-06-16
 owner: Quantum Misaka
 ---
 
@@ -32,6 +32,7 @@ owner: Quantum Misaka
 
 ### 1.3 研究者（关注算法假设/设计权衡/实验结论）
 
+- DP-EVA 论文与引用方式：[DOI](https://doi.org/10.1093/ce/zkag029) | [README Citation](../README.md#citation)
 - 系统设计与模式分析：[design-report.md](architecture/design-report.md)
 - DeepMD 依赖决策记录：[2026-02-04-deepmd-dependency.md](architecture/decisions/2026-02-04-deepmd-dependency.md)
 - 描述符模长假设与实验报告：[modulo-hypothesis.md](archive/v0.5.2/reports/modulo-hypothesis.md)

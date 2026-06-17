@@ -76,6 +76,22 @@ class TestTrainingConfigManager:
         
         assert config["training"]["training_data"]["systems"] == override
 
+    def test_resolve_data_path_validation_data_absolute(self, config_manager, tmp_path):
+        """Validation data paths should be resolved relative to the input config file."""
+        validation_dir = tmp_path / "data" / "validation"
+        validation_dir.mkdir(parents=True)
+        config = config_manager.base_config.copy()
+        config["training"]["validation_data"] = {
+            "systems": "data/validation",
+            "batch_size": 1,
+        }
+
+        config_manager.resolve_data_path(config, 0)
+
+        resolved_path = config["training"]["validation_data"]["systems"]
+        assert os.path.isabs(resolved_path)
+        assert resolved_path == str(validation_dir)
+
     def test_prepare_task_configs(self, config_manager):
         """Test task config generation."""
         num_models = 2

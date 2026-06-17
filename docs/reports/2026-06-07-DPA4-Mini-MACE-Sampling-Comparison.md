@@ -1,9 +1,22 @@
+---
+title: DPA4 Mini / MACE Sampling Comparison
+status: active
+audience: Developers / Researchers
+last-updated: 2026-06-07
+owner: DPEVA Maintainers
+series: Sampling Comparison
+related:
+  - 2026-06-08-DPA4-Neo-Air-Plus-Sampling-Comparison.md
+---
+
 # DPA4 Mini / MACE small / MACE medium 采样对比报告
 
 - Date: 2026-06-07
 - Status: active
-- Owners: DPEVA Maintainers
-- Related: [MACE_DPA4_MINI_SAMPLING_COMPARISON.html](assets/2026-06-07-dpa4-mini-mace/MACE_DPA4_MINI_SAMPLING_COMPARISON.html)
+- Owner: DPEVA Maintainers
+- Series: Sampling Comparison
+- Related Reports: [2026-06-08-DPA4-Neo-Air-Plus-Sampling-Comparison.md](2026-06-08-DPA4-Neo-Air-Plus-Sampling-Comparison.md)
+- Result Artifact: [MACE_DPA4_MINI_SAMPLING_COMPARISON.html](assets/2026-06-07-dpa4-mini-mace/MACE_DPA4_MINI_SAMPLING_COMPARISON.html)
 
 ## 1. 结论摘要
 

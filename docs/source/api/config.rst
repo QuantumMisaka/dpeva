@@ -7,6 +7,7 @@ Configuration Reference
 
    config/submission
    config/feature
+   config/exploration
    config/training
    config/inference
    config/collection

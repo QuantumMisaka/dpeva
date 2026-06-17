@@ -1,5 +1,12 @@
 import numpy as np
+import pandas as pd
 from unittest.mock import patch
+
+from dpeva.constants import (
+    COL_UQ_DPOSE_ENERGY_ENSEMBLE_PATH,
+    COL_UQ_DPOSE_ENERGY_ENSEMBLE_STD_PER_ATOM,
+    COL_UQ_LLPR_ENERGY_PER_ATOM,
+)
 from dpeva.workflows.collect import CollectionWorkflow
 
 def test_collect_single_pool_routing(tmp_path):
@@ -113,3 +120,110 @@ def test_no_filter_uq_phase_with_single_pool_names(tmp_path):
 
     assert len(df_candidate) == 3
     assert set(unique_system_names) == {"sys1", "sys2"}
+
+
+def test_llpr_uq_phase_routes_last_layer_features(tmp_path):
+    (tmp_path / "project").mkdir()
+    (tmp_path / "desc_pool").mkdir()
+    (tmp_path / "test_data").mkdir()
+    train_feature_dir = tmp_path / "train_ll"
+    candidate_feature_dir = tmp_path / "candidate_ll"
+    train_feature_dir.mkdir()
+    candidate_feature_dir.mkdir()
+
+    np.save(train_feature_dir / "train.npy", np.array([[[1.0, 0.0], [0.0, 1.0]]]))
+    np.save(
+        candidate_feature_dir / "sys.npy",
+        np.array(
+            [
+                [[1.0, 0.0], [0.0, 1.0]],
+                [[3.0, 0.0], [0.0, 3.0]],
+            ]
+        ),
+    )
+
+    config = {
+        "project": str(tmp_path / "project"),
+        "desc_dir": str(tmp_path / "desc_pool"),
+        "testdata_dir": str(tmp_path / "test_data"),
+        "root_savedir": str(tmp_path / "savedir"),
+        "uq_backend": "llpr",
+        "uq_trust_mode": "manual",
+        "uq_llpr_energy_trust_lo": 0.0,
+        "uq_llpr_energy_trust_hi": 10.0,
+        "llpr_train_feature_dir": str(train_feature_dir),
+        "llpr_candidate_feature_dir": str(candidate_feature_dir),
+        "sampler_type": "direct",
+        "backend": "local",
+    }
+
+    workflow = CollectionWorkflow(config)
+
+    datanames = ["sys-0", "sys-1"]
+    desc = np.random.rand(2, 6)
+    with patch.object(workflow.io_manager, "load_descriptors", return_value=(datanames, desc)):
+        df_desc, df_candidate, unique_system_names = workflow._run_uq_phase(vis=None)
+
+    assert len(df_desc) == 2
+    assert len(df_candidate) == 2
+    assert set(unique_system_names) == {"sys"}
+    assert COL_UQ_LLPR_ENERGY_PER_ATOM in df_candidate.columns
+    assert set(df_candidate["uq_identity"]) == {"candidate"}
+
+
+def test_llpr_uq_phase_writes_energy_ensemble_outputs_and_scores_by_std(tmp_path):
+    (tmp_path / "project").mkdir()
+    (tmp_path / "desc_pool").mkdir()
+    (tmp_path / "test_data").mkdir()
+    train_feature_dir = tmp_path / "train_ll"
+    candidate_feature_dir = tmp_path / "candidate_ll"
+    train_feature_dir.mkdir()
+    candidate_feature_dir.mkdir()
+    weights_path = tmp_path / "weights.npy"
+    energy_path = tmp_path / "base_energy.npy"
+
+    np.save(train_feature_dir / "train.npy", np.array([[1.0, 0.0], [0.0, 1.0]]))
+    np.save(candidate_feature_dir / "sys.npy", np.array([[1.0, 0.0], [3.0, 0.0]]))
+    np.save(weights_path, np.array([1.0, 0.0]))
+    np.save(energy_path, np.array([10.0, 20.0]))
+
+    config = {
+        "project": str(tmp_path / "project"),
+        "desc_dir": str(tmp_path / "desc_pool"),
+        "testdata_dir": str(tmp_path / "test_data"),
+        "root_savedir": str(tmp_path / "savedir"),
+        "uq_backend": "llpr",
+        "uq_trust_mode": "manual",
+        "uq_llpr_energy_trust_lo": 0.0,
+        "uq_llpr_energy_trust_hi": 0.8,
+        "llpr_train_feature_dir": str(train_feature_dir),
+        "llpr_candidate_feature_dir": str(candidate_feature_dir),
+        "llpr_last_layer_weights_path": str(weights_path),
+        "llpr_candidate_energy_path": str(energy_path),
+        "llpr_num_ensemble_members": 4,
+        "llpr_random_seed": 13,
+        "llpr_collect_score": "energy_ensemble_std_per_atom",
+        "sampler_type": "direct",
+        "backend": "local",
+    }
+
+    workflow = CollectionWorkflow(config)
+
+    datanames = ["sys-0", "sys-1"]
+    desc = np.random.rand(2, 6)
+    with patch.object(workflow.io_manager, "load_descriptors", return_value=(datanames, desc)):
+        _, df_candidate, _ = workflow._run_uq_phase(vis=None)
+
+    ensemble_path = tmp_path / "savedir" / "energy_ensemble.npy"
+    assert ensemble_path.exists()
+    assert COL_UQ_DPOSE_ENERGY_ENSEMBLE_STD_PER_ATOM in df_candidate.columns
+    assert set(df_candidate[COL_UQ_DPOSE_ENERGY_ENSEMBLE_PATH]) == {str(ensemble_path)}
+
+    df_uq = pd.read_csv(tmp_path / "savedir" / "dataframe" / "df_uq.csv", index_col=0)
+    df_uq_desc = pd.read_csv(tmp_path / "savedir" / "dataframe" / "df_uq_desc.csv", index_col=0)
+    assert COL_UQ_DPOSE_ENERGY_ENSEMBLE_STD_PER_ATOM in df_uq.columns
+    assert COL_UQ_DPOSE_ENERGY_ENSEMBLE_STD_PER_ATOM in df_uq_desc.columns
+    np.testing.assert_allclose(
+        df_uq[COL_UQ_DPOSE_ENERGY_ENSEMBLE_STD_PER_ATOM],
+        df_uq_desc[COL_UQ_DPOSE_ENERGY_ENSEMBLE_STD_PER_ATOM],
+    )

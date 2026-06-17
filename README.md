@@ -7,7 +7,7 @@
 
 # DP-EVA (Deep Potential EVolution Accelerator)
 
-![Version](https://img.shields.io/badge/version-0.7.2-blue)
+![Version](https://img.shields.io/badge/version-0.8.0-blue)
 ![Python](https://img.shields.io/badge/python-3.10%2B-green)
 ![License](https://img.shields.io/badge/License-LGPL_v3-blue.svg)
 ![Unit Test Coverage](https://img.shields.io/badge/unit%20coverage-84%25-yellowgreen)
@@ -36,6 +36,12 @@ cd dpeva
 pip install -e .
 ```
 
+Optional trajectory exploration through `atst-tools` is installed separately:
+
+```bash
+pip install -e '.[explore]'
+```
+
 ### Usage
 
 DP-EVA provides a unified CLI `dpeva` for all workflows. See [CLI Guide](docs/guides/cli.md) for more details.
@@ -58,6 +64,10 @@ dpeva label config_label.json
 
 # 6. Analysis
 dpeva analysis config_analyze.json
+
+# Optional: trajectory exploration backend
+cd examples/recipes/exploration
+dpeva explore config_explore_md.json
 ```
 
 For detailed configuration examples, see `examples/recipes/`.
@@ -74,7 +84,25 @@ For detailed configuration examples, see `examples/recipes/`.
 *   **Upstream**: [Upstream Software](docs/reference/upstream-software.md)
 *   **Developer**: [Developer Guide](docs/guides/developer-guide.md) | [Architecture](docs/architecture/README.md)
 *   **Governance**: [Policy](docs/policy/README.md) | [Plans](docs/plans/README.md)
-*   **Review**: [Repository Audit 2026-04-01](docs/reports/2026-04-01-Code-Review-Repository-Audit.md) | [Reports Index](docs/reports/README.md) | [Archive Index](docs/archive/README.md)
+*   **Review**: [Repository Audit 2026-04-01](docs/archive/v0.8.0/reports/2026-04-01-Code-Review-Repository-Audit.md) | [Reports Index](docs/reports/README.md) | [Archive Index](docs/archive/README.md)
+
+## Citation
+
+If you use DP-EVA, please cite the project article:
+
+Zhaoqing Liu, Zhe Deng, Huabo Zhao, Han Wang, Mohan Chen, Hong Jiang, DP-EVA: Data-Efficient Fine-Tuning Framework via Maximizing Pre-Trained Knowledge of Large Atomistic Models for Developing Domain-Specific Machine Learning Interatomic Potentials, *Clean Energy*, 2026, zkag029, https://doi.org/10.1093/ce/zkag029.
+
+```bibtex
+@article{liu2026dpeva,
+  author = {Liu, Zhaoqing and Deng, Zhe and Zhao, Huabo and Wang, Han and Chen, Mohan and Jiang, Hong},
+  title = {DP-EVA: Data-Efficient Fine-Tuning Framework via Maximizing Pre-Trained Knowledge of Large Atomistic Models for Developing Domain-Specific Machine Learning Interatomic Potentials},
+  journal = {Clean Energy},
+  year = {2026},
+  pages = {zkag029},
+  doi = {10.1093/ce/zkag029},
+  url = {https://doi.org/10.1093/ce/zkag029},
+}
+```
 
 ## License
 

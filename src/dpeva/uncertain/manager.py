@@ -2,13 +2,28 @@ import os
 import logging
 import pandas as pd
 import numpy as np
+from pathlib import Path
 from typing import List, Dict, Tuple
 
 from dpeva.io.dataproc import DPTestResultParser
 from dpeva.io.types import PredictionData
 from dpeva.uncertain.calculator import UQCalculator
 from dpeva.uncertain.filter import UQFilter
-from dpeva.constants import COL_UQ_QBC, COL_UQ_RND
+from dpeva.constants import (
+    COL_UQ_DPOSE_ENERGY_ENSEMBLE_MEAN,
+    COL_UQ_DPOSE_ENERGY_ENSEMBLE_N_MEMBERS,
+    COL_UQ_DPOSE_ENERGY_ENSEMBLE_PATH,
+    COL_UQ_DPOSE_ENERGY_ENSEMBLE_STD,
+    COL_UQ_DPOSE_ENERGY_ENSEMBLE_STD_PER_ATOM,
+    COL_UQ_LLPR_ALPHA,
+    COL_UQ_LLPR_CALIBRATED,
+    COL_UQ_LLPR_ENERGY_PER_ATOM,
+    COL_UQ_LLPR_ENERGY_TOTAL,
+    COL_UQ_QBC,
+    COL_UQ_RND,
+)
+from dpeva.uncertain.dpose import DPOSEEnsemble
+from dpeva.uncertain.llpr import LLPRCalibrator, LLPRState, ShallowEnsembleSampler
 
 class UQManager:
     """
@@ -149,6 +164,181 @@ class UQManager:
         uq_rnd_rescaled = self.calculator.align_scales(uq_results[COL_UQ_QBC], uq_results[COL_UQ_RND])
         
         return uq_results, uq_rnd_rescaled
+
+    def run_llpr_analysis(
+        self,
+        train_features: np.ndarray,
+        candidate_features: np.ndarray,
+        candidate_atom_counts: np.ndarray | None = None,
+        residuals: np.ndarray | None = None,
+        calibration_uncertainties: np.ndarray | None = None,
+        mean_energy: np.ndarray | None = None,
+        last_layer_weights: np.ndarray | None = None,
+    ) -> Dict:
+        """
+        Run DeepMD last-layer LLPR analysis and return collect-ready columns.
+
+        Force-level DPOSE requires a differentiable DeepMDTorchDPOSEAdapter and is
+        not available from detached last-layer feature arrays.
+        """
+        llpr_targets = self.uq_config.get("llpr_targets", "energy")
+        self.logger.info(
+            "Running LLPR/DPOSE UQ: targets=%s, train_shape=%s, candidate_shape=%s",
+            llpr_targets,
+            np.asarray(train_features).shape,
+            np.asarray(candidate_features).shape,
+        )
+        if llpr_targets in {"force", "energy_force"}:
+            raise RuntimeError(
+                "Force-level DPOSE requires DeepMDTorchDPOSEAdapter; detached "
+                "last-layer feature arrays only support llpr_targets='energy'."
+            )
+        regularizer = float(self.uq_config.get("llpr_regularizer", 1e-8))
+        feature_normalization = self.uq_config.get("llpr_feature_normalization", "mean")
+        self.logger.info(
+            "LLPR covariance settings: regularizer=%s, feature_normalization=%s, "
+            "state_path=%s, save_state_path=%s",
+            regularizer,
+            feature_normalization,
+            self.uq_config.get("llpr_state_path"),
+            self.uq_config.get("llpr_save_state_path"),
+        )
+        alpha = 1.0
+        calibrated = False
+        state_path = self.uq_config.get("llpr_state_path")
+        if state_path:
+            base_state = LLPRState.load_npz(state_path)
+            alpha = base_state.alpha
+            calibrated = base_state.calibrated
+            feature_normalization = base_state.feature_normalization
+            self.logger.info(
+                "Loaded LLPR state: path=%s, feature_dimension=%d, alpha=%s, calibrated=%s",
+                state_path,
+                base_state.feature_dimension,
+                np.array2string(np.asarray(base_state.alpha), precision=6),
+                base_state.calibrated,
+            )
+        else:
+            base_state = LLPRState.from_training_features(
+                train_features,
+                regularizer=regularizer,
+                alpha=alpha,
+                calibrated=calibrated,
+                feature_normalization=feature_normalization,
+            )
+        if residuals is not None and calibration_uncertainties is not None:
+            method = self.uq_config.get("llpr_calibration_method", "squared_residuals")
+            self.logger.info("Calibrating LLPR alpha with method=%s", method)
+            alpha = LLPRCalibrator(method=method).fit_alpha(
+                residuals,
+                calibration_uncertainties,
+            )
+            calibrated = True
+            state = LLPRState.from_training_features(
+                train_features,
+                regularizer=regularizer,
+                alpha=alpha,
+                calibrated=True,
+                feature_normalization=feature_normalization,
+            )
+        else:
+            state = base_state
+
+        save_state_path = self.uq_config.get("llpr_save_state_path")
+        if save_state_path:
+            state.save_npz(save_state_path)
+            self.logger.info("Saved LLPR state: path=%s", save_state_path)
+
+        prediction = state.predict_uncertainty(candidate_features)
+        per_atom = prediction.per_atom
+        if candidate_atom_counts is not None:
+            atom_counts = np.asarray(candidate_atom_counts, dtype=float)
+            if atom_counts.shape != prediction.total.shape:
+                raise ValueError(
+                    "candidate_atom_counts must have the same length as candidate_features."
+                )
+            if np.any(atom_counts <= 0):
+                raise ValueError("candidate_atom_counts must be positive.")
+            per_atom = prediction.total / atom_counts
+        result = {
+            COL_UQ_LLPR_ENERGY_TOTAL: prediction.total,
+            COL_UQ_LLPR_ENERGY_PER_ATOM: per_atom,
+            COL_UQ_LLPR_ALPHA: prediction.alpha,
+            COL_UQ_LLPR_CALIBRATED: prediction.calibrated,
+        }
+        self.logger.info(
+            "LLPR energy UQ completed: frames=%d, alpha=%s, calibrated=%s, "
+            "feature_dimension=%d, energy_total_range=[%.6g, %.6g], "
+            "energy_per_atom_range=[%.6g, %.6g]",
+            len(prediction.total),
+            np.array2string(np.asarray(prediction.alpha), precision=6),
+            prediction.calibrated,
+            state.feature_dimension,
+            float(np.min(prediction.total)),
+            float(np.max(prediction.total)),
+            float(np.min(per_atom)),
+            float(np.max(per_atom)),
+        )
+        n_members = self.uq_config.get("llpr_num_ensemble_members")
+        if n_members:
+            strict = self.uq_config.get("llpr_strict_metatrain_parity", True)
+            if mean_energy is None and strict:
+                raise RuntimeError(
+                    "DPOSE energy_ensemble requires base DeepMD energy. "
+                    "Provide llpr_candidate_energy_path or disable llpr_num_ensemble_members."
+                )
+            if last_layer_weights is None and self.uq_config.get("llpr_strict_metatrain_parity", True):
+                raise RuntimeError(
+                    "DPOSE energy_ensemble requires real last-layer weights. "
+                    "Disable llpr_num_ensemble_members or provide last_layer_weights."
+                )
+            if mean_energy is None:
+                raise RuntimeError("mean_energy is required to generate energy_ensemble.")
+            if last_layer_weights is not None:
+                sampler = DPOSEEnsemble(
+                    state=state,
+                    weights=last_layer_weights,
+                    n_members=int(n_members),
+                    random_seed=self.uq_config.get("llpr_random_seed"),
+                )
+            else:
+                sampler = ShallowEnsembleSampler(
+                    state,
+                    n_members=int(n_members),
+                    random_seed=self.uq_config.get("llpr_random_seed"),
+                )
+            result["energy_ensemble"] = sampler.sample_energy_ensemble(
+                candidate_features,
+                mean_energy,
+            )
+            ensemble = result["energy_ensemble"]
+            ensemble_std = np.std(ensemble, axis=1, ddof=1)
+            result[COL_UQ_DPOSE_ENERGY_ENSEMBLE_MEAN] = ensemble.mean(axis=1)
+            result[COL_UQ_DPOSE_ENERGY_ENSEMBLE_STD] = ensemble_std
+            result[COL_UQ_DPOSE_ENERGY_ENSEMBLE_STD_PER_ATOM] = ensemble_std / (
+                np.asarray(candidate_atom_counts, dtype=float)
+                if candidate_atom_counts is not None
+                else np.ones(ensemble.shape[0], dtype=float)
+            )
+            result[COL_UQ_DPOSE_ENERGY_ENSEMBLE_N_MEMBERS] = int(n_members)
+            ensemble_output_path = self.uq_config.get("llpr_ensemble_output_path")
+            if ensemble_output_path:
+                ensemble_output_path = Path(ensemble_output_path)
+                ensemble_output_path.parent.mkdir(parents=True, exist_ok=True)
+                np.save(ensemble_output_path, ensemble)
+                result[COL_UQ_DPOSE_ENERGY_ENSEMBLE_PATH] = str(ensemble_output_path)
+            self.logger.info(
+                "DPOSE energy ensemble generated: frames=%d, members=%d, "
+                "weight_source=%s, output_path=%s, std_per_atom_range=[%.6g, %.6g]",
+                ensemble.shape[0],
+                ensemble.shape[1],
+                self.uq_config.get("llpr_weight_source", "provided"),
+                self.uq_config.get("llpr_ensemble_output_path"),
+                float(np.min(result[COL_UQ_DPOSE_ENERGY_ENSEMBLE_STD_PER_ATOM])),
+                float(np.max(result[COL_UQ_DPOSE_ENERGY_ENSEMBLE_STD_PER_ATOM])),
+            )
+        self.logger.info("LLPR output columns: %s", ", ".join(sorted(result)))
+        return result
         
     def log_uq_statistics(self, uq_results: Dict, uq_rnd_rescaled: np.ndarray):
         """

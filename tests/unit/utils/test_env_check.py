@@ -59,5 +59,16 @@ class TestEnvCheck:
             assert len(w) == 1
             assert "older than" in str(w[0].message)
 
+    @patch("subprocess.check_output")
+    def test_source_dev_version_skips_release_floor(self, mock_subprocess):
+        # Case: DPA4 source builds may report a dev/local version lower than
+        # the latest release line while carrying newer upstream features.
+        mock_subprocess.return_value = "DeePMD-kit v0.1.dev1+g27a18b604"
+
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            check_deepmd_version()
+            assert len(w) == 0
+
 if __name__ == "__main__":
     pytest.main([__file__])

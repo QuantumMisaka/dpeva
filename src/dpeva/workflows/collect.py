@@ -1,5 +1,6 @@
 import os
 import sys
+import glob
 import logging
 from typing import Union, Dict
 import pandas as pd
@@ -11,10 +12,20 @@ from dpeva.constants import (
     COL_DESC_PREFIX,
     COL_UQ_QBC,
     COL_UQ_RND,
+    COL_UQ_DPOSE_ENERGY_ENSEMBLE_MEAN,
+    COL_UQ_DPOSE_ENERGY_ENSEMBLE_N_MEMBERS,
+    COL_UQ_DPOSE_ENERGY_ENSEMBLE_PATH,
+    COL_UQ_DPOSE_ENERGY_ENSEMBLE_STD,
+    COL_UQ_DPOSE_ENERGY_ENSEMBLE_STD_PER_ATOM,
+    COL_UQ_LLPR_ALPHA,
+    COL_UQ_LLPR_CALIBRATED,
+    COL_UQ_LLPR_ENERGY_PER_ATOM,
+    COL_UQ_LLPR_ENERGY_TOTAL,
     LOG_FILE_COLLECT,
     FILENAME_UQ_QBC_FORCE,
     FILENAME_UQ_RND_FORCE,
 )
+from dpeva.uncertain.dpose import resolve_last_layer_weights
 from dpeva.uncertain.visualization import UQVisualizer
 from dpeva.submission.manager import JobManager
 from dpeva.submission.templates import JobConfig
@@ -105,7 +116,18 @@ class CollectionWorkflow:
                     "width": self.config.uq_rnd_rescaled_trust_width or self.config.uq_trust_width,
                     "lo": self.config.uq_rnd_rescaled_trust_lo,
                     "hi": self.config.uq_rnd_rescaled_trust_hi
-                }
+                },
+                "llpr_regularizer": self.config.llpr_regularizer,
+                "llpr_calibration_method": self.config.llpr_calibration_method,
+                "llpr_num_ensemble_members": self.config.llpr_num_ensemble_members,
+                "llpr_random_seed": self.config.llpr_random_seed,
+                "llpr_targets": self.config.llpr_targets,
+                "llpr_feature_normalization": self.config.llpr_feature_normalization,
+                "llpr_strict_metatrain_parity": self.config.llpr_strict_metatrain_parity,
+                "llpr_state_path": self.config.llpr_state_path,
+                "llpr_save_state_path": self.config.llpr_save_state_path,
+                "llpr_ensemble_output_path": self.config.llpr_ensemble_output_path,
+                "llpr_collect_score": self.config.llpr_collect_score,
             },
             num_models=self.config.num_models,
             testdata_dir=str(self.config.testdata_dir) # Pass testdata_dir for optional verification
@@ -172,6 +194,8 @@ class CollectionWorkflow:
     def _run_uq_phase(self, vis: UQVisualizer):
         if self.config.uq_trust_mode == "no_filter":
             return self._run_no_filter_uq_phase()
+        if self.config.uq_backend == "llpr":
+            return self._run_llpr_uq_phase(vis)
         return self._run_filtered_uq_phase(vis)
 
     def _run_no_filter_uq_phase(self):
@@ -186,6 +210,228 @@ class CollectionWorkflow:
         unique_system_names = sorted(list(set(get_sys_name(d) for d in desc_datanames)))
         self._log_initial_stats(desc_datanames)
         return df_desc, df_candidate, unique_system_names
+
+    def _run_llpr_uq_phase(self, vis: UQVisualizer | None):
+        self.logger.info("Running LLPR energy UQ from DeepMD last-layer features.")
+        if self.config.llpr_train_feature_dir is None:
+            raise ValueError("llpr_train_feature_dir is required when uq_backend='llpr'.")
+        if self.config.llpr_candidate_feature_dir is None:
+            raise ValueError("llpr_candidate_feature_dir is required when uq_backend='llpr'.")
+
+        desc_datanames, desc_stru = self.io_manager.load_descriptors(
+            str(self.config.desc_dir),
+            "candidate descriptors",
+        )
+        if len(desc_stru) == 0:
+            raise ValueError("No descriptors loaded!")
+
+        df_desc = pd.DataFrame(desc_stru, columns=[f"{COL_DESC_PREFIX}{i}" for i in range(desc_stru.shape[1])])
+        df_desc["dataname"] = desc_datanames
+
+        _, train_features, _ = self._load_llpr_feature_sums(
+            str(self.config.llpr_train_feature_dir),
+            "training LLPR features",
+        )
+        candidate_names, candidate_features_all, candidate_atom_counts_all = self._load_llpr_feature_sums(
+            str(self.config.llpr_candidate_feature_dir),
+            "candidate LLPR features",
+        )
+        feature_by_name = {
+            name: (candidate_features_all[i], candidate_atom_counts_all[i])
+            for i, name in enumerate(candidate_names)
+        }
+        missing = [name for name in desc_datanames if name not in feature_by_name]
+        if missing:
+            preview = ", ".join(missing[:5])
+            raise ValueError(f"Missing LLPR candidate features for {len(missing)} frames: {preview}")
+
+        candidate_features = np.vstack([feature_by_name[name][0] for name in desc_datanames])
+        candidate_atom_counts = np.asarray([feature_by_name[name][1] for name in desc_datanames], dtype=float)
+        mean_energy = None
+        last_layer_weights = None
+        if self.config.llpr_num_ensemble_members:
+            mean_energy = self._load_llpr_candidate_energy(desc_datanames)
+            feature_dimension = int(candidate_features.shape[1])
+            last_layer_weights = resolve_last_layer_weights(
+                feature_dimension=feature_dimension,
+                last_layer_weights_path=self.config.llpr_last_layer_weights_path,
+                model_path=self.config.llpr_model_path,
+                model_head=self.config.llpr_model_head,
+            )
+            weight_source = (
+                str(self.config.llpr_last_layer_weights_path)
+                if self.config.llpr_last_layer_weights_path is not None
+                else str(self.config.llpr_model_path)
+            )
+            if self.config.llpr_ensemble_output_path is None:
+                self.uq_manager.uq_config["llpr_ensemble_output_path"] = os.path.join(
+                    self.io_manager.project_dir,
+                    self.io_manager.root_savedir,
+                    "energy_ensemble.npy",
+                )
+            self.uq_manager.uq_config["llpr_weight_source"] = weight_source
+            self.logger.info(
+                "LLPR DPOSE ensemble inputs: model_path=%s, model_head=%s, "
+                "feature_shape=%s, weights_shape=%s, candidate_energy_path=%s, "
+                "ensemble_members=%s, ensemble_output_path=%s",
+                self.config.llpr_model_path,
+                self.config.llpr_model_head,
+                candidate_features.shape,
+                np.asarray(last_layer_weights).shape,
+                self.config.llpr_candidate_energy_path,
+                self.config.llpr_num_ensemble_members,
+                self.uq_manager.uq_config.get("llpr_ensemble_output_path"),
+            )
+        llpr_results = self.uq_manager.run_llpr_analysis(
+            train_features=train_features,
+            candidate_features=candidate_features,
+            candidate_atom_counts=candidate_atom_counts,
+            mean_energy=mean_energy,
+            last_layer_weights=last_layer_weights,
+        )
+        uq_columns = {
+            "dataname": desc_datanames,
+            COL_UQ_LLPR_ENERGY_TOTAL: llpr_results[COL_UQ_LLPR_ENERGY_TOTAL],
+            COL_UQ_LLPR_ENERGY_PER_ATOM: llpr_results[COL_UQ_LLPR_ENERGY_PER_ATOM],
+            COL_UQ_LLPR_ALPHA: llpr_results[COL_UQ_LLPR_ALPHA],
+            COL_UQ_LLPR_CALIBRATED: llpr_results[COL_UQ_LLPR_CALIBRATED],
+        }
+        for column in (
+            COL_UQ_DPOSE_ENERGY_ENSEMBLE_MEAN,
+            COL_UQ_DPOSE_ENERGY_ENSEMBLE_STD,
+            COL_UQ_DPOSE_ENERGY_ENSEMBLE_STD_PER_ATOM,
+            COL_UQ_DPOSE_ENERGY_ENSEMBLE_N_MEMBERS,
+            COL_UQ_DPOSE_ENERGY_ENSEMBLE_PATH,
+        ):
+            if column in llpr_results:
+                uq_columns[column] = llpr_results[column]
+        df_uq_raw = pd.DataFrame(uq_columns)
+        df_uq_desc = pd.concat([df_uq_raw, df_desc.drop(columns=["dataname"])], axis=1)
+        self.io_manager.save_dataframe(df_uq_desc, "df_uq_desc.csv")
+
+        score_column = self._resolve_llpr_score_column(df_uq_raw)
+        trust_lo, trust_hi = self._resolve_llpr_energy_bounds(
+            df_uq_raw[score_column].to_numpy()
+        )
+        scores = df_uq_raw[score_column].to_numpy()
+        candidate_mask = (scores >= trust_lo) & (scores <= trust_hi)
+        accurate_mask = scores < trust_lo
+        failed_mask = scores > trust_hi
+        df_uq = df_uq_raw.copy()
+        df_uq["uq_identity"] = "failed"
+        df_uq.loc[accurate_mask, "uq_identity"] = "accurate"
+        df_uq.loc[candidate_mask, "uq_identity"] = "candidate"
+
+        df_candidate = df_uq_desc.loc[candidate_mask].copy()
+        df_candidate["uq_identity"] = "candidate"
+        self.io_manager.save_dataframe(df_uq, "df_uq.csv")
+        self.io_manager.save_dataframe(df_candidate, "df_uq_desc_sampled-UQ.csv")
+
+        if vis is not None:
+            vis.plot_uq_with_trust_range(
+                scores,
+                score_column,
+                "UQ-LLPR-energy-per-atom.png",
+                trust_lo,
+                trust_hi,
+            )
+            self._log_generated_plots(["UQ-LLPR-energy-per-atom"], layer="core", condition="llpr_uq_completed")
+
+        unique_system_names = sorted(list(set(get_sys_name(d) for d in desc_datanames)))
+        self._log_initial_stats(desc_datanames)
+        self.logger.info(
+            "LLPR filter results: Cand=%d, Accurate=%d, Failed=%d",
+            int(candidate_mask.sum()),
+            int(accurate_mask.sum()),
+            int(failed_mask.sum()),
+        )
+        return df_desc, df_candidate, unique_system_names
+
+    def _load_llpr_feature_sums(self, feature_dir: str, label: str):
+        self.logger.info(f"Loading {label} from {feature_dir}")
+        files = sorted(glob.glob(os.path.join(feature_dir, "**", "*.npy"), recursive=True))
+        if not files:
+            raise FileNotFoundError(f"No {label} .npy files found in {feature_dir}")
+
+        datanames = []
+        feature_sums = []
+        atom_counts = []
+        base_dir = os.path.abspath(feature_dir)
+        for path in files:
+            rel = os.path.relpath(os.path.abspath(path), base_dir)
+            sys_name = os.path.splitext(rel)[0].replace("\\", "/")
+            arr = np.asarray(np.load(path))
+            if arr.ndim == 3:
+                if self.config.llpr_feature_normalization == "mean":
+                    frame_sums = arr.mean(axis=1)
+                else:
+                    frame_sums = arr.sum(axis=1)
+                counts = np.full(arr.shape[0], arr.shape[1], dtype=float)
+            elif arr.ndim == 2:
+                frame_sums = arr
+                counts = np.ones(arr.shape[0], dtype=float)
+            else:
+                raise ValueError(f"LLPR feature file {path} must be 2D or 3D, got shape={arr.shape}")
+            datanames.extend([f"{sys_name}-{i}" for i in range(frame_sums.shape[0])])
+            feature_sums.append(frame_sums)
+            atom_counts.append(counts)
+
+        return datanames, np.vstack(feature_sums), np.concatenate(atom_counts)
+
+    def _load_llpr_candidate_energy(self, desc_datanames: list[str]) -> np.ndarray:
+        if self.config.llpr_candidate_energy_path is None:
+            raise RuntimeError(
+                "DPOSE energy_ensemble requires llpr_candidate_energy_path when "
+                "llpr_num_ensemble_members is set."
+            )
+        path = self.config.llpr_candidate_energy_path
+        if str(path).endswith(".npy"):
+            values = np.asarray(np.load(path), dtype=float).reshape(-1)
+            if values.shape[0] != len(desc_datanames):
+                raise ValueError(
+                    "llpr_candidate_energy_path .npy length must match candidate descriptors."
+                )
+            return values
+        df = pd.read_csv(path)
+        if "dataname" not in df.columns or "energy" not in df.columns:
+            raise ValueError("llpr_candidate_energy_path CSV must contain dataname and energy columns.")
+        energy_by_name = dict(zip(df["dataname"], df["energy"]))
+        missing = [name for name in desc_datanames if name not in energy_by_name]
+        if missing:
+            preview = ", ".join(missing[:5])
+            raise ValueError(f"Missing LLPR candidate base energy for {len(missing)} frames: {preview}")
+        return np.asarray([energy_by_name[name] for name in desc_datanames], dtype=float)
+
+    def _resolve_llpr_score_column(self, df_uq_raw: pd.DataFrame) -> str:
+        if self.config.llpr_collect_score == "energy_uncertainty_per_atom":
+            return COL_UQ_LLPR_ENERGY_PER_ATOM
+        if self.config.llpr_collect_score == "energy_ensemble_std_per_atom":
+            if COL_UQ_DPOSE_ENERGY_ENSEMBLE_STD_PER_ATOM not in df_uq_raw.columns:
+                raise ValueError(
+                    "llpr_collect_score='energy_ensemble_std_per_atom' requires "
+                    "energy ensemble summary columns."
+                )
+            return COL_UQ_DPOSE_ENERGY_ENSEMBLE_STD_PER_ATOM
+        if self.config.llpr_collect_score == "force_uncertainty_max":
+            raise RuntimeError("force_uncertainty_max collection score is not available for detached LLPR features.")
+        raise ValueError(f"Unsupported llpr_collect_score={self.config.llpr_collect_score!r}")
+
+    def _resolve_llpr_energy_bounds(self, scores: np.ndarray):
+        if self.config.uq_trust_mode == "manual":
+            trust_lo = self.config.uq_llpr_energy_trust_lo
+            trust_hi = self.config.uq_llpr_energy_trust_hi
+        else:
+            trust_lo = self.uq_manager.calculator.calculate_trust_lo(
+                scores,
+                ratio=self.config.uq_trust_ratio,
+            )
+            if trust_lo is None:
+                trust_lo = float(np.quantile(scores, 0.5))
+            trust_hi = trust_lo + self.config.uq_trust_width
+
+        if trust_lo is None or trust_hi is None:
+            raise ValueError("LLPR trust bounds could not be resolved.")
+        return float(trust_lo), float(trust_hi)
 
     def _run_filtered_uq_phase(self, vis: UQVisualizer):
         self._plot_audit_entries = []

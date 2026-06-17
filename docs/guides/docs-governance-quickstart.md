@@ -2,7 +2,7 @@
 title: 文档治理快速上手（开发者与 AI）
 status: active
 audience: Developers / Maintainers
-last-updated: 2026-03-12
+last-updated: 2026-06-10
 owner: Docs Owner
 ---
 

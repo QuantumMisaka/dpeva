@@ -153,7 +153,18 @@ def check_owner_metadata(docs_root, owner_dirs=None):
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Run documentation governance checks.")
-    parser.add_argument("--strict-owner", action="store_true", help="Fail when active docs miss owner metadata.")
+    parser.add_argument(
+        "--strict-owner",
+        action="store_true",
+        default=True,
+        help="Fail when active docs miss owner metadata. Enabled by default.",
+    )
+    parser.add_argument(
+        "--no-strict-owner",
+        dest="strict_owner",
+        action="store_false",
+        help="Report missing active doc owner metadata without failing.",
+    )
     parser.add_argument(
         "--strict-owner-dir",
         action="append",

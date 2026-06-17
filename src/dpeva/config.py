@@ -140,6 +140,10 @@ class FeatureConfig(BaseWorkflowConfig):
     data_path: Path = Field(..., description="Path to dataset.")
     model_path: Path = Field(..., description="Path to model file.")
     model_head: str = Field(..., description="Model head name.")
+    feature_kind: Literal["descriptor", "fitting_last_layer"] = Field(
+        "descriptor",
+        description="Feature type to export. `fitting_last_layer` requires Python mode.",
+    )
     
     output_mode: Literal["atomic", "structural"] = Field(
         default=DEFAULT_DESC_OUTPUT_MODE,
@@ -158,6 +162,41 @@ class FeatureConfig(BaseWorkflowConfig):
             data_name = self.data_path.name
             self.savedir = Path(f"desc-{model_name}-{data_name}")
         return self
+
+
+class ExplorationConfig(BaseModel):
+    """Configuration for optional trajectory exploration backends."""
+
+    model_config = ConfigDict(extra='ignore', populate_by_name=True, protected_namespaces=())
+
+    work_dir: Path = Field(
+        default_factory=Path.cwd,
+        description="Working directory.",
+    )
+    backend: Literal["atst-tools"] = Field(
+        "atst-tools",
+        description="Exploration backend name.",
+    )
+    workflow_type: Literal["md", "relax"] = Field(
+        ...,
+        description="Exploration workflow type supported by the first ATST backend.",
+    )
+    backend_config_path: Path = Field(
+        ...,
+        description="Path to the backend-native configuration file.",
+    )
+    input_structure_paths: List[Path] = Field(
+        default_factory=list,
+        description="Optional input structures to pass through the exploration request.",
+    )
+    result_structure_paths: List[Path] = Field(
+        default_factory=list,
+        description="Optional result structures to collect after backend execution.",
+    )
+    metadata: Dict[str, Any] = Field(
+        default_factory=dict,
+        description="Backend-specific metadata carried through the request.",
+    )
 
 class AnalysisConfig(BaseModel):
     """Configuration for Analysis Workflow (Post-processing)."""
@@ -402,6 +441,10 @@ class CollectionConfig(BaseWorkflowConfig):
     
     # UQ Parameters
     num_models: int = Field(DEFAULT_NUM_MODELS, ge=3, description="Number of models for UQ calculation.")
+    uq_backend: Literal["qbc_rnd", "llpr", "hybrid"] = Field(
+        "qbc_rnd",
+        description="UQ backend: existing QbC/RND, DeepMD last-layer LLPR, or hybrid reporting.",
+    )
     uq_select_scheme: Literal["tangent_lo", "strict", "circle_lo", "crossline_lo", "loose"] = Field(
         default=DEFAULT_UQ_SCHEME,
         description="Strategy for selecting high-uncertainty data. Options: `tangent_lo`, `strict`, `circle_lo`, etc."
@@ -415,12 +458,43 @@ class CollectionConfig(BaseWorkflowConfig):
     uq_qbc_trust_hi: Optional[float] = None
     uq_rnd_rescaled_trust_lo: Optional[float] = None
     uq_rnd_rescaled_trust_hi: Optional[float] = None
+    uq_llpr_energy_trust_lo: Optional[float] = None
+    uq_llpr_energy_trust_hi: Optional[float] = None
     
     # Specific Trust Params (Overrides)
     uq_qbc_trust_ratio: Optional[float] = None
     uq_qbc_trust_width: Optional[float] = None
     uq_rnd_rescaled_trust_ratio: Optional[float] = None
     uq_rnd_rescaled_trust_width: Optional[float] = None
+
+    # DeepMD last-layer LLPR parameters
+    llpr_train_feature_dir: Optional[Path] = Field(
+        None,
+        description="Training-set DeepMD last-layer feature directory used to fit LLPR covariance.",
+    )
+    llpr_candidate_feature_dir: Optional[Path] = Field(
+        None,
+        description="Candidate-pool DeepMD last-layer feature directory used for LLPR scoring.",
+    )
+    llpr_regularizer: float = Field(1e-8, gt=0.0)
+    llpr_calibration_method: Literal["squared_residuals", "absolute_residuals", "crps"] = "squared_residuals"
+    llpr_num_ensemble_members: Optional[int] = Field(None, ge=2)
+    llpr_random_seed: Optional[int] = None
+    llpr_targets: Literal["energy", "force", "energy_force"] = "energy"
+    llpr_collect_score: Literal[
+        "energy_uncertainty_per_atom",
+        "energy_ensemble_std_per_atom",
+        "force_uncertainty_max",
+    ] = "energy_uncertainty_per_atom"
+    llpr_strict_metatrain_parity: bool = True
+    llpr_feature_normalization: Literal["sum", "mean"] = "mean"
+    llpr_model_path: Optional[Path] = None
+    llpr_model_head: Optional[str] = None
+    llpr_last_layer_weights_path: Optional[Path] = None
+    llpr_candidate_energy_path: Optional[Path] = None
+    llpr_state_path: Optional[Path] = None
+    llpr_save_state_path: Optional[Path] = None
+    llpr_ensemble_output_path: Optional[Path] = None
 
     # Auto UQ Bounds
     uq_auto_bounds: Dict[str, Dict[str, float]] = Field(default_factory=dict)
@@ -451,7 +525,34 @@ class CollectionConfig(BaseWorkflowConfig):
     @model_validator(mode='after')
     def validate_manual_trust_bounds(self):
         """Validates that manual trust bounds are properly set."""
+        if self.llpr_collect_score == "force_uncertainty_max" and self.llpr_targets == "energy":
+            raise ValueError(
+                "llpr_collect_score='force_uncertainty_max' requires "
+                "llpr_targets='force' or 'energy_force'."
+            )
+        if self.llpr_collect_score == "energy_ensemble_std_per_atom" and not self.llpr_num_ensemble_members:
+            raise ValueError(
+                "llpr_collect_score='energy_ensemble_std_per_atom' requires "
+                "llpr_num_ensemble_members."
+            )
+        if self.llpr_num_ensemble_members and self.llpr_strict_metatrain_parity:
+            if self.llpr_candidate_energy_path is None:
+                raise ValueError(
+                    "llpr_num_ensemble_members requires llpr_candidate_energy_path "
+                    "when llpr_strict_metatrain_parity=True."
+                )
+            if self.llpr_last_layer_weights_path is None and self.llpr_model_path is None:
+                raise ValueError(
+                    "llpr_num_ensemble_members requires llpr_last_layer_weights_path "
+                    "or llpr_model_path when llpr_strict_metatrain_parity=True."
+                )
         if self.uq_trust_mode == "manual":
+            if self.uq_backend == "llpr":
+                if self.uq_llpr_energy_trust_lo is None:
+                    raise ValueError("In 'manual' LLPR mode, uq_llpr_energy_trust_lo must be provided.")
+                if self.uq_llpr_energy_trust_hi is None:
+                    self.uq_llpr_energy_trust_hi = self.uq_llpr_energy_trust_lo + self.uq_trust_width
+                return self
             # QbC Validation & Calculation
             if self.uq_qbc_trust_lo is None:
                 raise ValueError("In 'manual' trust mode, uq_qbc_trust_lo must be provided.")

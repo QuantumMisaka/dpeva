@@ -2,14 +2,15 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-03-11
+last-updated: 2026-06-10
+owner: Workflow Owner
 ---
 
 # DP-EVA 集成测试最小配置模板（Slurm）
 
 - Status: active
 - Audience: Developers / Infra
-- Last-Updated: 2026-03-11
+- Last-Updated: 2026-06-10
 
 对应可直接复制的模板文件位于：
 

@@ -2,7 +2,8 @@
 title: 文档结构与命名规范 (Docs Structure & Naming)
 status: active
 audience: Maintainers / Developers
-last-updated: 2026-03-11
+last-updated: 2026-06-10
+owner: Docs Owner
 ---
 
 # 文档结构与命名规范（Docs Structure & Naming）

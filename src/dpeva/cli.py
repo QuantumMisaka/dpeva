@@ -113,6 +113,41 @@ def handle_feature(args):
     workflow = FeatureWorkflow(config)
     workflow.run()
 
+def handle_explore(args):
+    """
+    Handles the 'explore' command.
+    Runs an optional trajectory exploration backend.
+    """
+    from ase.io import read
+
+    from dpeva.config import ExplorationConfig
+    from dpeva.exploration.base import ExplorationRequest
+    from dpeva.exploration.manager import run_exploration
+
+    config_dict = load_and_resolve_config(args.config)
+    config = ExplorationConfig(**config_dict)
+    input_structures = []
+    for path in config.input_structure_paths:
+        loaded = read(path)
+        if isinstance(loaded, list):
+            input_structures.extend(loaded)
+        else:
+            input_structures.append(loaded)
+
+    metadata = dict(config.metadata)
+    metadata["result_structure_paths"] = list(config.result_structure_paths)
+    request = ExplorationRequest(
+        backend=config.backend,
+        workflow_type=config.workflow_type,
+        work_dir=config.work_dir,
+        config_path=config.backend_config_path,
+        input_structures=input_structures,
+        metadata=metadata,
+    )
+    result = run_exploration(request)
+    if result.status == "failed":
+        raise CLIUserInputError(result.error_message or "Exploration failed")
+
 def handle_collect(args):
     """
     Handles the 'collect' command.
@@ -208,6 +243,11 @@ def main():
     p_feature = subparsers.add_parser("feature", help="Run Feature Generation Workflow")
     p_feature.add_argument("config", type=validate_config_path, help="Path to configuration JSON")
     p_feature.set_defaults(func=handle_feature)
+
+    # Exploration Sub-command
+    p_explore = subparsers.add_parser("explore", help="Run optional trajectory exploration backend")
+    p_explore.add_argument("config", type=validate_config_path, help="Path to configuration JSON")
+    p_explore.set_defaults(func=handle_explore)
 
     # Collection Sub-command
     p_collect = subparsers.add_parser("collect", help="Run Data Collection Workflow")

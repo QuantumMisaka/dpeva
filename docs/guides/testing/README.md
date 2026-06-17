@@ -2,14 +2,15 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-03-09
+last-updated: 2026-06-10
+owner: Workflow Owner
 ---
 
 # Testing（测试指南）
 
 - Status: active
 - Audience: Developers / QA
-- Last-Updated: 2026-03-09
+- Last-Updated: 2026-06-10
 
 本目录用于存放测试相关文档，包括集成测试方案、Slurm 编排约定、验收标准与测试资产说明。
 

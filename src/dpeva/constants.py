@@ -127,6 +127,15 @@ FILENAME_FINAL_SAMPLED_PCAVIEW_BY_POOL: Final[str] = "Final_sampled_PCAview_by_p
 COL_DESC_PREFIX: Final[str] = "desc_stru_"
 COL_UQ_QBC: Final[str] = "uq_qbc_for"
 COL_UQ_RND: Final[str] = "uq_rnd_for"
+COL_UQ_LLPR_ENERGY_TOTAL: Final[str] = "uq_llpr_energy_total"
+COL_UQ_LLPR_ENERGY_PER_ATOM: Final[str] = "uq_llpr_energy_per_atom"
+COL_UQ_LLPR_ALPHA: Final[str] = "uq_llpr_alpha"
+COL_UQ_LLPR_CALIBRATED: Final[str] = "uq_llpr_calibrated"
+COL_UQ_DPOSE_ENERGY_ENSEMBLE_MEAN: Final[str] = "uq_dpose_energy_ensemble_mean"
+COL_UQ_DPOSE_ENERGY_ENSEMBLE_STD: Final[str] = "uq_dpose_energy_ensemble_std"
+COL_UQ_DPOSE_ENERGY_ENSEMBLE_STD_PER_ATOM: Final[str] = "uq_dpose_energy_ensemble_std_per_atom"
+COL_UQ_DPOSE_ENERGY_ENSEMBLE_N_MEMBERS: Final[str] = "uq_dpose_energy_ensemble_n_members"
+COL_UQ_DPOSE_ENERGY_ENSEMBLE_PATH: Final[str] = "uq_dpose_energy_ensemble_path"
 
 # Logging
 DEFAULT_LOG_MAX_BYTES: Final[int] = 10 * 1024 * 1024  # 10 MB

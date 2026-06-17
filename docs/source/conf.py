@@ -6,8 +6,8 @@ from pathlib import Path
 project = 'DP-EVA'
 copyright = '2026, DP-EVA Developers'
 author = 'DP-EVA Developers'
-version = '0.7.2'
-release = '0.7.2'
+version = '0.8.0'
+release = '0.8.0'
 
 # -- Path setup --------------------------------------------------------------
 # Add src to sys.path to allow autodoc to find modules
@@ -30,6 +30,21 @@ exclude_patterns = [
     'archive/**',
 ]
 language = 'zh_CN'
+
+# Optional scientific backends are runtime dependencies for specific workflows,
+# but docs must build in a lightweight environment.
+autodoc_mock_imports = [
+    'deepmd',
+]
+
+# External services may reject GitHub Actions linkcheck requests even when the
+# links are valid in browsers. Keep these citations visible in docs but exclude
+# them from CI link probing.
+linkcheck_ignore = [
+    r'https://github\.com/QuantumMisaka/dpeva/.*',
+    r'https://doi\.org/10\.1093/ce/zkag029',
+    r'https://academic\.oup\.com/ce/advance-article/doi/10\.1093/ce/zkag029/.*',
+]
 
 # -- Options for HTML output -------------------------------------------------
 html_theme = 'sphinx_book_theme'

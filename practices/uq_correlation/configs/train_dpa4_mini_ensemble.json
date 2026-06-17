@@ -1,0 +1,45 @@
+{
+  "work_dir": "../work/dpa4_mini_ensemble",
+  "input_json_path": "input_dpa4_mini_uq.json",
+  "num_models": 4,
+  "training_mode": "init",
+  "seeds": [19090, 42, 10032, 2933],
+  "training_seeds": [19090, 42, 10032, 2933],
+  "model_head": "RANDOM",
+  "base_model_path": "../../../tests/integration/data/DPA4-Mini-OMat24.pt",
+  "dp_backend": "pt",
+  "omp_threads": 2,
+  "training_data_path": "../../sampled_dpdata",
+  "submission": {
+    "backend": "slurm",
+    "env_setup": [
+      "set -euo pipefail",
+      "nvidia-smi dmon -s pucvmte -o T > nvdmon_job-${SLURM_JOB_ID}.log &",
+      "source /opt/devtools/anaconda3/etc/profile.d/conda.sh",
+      "conda activate dpeva-dpa4-test",
+      "export CUDA_HOME=/opt/devtools/nvidia/cuda-12.6.3",
+      "export CUDAToolkit_ROOT=${CUDA_HOME}",
+      "export PATH=${CUDA_HOME}/bin:${PATH}",
+      "export LD_LIBRARY_PATH=${CUDA_HOME}/lib64:${CONDA_PREFIX}/lib:${LD_LIBRARY_PATH:-}",
+      "export TORCH_CUDA_ARCH_LIST=7.0",
+      "export CMAKE_CUDA_ARCHITECTURES=70",
+      "export DP_VARIANT=cuda",
+      "export DP_ENABLE_PYTORCH=1",
+      "export DP_ENABLE_TENSORFLOW=0",
+      "export DP_COMPILE_INFER=0",
+      "export DP_INTERFACE_PREC=high",
+      "export OMP_NUM_THREADS=2"
+    ],
+    "slurm_config": {
+      "partition": "4V100PX",
+      "nodes": 1,
+      "ntasks": 1,
+      "gpus_per_node": 4,
+      "qos": "flood-gpu",
+      "walltime": "04:00:00",
+      "custom_headers": [
+        "#SBATCH --open-mode=truncate"
+      ]
+    }
+  }
+}

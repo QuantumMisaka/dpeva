@@ -2,14 +2,15 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-03-09
+last-updated: 2026-06-10
+owner: Workflow Owner
 ---
 
 # 安装与环境准备（Installation）
 
 - Status: active
 - Audience: Users / Developers
-- Last-Updated: 2026-02-19
+- Last-Updated: 2026-06-10
 
 ## 1. 目的与范围
 
@@ -49,6 +50,26 @@ dpeva --help
 ```bash
 python -m pip install -e '.[dev]'
 ```
+
+### 4.3 Exploration 可选依赖
+
+`dpeva explore` 通过可选 `atst-tools` backend 调用轨迹探索工作流。该依赖不进入核心安装，需要时单独启用：
+
+```bash
+python -m pip install -e '.[explore]'
+```
+
+验证：
+
+```bash
+dpeva explore --help
+atst --help
+```
+
+说明：
+
+- `dpeva[explore]` 只安装 DP-EVA 的 exploration backend 依赖。
+- ABACUS、DeePMD 模型文件、赝势和轨道文件仍由具体 ATST 配置与运行环境提供。
 
 ## 5. 外部依赖：DeepMD-kit
 

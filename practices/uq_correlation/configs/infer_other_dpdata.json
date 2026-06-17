@@ -1,0 +1,29 @@
+{
+  "data_path": "../../other_dpdata",
+  "work_dir": "../work/dpa4_mini_ensemble",
+  "task_name": "test_val",
+  "model_head": "RANDOM",
+  "results_prefix": "results",
+  "auto_analysis": false,
+  "dp_backend": "pt",
+  "omp_threads": 2,
+  "submission": {
+    "backend": "slurm",
+    "env_setup": [
+      "set -euo pipefail",
+      "nvidia-smi dmon -s pucvmte -o T > nvdmon_job-${SLURM_JOB_ID}.log &",
+      "source /opt/devtools/anaconda3/etc/profile.d/conda.sh",
+      "conda activate dpeva-dpa4-test",
+      "export DP_INTERFACE_PREC=high",
+      "export OMP_NUM_THREADS=2"
+    ],
+    "slurm_config": {
+      "partition": "4V100PX",
+      "nodes": 1,
+      "ntasks": 1,
+      "gpus_per_node": 1,
+      "qos": "rush-1o2gpu",
+      "walltime": "24:00:00"
+    }
+  }
+}

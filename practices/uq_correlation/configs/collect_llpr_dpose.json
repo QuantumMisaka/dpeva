@@ -1,0 +1,43 @@
+{
+  "project": "../work/dpa4_mini_ensemble",
+  "uq_backend": "llpr",
+  "uq_select_scheme": "tangent_lo",
+  "desc_dir": "../outputs/features/candidate_last_layer",
+  "testdata_dir": "../../other_dpdata",
+  "testing_dir": "test_val",
+  "results_prefix": "results",
+  "num_models": 4,
+  "llpr_train_feature_dir": "../outputs/features/train_last_layer",
+  "llpr_candidate_feature_dir": "../outputs/features/candidate_last_layer",
+  "llpr_feature_normalization": "mean",
+  "llpr_regularizer": 1e-8,
+  "llpr_num_ensemble_members": 8,
+  "llpr_model_path": "../work/dpa4_mini_ensemble/0/model.ckpt.pt",
+  "llpr_model_head": "RANDOM",
+  "llpr_candidate_energy_path": "../outputs/candidate_energy.npy",
+  "llpr_ensemble_output_path": "../outputs/energy_ensemble.npy",
+  "llpr_collect_score": "energy_ensemble_std_per_atom",
+  "llpr_random_seed": 19090,
+  "root_savedir": "../outputs/collect_llpr_dpose",
+  "fig_dpi": 300,
+  "enable_diagnostic_plots": false,
+  "uq_trust_mode": "auto",
+  "uq_trust_ratio": 0.50,
+  "uq_trust_width": 0.15,
+  "sampler_type": "direct",
+  "direct_k": 1,
+  "direct_thr_init": 0.1,
+  "submission": {
+    "backend": "slurm",
+    "env_setup": [
+      "source /opt/devtools/anaconda3/etc/profile.d/conda.sh",
+      "conda activate dpeva-dpa4-test"
+    ],
+    "slurm_config": {
+      "partition": "CPU-MISC",
+      "qos": "rush-cpu",
+      "ntasks": 1,
+      "job_name": "DPEVA-uq-corr-llpr"
+    }
+  }
+}
