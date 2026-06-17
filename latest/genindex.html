@@ -36,7 +36,7 @@
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="_static/documentation_options.js?v=2eb37dcf"></script>
+    <script src="_static/documentation_options.js?v=d2c02a7d"></script>
     <script src="_static/doctools.js?v=9bcbadda"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -613,6 +613,7 @@ window.runMermaid = runMermaid;</script>
 <li class="toctree-l1 has-children"><a class="reference internal" href="api/config.html">Configuration Reference</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="api/config/submission.html">Common &amp; Submission Configuration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/config/feature.html">Feature Generation Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/config/exploration.html">Exploration Configuration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/config/training.html">Training Configuration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/config/inference.html">Inference Configuration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/config/collection.html">Collection (Active Learning) Configuration</a></li>
@@ -806,12 +807,16 @@ document.write(`
 <h2 id="B">B</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/config/submission.html#dpeva.config.SubmissionConfig.backend">backend（dpeva.config.SubmissionConfig 属性）</a>
+      <li><a href="api/config/exploration.html#dpeva.config.ExplorationConfig.backend_config_path">backend_config_path（dpeva.config.ExplorationConfig 属性）</a>
 </li>
-      <li><a href="api/config/training.html#dpeva.config.TrainingConfig.base_model_path">base_model_path（dpeva.config.TrainingConfig 属性）</a>
+      <li><a href="api/config/exploration.html#dpeva.config.ExplorationConfig.backend">backend（dpeva.config.ExplorationConfig 属性）</a>
+</li>
+      <li><a href="api/config/submission.html#dpeva.config.SubmissionConfig.backend">backend（dpeva.config.SubmissionConfig 属性）</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/config/training.html#dpeva.config.TrainingConfig.base_model_path">base_model_path（dpeva.config.TrainingConfig 属性）</a>
+</li>
       <li><a href="api/config/feature.html#dpeva.config.FeatureConfig.batch_size">batch_size（dpeva.config.FeatureConfig 属性）</a>
 </li>
       <li><a href="api/labeling.html#dpeva.labeling.AbacusPostProcessor.build_no_contribution_hint">build_no_contribution_hint()（dpeva.labeling.AbacusPostProcessor 静态方法）</a>
@@ -943,6 +948,8 @@ document.write(`
 <h2 id="F">F</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/config/feature.html#dpeva.config.FeatureConfig.feature_kind">feature_kind（dpeva.config.FeatureConfig 属性）</a>
+</li>
       <li><a href="api/workflows.html#dpeva.workflows.FeatureWorkflow">FeatureWorkflow（dpeva.workflows 中的类）</a>
 </li>
       <li><a href="api/config/collection.html#dpeva.config.CollectionConfig.fig_base_font_size">fig_base_font_size（dpeva.config.CollectionConfig 属性）</a>
@@ -989,6 +996,8 @@ document.write(`
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/config/exploration.html#dpeva.config.ExplorationConfig.input_structure_paths">input_structure_paths（dpeva.config.ExplorationConfig 属性）</a>
+</li>
       <li><a href="api/config/labeling.html#dpeva.config.LabelingConfig.integration_deduplicate">integration_deduplicate（dpeva.config.LabelingConfig 属性）</a>
 </li>
       <li><a href="api/config/labeling.html#dpeva.config.LabelingConfig.integration_enabled">integration_enabled（dpeva.config.LabelingConfig 属性）</a>
@@ -1023,6 +1032,42 @@ document.write(`
 <h2 id="L">L</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/config/collection.html#dpeva.config.CollectionConfig.llpr_calibration_method">llpr_calibration_method（dpeva.config.CollectionConfig 属性）</a>
+</li>
+      <li><a href="api/config/collection.html#dpeva.config.CollectionConfig.llpr_candidate_energy_path">llpr_candidate_energy_path（dpeva.config.CollectionConfig 属性）</a>
+</li>
+      <li><a href="api/config/collection.html#dpeva.config.CollectionConfig.llpr_candidate_feature_dir">llpr_candidate_feature_dir（dpeva.config.CollectionConfig 属性）</a>
+</li>
+      <li><a href="api/config/collection.html#dpeva.config.CollectionConfig.llpr_collect_score">llpr_collect_score（dpeva.config.CollectionConfig 属性）</a>
+</li>
+      <li><a href="api/config/collection.html#dpeva.config.CollectionConfig.llpr_ensemble_output_path">llpr_ensemble_output_path（dpeva.config.CollectionConfig 属性）</a>
+</li>
+      <li><a href="api/config/collection.html#dpeva.config.CollectionConfig.llpr_feature_normalization">llpr_feature_normalization（dpeva.config.CollectionConfig 属性）</a>
+</li>
+      <li><a href="api/config/collection.html#dpeva.config.CollectionConfig.llpr_last_layer_weights_path">llpr_last_layer_weights_path（dpeva.config.CollectionConfig 属性）</a>
+</li>
+      <li><a href="api/config/collection.html#dpeva.config.CollectionConfig.llpr_model_head">llpr_model_head（dpeva.config.CollectionConfig 属性）</a>
+</li>
+      <li><a href="api/config/collection.html#dpeva.config.CollectionConfig.llpr_model_path">llpr_model_path（dpeva.config.CollectionConfig 属性）</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/config/collection.html#dpeva.config.CollectionConfig.llpr_num_ensemble_members">llpr_num_ensemble_members（dpeva.config.CollectionConfig 属性）</a>
+</li>
+      <li><a href="api/config/collection.html#dpeva.config.CollectionConfig.llpr_random_seed">llpr_random_seed（dpeva.config.CollectionConfig 属性）</a>
+</li>
+      <li><a href="api/config/collection.html#dpeva.config.CollectionConfig.llpr_regularizer">llpr_regularizer（dpeva.config.CollectionConfig 属性）</a>
+</li>
+      <li><a href="api/config/collection.html#dpeva.config.CollectionConfig.llpr_save_state_path">llpr_save_state_path（dpeva.config.CollectionConfig 属性）</a>
+</li>
+      <li><a href="api/config/collection.html#dpeva.config.CollectionConfig.llpr_state_path">llpr_state_path（dpeva.config.CollectionConfig 属性）</a>
+</li>
+      <li><a href="api/config/collection.html#dpeva.config.CollectionConfig.llpr_strict_metatrain_parity">llpr_strict_metatrain_parity（dpeva.config.CollectionConfig 属性）</a>
+</li>
+      <li><a href="api/config/collection.html#dpeva.config.CollectionConfig.llpr_targets">llpr_targets（dpeva.config.CollectionConfig 属性）</a>
+</li>
+      <li><a href="api/config/collection.html#dpeva.config.CollectionConfig.llpr_train_feature_dir">llpr_train_feature_dir（dpeva.config.CollectionConfig 属性）</a>
+</li>
       <li><a href="api/labeling.html#dpeva.labeling.AbacusPostProcessor.load_data">load_data() （dpeva.labeling.AbacusPostProcessor 方法）</a>
 </li>
   </ul></td>
@@ -1035,6 +1080,8 @@ document.write(`
 </li>
       <li><a href="api/config/labeling.html#dpeva.config.LabelingConfig.merged_training_data_path">merged_training_data_path（dpeva.config.LabelingConfig 属性）</a>
 </li>
+      <li><a href="api/config/exploration.html#dpeva.config.ExplorationConfig.metadata">metadata（dpeva.config.ExplorationConfig 属性）</a>
+</li>
       <li><a href="api/config/feature.html#dpeva.config.FeatureConfig.model_head">model_head（dpeva.config.FeatureConfig 属性）</a>
 </li>
       <li><a href="api/config/inference.html#dpeva.config.InferenceConfig.model_head">model_head（dpeva.config.InferenceConfig 属性）</a>
@@ -1043,10 +1090,10 @@ document.write(`
 </li>
       <li><a href="api/config/feature.html#dpeva.config.FeatureConfig.model_path">model_path（dpeva.config.FeatureConfig 属性）</a>
 </li>
-      <li><a href="api/config/analysis.html#dpeva.config.AnalysisConfig.mode">mode（dpeva.config.AnalysisConfig 属性）</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/config/analysis.html#dpeva.config.AnalysisConfig.mode">mode（dpeva.config.AnalysisConfig 属性）</a>
+</li>
       <li><a href="api/config/feature.html#dpeva.config.FeatureConfig.mode">mode（dpeva.config.FeatureConfig 属性）</a>
 </li>
       <li>
@@ -1145,6 +1192,8 @@ document.write(`
       <li><a href="api/labeling.html#dpeva.labeling.ResubmissionStrategy">ResubmissionStrategy（dpeva.labeling 中的类）</a>
 </li>
       <li><a href="api/config/analysis.html#dpeva.config.AnalysisConfig.result_dir">result_dir（dpeva.config.AnalysisConfig 属性）</a>
+</li>
+      <li><a href="api/config/exploration.html#dpeva.config.ExplorationConfig.result_structure_paths">result_structure_paths（dpeva.config.ExplorationConfig 属性）</a>
 </li>
       <li><a href="api/config/analysis.html#dpeva.config.AnalysisConfig.results_prefix">results_prefix（dpeva.config.AnalysisConfig 属性）</a>
 </li>
@@ -1248,6 +1297,12 @@ document.write(`
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/config/collection.html#dpeva.config.CollectionConfig.uq_auto_bounds">uq_auto_bounds（dpeva.config.CollectionConfig 属性）</a>
 </li>
+      <li><a href="api/config/collection.html#dpeva.config.CollectionConfig.uq_backend">uq_backend（dpeva.config.CollectionConfig 属性）</a>
+</li>
+      <li><a href="api/config/collection.html#dpeva.config.CollectionConfig.uq_llpr_energy_trust_hi">uq_llpr_energy_trust_hi（dpeva.config.CollectionConfig 属性）</a>
+</li>
+      <li><a href="api/config/collection.html#dpeva.config.CollectionConfig.uq_llpr_energy_trust_lo">uq_llpr_energy_trust_lo（dpeva.config.CollectionConfig 属性）</a>
+</li>
       <li><a href="api/config/collection.html#dpeva.config.CollectionConfig.uq_qbc_trust_hi">uq_qbc_trust_hi（dpeva.config.CollectionConfig 属性）</a>
 </li>
       <li><a href="api/config/collection.html#dpeva.config.CollectionConfig.uq_qbc_trust_lo">uq_qbc_trust_lo（dpeva.config.CollectionConfig 属性）</a>
@@ -1256,10 +1311,10 @@ document.write(`
 </li>
       <li><a href="api/config/collection.html#dpeva.config.CollectionConfig.uq_qbc_trust_width">uq_qbc_trust_width（dpeva.config.CollectionConfig 属性）</a>
 </li>
-      <li><a href="api/config/collection.html#dpeva.config.CollectionConfig.uq_rnd_rescaled_trust_hi">uq_rnd_rescaled_trust_hi（dpeva.config.CollectionConfig 属性）</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/config/collection.html#dpeva.config.CollectionConfig.uq_rnd_rescaled_trust_hi">uq_rnd_rescaled_trust_hi（dpeva.config.CollectionConfig 属性）</a>
+</li>
       <li><a href="api/config/collection.html#dpeva.config.CollectionConfig.uq_rnd_rescaled_trust_lo">uq_rnd_rescaled_trust_lo（dpeva.config.CollectionConfig 属性）</a>
 </li>
       <li><a href="api/config/collection.html#dpeva.config.CollectionConfig.uq_rnd_rescaled_trust_ratio">uq_rnd_rescaled_trust_ratio（dpeva.config.CollectionConfig 属性）</a>
@@ -1300,11 +1355,15 @@ document.write(`
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/submission.html#dpeva.submission.JobConfig.walltime">walltime（dpeva.submission.JobConfig 属性）</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/config/submission.html#dpeva.config.BaseWorkflowConfig.work_dir">work_dir（dpeva.config.BaseWorkflowConfig 属性）</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/config/exploration.html#dpeva.config.ExplorationConfig.work_dir">work_dir（dpeva.config.ExplorationConfig 属性）</a>
+</li>
       <li><a href="api/config/labeling.html#dpeva.config.LabelingConfig.work_dir">work_dir（dpeva.config.LabelingConfig 属性）</a>
+</li>
+      <li><a href="api/config/exploration.html#dpeva.config.ExplorationConfig.workflow_type">workflow_type（dpeva.config.ExplorationConfig 属性）</a>
 </li>
   </ul></td>
 </tr></table>

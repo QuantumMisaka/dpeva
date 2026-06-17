@@ -2,7 +2,8 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-03-11
+last-updated: 2026-06-10
+owner: Workflow Owner
 ---
 
 # Quickstart（最短路径跑通）
@@ -10,7 +11,7 @@ last-updated: 2026-03-11
 - Status: active
 - Audience: Users / Developers
 - Applies-To: CLI 模式（推荐）
-- Last-Updated: 2026-03-11
+- Last-Updated: 2026-06-10
 
 ## 1. 目的与范围
 

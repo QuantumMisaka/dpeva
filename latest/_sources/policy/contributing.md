@@ -2,7 +2,7 @@
 title: 文档贡献指南 (Contributing)
 status: active
 audience: Developers / Maintainers
-last-updated: 2026-03-10
+last-updated: 2026-06-10
 owner: Docs Owner
 ---
 

@@ -2,7 +2,8 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-03-11
+last-updated: 2026-06-10
+owner: Workflow Owner
 ---
 
 # Slurm 使用与排障指南
@@ -10,7 +11,7 @@ last-updated: 2026-03-11
 - Status: active
 - Audience: Users / Developers / Infra
 - Applies-To: `submission.backend="slurm"`
-- Last-Updated: 2026-03-11
+- Last-Updated: 2026-06-10
 
 ## 1. 目的与范围
 

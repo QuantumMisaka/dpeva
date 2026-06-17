@@ -2,7 +2,7 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-04-06
+last-updated: 2026-06-16
 owner: Docs Owner
 ---
 
@@ -10,14 +10,14 @@ owner: Docs Owner
 
 - Status: active
 - Audience: Developers
-- Last-Updated: 2026-04-06
+- Last-Updated: 2026-06-10
 - Related:
   - 配置字段字典：`API Reference`（由 `src/dpeva/config.py` 自动生成）
   - 校验规则补充：`docs/reference/validation.md`
   - 上游软件与职责：`docs/reference/upstream-software.md`
 
-* **版本**: 0.7.2
-* **生成日期**: 2026-04-05
+* **版本**: 0.8.0
+* **生成日期**: 2026-06-16
 * **作者**: Quantum Misaka with Trae SOLO
 
 ---
@@ -523,7 +523,8 @@ Auto-UQ 用于根据数据分布自动确定筛选边界；具体的字段与约
     pytest tests/unit
     
     # 带覆盖率报告的运行 (推荐)
-    pytest tests/unit --cov=dpeva --cov-report=term-missing
+    mkdir -p build/coverage
+    pytest tests/unit --cov=src/dpeva --cov-branch --cov-report=term --cov-report=json:build/coverage/coverage-unit.json --cov-fail-under=80
     ```
     *   **规范**:
         *   **Mock 外部依赖**: 所有对 `dp`, `dpdata`, `slurm` 的调用必须被 Mock，严禁在单元测试中产生实际的文件 I/O 或进程提交。
@@ -580,7 +581,7 @@ DPEVA_TAG: WORKFLOW_FINISHED
 1.  **历史归档 (Historical Archive)**：
     *   对于重大版本重置（如 v2.x -> v0.4.x）之前的历史记录，不再保留详细条目，仅进行概要性总结。
 2.  **当前纪元 (Current Era)**：
-    *   当前主版本系列（v0.7.x）必须保持**完整**的记录链条。
+    *   当前主版本系列（v0.8.x）必须保持**完整**的记录链条。
     *   **追加式记录 (Append-only)**：新版本记录应始终添加在列表顶部，严禁覆盖或修改旧版本的历史条目。
     *   **中间版本找回**：若因误操作导致记录丢失，必须基于 git log 进行回溯与补全。
 
@@ -588,16 +589,32 @@ DPEVA_TAG: WORKFLOW_FINISHED
 
 - `scripts/release_helper.py` 只负责同步 `src/dpeva/__init__.py` 与 `README.md` 中的版本号。
 - 发布说明的权威写入位置始终是本文件的 `### 6.2 版本历史`，脚本不会自动追加版本条目。
-- 使用脚本完成版本号更新后，必须手动在 `#### Current Era (v0.7.x)` 顶部追加新版本记录，再执行提交与打 tag。
+- 使用脚本完成版本号更新后，必须手动在 `#### Current Era (v0.8.x)` 顶部追加新版本记录，再执行提交与打 tag。
 
 ### 6.2 版本历史
 
-#### **Current Era (v0.7.x)**
+#### **Current Era (v0.8.x)**
+
+*   **v0.8.0** (2026-06-10):
+    *   **[版本]** 开启 v0.8.0 开发周期，移除 Labeling 对 GitLab `ase-abacus` fork 的运行时绑定，并以可选 backend 方式接入 `atst-tools` exploration 能力。
+    *   **[依赖]** 将核心 ASE 下限提升至 `ase>=3.28.0`，与 `atst-tools` 运行环境对齐；`atst-tools>=2.1.0` 仅通过 `dpeva[explore]` 可选安装。
+    *   **[Labeling]** 新增内部 ABACUS INPUT/KPT/STRU writer，参考 `atst-tools` vendored `abacuslite` 的当前写入子集，标准 ASE 环境下不再依赖 `ase.io.abacus`。
+    *   **[测试]** 为 ABACUS writer 固化 `INPUT/KPT/STRU` golden baseline，防止 Labeling prepare 输出格式漂移。
+    *   **[Exploration]** 新增 `dpeva.exploration` 抽象层、`ATSTToolsBackend` 与 `dpeva explore` CLI，首版支持 `md` 与 `relax`。
+    *   **[Exploration]** `ATSTToolsBackend` 新增 DPEVA 侧输入结构快照与 `dpeva_exploration_result.json` manifest，统一记录成功和失败结果。
+    *   **[CI/CD]** 新增 `dpeva[explore]` optional extra smoke check，覆盖 `dpeva explore --help` 与 `atst --help`。
+    *   **[特性准备]** 将 v0.7.2 之后已并入的模型对比报告生成器纳入 v0.8.0 变更范围，保留其单测基线与 DPA 模型对比报告产物生成能力。
+    *   **[修复]** 纳入 DeepMD 开发版本号解析兼容修复，允许 `0.1.dev*+g...` 等开发构建版本被环境检查正确识别。
+    *   **[治理]** 纳入 docs/reports 去冗余治理：明确总报告、专题报告、系列实验报告与归档报告的生命周期边界，并将 2026-04-05 阶段性治理闭环记录迁入归档。
+    *   **[自动化]** 纳入文档治理自动化加固：`doc_check.py` 默认阻断 active 文档缺 owner，`check_docs_freshness.py` 以 front matter `last-updated` 为主，`verify_docs.sh` 统一串联治理、freshness 与 Sphinx 构建。
+    *   **[计划]** 将 `docs/archive/v0.8.0/plans/2026-06-10-v0.8.0-atst-integration-plan.md` 归档为 v0.8.0 ATST integration 的计划入口与验收索引。
+
+#### **Previous Era (v0.7.x)**
 
 *   **v0.7.2** (2026-04-05):
     *   **[测试]** 围绕核心功能模块开展单元测试集中攻坚，补强 `labeling/postprocess`、`analysis/managers`、`inference/managers`、`workflows/feature` 与 `workflows/labeling` 的关键正向、异常与边界分支覆盖。
     *   **[质量]** 修复 `test_analysis_workflow.py` 中因缩进导致的隐藏未收集测试，清理空测试并将共享随机 fixture 固定为确定性生成，降低测试波动性。
-    *   **[CI/CD]** 为单元测试接入覆盖率门禁与 `coverage-unit.json` 产物上传，当前单测回归为 `373 passed`，总覆盖率提升至 `83.92%`。
+    *   **[CI/CD]** 为单元测试接入覆盖率门禁与 `build/coverage/coverage-unit.json` 产物上传，当前单测回归为 `373 passed`，总覆盖率提升至 `83.92%`。
     *   **[文档]** 新增单元测试专项审查报告与集中攻坚计划，沉淀覆盖率短板、整改路径与回归验证基线。
     *   **[发布]** 版本升级至 `0.7.2`，同步 `__init__`、`README`、Sphinx `conf.py` 与开发文档中的版本标识。
 

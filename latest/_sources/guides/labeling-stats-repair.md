@@ -2,7 +2,7 @@
 title: Labeling 历史统计修复
 status: active
 audience: Developers
-last-updated: 2026-03-14
+last-updated: 2026-06-14
 owner: Labeling Maintainers
 ---
 

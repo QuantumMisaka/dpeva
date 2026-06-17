@@ -37,7 +37,7 @@
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="../_static/documentation_options.js?v=2eb37dcf"></script>
+    <script src="../_static/documentation_options.js?v=d2c02a7d"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -46,7 +46,7 @@
     <link rel="index" title="索引" href="../genindex.html" />
     <link rel="search" title="搜索" href="../search.html" />
     <link rel="next" title="Quickstart（最短路径跑通）" href="quickstart.html" />
-    <link rel="prev" title="&lt;no title&gt;" href="../index.html" />
+    <link rel="prev" title="Citation" href="../index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="zh-CN"/>
   </head>
@@ -178,6 +178,7 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="../api/config.html">Configuration Reference</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../api/config/submission.html">Common &amp; Submission Configuration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../api/config/feature.html">Feature Generation Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/config/exploration.html">Exploration Configuration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../api/config/training.html">Training Configuration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../api/config/inference.html">Inference Configuration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../api/config/collection.html">Collection (Active Learning) Configuration</a></li>
@@ -368,6 +369,7 @@ document.write(`
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">4. 安装方式</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">4.1 可编辑安装（推荐用于开发/使用）</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">4.2 开发依赖（可选）</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#exploration">4.3 Exploration 可选依赖</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#deepmd-kit">5. 外部依赖：DeepMD-kit</a></li>
@@ -388,7 +390,7 @@ document.write(`
 <ul class="simple">
 <li><p>Status: active</p></li>
 <li><p>Audience: Users / Developers</p></li>
-<li><p>Last-Updated: 2026-02-19</p></li>
+<li><p>Last-Updated: 2026-06-10</p></li>
 </ul>
 <section id="id1">
 <h2>1. 目的与范围<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
@@ -428,6 +430,23 @@ document.write(`
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s1">&#39;.[dev]&#39;</span>
 </pre></div>
 </div>
+</section>
+<section id="exploration">
+<h3>4.3 Exploration 可选依赖<a class="headerlink" href="#exploration" title="Link to this heading">#</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">dpeva</span> <span class="pre">explore</span></code> 通过可选 <code class="docutils literal notranslate"><span class="pre">atst-tools</span></code> backend 调用轨迹探索工作流。该依赖不进入核心安装，需要时单独启用：</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s1">&#39;.[explore]&#39;</span>
+</pre></div>
+</div>
+<p>验证：</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>dpeva<span class="w"> </span>explore<span class="w"> </span>--help
+atst<span class="w"> </span>--help
+</pre></div>
+</div>
+<p>说明：</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">dpeva[explore]</span></code> 只安装 DP-EVA 的 exploration backend 依赖。</p></li>
+<li><p>ABACUS、DeePMD 模型文件、赝势和轨道文件仍由具体 ATST 配置与运行环境提供。</p></li>
+</ul>
 </section>
 </section>
 <section id="deepmd-kit">
@@ -480,7 +499,7 @@ document.write(`
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">上一页</p>
-        <p class="prev-next-title">&lt;no title&gt;</p>
+        <p class="prev-next-title">Citation</p>
       </div>
     </a>
     <a class="right-next"
@@ -514,6 +533,7 @@ document.write(`
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">4. 安装方式</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">4.1 可编辑安装（推荐用于开发/使用）</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">4.2 开发依赖（可选）</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#exploration">4.3 Exploration 可选依赖</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#deepmd-kit">5. 外部依赖：DeepMD-kit</a></li>

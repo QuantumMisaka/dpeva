@@ -36,7 +36,7 @@
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="../../../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="../../../_static/documentation_options.js?v=2eb37dcf"></script>
+    <script src="../../../_static/documentation_options.js?v=d2c02a7d"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -613,6 +613,7 @@ window.runMermaid = runMermaid;</script>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../../api/config.html">Configuration Reference</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../../api/config/submission.html">Common &amp; Submission Configuration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../api/config/feature.html">Feature Generation Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/config/exploration.html">Exploration Configuration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../api/config/training.html">Training Configuration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../api/config/inference.html">Inference Configuration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../api/config/collection.html">Collection (Active Learning) Configuration</a></li>
@@ -766,15 +767,12 @@ document.write(`
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">ase</span><span class="w"> </span><span class="kn">import</span> <span class="n">Atoms</span>
-<span class="k">try</span><span class="p">:</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">ase.io.abacus</span><span class="w"> </span><span class="kn">import</span> <span class="n">write_input</span><span class="p">,</span> <span class="n">write_abacus</span>
-<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
-    <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
-        <span class="s2">&quot;Could not import ase.io.abacus. This module requires the &#39;ase-abacus&#39; plugin.</span><span class="se">\n</span><span class="s2">&quot;</span>
-        <span class="s2">&quot;Please install it via:</span><span class="se">\n</span><span class="s2">&quot;</span>
-        <span class="s2">&quot;  pip install git+https://gitlab.com/1041176461/ase-abacus.git&quot;</span>
-    <span class="p">)</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">dpeva.labeling.abacus_io</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">write_input_file</span><span class="p">,</span>
+    <span class="n">write_kpt_file</span><span class="p">,</span>
+    <span class="n">write_stru_file</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dpeva.labeling.structure</span><span class="w"> </span><span class="kn">import</span> <span class="n">StructureAnalyzer</span>
 
 <span class="c1"># Configure logging</span>
@@ -855,12 +853,6 @@ document.write(`
                     <span class="n">kpoints</span><span class="p">[</span><span class="n">dim</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kpt_criteria</span> <span class="o">/</span> <span class="n">length</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
         <span class="k">return</span> <span class="n">kpoints</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_write_kpt_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">kpoints</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Write KPT file.&quot;&quot;&quot;</span>
-        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;K_POINTS</span><span class="se">\n</span><span class="s2">0</span><span class="se">\n</span><span class="s2">Gamma</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
-            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">kpoints</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">kpoints</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">kpoints</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s2"> 0 0 0</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
-
 <div class="viewcode-block" id="AbacusGenerator.generate">
 <a class="viewcode-back" href="../../../api/labeling.html#dpeva.labeling.AbacusGenerator.generate">[文档]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">generate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">atoms</span><span class="p">:</span> <span class="n">Atoms</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span> <span class="n">task_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> 
@@ -933,20 +925,14 @@ document.write(`
         <span class="bp">self</span><span class="o">.</span><span class="n">_set_magmom</span><span class="p">(</span><span class="n">atoms</span><span class="p">)</span>
         
         <span class="c1"># Write Files</span>
-        <span class="n">input_params</span><span class="p">[</span><span class="s1">&#39;pp&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pp_map</span>
-        <span class="n">input_params</span><span class="p">[</span><span class="s1">&#39;basis&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">orb_map</span>
         <span class="n">input_params</span><span class="p">[</span><span class="s1">&#39;pseudo_dir&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pp_dir</span>
         <span class="n">input_params</span><span class="p">[</span><span class="s1">&#39;basis_dir&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">orb_dir</span> 
-        
-        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">output_dir</span> <span class="o">/</span> <span class="s2">&quot;INPUT&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-            <span class="n">write_input</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">parameters</span><span class="o">=</span><span class="n">input_params</span><span class="p">)</span>
-            <span class="k">if</span> <span class="s1">&#39;orbital_dir&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">input_params</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">orb_dir</span><span class="p">:</span>
-                 <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;orbital_dir </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">orb_dir</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s1">&#39;orbital_dir&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">input_params</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">orb_dir</span><span class="p">:</span>
+            <span class="n">input_params</span><span class="p">[</span><span class="s1">&#39;orbital_dir&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">orb_dir</span>
 
-        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">output_dir</span> <span class="o">/</span> <span class="s2">&quot;STRU&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-            <span class="n">write_abacus</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">atoms</span><span class="p">,</span> <span class="n">pp</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pp_map</span><span class="p">,</span> <span class="n">basis</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">orb_map</span><span class="p">)</span>
-            
-        <span class="bp">self</span><span class="o">.</span><span class="n">_write_kpt_file</span><span class="p">(</span><span class="n">output_dir</span> <span class="o">/</span> <span class="s2">&quot;KPT&quot;</span><span class="p">,</span> <span class="n">kpoints</span><span class="p">)</span>
+        <span class="n">write_input_file</span><span class="p">(</span><span class="n">output_dir</span> <span class="o">/</span> <span class="s2">&quot;INPUT&quot;</span><span class="p">,</span> <span class="n">input_params</span><span class="p">)</span>
+        <span class="n">write_stru_file</span><span class="p">(</span><span class="n">output_dir</span> <span class="o">/</span> <span class="s2">&quot;STRU&quot;</span><span class="p">,</span> <span class="n">atoms</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pp_map</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">orb_map</span><span class="p">)</span>
+        <span class="n">write_kpt_file</span><span class="p">(</span><span class="n">output_dir</span> <span class="o">/</span> <span class="s2">&quot;KPT&quot;</span><span class="p">,</span> <span class="n">kpoints</span><span class="p">)</span>
         
         <span class="c1"># Dump viz files</span>
         <span class="n">atoms</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">output_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">task_name</span><span class="si">}</span><span class="s2">.cif&quot;</span><span class="p">)</span>
@@ -954,7 +940,6 @@ document.write(`
         
         <span class="k">return</span> <span class="n">stru_type</span></div>
 </div>
-
 
 </pre></div>
 

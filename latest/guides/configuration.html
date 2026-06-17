@@ -37,7 +37,7 @@
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="../_static/documentation_options.js?v=2eb37dcf"></script>
+    <script src="../_static/documentation_options.js?v=d2c02a7d"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -178,6 +178,7 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="../api/config.html">Configuration Reference</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../api/config/submission.html">Common &amp; Submission Configuration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../api/config/feature.html">Feature Generation Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/config/exploration.html">Exploration Configuration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../api/config/training.html">Training Configuration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../api/config/inference.html">Inference Configuration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../api/config/collection.html">Collection (Active Learning) Configuration</a></li>
@@ -381,6 +382,7 @@ document.write(`
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#collect">5.4 Collect</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#analysis">5.5 Analysis</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#labeling">5.6 Labeling</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#exploration">5.7 Exploration</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">6. 异常处理</a></li>
@@ -401,7 +403,7 @@ document.write(`
 <ul class="simple">
 <li><p>Status: active</p></li>
 <li><p>Audience: Users / Developers</p></li>
-<li><p>Last-Updated: 2026-04-05</p></li>
+<li><p>Last-Updated: 2026-06-12</p></li>
 </ul>
 <section id="id1">
 <h2>1. 目的与范围<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
@@ -531,6 +533,26 @@ document.write(`
 <span class="p">}</span>
 </pre></div>
 </div>
+<p>LLPR / energy DPOSE 可作为 Collect UQ backend 使用。最小 energy LLPR 只需要训练集与候选集 last-layer feature 目录；请求 shallow ensemble 时必须提供真实最后一层权重和候选 base energy，默认 strict parity 不会用 synthetic weights 冒充 DPOSE：</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;uq_backend&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;llpr&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;llpr_train_feature_dir&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;./train_last_layer&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;llpr_candidate_feature_dir&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;./candidate_last_layer&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;llpr_feature_normalization&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;mean&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;llpr_num_ensemble_members&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">8</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;llpr_last_layer_weights_path&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;./last_layer_weights.npy&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;llpr_candidate_energy_path&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;./candidate_energy.npy&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;llpr_collect_score&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;energy_ensemble_std_per_atom&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>可选字段：</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">llpr_model_path</span></code> / <code class="docutils literal notranslate"><span class="pre">llpr_model_head</span></code>：未显式提供 <code class="docutils literal notranslate"><span class="pre">llpr_last_layer_weights_path</span></code> 时，从 PyTorch checkpoint/state_dict 按 feature dimension 解析 energy fitting last linear weight。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">llpr_state_path</span></code> / <code class="docutils literal notranslate"><span class="pre">llpr_save_state_path</span></code>：复用或保存 LLPR covariance/Cholesky/alpha 状态。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">llpr_ensemble_output_path</span></code>：自定义 <code class="docutils literal notranslate"><span class="pre">energy_ensemble.npy</span></code> 输出路径；未设置时写到 Collect 输出根目录下。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">llpr_collect_score</span></code>：支持 <code class="docutils literal notranslate"><span class="pre">energy_uncertainty_per_atom</span></code>（默认）、<code class="docutils literal notranslate"><span class="pre">energy_ensemble_std_per_atom</span></code>、<code class="docutils literal notranslate"><span class="pre">force_uncertainty_max</span></code>。当前 detached feature workflow 只支持 energy；force DPOSE 仍需要可微 DeepMD PyTorch graph adapter。</p></li>
+</ul>
 </section>
 <section id="analysis">
 <h3>5.5 Analysis<a class="headerlink" href="#analysis" title="Link to this heading">#</a></h3>
@@ -588,6 +610,20 @@ document.write(`
 </pre></div>
 </div>
 </section>
+<section id="exploration">
+<h3>5.7 Exploration<a class="headerlink" href="#exploration" title="Link to this heading">#</a></h3>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;work_dir&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;./explore_work&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;backend&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;atst-tools&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;workflow_type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;md&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;backend_config_path&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;./atst_md.yaml&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;result_structure_paths&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;./explore_work/result.extxyz&quot;</span><span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Exploration 是可选能力。使用 <code class="docutils literal notranslate"><span class="pre">backend:</span> <span class="pre">&quot;atst-tools&quot;</span></code> 前需安装 <code class="docutils literal notranslate"><span class="pre">dpeva[explore]</span></code>，首版仅支持 <code class="docutils literal notranslate"><span class="pre">workflow_type</span></code> 为 <code class="docutils literal notranslate"><span class="pre">md</span></code> 或 <code class="docutils literal notranslate"><span class="pre">relax</span></code>。<code class="docutils literal notranslate"><span class="pre">backend_config_path</span></code> 保持后端原生格式，DPEVA 不重写 ATST YAML。</p>
+<p>运行完成后，DPEVA 会在 <code class="docutils literal notranslate"><span class="pre">work_dir/dpeva_exploration_result.json</span></code> 写入标准 manifest。若配置了 <code class="docutils literal notranslate"><span class="pre">input_structure_paths</span></code>，这些结构会作为可追溯输入快照写入 <code class="docutils literal notranslate"><span class="pre">work_dir/dpeva_inputs/</span></code>；若配置了 <code class="docutils literal notranslate"><span class="pre">result_structure_paths</span></code>，这些路径必须在 backend 成功后存在并可由 ASE 读取。</p>
+</section>
 </section>
 <section id="id6">
 <h2>6. 异常处理<a class="headerlink" href="#id6" title="Link to this heading">#</a></h2>
@@ -600,6 +636,9 @@ document.write(`
 <section id="id7">
 <h2>7. 变更记录<a class="headerlink" href="#id7" title="Link to this heading">#</a></h2>
 <ul class="simple">
+<li><p>2026-06-12：补充 Collect LLPR / energy DPOSE ensemble 配置字段、状态复用和 strict parity 约束。</p></li>
+<li><p>2026-06-11：补充 Exploration manifest、输入结构快照与结果结构校验契约。</p></li>
+<li><p>2026-06-10：新增 Exploration 最小配置示例，明确 <code class="docutils literal notranslate"><span class="pre">atst-tools</span></code> 为可选 backend。</p></li>
 <li><p>2026-03-30：Analysis 配置新增 <code class="docutils literal notranslate"><span class="pre">enhanced_parity_renderer</span></code>，并补充 quantity-aware parity 渲染策略说明。</p></li>
 <li><p>2026-03-16：Analysis 最小配置增加 <code class="docutils literal notranslate"><span class="pre">data_path</span></code>、<code class="docutils literal notranslate"><span class="pre">enable_cohesive_energy</span></code>、<code class="docutils literal notranslate"><span class="pre">allow_ref_energy_lstsq_completion</span></code>，并补充 Cohesive Energy 配置建议。</p></li>
 <li><p>2026-03-11：配置字段权威入口改为 API Reference，并补充 Labeling 最小配置示例。</p></li>
@@ -672,6 +711,7 @@ document.write(`
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#collect">5.4 Collect</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#analysis">5.5 Analysis</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#labeling">5.6 Labeling</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#exploration">5.7 Exploration</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">6. 异常处理</a></li>

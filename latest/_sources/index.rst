@@ -2,6 +2,11 @@
 
 **Deep Potential EVolution Accelerator (DP-EVA)** is an active learning framework designed for efficient fine-tuning of DPA universal machine learning interatomic potential.
 
+Citation
+--------
+
+If you use DP-EVA, please cite the project article: `DP-EVA in Clean Energy <https://doi.org/10.1093/ce/zkag029>`__.
+
 .. toctree::
    :maxdepth: 2
    :caption: Getting Started

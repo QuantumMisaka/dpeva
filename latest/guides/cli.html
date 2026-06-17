@@ -37,7 +37,7 @@
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="../_static/documentation_options.js?v=2eb37dcf"></script>
+    <script src="../_static/documentation_options.js?v=d2c02a7d"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -178,6 +178,7 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="../api/config.html">Configuration Reference</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../api/config/submission.html">Common &amp; Submission Configuration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../api/config/feature.html">Feature Generation Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/config/exploration.html">Exploration Configuration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../api/config/training.html">Training Configuration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../api/config/inference.html">Inference Configuration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../api/config/collection.html">Collection (Active Learning) Configuration</a></li>
@@ -373,10 +374,11 @@ document.write(`
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#train">4.1 train（并行微调训练）</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#infer">4.2 infer（并行推理）</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#feature">4.3 feature（描述符生成）</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#collect-uq-filtering-sampling-export">4.4 collect（UQ + Filtering + Sampling + Export）</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#label">4.5 label（标注）</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#analysis">4.6 analysis（双模式分析）</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#clean">4.7 clean（基于推理误差阈值的数据清洗）</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#explore">4.4 explore（轨迹探索，可选）</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#collect-uq-filtering-sampling-export">4.5 collect（UQ + Filtering + Sampling + Export）</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#label">4.6 label（标注）</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#analysis">4.7 analysis（双模式分析）</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#clean">4.8 clean（基于推理误差阈值的数据清洗）</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">5. 完成标记与链式编排</a></li>
@@ -399,14 +401,14 @@ document.write(`
 <li><p>Status: active</p></li>
 <li><p>Audience: Users / Developers</p></li>
 <li><p>Applies-To: CLI 模式（推荐）</p></li>
-<li><p>Last-Updated: 2026-04-05</p></li>
+<li><p>Last-Updated: 2026-06-10</p></li>
 </ul>
 <section id="id1">
 <h2>1. 目的与范围<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
 <p>本页说明 DP-EVA 的统一命令行入口、子命令职责、配置文件约定、输出与失败定位方式。</p>
 <p>范围：</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">dpeva</span> <span class="pre">train</span> <span class="pre">/</span> <span class="pre">infer</span> <span class="pre">/</span> <span class="pre">feature</span> <span class="pre">/</span> <span class="pre">collect</span> <span class="pre">/</span> <span class="pre">label</span> <span class="pre">/</span> <span class="pre">analysis</span> <span class="pre">/</span> <span class="pre">clean</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">dpeva</span> <span class="pre">train</span> <span class="pre">/</span> <span class="pre">infer</span> <span class="pre">/</span> <span class="pre">feature</span> <span class="pre">/</span> <span class="pre">explore</span> <span class="pre">/</span> <span class="pre">collect</span> <span class="pre">/</span> <span class="pre">label</span> <span class="pre">/</span> <span class="pre">analysis</span> <span class="pre">/</span> <span class="pre">clean</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">--no-banner</span></code></p></li>
 </ul>
 </section>
@@ -511,8 +513,34 @@ dpeva<span class="w"> </span>train<span class="w"> </span>--help
 </ul>
 <p>示例配置：<code class="docutils literal notranslate"><span class="pre">examples/recipes/feature_generation/config_feature.json</span></code></p>
 </section>
+<section id="explore">
+<h3>4.4 explore（轨迹探索，可选）<a class="headerlink" href="#explore" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p>输入</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">ExplorationConfig</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">backend_config_path</span></code>（后端原生配置，例如 ATST YAML）</p></li>
+<li><p>可选 <code class="docutils literal notranslate"><span class="pre">result_structure_paths</span></code>（后端完成后需要回收的结构文件）</p></li>
+</ul>
+</li>
+<li><p>功能</p>
+<ul>
+<li><p>通过可选 backend 启动轨迹探索。</p></li>
+<li><p>v0.8.0 首个 backend 为 <code class="docutils literal notranslate"><span class="pre">atst-tools</span></code>，支持 <code class="docutils literal notranslate"><span class="pre">workflow_type=md|relax</span></code>。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">atst-tools</span></code> 不属于核心依赖；需要时安装 <code class="docutils literal notranslate"><span class="pre">dpeva[explore]</span></code>。</p></li>
+<li><p>成功或失败都会在 <code class="docutils literal notranslate"><span class="pre">work_dir/dpeva_exploration_result.json</span></code> 写入 manifest。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">input_structure_paths</span></code> 会被快照到 <code class="docutils literal notranslate"><span class="pre">work_dir/dpeva_inputs/</span></code>，<code class="docutils literal notranslate"><span class="pre">result_structure_paths</span></code> 用于声明 backend 运行后需要回收的结构文件。</p></li>
+</ul>
+</li>
+<li><p>输出</p>
+<ul>
+<li><p>由后端原生配置决定；DPEVA 只收集显式配置的结果结构路径。</p></li>
+</ul>
+</li>
+</ul>
+</section>
 <section id="collect-uq-filtering-sampling-export">
-<h3>4.4 collect（UQ + Filtering + Sampling + Export）<a class="headerlink" href="#collect-uq-filtering-sampling-export" title="Link to this heading">#</a></h3>
+<h3>4.5 collect（UQ + Filtering + Sampling + Export）<a class="headerlink" href="#collect-uq-filtering-sampling-export" title="Link to this heading">#</a></h3>
 <p><code class="docutils literal notranslate"><span class="pre">collect</span></code> 在 Slurm 后端采用自调用方式提交 worker（配置路径会被传入，避免“冻结配置”写盘）。</p>
 <ul class="simple">
 <li><p>输入（核心）</p>
@@ -534,7 +562,7 @@ dpeva<span class="w"> </span>train<span class="w"> </span>--help
 <p>示例配置：<code class="docutils literal notranslate"><span class="pre">examples/recipes/collection/config_collect_normal.json</span></code>、<code class="docutils literal notranslate"><span class="pre">examples/recipes/collection/config_collect_joint.json</span></code></p>
 </section>
 <section id="label">
-<h3>4.5 label（标注）<a class="headerlink" href="#label" title="Link to this heading">#</a></h3>
+<h3>4.6 label（标注）<a class="headerlink" href="#label" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p>输入</p>
 <ul>
@@ -565,7 +593,7 @@ dpeva<span class="w"> </span>train<span class="w"> </span>--help
 </ul>
 </section>
 <section id="analysis">
-<h3>4.6 analysis（双模式分析）<a class="headerlink" href="#analysis" title="Link to this heading">#</a></h3>
+<h3>4.7 analysis（双模式分析）<a class="headerlink" href="#analysis" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">model_test</span></code> 模式（默认）</p>
 <ul>
@@ -584,7 +612,7 @@ dpeva<span class="w"> </span>train<span class="w"> </span>--help
 <p>示例配置：<code class="docutils literal notranslate"><span class="pre">examples/recipes/analysis/config_analysis.json</span></code></p>
 </section>
 <section id="clean">
-<h3>4.7 clean（基于推理误差阈值的数据清洗）<a class="headerlink" href="#clean" title="Link to this heading">#</a></h3>
+<h3>4.8 clean（基于推理误差阈值的数据清洗）<a class="headerlink" href="#clean" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p>输入</p>
 <ul>
@@ -665,6 +693,8 @@ dpeva<span class="w"> </span>label<span class="w"> </span>config.json<span class
 <section id="id9">
 <h2>7. 变更记录<a class="headerlink" href="#id9" title="Link to this heading">#</a></h2>
 <ul class="simple">
+<li><p>2026-06-11：补充 <code class="docutils literal notranslate"><span class="pre">dpeva</span> <span class="pre">explore</span></code> manifest、输入结构快照和结果结构回收契约。</p></li>
+<li><p>2026-06-10：新增 <code class="docutils literal notranslate"><span class="pre">dpeva</span> <span class="pre">explore</span></code> 可选轨迹探索入口，记录 <code class="docutils literal notranslate"><span class="pre">atst-tools</span></code> backend 的 md/relax 边界。</p></li>
 <li><p>2026-03-03：更新退出码契约说明，明确 <code class="docutils literal notranslate"><span class="pre">WorkflowError</span></code> 会导致退出码 1。</p></li>
 <li><p>2026-03-12：新增 config 路径前置校验说明，补充 label <code class="docutils literal notranslate"><span class="pre">--stage</span></code> 参数和参数解析失败退出码 2。</p></li>
 <li><p>2026-03-11：更新配置权威入口为 API Reference，并同步 infer 日志文件名为 <code class="docutils literal notranslate"><span class="pre">test_job.out</span></code>。</p></li>
@@ -731,10 +761,11 @@ dpeva<span class="w"> </span>label<span class="w"> </span>config.json<span class
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#train">4.1 train（并行微调训练）</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#infer">4.2 infer（并行推理）</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#feature">4.3 feature（描述符生成）</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#collect-uq-filtering-sampling-export">4.4 collect（UQ + Filtering + Sampling + Export）</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#label">4.5 label（标注）</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#analysis">4.6 analysis（双模式分析）</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#clean">4.7 clean（基于推理误差阈值的数据清洗）</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#explore">4.4 explore（轨迹探索，可选）</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#collect-uq-filtering-sampling-export">4.5 collect（UQ + Filtering + Sampling + Export）</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#label">4.6 label（标注）</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#analysis">4.7 analysis（双模式分析）</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#clean">4.8 clean（基于推理误差阈值的数据清洗）</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">5. 完成标记与链式编排</a></li>

@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Feature Generation Configuration &#8212; DP-EVA Documentation</title>
+    <title>Exploration Configuration &#8212; DP-EVA Documentation</title>
   
   
   
@@ -42,11 +42,11 @@
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
     <script src="../../_static/translations.js?v=beaddf03"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'api/config/feature';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'api/config/exploration';</script>
     <link rel="index" title="索引" href="../../genindex.html" />
     <link rel="search" title="搜索" href="../../search.html" />
-    <link rel="next" title="Exploration Configuration" href="exploration.html" />
-    <link rel="prev" title="Common &amp; Submission Configuration" href="submission.html" />
+    <link rel="next" title="Training Configuration" href="training.html" />
+    <link rel="prev" title="Feature Generation Configuration" href="feature.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="zh-CN"/>
   </head>
@@ -177,8 +177,8 @@
 <li class="toctree-l1"><a class="reference internal" href="../../architecture/README.html">Architecture（系统结构）</a></li>
 <li class="toctree-l1 current active has-children"><a class="reference internal" href="../config.html">Configuration Reference</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="submission.html">Common &amp; Submission Configuration</a></li>
-<li class="toctree-l2 current active"><a class="current reference internal" href="#">Feature Generation Configuration</a></li>
-<li class="toctree-l2"><a class="reference internal" href="exploration.html">Exploration Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="feature.html">Feature Generation Configuration</a></li>
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">Exploration Configuration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="training.html">Training Configuration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="inference.html">Inference Configuration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="collection.html">Collection (Active Learning) Configuration</a></li>
@@ -269,7 +269,7 @@
       
       
       
-      <li><a href="../../_sources/api/config/feature.rst" target="_blank"
+      <li><a href="../../_sources/api/config/exploration.rst" target="_blank"
    class="btn btn-sm btn-download-source-button dropdown-item"
    title="下载源文件"
    data-bs-placement="left" data-bs-toggle="tooltip"
@@ -353,7 +353,7 @@ document.write(`
               
 
 <div id="jb-print-docs-body" class="onlyprint">
-    <h1>Feature Generation Configuration</h1>
+    <h1>Exploration Configuration</h1>
     <!-- Table of contents -->
     <div id="print-main-content">
         <div id="jb-print-toc">
@@ -363,15 +363,14 @@ document.write(`
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.FeatureConfig"><code class="docutils literal notranslate"><span class="pre">FeatureConfig</span></code></a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.FeatureConfig.batch_size"><code class="docutils literal notranslate"><span class="pre">FeatureConfig.batch_size</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.FeatureConfig.data_path"><code class="docutils literal notranslate"><span class="pre">FeatureConfig.data_path</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.FeatureConfig.feature_kind"><code class="docutils literal notranslate"><span class="pre">FeatureConfig.feature_kind</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.FeatureConfig.mode"><code class="docutils literal notranslate"><span class="pre">FeatureConfig.mode</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.FeatureConfig.model_head"><code class="docutils literal notranslate"><span class="pre">FeatureConfig.model_head</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.FeatureConfig.model_path"><code class="docutils literal notranslate"><span class="pre">FeatureConfig.model_path</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.FeatureConfig.output_mode"><code class="docutils literal notranslate"><span class="pre">FeatureConfig.output_mode</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.FeatureConfig.savedir"><code class="docutils literal notranslate"><span class="pre">FeatureConfig.savedir</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.ExplorationConfig"><code class="docutils literal notranslate"><span class="pre">ExplorationConfig</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.ExplorationConfig.backend"><code class="docutils literal notranslate"><span class="pre">ExplorationConfig.backend</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.ExplorationConfig.backend_config_path"><code class="docutils literal notranslate"><span class="pre">ExplorationConfig.backend_config_path</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.ExplorationConfig.input_structure_paths"><code class="docutils literal notranslate"><span class="pre">ExplorationConfig.input_structure_paths</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.ExplorationConfig.metadata"><code class="docutils literal notranslate"><span class="pre">ExplorationConfig.metadata</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.ExplorationConfig.result_structure_paths"><code class="docutils literal notranslate"><span class="pre">ExplorationConfig.result_structure_paths</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.ExplorationConfig.work_dir"><code class="docutils literal notranslate"><span class="pre">ExplorationConfig.work_dir</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.ExplorationConfig.workflow_type"><code class="docutils literal notranslate"><span class="pre">ExplorationConfig.workflow_type</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -385,56 +384,53 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="feature-generation-configuration">
-<h1>Feature Generation Configuration<a class="headerlink" href="#feature-generation-configuration" title="Link to this heading">#</a></h1>
+  <section id="exploration-configuration">
+<h1>Exploration Configuration<a class="headerlink" href="#exploration-configuration" title="Link to this heading">#</a></h1>
 <dl class="py class pydantic_model">
-<dt class="sig sig-object py" id="dpeva.config.FeatureConfig">
-<em class="property"><span class="pre">pydantic</span> <span class="pre">model</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dpeva.config.</span></span><span class="sig-name descname"><span class="pre">FeatureConfig</span></span><a class="reference internal" href="../../_modules/dpeva/config.html#FeatureConfig"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#dpeva.config.FeatureConfig" title="Link to this definition">#</a></dt>
-<dd><p>Configuration for Feature Generation Workflow.</p>
+<dt class="sig sig-object py" id="dpeva.config.ExplorationConfig">
+<em class="property"><span class="pre">pydantic</span> <span class="pre">model</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dpeva.config.</span></span><span class="sig-name descname"><span class="pre">ExplorationConfig</span></span><a class="reference internal" href="../../_modules/dpeva/config.html#ExplorationConfig"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#dpeva.config.ExplorationConfig" title="Link to this definition">#</a></dt>
+<dd><p>Configuration for optional trajectory exploration backends.</p>
 <dl class="py attribute pydantic_field">
-<dt class="sig sig-object py" id="dpeva.config.FeatureConfig.batch_size">
-<em class="property"><span class="pre">field</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">batch_size</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1000</span></em><a class="headerlink" href="#dpeva.config.FeatureConfig.batch_size" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute pydantic_field">
-<dt class="sig sig-object py" id="dpeva.config.FeatureConfig.data_path">
-<em class="property"><span class="pre">field</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">data_path</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Path</span></em><em class="property"> <span class="pre">[Required]</span></em><a class="headerlink" href="#dpeva.config.FeatureConfig.data_path" title="Link to this definition">#</a></dt>
-<dd><p>Path to dataset.</p>
+<dt class="sig sig-object py" id="dpeva.config.ExplorationConfig.backend">
+<em class="property"><span class="pre">field</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">backend</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'atst-tools'</span></span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'atst-tools'</span></em><a class="headerlink" href="#dpeva.config.ExplorationConfig.backend" title="Link to this definition">#</a></dt>
+<dd><p>Exploration backend name.</p>
 </dd></dl>
 
 <dl class="py attribute pydantic_field">
-<dt class="sig sig-object py" id="dpeva.config.FeatureConfig.feature_kind">
-<em class="property"><span class="pre">field</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">feature_kind</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'descriptor'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'fitting_last_layer'</span></span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'descriptor'</span></em><a class="headerlink" href="#dpeva.config.FeatureConfig.feature_kind" title="Link to this definition">#</a></dt>
-<dd><p>Feature type to export. <cite>fitting_last_layer</cite> requires Python mode.</p>
+<dt class="sig sig-object py" id="dpeva.config.ExplorationConfig.backend_config_path">
+<em class="property"><span class="pre">field</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">backend_config_path</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Path</span></em><em class="property"> <span class="pre">[Required]</span></em><a class="headerlink" href="#dpeva.config.ExplorationConfig.backend_config_path" title="Link to this definition">#</a></dt>
+<dd><p>Path to the backend-native configuration file.</p>
 </dd></dl>
 
 <dl class="py attribute pydantic_field">
-<dt class="sig sig-object py" id="dpeva.config.FeatureConfig.mode">
-<em class="property"><span class="pre">field</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">mode</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'cli'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'python'</span></span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'cli'</span></em><a class="headerlink" href="#dpeva.config.FeatureConfig.mode" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute pydantic_field">
-<dt class="sig sig-object py" id="dpeva.config.FeatureConfig.model_head">
-<em class="property"><span class="pre">field</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">model_head</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"> <span class="pre">[Required]</span></em><a class="headerlink" href="#dpeva.config.FeatureConfig.model_head" title="Link to this definition">#</a></dt>
-<dd><p>Model head name.</p>
+<dt class="sig sig-object py" id="dpeva.config.ExplorationConfig.input_structure_paths">
+<em class="property"><span class="pre">field</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">input_structure_paths</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Path</span><span class="p"><span class="pre">]</span></span></em><em class="property"> <span class="pre">[Optional]</span></em><a class="headerlink" href="#dpeva.config.ExplorationConfig.input_structure_paths" title="Link to this definition">#</a></dt>
+<dd><p>Optional input structures to pass through the exploration request.</p>
 </dd></dl>
 
 <dl class="py attribute pydantic_field">
-<dt class="sig sig-object py" id="dpeva.config.FeatureConfig.model_path">
-<em class="property"><span class="pre">field</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">model_path</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Path</span></em><em class="property"> <span class="pre">[Required]</span></em><a class="headerlink" href="#dpeva.config.FeatureConfig.model_path" title="Link to this definition">#</a></dt>
-<dd><p>Path to model file.</p>
+<dt class="sig sig-object py" id="dpeva.config.ExplorationConfig.metadata">
+<em class="property"><span class="pre">field</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">metadata</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></em><em class="property"> <span class="pre">[Optional]</span></em><a class="headerlink" href="#dpeva.config.ExplorationConfig.metadata" title="Link to this definition">#</a></dt>
+<dd><p>Backend-specific metadata carried through the request.</p>
 </dd></dl>
 
 <dl class="py attribute pydantic_field">
-<dt class="sig sig-object py" id="dpeva.config.FeatureConfig.output_mode">
-<em class="property"><span class="pre">field</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">output_mode</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'atomic'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'structural'</span></span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'atomic'</span></em><a class="headerlink" href="#dpeva.config.FeatureConfig.output_mode" title="Link to this definition">#</a></dt>
-<dd><p>Descriptor output format. Options: <cite>atomic</cite> (per-atom features) or <cite>structural</cite> (global features).</p>
+<dt class="sig sig-object py" id="dpeva.config.ExplorationConfig.result_structure_paths">
+<em class="property"><span class="pre">field</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">result_structure_paths</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Path</span><span class="p"><span class="pre">]</span></span></em><em class="property"> <span class="pre">[Optional]</span></em><a class="headerlink" href="#dpeva.config.ExplorationConfig.result_structure_paths" title="Link to this definition">#</a></dt>
+<dd><p>Optional result structures to collect after backend execution.</p>
 </dd></dl>
 
 <dl class="py attribute pydantic_field">
-<dt class="sig sig-object py" id="dpeva.config.FeatureConfig.savedir">
-<em class="property"><span class="pre">field</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">savedir</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#dpeva.config.FeatureConfig.savedir" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
+<dt class="sig sig-object py" id="dpeva.config.ExplorationConfig.work_dir">
+<em class="property"><span class="pre">field</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">work_dir</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Path</span></em><em class="property"> <span class="pre">[Optional]</span></em><a class="headerlink" href="#dpeva.config.ExplorationConfig.work_dir" title="Link to this definition">#</a></dt>
+<dd><p>Working directory.</p>
+</dd></dl>
+
+<dl class="py attribute pydantic_field">
+<dt class="sig sig-object py" id="dpeva.config.ExplorationConfig.workflow_type">
+<em class="property"><span class="pre">field</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">workflow_type</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'md'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'relax'</span></span><span class="p"><span class="pre">]</span></span></em><em class="property"> <span class="pre">[Required]</span></em><a class="headerlink" href="#dpeva.config.ExplorationConfig.workflow_type" title="Link to this definition">#</a></dt>
+<dd><p>Exploration workflow type supported by the first ATST backend.</p>
+</dd></dl>
 
 </dd></dl>
 
@@ -452,20 +448,20 @@ document.write(`
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="submission.html"
+       href="feature.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">上一页</p>
-        <p class="prev-next-title">Common &amp; Submission Configuration</p>
+        <p class="prev-next-title">Feature Generation Configuration</p>
       </div>
     </a>
     <a class="right-next"
-       href="exploration.html"
+       href="training.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">下一页</p>
-        <p class="prev-next-title">Exploration Configuration</p>
+        <p class="prev-next-title">Training Configuration</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -485,15 +481,14 @@ document.write(`
   </div>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.FeatureConfig"><code class="docutils literal notranslate"><span class="pre">FeatureConfig</span></code></a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.FeatureConfig.batch_size"><code class="docutils literal notranslate"><span class="pre">FeatureConfig.batch_size</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.FeatureConfig.data_path"><code class="docutils literal notranslate"><span class="pre">FeatureConfig.data_path</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.FeatureConfig.feature_kind"><code class="docutils literal notranslate"><span class="pre">FeatureConfig.feature_kind</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.FeatureConfig.mode"><code class="docutils literal notranslate"><span class="pre">FeatureConfig.mode</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.FeatureConfig.model_head"><code class="docutils literal notranslate"><span class="pre">FeatureConfig.model_head</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.FeatureConfig.model_path"><code class="docutils literal notranslate"><span class="pre">FeatureConfig.model_path</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.FeatureConfig.output_mode"><code class="docutils literal notranslate"><span class="pre">FeatureConfig.output_mode</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.FeatureConfig.savedir"><code class="docutils literal notranslate"><span class="pre">FeatureConfig.savedir</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.ExplorationConfig"><code class="docutils literal notranslate"><span class="pre">ExplorationConfig</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.ExplorationConfig.backend"><code class="docutils literal notranslate"><span class="pre">ExplorationConfig.backend</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.ExplorationConfig.backend_config_path"><code class="docutils literal notranslate"><span class="pre">ExplorationConfig.backend_config_path</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.ExplorationConfig.input_structure_paths"><code class="docutils literal notranslate"><span class="pre">ExplorationConfig.input_structure_paths</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.ExplorationConfig.metadata"><code class="docutils literal notranslate"><span class="pre">ExplorationConfig.metadata</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.ExplorationConfig.result_structure_paths"><code class="docutils literal notranslate"><span class="pre">ExplorationConfig.result_structure_paths</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.ExplorationConfig.work_dir"><code class="docutils literal notranslate"><span class="pre">ExplorationConfig.work_dir</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.ExplorationConfig.workflow_type"><code class="docutils literal notranslate"><span class="pre">ExplorationConfig.workflow_type</span></code></a></li>
 </ul>
 </li>
 </ul>

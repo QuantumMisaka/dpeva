@@ -37,7 +37,7 @@
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="../../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="../../_static/documentation_options.js?v=2eb37dcf"></script>
+    <script src="../../_static/documentation_options.js?v=d2c02a7d"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -178,6 +178,7 @@
 <li class="toctree-l1 current active has-children"><a class="reference internal" href="../config.html">Configuration Reference</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="submission.html">Common &amp; Submission Configuration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="feature.html">Feature Generation Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="exploration.html">Exploration Configuration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="training.html">Training Configuration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="inference.html">Inference Configuration</a></li>
 <li class="toctree-l2 current active"><a class="current reference internal" href="#">Collection (Active Learning) Configuration</a></li>
@@ -374,6 +375,23 @@ document.write(`
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.fig_legend_max_cols"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.fig_legend_max_cols</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.fig_legend_max_rows"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.fig_legend_max_rows</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.fig_tick_target_count"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.fig_tick_target_count</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.llpr_calibration_method"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.llpr_calibration_method</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.llpr_candidate_energy_path"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.llpr_candidate_energy_path</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.llpr_candidate_feature_dir"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.llpr_candidate_feature_dir</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.llpr_collect_score"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.llpr_collect_score</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.llpr_ensemble_output_path"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.llpr_ensemble_output_path</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.llpr_feature_normalization"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.llpr_feature_normalization</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.llpr_last_layer_weights_path"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.llpr_last_layer_weights_path</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.llpr_model_head"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.llpr_model_head</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.llpr_model_path"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.llpr_model_path</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.llpr_num_ensemble_members"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.llpr_num_ensemble_members</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.llpr_random_seed"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.llpr_random_seed</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.llpr_regularizer"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.llpr_regularizer</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.llpr_save_state_path"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.llpr_save_state_path</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.llpr_state_path"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.llpr_state_path</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.llpr_strict_metatrain_parity"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.llpr_strict_metatrain_parity</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.llpr_targets"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.llpr_targets</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.llpr_train_feature_dir"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.llpr_train_feature_dir</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.num_models"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.num_models</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.project"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.project</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.results_prefix"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.results_prefix</span></code></a></li>
@@ -390,6 +408,9 @@ document.write(`
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.training_data_dir"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.training_data_dir</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.training_desc_dir"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.training_desc_dir</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.uq_auto_bounds"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.uq_auto_bounds</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.uq_backend"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.uq_backend</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.uq_llpr_energy_trust_hi"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.uq_llpr_energy_trust_hi</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.uq_llpr_energy_trust_lo"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.uq_llpr_energy_trust_lo</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.uq_qbc_trust_hi"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.uq_qbc_trust_hi</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.uq_qbc_trust_lo"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.uq_qbc_trust_lo</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.uq_qbc_trust_ratio"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.uq_qbc_trust_ratio</span></code></a></li>
@@ -485,6 +506,93 @@ document.write(`
 </dd></dl>
 
 <dl class="py attribute pydantic_field">
+<dt class="sig sig-object py" id="dpeva.config.CollectionConfig.llpr_calibration_method">
+<em class="property"><span class="pre">field</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">llpr_calibration_method</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'squared_residuals'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'absolute_residuals'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'crps'</span></span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'squared_residuals'</span></em><a class="headerlink" href="#dpeva.config.CollectionConfig.llpr_calibration_method" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute pydantic_field">
+<dt class="sig sig-object py" id="dpeva.config.CollectionConfig.llpr_candidate_energy_path">
+<em class="property"><span class="pre">field</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">llpr_candidate_energy_path</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#dpeva.config.CollectionConfig.llpr_candidate_energy_path" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute pydantic_field">
+<dt class="sig sig-object py" id="dpeva.config.CollectionConfig.llpr_candidate_feature_dir">
+<em class="property"><span class="pre">field</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">llpr_candidate_feature_dir</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#dpeva.config.CollectionConfig.llpr_candidate_feature_dir" title="Link to this definition">#</a></dt>
+<dd><p>Candidate-pool DeepMD last-layer feature directory used for LLPR scoring.</p>
+</dd></dl>
+
+<dl class="py attribute pydantic_field">
+<dt class="sig sig-object py" id="dpeva.config.CollectionConfig.llpr_collect_score">
+<em class="property"><span class="pre">field</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">llpr_collect_score</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'energy_uncertainty_per_atom'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'energy_ensemble_std_per_atom'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'force_uncertainty_max'</span></span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'energy_uncertainty_per_atom'</span></em><a class="headerlink" href="#dpeva.config.CollectionConfig.llpr_collect_score" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute pydantic_field">
+<dt class="sig sig-object py" id="dpeva.config.CollectionConfig.llpr_ensemble_output_path">
+<em class="property"><span class="pre">field</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">llpr_ensemble_output_path</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#dpeva.config.CollectionConfig.llpr_ensemble_output_path" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute pydantic_field">
+<dt class="sig sig-object py" id="dpeva.config.CollectionConfig.llpr_feature_normalization">
+<em class="property"><span class="pre">field</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">llpr_feature_normalization</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'sum'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'mean'</span></span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'mean'</span></em><a class="headerlink" href="#dpeva.config.CollectionConfig.llpr_feature_normalization" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute pydantic_field">
+<dt class="sig sig-object py" id="dpeva.config.CollectionConfig.llpr_last_layer_weights_path">
+<em class="property"><span class="pre">field</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">llpr_last_layer_weights_path</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#dpeva.config.CollectionConfig.llpr_last_layer_weights_path" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute pydantic_field">
+<dt class="sig sig-object py" id="dpeva.config.CollectionConfig.llpr_model_head">
+<em class="property"><span class="pre">field</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">llpr_model_head</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#dpeva.config.CollectionConfig.llpr_model_head" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute pydantic_field">
+<dt class="sig sig-object py" id="dpeva.config.CollectionConfig.llpr_model_path">
+<em class="property"><span class="pre">field</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">llpr_model_path</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#dpeva.config.CollectionConfig.llpr_model_path" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute pydantic_field">
+<dt class="sig sig-object py" id="dpeva.config.CollectionConfig.llpr_num_ensemble_members">
+<em class="property"><span class="pre">field</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">llpr_num_ensemble_members</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#dpeva.config.CollectionConfig.llpr_num_ensemble_members" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute pydantic_field">
+<dt class="sig sig-object py" id="dpeva.config.CollectionConfig.llpr_random_seed">
+<em class="property"><span class="pre">field</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">llpr_random_seed</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#dpeva.config.CollectionConfig.llpr_random_seed" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute pydantic_field">
+<dt class="sig sig-object py" id="dpeva.config.CollectionConfig.llpr_regularizer">
+<em class="property"><span class="pre">field</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">llpr_regularizer</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1e-08</span></em><a class="headerlink" href="#dpeva.config.CollectionConfig.llpr_regularizer" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute pydantic_field">
+<dt class="sig sig-object py" id="dpeva.config.CollectionConfig.llpr_save_state_path">
+<em class="property"><span class="pre">field</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">llpr_save_state_path</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#dpeva.config.CollectionConfig.llpr_save_state_path" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute pydantic_field">
+<dt class="sig sig-object py" id="dpeva.config.CollectionConfig.llpr_state_path">
+<em class="property"><span class="pre">field</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">llpr_state_path</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#dpeva.config.CollectionConfig.llpr_state_path" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute pydantic_field">
+<dt class="sig sig-object py" id="dpeva.config.CollectionConfig.llpr_strict_metatrain_parity">
+<em class="property"><span class="pre">field</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">llpr_strict_metatrain_parity</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></em><a class="headerlink" href="#dpeva.config.CollectionConfig.llpr_strict_metatrain_parity" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute pydantic_field">
+<dt class="sig sig-object py" id="dpeva.config.CollectionConfig.llpr_targets">
+<em class="property"><span class="pre">field</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">llpr_targets</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'energy'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'force'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'energy_force'</span></span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'energy'</span></em><a class="headerlink" href="#dpeva.config.CollectionConfig.llpr_targets" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute pydantic_field">
+<dt class="sig sig-object py" id="dpeva.config.CollectionConfig.llpr_train_feature_dir">
+<em class="property"><span class="pre">field</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">llpr_train_feature_dir</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#dpeva.config.CollectionConfig.llpr_train_feature_dir" title="Link to this definition">#</a></dt>
+<dd><p>Training-set DeepMD last-layer feature directory used to fit LLPR covariance.</p>
+</dd></dl>
+
+<dl class="py attribute pydantic_field">
 <dt class="sig sig-object py" id="dpeva.config.CollectionConfig.num_models">
 <em class="property"><span class="pre">field</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">num_models</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">4</span></em><a class="headerlink" href="#dpeva.config.CollectionConfig.num_models" title="Link to this definition">#</a></dt>
 <dd><p>Number of models for UQ calculation.</p>
@@ -572,6 +680,22 @@ document.write(`
 <dl class="py attribute pydantic_field">
 <dt class="sig sig-object py" id="dpeva.config.CollectionConfig.uq_auto_bounds">
 <em class="property"><span class="pre">field</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">uq_auto_bounds</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><em class="property"> <span class="pre">[Optional]</span></em><a class="headerlink" href="#dpeva.config.CollectionConfig.uq_auto_bounds" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute pydantic_field">
+<dt class="sig sig-object py" id="dpeva.config.CollectionConfig.uq_backend">
+<em class="property"><span class="pre">field</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">uq_backend</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'qbc_rnd'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'llpr'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'hybrid'</span></span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'qbc_rnd'</span></em><a class="headerlink" href="#dpeva.config.CollectionConfig.uq_backend" title="Link to this definition">#</a></dt>
+<dd><p>UQ backend: existing QbC/RND, DeepMD last-layer LLPR, or hybrid reporting.</p>
+</dd></dl>
+
+<dl class="py attribute pydantic_field">
+<dt class="sig sig-object py" id="dpeva.config.CollectionConfig.uq_llpr_energy_trust_hi">
+<em class="property"><span class="pre">field</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">uq_llpr_energy_trust_hi</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#dpeva.config.CollectionConfig.uq_llpr_energy_trust_hi" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute pydantic_field">
+<dt class="sig sig-object py" id="dpeva.config.CollectionConfig.uq_llpr_energy_trust_lo">
+<em class="property"><span class="pre">field</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">uq_llpr_energy_trust_lo</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#dpeva.config.CollectionConfig.uq_llpr_energy_trust_lo" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute pydantic_field">
@@ -696,6 +820,23 @@ document.write(`
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.fig_legend_max_cols"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.fig_legend_max_cols</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.fig_legend_max_rows"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.fig_legend_max_rows</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.fig_tick_target_count"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.fig_tick_target_count</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.llpr_calibration_method"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.llpr_calibration_method</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.llpr_candidate_energy_path"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.llpr_candidate_energy_path</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.llpr_candidate_feature_dir"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.llpr_candidate_feature_dir</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.llpr_collect_score"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.llpr_collect_score</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.llpr_ensemble_output_path"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.llpr_ensemble_output_path</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.llpr_feature_normalization"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.llpr_feature_normalization</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.llpr_last_layer_weights_path"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.llpr_last_layer_weights_path</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.llpr_model_head"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.llpr_model_head</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.llpr_model_path"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.llpr_model_path</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.llpr_num_ensemble_members"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.llpr_num_ensemble_members</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.llpr_random_seed"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.llpr_random_seed</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.llpr_regularizer"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.llpr_regularizer</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.llpr_save_state_path"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.llpr_save_state_path</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.llpr_state_path"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.llpr_state_path</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.llpr_strict_metatrain_parity"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.llpr_strict_metatrain_parity</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.llpr_targets"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.llpr_targets</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.llpr_train_feature_dir"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.llpr_train_feature_dir</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.num_models"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.num_models</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.project"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.project</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.results_prefix"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.results_prefix</span></code></a></li>
@@ -712,6 +853,9 @@ document.write(`
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.training_data_dir"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.training_data_dir</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.training_desc_dir"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.training_desc_dir</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.uq_auto_bounds"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.uq_auto_bounds</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.uq_backend"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.uq_backend</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.uq_llpr_energy_trust_hi"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.uq_llpr_energy_trust_hi</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.uq_llpr_energy_trust_lo"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.uq_llpr_energy_trust_lo</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.uq_qbc_trust_hi"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.uq_qbc_trust_hi</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.uq_qbc_trust_lo"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.uq_qbc_trust_lo</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.uq_qbc_trust_ratio"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.uq_qbc_trust_ratio</span></code></a></li>

@@ -37,7 +37,7 @@
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="../_static/documentation_options.js?v=2eb37dcf"></script>
+    <script src="../_static/documentation_options.js?v=d2c02a7d"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -178,6 +178,7 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="../api/config.html">Configuration Reference</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../api/config/submission.html">Common &amp; Submission Configuration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../api/config/feature.html">Feature Generation Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/config/exploration.html">Exploration Configuration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../api/config/training.html">Training Configuration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../api/config/inference.html">Inference Configuration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../api/config/collection.html">Collection (Active Learning) Configuration</a></li>
@@ -365,8 +366,10 @@ document.write(`
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#deepmd-kit">1. DeePMD-kit</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#dpdata">2. dpdata</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#abacus">3. ABACUS</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#ase-abacus">4. ase-abacus</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">5. 依赖分工总览</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#ase">4. ASE</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#atst-tools">5. atst-tools（可选）</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#ase-abacus-legacy">6. ase-abacus（Legacy）</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">7. 依赖分工总览</a></li>
 </ul>
             </nav>
         </div>
@@ -383,7 +386,7 @@ document.write(`
 <ul class="simple">
 <li><p>Status: active</p></li>
 <li><p>Audience: Users / Developers</p></li>
-<li><p>Last-Updated: 2026-04-05</p></li>
+<li><p>Last-Updated: 2026-06-10</p></li>
 </ul>
 <p>本文档汇总 DP-EVA 的核心上游软件，说明其仓库位置与在本项目中的职责边界。</p>
 <section id="deepmd-kit">
@@ -425,21 +428,48 @@ document.write(`
 </li>
 </ul>
 </section>
-<section id="ase-abacus">
-<h2>4. ase-abacus<a class="headerlink" href="#ase-abacus" title="Link to this heading">#</a></h2>
+<section id="ase">
+<h2>4. ASE<a class="headerlink" href="#ase" title="Link to this heading">#</a></h2>
 <ul class="simple">
-<li><p>仓库地址：https://gitlab.com/1041176461/ase-abacus</p></li>
-<li><p>核心功能：用于 ABACUS 计算的数据预处理。</p></li>
+<li><p>仓库地址：https://gitlab.com/ase/ase</p></li>
+<li><p>核心功能：原子结构对象、结构读写与计算器生态。</p></li>
 <li><p>在 DP-EVA 中的作用：</p>
 <ul>
-<li><p>负责 ABACUS 计算前的数据准备与输入转换。</p></li>
-<li><p>为 Labeling 工作流中的结构预处理提供支持。</p></li>
+<li><p>作为 <code class="docutils literal notranslate"><span class="pre">ase.Atoms</span></code> 的核心结构表示。</p></li>
+<li><p>v0.8.0 起核心依赖下限为 <code class="docutils literal notranslate"><span class="pre">ase&gt;=3.28.0</span></code>，与 <code class="docutils literal notranslate"><span class="pre">atst-tools</span></code> 运行环境对齐。</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="atst-tools">
+<h2>5. atst-tools（可选）<a class="headerlink" href="#atst-tools" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p>仓库地址：本项目 <code class="docutils literal notranslate"><span class="pre">test/atst-tools</span></code> 参考仓库；发布包为 <code class="docutils literal notranslate"><span class="pre">atst-tools</span></code>。</p></li>
+<li><p>核心功能：基于 ASE 的轨迹探索与过渡态工具。</p></li>
+<li><p>在 DP-EVA 中的作用：</p>
+<ul>
+<li><p>作为可选 exploration backend，首版支持 <code class="docutils literal notranslate"><span class="pre">md</span></code> 与 <code class="docutils literal notranslate"><span class="pre">relax</span></code>。</p></li>
+<li><p>通过 <code class="docutils literal notranslate"><span class="pre">dpeva[explore]</span></code> 安装，不进入核心依赖。</p></li>
+<li><p>DPEVA 内部 ABACUS writer 参考其 vendored <code class="docutils literal notranslate"><span class="pre">abacuslite/io/generalio.py</span></code> 的 INPUT/KPT/STRU 子集。</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="ase-abacus-legacy">
+<h2>6. ase-abacus（Legacy）<a class="headerlink" href="#ase-abacus-legacy" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p>仓库地址：https://gitlab.com/1041176461/ase-abacus</p></li>
+<li><p>状态：历史依赖。v0.8.0 当前主链路不再推荐安装，也不再要求 <code class="docutils literal notranslate"><span class="pre">ase.io.abacus</span></code>。</p></li>
+<li><p>在 DP-EVA 中的历史作用：</p>
+<ul>
+<li><p>曾用于 Labeling 工作流的 ABACUS 输入生成。</p></li>
+<li><p>已由 <code class="docutils literal notranslate"><span class="pre">src/dpeva/labeling/abacus_io.py</span></code> 的内部最小 writer 替代。</p></li>
 </ul>
 </li>
 </ul>
 </section>
 <section id="id1">
-<h2>5. 依赖分工总览<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
+<h2>7. 依赖分工总览<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
 <div class="pst-scrollable-table-container"><table class="table">
 <thead>
 <tr class="row-odd"><th class="head"><p>依赖</p></th>
@@ -460,9 +490,17 @@ document.write(`
 <td><p>Labeling</p></td>
 <td><p>第一性原理计算后端</p></td>
 </tr>
+<tr class="row-odd"><td><p>ASE</p></td>
+<td><p>Labeling / Exploration</p></td>
+<td><p>原子结构对象与结构读写基础</p></td>
+</tr>
+<tr class="row-even"><td><p>atst-tools</p></td>
+<td><p>Exploration（可选）</p></td>
+<td><p>md/relax 轨迹探索后端</p></td>
+</tr>
 <tr class="row-odd"><td><p>ase-abacus</p></td>
-<td><p>Labeling 预处理</p></td>
-<td><p>ABACUS 输入准备与结构转换</p></td>
+<td><p>Legacy</p></td>
+<td><p>历史 ABACUS 输入生成依赖</p></td>
 </tr>
 </tbody>
 </table>
@@ -518,8 +556,10 @@ document.write(`
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#deepmd-kit">1. DeePMD-kit</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#dpdata">2. dpdata</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#abacus">3. ABACUS</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#ase-abacus">4. ase-abacus</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">5. 依赖分工总览</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#ase">4. ASE</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#atst-tools">5. atst-tools（可选）</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#ase-abacus-legacy">6. ase-abacus（Legacy）</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">7. 依赖分工总览</a></li>
 </ul>
   </nav></div>
 

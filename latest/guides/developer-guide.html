@@ -37,7 +37,7 @@
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="../_static/documentation_options.js?v=2eb37dcf"></script>
+    <script src="../_static/documentation_options.js?v=d2c02a7d"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -614,6 +614,7 @@ window.runMermaid = runMermaid;</script>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../api/config.html">Configuration Reference</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../api/config/submission.html">Common &amp; Submission Configuration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../api/config/feature.html">Feature Generation Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/config/exploration.html">Exploration Configuration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../api/config/training.html">Training Configuration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../api/config/inference.html">Inference Configuration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../api/config/collection.html">Collection (Active Learning) Configuration</a></li>
@@ -879,7 +880,8 @@ document.write(`
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#maintenance-policy">6.1 维护策略 (Maintenance Policy)</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#release-helper">6.1.1 Release Helper 使用约定</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id19">6.2 版本历史</a><ul class="nav section-nav flex-column">
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#current-era-v0-7-x"><strong>Current Era (v0.7.x)</strong></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#current-era-v0-8-x"><strong>Current Era (v0.8.x)</strong></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#previous-era-v0-7-x"><strong>Previous Era (v0.7.x)</strong></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#legacy-era-v0-4-x"><strong>Legacy Era (v0.4.x)</strong></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#legacy-era-v2-x"><strong>Legacy Era (v2.x)</strong></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id20"><strong>Legacy Era (v2.x)</strong></a></li>
@@ -903,7 +905,7 @@ document.write(`
 <ul class="simple">
 <li><p>Status: active</p></li>
 <li><p>Audience: Developers</p></li>
-<li><p>Last-Updated: 2026-04-06</p></li>
+<li><p>Last-Updated: 2026-06-10</p></li>
 <li><p>Related:</p>
 <ul>
 <li><p>配置字段字典：<code class="docutils literal notranslate"><span class="pre">API</span> <span class="pre">Reference</span></code>（由 <code class="docutils literal notranslate"><span class="pre">src/dpeva/config.py</span></code> 自动生成）</p></li>
@@ -913,8 +915,8 @@ document.write(`
 </li>
 </ul>
 <ul class="simple">
-<li><p><strong>版本</strong>: 0.7.2</p></li>
-<li><p><strong>生成日期</strong>: 2026-04-05</p></li>
+<li><p><strong>版本</strong>: 0.8.0</p></li>
+<li><p><strong>生成日期</strong>: 2026-06-16</p></li>
 <li><p><strong>作者</strong>: Quantum Misaka with Trae SOLO</p></li>
 </ul>
 <hr class="docutils" />
@@ -1540,7 +1542,8 @@ dpeva<span class="w"> </span>label<span class="w"> </span>config_label.json<span
 pytest<span class="w"> </span>tests/unit
 
 <span class="c1"># 带覆盖率报告的运行 (推荐)</span>
-pytest<span class="w"> </span>tests/unit<span class="w"> </span>--cov<span class="o">=</span>dpeva<span class="w"> </span>--cov-report<span class="o">=</span>term-missing
+mkdir<span class="w"> </span>-p<span class="w"> </span>build/coverage
+pytest<span class="w"> </span>tests/unit<span class="w"> </span>--cov<span class="o">=</span>src/dpeva<span class="w"> </span>--cov-branch<span class="w"> </span>--cov-report<span class="o">=</span>term<span class="w"> </span>--cov-report<span class="o">=</span>json:build/coverage/coverage-unit.json<span class="w"> </span>--cov-fail-under<span class="o">=</span><span class="m">80</span>
 </pre></div>
 </div>
 <ul class="simple">
@@ -1614,7 +1617,7 @@ A: 这是预期行为。在联合模式下，<code class="docutils literal notra
 </li>
 <li><p><strong>当前纪元 (Current Era)</strong>：</p>
 <ul class="simple">
-<li><p>当前主版本系列（v0.7.x）必须保持<strong>完整</strong>的记录链条。</p></li>
+<li><p>当前主版本系列（v0.8.x）必须保持<strong>完整</strong>的记录链条。</p></li>
 <li><p><strong>追加式记录 (Append-only)</strong>：新版本记录应始终添加在列表顶部，严禁覆盖或修改旧版本的历史条目。</p></li>
 <li><p><strong>中间版本找回</strong>：若因误操作导致记录丢失，必须基于 git log 进行回溯与补全。</p></li>
 </ul>
@@ -1626,19 +1629,40 @@ A: 这是预期行为。在联合模式下，<code class="docutils literal notra
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">scripts/release_helper.py</span></code> 只负责同步 <code class="docutils literal notranslate"><span class="pre">src/dpeva/__init__.py</span></code> 与 <code class="docutils literal notranslate"><span class="pre">README.md</span></code> 中的版本号。</p></li>
 <li><p>发布说明的权威写入位置始终是本文件的 <code class="docutils literal notranslate"><span class="pre">###</span> <span class="pre">6.2</span> <span class="pre">版本历史</span></code>，脚本不会自动追加版本条目。</p></li>
-<li><p>使用脚本完成版本号更新后，必须手动在 <code class="docutils literal notranslate"><span class="pre">####</span> <span class="pre">Current</span> <span class="pre">Era</span> <span class="pre">(v0.7.x)</span></code> 顶部追加新版本记录，再执行提交与打 tag。</p></li>
+<li><p>使用脚本完成版本号更新后，必须手动在 <code class="docutils literal notranslate"><span class="pre">####</span> <span class="pre">Current</span> <span class="pre">Era</span> <span class="pre">(v0.8.x)</span></code> 顶部追加新版本记录，再执行提交与打 tag。</p></li>
 </ul>
 </section>
 <section id="id19">
 <h3>6.2 版本历史<a class="headerlink" href="#id19" title="Link to this heading">#</a></h3>
-<section id="current-era-v0-7-x">
-<h4><strong>Current Era (v0.7.x)</strong><a class="headerlink" href="#current-era-v0-7-x" title="Link to this heading">#</a></h4>
+<section id="current-era-v0-8-x">
+<h4><strong>Current Era (v0.8.x)</strong><a class="headerlink" href="#current-era-v0-8-x" title="Link to this heading">#</a></h4>
+<ul class="simple">
+<li><p><strong>v0.8.0</strong> (2026-06-10):</p>
+<ul>
+<li><p><strong>[版本]</strong> 开启 v0.8.0 开发周期，移除 Labeling 对 GitLab <code class="docutils literal notranslate"><span class="pre">ase-abacus</span></code> fork 的运行时绑定，并以可选 backend 方式接入 <code class="docutils literal notranslate"><span class="pre">atst-tools</span></code> exploration 能力。</p></li>
+<li><p><strong>[依赖]</strong> 将核心 ASE 下限提升至 <code class="docutils literal notranslate"><span class="pre">ase&gt;=3.28.0</span></code>，与 <code class="docutils literal notranslate"><span class="pre">atst-tools</span></code> 运行环境对齐；<code class="docutils literal notranslate"><span class="pre">atst-tools&gt;=2.1.0</span></code> 仅通过 <code class="docutils literal notranslate"><span class="pre">dpeva[explore]</span></code> 可选安装。</p></li>
+<li><p><strong>[Labeling]</strong> 新增内部 ABACUS INPUT/KPT/STRU writer，参考 <code class="docutils literal notranslate"><span class="pre">atst-tools</span></code> vendored <code class="docutils literal notranslate"><span class="pre">abacuslite</span></code> 的当前写入子集，标准 ASE 环境下不再依赖 <code class="docutils literal notranslate"><span class="pre">ase.io.abacus</span></code>。</p></li>
+<li><p><strong>[测试]</strong> 为 ABACUS writer 固化 <code class="docutils literal notranslate"><span class="pre">INPUT/KPT/STRU</span></code> golden baseline，防止 Labeling prepare 输出格式漂移。</p></li>
+<li><p><strong>[Exploration]</strong> 新增 <code class="docutils literal notranslate"><span class="pre">dpeva.exploration</span></code> 抽象层、<code class="docutils literal notranslate"><span class="pre">ATSTToolsBackend</span></code> 与 <code class="docutils literal notranslate"><span class="pre">dpeva</span> <span class="pre">explore</span></code> CLI，首版支持 <code class="docutils literal notranslate"><span class="pre">md</span></code> 与 <code class="docutils literal notranslate"><span class="pre">relax</span></code>。</p></li>
+<li><p><strong>[Exploration]</strong> <code class="docutils literal notranslate"><span class="pre">ATSTToolsBackend</span></code> 新增 DPEVA 侧输入结构快照与 <code class="docutils literal notranslate"><span class="pre">dpeva_exploration_result.json</span></code> manifest，统一记录成功和失败结果。</p></li>
+<li><p><strong>[CI/CD]</strong> 新增 <code class="docutils literal notranslate"><span class="pre">dpeva[explore]</span></code> optional extra smoke check，覆盖 <code class="docutils literal notranslate"><span class="pre">dpeva</span> <span class="pre">explore</span> <span class="pre">--help</span></code> 与 <code class="docutils literal notranslate"><span class="pre">atst</span> <span class="pre">--help</span></code>。</p></li>
+<li><p><strong>[特性准备]</strong> 将 v0.7.2 之后已并入的模型对比报告生成器纳入 v0.8.0 变更范围，保留其单测基线与 DPA 模型对比报告产物生成能力。</p></li>
+<li><p><strong>[修复]</strong> 纳入 DeepMD 开发版本号解析兼容修复，允许 <code class="docutils literal notranslate"><span class="pre">0.1.dev*+g...</span></code> 等开发构建版本被环境检查正确识别。</p></li>
+<li><p><strong>[治理]</strong> 纳入 docs/reports 去冗余治理：明确总报告、专题报告、系列实验报告与归档报告的生命周期边界，并将 2026-04-05 阶段性治理闭环记录迁入归档。</p></li>
+<li><p><strong>[自动化]</strong> 纳入文档治理自动化加固：<code class="docutils literal notranslate"><span class="pre">doc_check.py</span></code> 默认阻断 active 文档缺 owner，<code class="docutils literal notranslate"><span class="pre">check_docs_freshness.py</span></code> 以 front matter <code class="docutils literal notranslate"><span class="pre">last-updated</span></code> 为主，<code class="docutils literal notranslate"><span class="pre">verify_docs.sh</span></code> 统一串联治理、freshness 与 Sphinx 构建。</p></li>
+<li><p><strong>[计划]</strong> 将 <code class="docutils literal notranslate"><span class="pre">docs/archive/v0.8.0/plans/2026-06-10-v0.8.0-atst-integration-plan.md</span></code> 归档为 v0.8.0 ATST integration 的计划入口与验收索引。</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="previous-era-v0-7-x">
+<h4><strong>Previous Era (v0.7.x)</strong><a class="headerlink" href="#previous-era-v0-7-x" title="Link to this heading">#</a></h4>
 <ul class="simple">
 <li><p><strong>v0.7.2</strong> (2026-04-05):</p>
 <ul>
 <li><p><strong>[测试]</strong> 围绕核心功能模块开展单元测试集中攻坚，补强 <code class="docutils literal notranslate"><span class="pre">labeling/postprocess</span></code>、<code class="docutils literal notranslate"><span class="pre">analysis/managers</span></code>、<code class="docutils literal notranslate"><span class="pre">inference/managers</span></code>、<code class="docutils literal notranslate"><span class="pre">workflows/feature</span></code> 与 <code class="docutils literal notranslate"><span class="pre">workflows/labeling</span></code> 的关键正向、异常与边界分支覆盖。</p></li>
 <li><p><strong>[质量]</strong> 修复 <code class="docutils literal notranslate"><span class="pre">test_analysis_workflow.py</span></code> 中因缩进导致的隐藏未收集测试，清理空测试并将共享随机 fixture 固定为确定性生成，降低测试波动性。</p></li>
-<li><p><strong>[CI/CD]</strong> 为单元测试接入覆盖率门禁与 <code class="docutils literal notranslate"><span class="pre">coverage-unit.json</span></code> 产物上传，当前单测回归为 <code class="docutils literal notranslate"><span class="pre">373</span> <span class="pre">passed</span></code>，总覆盖率提升至 <code class="docutils literal notranslate"><span class="pre">83.92%</span></code>。</p></li>
+<li><p><strong>[CI/CD]</strong> 为单元测试接入覆盖率门禁与 <code class="docutils literal notranslate"><span class="pre">build/coverage/coverage-unit.json</span></code> 产物上传，当前单测回归为 <code class="docutils literal notranslate"><span class="pre">373</span> <span class="pre">passed</span></code>，总覆盖率提升至 <code class="docutils literal notranslate"><span class="pre">83.92%</span></code>。</p></li>
 <li><p><strong>[文档]</strong> 新增单元测试专项审查报告与集中攻坚计划，沉淀覆盖率短板、整改路径与回归验证基线。</p></li>
 <li><p><strong>[发布]</strong> 版本升级至 <code class="docutils literal notranslate"><span class="pre">0.7.2</span></code>，同步 <code class="docutils literal notranslate"><span class="pre">__init__</span></code>、<code class="docutils literal notranslate"><span class="pre">README</span></code>、Sphinx <code class="docutils literal notranslate"><span class="pre">conf.py</span></code> 与开发文档中的版本标识。</p></li>
 </ul>
@@ -2027,7 +2051,8 @@ A: 这是预期行为。在联合模式下，<code class="docutils literal notra
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#maintenance-policy">6.1 维护策略 (Maintenance Policy)</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#release-helper">6.1.1 Release Helper 使用约定</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id19">6.2 版本历史</a><ul class="nav section-nav flex-column">
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#current-era-v0-7-x"><strong>Current Era (v0.7.x)</strong></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#current-era-v0-8-x"><strong>Current Era (v0.8.x)</strong></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#previous-era-v0-7-x"><strong>Previous Era (v0.7.x)</strong></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#legacy-era-v0-4-x"><strong>Legacy Era (v0.4.x)</strong></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#legacy-era-v2-x"><strong>Legacy Era (v2.x)</strong></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id20"><strong>Legacy Era (v2.x)</strong></a></li>
