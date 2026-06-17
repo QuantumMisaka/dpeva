@@ -2,7 +2,7 @@
 title: Tools（治理工具）
 status: active
 audience: Maintainers / Developers
-last-updated: 2026-06-10
+last-updated: 2026-06-17
 owner: Docs Owner
 ---
 
@@ -15,7 +15,7 @@ owner: Docs Owner
 - 治理检查：`scripts/doc_check.py`
 - 新鲜度检查：`scripts/check_docs_freshness.py`
 - 严格构建：`make -C docs html SPHINXOPTS="-W --keep-going"`
-- 链接检查：`make -C docs linkcheck SPHINXOPTS="-W --keep-going -D linkcheck_ignore='https://github.com/QuantumMisaka/dpeva/.*'"`
+- 链接检查：`make -C docs linkcheck SPHINXOPTS="-W --keep-going"`；外部站点忽略策略统一维护在 `docs/source/conf.py`。
 
 ## 2. CI 对应关系
 

@@ -71,4 +71,4 @@ jobs:
         if: github.event_name == 'pull_request'
         run: |
           cd docs
-          make linkcheck SPHINXOPTS="-W --keep-going -D linkcheck_ignore='https://github.com/QuantumMisaka/dpeva/.*'"
+          make linkcheck SPHINXOPTS="-W --keep-going"
