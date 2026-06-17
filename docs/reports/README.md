@@ -2,7 +2,7 @@
 title: Technical Reports
 status: active
 audience: Developers
-last-updated: 2026-06-14
+last-updated: 2026-06-17
 owner: Docs Owner
 ---
 
@@ -10,7 +10,7 @@ owner: Docs Owner
 
 - Status: active
 - Audience: All
-- Last-Updated: 2026-06-14
+- Last-Updated: 2026-06-17
 
 本文档目录用于存放“项目级、可共享、可追溯”的技术结论，不承载执行过程草稿。
 
@@ -40,7 +40,11 @@ owner: Docs Owner
 
 ## 4. Active Summary Reports
 
-- 当前无 active summary report。已闭环审查报告请查看 [v0.8.0 归档报告索引](../archive/v0.8.0/reports/README.md)。
+- [2026-06-17-DP-EVA-v0.8.0-Release.md](2026-06-17-DP-EVA-v0.8.0-Release.md)
+  - Type: Summary Report
+  - Status: active
+  - Topic: v0.8.0 Release
+  - Archive Policy: v0.8.0 标签发布并闭环后归档至 `docs/archive/v0.8.0/reports/`
 
 ## 5. Active Focused Reports
 

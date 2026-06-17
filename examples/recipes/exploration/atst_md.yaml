@@ -1,0 +1,4 @@
+calculation:
+  type: md
+metadata:
+  purpose: Minimal ATST MD backend config for the DP-EVA JSON wrapper

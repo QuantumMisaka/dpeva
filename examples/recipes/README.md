@@ -101,10 +101,10 @@ For programmatic workflow demos and helper scripts, use:
 
 ## 8. Exploration Recipes (`exploration/`)
 
-- **ATST relax wrapper (`exploration/config_explore_relax.json`)**
+- **ATST MD exploration wrapper (`exploration/config_explore_md.json`)**
   - Inputs: a DP-EVA wrapper JSON plus a backend-native ATST YAML.
   - Install with `python -m pip install -e '.[explore]'`.
-  - Run with `dpeva explore examples/recipes/exploration/config_explore_relax.json`.
+  - Run with `cd examples/recipes/exploration && dpeva explore config_explore_md.json`.
 
 ## 9. Data Cleaning Recipes (`data_cleaning/`)
 

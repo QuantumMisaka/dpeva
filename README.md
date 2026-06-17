@@ -66,7 +66,8 @@ dpeva label config_label.json
 dpeva analysis config_analyze.json
 
 # Optional: trajectory exploration backend
-dpeva explore examples/recipes/exploration/config_explore_relax.json
+cd examples/recipes/exploration
+dpeva explore config_explore_md.json
 ```
 
 For detailed configuration examples, see `examples/recipes/`.
