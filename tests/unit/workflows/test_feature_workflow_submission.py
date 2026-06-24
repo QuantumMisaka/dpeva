@@ -120,3 +120,19 @@ class TestFeatureWorkflowSubmission:
         job_config = workflow.execution_manager.job_manager.generate_script.call_args[0][0]
         assert "eval-desc" in job_config.command
         assert "DPEVA_TAG: WORKFLOW_FINISHED" in job_config.command
+
+    @patch("dpeva.feature.managers.JobManager")
+    def test_cli_embed_supports_fitting_last_layer(self, MockJobManager, config):
+        config["mode"] = "cli"
+        config["feature_exporter"] = "embed"
+        config["feature_kind"] = "fitting_last_layer"
+        config["embedding_dtype"] = "fp32"
+
+        workflow = FeatureWorkflow(config)
+        workflow.run()
+
+        job_config = workflow.execution_manager.job_manager.generate_script.call_args[0][0]
+        assert "dp --pt embed" in job_config.command
+        assert "eval-desc" not in job_config.command
+        assert "--dtype fp32" in job_config.command
+        assert "embedding.hdf5" in job_config.command

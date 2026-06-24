@@ -1,5 +1,6 @@
 import pytest
 import os
+import h5py
 import numpy as np
 import pandas as pd
 
@@ -51,3 +52,64 @@ def test_load_atomic_features(manager, tmp_path):
     assert len(X) == 2
     assert X[0].shape == (10, 4)
     assert n[0] == 10
+
+def _write_embedding_hdf5(path, system_name="sys1"):
+    descriptor = np.arange(24, dtype=np.float32).reshape(3, 2, 4) + 1.0
+    atomic_feature = np.arange(18, dtype=np.float32).reshape(3, 2, 3) + 1.0
+    with h5py.File(path, "w") as h5:
+        group = h5.create_group(system_name)
+        group.attrs["system"] = system_name
+        group.attrs["nframes"] = 3
+        group.create_dataset("descriptor", data=descriptor)
+        group.create_dataset("atomic_feature", data=atomic_feature)
+        group.create_dataset("structural_feature", data=atomic_feature.sum(axis=1))
+        group.create_dataset("atom_types", data=np.zeros((3, 2), dtype=np.int32))
+    return descriptor, atomic_feature
+
+def test_load_descriptors_from_hdf5_file(manager, tmp_path):
+    h5_path = tmp_path / "embedding.hdf5"
+    descriptor, _ = _write_embedding_hdf5(h5_path)
+
+    names, stru = manager.load_descriptors(str(h5_path), "test")
+
+    expected = descriptor.mean(axis=1)
+    expected = expected / (np.linalg.norm(expected, axis=1, keepdims=True) + 1e-12)
+    assert names == ["sys1-0", "sys1-1", "sys1-2"]
+    np.testing.assert_allclose(stru, expected)
+
+def test_load_descriptors_from_hdf5_directory(manager, tmp_path):
+    desc_dir = tmp_path / "desc"
+    desc_dir.mkdir()
+    _write_embedding_hdf5(desc_dir / "embedding.hdf5")
+
+    names, stru = manager.load_descriptors(str(desc_dir), "test")
+
+    assert names == ["sys1-0", "sys1-1", "sys1-2"]
+    assert stru.shape == (3, 4)
+
+def test_load_atomic_features_from_hdf5(manager, tmp_path):
+    h5_path = tmp_path / "embedding.hdf5"
+    descriptor, _ = _write_embedding_hdf5(h5_path)
+    df = pd.DataFrame({"dataname": ["sys1-0", "sys1-2"]})
+
+    X, n = manager.load_atomic_features(str(h5_path), df)
+
+    assert len(X) == 2
+    np.testing.assert_array_equal(X[0], descriptor[0])
+    np.testing.assert_array_equal(X[1], descriptor[2])
+    assert n == [2, 2]
+
+def test_load_feature_sums_from_hdf5_atomic_feature(manager, tmp_path):
+    h5_path = tmp_path / "embedding.hdf5"
+    _, atomic_feature = _write_embedding_hdf5(h5_path)
+
+    names, feature_sums, atom_counts = manager.load_feature_sums(
+        str(h5_path),
+        "training LLPR features",
+        dataset="atomic_feature",
+        normalization="sum",
+    )
+
+    assert names == ["sys1-0", "sys1-1", "sys1-2"]
+    np.testing.assert_array_equal(feature_sums, atomic_feature.sum(axis=1))
+    np.testing.assert_array_equal(atom_counts, np.array([2.0, 2.0, 2.0]))

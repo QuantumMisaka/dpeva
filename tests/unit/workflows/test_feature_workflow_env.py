@@ -44,7 +44,10 @@ def test_feature_workflow_cli_env(tmp_path):
                 output_dir=str(tmp_path / "savedir"),
                 model_path=str(tmp_path / "model.pt"),
                 head="OC20M",
-                sub_pools=["pool1"]
+                sub_pools=["pool1"],
+                feature_exporter="eval_desc",
+                feature_kind="descriptor",
+                embedding_dtype="fp32",
             )
 
 def test_feature_workflow_python_mode(tmp_path):

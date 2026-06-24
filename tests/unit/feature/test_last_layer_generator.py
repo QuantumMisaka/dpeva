@@ -32,6 +32,39 @@ def test_compute_fitting_last_layer_uses_deepmd_api(_deep_pot):
     np.testing.assert_allclose(result, np.ones((1, 3)))
 
 
+@patch("dpeva.feature.generator.DeepPot", create=True)
+@patch("dpeva.feature.generator._DEEPMD_AVAILABLE", True)
+def test_compute_fitting_last_layer_prefers_eval_embedding_atomic_feature(_deep_pot):
+    generator = DescriptorGenerator(model_path="model.pt")
+    generator.model = MagicMock()
+    generator.model.get_type_map.return_value = ["H", "O"]
+    descriptor = np.zeros((1, 2, 4))
+    atomic_feature = np.ones((1, 2, 3))
+    structural_feature = atomic_feature.sum(axis=1)
+    generator.model.eval_embedding = MagicMock(
+        return_value=(descriptor, atomic_feature, structural_feature)
+    )
+    generator.model.eval_fitting_last_layer.return_value = np.zeros((1, 2, 3))
+
+    system = MagicMock()
+    system.data = {
+        "coords": np.zeros((1, 2, 3)),
+        "cells": np.eye(3).reshape(1, 3, 3),
+        "atom_names": ["H", "O"],
+        "atom_types": np.array([0, 1]),
+        "nopbc": False,
+    }
+    system.__len__.return_value = 1
+    system.__getitem__.return_value = system
+
+    with patch("dpeva.feature.generator.load_systems", return_value=[system]):
+        result = generator.compute_fitting_last_layer("data", output_mode="structural")
+
+    generator.model.eval_embedding.assert_called_once()
+    generator.model.eval_fitting_last_layer.assert_not_called()
+    np.testing.assert_allclose(result, np.ones((1, 3)))
+
+
 def test_execution_manager_uses_fitting_last_layer_feature_kind(tmp_path):
     manager = FeatureExecutionManager(
         backend="local",

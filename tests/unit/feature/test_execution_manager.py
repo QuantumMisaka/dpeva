@@ -2,6 +2,7 @@ import pytest
 import numpy as np
 from unittest.mock import MagicMock, patch
 from dpeva.feature.managers import FeatureExecutionManager, FeatureIOManager
+from dpeva.utils.command import DPCommandBuilder
 
 @pytest.fixture
 def mock_job_manager():
@@ -63,6 +64,53 @@ class TestFeatureExecutionManager:
         assert "Processing pool: pool1" in job_config.command
         assert "Processing pool: pool2" in job_config.command
         assert "mkdir -p" in job_config.command
+
+    def test_submit_cli_job_embed_keeps_hdf5_for_last_layer(self, mock_job_manager, tmp_path):
+        """Embed CLI should support fitting-last-layer features through HDF5 atomic_feature."""
+        manager = FeatureExecutionManager(
+            backend="slurm",
+            slurm_config={},
+            env_setup="",
+            dp_backend="pt",
+            omp_threads=1,
+        )
+
+        manager.submit_cli_job(
+            data_path="data",
+            output_dir=str(tmp_path / "output"),
+            model_path="model.pt",
+            head="OC20M",
+            sub_pools=[],
+            feature_exporter="embed",
+            feature_kind="fitting_last_layer",
+            embedding_dtype="native",
+        )
+
+        jm = mock_job_manager.return_value
+        job_config = jm.generate_script.call_args[0][0]
+        script_path = jm.generate_script.call_args[0][1]
+
+        assert "dp --pt embed" in job_config.command
+        assert "eval-desc" not in job_config.command
+        assert "--dtype native" in job_config.command
+        assert "embedding.hdf5" in job_config.command
+        assert script_path.endswith("run_embed.slurm")
+
+    def test_command_builder_embed_quotes_dtype_and_head(self):
+        DPCommandBuilder.set_backend("pt")
+
+        cmd = DPCommandBuilder.embed(
+            model="model path.pt",
+            system="data path",
+            output="out/embedding.hdf5",
+            head="OC20M",
+            dtype="fp64",
+        )
+
+        assert cmd == (
+            "dp --pt embed -s 'data path' -m 'model path.pt' "
+            "-o out/embedding.hdf5 --dtype fp64 --head OC20M"
+        )
 
     def test_submit_python_slurm_job(self, mock_job_manager, tmp_path):
         """Test Python Slurm job submission."""
