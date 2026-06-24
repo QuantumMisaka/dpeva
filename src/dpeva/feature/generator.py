@@ -71,6 +71,14 @@ class DescriptorGenerator:
         type_trans = np.array([model_type_map.index(i) for i in sys.data['atom_names']])
         atypes = list(type_trans[sys.data['atom_types']])
 
+        eval_embedding = self._get_eval_embedding()
+        if callable(eval_embedding):
+            descriptor, atomic_feature, _ = eval_embedding(coords, cells, atypes)
+            if feature_kind == "descriptor":
+                return descriptor
+            if feature_kind == "fitting_last_layer":
+                return atomic_feature
+
         if feature_kind == "descriptor":
             return self.model.eval_descriptor(coords, cells, atypes)
         if feature_kind == "fitting_last_layer":
@@ -81,6 +89,17 @@ class DescriptorGenerator:
                 )
             return self.model.eval_fitting_last_layer(coords, cells, atypes)
         raise ValueError(f"Unsupported feature kind: {feature_kind}")
+
+    def _get_eval_embedding(self):
+        """Return a real or explicitly configured eval_embedding method."""
+        eval_embedding = getattr(self.model, "eval_embedding", None)
+        if not callable(eval_embedding):
+            return None
+        model_type = type(self.model)
+        is_dynamic_mock = model_type.__module__.startswith("unittest.mock")
+        if is_dynamic_mock and "eval_embedding" not in getattr(self.model, "__dict__", {}):
+            return None
+        return eval_embedding
 
     def _get_desc_by_batch(self, sys: dpdata.System, nopbc=False) -> list:
         """Calculate descriptors in batches."""

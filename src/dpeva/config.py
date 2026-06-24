@@ -142,7 +142,21 @@ class FeatureConfig(BaseWorkflowConfig):
     model_head: str = Field(..., description="Model head name.")
     feature_kind: Literal["descriptor", "fitting_last_layer"] = Field(
         "descriptor",
-        description="Feature type to export. `fitting_last_layer` requires Python mode.",
+        description=(
+            "Feature type to export. `fitting_last_layer` requires Python mode "
+            "unless `feature_exporter='embed'` is used."
+        ),
+    )
+    feature_exporter: Literal["eval_desc", "embed"] = Field(
+        "eval_desc",
+        description=(
+            "Feature export implementation for CLI mode. `eval_desc` preserves "
+            "legacy `.npy` descriptor output; `embed` writes DeepMD HDF5 embeddings."
+        ),
+    )
+    embedding_dtype: Literal["fp32", "fp64", "native"] = Field(
+        "fp32",
+        description="Output dtype used by DeepMD `dp embed`.",
     )
     
     output_mode: Literal["atomic", "structural"] = Field(

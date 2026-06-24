@@ -28,7 +28,11 @@ def resolve_config_paths(config: Dict[str, Any], config_file_path: str, path_key
             "desc_dir", "testdata_dir", "training_desc_dir", "root_savedir",
             "output_basedir", "result_dir", "output_dir", "config_path",
             "input_data_path", "pp_dir", "orb_dir", "dataset_dir",
-            "template_path", "existing_training_data_path", "merged_training_data_path"
+            "template_path", "existing_training_data_path", "merged_training_data_path",
+            "llpr_train_feature_dir", "llpr_candidate_feature_dir",
+            "llpr_model_path", "llpr_last_layer_weights_path",
+            "llpr_candidate_energy_path", "llpr_state_path",
+            "llpr_save_state_path", "llpr_ensemble_output_path",
         ]
         
     for key in path_keys:

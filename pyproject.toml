@@ -34,6 +34,7 @@ dependencies = [
     "seaborn>=0.11.0",
     "pydantic>=2.0.0",
     "ase>=3.28.0",
+    "h5py>=3.0.0",
     "deepmd-kit",
 ]
 requires-python = ">=3.10"

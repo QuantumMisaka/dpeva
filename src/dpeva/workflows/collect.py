@@ -348,35 +348,12 @@ class CollectionWorkflow:
         return df_desc, df_candidate, unique_system_names
 
     def _load_llpr_feature_sums(self, feature_dir: str, label: str):
-        self.logger.info(f"Loading {label} from {feature_dir}")
-        files = sorted(glob.glob(os.path.join(feature_dir, "**", "*.npy"), recursive=True))
-        if not files:
-            raise FileNotFoundError(f"No {label} .npy files found in {feature_dir}")
-
-        datanames = []
-        feature_sums = []
-        atom_counts = []
-        base_dir = os.path.abspath(feature_dir)
-        for path in files:
-            rel = os.path.relpath(os.path.abspath(path), base_dir)
-            sys_name = os.path.splitext(rel)[0].replace("\\", "/")
-            arr = np.asarray(np.load(path))
-            if arr.ndim == 3:
-                if self.config.llpr_feature_normalization == "mean":
-                    frame_sums = arr.mean(axis=1)
-                else:
-                    frame_sums = arr.sum(axis=1)
-                counts = np.full(arr.shape[0], arr.shape[1], dtype=float)
-            elif arr.ndim == 2:
-                frame_sums = arr
-                counts = np.ones(arr.shape[0], dtype=float)
-            else:
-                raise ValueError(f"LLPR feature file {path} must be 2D or 3D, got shape={arr.shape}")
-            datanames.extend([f"{sys_name}-{i}" for i in range(frame_sums.shape[0])])
-            feature_sums.append(frame_sums)
-            atom_counts.append(counts)
-
-        return datanames, np.vstack(feature_sums), np.concatenate(atom_counts)
+        return self.io_manager.load_feature_sums(
+            feature_dir,
+            label,
+            dataset="atomic_feature",
+            normalization=self.config.llpr_feature_normalization,
+        )
 
     def _load_llpr_candidate_energy(self, desc_datanames: list[str]) -> np.ndarray:
         if self.config.llpr_candidate_energy_path is None:
