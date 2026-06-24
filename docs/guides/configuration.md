@@ -91,6 +91,29 @@ owner: Docs Owner
 }
 ```
 
+DeepMD PyTorch 模型可使用 `dp embed` 导出 HDF5 embedding。该路线会在 `savedir/embedding.hdf5` 中保留 `descriptor`、`atomic_feature`、`structural_feature` 和 `atom_types`；HDF5 dataset 由 DeepMD 使用 gzip + shuffle 压缩。`feature_kind="descriptor"` 读取 `descriptor`，`feature_kind="fitting_last_layer"` 对应 `atomic_feature`。
+
+```json
+{
+  "work_dir": "./",
+  "data_path": "./other_dpdata_all",
+  "model_path": "./DPA4-Plus-OMat24-16M.pt",
+  "savedir": "./desc_pool_embed",
+  "model_head": "OC22",
+  "mode": "cli",
+  "feature_exporter": "embed",
+  "feature_kind": "fitting_last_layer",
+  "embedding_dtype": "fp32",
+  "submission": { "backend": "slurm" }
+}
+```
+
+兼容规则：
+
+- 默认 `feature_exporter="eval_desc"`，仍调用 `dp eval-desc` 并生成旧 `.npy` descriptor。
+- `feature_exporter="embed"` 支持 `feature_kind="descriptor"` 和 `feature_kind="fitting_last_layer"`。
+- Collect 的 `desc_dir`、`training_desc_dir`、LLPR feature 目录既可以指向旧 `.npy` 目录，也可以指向 `embedding.hdf5` 文件或包含该文件的目录。
+
 ### 5.2 Train
 
 ```json

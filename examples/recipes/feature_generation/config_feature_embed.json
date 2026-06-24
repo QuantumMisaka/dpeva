@@ -1,0 +1,25 @@
+{
+    "data_path": "./other_dpdata",
+    "model_path": "DPA4-Plus-OMat24-16M.pt",
+    "savedir": "desc_pool_embed",
+    "model_head": "OC22",
+    "mode": "cli",
+    "feature_exporter": "embed",
+    "feature_kind": "fitting_last_layer",
+    "embedding_dtype": "fp32",
+    "omp_threads": 2,
+    "submission": {
+        "backend": "slurm",
+        "env_setup": [
+            "nvidia-smi dmon -s pucvmte -o T > nvdmon_job-${SLURM_JOB_ID}.log &",
+            "source scripts/env/dpeva-dpa4-embed-test.env"
+        ],
+        "slurm_config": {
+            "partition": "4V100",
+            "nodes": 1,
+            "ntasks": 1,
+            "gpus_per_node": 1,
+            "qos": "rush-1o2gpu"
+        }
+    }
+}
