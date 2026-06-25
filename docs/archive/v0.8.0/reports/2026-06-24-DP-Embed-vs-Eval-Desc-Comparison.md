@@ -12,8 +12,8 @@
 
 测试脚本：
 
-- [compare_eval_desc_embed.py](/home/pku-jianghong/liuzhaoqing/work/ft2dp-dpeva/dpeva/scripts/validation/compare_eval_desc_embed.py)
-- [run_compare_eval_desc_embed_4v100px.slurm](/home/pku-jianghong/liuzhaoqing/work/ft2dp-dpeva/dpeva/practices/dpeva-dpa4-test/dpa4-dpeva-test/embed_eval_desc_comparison/run_compare_eval_desc_embed_4v100px.slurm)
+- [compare_eval_desc_embed.py](../../../../scripts/validation/compare_eval_desc_embed.py)
+- [run_compare_eval_desc_embed_4v100px.slurm](../../../../scripts/validation/run_compare_eval_desc_embed_4v100px.slurm)
 
 原始结果：
 

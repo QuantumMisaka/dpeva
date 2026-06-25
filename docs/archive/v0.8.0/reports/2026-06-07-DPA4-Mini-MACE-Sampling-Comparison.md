@@ -1,8 +1,8 @@
 ---
 title: DPA4 Mini / MACE Sampling Comparison
-status: active
+status: archived
 audience: Developers / Researchers
-last-updated: 2026-06-07
+last-updated: 2026-06-25
 owner: DPEVA Maintainers
 series: Sampling Comparison
 related:
@@ -12,11 +12,11 @@ related:
 # DPA4 Mini / MACE small / MACE medium 采样对比报告
 
 - Date: 2026-06-07
-- Status: active
+- Status: archived
 - Owner: DPEVA Maintainers
 - Series: Sampling Comparison
 - Related Reports: [2026-06-08-DPA4-Neo-Air-Plus-Sampling-Comparison.md](2026-06-08-DPA4-Neo-Air-Plus-Sampling-Comparison.md)
-- Result Artifact: [MACE_DPA4_MINI_SAMPLING_COMPARISON.html](assets/2026-06-07-dpa4-mini-mace/MACE_DPA4_MINI_SAMPLING_COMPARISON.html)
+- Result Artifact: [MACE_DPA4_MINI_SAMPLING_COMPARISON.html](../../../reports/assets/2026-06-07-dpa4-mini-mace/MACE_DPA4_MINI_SAMPLING_COMPARISON.html)
 
 ## 1. 结论摘要
 
@@ -87,11 +87,11 @@ related:
 
 ## 5. 附件与可追溯结果
 
-- HTML 报告: [MACE_DPA4_MINI_SAMPLING_COMPARISON.html](assets/2026-06-07-dpa4-mini-mace/MACE_DPA4_MINI_SAMPLING_COMPARISON.html)
-- 指标汇总: [mace_mini_sampling_metrics.csv](assets/2026-06-07-dpa4-mini-mace/mace_mini_sampling_metrics.csv)
-- 选择重叠: [mace_mini_selection_overlap.csv](assets/2026-06-07-dpa4-mini-mace/mace_mini_selection_overlap.csv)
-- MACE small summary: [sampling_summary_mace_small.json](assets/2026-06-07-dpa4-mini-mace/sampling_summary_mace_small.json)
-- MACE medium summary: [sampling_summary_mace_medium.json](assets/2026-06-07-dpa4-mini-mace/sampling_summary_mace_medium.json)
+- HTML 报告: [MACE_DPA4_MINI_SAMPLING_COMPARISON.html](../../../reports/assets/2026-06-07-dpa4-mini-mace/MACE_DPA4_MINI_SAMPLING_COMPARISON.html)
+- 指标汇总: [mace_mini_sampling_metrics.csv](../../../reports/assets/2026-06-07-dpa4-mini-mace/mace_mini_sampling_metrics.csv)
+- 选择重叠: [mace_mini_selection_overlap.csv](../../../reports/assets/2026-06-07-dpa4-mini-mace/mace_mini_selection_overlap.csv)
+- MACE small summary: [sampling_summary_mace_small.json](../../../reports/assets/2026-06-07-dpa4-mini-mace/sampling_summary_mace_small.json)
+- MACE medium summary: [sampling_summary_mace_medium.json](../../../reports/assets/2026-06-07-dpa4-mini-mace/sampling_summary_mace_medium.json)
 
 ## 6. 建议
 

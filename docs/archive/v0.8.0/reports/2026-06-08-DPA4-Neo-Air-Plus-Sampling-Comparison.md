@@ -1,8 +1,8 @@
 ---
 title: DPA4 Neo / Air / Plus Sampling Comparison
-status: active
+status: archived
 audience: Developers / Researchers
-last-updated: 2026-06-08
+last-updated: 2026-06-25
 owner: DPEVA Maintainers
 series: Sampling Comparison
 related:
@@ -12,11 +12,11 @@ related:
 # DPA4 Neo / Air / Plus 采样对比报告
 
 - Date: 2026-06-08
-- Status: active
+- Status: archived
 - Owner: DPEVA Maintainers
 - Series: Sampling Comparison
 - Related Reports: [2026-06-07-DPA4-Mini-MACE-Sampling-Comparison.md](2026-06-07-DPA4-Mini-MACE-Sampling-Comparison.md)
-- Result Artifact: [DPA4_NEO_AIR_PLUS_SAMPLING_COMPARISON.html](assets/2026-06-08-dpa4-neo-air-plus/DPA4_NEO_AIR_PLUS_SAMPLING_COMPARISON.html)
+- Result Artifact: [DPA4_NEO_AIR_PLUS_SAMPLING_COMPARISON.html](../../../reports/assets/2026-06-08-dpa4-neo-air-plus/DPA4_NEO_AIR_PLUS_SAMPLING_COMPARISON.html)
 
 ## 1. 结论摘要
 
@@ -85,12 +85,12 @@ related:
 
 ## 5. 附件与可追溯结果
 
-- HTML 报告: [DPA4_NEO_AIR_PLUS_SAMPLING_COMPARISON.html](assets/2026-06-08-dpa4-neo-air-plus/DPA4_NEO_AIR_PLUS_SAMPLING_COMPARISON.html)
-- 指标汇总: [neo_air_plus_sampling_metrics.csv](assets/2026-06-08-dpa4-neo-air-plus/neo_air_plus_sampling_metrics.csv)
-- 选择重叠: [neo_air_plus_selection_overlap.csv](assets/2026-06-08-dpa4-neo-air-plus/neo_air_plus_selection_overlap.csv)
-- PCA 表: [neo_air_plus_pca_table.csv](assets/2026-06-08-dpa4-neo-air-plus/neo_air_plus_pca_table.csv)
-- pool 计数: [neo_air_plus_pool_counts.csv](assets/2026-06-08-dpa4-neo-air-plus/neo_air_plus_pool_counts.csv)
-- UQ 汇总: [neo_air_plus_uq_summary.csv](assets/2026-06-08-dpa4-neo-air-plus/neo_air_plus_uq_summary.csv)
+- HTML 报告: [DPA4_NEO_AIR_PLUS_SAMPLING_COMPARISON.html](../../../reports/assets/2026-06-08-dpa4-neo-air-plus/DPA4_NEO_AIR_PLUS_SAMPLING_COMPARISON.html)
+- 指标汇总: [neo_air_plus_sampling_metrics.csv](../../../reports/assets/2026-06-08-dpa4-neo-air-plus/neo_air_plus_sampling_metrics.csv)
+- 选择重叠: [neo_air_plus_selection_overlap.csv](../../../reports/assets/2026-06-08-dpa4-neo-air-plus/neo_air_plus_selection_overlap.csv)
+- PCA 表: [neo_air_plus_pca_table.csv](../../../reports/assets/2026-06-08-dpa4-neo-air-plus/neo_air_plus_pca_table.csv)
+- pool 计数: [neo_air_plus_pool_counts.csv](../../../reports/assets/2026-06-08-dpa4-neo-air-plus/neo_air_plus_pool_counts.csv)
+- UQ 汇总: [neo_air_plus_uq_summary.csv](../../../reports/assets/2026-06-08-dpa4-neo-air-plus/neo_air_plus_uq_summary.csv)
 
 ## 6. 建议
 

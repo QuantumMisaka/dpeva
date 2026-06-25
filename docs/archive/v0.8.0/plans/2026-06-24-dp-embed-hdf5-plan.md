@@ -1,3 +1,11 @@
+---
+title: DP-EVA Feature Embed/HDF5 Adaptation Plan
+status: archived
+audience: Developers
+last-updated: 2026-06-25
+owner: Maintainers
+---
+
 # DP-EVA feature Embed/HDF5 适配与 SAI DPA4 验证计划
 
   ## Confirmed Facts
