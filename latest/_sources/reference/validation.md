@@ -2,7 +2,7 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-04-05
+last-updated: 2026-06-27
 owner: Docs Owner
 ---
 
@@ -10,7 +10,7 @@ owner: Docs Owner
 
 - Status: active
 - Audience: Developers
-- Last-Updated: 2026-04-05
+- Last-Updated: 2026-06-27
 
 本文件用于作为参数校验规则的单一权威来源。
 
@@ -62,6 +62,18 @@ owner: Docs Owner
 #### 3.2.1 自动保存目录 (Auto Savedir)
 *   **规则**: 如果用户未指定 `savedir`，系统会自动根据 `model_path` 和 `data_path` 生成默认保存路径。
 *   **逻辑**: `savedir = "desc-{model_stem}-{data_name}"`
+
+#### 3.2.2 Feature exporter
+*   **默认**: `feature_exporter="eval_desc"`，CLI 模式调用 `dp eval-desc`，输出旧 `.npy` descriptor。
+*   **Embed**: `feature_exporter="embed"` 调用 `dp embed`，输出 `savedir/embedding.hdf5`。
+*   **特征映射**: `feature_kind="descriptor"` 对应 HDF5 `descriptor`；`feature_kind="fitting_last_layer"` 对应 HDF5 `atomic_feature`。
+*   **精度**: `embedding_dtype` 允许 `fp32`、`fp64`、`native`，默认 `fp32`。
+
+#### 3.2.3 Collect feature input
+*   **规则**: `CollectionConfig.desc_dir` 与 `training_desc_dir` 可指向 `.npy` descriptor 目录、单个 HDF5 文件，或包含 `embedding.hdf5` 的目录。
+*   **特征映射**: `CollectionConfig.desc_feature_kind="descriptor"` 默认读取 HDF5 `descriptor`；`"fitting_last_layer"` 读取 HDF5 `atomic_feature`。
+*   **多池命名**: 递归 HDF5 目录会把 `embedding.hdf5` 相对 `desc_dir` 的父目录作为 system 前缀，例如 `desc/poolA/embedding.hdf5` 生成 `poolA/sys1-0`。
+*   **LLPR**: `llpr_train_feature_dir` 与 `llpr_candidate_feature_dir` 可直接读取 HDF5 `atomic_feature`。
 
 ### 3.3 提交配置 (SubmissionConfig)
 

@@ -366,6 +366,8 @@ document.write(`
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.FeatureConfig"><code class="docutils literal notranslate"><span class="pre">FeatureConfig</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.FeatureConfig.batch_size"><code class="docutils literal notranslate"><span class="pre">FeatureConfig.batch_size</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.FeatureConfig.data_path"><code class="docutils literal notranslate"><span class="pre">FeatureConfig.data_path</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.FeatureConfig.embedding_dtype"><code class="docutils literal notranslate"><span class="pre">FeatureConfig.embedding_dtype</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.FeatureConfig.feature_exporter"><code class="docutils literal notranslate"><span class="pre">FeatureConfig.feature_exporter</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.FeatureConfig.feature_kind"><code class="docutils literal notranslate"><span class="pre">FeatureConfig.feature_kind</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.FeatureConfig.mode"><code class="docutils literal notranslate"><span class="pre">FeatureConfig.mode</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.FeatureConfig.model_head"><code class="docutils literal notranslate"><span class="pre">FeatureConfig.model_head</span></code></a></li>
@@ -403,9 +405,21 @@ document.write(`
 </dd></dl>
 
 <dl class="py attribute pydantic_field">
+<dt class="sig sig-object py" id="dpeva.config.FeatureConfig.embedding_dtype">
+<em class="property"><span class="pre">field</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">embedding_dtype</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'fp32'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'fp64'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'native'</span></span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'fp32'</span></em><a class="headerlink" href="#dpeva.config.FeatureConfig.embedding_dtype" title="Link to this definition">#</a></dt>
+<dd><p>Output dtype used by DeepMD <cite>dp embed</cite>.</p>
+</dd></dl>
+
+<dl class="py attribute pydantic_field">
+<dt class="sig sig-object py" id="dpeva.config.FeatureConfig.feature_exporter">
+<em class="property"><span class="pre">field</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">feature_exporter</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'eval_desc'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'embed'</span></span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'eval_desc'</span></em><a class="headerlink" href="#dpeva.config.FeatureConfig.feature_exporter" title="Link to this definition">#</a></dt>
+<dd><p>Feature export implementation for CLI mode. <cite>eval_desc</cite> preserves legacy <cite>.npy</cite> descriptor output; <cite>embed</cite> writes DeepMD HDF5 embeddings.</p>
+</dd></dl>
+
+<dl class="py attribute pydantic_field">
 <dt class="sig sig-object py" id="dpeva.config.FeatureConfig.feature_kind">
 <em class="property"><span class="pre">field</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">feature_kind</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'descriptor'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'fitting_last_layer'</span></span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'descriptor'</span></em><a class="headerlink" href="#dpeva.config.FeatureConfig.feature_kind" title="Link to this definition">#</a></dt>
-<dd><p>Feature type to export. <cite>fitting_last_layer</cite> requires Python mode.</p>
+<dd><p>Feature type to export. <cite>fitting_last_layer</cite> requires Python mode unless <cite>feature_exporter='embed'</cite> is used.</p>
 </dd></dl>
 
 <dl class="py attribute pydantic_field">
@@ -488,6 +502,8 @@ document.write(`
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.FeatureConfig"><code class="docutils literal notranslate"><span class="pre">FeatureConfig</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.FeatureConfig.batch_size"><code class="docutils literal notranslate"><span class="pre">FeatureConfig.batch_size</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.FeatureConfig.data_path"><code class="docutils literal notranslate"><span class="pre">FeatureConfig.data_path</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.FeatureConfig.embedding_dtype"><code class="docutils literal notranslate"><span class="pre">FeatureConfig.embedding_dtype</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.FeatureConfig.feature_exporter"><code class="docutils literal notranslate"><span class="pre">FeatureConfig.feature_exporter</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.FeatureConfig.feature_kind"><code class="docutils literal notranslate"><span class="pre">FeatureConfig.feature_kind</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.FeatureConfig.mode"><code class="docutils literal notranslate"><span class="pre">FeatureConfig.mode</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.FeatureConfig.model_head"><code class="docutils literal notranslate"><span class="pre">FeatureConfig.model_head</span></code></a></li>

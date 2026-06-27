@@ -366,6 +366,7 @@ document.write(`
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig"><code class="docutils literal notranslate"><span class="pre">CollectionConfig</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.config_path"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.config_path</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.desc_dir"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.desc_dir</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.desc_feature_kind"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.desc_feature_kind</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.direct_k"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.direct_k</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.direct_n_clusters"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.direct_n_clusters</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.direct_thr_init"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.direct_thr_init</span></code></a></li>
@@ -451,6 +452,12 @@ document.write(`
 <dt class="sig sig-object py" id="dpeva.config.CollectionConfig.desc_dir">
 <em class="property"><span class="pre">field</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">desc_dir</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Path</span></em><em class="property"> <span class="pre">[Required]</span></em><a class="headerlink" href="#dpeva.config.CollectionConfig.desc_dir" title="Link to this definition">#</a></dt>
 <dd><p>Descriptor directory.</p>
+</dd></dl>
+
+<dl class="py attribute pydantic_field">
+<dt class="sig sig-object py" id="dpeva.config.CollectionConfig.desc_feature_kind">
+<em class="property"><span class="pre">field</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">desc_feature_kind</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'descriptor'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'fitting_last_layer'</span></span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'descriptor'</span></em><a class="headerlink" href="#dpeva.config.CollectionConfig.desc_feature_kind" title="Link to this definition">#</a></dt>
+<dd><p>Feature kind stored in desc_dir/training_desc_dir. HDF5 descriptor inputs read <cite>descriptor</cite>; fitting_last_layer inputs read <cite>atomic_feature</cite>.</p>
 </dd></dl>
 
 <dl class="py attribute pydantic_field">
@@ -811,6 +818,7 @@ document.write(`
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig"><code class="docutils literal notranslate"><span class="pre">CollectionConfig</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.config_path"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.config_path</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.desc_dir"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.desc_dir</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.desc_feature_kind"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.desc_feature_kind</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.direct_k"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.direct_k</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.direct_n_clusters"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.direct_n_clusters</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.CollectionConfig.direct_thr_init"><code class="docutils literal notranslate"><span class="pre">CollectionConfig.direct_thr_init</span></code></a></li>

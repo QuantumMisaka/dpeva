@@ -374,6 +374,8 @@ document.write(`
 </li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#featureconfig">3.2 特征工作流 (FeatureConfig)</a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#auto-savedir">3.2.1 自动保存目录 (Auto Savedir)</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#feature-exporter">3.2.2 Feature exporter</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#collect-feature-input">3.2.3 Collect feature input</a></li>
 </ul>
 </li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#submissionconfig">3.3 提交配置 (SubmissionConfig)</a><ul class="nav section-nav flex-column">
@@ -404,7 +406,7 @@ document.write(`
 <ul class="simple">
 <li><p>Status: active</p></li>
 <li><p>Audience: Developers</p></li>
-<li><p>Last-Updated: 2026-04-05</p></li>
+<li><p>Last-Updated: 2026-06-27</p></li>
 </ul>
 <p>本文件用于作为参数校验规则的单一权威来源。</p>
 <p>本文档说明了 DP-EVA 系统中各参数的校验逻辑和约束条件，这些规则由 Pydantic 验证器在运行时强制执行。</p>
@@ -508,6 +510,24 @@ document.write(`
 <li><p><strong>逻辑</strong>: <code class="docutils literal notranslate"><span class="pre">savedir</span> <span class="pre">=</span> <span class="pre">&quot;desc-{model_stem}-{data_name}&quot;</span></code></p></li>
 </ul>
 </section>
+<section id="feature-exporter">
+<h4>3.2.2 Feature exporter<a class="headerlink" href="#feature-exporter" title="Link to this heading">#</a></h4>
+<ul class="simple">
+<li><p><strong>默认</strong>: <code class="docutils literal notranslate"><span class="pre">feature_exporter=&quot;eval_desc&quot;</span></code>，CLI 模式调用 <code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">eval-desc</span></code>，输出旧 <code class="docutils literal notranslate"><span class="pre">.npy</span></code> descriptor。</p></li>
+<li><p><strong>Embed</strong>: <code class="docutils literal notranslate"><span class="pre">feature_exporter=&quot;embed&quot;</span></code> 调用 <code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">embed</span></code>，输出 <code class="docutils literal notranslate"><span class="pre">savedir/embedding.hdf5</span></code>。</p></li>
+<li><p><strong>特征映射</strong>: <code class="docutils literal notranslate"><span class="pre">feature_kind=&quot;descriptor&quot;</span></code> 对应 HDF5 <code class="docutils literal notranslate"><span class="pre">descriptor</span></code>；<code class="docutils literal notranslate"><span class="pre">feature_kind=&quot;fitting_last_layer&quot;</span></code> 对应 HDF5 <code class="docutils literal notranslate"><span class="pre">atomic_feature</span></code>。</p></li>
+<li><p><strong>精度</strong>: <code class="docutils literal notranslate"><span class="pre">embedding_dtype</span></code> 允许 <code class="docutils literal notranslate"><span class="pre">fp32</span></code>、<code class="docutils literal notranslate"><span class="pre">fp64</span></code>、<code class="docutils literal notranslate"><span class="pre">native</span></code>，默认 <code class="docutils literal notranslate"><span class="pre">fp32</span></code>。</p></li>
+</ul>
+</section>
+<section id="collect-feature-input">
+<h4>3.2.3 Collect feature input<a class="headerlink" href="#collect-feature-input" title="Link to this heading">#</a></h4>
+<ul class="simple">
+<li><p><strong>规则</strong>: <code class="docutils literal notranslate"><span class="pre">CollectionConfig.desc_dir</span></code> 与 <code class="docutils literal notranslate"><span class="pre">training_desc_dir</span></code> 可指向 <code class="docutils literal notranslate"><span class="pre">.npy</span></code> descriptor 目录、单个 HDF5 文件，或包含 <code class="docutils literal notranslate"><span class="pre">embedding.hdf5</span></code> 的目录。</p></li>
+<li><p><strong>特征映射</strong>: <code class="docutils literal notranslate"><span class="pre">CollectionConfig.desc_feature_kind=&quot;descriptor&quot;</span></code> 默认读取 HDF5 <code class="docutils literal notranslate"><span class="pre">descriptor</span></code>；<code class="docutils literal notranslate"><span class="pre">&quot;fitting_last_layer&quot;</span></code> 读取 HDF5 <code class="docutils literal notranslate"><span class="pre">atomic_feature</span></code>。</p></li>
+<li><p><strong>多池命名</strong>: 递归 HDF5 目录会把 <code class="docutils literal notranslate"><span class="pre">embedding.hdf5</span></code> 相对 <code class="docutils literal notranslate"><span class="pre">desc_dir</span></code> 的父目录作为 system 前缀，例如 <code class="docutils literal notranslate"><span class="pre">desc/poolA/embedding.hdf5</span></code> 生成 <code class="docutils literal notranslate"><span class="pre">poolA/sys1-0</span></code>。</p></li>
+<li><p><strong>LLPR</strong>: <code class="docutils literal notranslate"><span class="pre">llpr_train_feature_dir</span></code> 与 <code class="docutils literal notranslate"><span class="pre">llpr_candidate_feature_dir</span></code> 可直接读取 HDF5 <code class="docutils literal notranslate"><span class="pre">atomic_feature</span></code>。</p></li>
+</ul>
+</section>
 </section>
 <section id="submissionconfig">
 <h3>3.3 提交配置 (SubmissionConfig)<a class="headerlink" href="#submissionconfig" title="Link to this heading">#</a></h3>
@@ -608,6 +628,8 @@ document.write(`
 </li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#featureconfig">3.2 特征工作流 (FeatureConfig)</a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#auto-savedir">3.2.1 自动保存目录 (Auto Savedir)</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#feature-exporter">3.2.2 Feature exporter</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#collect-feature-input">3.2.3 Collect feature input</a></li>
 </ul>
 </li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#submissionconfig">3.3 提交配置 (SubmissionConfig)</a><ul class="nav section-nav flex-column">
