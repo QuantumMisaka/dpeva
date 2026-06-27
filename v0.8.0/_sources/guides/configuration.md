@@ -2,7 +2,7 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-06-12
+last-updated: 2026-06-27
 owner: Docs Owner
 ---
 
@@ -10,7 +10,7 @@ owner: Docs Owner
 
 - Status: active
 - Audience: Users / Developers
-- Last-Updated: 2026-06-12
+- Last-Updated: 2026-06-27
 
 ## 1. 目的与范围
 
@@ -91,6 +91,30 @@ owner: Docs Owner
 }
 ```
 
+DeepMD PyTorch 模型可使用 `dp embed` 导出 HDF5 embedding。该路线会在 `savedir/embedding.hdf5` 中保留 `descriptor`、`atomic_feature`、`structural_feature` 和 `atom_types`；HDF5 dataset 由 DeepMD 使用 gzip + shuffle 压缩。`feature_kind="descriptor"` 读取 `descriptor`，`feature_kind="fitting_last_layer"` 对应 `atomic_feature`。
+
+```json
+{
+  "work_dir": "./",
+  "data_path": "./other_dpdata_all",
+  "model_path": "./DPA4-Plus-OMat24-16M.pt",
+  "savedir": "./desc_pool_embed",
+  "model_head": "OC22",
+  "mode": "cli",
+  "feature_exporter": "embed",
+  "feature_kind": "fitting_last_layer",
+  "embedding_dtype": "fp32",
+  "submission": { "backend": "slurm" }
+}
+```
+
+兼容规则：
+
+- 默认 `feature_exporter="eval_desc"`，仍调用 `dp eval-desc` 并生成旧 `.npy` descriptor。
+- `feature_exporter="embed"` 支持 `feature_kind="descriptor"` 和 `feature_kind="fitting_last_layer"`。
+- Collect 的 `desc_dir`、`training_desc_dir`、LLPR feature 目录既可以指向旧 `.npy` 目录，也可以指向 `embedding.hdf5` 文件或包含该文件的目录。
+- Collect 默认把 `desc_dir` 与 `training_desc_dir` 当作 descriptor 读取；若这些目录来自 `feature_kind="fitting_last_layer"` 的 HDF5 embed 输出，需设置 `desc_feature_kind="fitting_last_layer"`，此时读取 HDF5 `atomic_feature`。
+
 ### 5.2 Train
 
 ```json
@@ -124,6 +148,7 @@ owner: Docs Owner
 {
   "project": "./",
   "desc_dir": "./desc_pool",
+  "desc_feature_kind": "descriptor",
   "testdata_dir": "./other_dpdata_all",
   "testing_dir": "test_val",
   "results_prefix": "results",
@@ -132,6 +157,15 @@ owner: Docs Owner
   "direct_n_clusters": 20,
   "direct_k": 1,
   "submission": { "backend": "slurm" }
+}
+```
+
+当候选描述符来自 `dpeva feature` 的 `feature_exporter="embed"` 且 `feature_kind="fitting_last_layer"` 时，将 `desc_dir` 指向 HDF5 输出目录并设置：
+
+```json
+{
+  "desc_dir": "./desc_pool_embed",
+  "desc_feature_kind": "fitting_last_layer"
 }
 ```
 

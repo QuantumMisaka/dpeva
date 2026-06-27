@@ -792,6 +792,8 @@ document.write(`
         <span class="bp">self</span><span class="o">.</span><span class="n">head</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">model_head</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">output_mode</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">output_mode</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">feature_kind</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">feature_kind</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">feature_exporter</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">feature_exporter</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">embedding_dtype</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">embedding_dtype</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">batch_size</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">mode</span>
         
@@ -845,10 +847,10 @@ document.write(`
             <span class="k">raise</span> <span class="n">WorkflowError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Data path not found: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">data_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;cli&quot;</span><span class="p">:</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">feature_kind</span> <span class="o">!=</span> <span class="s2">&quot;descriptor&quot;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">feature_exporter</span> <span class="o">==</span> <span class="s2">&quot;eval_desc&quot;</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">feature_kind</span> <span class="o">!=</span> <span class="s2">&quot;descriptor&quot;</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="n">WorkflowError</span><span class="p">(</span>
-                    <span class="s2">&quot;feature_kind=&#39;fitting_last_layer&#39; requires mode=&#39;python&#39;; &quot;</span>
-                    <span class="s2">&quot;deepmd-kit does not provide a dp eval-lastlayer CLI.&quot;</span>
+                    <span class="s2">&quot;feature_kind=&#39;fitting_last_layer&#39; requires mode=&#39;python&#39; or &quot;</span>
+                    <span class="s2">&quot;feature_exporter=&#39;embed&#39;.&quot;</span>
                 <span class="p">)</span>
             <span class="c1"># CLI Mode: Use dp eval-desc</span>
             <span class="c1"># Detect multi-pool structure</span>
@@ -859,7 +861,10 @@ document.write(`
                 <span class="n">output_dir</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span><span class="p">,</span>
                 <span class="n">model_path</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model_path</span><span class="p">,</span>
                 <span class="n">head</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">head</span><span class="p">,</span>
-                <span class="n">sub_pools</span><span class="o">=</span><span class="n">sub_pools</span>
+                <span class="n">sub_pools</span><span class="o">=</span><span class="n">sub_pools</span><span class="p">,</span>
+                <span class="n">feature_exporter</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">feature_exporter</span><span class="p">,</span>
+                <span class="n">feature_kind</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">feature_kind</span><span class="p">,</span>
+                <span class="n">embedding_dtype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">embedding_dtype</span><span class="p">,</span>
             <span class="p">)</span>
             
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;python&quot;</span><span class="p">:</span>

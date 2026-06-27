@@ -403,7 +403,7 @@ document.write(`
 <ul class="simple">
 <li><p>Status: active</p></li>
 <li><p>Audience: Users / Developers</p></li>
-<li><p>Last-Updated: 2026-06-12</p></li>
+<li><p>Last-Updated: 2026-06-27</p></li>
 </ul>
 <section id="id1">
 <h2>1. 目的与范围<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
@@ -489,6 +489,28 @@ document.write(`
 <span class="p">}</span>
 </pre></div>
 </div>
+<p>DeepMD PyTorch 模型可使用 <code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">embed</span></code> 导出 HDF5 embedding。该路线会在 <code class="docutils literal notranslate"><span class="pre">savedir/embedding.hdf5</span></code> 中保留 <code class="docutils literal notranslate"><span class="pre">descriptor</span></code>、<code class="docutils literal notranslate"><span class="pre">atomic_feature</span></code>、<code class="docutils literal notranslate"><span class="pre">structural_feature</span></code> 和 <code class="docutils literal notranslate"><span class="pre">atom_types</span></code>；HDF5 dataset 由 DeepMD 使用 gzip + shuffle 压缩。<code class="docutils literal notranslate"><span class="pre">feature_kind=&quot;descriptor&quot;</span></code> 读取 <code class="docutils literal notranslate"><span class="pre">descriptor</span></code>，<code class="docutils literal notranslate"><span class="pre">feature_kind=&quot;fitting_last_layer&quot;</span></code> 对应 <code class="docutils literal notranslate"><span class="pre">atomic_feature</span></code>。</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;work_dir&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;./&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;data_path&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;./other_dpdata_all&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;model_path&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;./DPA4-Plus-OMat24-16M.pt&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;savedir&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;./desc_pool_embed&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;model_head&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;OC22&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;mode&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;cli&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;feature_exporter&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;embed&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;feature_kind&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;fitting_last_layer&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;embedding_dtype&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;fp32&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;submission&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;backend&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;slurm&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>兼容规则：</p>
+<ul class="simple">
+<li><p>默认 <code class="docutils literal notranslate"><span class="pre">feature_exporter=&quot;eval_desc&quot;</span></code>，仍调用 <code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">eval-desc</span></code> 并生成旧 <code class="docutils literal notranslate"><span class="pre">.npy</span></code> descriptor。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">feature_exporter=&quot;embed&quot;</span></code> 支持 <code class="docutils literal notranslate"><span class="pre">feature_kind=&quot;descriptor&quot;</span></code> 和 <code class="docutils literal notranslate"><span class="pre">feature_kind=&quot;fitting_last_layer&quot;</span></code>。</p></li>
+<li><p>Collect 的 <code class="docutils literal notranslate"><span class="pre">desc_dir</span></code>、<code class="docutils literal notranslate"><span class="pre">training_desc_dir</span></code>、LLPR feature 目录既可以指向旧 <code class="docutils literal notranslate"><span class="pre">.npy</span></code> 目录，也可以指向 <code class="docutils literal notranslate"><span class="pre">embedding.hdf5</span></code> 文件或包含该文件的目录。</p></li>
+<li><p>Collect 默认把 <code class="docutils literal notranslate"><span class="pre">desc_dir</span></code> 与 <code class="docutils literal notranslate"><span class="pre">training_desc_dir</span></code> 当作 descriptor 读取；若这些目录来自 <code class="docutils literal notranslate"><span class="pre">feature_kind=&quot;fitting_last_layer&quot;</span></code> 的 HDF5 embed 输出，需设置 <code class="docutils literal notranslate"><span class="pre">desc_feature_kind=&quot;fitting_last_layer&quot;</span></code>，此时读取 HDF5 <code class="docutils literal notranslate"><span class="pre">atomic_feature</span></code>。</p></li>
+</ul>
 </section>
 <section id="train">
 <h3>5.2 Train<a class="headerlink" href="#train" title="Link to this heading">#</a></h3>
@@ -522,6 +544,7 @@ document.write(`
 <div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
 <span class="w">  </span><span class="nt">&quot;project&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;./&quot;</span><span class="p">,</span>
 <span class="w">  </span><span class="nt">&quot;desc_dir&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;./desc_pool&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;desc_feature_kind&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;descriptor&quot;</span><span class="p">,</span>
 <span class="w">  </span><span class="nt">&quot;testdata_dir&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;./other_dpdata_all&quot;</span><span class="p">,</span>
 <span class="w">  </span><span class="nt">&quot;testing_dir&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;test_val&quot;</span><span class="p">,</span>
 <span class="w">  </span><span class="nt">&quot;results_prefix&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;results&quot;</span><span class="p">,</span>
@@ -530,6 +553,13 @@ document.write(`
 <span class="w">  </span><span class="nt">&quot;direct_n_clusters&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">20</span><span class="p">,</span>
 <span class="w">  </span><span class="nt">&quot;direct_k&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
 <span class="w">  </span><span class="nt">&quot;submission&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;backend&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;slurm&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>当候选描述符来自 <code class="docutils literal notranslate"><span class="pre">dpeva</span> <span class="pre">feature</span></code> 的 <code class="docutils literal notranslate"><span class="pre">feature_exporter=&quot;embed&quot;</span></code> 且 <code class="docutils literal notranslate"><span class="pre">feature_kind=&quot;fitting_last_layer&quot;</span></code> 时，将 <code class="docutils literal notranslate"><span class="pre">desc_dir</span></code> 指向 HDF5 输出目录并设置：</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;desc_dir&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;./desc_pool_embed&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;desc_feature_kind&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;fitting_last_layer&quot;</span>
 <span class="p">}</span>
 </pre></div>
 </div>

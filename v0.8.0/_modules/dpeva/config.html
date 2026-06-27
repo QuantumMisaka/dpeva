@@ -917,7 +917,21 @@ document.write(`
     <span class="n">model_head</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Model head name.&quot;</span><span class="p">)</span>
     <span class="n">feature_kind</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;descriptor&quot;</span><span class="p">,</span> <span class="s2">&quot;fitting_last_layer&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="s2">&quot;descriptor&quot;</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Feature type to export. `fitting_last_layer` requires Python mode.&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;Feature type to export. `fitting_last_layer` requires Python mode &quot;</span>
+            <span class="s2">&quot;unless `feature_exporter=&#39;embed&#39;` is used.&quot;</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">feature_exporter</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;eval_desc&quot;</span><span class="p">,</span> <span class="s2">&quot;embed&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="s2">&quot;eval_desc&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;Feature export implementation for CLI mode. `eval_desc` preserves &quot;</span>
+            <span class="s2">&quot;legacy `.npy` descriptor output; `embed` writes DeepMD HDF5 embeddings.&quot;</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">embedding_dtype</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;fp32&quot;</span><span class="p">,</span> <span class="s2">&quot;fp64&quot;</span><span class="p">,</span> <span class="s2">&quot;native&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="s2">&quot;fp32&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Output dtype used by DeepMD `dp embed`.&quot;</span><span class="p">,</span>
     <span class="p">)</span>
     
     <span class="n">output_mode</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;atomic&quot;</span><span class="p">,</span> <span class="s2">&quot;structural&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
@@ -1198,6 +1212,13 @@ document.write(`
     <span class="c1"># Paths</span>
     <span class="n">desc_dir</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Descriptor directory.&quot;</span><span class="p">)</span>
     <span class="n">testdata_dir</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Test data directory.&quot;</span><span class="p">)</span>
+    <span class="n">desc_feature_kind</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;descriptor&quot;</span><span class="p">,</span> <span class="s2">&quot;fitting_last_layer&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="s2">&quot;descriptor&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;Feature kind stored in desc_dir/training_desc_dir. HDF5 descriptor &quot;</span>
+            <span class="s2">&quot;inputs read `descriptor`; fitting_last_layer inputs read `atomic_feature`.&quot;</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
     
     <span class="c1"># Optional Paths (for Joint Sampling)</span>
     <span class="n">training_data_dir</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
