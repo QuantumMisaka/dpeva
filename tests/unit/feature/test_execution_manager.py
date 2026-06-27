@@ -96,6 +96,36 @@ class TestFeatureExecutionManager:
         assert "embedding.hdf5" in job_config.command
         assert script_path.endswith("run_embed.slurm")
 
+    def test_submit_cli_job_embed_multi_pool_writes_one_hdf5_per_pool(self, mock_job_manager, tmp_path):
+        """Embed CLI should preserve DP-EVA's multi-pool output layout."""
+        manager = FeatureExecutionManager(
+            backend="local",
+            slurm_config={},
+            env_setup="",
+            dp_backend="pt",
+            omp_threads=1,
+        )
+
+        manager.submit_cli_job(
+            data_path="data",
+            output_dir=str(tmp_path / "output"),
+            model_path="model.pt",
+            head="OC20M",
+            sub_pools=["pool1", "pool2"],
+            feature_exporter="embed",
+            feature_kind="descriptor",
+            embedding_dtype="fp32",
+        )
+
+        jm = mock_job_manager.return_value
+        job_config = jm.generate_script.call_args[0][0]
+
+        assert "Processing pool: pool1" in job_config.command
+        assert "Processing pool: pool2" in job_config.command
+        assert "pool1/embedding.hdf5" in job_config.command
+        assert "pool2/embedding.hdf5" in job_config.command
+        assert "/output/embedding.hdf5" not in job_config.command
+
     def test_command_builder_embed_quotes_dtype_and_head(self):
         DPCommandBuilder.set_backend("pt")
 

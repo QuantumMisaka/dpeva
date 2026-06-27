@@ -136,16 +136,36 @@ class FeatureExecutionManager:
         elif feature_exporter == "embed":
             if feature_kind not in {"descriptor", "fitting_last_layer"}:
                 raise ValueError(f"Unsupported feature kind for embed: {feature_kind}")
-            output_hdf5 = os.path.join(abs_output_dir, "embedding.hdf5")
             log_file = "embed.log" if self.backend == "local" else None
-            cmd = DPCommandBuilder.embed(
-                model=model_path,
-                system=abs_data_path,
-                output=output_hdf5,
-                head=head,
-                dtype=embedding_dtype,
-                log_file=log_file,
-            )
+            if sub_pools:
+                self.logger.info(f"Detected multi-pool structure with {len(sub_pools)} pools. Generating iterative script.")
+                cmd = ""
+                for pool in sub_pools:
+                    pool_in = os.path.join(abs_data_path, pool)
+                    pool_out = os.path.join(abs_output_dir, pool)
+                    output_hdf5 = os.path.join(pool_out, "embedding.hdf5")
+
+                    cmd += f"mkdir -p {pool_out}\n"
+                    pool_cmd = DPCommandBuilder.embed(
+                        model=model_path,
+                        system=pool_in,
+                        output=output_hdf5,
+                        head=head,
+                        dtype=embedding_dtype,
+                        log_file=None,
+                    )
+                    cmd += f"echo 'Processing pool: {pool}'\n"
+                    cmd += f"{pool_cmd}\n"
+            else:
+                output_hdf5 = os.path.join(abs_output_dir, "embedding.hdf5")
+                cmd = DPCommandBuilder.embed(
+                    model=model_path,
+                    system=abs_data_path,
+                    output=output_hdf5,
+                    head=head,
+                    dtype=embedding_dtype,
+                    log_file=log_file,
+                )
             job_name = f"dpa_embed_{os.path.basename(abs_data_path)}"
             output_log = "embed.log"
             error_log = "embed.err"

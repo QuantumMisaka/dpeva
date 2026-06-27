@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from dpeva.constants import (
     COL_UQ_DPOSE_ENERGY_ENSEMBLE_PATH,
@@ -120,6 +120,78 @@ def test_no_filter_uq_phase_with_single_pool_names(tmp_path):
 
     assert len(df_candidate) == 3
     assert set(unique_system_names) == {"sys1", "sys2"}
+
+
+def test_no_filter_uq_phase_passes_last_layer_hdf5_dataset(tmp_path):
+    (tmp_path / "project").mkdir()
+    (tmp_path / "desc_pool").mkdir()
+    (tmp_path / "test_data").mkdir()
+
+    config = {
+        "project": str(tmp_path / "project"),
+        "desc_dir": str(tmp_path / "desc_pool"),
+        "testdata_dir": str(tmp_path / "test_data"),
+        "root_savedir": str(tmp_path / "savedir"),
+        "uq_trust_mode": "no_filter",
+        "sampler_type": "direct",
+        "desc_feature_kind": "fitting_last_layer",
+        "backend": "local",
+    }
+
+    with patch("dpeva.workflows.collect.UQManager"):
+        workflow = CollectionWorkflow(config)
+
+    datanames = ["sys1-0", "sys1-1"]
+    desc = np.random.rand(2, 3)
+    with patch.object(workflow.io_manager, "load_descriptors", return_value=(datanames, desc)) as load_descriptors:
+        workflow._run_no_filter_uq_phase()
+
+    assert load_descriptors.call_args.kwargs["hdf5_dataset"] == "atomic_feature"
+
+
+def test_sampling_phase_passes_last_layer_hdf5_dataset_to_training_and_2direct(tmp_path):
+    (tmp_path / "project").mkdir()
+    (tmp_path / "desc_pool").mkdir()
+    (tmp_path / "test_data").mkdir()
+    (tmp_path / "desc_train").mkdir()
+
+    config = {
+        "project": str(tmp_path / "project"),
+        "desc_dir": str(tmp_path / "desc_pool"),
+        "testdata_dir": str(tmp_path / "test_data"),
+        "training_desc_dir": str(tmp_path / "desc_train"),
+        "root_savedir": str(tmp_path / "savedir"),
+        "uq_trust_mode": "no_filter",
+        "sampler_type": "2-direct",
+        "desc_feature_kind": "fitting_last_layer",
+        "backend": "local",
+    }
+
+    with patch("dpeva.workflows.collect.UQManager"):
+        workflow = CollectionWorkflow(config)
+
+    workflow.sampling_manager = MagicMock()
+    workflow.sampling_manager.sampler_type = "2-direct"
+    workflow.sampling_manager.prepare_features.return_value = (np.array([[1.0, 0.0]]), False, 1)
+    workflow.sampling_manager.execute_sampling.return_value = {
+        "selected_indices": [0],
+        "pca_features": np.array([[1.0, 0.0]]),
+        "explained_variance": np.array([1.0]),
+        "random_indices": [0],
+        "scores_direct": np.array([0.0]),
+        "scores_random": np.array([0.0]),
+    }
+
+    df_candidate = pd.DataFrame({"dataname": ["sys1-0"], "uq_identity": ["candidate"]})
+    df_desc = pd.DataFrame({"dataname": ["sys1-0"], "desc_0": [1.0], "desc_1": [0.0]})
+    vis = MagicMock()
+
+    with patch.object(workflow.io_manager, "load_descriptors", return_value=(["train-0"], np.array([[0.0, 1.0]]))) as load_descriptors:
+        with patch.object(workflow.io_manager, "load_atomic_features", return_value=([np.ones((2, 3))], [2])) as load_atomic:
+            workflow._run_sampling_phase(df_candidate, df_desc, vis)
+
+    assert load_descriptors.call_args.kwargs["hdf5_dataset"] == "atomic_feature"
+    assert load_atomic.call_args.kwargs["hdf5_dataset"] == "atomic_feature"
 
 
 def test_llpr_uq_phase_routes_last_layer_features(tmp_path):

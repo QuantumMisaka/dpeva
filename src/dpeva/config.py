@@ -413,6 +413,13 @@ class CollectionConfig(BaseWorkflowConfig):
     # Paths
     desc_dir: Path = Field(..., description="Descriptor directory.")
     testdata_dir: Path = Field(..., description="Test data directory.")
+    desc_feature_kind: Literal["descriptor", "fitting_last_layer"] = Field(
+        "descriptor",
+        description=(
+            "Feature kind stored in desc_dir/training_desc_dir. HDF5 descriptor "
+            "inputs read `descriptor`; fitting_last_layer inputs read `atomic_feature`."
+        ),
+    )
     
     # Optional Paths (for Joint Sampling)
     training_data_dir: Optional[Path] = None

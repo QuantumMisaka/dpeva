@@ -2,7 +2,7 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-04-05
+last-updated: 2026-06-27
 owner: Docs Owner
 ---
 
@@ -10,7 +10,7 @@ owner: Docs Owner
 
 - Status: active
 - Audience: Developers
-- Last-Updated: 2026-04-05
+- Last-Updated: 2026-06-27
 
 本文件用于作为参数校验规则的单一权威来源。
 
@@ -71,6 +71,8 @@ owner: Docs Owner
 
 #### 3.2.3 Collect feature input
 *   **规则**: `CollectionConfig.desc_dir` 与 `training_desc_dir` 可指向 `.npy` descriptor 目录、单个 HDF5 文件，或包含 `embedding.hdf5` 的目录。
+*   **特征映射**: `CollectionConfig.desc_feature_kind="descriptor"` 默认读取 HDF5 `descriptor`；`"fitting_last_layer"` 读取 HDF5 `atomic_feature`。
+*   **多池命名**: 递归 HDF5 目录会把 `embedding.hdf5` 相对 `desc_dir` 的父目录作为 system 前缀，例如 `desc/poolA/embedding.hdf5` 生成 `poolA/sys1-0`。
 *   **LLPR**: `llpr_train_feature_dir` 与 `llpr_candidate_feature_dir` 可直接读取 HDF5 `atomic_feature`。
 
 ### 3.3 提交配置 (SubmissionConfig)

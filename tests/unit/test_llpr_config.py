@@ -36,6 +36,16 @@ def test_collection_config_defaults_llpr_to_energy_target(tmp_path):
     assert cfg.llpr_collect_score == "energy_uncertainty_per_atom"
 
 
+def test_collection_config_accepts_desc_feature_kind_for_hdf5_routing(tmp_path):
+    cfg = CollectionConfig(
+        desc_dir=tmp_path,
+        testdata_dir=tmp_path,
+        desc_feature_kind="fitting_last_layer",
+    )
+
+    assert cfg.desc_feature_kind == "fitting_last_layer"
+
+
 def test_collection_config_accepts_energy_ensemble_collect_score(tmp_path):
     cfg = CollectionConfig(
         desc_dir=tmp_path,

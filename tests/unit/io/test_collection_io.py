@@ -77,6 +77,24 @@ def test_load_descriptors_from_hdf5_file(manager, tmp_path):
     assert names == ["sys1-0", "sys1-1", "sys1-2"]
     np.testing.assert_allclose(stru, expected)
 
+
+def test_load_descriptors_from_hdf5_atomic_feature_dataset(manager, tmp_path):
+    h5_path = tmp_path / "embedding.hdf5"
+    _, atomic_feature = _write_embedding_hdf5(h5_path)
+
+    names, stru = manager.load_descriptors(
+        str(h5_path),
+        "test fitting last layer",
+        hdf5_dataset="atomic_feature",
+    )
+
+    expected = atomic_feature.mean(axis=1)
+    expected = expected / (np.linalg.norm(expected, axis=1, keepdims=True) + 1e-12)
+    assert names == ["sys1-0", "sys1-1", "sys1-2"]
+    assert stru.shape == (3, 3)
+    np.testing.assert_allclose(stru, expected)
+
+
 def test_load_descriptors_from_hdf5_directory(manager, tmp_path):
     desc_dir = tmp_path / "desc"
     desc_dir.mkdir()
@@ -86,6 +104,19 @@ def test_load_descriptors_from_hdf5_directory(manager, tmp_path):
 
     assert names == ["sys1-0", "sys1-1", "sys1-2"]
     assert stru.shape == (3, 4)
+
+
+def test_load_descriptors_from_nested_hdf5_directory_keeps_pool_prefix(manager, tmp_path):
+    desc_dir = tmp_path / "desc"
+    pool_dir = desc_dir / "poolA"
+    pool_dir.mkdir(parents=True)
+    _write_embedding_hdf5(pool_dir / "embedding.hdf5")
+
+    names, stru = manager.load_descriptors(str(desc_dir), "test")
+
+    assert names == ["poolA/sys1-0", "poolA/sys1-1", "poolA/sys1-2"]
+    assert stru.shape == (3, 4)
+
 
 def test_load_atomic_features_from_hdf5(manager, tmp_path):
     h5_path = tmp_path / "embedding.hdf5"
@@ -98,6 +129,24 @@ def test_load_atomic_features_from_hdf5(manager, tmp_path):
     np.testing.assert_array_equal(X[0], descriptor[0])
     np.testing.assert_array_equal(X[1], descriptor[2])
     assert n == [2, 2]
+
+
+def test_load_atomic_features_from_hdf5_atomic_feature_dataset(manager, tmp_path):
+    h5_path = tmp_path / "embedding.hdf5"
+    _, atomic_feature = _write_embedding_hdf5(h5_path)
+    df = pd.DataFrame({"dataname": ["sys1-0", "sys1-2"]})
+
+    X, n = manager.load_atomic_features(
+        str(h5_path),
+        df,
+        hdf5_dataset="atomic_feature",
+    )
+
+    assert len(X) == 2
+    np.testing.assert_array_equal(X[0], atomic_feature[0])
+    np.testing.assert_array_equal(X[1], atomic_feature[2])
+    assert n == [2, 2]
+
 
 def test_load_feature_sums_from_hdf5_atomic_feature(manager, tmp_path):
     h5_path = tmp_path / "embedding.hdf5"

@@ -1,0 +1,27 @@
+{
+    "project": "./",
+    "desc_dir": "./desc_pool_embed",
+    "desc_feature_kind": "fitting_last_layer",
+    "testdata_dir": "./other_dpdata",
+    "testing_dir": "test_val",
+    "results_prefix": "results",
+    "root_savedir": "dpeva_collect_last_layer",
+
+    "uq_trust_mode": "no_filter",
+    "sampler_type": "direct",
+    "direct_n_clusters": 1000,
+    "direct_k": 1,
+    "direct_thr_init": 0.1,
+
+    "submission": {
+        "backend": "slurm",
+        "env_setup": [],
+        "slurm_config": {
+            "partition": "CPU-MISC",
+            "qos": "rush-cpu",
+            "ntasks": 1,
+            "cpus_per_task": 4,
+            "job_name": "DPEVA-collect-last-layer"
+        }
+    }
+}

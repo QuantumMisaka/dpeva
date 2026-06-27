@@ -2,7 +2,7 @@
 title: Technical Reports
 status: active
 audience: Developers
-last-updated: 2026-06-25
+last-updated: 2026-06-27
 owner: Docs Owner
 ---
 
@@ -10,7 +10,7 @@ owner: Docs Owner
 
 - Status: active
 - Audience: All
-- Last-Updated: 2026-06-25
+- Last-Updated: 2026-06-27
 
 本文档目录用于存放“项目级、可共享、可追溯”的技术结论，不承载执行过程草稿。
 
@@ -54,6 +54,11 @@ owner: Docs Owner
 
 ## 7. Recently Archived
 
+- [docs/archive/v0.8.0/reports/2026-06-27-HDF5-Last-Layer-Collect-Routing.md](../archive/v0.8.0/reports/2026-06-27-HDF5-Last-Layer-Collect-Routing.md)
+  - Type: Archived Focused Report
+  - Status: archived
+  - Reason: HDF5 `atomic_feature` last-layer collect routing, multi-pool embed output layout, and related config/recipe contract have been reviewed and documented
+  - Related Plan: [docs/archive/v0.8.0/plans/2026-06-24-dp-embed-hdf5-plan.md](../archive/v0.8.0/plans/2026-06-24-dp-embed-hdf5-plan.md)
 - [docs/archive/v0.8.0/reports/2026-06-24-DP-Embed-vs-Eval-Desc-Comparison.md](../archive/v0.8.0/reports/2026-06-24-DP-Embed-vs-Eval-Desc-Comparison.md)
   - Type: Archived Focused Report
   - Status: archived
