@@ -2,6 +2,7 @@ import os
 import glob
 import logging
 import shutil
+import h5py
 import numpy as np
 import pandas as pd
 from typing import List, Tuple, Dict, Optional
@@ -59,6 +60,68 @@ class CollectionIOManager:
             return path_flat
         return None
 
+    def _is_hdf5_file(self, path: str) -> bool:
+        return os.path.isfile(path) and path.lower().endswith((".h5", ".hdf5"))
+
+    def _resolve_hdf5_files(self, desc_dir: str) -> List[str]:
+        return [path for path, _ in self._resolve_hdf5_sources(desc_dir)]
+
+    def _resolve_hdf5_sources(self, desc_dir: str) -> List[Tuple[str, str]]:
+        if "*" in desc_dir:
+            return [
+                (path, "")
+                for path in sorted(glob.glob(desc_dir))
+                if path.lower().endswith((".h5", ".hdf5")) and os.path.isfile(path)
+            ]
+        if self._is_hdf5_file(desc_dir):
+            return [(desc_dir, "")]
+        if os.path.isdir(desc_dir):
+            preferred = os.path.join(desc_dir, "embedding.hdf5")
+            if os.path.exists(preferred):
+                return [(preferred, "")]
+            files = sorted(
+                glob.glob(os.path.join(desc_dir, "**", "*.hdf5"), recursive=True)
+                + glob.glob(os.path.join(desc_dir, "**", "*.h5"), recursive=True)
+            )
+            sources = []
+            base_dir = os.path.abspath(desc_dir)
+            for path in files:
+                rel = os.path.relpath(os.path.dirname(os.path.abspath(path)), base_dir)
+                prefix = "" if rel == "." else rel.replace("\\", "/")
+                sources.append((path, prefix))
+            return sources
+        return []
+
+    def _normalize_hdf5_system_name(self, group_name: str, group) -> str:
+        raw = group.attrs.get("system", group_name)
+        if isinstance(raw, bytes):
+            raw = raw.decode()
+        if isinstance(raw, np.ndarray):
+            raw = raw.tolist()
+        if isinstance(raw, list):
+            raw = raw[0] if raw else group_name
+        raw = str(raw)
+        if os.path.isabs(raw):
+            raw = os.path.basename(os.path.normpath(raw))
+        try:
+            return normalize_sys_name(raw).replace(os.sep, "/")
+        except ValueError:
+            return normalize_sys_name(group_name).replace(os.sep, "/")
+
+    def _apply_hdf5_file_prefix(self, sys_name: str, file_prefix: str) -> str:
+        if not file_prefix:
+            return sys_name
+        prefix = normalize_sys_name(file_prefix).replace(os.sep, "/")
+        if sys_name == prefix or sys_name.startswith(f"{prefix}/"):
+            return sys_name
+        return f"{prefix}/{sys_name}"
+
+    def _matches_target_name(self, sys_name: str, target_names: Optional[List[str]]) -> bool:
+        if not target_names:
+            return True
+        target_set = set(target_names)
+        return sys_name in target_set or os.path.basename(sys_name) in target_set
+
     def count_frames(self, data_dir: str, fmt: str = "auto") -> int:
         """Counts total frames in dataset."""
         try:
@@ -70,7 +133,8 @@ class CollectionIOManager:
 
     def load_descriptors(self, desc_dir: str, label: str = "descriptors", 
                         target_names: Optional[List[str]] = None, 
-                        expected_frames: Optional[Dict[str, int]] = None) -> Tuple[List[str], np.ndarray]:
+                        expected_frames: Optional[Dict[str, int]] = None,
+                        hdf5_dataset: str = "descriptor") -> Tuple[List[str], np.ndarray]:
         """
         Load descriptors from a directory.
 
@@ -94,26 +158,52 @@ class CollectionIOManager:
         
         desc_datanames = []
         desc_stru = []
+        hdf5_sources = self._resolve_hdf5_sources(desc_dir)
         
         if target_names:
             self.logger.info(f"Loading {len(target_names)} specific systems based on target names.")
-            for sys_name in target_names:
-                f = self._resolve_descriptor_file(desc_dir, sys_name)
-                if f is None:
-                    self.logger.error(f"Descriptor file not found for system: {sys_name}")
-                    raise FileNotFoundError(f"Descriptor file missing for {sys_name}")
-                
-                self._load_single_descriptor(f, sys_name, expected_frames, desc_datanames, desc_stru)
+            if hdf5_sources:
+                for f, file_prefix in hdf5_sources:
+                    self._load_hdf5_descriptors(
+                        f,
+                        file_prefix,
+                        target_names,
+                        expected_frames,
+                        desc_datanames,
+                        desc_stru,
+                        hdf5_dataset,
+                    )
+            else:
+                for sys_name in target_names:
+                    f = self._resolve_descriptor_file(desc_dir, sys_name)
+                    if f is None:
+                        self.logger.error(f"Descriptor file not found for system: {sys_name}")
+                        raise FileNotFoundError(f"Descriptor file missing for {sys_name}")
+
+                    self._load_single_descriptor(f, sys_name, expected_frames, desc_datanames, desc_stru)
                 
         else:
-            if "*" in desc_dir:
+            if hdf5_sources:
+                for f, file_prefix in hdf5_sources:
+                    self._load_hdf5_descriptors(
+                        f,
+                        file_prefix,
+                        target_names,
+                        expected_frames,
+                        desc_datanames,
+                        desc_stru,
+                        hdf5_dataset,
+                    )
+            elif "*" in desc_dir:
                 desc_iter_list = sorted(glob.glob(desc_dir))
                 base_dir = None
             else:
                 desc_iter_list = sorted(glob.glob(os.path.join(desc_dir, "**", "*.npy"), recursive=True))
                 base_dir = os.path.abspath(desc_dir)
             
-            if not desc_iter_list:
+            if hdf5_sources:
+                desc_iter_list = []
+            elif not desc_iter_list:
                 self.logger.warning(f"No {label} found in {desc_dir}")
                 return [], np.array([])
             
@@ -142,6 +232,11 @@ class CollectionIOManager:
         and normalizes it. Appends results to lists in-place.
         """
         one_desc = np.load(f_path)
+        self._append_descriptor_array(one_desc, sys_name, expected_frames, desc_datanames, desc_stru)
+
+    def _append_descriptor_array(self, one_desc: np.ndarray, sys_name: str, expected_frames: Optional[Dict],
+                                 desc_datanames: List, desc_stru: List):
+        """Append one system's atomic descriptors after frame validation and pooling."""
         
         # Consistency Check
         if expected_frames and sys_name in expected_frames:
@@ -162,7 +257,41 @@ class CollectionIOManager:
         stru_modulo = np.linalg.norm(one_desc_stru, axis=1, keepdims=True)
         desc_stru.append(one_desc_stru / (stru_modulo + 1e-12))
 
-    def load_atomic_features(self, desc_dir: str, df_candidate: pd.DataFrame) -> Tuple[List[np.ndarray], List[int]]:
+    def _load_hdf5_descriptors(
+        self,
+        hdf5_path: str,
+        file_prefix: str,
+        target_names: Optional[List[str]],
+        expected_frames: Optional[Dict[str, int]],
+        desc_datanames: List,
+        desc_stru: List,
+        dataset: str = "descriptor",
+    ):
+        with h5py.File(hdf5_path, "r") as h5:
+            for group_name in sorted(h5.keys()):
+                group = h5[group_name]
+                if dataset not in group:
+                    continue
+                sys_name = self._apply_hdf5_file_prefix(
+                    self._normalize_hdf5_system_name(group_name, group),
+                    file_prefix,
+                )
+                if not self._matches_target_name(sys_name, target_names):
+                    continue
+                self._append_descriptor_array(
+                    np.asarray(group[dataset]),
+                    sys_name,
+                    expected_frames,
+                    desc_datanames,
+                    desc_stru,
+                )
+
+    def load_atomic_features(
+        self,
+        desc_dir: str,
+        df_candidate: pd.DataFrame,
+        hdf5_dataset: str = "descriptor",
+    ) -> Tuple[List[np.ndarray], List[int]]:
         """
         Load atomic features for 2-DIRECT sampling.
 
@@ -190,6 +319,37 @@ class CollectionIOManager:
         for dn in candidate_datanames:
             sys_name, idx = dn.rsplit("-", 1)
             sys_to_frames.setdefault(sys_name, set()).add(int(idx))
+
+        hdf5_sources = self._resolve_hdf5_sources(desc_dir)
+        if hdf5_sources:
+            for hdf5_path, file_prefix in hdf5_sources:
+                with h5py.File(hdf5_path, "r") as h5:
+                    for group_name in sorted(h5.keys()):
+                        group = h5[group_name]
+                        if hdf5_dataset not in group:
+                            continue
+                        sys_name = self._apply_hdf5_file_prefix(
+                            self._normalize_hdf5_system_name(group_name, group),
+                            file_prefix,
+                        )
+                        if sys_name not in sys_to_frames:
+                            continue
+                        descriptors = group[hdf5_dataset]
+                        for idx in sys_to_frames[sys_name]:
+                            if idx < descriptors.shape[0]:
+                                feat = np.asarray(descriptors[idx])
+                                dn = f"{sys_name}-{idx}"
+                                dataname_to_feat[dn] = feat
+                                dataname_to_natoms[dn] = feat.shape[0]
+            X_list = []
+            n_list = []
+            for dn in df_candidate["dataname"]:
+                if dn in dataname_to_feat:
+                    X_list.append(dataname_to_feat[dn])
+                    n_list.append(dataname_to_natoms[dn])
+                else:
+                    raise ValueError(f"Missing atomic features for {dn}")
+            return X_list, n_list
             
         for sys_name, indices in sys_to_frames.items():
             f_path = self._resolve_descriptor_file(desc_dir, sys_name)
@@ -219,6 +379,88 @@ class CollectionIOManager:
                 raise ValueError(f"Missing atomic features for {dn}")
                 
         return X_list, n_list
+
+    def load_feature_sums(
+        self,
+        feature_dir: str,
+        label: str,
+        dataset: str = "atomic_feature",
+        normalization: str = "sum",
+    ) -> Tuple[List[str], np.ndarray, np.ndarray]:
+        """Load per-frame feature sums from `.npy` files or DeepMD embed HDF5."""
+        self.logger.info(f"Loading {label} from {feature_dir}")
+        hdf5_sources = self._resolve_hdf5_sources(feature_dir)
+        if hdf5_sources:
+            return self._load_hdf5_feature_sums(hdf5_sources, dataset, normalization)
+        return self._load_npy_feature_sums(feature_dir, label, normalization)
+
+    def _load_hdf5_feature_sums(
+        self,
+        hdf5_sources: List[Tuple[str, str]],
+        dataset: str,
+        normalization: str,
+    ) -> Tuple[List[str], np.ndarray, np.ndarray]:
+        datanames = []
+        feature_sums = []
+        atom_counts = []
+        for hdf5_path, file_prefix in hdf5_sources:
+            with h5py.File(hdf5_path, "r") as h5:
+                for group_name in sorted(h5.keys()):
+                    group = h5[group_name]
+                    if dataset not in group:
+                        continue
+                    sys_name = self._apply_hdf5_file_prefix(
+                        self._normalize_hdf5_system_name(group_name, group),
+                        file_prefix,
+                    )
+                    arr = np.asarray(group[dataset])
+                    frame_sums, counts = self._reduce_feature_array(arr, normalization)
+                    datanames.extend([f"{sys_name}-{i}" for i in range(frame_sums.shape[0])])
+                    feature_sums.append(frame_sums)
+                    atom_counts.append(counts)
+        if not feature_sums:
+            hdf5_files = [path for path, _ in hdf5_sources]
+            raise FileNotFoundError(f"No HDF5 dataset '{dataset}' found in {hdf5_files}")
+        return datanames, np.vstack(feature_sums), np.concatenate(atom_counts)
+
+    def _load_npy_feature_sums(
+        self,
+        feature_dir: str,
+        label: str,
+        normalization: str,
+    ) -> Tuple[List[str], np.ndarray, np.ndarray]:
+        files = sorted(glob.glob(os.path.join(feature_dir, "**", "*.npy"), recursive=True))
+        if not files:
+            raise FileNotFoundError(f"No {label} .npy files found in {feature_dir}")
+
+        datanames = []
+        feature_sums = []
+        atom_counts = []
+        base_dir = os.path.abspath(feature_dir)
+        for path in files:
+            rel = os.path.relpath(os.path.abspath(path), base_dir)
+            sys_name = os.path.splitext(rel)[0].replace("\\", "/")
+            arr = np.asarray(np.load(path))
+            frame_sums, counts = self._reduce_feature_array(arr, normalization)
+            datanames.extend([f"{sys_name}-{i}" for i in range(frame_sums.shape[0])])
+            feature_sums.append(frame_sums)
+            atom_counts.append(counts)
+
+        return datanames, np.vstack(feature_sums), np.concatenate(atom_counts)
+
+    def _reduce_feature_array(self, arr: np.ndarray, normalization: str) -> Tuple[np.ndarray, np.ndarray]:
+        if arr.ndim == 3:
+            if normalization == "mean":
+                frame_sums = arr.mean(axis=1)
+            else:
+                frame_sums = arr.sum(axis=1)
+            counts = np.full(arr.shape[0], arr.shape[1], dtype=float)
+        elif arr.ndim == 2:
+            frame_sums = arr
+            counts = np.ones(arr.shape[0], dtype=float)
+        else:
+            raise ValueError(f"Feature array must be 2D or 3D, got shape={arr.shape}")
+        return frame_sums, counts
 
     def save_dataframe(self, df: pd.DataFrame, filename: str):
         """

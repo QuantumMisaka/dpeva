@@ -2,7 +2,7 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-03-26
+last-updated: 2026-06-27
 owner: Docs Owner
 ---
 
@@ -10,7 +10,7 @@ owner: Docs Owner
 
 - Status: active
 - Audience: Developers
-- Last-Updated: 2026-03-26
+- Last-Updated: 2026-06-27
 
 目标目录：以仓库内多数据池测试资产为参照，例如 `tests/` 中的相关集成测试输入输出目录。
 
@@ -179,5 +179,6 @@ owner: Docs Owner
 
 ## 5. 变更记录
 
+- 2026-06-27：文档治理新鲜度复核，确认生产目录 I/O 拆解与 Workflow 映射仍作为测试专题参考；无契约变更。
 - 2026-03-26：补充 joint 多数据池新增总结图 `Final_sampled_PCAview_by_pool.png` 的触发条件与输出约定。
 - 2026-02-18：补齐生产目录 I/O 拆解与 Workflow 配置映射，并作为集成测试专题附录。

@@ -75,51 +75,106 @@ class FeatureExecutionManager:
         if not self.env_setup:
             self.env_setup = f"export OMP_NUM_THREADS={self.omp_threads}"
 
-    def submit_cli_job(self, data_path: str, output_dir: str, model_path: str, head: str, 
-                      sub_pools: List[str], blocking: bool = True):
+    def submit_cli_job(
+        self,
+        data_path: str,
+        output_dir: str,
+        model_path: str,
+        head: str,
+        sub_pools: List[str],
+        blocking: bool = True,
+        feature_exporter: str = "eval_desc",
+        feature_kind: str = "descriptor",
+        embedding_dtype: str = "fp32",
+    ):
         """
-        Submit a CLI job (dp eval-desc).
+        Submit a CLI job (`dp eval-desc` or `dp embed`).
         Handles both Single-Pool and Multi-Pool structures.
         """
         abs_data_path = os.path.abspath(data_path)
         abs_output_dir = os.path.abspath(output_dir)
         os.makedirs(abs_output_dir, exist_ok=True)
-        
-        log_file = "eval_desc.log" if self.backend == "local" else None
-        
-        cmd = ""
-        if sub_pools:
-            self.logger.info(f"Detected multi-pool structure with {len(sub_pools)} pools. Generating iterative script.")
-            for pool in sub_pools:
-                pool_in = os.path.join(abs_data_path, pool)
-                pool_out = os.path.join(abs_output_dir, pool)
-                
-                cmd += f"mkdir -p {pool_out}\n"
-                
-                pool_cmd = DPCommandBuilder.eval_desc(
+
+        if feature_exporter == "eval_desc":
+            if feature_kind != "descriptor":
+                raise ValueError("feature_exporter='eval_desc' only supports descriptor features.")
+            log_file = "eval_desc.log" if self.backend == "local" else None
+
+            cmd = ""
+            if sub_pools:
+                self.logger.info(f"Detected multi-pool structure with {len(sub_pools)} pools. Generating iterative script.")
+                for pool in sub_pools:
+                    pool_in = os.path.join(abs_data_path, pool)
+                    pool_out = os.path.join(abs_output_dir, pool)
+
+                    cmd += f"mkdir -p {pool_out}\n"
+
+                    pool_cmd = DPCommandBuilder.eval_desc(
+                        model=model_path,
+                        system=pool_in,
+                        output=pool_out,
+                        head=head,
+                        log_file=None
+                    )
+
+                    cmd += f"echo 'Processing pool: {pool}'\n"
+                    cmd += f"{pool_cmd}\n"
+            else:
+                cmd = DPCommandBuilder.eval_desc(
                     model=model_path,
-                    system=pool_in,
-                    output=pool_out,
+                    system=abs_data_path,
+                    output=abs_output_dir,
                     head=head,
-                    log_file=None
+                    log_file=log_file
                 )
-                
-                cmd += f"echo 'Processing pool: {pool}'\n"
-                cmd += f"{pool_cmd}\n"
+
+            job_name = f"dpa_evaldesc_{os.path.basename(abs_data_path)}"
+            output_log = "eval_desc.log"
+            error_log = "eval_desc.err"
+            script_name = "run_evaldesc.slurm" if self.backend == "slurm" else "run_evaldesc.sh"
+
+        elif feature_exporter == "embed":
+            if feature_kind not in {"descriptor", "fitting_last_layer"}:
+                raise ValueError(f"Unsupported feature kind for embed: {feature_kind}")
+            log_file = "embed.log" if self.backend == "local" else None
+            if sub_pools:
+                self.logger.info(f"Detected multi-pool structure with {len(sub_pools)} pools. Generating iterative script.")
+                cmd = ""
+                for pool in sub_pools:
+                    pool_in = os.path.join(abs_data_path, pool)
+                    pool_out = os.path.join(abs_output_dir, pool)
+                    output_hdf5 = os.path.join(pool_out, "embedding.hdf5")
+
+                    cmd += f"mkdir -p {pool_out}\n"
+                    pool_cmd = DPCommandBuilder.embed(
+                        model=model_path,
+                        system=pool_in,
+                        output=output_hdf5,
+                        head=head,
+                        dtype=embedding_dtype,
+                        log_file=None,
+                    )
+                    cmd += f"echo 'Processing pool: {pool}'\n"
+                    cmd += f"{pool_cmd}\n"
+            else:
+                output_hdf5 = os.path.join(abs_output_dir, "embedding.hdf5")
+                cmd = DPCommandBuilder.embed(
+                    model=model_path,
+                    system=abs_data_path,
+                    output=output_hdf5,
+                    head=head,
+                    dtype=embedding_dtype,
+                    log_file=log_file,
+                )
+            job_name = f"dpa_embed_{os.path.basename(abs_data_path)}"
+            output_log = "embed.log"
+            error_log = "embed.err"
+            script_name = "run_embed.slurm" if self.backend == "slurm" else "run_embed.sh"
         else:
-            cmd = DPCommandBuilder.eval_desc(
-                model=model_path,
-                system=abs_data_path,
-                output=abs_output_dir,
-                head=head,
-                log_file=log_file
-            )
+            raise ValueError(f"Unsupported feature exporter: {feature_exporter}")
             
         cmd += f"\necho \"{WORKFLOW_FINISHED_TAG}\""
-        
-        # Create JobConfig
-        job_name = f"dpa_evaldesc_{os.path.basename(abs_data_path)}"
-        
+
         # Filter Slurm config
         task_slurm_config = self.slurm_config.copy()
         for k in ["job_name", "output_log", "error_log"]:
@@ -129,17 +184,15 @@ class FeatureExecutionManager:
             job_name=job_name,
             command=cmd,
             env_setup=self.env_setup,
-            output_log="eval_desc.log",
-            error_log="eval_desc.err",
+            output_log=output_log,
+            error_log=error_log,
             **task_slurm_config
         )
-        
-        script_name = "run_evaldesc.slurm" if self.backend == "slurm" else "run_evaldesc.sh"
         script_path = os.path.join(abs_output_dir, script_name)
         
         self.job_manager.generate_script(job_config, script_path)
         
-        self.logger.info(f"Submitting eval-desc job for {data_path}")
+        self.logger.info(f"Submitting {feature_exporter} job for {data_path}")
         self.job_manager.submit(script_path, working_dir=abs_output_dir)
 
     def submit_python_slurm_job(self, data_path: str, output_dir: str, model_path: str, head: str, 

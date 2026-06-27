@@ -99,6 +99,40 @@ class DPCommandBuilder:
         return cmd
 
     @classmethod
+    def embed(
+        cls,
+        model: str,
+        system: str,
+        output: str,
+        head: Optional[str] = None,
+        dtype: str = "fp32",
+        log_file: Optional[str] = None,
+    ) -> str:
+        """
+        Builds 'dp [backend] embed' command.
+
+        Args:
+            model: Path to model file.
+            system: Path to system directory.
+            output: Output HDF5 file.
+            head: Model head (optional).
+            dtype: Output precision (`fp32`, `fp64`, or `native`).
+            log_file: If provided, appends '> log_file 2>&1'.
+        """
+        cmd = (
+            f"{cls._get_base_cmd()} embed -s {shlex.quote(system)} "
+            f"-m {shlex.quote(model)} -o {shlex.quote(output)} "
+            f"--dtype {shlex.quote(dtype)}"
+        )
+        if head:
+            cmd += f" --head {shlex.quote(head)}"
+
+        if log_file:
+            cmd += f" > {shlex.quote(log_file)} 2>&1"
+
+        return cmd
+
+    @classmethod
     def test(cls, model: str, system: str, prefix: str, head: Optional[str] = None, log_file: Optional[str] = None) -> str:
         """
         Builds 'dp [backend] test' command.

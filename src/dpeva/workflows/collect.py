@@ -1,6 +1,5 @@
 import os
 import sys
-import glob
 import logging
 from typing import Union, Dict
 import pandas as pd
@@ -198,9 +197,18 @@ class CollectionWorkflow:
             return self._run_llpr_uq_phase(vis)
         return self._run_filtered_uq_phase(vis)
 
+    def _desc_hdf5_dataset(self) -> str:
+        if self.config.desc_feature_kind == "fitting_last_layer":
+            return "atomic_feature"
+        return "descriptor"
+
     def _run_no_filter_uq_phase(self):
         self.logger.info("UQ Trust Mode is 'no_filter'. Skipping UQ.")
-        desc_datanames, desc_stru = self.io_manager.load_descriptors(str(self.config.desc_dir), "candidate descriptors")
+        desc_datanames, desc_stru = self.io_manager.load_descriptors(
+            str(self.config.desc_dir),
+            "candidate descriptors",
+            hdf5_dataset=self._desc_hdf5_dataset(),
+        )
         if len(desc_stru) == 0:
             raise ValueError("No descriptors loaded!")
         df_desc = pd.DataFrame(desc_stru, columns=[f"{COL_DESC_PREFIX}{i}" for i in range(desc_stru.shape[1])])
@@ -221,6 +229,7 @@ class CollectionWorkflow:
         desc_datanames, desc_stru = self.io_manager.load_descriptors(
             str(self.config.desc_dir),
             "candidate descriptors",
+            hdf5_dataset=self._desc_hdf5_dataset(),
         )
         if len(desc_stru) == 0:
             raise ValueError("No descriptors loaded!")
@@ -348,35 +357,12 @@ class CollectionWorkflow:
         return df_desc, df_candidate, unique_system_names
 
     def _load_llpr_feature_sums(self, feature_dir: str, label: str):
-        self.logger.info(f"Loading {label} from {feature_dir}")
-        files = sorted(glob.glob(os.path.join(feature_dir, "**", "*.npy"), recursive=True))
-        if not files:
-            raise FileNotFoundError(f"No {label} .npy files found in {feature_dir}")
-
-        datanames = []
-        feature_sums = []
-        atom_counts = []
-        base_dir = os.path.abspath(feature_dir)
-        for path in files:
-            rel = os.path.relpath(os.path.abspath(path), base_dir)
-            sys_name = os.path.splitext(rel)[0].replace("\\", "/")
-            arr = np.asarray(np.load(path))
-            if arr.ndim == 3:
-                if self.config.llpr_feature_normalization == "mean":
-                    frame_sums = arr.mean(axis=1)
-                else:
-                    frame_sums = arr.sum(axis=1)
-                counts = np.full(arr.shape[0], arr.shape[1], dtype=float)
-            elif arr.ndim == 2:
-                frame_sums = arr
-                counts = np.ones(arr.shape[0], dtype=float)
-            else:
-                raise ValueError(f"LLPR feature file {path} must be 2D or 3D, got shape={arr.shape}")
-            datanames.extend([f"{sys_name}-{i}" for i in range(frame_sums.shape[0])])
-            feature_sums.append(frame_sums)
-            atom_counts.append(counts)
-
-        return datanames, np.vstack(feature_sums), np.concatenate(atom_counts)
+        return self.io_manager.load_feature_sums(
+            feature_dir,
+            label,
+            dataset="atomic_feature",
+            normalization=self.config.llpr_feature_normalization,
+        )
 
     def _load_llpr_candidate_energy(self, desc_datanames: list[str]) -> np.ndarray:
         if self.config.llpr_candidate_energy_path is None:
@@ -486,6 +472,7 @@ class CollectionWorkflow:
             "candidate descriptors",
             target_names=unique_system_names,
             expected_frames=expected_frames,
+            hdf5_dataset=self._desc_hdf5_dataset(),
         )
         df_desc = pd.DataFrame(desc_stru, columns=[f"{COL_DESC_PREFIX}{i}" for i in range(desc_stru.shape[1])])
         df_desc["dataname"] = desc_datanames
@@ -735,11 +722,19 @@ class CollectionWorkflow:
             return df_final
         train_desc_stru = np.array([])
         if self.config.training_desc_dir:
-            _, train_desc_stru = self.io_manager.load_descriptors(str(self.config.training_desc_dir), "training descriptors")
+            _, train_desc_stru = self.io_manager.load_descriptors(
+                str(self.config.training_desc_dir),
+                "training descriptors",
+                hdf5_dataset=self._desc_hdf5_dataset(),
+            )
         features, use_joint, n_candidates = self.sampling_manager.prepare_features(df_candidate, df_desc, train_desc_stru)
         x_atom, n_atoms = None, None
         if self.sampling_manager.sampler_type == "2-direct":
-            x_atom, n_atoms = self.io_manager.load_atomic_features(str(self.config.desc_dir), df_candidate)
+            x_atom, n_atoms = self.io_manager.load_atomic_features(
+                str(self.config.desc_dir),
+                df_candidate,
+                hdf5_dataset=self._desc_hdf5_dataset(),
+            )
         background_features = df_desc[[col for col in df_desc.columns if col.startswith(COL_DESC_PREFIX)]].values
         sampling_results = self.sampling_manager.execute_sampling(features, x_atom, n_atoms, background_features=background_features)
         selected_indices = sampling_results["selected_indices"]
