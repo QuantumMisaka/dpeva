@@ -49,7 +49,7 @@ Current blockers:
 - DP-EVA labeling Slurm dispatch is being refactored; do not restart full FP11 production labeling with the old packed multi-GPU MPI runner.
 - The next run must split launcher modes by task class:
   - ordinary single-card tasks: request `--ntasks=1`, `--gpus-per-node=1`, and run `abacus` directly;
-  - genuine multi-card ABACUS tasks: source the SAI rank-map script and set `ABACUS_COMMAND` to include `-map-by ${MAP_OPT}` and the ABACUS executable in config; DP-EVA must not read `MAP_OPT` internally.
+  - genuine multi-card ABACUS tasks: use a separate `launcher_mode="mpi_abacus"` task class so DP-EVA sources the SAI rank-map script and runs `mpirun -np $SLURM_NTASKS --map-by $MAP_OPT abacus`.
 - The local command-mode note for this server is `/home/pku-jianghong/liuzhaoqing/work/ft2dp-dpeva/iter10-dpa4/fp11/fp11_sai_abacus_submission_notes.md`.
 - Remaining FP11 tasks should be resubmitted only after the labeling Slurm backend can preserve the correct single-card versus multi-card launcher semantics.
 
