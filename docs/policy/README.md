@@ -2,7 +2,7 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-04-05
+last-updated: 2026-07-04
 owner: Docs Owner
 ---
 
@@ -10,7 +10,7 @@ owner: Docs Owner
 
 - Status: active
 - Audience: Maintainers / Developers
-- Last-Updated: 2026-04-05
+- Last-Updated: 2026-07-04
 
 本目录用于存放文档体系的制度与规范（Owner、质量标准、贡献流程等），作为 `docs/` 治理的单一权威来源。
 
@@ -18,9 +18,10 @@ owner: Docs Owner
 
 | 文档 | 一句话描述 | Last-Updated |
 |---|---|---|
-| `docs/source/policy/maintenance.md` | 文档维护机制：Owner、Review、过期治理与版本策略。 | 2026-02-18 |
-| `docs/source/policy/quality.md` | 文档质量标准与验收清单（元信息、结构、示例、链接）。 | 2026-02-18 |
-| `docs/source/policy/contributing.md` | 文档贡献指南：权威来源、链接规范、PR 自检与模板。 | 2026-02-19 |
+| `maintenance.md` | 文档维护机制：Owner、Review、过期治理与版本策略。 | 2026-02-18 |
+| `quality.md` | 文档质量标准与验收清单（元信息、结构、示例、链接）。 | 2026-02-18 |
+| `contributing.md` | 文档贡献指南：权威来源、链接规范、PR 自检与模板。 | 2026-02-19 |
+| `docs-structure.md` | 文档目录职责、层级边界与归档位置说明。 | 2026-03-09 |
 
 ## 2. 快速开始
 

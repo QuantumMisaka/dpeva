@@ -33,51 +33,51 @@ owner: Docs Owner
 
 ## File Structure
 
-- Create: `tests/unit/scripts/test_docs_contracts.py`  
+- Create: `tests/unit/scripts/test_docs_contracts.py`
   Executable documentation-contract tests for CLI coverage, config reference coverage, workflow/test matrix accuracy, Skill placement, and docs governance behavior around Skill bundles.
-- Modify: `scripts/check_docs.py`  
+- Modify: `scripts/check_docs.py`
   Replace hard-coded CLI command coverage with dynamic parsing from current `dpeva --help`.
-- Modify: `scripts/doc_check.py`  
+- Modify: `scripts/doc_check.py`
   Allow `docs/skills/<skill-name>/SKILL.md` bundles to omit project-doc `README.md` and `status/audience/last-updated` metadata while still requiring `docs/skills/README.md`.
-- Create: `docs/source/api/config/data-cleaning.rst`  
+- Create: `docs/source/api/config/data-cleaning.rst`
   Sphinx/autodoc-pydantic reference page for `dpeva.config.DataCleaningConfig`.
-- Modify: `docs/source/api/config.rst`  
+- Modify: `docs/source/api/config.rst`
   Add `config/data-cleaning` to the config toctree.
-- Modify: `docs/guides/quickstart.md`  
+- Modify: `docs/guides/quickstart.md`
   Include `explore` and `clean`, update Collect verification to `final_df.csv`, and point users to real recipe paths.
-- Modify: `docs/guides/cli.md`  
+- Modify: `docs/guides/cli.md`
   Spell out all live `dpeva <subcommand>` strings so automated CLI-doc coverage can detect them.
-- Modify: `docs/README.md`  
+- Modify: `docs/README.md`
   Fix root README link, duplicate section numbering, and add Skill navigation.
-- Modify: `docs/source/index.rst`  
+- Modify: `docs/source/index.rst`
   Add `skills/README` to the stable navigation.
-- Modify: `docs/policy/docs-structure.md`  
+- Modify: `docs/policy/docs-structure.md`
   Document the new `docs/skills/` category and its doc-check exception.
-- Modify: `docs/guides/developer-guide.md`  
+- Modify: `docs/guides/developer-guide.md`
   Update stale log anchors and documentation gates.
-- Modify: `docs/governance/traceability/feature-doc-matrix.md`  
+- Modify: `docs/governance/traceability/feature-doc-matrix.md`
   Add `explore`, `clean`, and `DataCleaningConfig`; refresh last-updated.
-- Modify: `docs/governance/traceability/workflow-contract-test-matrix.md`  
+- Modify: `docs/governance/traceability/workflow-contract-test-matrix.md`
   Add `explore`/`clean`, align Collect with `final_df.csv`, and replace stale test references with existing tests.
-- Modify: `docs/governance/inventory/docs-catalog.md`  
+- Modify: `docs/governance/inventory/docs-catalog.md`
   Add `docs/skills/README.md`, remove active labels from archived documents, and refresh last-updated.
-- Create: `docs/reports/2026-07-01-doc-system-audit.md`  
+- Create: `docs/reports/2026-07-01-doc-system-audit.md`
   Short audit report recording evidence, drift, fixes, and validation output.
-- Create: `docs/skills/README.md`  
+- Create: `docs/skills/README.md`
   Human-facing index for project-contained Skills.
-- Create: `docs/skills/dpeva-operator/SKILL.md`  
+- Create: `docs/skills/dpeva-operator/SKILL.md`
   Main AI-readable Skill entry point.
-- Create: `docs/skills/dpeva-operator/agents/openai.yaml`  
+- Create: `docs/skills/dpeva-operator/agents/openai.yaml`
   UI metadata for Codex/OpenAI skill surfaces.
-- Create: `docs/skills/dpeva-operator/references/workflow-map.md`  
+- Create: `docs/skills/dpeva-operator/references/workflow-map.md`
   Workflow command/input/output/verification map.
-- Create: `docs/skills/dpeva-operator/references/config-authoring.md`  
+- Create: `docs/skills/dpeva-operator/references/config-authoring.md`
   Configuration authoring rules and recipe map.
-- Create: `docs/skills/dpeva-operator/references/slurm-monitoring.md`  
+- Create: `docs/skills/dpeva-operator/references/slurm-monitoring.md`
   Slurm execution and log-monitoring reference.
-- Create: `docs/skills/dpeva-operator/references/troubleshooting.md`  
+- Create: `docs/skills/dpeva-operator/references/troubleshooting.md`
   Fast failure triage reference.
-- Create: `docs/reports/2026-07-01-dpeva-operator-skill-validation.md`  
+- Create: `docs/reports/2026-07-01-dpeva-operator-skill-validation.md`
   Skill validation record with pressure scenarios and command results.
 
 Implementation must stage only the files listed in each task. The current worktree contains unrelated user changes.
@@ -1332,11 +1332,11 @@ Expected: commit succeeds and excludes unrelated dirty worktree files.
 
 ## Self-Review
 
-**Spec coverage:**  
+**Spec coverage:**
 The plan audits active docs against current CLI/config/workflow/tests/recipes, repairs stale and missing docs, removes uncovered redundancy by linking to reference sources, and creates a project-contained Skill bundle for both human and AI operation.
 
-**Placeholder scan:**  
+**Placeholder scan:**
 No task depends on unspecified content. Each new file and key replacement contains exact text or exact code. Commands include expected outcomes.
 
-**Type and name consistency:**  
+**Type and name consistency:**
 The plan consistently uses `DataCleaningConfig`, `dpeva clean`, `docs/skills/dpeva-operator`, `final_df.csv`, `DPEVA_TAG: WORKFLOW_FINISHED`, and existing test paths verified from the repository inventory. It also explicitly repairs `docs/guides/cli.md` so the dynamic CLI coverage gate has a matching documentation target.
