@@ -207,6 +207,7 @@
 <li class="toctree-l1"><a class="reference internal" href="labeling-stats-repair.html">Labeling 历史统计修复</a></li>
 <li class="toctree-l1"><a class="reference internal" href="developer/README.html">Developer Guides</a></li>
 <li class="toctree-l1"><a class="reference internal" href="developer/config-docs-maintenance.html">变量说明文档维护指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="developer/deepmd-kit-sai-build.html">SAI 服务器 DeepMD-kit 安装配置指南</a></li>
 <li class="toctree-l1"><a class="reference internal" href="testing/README.html">Testing（测试指南）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="testing/integration-config-templates.html">DP-EVA 集成测试最小配置模板（Slurm）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="testing/integration-slurm.html">DP-EVA 集成测试设计与交付报告（Slurm + Multi DataPool）</a></li>
@@ -403,7 +404,7 @@ document.write(`
 <ul class="simple">
 <li><p>Status: active</p></li>
 <li><p>Audience: Users / Developers</p></li>
-<li><p>Last-Updated: 2026-06-27</p></li>
+<li><p>Last-Updated: 2026-07-04</p></li>
 </ul>
 <section id="id1">
 <h2>1. 目的与范围<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
@@ -639,6 +640,52 @@ document.write(`
 <span class="p">}</span>
 </pre></div>
 </div>
+<p>SAI 上的 ABACUS labeling 如需同时处理普通单卡任务与 highmem/multicard 任务，应使用 <code class="docutils literal notranslate"><span class="pre">labeling_task_classes</span></code> 显式拆分 launcher/resource mode：</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;submission&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;backend&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;slurm&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;env_setup&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;module load abacus/LTSv3.10.1-sm70-auto&quot;</span><span class="p">],</span>
+<span class="w">    </span><span class="nt">&quot;slurm_config&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;partition&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;4V100&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;qos&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;flood-1o2gpu&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;walltime&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;02:00:00&quot;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nt">&quot;tasks_per_job&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;labeling_task_classes&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;normal&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;selector&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;max_atoms&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">180</span><span class="w"> </span><span class="p">},</span>
+<span class="w">      </span><span class="nt">&quot;tasks_per_job&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;launcher_mode&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;abacus&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;resource_mode&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;single_gpu&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;slurm_config&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">&quot;ntasks&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;gpus_per_node&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;qos&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;flood-1o2gpu&quot;</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;highmem&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;selector&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;min_atoms&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">181</span><span class="w"> </span><span class="p">},</span>
+<span class="w">      </span><span class="nt">&quot;tasks_per_job&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;launcher_mode&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;mpi_abacus&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;resource_mode&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;multi_gpu_mpi&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;slurm_config&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">&quot;ntasks&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">4</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;gpus_per_node&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">4</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;qos&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;flood-gpu&quot;</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">launcher_mode=&quot;abacus&quot;</span></code>：runner 直接执行 <code class="docutils literal notranslate"><span class="pre">abacus</span></code>，并强制该 class 的 Slurm resources 为 <code class="docutils literal notranslate"><span class="pre">ntasks=1,gpus_per_node=1</span></code>；不会 source SAI rank-map。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">launcher_mode=&quot;mpi_abacus&quot;</span></code>：runner 执行 <code class="docutils literal notranslate"><span class="pre">mpirun</span> <span class="pre">-np</span> <span class="pre">$SLURM_NTASKS</span> <span class="pre">--map-by</span> <span class="pre">$MAP_OPT</span> <span class="pre">-mca</span> <span class="pre">coll_hcoll_enable</span> <span class="pre">0</span> <span class="pre">abacus</span></code>，并自动补充 SAI rank-map source。</p></li>
+<li><p>没有配置 <code class="docutils literal notranslate"><span class="pre">labeling_task_classes</span></code> 时，DP-EVA 保持旧的单一 <code class="docutils literal notranslate"><span class="pre">submission</span></code> 行为，兼容既有配置。</p></li>
+</ul>
 </section>
 <section id="exploration">
 <h3>5.7 Exploration<a class="headerlink" href="#exploration" title="Link to this heading">#</a></h3>
@@ -666,6 +713,7 @@ document.write(`
 <section id="id7">
 <h2>7. 变更记录<a class="headerlink" href="#id7" title="Link to this heading">#</a></h2>
 <ul class="simple">
+<li><p>2026-07-04：补充 Labeling <code class="docutils literal notranslate"><span class="pre">labeling_task_classes</span></code>，明确 SAI ABACUS 单卡与 MPI 多卡 launcher/resource mode。</p></li>
 <li><p>2026-06-12：补充 Collect LLPR / energy DPOSE ensemble 配置字段、状态复用和 strict parity 约束。</p></li>
 <li><p>2026-06-11：补充 Exploration manifest、输入结构快照与结果结构校验契约。</p></li>
 <li><p>2026-06-10：新增 Exploration 最小配置示例，明确 <code class="docutils literal notranslate"><span class="pre">atst-tools</span></code> 为可选 backend。</p></li>

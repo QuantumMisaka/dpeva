@@ -642,6 +642,7 @@ window.runMermaid = runMermaid;</script>
 <li class="toctree-l1"><a class="reference internal" href="../../../guides/labeling-stats-repair.html">Labeling 历史统计修复</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../guides/developer/README.html">Developer Guides</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../guides/developer/config-docs-maintenance.html">变量说明文档维护指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../guides/developer/deepmd-kit-sai-build.html">SAI 服务器 DeepMD-kit 安装配置指南</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../guides/testing/README.html">Testing（测试指南）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../guides/testing/integration-config-templates.html">DP-EVA 集成测试最小配置模板（Slurm）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../guides/testing/integration-slurm.html">DP-EVA 集成测试设计与交付报告（Slurm + Multi DataPool）</a></li>
@@ -778,6 +779,33 @@ document.write(`
 <span class="c1"># Configure logging</span>
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
+
+<span class="n">ABACUS_INPUT_KEY_ALIASES</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;xc&quot;</span><span class="p">:</span> <span class="s2">&quot;dft_functional&quot;</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="n">ABACUS_INPUT_DEPRECATED_KEYS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;basis_dir&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;kpts&quot;</span><span class="p">,</span>
+<span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">normalize_abacus_input_params</span><span class="p">(</span><span class="n">params</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Normalize DP-EVA DFT params to ABACUS 3.10 INPUT keys.&quot;&quot;&quot;</span>
+    <span class="n">normalized</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">params</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">ABACUS_INPUT_DEPRECATED_KEYS</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Ignoring deprecated ABACUS INPUT parameter: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+            <span class="k">continue</span>
+        <span class="n">target_key</span> <span class="o">=</span> <span class="n">ABACUS_INPUT_KEY_ALIASES</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">target_key</span> <span class="ow">in</span> <span class="n">normalized</span> <span class="ow">and</span> <span class="n">normalized</span><span class="p">[</span><span class="n">target_key</span><span class="p">]</span> <span class="o">!=</span> <span class="n">value</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Conflicting ABACUS INPUT parameters for </span><span class="si">{</span><span class="n">target_key</span><span class="si">}</span><span class="s2">: &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">normalized</span><span class="p">[</span><span class="n">target_key</span><span class="p">]</span><span class="si">!r}</span><span class="s2"> vs </span><span class="si">{</span><span class="n">value</span><span class="si">!r}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+        <span class="n">normalized</span><span class="p">[</span><span class="n">target_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+    <span class="k">return</span> <span class="n">normalized</span>
+
 <div class="viewcode-block" id="AbacusGenerator">
 <a class="viewcode-back" href="../../../api/labeling.html#dpeva.labeling.AbacusGenerator">[文档]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">AbacusGenerator</span><span class="p">:</span>
@@ -889,7 +917,8 @@ document.write(`
             <span class="s2">&quot;system_name&quot;</span><span class="p">:</span> <span class="n">system_name</span><span class="p">,</span>
             <span class="s2">&quot;stru_type&quot;</span><span class="p">:</span> <span class="n">stru_type</span><span class="p">,</span>
             <span class="s2">&quot;task_name&quot;</span><span class="p">:</span> <span class="n">task_name</span><span class="p">,</span>
-            <span class="s2">&quot;frame_idx&quot;</span><span class="p">:</span> <span class="n">frame_idx</span>
+            <span class="s2">&quot;frame_idx&quot;</span><span class="p">:</span> <span class="n">frame_idx</span><span class="p">,</span>
+            <span class="s2">&quot;atom_count&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">atoms</span><span class="p">),</span>
         <span class="p">}</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">output_dir</span> <span class="o">/</span> <span class="s2">&quot;task_meta.json&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
@@ -897,7 +926,7 @@ document.write(`
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to write task_meta.json: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
-        <span class="n">input_params</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dft_params</span><span class="p">)</span>
+        <span class="n">input_params</span> <span class="o">=</span> <span class="n">normalize_abacus_input_params</span><span class="p">(</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dft_params</span><span class="p">))</span>
         
         <span class="c1"># Layer specific params</span>
         <span class="k">if</span> <span class="n">stru_type</span> <span class="o">==</span> <span class="s2">&quot;layer&quot;</span><span class="p">:</span>
@@ -914,7 +943,6 @@ document.write(`
         <span class="c1"># K-Points</span>
         <span class="n">is_cluster</span> <span class="o">=</span> <span class="p">(</span><span class="n">stru_type</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;cluster&quot;</span><span class="p">,</span> <span class="s2">&quot;cubic_cluster&quot;</span><span class="p">])</span>
         <span class="n">kpoints</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_set_kpoints</span><span class="p">(</span><span class="n">atoms</span><span class="p">,</span> <span class="n">vacuum_status</span><span class="p">,</span> <span class="n">is_cluster</span><span class="p">)</span>
-        <span class="n">input_params</span><span class="p">[</span><span class="s1">&#39;kpts&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">kpoints</span>
         
         <span class="c1"># Gamma Only Check</span>
         <span class="n">vac_count</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">vacuum_status</span><span class="p">)</span>
@@ -926,7 +954,6 @@ document.write(`
         
         <span class="c1"># Write Files</span>
         <span class="n">input_params</span><span class="p">[</span><span class="s1">&#39;pseudo_dir&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pp_dir</span>
-        <span class="n">input_params</span><span class="p">[</span><span class="s1">&#39;basis_dir&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">orb_dir</span> 
         <span class="k">if</span> <span class="s1">&#39;orbital_dir&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">input_params</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">orb_dir</span><span class="p">:</span>
             <span class="n">input_params</span><span class="p">[</span><span class="s1">&#39;orbital_dir&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">orb_dir</span>
 

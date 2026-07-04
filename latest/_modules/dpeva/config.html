@@ -642,6 +642,7 @@ window.runMermaid = runMermaid;</script>
 <li class="toctree-l1"><a class="reference internal" href="../../guides/labeling-stats-repair.html">Labeling 历史统计修复</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../guides/developer/README.html">Developer Guides</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../guides/developer/config-docs-maintenance.html">变量说明文档维护指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guides/developer/deepmd-kit-sai-build.html">SAI 服务器 DeepMD-kit 安装配置指南</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../guides/testing/README.html">Testing（测试指南）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../guides/testing/integration-config-templates.html">DP-EVA 集成测试最小配置模板（Slurm）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../guides/testing/integration-slurm.html">DP-EVA 集成测试设计与交付报告（Slurm + Multi DataPool）</a></li>
@@ -1104,6 +1105,53 @@ document.write(`
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Whether to require strict system/frame alignment between dataset and inference results.&quot;</span>
     <span class="p">)</span>
 
+<span class="k">class</span><span class="w"> </span><span class="nc">LabelingTaskSelectorConfig</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Selector used to assign generated labeling tasks to resource classes.&quot;&quot;&quot;</span>
+
+    <span class="n">min_atoms</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Inclusive minimum atom count.&quot;</span><span class="p">)</span>
+    <span class="n">max_atoms</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Inclusive maximum atom count.&quot;</span><span class="p">)</span>
+    <span class="n">name_prefixes</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Task name prefixes to include.&quot;</span><span class="p">)</span>
+    <span class="n">name_regex</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Regular expression matched against task names.&quot;</span><span class="p">)</span>
+    <span class="n">dataset_names</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Dataset names to include.&quot;</span><span class="p">)</span>
+    <span class="n">stru_types</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Structure types to include.&quot;</span><span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">LabelingTaskClassConfig</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Resource and launcher mode for a group of labeling tasks.&quot;&quot;&quot;</span>
+
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Stable task class name used under inputs/&lt;name&gt;/N_*.&quot;</span><span class="p">)</span>
+    <span class="n">selector</span><span class="p">:</span> <span class="n">LabelingTaskSelectorConfig</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">LabelingTaskSelectorConfig</span><span class="p">)</span>
+    <span class="n">tasks_per_job</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">gt</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Override tasks_per_job for this class.&quot;</span><span class="p">)</span>
+    <span class="n">launcher_mode</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;abacus&quot;</span><span class="p">,</span> <span class="s2">&quot;mpi_abacus&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="s2">&quot;abacus&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;ABACUS launch mode. `mpi_abacus` adds mpirun and SAI rank-map handling.&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">resource_mode</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;single_gpu&quot;</span><span class="p">,</span> <span class="s2">&quot;multi_gpu_mpi&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="s2">&quot;single_gpu&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Resource intent used to apply Slurm defaults and reviewer-visible gates.&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">slurm_config</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Slurm overrides for this class.&quot;</span><span class="p">)</span>
+    <span class="n">env_setup</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Extra environment setup lines for this class.&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;env_setup&quot;</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_env_setup</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">v</span>
+
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">&quot;after&quot;</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_launcher_resource_pair</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">resource_mode</span> <span class="o">==</span> <span class="s2">&quot;single_gpu&quot;</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">launcher_mode</span> <span class="o">!=</span> <span class="s2">&quot;abacus&quot;</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;single_gpu task classes must use launcher_mode=&#39;abacus&#39;&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">resource_mode</span> <span class="o">==</span> <span class="s2">&quot;multi_gpu_mpi&quot;</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">launcher_mode</span> <span class="o">!=</span> <span class="s2">&quot;mpi_abacus&quot;</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;multi_gpu_mpi task classes must use launcher_mode=&#39;mpi_abacus&#39;&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+
 <div class="viewcode-block" id="InferenceConfig">
 <a class="viewcode-back" href="../../api/config/inference.html#dpeva.config.InferenceConfig">[文档]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">InferenceConfig</span><span class="p">(</span><span class="n">BaseWorkflowConfig</span><span class="p">):</span>
@@ -1153,6 +1201,14 @@ document.write(`
     
     <span class="c1"># Packing</span>
     <span class="n">tasks_per_job</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">DEFAULT_LABELING_TASKS_PER_JOB</span><span class="p">,</span> <span class="n">gt</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Number of tasks per packed job.&quot;</span><span class="p">)</span>
+    <span class="n">labeling_task_classes</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">LabelingTaskClassConfig</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;Optional task-class resource definitions. When set, generated labeling &quot;</span>
+            <span class="s2">&quot;tasks are grouped under inputs/&lt;class&gt;/N_* and submitted with class-specific &quot;</span>
+            <span class="s2">&quot;launcher/resource modes.&quot;</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
     
     <span class="c1"># Cleaning &amp; Strategy</span>
     <span class="n">mag_map</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Initial magnetic moments per element (e.g. {&#39;Fe&#39;: 5.0})&quot;</span><span class="p">)</span>

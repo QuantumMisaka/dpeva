@@ -207,6 +207,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../guides/labeling-stats-repair.html">Labeling 历史统计修复</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../guides/developer/README.html">Developer Guides</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../guides/developer/config-docs-maintenance.html">变量说明文档维护指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/developer/deepmd-kit-sai-build.html">SAI 服务器 DeepMD-kit 安装配置指南</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../guides/testing/README.html">Testing（测试指南）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../guides/testing/integration-config-templates.html">DP-EVA 集成测试最小配置模板（Slurm）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../guides/testing/integration-slurm.html">DP-EVA 集成测试设计与交付报告（Slurm + Multi DataPool）</a></li>
@@ -406,7 +407,7 @@ document.write(`
 <ul class="simple">
 <li><p>Status: active</p></li>
 <li><p>Audience: Developers</p></li>
-<li><p>Last-Updated: 2026-06-27</p></li>
+<li><p>Last-Updated: 2026-07-04</p></li>
 </ul>
 <p>本文件用于作为参数校验规则的单一权威来源。</p>
 <p>本文档说明了 DP-EVA 系统中各参数的校验逻辑和约束条件，这些规则由 Pydantic 验证器在运行时强制执行。</p>
@@ -559,6 +560,8 @@ document.write(`
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">cleaning_thresholds</span></code>: 支持设置为 <code class="docutils literal notranslate"><span class="pre">null</span></code> 以跳过对特定物理量（如 <code class="docutils literal notranslate"><span class="pre">cohesive_energy</span></code>）的检查。</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">kpt_criteria</span></code>: 必须 <code class="docutils literal notranslate"><span class="pre">&gt;</span> <span class="pre">0</span></code>。用于自动计算 K 点网格密度。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">labeling_task_classes</span></code>: 若启用 task class，<code class="docutils literal notranslate"><span class="pre">resource_mode=&quot;single_gpu&quot;</span></code> 必须搭配 <code class="docutils literal notranslate"><span class="pre">launcher_mode=&quot;abacus&quot;</span></code>；<code class="docutils literal notranslate"><span class="pre">resource_mode=&quot;multi_gpu_mpi&quot;</span></code> 必须搭配 <code class="docutils literal notranslate"><span class="pre">launcher_mode=&quot;mpi_abacus&quot;</span></code>。</p></li>
+<li><p>普通 FP11 单卡 class 应设置 <code class="docutils literal notranslate"><span class="pre">ntasks=1</span></code>、<code class="docutils literal notranslate"><span class="pre">gpus_per_node=1</span></code>，且不加载 rank-map 或引用 <code class="docutils literal notranslate"><span class="pre">MAP_OPT</span></code>。多卡 MPI ABACUS class 才加载 SAI rank-map 并通过 <code class="docutils literal notranslate"><span class="pre">MAP_OPT</span></code> 组装 <code class="docutils literal notranslate"><span class="pre">mpirun</span></code>。</p></li>
 </ul>
 </section>
 <section id="id8">

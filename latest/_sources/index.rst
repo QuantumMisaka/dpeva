@@ -59,6 +59,7 @@ If you use DP-EVA, please cite the project article: `DP-EVA in Clean Energy <htt
    guides/labeling-stats-repair
    guides/developer/README
    guides/developer/config-docs-maintenance
+   guides/developer/deepmd-kit-sai-build
    guides/testing/README
    guides/testing/integration-config-templates
    guides/testing/integration-slurm

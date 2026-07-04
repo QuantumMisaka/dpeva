@@ -2,7 +2,7 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-06-10
+last-updated: 2026-07-01
 owner: Workflow Owner
 ---
 
@@ -10,7 +10,7 @@ owner: Workflow Owner
 
 - Status: active
 - Audience: Users / Developers
-- Last-Updated: 2026-06-10
+- Last-Updated: 2026-07-01
 
 ## 1. 目的与范围
 
@@ -93,6 +93,7 @@ dp --version
 参考：
 
 - /docs/guides/slurm.md
+- /docs/guides/developer/deepmd-kit-sai-build.md
 - /docs/architecture/decisions/2026-02-04-deepmd-dependency.md
 - /docs/reference/upstream-software.md
 

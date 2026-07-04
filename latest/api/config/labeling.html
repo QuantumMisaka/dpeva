@@ -207,6 +207,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../guides/labeling-stats-repair.html">Labeling 历史统计修复</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../guides/developer/README.html">Developer Guides</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../guides/developer/config-docs-maintenance.html">变量说明文档维护指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guides/developer/deepmd-kit-sai-build.html">SAI 服务器 DeepMD-kit 安装配置指南</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../guides/testing/README.html">Testing（测试指南）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../guides/testing/integration-config-templates.html">DP-EVA 集成测试最小配置模板（Slurm）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../guides/testing/integration-slurm.html">DP-EVA 集成测试设计与交付报告（Slurm + Multi DataPool）</a></li>
@@ -373,6 +374,7 @@ document.write(`
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.LabelingConfig.integration_enabled"><code class="docutils literal notranslate"><span class="pre">LabelingConfig.integration_enabled</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.LabelingConfig.integration_output_format"><code class="docutils literal notranslate"><span class="pre">LabelingConfig.integration_output_format</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.LabelingConfig.kpt_criteria"><code class="docutils literal notranslate"><span class="pre">LabelingConfig.kpt_criteria</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.LabelingConfig.labeling_task_classes"><code class="docutils literal notranslate"><span class="pre">LabelingConfig.labeling_task_classes</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.LabelingConfig.mag_map"><code class="docutils literal notranslate"><span class="pre">LabelingConfig.mag_map</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.LabelingConfig.merged_training_data_path"><code class="docutils literal notranslate"><span class="pre">LabelingConfig.merged_training_data_path</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.LabelingConfig.orb_dir"><code class="docutils literal notranslate"><span class="pre">LabelingConfig.orb_dir</span></code></a></li>
@@ -458,6 +460,12 @@ document.write(`
 </dd></dl>
 
 <dl class="py attribute pydantic_field">
+<dt class="sig sig-object py" id="dpeva.config.LabelingConfig.labeling_task_classes">
+<em class="property"><span class="pre">field</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">labeling_task_classes</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">LabelingTaskClassConfig</span><span class="p"><span class="pre">]</span></span></em><em class="property"> <span class="pre">[Optional]</span></em><a class="headerlink" href="#dpeva.config.LabelingConfig.labeling_task_classes" title="Link to this definition">#</a></dt>
+<dd><p>Optional task-class resource definitions. When set, generated labeling tasks are grouped under inputs/&lt;class&gt;/N_* and submitted with class-specific launcher/resource modes.</p>
+</dd></dl>
+
+<dl class="py attribute pydantic_field">
 <dt class="sig sig-object py" id="dpeva.config.LabelingConfig.mag_map">
 <em class="property"><span class="pre">field</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">mag_map</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></em><em class="property"> <span class="pre">[Optional]</span></em><a class="headerlink" href="#dpeva.config.LabelingConfig.mag_map" title="Link to this definition">#</a></dt>
 <dd><p>Initial magnetic moments per element (e.g. {'Fe': 5.0})</p>
@@ -525,7 +533,7 @@ document.write(`
 
 <dl class="py method pydantic_validator">
 <dt class="sig sig-object py" id="dpeva.config.LabelingConfig.validate_labeling_output_format">
-<em class="property"><span class="pre">validator</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">validate_labeling_output_format</span></span><em class="autodoc_pydantic_validator_arrow property">&#160; <span class="pre">»</span>&#160; </em><a class="reference internal" href="#dpeva.config.LabelingConfig.integration_output_format" title="dpeva.config.LabelingConfig.integration_output_format"><em class="xref py py-obj"><span class="pre">integration_output_format</span></em></a><em class="property"><span class="pre">,</span> </em><a class="reference internal" href="#dpeva.config.LabelingConfig.output_format" title="dpeva.config.LabelingConfig.output_format"><em class="xref py py-obj"><span class="pre">output_format</span></em></a><a class="reference internal" href="../../_modules/dpeva/config.html#LabelingConfig.validate_labeling_output_format"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#dpeva.config.LabelingConfig.validate_labeling_output_format" title="Link to this definition">#</a></dt>
+<em class="property"><span class="pre">validator</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">validate_labeling_output_format</span></span><em class="autodoc_pydantic_validator_arrow property">&#160; <span class="pre">»</span>&#160; </em><a class="reference internal" href="#dpeva.config.LabelingConfig.output_format" title="dpeva.config.LabelingConfig.output_format"><em class="xref py py-obj"><span class="pre">output_format</span></em></a><em class="property"><span class="pre">,</span> </em><a class="reference internal" href="#dpeva.config.LabelingConfig.integration_output_format" title="dpeva.config.LabelingConfig.integration_output_format"><em class="xref py py-obj"><span class="pre">integration_output_format</span></em></a><a class="reference internal" href="../../_modules/dpeva/config.html#LabelingConfig.validate_labeling_output_format"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#dpeva.config.LabelingConfig.validate_labeling_output_format" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -587,6 +595,7 @@ document.write(`
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.LabelingConfig.integration_enabled"><code class="docutils literal notranslate"><span class="pre">LabelingConfig.integration_enabled</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.LabelingConfig.integration_output_format"><code class="docutils literal notranslate"><span class="pre">LabelingConfig.integration_output_format</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.LabelingConfig.kpt_criteria"><code class="docutils literal notranslate"><span class="pre">LabelingConfig.kpt_criteria</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.LabelingConfig.labeling_task_classes"><code class="docutils literal notranslate"><span class="pre">LabelingConfig.labeling_task_classes</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.LabelingConfig.mag_map"><code class="docutils literal notranslate"><span class="pre">LabelingConfig.mag_map</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.LabelingConfig.merged_training_data_path"><code class="docutils literal notranslate"><span class="pre">LabelingConfig.merged_training_data_path</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.LabelingConfig.orb_dir"><code class="docutils literal notranslate"><span class="pre">LabelingConfig.orb_dir</span></code></a></li>
