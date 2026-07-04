@@ -154,6 +154,9 @@ class TestLabelingManager:
         assert "subprocess.run(cmd, check=True" in script
         assert "import shlex" in script
         assert "shlex.split(abacus_cmd)" in script
+        assert 'shlex.split(os.environ.get("MAP_OPT", ""))' in script
+        assert '["-map-by", *map_opt] if map_opt else []' in script
+        assert '["mpirun", "-np", str(slurm_ntasks), *map_args, *abacus_args]' in script
 
     @patch("dpeva.labeling.manager.dpdata")
     def test_mgr_006_invalid_task_meta_is_handled(self, mock_dpdata, manager):

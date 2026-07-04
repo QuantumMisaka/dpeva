@@ -23,6 +23,33 @@ from dpeva.labeling.structure import StructureAnalyzer
 # Configure logging
 logger = logging.getLogger(__name__)
 
+
+ABACUS_INPUT_KEY_ALIASES = {
+    "xc": "dft_functional",
+}
+
+ABACUS_INPUT_DEPRECATED_KEYS = {
+    "basis_dir",
+    "kpts",
+}
+
+
+def normalize_abacus_input_params(params: Dict[str, Any]) -> Dict[str, Any]:
+    """Normalize DP-EVA DFT params to ABACUS 3.10 INPUT keys."""
+    normalized: Dict[str, Any] = {}
+    for key, value in params.items():
+        if key in ABACUS_INPUT_DEPRECATED_KEYS:
+            logger.warning("Ignoring deprecated ABACUS INPUT parameter: %s", key)
+            continue
+        target_key = ABACUS_INPUT_KEY_ALIASES.get(key, key)
+        if target_key in normalized and normalized[target_key] != value:
+            raise ValueError(
+                f"Conflicting ABACUS INPUT parameters for {target_key}: "
+                f"{normalized[target_key]!r} vs {value!r}"
+            )
+        normalized[target_key] = value
+    return normalized
+
 class AbacusGenerator:
     """
     Generates ABACUS input files for a set of atomic structures.
@@ -138,7 +165,7 @@ class AbacusGenerator:
         except Exception as e:
             logger.warning(f"Failed to write task_meta.json: {e}")
 
-        input_params = deepcopy(self.dft_params)
+        input_params = normalize_abacus_input_params(deepcopy(self.dft_params))
         
         # Layer specific params
         if stru_type == "layer":
@@ -155,7 +182,6 @@ class AbacusGenerator:
         # K-Points
         is_cluster = (stru_type in ["cluster", "cubic_cluster"])
         kpoints = self._set_kpoints(atoms, vacuum_status, is_cluster)
-        input_params['kpts'] = kpoints
         
         # Gamma Only Check
         vac_count = sum(vacuum_status)
@@ -167,7 +193,6 @@ class AbacusGenerator:
         
         # Write Files
         input_params['pseudo_dir'] = self.pp_dir
-        input_params['basis_dir'] = self.orb_dir 
         if 'orbital_dir' not in input_params and self.orb_dir:
             input_params['orbital_dir'] = self.orb_dir
 

@@ -128,6 +128,67 @@ class TestAbacusGenerator:
         # mock_atoms_bulk has 2 Fe atoms. Config has Fe: 5.0
         assert all(m == 5.0 for m in magmoms)
 
+    @patch("dpeva.labeling.generator.write_input_file")
+    @patch("dpeva.labeling.generator.write_stru_file")
+    def test_gen_005_does_not_write_kpts_to_input(self, mock_write_stru_file, mock_write_input_file, generator, mock_atoms_bulk, tmp_path):
+        """
+        GEN-005: ABACUS reads k-points from KPT, not from INPUT.
+        """
+        output_dir = tmp_path / "task_kpts"
+
+        generator.generate(mock_atoms_bulk, output_dir, "task_kpts")
+
+        mock_write_input_file.assert_called_once()
+        params = mock_write_input_file.call_args[0][1]
+        assert "kpts" not in params
+        assert (output_dir / "KPT").exists()
+
+    @patch("dpeva.labeling.generator.write_input_file")
+    @patch("dpeva.labeling.generator.write_stru_file")
+    def test_gen_006_uses_orbital_dir_not_basis_dir(self, mock_write_stru_file, mock_write_input_file, generator, mock_atoms_bulk, tmp_path):
+        """
+        GEN-006: ABACUS 3.10 reads orbital bases from orbital_dir.
+        """
+        output_dir = tmp_path / "task_orbital_dir"
+
+        generator.generate(mock_atoms_bulk, output_dir, "task_orbital_dir")
+
+        mock_write_input_file.assert_called_once()
+        params = mock_write_input_file.call_args[0][1]
+        assert params["pseudo_dir"] == "/tmp/pp"
+        assert params["orbital_dir"] == "/tmp/orb"
+        assert "basis_dir" not in params
+
+    @patch("dpeva.labeling.generator.write_input_file")
+    @patch("dpeva.labeling.generator.write_stru_file")
+    def test_gen_007_normalizes_stale_abacus_input_params(self, mock_write_stru_file, mock_write_input_file, mock_atoms_bulk, tmp_path):
+        """
+        GEN-007: Legacy configs are normalized to ABACUS 3.10 INPUT keys.
+        """
+        generator = AbacusGenerator(
+            {
+                "dft_params": {
+                    "ecutwfc": 100,
+                    "xc": "pbe",
+                    "basis_dir": "/old/orb",
+                    "kpts": [1, 1, 1],
+                },
+                "pp_map": {"Fe": "Fe.upf"},
+                "orb_map": {"Fe": "Fe.orb"},
+                "pp_dir": "/tmp/pp",
+                "orb_dir": "/tmp/orb",
+            }
+        )
+
+        generator.generate(mock_atoms_bulk, tmp_path / "task_stale", "task_stale")
+
+        mock_write_input_file.assert_called_once()
+        params = mock_write_input_file.call_args[0][1]
+        assert params["dft_functional"] == "pbe"
+        assert "xc" not in params
+        assert "basis_dir" not in params
+        assert "kpts" not in params
+
 
 def test_labeling_package_imports_without_ase_abacus_plugin():
     import dpeva.labeling as labeling

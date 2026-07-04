@@ -34,7 +34,7 @@
     "dft_params": {
         "calculation": "scf",
         "nspin": 2,
-        "xc": "pbe",
+        "dft_functional": "pbe",
         "symmetry": 0,
         "vdw_method": "none",
         "ecutwfc": 100,
