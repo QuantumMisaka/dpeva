@@ -2,7 +2,7 @@
 title: Guides（操作指南导航）
 status: active
 audience: Developers / Users
-last-updated: 2026-06-14
+last-updated: 2026-07-01
 owner: Docs Owner
 ---
 
@@ -16,6 +16,7 @@ owner: Docs Owner
 - 文档治理上手：`docs-governance-quickstart.md`
 - 过程资产生命周期：`process-asset-lifecycle.md`
 - 配置文档维护：`developer/config-docs-maintenance.md`
+- SAI DeepMD-kit 源码构建：`developer/deepmd-kit-sai-build.md`
 
 ## 2. 使用与运维指南
 
