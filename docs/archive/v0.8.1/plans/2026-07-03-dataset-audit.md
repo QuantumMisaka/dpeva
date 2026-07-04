@@ -1,7 +1,7 @@
 ---
 title: Dataset Audit Implementation Plan
-status: active
-audience: Developers / Maintainers / AI Agents
+status: archived
+audience: Historians / Developers / Maintainers / AI Agents
 last-updated: 2026-07-04
 owner: Docs Owner
 ---
@@ -22,7 +22,7 @@ owner: Docs Owner
 
 Read before implementing:
 
-- `docs/superpowers/specs/2026-07-03-dataset-audit-design.md`
+- `docs/archive/v0.8.1/specs/2026-07-03-dataset-audit-design.md`
 - `src/dpeva/config.py`
 - `src/dpeva/cli.py`
 - `src/dpeva/workflows/analysis.py`

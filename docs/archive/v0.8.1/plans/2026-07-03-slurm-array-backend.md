@@ -1,7 +1,7 @@
 ---
 title: Slurm Array Backend Refactor Implementation Plan
-status: active
-audience: Developers / Operators / AI Agents
+status: archived
+audience: Historians / Developers / Operators / AI Agents
 last-updated: 2026-07-04
 owner: Workflow Owner
 ---

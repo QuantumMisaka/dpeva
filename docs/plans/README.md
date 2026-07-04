@@ -64,9 +64,7 @@ owner: Docs Owner
 ## 6. 活跃计划 (Active Plans)
 
 - [文档治理计划 (Governance Plan)](../governance/README.md)
-- [Docs Audit And DP-EVA Operator Skill Implementation Plan](2026-07-01-docs-audit-and-dpeva-operator-skill-plan.md)
-  - Type: Governance / Skill Implementation Plan
-  - Status: active
-  - Scope: 对齐 active docs 与 CLI/config/workflow 表面，并规划项目内 `dpeva-operator` Skill bundle。
+- 当前无其他 active project-level plan。
+- v0.8.1 已归档计划请查看 [v0.8.1 归档计划索引](../archive/v0.8.1/plans/README.md)，其中包括 docs audit / operator skill 计划、FP11 labeling 交接记录、dataset audit 计划快照和 Slurm array backend 计划快照。
 - v0.8.0 已闭环计划请查看 [v0.8.0 归档计划索引](../archive/v0.8.0/plans/README.md)，其中包括 ATST integration、native LLPR/DPOSE、DPA4 Mini UQ correlation、DP embed/HDF5 适配等计划。
-- 历史计划请查看 [v0.6.9 归档计划索引](../archive/v0.6.9/plans/README.md)、[v0.7.1 归档计划索引](../archive/v0.7.1/plans/README.md) 与 [v0.8.0 归档计划索引](../archive/v0.8.0/plans/README.md)。
+- 历史计划请查看 [v0.6.9 归档计划索引](../archive/v0.6.9/plans/README.md)、[v0.7.1 归档计划索引](../archive/v0.7.1/plans/README.md)、[v0.8.0 归档计划索引](../archive/v0.8.0/plans/README.md) 与 [v0.8.1 归档计划索引](../archive/v0.8.1/plans/README.md)。

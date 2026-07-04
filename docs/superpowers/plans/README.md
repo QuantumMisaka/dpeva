@@ -11,3 +11,8 @@ owner: Docs Owner
 Execution plans in this directory preserve task-level checklists for agentic
 implementation work. They are not a replacement for project-level plans in
 `docs/plans/`.
+
+## Active Execution Plans
+
+- Current tracked active execution plans: none.
+- v0.8.1 archived execution plans are listed in [docs/archive/v0.8.1/plans/README.md](../../archive/v0.8.1/plans/README.md).

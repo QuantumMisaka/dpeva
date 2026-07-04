@@ -1,7 +1,7 @@
 ---
 title: Docs Audit And DP-EVA Operator Skill Implementation Plan
-status: active
-audience: Maintainers / Developers / AI Agents
+status: archived
+audience: Historians / Maintainers / Developers / AI Agents
 last-updated: 2026-07-01
 owner: Docs Owner
 ---
