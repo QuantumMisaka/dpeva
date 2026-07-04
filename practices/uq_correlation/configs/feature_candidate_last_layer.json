@@ -15,7 +15,7 @@
       "set -euo pipefail",
       "nvidia-smi dmon -s pucvmte -o T > nvdmon_job-${SLURM_JOB_ID}.log &",
       "source /opt/devtools/anaconda3/etc/profile.d/conda.sh",
-      "conda activate dpeva-dpa4-test",
+      "conda activate dpeva-dpa4",
       "export DP_INTERFACE_PREC=high",
       "export OMP_NUM_THREADS=2"
     ],

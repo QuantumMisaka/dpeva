@@ -31,7 +31,7 @@
     "backend": "slurm",
     "env_setup": [
       "source /opt/devtools/anaconda3/etc/profile.d/conda.sh",
-      "conda activate dpeva-dpa4-test"
+      "conda activate dpeva-dpa4"
     ],
     "slurm_config": {
       "partition": "CPU-MISC",

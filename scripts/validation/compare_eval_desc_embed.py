@@ -365,7 +365,7 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--timeout-s", type=int, default=900)
-    parser.add_argument("--old-env", default="dpeva-dpa4-test")
+    parser.add_argument("--old-env", default="dpeva-dpa4")
     parser.add_argument("--new-env", default="dpeva-dpa4-embed-test")
     parser.add_argument("--stress", action="store_true")
     args = parser.parse_args()

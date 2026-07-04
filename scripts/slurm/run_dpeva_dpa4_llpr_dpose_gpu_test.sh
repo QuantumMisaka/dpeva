@@ -13,7 +13,7 @@ set -euo pipefail
 cd /home/pku-jianghong/liuzhaoqing/work/ft2dp-dpeva/dpeva
 
 source /opt/devtools/anaconda3/etc/profile.d/conda.sh
-conda activate dpeva-dpa4-test
+conda activate dpeva-dpa4
 
 export OMP_NUM_THREADS=1
 export DP_INTRA_OP_PARALLELISM_THREADS=1

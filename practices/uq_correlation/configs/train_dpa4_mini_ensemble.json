@@ -16,7 +16,7 @@
       "set -euo pipefail",
       "nvidia-smi dmon -s pucvmte -o T > nvdmon_job-${SLURM_JOB_ID}.log &",
       "source /opt/devtools/anaconda3/etc/profile.d/conda.sh",
-      "conda activate dpeva-dpa4-test",
+      "conda activate dpeva-dpa4",
       "export CUDA_HOME=/opt/devtools/nvidia/cuda-12.6.3",
       "export CUDAToolkit_ROOT=${CUDA_HOME}",
       "export PATH=${CUDA_HOME}/bin:${PATH}",
