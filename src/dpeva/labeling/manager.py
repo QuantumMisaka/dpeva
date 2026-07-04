@@ -157,9 +157,7 @@ def run_abacus_tasks():
         
         abacus_args = shlex.split(abacus_cmd)
         if int(slurm_ntasks) > 1:
-            map_opt = shlex.split(os.environ.get("MAP_OPT", ""))
-            map_args = ["-map-by", *map_opt] if map_opt else []
-            cmd = ["mpirun", "-np", str(slurm_ntasks), *map_args, *abacus_args]
+            cmd = ["mpirun", "-np", str(slurm_ntasks), *abacus_args]
         else:
             cmd = abacus_args
             

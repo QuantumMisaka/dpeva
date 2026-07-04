@@ -1,5 +1,5 @@
 {
-    "work_dir": "labeling_workdir",
+    "work_dir": "labeling_workdir_sai_abacus",
     "input_data_path": "sampled_dpdata",
     "pp_dir": "$HOME/PP_ORB/PP",
     "orb_dir": "$HOME/PP_ORB/ORB",
@@ -20,13 +20,15 @@
         "backend": "slurm",
         "slurm_config": {
             "partition": "4V100",
-            "ntasks": 1,
-            "gpus_per_node": 1,
-            "qos": "rush-1o2gpu",
+            "ntasks": 4,
+            "gpus_per_node": 4,
+            "qos": "rush-4gpu",
             "walltime": "24:00:00"
         },
         "env_setup": [
-            "module load abacus/LTSv3.10.1-sm70-auto"
+            "source /opt/sai_config/mps_mapping.d/${SLURM_JOB_PARTITION}.bash",
+            "module load abacus/LTSv3.10.1-sm70-auto",
+            "export ABACUS_COMMAND=\"-map-by ${MAP_OPT} -mca coll_hcoll_enable 0 abacus\""
         ]
     },
     "tasks_per_job": 50,

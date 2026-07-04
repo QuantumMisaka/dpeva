@@ -88,7 +88,18 @@ For users who want to use the sampling algorithms directly without the full DP-E
   - Inputs: `mode=dataset` + `dataset_dir`.
   - Run with `dpeva analysis examples/recipes/analysis/config_analysis_dataset.json`
 
-## 7. Script Entry Points
+## 7. First-Principles Labeling (`labeling/`)
+
+- **Single-card GPU ABACUS (`labeling/config_gpu.json`)**
+  - Uses SAI Slurm with one task and one GPU per node.
+  - Run with `dpeva label examples/recipes/labeling/config_gpu.json`
+
+- **SAI multi-rank ABACUS (`labeling/config_sai_abacus_slurm.json`)**
+  - Sources SAI's rank-map script and sets `ABACUS_COMMAND` in `submission.env_setup`.
+  - DP-EVA does not read `MAP_OPT` directly; users opt into `-map-by ${MAP_OPT}` by composing the command in config.
+  - Run with `dpeva label examples/recipes/labeling/config_sai_abacus_slurm.json`
+
+## 8. Script Entry Points
 
 For programmatic workflow demos and helper scripts, use:
 
@@ -100,14 +111,14 @@ For programmatic workflow demos and helper scripts, use:
 - `examples/scripts/analysis/analysis_recipe.py`
 - `examples/scripts/labeling/run_labeling.sh`
 
-## 8. Exploration Recipes (`exploration/`)
+## 9. Exploration Recipes (`exploration/`)
 
 - **ATST MD exploration wrapper (`exploration/config_explore_md.json`)**
   - Inputs: a DP-EVA wrapper JSON plus a backend-native ATST YAML.
   - Install with `python -m pip install -e '.[explore]'`.
   - Run with `cd examples/recipes/exploration && dpeva explore config_explore_md.json`.
 
-## 9. Data Cleaning Recipes (`data_cleaning/`)
+## 10. Data Cleaning Recipes (`data_cleaning/`)
 
 - **All thresholds enabled (`data_cleaning/config_clean_all_thresholds.json`)**
   - Inputs: labeled `dataset_dir` + inference `result_dir`, with energy/force/stress thresholds.
