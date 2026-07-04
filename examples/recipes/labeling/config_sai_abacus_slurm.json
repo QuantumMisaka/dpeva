@@ -20,18 +20,44 @@
         "backend": "slurm",
         "slurm_config": {
             "partition": "4V100",
-            "ntasks": 4,
-            "gpus_per_node": 4,
-            "qos": "rush-4gpu",
-            "walltime": "24:00:00"
+            "qos": "flood-1o2gpu",
+            "walltime": "02:00:00"
         },
         "env_setup": [
-            "source /opt/sai_config/mps_mapping.d/${SLURM_JOB_PARTITION}.bash",
-            "module load abacus/LTSv3.10.1-sm70-auto",
-            "export ABACUS_COMMAND=\"-map-by ${MAP_OPT} -mca coll_hcoll_enable 0 abacus\""
+            "module load abacus/LTSv3.10.1-sm70-auto"
         ]
     },
-    "tasks_per_job": 50,
+    "tasks_per_job": 1,
+    "labeling_task_classes": [
+        {
+            "name": "normal",
+            "selector": {"max_atoms": 180},
+            "tasks_per_job": 1,
+            "launcher_mode": "abacus",
+            "resource_mode": "single_gpu",
+            "slurm_config": {
+                "partition": "4V100",
+                "ntasks": 1,
+                "gpus_per_node": 1,
+                "qos": "flood-1o2gpu",
+                "walltime": "02:00:00"
+            }
+        },
+        {
+            "name": "highmem",
+            "selector": {"min_atoms": 181},
+            "tasks_per_job": 1,
+            "launcher_mode": "mpi_abacus",
+            "resource_mode": "multi_gpu_mpi",
+            "slurm_config": {
+                "partition": "4V100",
+                "ntasks": 4,
+                "gpus_per_node": 4,
+                "qos": "flood-gpu",
+                "walltime": "02:00:00"
+            }
+        }
+    ],
     "dft_params": {
         "calculation": "scf",
         "nspin": 2,

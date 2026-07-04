@@ -149,16 +149,66 @@ class TestLabelingManager:
         assert failed_tasks_info == [{"dataset": "DS1", "type": "cluster"}]
 
     def test_mgr_005_runner_script_avoids_shell_true(self, manager, tmp_path):
-        script = manager.generate_runner_script(tmp_path)
+        script = manager.generate_runner_script(tmp_path, launcher_mode="abacus")
         assert "shell=True" not in script
         assert "subprocess.run(cmd, check=True" in script
         assert "import shlex" in script
         assert "shlex.split(abacus_cmd)" in script
         assert 'os.environ.get("ABACUS_COMMAND", "abacus")' in script
+        assert "SLURM_NTASKS" not in script
+        assert "mpirun" not in script
         assert "MAP_OPT" not in script
         assert "-map-by" not in script
         assert "map_args" not in script
-        assert '["mpirun", "-np", str(slurm_ntasks), *abacus_args]' in script
+        assert "cmd = abacus_args" in script
+
+    def test_mgr_005b_mpi_runner_uses_explicit_rank_map_launcher(self, manager, tmp_path):
+        script = manager.generate_runner_script(tmp_path, launcher_mode="mpi_abacus")
+        assert "shell=True" not in script
+        assert 'os.environ.get("ABACUS_COMMAND", "abacus")' in script
+        assert 'os.environ.get("SLURM_NTASKS", "1")' in script
+        assert 'os.environ.get("MAP_OPT")' in script
+        assert '"--map-by", map_opt' in script
+        assert '"-mca", "coll_hcoll_enable", "0"' in script
+
+    def test_mgr_005c_pack_tasks_by_class_uses_atom_count_selectors(self, tmp_path):
+        config = {
+            "work_dir": str(tmp_path),
+            "input_data_path": "dummy",
+            "submission": {"backend": "local"},
+            "tasks_per_job": 50,
+            "dft_params": {},
+            "attempt_params": [],
+            "labeling_task_classes": [
+                {
+                    "name": "normal",
+                    "selector": {"max_atoms": 180},
+                    "tasks_per_job": 4,
+                    "launcher_mode": "abacus",
+                    "resource_mode": "single_gpu",
+                },
+                {
+                    "name": "highmem",
+                    "selector": {"min_atoms": 181},
+                    "tasks_per_job": 1,
+                    "launcher_mode": "mpi_abacus",
+                    "resource_mode": "multi_gpu_mpi",
+                },
+            ],
+        }
+        manager = LabelingManager(config)
+        normal_task = manager.input_dir / "DeepCNT" / "cluster" / "C180Fe0_0"
+        highmem_task = manager.input_dir / "DeepCNT" / "cluster" / "C181Fe0_0"
+        for task_dir, atom_count in ((normal_task, 180), (highmem_task, 181)):
+            task_dir.mkdir(parents=True)
+            (task_dir / "INPUT").touch()
+            (task_dir / "task_meta.json").write_text(json.dumps({"atom_count": atom_count}))
+
+        packed_dirs = manager.pack_tasks()
+
+        assert (manager.input_dir / "normal" / "N_4_0" / "C180Fe0_0").exists()
+        assert (manager.input_dir / "highmem" / "N_1_0" / "C181Fe0_0").exists()
+        assert sorted(path.name for path in packed_dirs) == ["N_1_0", "N_4_0"]
 
     @patch("dpeva.labeling.manager.dpdata")
     def test_mgr_006_invalid_task_meta_is_handled(self, mock_dpdata, manager):

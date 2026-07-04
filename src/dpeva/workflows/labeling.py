@@ -11,7 +11,7 @@ import subprocess
 import re
 import sys
 from pathlib import Path
-from typing import List, Dict, Optional
+from typing import Any, List, Dict, Optional
 
 import dpdata
 
@@ -25,6 +25,8 @@ from dpeva.io.dataset import load_systems
 from dpeva.utils.logs import setup_workflow_logger, close_workflow_logger
 
 logger = logging.getLogger(__name__)
+
+SAI_RANK_MAP_SETUP = "source /opt/sai_config/mps_mapping.d/${SLURM_JOB_PARTITION}.bash"
 
 class LabelingWorkflow:
     """
@@ -227,7 +229,17 @@ class LabelingWorkflow:
         packed_root = Path(self.config.work_dir) / "inputs"
         if not packed_root.exists():
             return []
-        packed_dirs = [d for d in sorted(packed_root.iterdir()) if d.is_dir() and d.name.startswith("N_")]
+        packed_dirs = []
+        for candidate in sorted(packed_root.iterdir()):
+            if not candidate.is_dir():
+                continue
+            if candidate.name.startswith("N_"):
+                packed_dirs.append(candidate)
+                continue
+            packed_dirs.extend(
+                d for d in sorted(candidate.iterdir())
+                if d.is_dir() and d.name.startswith("N_")
+            )
         return packed_dirs
 
     @staticmethod
@@ -241,12 +253,19 @@ class LabelingWorkflow:
     def _submit_job_dirs(self, active_job_dirs: List[Path], attempt: int) -> List[str]:
         job_ids = []
         for job_dir in active_job_dirs:
-            runner_content = self.manager.generate_runner_script(job_dir)
+            class_config = self._task_class_config_for_job_dir(job_dir)
+            launcher_mode = self._class_value(class_config, "launcher_mode", "auto")
+            runner_content = self.manager.generate_runner_script(job_dir, launcher_mode=launcher_mode)
             runner_name = "run_batch.py"
-            slurm_conf = self.config.submission.slurm_config
+            slurm_conf = self._slurm_config_for_class(class_config)
+            env_setup = self._env_setup_for_class(class_config, launcher_mode)
+            class_name = self._class_value(class_config, "name", None)
+            job_name = f"fp_{job_dir.name}_att{attempt}"
+            if class_name:
+                job_name = f"fp_{class_name}_{job_dir.name}_att{attempt}"
             job_config = JobConfig(
                 command="",
-                job_name=f"fp_{job_dir.name}_att{attempt}",
+                job_name=job_name,
                 partition=slurm_conf.get("partition"),
                 qos=slurm_conf.get("qos"),
                 nodes=slurm_conf.get("nodes", 1),
@@ -254,7 +273,7 @@ class LabelingWorkflow:
                 gpus_per_node=slurm_conf.get("gpus_per_node"),
                 cpus_per_task=slurm_conf.get("cpus_per_task"),
                 walltime=slurm_conf.get("walltime", "24:00:00"),
-                env_setup=self.config.submission.env_setup
+                env_setup=env_setup
             )
             try:
                 job_id = self.job_manager.submit_python_script(
@@ -267,6 +286,82 @@ class LabelingWorkflow:
             except Exception as e:
                 logger.error(f"Failed to submit job for {job_dir}: {e}")
         return job_ids
+
+    @staticmethod
+    def _class_value(class_config: Any, key: str, default: Any = None) -> Any:
+        if class_config is None:
+            return default
+        if isinstance(class_config, dict):
+            return class_config.get(key, default)
+        return getattr(class_config, key, default)
+
+    def _task_class_config_for_job_dir(self, job_dir: Path) -> Any:
+        class_name = self._task_class_name_for_job_dir(job_dir)
+        if class_name is None:
+            return None
+        for class_config in self.config.labeling_task_classes:
+            if self._class_value(class_config, "name") == class_name:
+                return class_config
+        return None
+
+    def _task_class_name_for_job_dir(self, job_dir: Path) -> Optional[str]:
+        meta = job_dir / ".dpeva_job_class.json"
+        if meta.exists():
+            try:
+                import json
+                loaded = json.loads(meta.read_text(encoding="utf-8"))
+                class_name = loaded.get("task_class")
+                if isinstance(class_name, str) and class_name:
+                    return class_name
+            except (OSError, ValueError, TypeError):
+                pass
+        try:
+            rel = job_dir.relative_to(Path(self.config.work_dir) / "inputs")
+        except ValueError:
+            return None
+        if len(rel.parts) >= 2 and rel.parts[1].startswith("N_"):
+            return rel.parts[0]
+        return None
+
+    def _slurm_config_for_class(self, class_config: Any) -> Dict[str, Any]:
+        merged = dict(self.config.submission.slurm_config)
+        class_slurm = self._class_value(class_config, "slurm_config", {}) or {}
+        merged.update(class_slurm)
+        resource_mode = self._class_value(class_config, "resource_mode", None)
+        if resource_mode == "single_gpu":
+            merged["ntasks"] = 1
+            merged["gpus_per_node"] = 1
+        elif resource_mode == "multi_gpu_mpi":
+            class_ntasks = class_slurm.get("ntasks")
+            class_gpus = class_slurm.get("gpus_per_node")
+            default_size = class_ntasks or class_gpus or 4
+            merged["ntasks"] = class_ntasks or default_size
+            merged["gpus_per_node"] = class_gpus or default_size
+        return merged
+
+    def _env_setup_for_class(self, class_config: Any, launcher_mode: str) -> str:
+        lines = self._env_lines(self.config.submission.env_setup)
+        class_env = self._class_value(class_config, "env_setup", "")
+        lines.extend(self._env_lines(class_env))
+        if launcher_mode == "abacus":
+            lines = [
+                line for line in lines
+                if "mps_mapping.d" not in line and "MAP_OPT" not in line
+            ]
+        elif launcher_mode == "mpi_abacus":
+            if not any("mps_mapping.d" in line for line in lines):
+                lines.insert(0, SAI_RANK_MAP_SETUP)
+        return "\n".join(lines)
+
+    @staticmethod
+    def _env_lines(env_setup: Any) -> List[str]:
+        if env_setup is None:
+            return []
+        if isinstance(env_setup, list):
+            raw_lines = env_setup
+        else:
+            raw_lines = str(env_setup).splitlines()
+        return [line for line in raw_lines if line.strip()]
 
     def _monitor_slurm_jobs(self, job_ids: List[str], interval: int = 60):
         """Monitor Slurm jobs and wait until they finish."""

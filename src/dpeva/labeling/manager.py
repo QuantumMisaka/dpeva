@@ -41,6 +41,7 @@ class LabelingManager:
         self.packer = TaskPacker(self.config.get("tasks_per_job", 50))
         self.postprocessor = AbacusPostProcessor(self.config)
         self.strategy = ResubmissionStrategy(self.config.get("attempt_params"))
+        self.task_classes = self.config.get("labeling_task_classes") or []
         
         self.work_dir = Path(self.config.get("work_dir", "."))
         self.input_dir = self.work_dir / "inputs"
@@ -98,9 +99,8 @@ class LabelingManager:
         
         logger.info(f"Generated {generated_count} tasks.")
         
-        # Pack tasks
-        # Note: packer needs to scan recursively now because of deeper structure
-        packed_job_dirs = self.packer.pack(self.input_dir)
+        # Pack tasks. With task classes, keep separate launcher/resource groups.
+        packed_job_dirs = self.pack_tasks()
         return packed_job_dirs
 
     def _reset_prepare_workspace(self):
@@ -109,7 +109,140 @@ class LabelingManager:
             shutil.rmtree(self.input_dir)
         self.input_dir.mkdir(parents=True, exist_ok=True)
 
-    def generate_runner_script(self, job_dir: Path) -> str:
+    def pack_tasks(self) -> List[Path]:
+        if not self.task_classes:
+            return self.packer.pack(self.input_dir)
+        return self._pack_tasks_by_class()
+
+    def _pack_tasks_by_class(self) -> List[Path]:
+        grouped: Dict[str, List[Path]] = {}
+        class_by_name: Dict[str, Dict[str, Any]] = {}
+        for class_config in self.task_classes:
+            class_by_name[class_config["name"]] = class_config
+            grouped.setdefault(class_config["name"], [])
+
+        fallback_class = {
+            "name": "default",
+            "selector": {},
+            "tasks_per_job": self.config.get("tasks_per_job", 50),
+            "launcher_mode": "abacus",
+            "resource_mode": "single_gpu",
+        }
+        class_by_name[fallback_class["name"]] = fallback_class
+
+        for task_dir in self._iter_unpacked_task_dirs():
+            class_config = self._select_task_class(task_dir) or fallback_class
+            grouped.setdefault(class_config["name"], []).append(task_dir)
+
+        packed_job_dirs: List[Path] = []
+        for class_name, tasks in grouped.items():
+            if not tasks:
+                continue
+            class_config = class_by_name[class_name]
+            tasks_per_job = int(class_config.get("tasks_per_job") or self.config.get("tasks_per_job", 50))
+            class_root = self.input_dir / class_name
+            class_root.mkdir(parents=True, exist_ok=True)
+            tasks.sort(key=lambda path: str(path.relative_to(self.input_dir)))
+            for idx, task_dir in enumerate(tasks):
+                job_idx = idx // tasks_per_job
+                current_job_dir = class_root / f"N_{tasks_per_job}_{job_idx}"
+                current_job_dir.mkdir(parents=True, exist_ok=True)
+                job_meta = current_job_dir / ".dpeva_job_class.json"
+                if not job_meta.exists():
+                    job_meta.write_text(
+                        json.dumps({"task_class": class_name}, ensure_ascii=False, indent=2),
+                        encoding="utf-8",
+                    )
+                    packed_job_dirs.append(current_job_dir)
+                shutil.move(str(task_dir), str(current_job_dir / task_dir.name))
+                self._cleanup_empty_parents(task_dir.parent)
+
+        packed_job_dirs.sort(key=lambda path: str(path))
+        logger.info(f"Packed tasks into {len(packed_job_dirs)} class-aware job directories.")
+        return packed_job_dirs
+
+    def _iter_unpacked_task_dirs(self) -> List[Path]:
+        task_dirs = []
+        class_names = {cfg["name"] for cfg in self.task_classes if "name" in cfg}
+        for input_file in self.input_dir.rglob("INPUT"):
+            task_dir = input_file.parent
+            if not task_dir.is_dir() or "OUT." in task_dir.name:
+                continue
+            rel_path = task_dir.relative_to(self.input_dir)
+            if any(part.startswith("N_") for part in rel_path.parts):
+                continue
+            if rel_path.parts and rel_path.parts[0] in class_names:
+                continue
+            task_dirs.append(task_dir)
+        task_dirs.sort(key=lambda path: str(path.relative_to(self.input_dir)))
+        return task_dirs
+
+    def _select_task_class(self, task_dir: Path) -> Optional[Dict[str, Any]]:
+        profile = self._task_profile(task_dir)
+        for class_config in self.task_classes:
+            if self._selector_matches(profile, class_config.get("selector", {})):
+                return class_config
+        return None
+
+    def _task_profile(self, task_dir: Path) -> Dict[str, Any]:
+        meta = self._read_json_file(task_dir / "task_meta.json") or {}
+        identity = self._normalize_identity(
+            meta.get("dataset_name"),
+            meta.get("stru_type"),
+            meta.get("task_name", task_dir.name),
+            task_dir.name,
+        )
+        atom_count = meta.get("atom_count")
+        if not isinstance(atom_count, int):
+            atom_count = self._composition_atom_count(identity["task_name"])
+        return {
+            "task_name": identity["task_name"],
+            "dataset": identity["dataset"],
+            "type": identity["type"],
+            "atom_count": atom_count,
+        }
+
+    @staticmethod
+    def _composition_atom_count(task_name: str) -> Optional[int]:
+        composition = task_name.rsplit("_", 1)[0]
+        matches = re.findall(r"([A-Z][a-z]?)(\d*)", composition)
+        if not matches:
+            return None
+        return sum(int(count) if count else 1 for _, count in matches)
+
+    @staticmethod
+    def _selector_matches(profile: Dict[str, Any], selector: Dict[str, Any]) -> bool:
+        atom_count = profile.get("atom_count")
+        if selector.get("min_atoms") is not None and (atom_count is None or atom_count < selector["min_atoms"]):
+            return False
+        if selector.get("max_atoms") is not None and (atom_count is None or atom_count > selector["max_atoms"]):
+            return False
+        prefixes = selector.get("name_prefixes") or []
+        if prefixes and not any(str(profile["task_name"]).startswith(prefix) for prefix in prefixes):
+            return False
+        pattern = selector.get("name_regex")
+        if pattern and re.search(pattern, str(profile["task_name"])) is None:
+            return False
+        dataset_names = selector.get("dataset_names") or []
+        if dataset_names and profile.get("dataset") not in dataset_names:
+            return False
+        stru_types = selector.get("stru_types") or []
+        if stru_types and profile.get("type") not in stru_types:
+            return False
+        return True
+
+    def _cleanup_empty_parents(self, path: Path) -> None:
+        parent = path
+        while parent != self.input_dir:
+            try:
+                if any(parent.iterdir()):
+                    break
+                parent.rmdir()
+                parent = parent.parent
+            except OSError:
+                break
+
+    def generate_runner_script(self, job_dir: Path, launcher_mode: str = "auto") -> str:
         """
         Generate the content of a Python runner script for a packed job directory.
         This script will iterate over all subdirectories and run ABACUS.
@@ -119,7 +252,36 @@ class LabelingManager:
         if omp_threads == "auto":
             import os
             omp_threads = os.cpu_count() or 1
-            
+
+        if launcher_mode == "abacus":
+            command_block = """
+        abacus_cmd = os.environ.get("ABACUS_COMMAND", "abacus")
+        abacus_args = shlex.split(abacus_cmd)
+        cmd = abacus_args
+"""
+        elif launcher_mode == "mpi_abacus":
+            command_block = """
+        abacus_cmd = os.environ.get("ABACUS_COMMAND", "abacus")
+        slurm_ntasks = os.environ.get("SLURM_NTASKS", "1")
+        map_opt = os.environ.get("MAP_OPT")
+        if not map_opt:
+            raise RuntimeError("MAP_OPT is required for mpi_abacus launcher mode")
+        abacus_args = shlex.split(abacus_cmd)
+        cmd = ["mpirun", "-np", str(slurm_ntasks), "--map-by", map_opt, "-mca", "coll_hcoll_enable", "0", *abacus_args]
+"""
+        elif launcher_mode == "auto":
+            command_block = """
+        abacus_cmd = os.environ.get("ABACUS_COMMAND", "abacus")
+        slurm_ntasks = os.environ.get("SLURM_NTASKS", "1")
+        abacus_args = shlex.split(abacus_cmd)
+        if int(slurm_ntasks) > 1:
+            cmd = ["mpirun", "-np", str(slurm_ntasks), *abacus_args]
+        else:
+            cmd = abacus_args
+"""
+        else:
+            raise ValueError(f"Unsupported launcher_mode: {launcher_mode}")
+
         script_content = f"""
 import os
 import subprocess
@@ -150,16 +312,7 @@ def run_abacus_tasks():
         # Command to run ABACUS
         # We assume 'abacus' is in PATH or loaded via modules
         # Check environment variable for ABACUS command
-        abacus_cmd = os.environ.get("ABACUS_COMMAND", "abacus")
-        
-        # Check SLURM_NTASKS for MPI
-        slurm_ntasks = os.environ.get("SLURM_NTASKS", "1")
-        
-        abacus_args = shlex.split(abacus_cmd)
-        if int(slurm_ntasks) > 1:
-            cmd = ["mpirun", "-np", str(slurm_ntasks), *abacus_args]
-        else:
-            cmd = abacus_args
+{command_block.rstrip()}
             
         try:
             with open("abacus.out", "w") as outfile:

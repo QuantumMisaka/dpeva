@@ -2,7 +2,7 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-06-27
+last-updated: 2026-07-04
 owner: Docs Owner
 ---
 
@@ -10,7 +10,7 @@ owner: Docs Owner
 
 - Status: active
 - Audience: Developers
-- Last-Updated: 2026-06-27
+- Last-Updated: 2026-07-04
 
 本文件用于作为参数校验规则的单一权威来源。
 
@@ -97,6 +97,8 @@ cmd2"`。
 ### 5.1 阈值与参数
 *   `cleaning_thresholds`: 支持设置为 `null` 以跳过对特定物理量（如 `cohesive_energy`）的检查。
 *   `kpt_criteria`: 必须 `> 0`。用于自动计算 K 点网格密度。
+*   `labeling_task_classes`: 若启用 task class，`resource_mode="single_gpu"` 必须搭配 `launcher_mode="abacus"`；`resource_mode="multi_gpu_mpi"` 必须搭配 `launcher_mode="mpi_abacus"`。
+*   普通 FP11 单卡 class 应设置 `ntasks=1`、`gpus_per_node=1`，且不加载 rank-map 或引用 `MAP_OPT`。多卡 MPI ABACUS class 才加载 SAI rank-map 并通过 `MAP_OPT` 组装 `mpirun`。
 
 ### 5.2 路径校验
 *   `input_data_path`: 必须存在。

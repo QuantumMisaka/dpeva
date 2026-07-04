@@ -236,6 +236,24 @@ class TestLabelingWorkflow:
         assert any("No attempt_params defined" in call.args[0] for call in mock_warning.call_args_list)
 
     @patch("dpeva.workflows.labeling.LabelingManager")
+    def test_resolve_packed_job_dirs_includes_task_class_dirs(self, MockManager, config, tmp_path):
+        top_level = tmp_path / "inputs" / "N_50_0"
+        normal = tmp_path / "inputs" / "normal" / "N_4_0"
+        highmem = tmp_path / "inputs" / "highmem" / "N_1_0"
+        for job_dir in (top_level, normal, highmem):
+            job_dir.mkdir(parents=True)
+
+        wf = LabelingWorkflow(config)
+        resolved = wf._resolve_packed_job_dirs()
+
+        input_root = tmp_path / "inputs"
+        assert {path.relative_to(input_root).as_posix() for path in resolved} == {
+            "N_50_0",
+            "normal/N_4_0",
+            "highmem/N_1_0",
+        }
+
+    @patch("dpeva.workflows.labeling.LabelingManager")
     def test_collect_active_job_dirs_only_returns_non_empty_bundles(self, MockManager, config, tmp_path):
         active = tmp_path / "inputs" / "N_10_0"
         inactive = tmp_path / "inputs" / "N_20_0"
@@ -264,6 +282,97 @@ class TestLabelingWorkflow:
 
         assert job_ids == ["123"]
         mock_error.assert_called_once()
+
+    @patch("dpeva.workflows.labeling.LabelingManager")
+    def test_submit_job_dirs_applies_task_class_resource_modes(self, MockManager, tmp_path):
+        config = LabelingConfig(
+            work_dir=str(tmp_path),
+            input_data_path=str(tmp_path / "data"),
+            submission={
+                "backend": "slurm",
+                "slurm_config": {
+                    "partition": "4V100",
+                    "qos": "flood-1o2gpu",
+                    "walltime": "02:00:00",
+                },
+                "env_setup": ["module load abacus/LTSv3.10.1-sm70-auto"],
+            },
+            dft_params={},
+            attempt_params=[],
+            pp_dir="/tmp/pp",
+            orb_dir="/tmp/orb",
+            labeling_task_classes=[
+                {
+                    "name": "normal",
+                    "selector": {"max_atoms": 180},
+                    "tasks_per_job": 4,
+                    "launcher_mode": "abacus",
+                    "resource_mode": "single_gpu",
+                },
+                {
+                    "name": "highmem",
+                    "selector": {"min_atoms": 181},
+                    "tasks_per_job": 1,
+                    "launcher_mode": "mpi_abacus",
+                    "resource_mode": "multi_gpu_mpi",
+                    "slurm_config": {"ntasks": 4, "gpus_per_node": 4, "qos": "flood-gpu"},
+                },
+            ],
+        )
+        normal_job = tmp_path / "inputs" / "normal" / "N_4_0"
+        highmem_job = tmp_path / "inputs" / "highmem" / "N_1_0"
+        normal_job.mkdir(parents=True)
+        highmem_job.mkdir(parents=True)
+        manager = MockManager.return_value
+        manager.generate_runner_script.side_effect = ["print('normal')", "print('highmem')"]
+
+        wf = LabelingWorkflow(config)
+        wf.job_manager.submit_python_script = MagicMock(side_effect=["100", "200"])
+
+        job_ids = wf._submit_job_dirs([normal_job, highmem_job], attempt=0)
+
+        assert job_ids == ["100", "200"]
+        runner_calls = manager.generate_runner_script.call_args_list
+        assert runner_calls[0].kwargs["launcher_mode"] == "abacus"
+        assert runner_calls[1].kwargs["launcher_mode"] == "mpi_abacus"
+
+        normal_config = wf.job_manager.submit_python_script.call_args_list[0].args[2]
+        highmem_config = wf.job_manager.submit_python_script.call_args_list[1].args[2]
+        assert normal_config.ntasks == 1
+        assert normal_config.gpus_per_node == 1
+        assert "mps_mapping.d" not in normal_config.env_setup
+        assert highmem_config.ntasks == 4
+        assert highmem_config.gpus_per_node == 4
+        assert "source /opt/sai_config/mps_mapping.d/${SLURM_JOB_PARTITION}.bash" in highmem_config.env_setup
+
+    @patch("dpeva.workflows.labeling.LabelingManager")
+    def test_multi_gpu_task_class_does_not_inherit_single_gpu_defaults(self, MockManager, tmp_path):
+        config = LabelingConfig(
+            work_dir=str(tmp_path),
+            input_data_path=str(tmp_path / "data"),
+            submission={
+                "backend": "slurm",
+                "slurm_config": {"ntasks": 1, "gpus_per_node": 1, "qos": "flood-1o2gpu"},
+            },
+            dft_params={},
+            attempt_params=[],
+            pp_dir="/tmp/pp",
+            orb_dir="/tmp/orb",
+            labeling_task_classes=[
+                {
+                    "name": "highmem",
+                    "selector": {"min_atoms": 181},
+                    "launcher_mode": "mpi_abacus",
+                    "resource_mode": "multi_gpu_mpi",
+                },
+            ],
+        )
+
+        wf = LabelingWorkflow(config)
+        slurm_config = wf._slurm_config_for_class(config.labeling_task_classes[0])
+
+        assert slurm_config["ntasks"] == 4
+        assert slurm_config["gpus_per_node"] == 4
 
     @patch("dpeva.workflows.labeling.time.sleep")
     @patch("dpeva.workflows.labeling.subprocess.run", side_effect=RuntimeError("squeue down"))

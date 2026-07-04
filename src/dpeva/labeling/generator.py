@@ -157,7 +157,8 @@ class AbacusGenerator:
             "system_name": system_name,
             "stru_type": stru_type,
             "task_name": task_name,
-            "frame_idx": frame_idx
+            "frame_idx": frame_idx,
+            "atom_count": len(atoms),
         }
         try:
             with open(output_dir / "task_meta.json", "w") as f:

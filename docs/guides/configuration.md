@@ -2,7 +2,7 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-06-27
+last-updated: 2026-07-04
 owner: Docs Owner
 ---
 
@@ -10,7 +10,7 @@ owner: Docs Owner
 
 - Status: active
 - Audience: Users / Developers
-- Last-Updated: 2026-06-27
+- Last-Updated: 2026-07-04
 
 ## 1. 目的与范围
 
@@ -241,6 +241,53 @@ Analysis 相关建议：
 }
 ```
 
+SAI 上的 ABACUS labeling 如需同时处理普通单卡任务与 highmem/multicard 任务，应使用 `labeling_task_classes` 显式拆分 launcher/resource mode：
+
+```json
+{
+  "submission": {
+    "backend": "slurm",
+    "env_setup": ["module load abacus/LTSv3.10.1-sm70-auto"],
+    "slurm_config": {
+      "partition": "4V100",
+      "qos": "flood-1o2gpu",
+      "walltime": "02:00:00"
+    }
+  },
+  "tasks_per_job": 1,
+  "labeling_task_classes": [
+    {
+      "name": "normal",
+      "selector": { "max_atoms": 180 },
+      "tasks_per_job": 1,
+      "launcher_mode": "abacus",
+      "resource_mode": "single_gpu",
+      "slurm_config": {
+        "ntasks": 1,
+        "gpus_per_node": 1,
+        "qos": "flood-1o2gpu"
+      }
+    },
+    {
+      "name": "highmem",
+      "selector": { "min_atoms": 181 },
+      "tasks_per_job": 1,
+      "launcher_mode": "mpi_abacus",
+      "resource_mode": "multi_gpu_mpi",
+      "slurm_config": {
+        "ntasks": 4,
+        "gpus_per_node": 4,
+        "qos": "flood-gpu"
+      }
+    }
+  ]
+}
+```
+
+- `launcher_mode="abacus"`：runner 直接执行 `abacus`，并强制该 class 的 Slurm resources 为 `ntasks=1,gpus_per_node=1`；不会 source SAI rank-map。
+- `launcher_mode="mpi_abacus"`：runner 执行 `mpirun -np $SLURM_NTASKS --map-by $MAP_OPT -mca coll_hcoll_enable 0 abacus`，并自动补充 SAI rank-map source。
+- 没有配置 `labeling_task_classes` 时，DP-EVA 保持旧的单一 `submission` 行为，兼容既有配置。
+
 ### 5.7 Exploration
 
 ```json
@@ -265,6 +312,7 @@ Exploration 是可选能力。使用 `backend: "atst-tools"` 前需安装 `dpeva
 
 ## 7. 变更记录
 
+- 2026-07-04：补充 Labeling `labeling_task_classes`，明确 SAI ABACUS 单卡与 MPI 多卡 launcher/resource mode。
 - 2026-06-12：补充 Collect LLPR / energy DPOSE ensemble 配置字段、状态复用和 strict parity 约束。
 - 2026-06-11：补充 Exploration manifest、输入结构快照与结果结构校验契约。
 - 2026-06-10：新增 Exploration 最小配置示例，明确 `atst-tools` 为可选 backend。

@@ -94,9 +94,9 @@ For users who want to use the sampling algorithms directly without the full DP-E
   - Uses SAI Slurm with one task and one GPU per node.
   - Run with `dpeva label examples/recipes/labeling/config_gpu.json`
 
-- **SAI multi-rank ABACUS (`labeling/config_sai_abacus_slurm.json`)**
-  - Sources SAI's rank-map script and sets `ABACUS_COMMAND` in `submission.env_setup`.
-  - DP-EVA does not read `MAP_OPT` directly; users opt into `-map-by ${MAP_OPT}` by composing the command in config.
+- **SAI class-aware ABACUS (`labeling/config_sai_abacus_slurm.json`)**
+  - Uses `labeling_task_classes` to submit normal tasks as single-card `abacus`.
+  - Uses `launcher_mode="mpi_abacus"` only for high-memory/multi-card tasks; DP-EVA then sources SAI rank-map and runs `mpirun -np $SLURM_NTASKS --map-by $MAP_OPT abacus`.
   - Run with `dpeva label examples/recipes/labeling/config_sai_abacus_slurm.json`
 
 ## 8. Script Entry Points

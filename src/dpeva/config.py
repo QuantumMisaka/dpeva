@@ -319,6 +319,53 @@ class DataCleaningConfig(BaseWorkflowConfig):
         description="Whether to require strict system/frame alignment between dataset and inference results."
     )
 
+class LabelingTaskSelectorConfig(BaseModel):
+    """Selector used to assign generated labeling tasks to resource classes."""
+
+    min_atoms: Optional[int] = Field(None, ge=1, description="Inclusive minimum atom count.")
+    max_atoms: Optional[int] = Field(None, ge=1, description="Inclusive maximum atom count.")
+    name_prefixes: List[str] = Field(default_factory=list, description="Task name prefixes to include.")
+    name_regex: Optional[str] = Field(None, description="Regular expression matched against task names.")
+    dataset_names: List[str] = Field(default_factory=list, description="Dataset names to include.")
+    stru_types: List[str] = Field(default_factory=list, description="Structure types to include.")
+
+
+class LabelingTaskClassConfig(BaseModel):
+    """Resource and launcher mode for a group of labeling tasks."""
+
+    name: str = Field(..., description="Stable task class name used under inputs/<name>/N_*.")
+    selector: LabelingTaskSelectorConfig = Field(default_factory=LabelingTaskSelectorConfig)
+    tasks_per_job: Optional[int] = Field(None, gt=0, description="Override tasks_per_job for this class.")
+    launcher_mode: Literal["abacus", "mpi_abacus"] = Field(
+        "abacus",
+        description="ABACUS launch mode. `mpi_abacus` adds mpirun and SAI rank-map handling.",
+    )
+    resource_mode: Literal["single_gpu", "multi_gpu_mpi"] = Field(
+        "single_gpu",
+        description="Resource intent used to apply Slurm defaults and reviewer-visible gates.",
+    )
+    slurm_config: Dict[str, Any] = Field(default_factory=dict, description="Slurm overrides for this class.")
+    env_setup: Union[str, List[str]] = Field(
+        default="",
+        description="Extra environment setup lines for this class.",
+    )
+
+    @field_validator("env_setup")
+    @classmethod
+    def validate_env_setup(cls, v):
+        if isinstance(v, list):
+            return "\n".join(v)
+        return v
+
+    @model_validator(mode="after")
+    def validate_launcher_resource_pair(self):
+        if self.resource_mode == "single_gpu" and self.launcher_mode != "abacus":
+            raise ValueError("single_gpu task classes must use launcher_mode='abacus'")
+        if self.resource_mode == "multi_gpu_mpi" and self.launcher_mode != "mpi_abacus":
+            raise ValueError("multi_gpu_mpi task classes must use launcher_mode='mpi_abacus'")
+        return self
+
+
 class InferenceConfig(BaseWorkflowConfig):
     """Configuration for Inference Workflow."""
     data_path: Path = Field(..., description="Path to test dataset.")
@@ -363,6 +410,14 @@ class LabelingConfig(BaseWorkflowConfig):
     
     # Packing
     tasks_per_job: int = Field(DEFAULT_LABELING_TASKS_PER_JOB, gt=0, description="Number of tasks per packed job.")
+    labeling_task_classes: List[LabelingTaskClassConfig] = Field(
+        default_factory=list,
+        description=(
+            "Optional task-class resource definitions. When set, generated labeling "
+            "tasks are grouped under inputs/<class>/N_* and submitted with class-specific "
+            "launcher/resource modes."
+        ),
+    )
     
     # Cleaning & Strategy
     mag_map: Dict[str, float] = Field(default_factory=dict, description="Initial magnetic moments per element (e.g. {'Fe': 5.0})")
