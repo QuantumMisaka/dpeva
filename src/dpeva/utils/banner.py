@@ -20,6 +20,7 @@ Banner Reference:
 ├────────────────────────────────────────────────────────────────────────────┤
 │  :: LCL Sea Density ::  ......  * .  ..  .  *  .  * .  ...  * .  ..  .     │
 │  Deep Potential EVolution Accelerator          >>> [PRESS START] <<<       │
+│  Project author: @QuantumMisaka                                            │
 └────────────────────────────────────────────────────────────────────────────┘
 
 Banner Basic Reference:
@@ -111,6 +112,9 @@ def show_banner(no_delay=False):
     aa5 = fr"{BLUE} |____/|_|        {RESET}{ORANGE}|_____|  \_/   /_/   \_\{RESET}" # Corrected length to 42
     st5 = f"{GRAY} {pad_status(st5_txt, W_ST-1)}{RESET}"
 
+    author_txt = "  Project author: @QuantumMisaka"
+    author_padding = " " * (76 - len(author_txt))
+
     banner = f"""
 {GRAY}┌────────────────────────────────────────────────────────────────────────────┐{RESET}
 {GRAY}│{RESET}{aa1}  {st1}{GRAY}│{RESET}
@@ -121,6 +125,7 @@ def show_banner(no_delay=False):
 {GRAY}├────────────────────────────────────────────────────────────────────────────┤{RESET}
 {GRAY}│{RESET}  {GRAY}:: LCL Sea Density ::{RESET}  {ORANGE}......{RESET}  {BLUE}*{RESET} {ORANGE}.{RESET}  {ORANGE}..{RESET}  {ORANGE}.{RESET}  {BLUE}*{RESET}  {ORANGE}.{RESET}  {BLUE}*{RESET} {ORANGE}.{RESET}  {ORANGE}...{RESET}  {BLUE}*{RESET} {ORANGE}.{RESET}  {ORANGE}..{RESET}  {ORANGE}.{RESET}     {GRAY}│{RESET}
 {GRAY}│{RESET}  {GRAY}Deep Potential EVolution Accelerator{RESET}          {ORANGE}>>> [PRESS START] <<<{RESET}       {GRAY}│{RESET}
+{GRAY}│{RESET}  {GRAY}Project author:{RESET} {BLUE}@QuantumMisaka{RESET}{author_padding}{GRAY}│{RESET}
 {GRAY}└────────────────────────────────────────────────────────────────────────────┘{RESET}
 """
     print(banner)
