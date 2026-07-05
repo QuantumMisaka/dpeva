@@ -210,6 +210,46 @@ class TestLabelingManager:
         assert (manager.input_dir / "highmem" / "N_1_0" / "C181Fe0_0").exists()
         assert sorted(path.name for path in packed_dirs) == ["N_1_0", "N_4_0"]
 
+    def test_mgr_005d_class_packing_disambiguates_cross_dataset_task_name_collision(self, tmp_path):
+        config = {
+            "work_dir": str(tmp_path),
+            "input_data_path": "dummy",
+            "submission": {"backend": "local"},
+            "tasks_per_job": 50,
+            "dft_params": {},
+            "attempt_params": [],
+            "labeling_task_classes": [
+                {
+                    "name": "normal",
+                    "selector": {"max_atoms": 180},
+                    "tasks_per_job": 50,
+                    "launcher_mode": "abacus",
+                    "resource_mode": "single_gpu",
+                },
+            ],
+        }
+        manager = LabelingManager(config)
+        for dataset in ("DS1", "DS2"):
+            task_dir = manager.input_dir / dataset / "cluster" / "same_0"
+            task_dir.mkdir(parents=True)
+            (task_dir / "INPUT").touch()
+            (task_dir / "task_meta.json").write_text(
+                json.dumps(
+                    {
+                        "dataset_name": dataset,
+                        "stru_type": "cluster",
+                        "task_name": "same_0",
+                        "atom_count": 100,
+                    }
+                )
+            )
+
+        packed_dirs = manager.pack_tasks()
+
+        assert [path.relative_to(manager.input_dir).as_posix() for path in packed_dirs] == ["normal/N_50_0"]
+        assert (manager.input_dir / "normal" / "N_50_0" / "same_0").exists()
+        assert (manager.input_dir / "normal" / "N_50_0" / "DS2__cluster__same_0").exists()
+
     @patch("dpeva.labeling.manager.dpdata")
     def test_mgr_006_invalid_task_meta_is_handled(self, mock_dpdata, manager):
         failed_task = manager.input_dir / "DS1" / "cluster" / "Failed_Task"

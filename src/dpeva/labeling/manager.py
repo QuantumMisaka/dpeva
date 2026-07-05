@@ -154,7 +154,8 @@ class LabelingManager:
                         encoding="utf-8",
                     )
                     packed_job_dirs.append(current_job_dir)
-                shutil.move(str(task_dir), str(current_job_dir / task_dir.name))
+                destination = self.packer.resolve_destination(task_dir, current_job_dir, self.input_dir)
+                shutil.move(str(task_dir), str(destination))
                 self._cleanup_empty_parents(task_dir.parent)
 
         packed_job_dirs.sort(key=lambda path: str(path))

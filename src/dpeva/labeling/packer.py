@@ -7,8 +7,9 @@ Handles the distribution of tasks into subdirectories for efficient submission.
 
 import logging
 import shutil
+import json
 from pathlib import Path
-from typing import List
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -103,7 +104,8 @@ class TaskPacker:
                 # If dpdata loads mixed format, short_name might be preserved.
                 # Let's trust task_name is unique.
                 
-                shutil.move(str(task_dir), str(current_job_dir))
+                destination = self.resolve_destination(task_dir, current_job_dir, root_dir)
+                shutil.move(str(task_dir), str(destination))
                 sub_count += 1
                 
                 # Cleanup empty parent dirs
@@ -123,3 +125,67 @@ class TaskPacker:
         
         logger.info(f"Packed tasks into {len(job_dirs)} job directories.")
         return job_dirs
+
+    @classmethod
+    def resolve_destination(cls, task_dir: Path, job_dir: Path, root_dir: Path) -> Path:
+        destination = job_dir / task_dir.name
+        if not destination.exists():
+            return destination
+
+        qualified_name = cls._qualified_task_name(task_dir, root_dir)
+        destination = job_dir / qualified_name
+        if not destination.exists():
+            return destination
+
+        idx = 1
+        while True:
+            candidate = job_dir / f"{qualified_name}_dup{idx}"
+            if not candidate.exists():
+                return candidate
+            idx += 1
+
+    @classmethod
+    def _qualified_task_name(cls, task_dir: Path, root_dir: Path) -> str:
+        meta = cls._read_json_file(task_dir / "task_meta.json") or {}
+        dataset = cls._safe_name_part(meta.get("dataset_name"))
+        stru_type = cls._safe_name_part(meta.get("stru_type"))
+        task_name = cls._safe_name_part(meta.get("task_name"), task_dir.name)
+
+        if dataset is None or stru_type is None:
+            inferred_dataset, inferred_type = cls._infer_dataset_type(task_dir, root_dir)
+            dataset = dataset or inferred_dataset or "unknown"
+            stru_type = stru_type or inferred_type or "unknown"
+        return f"{dataset}__{stru_type}__{task_name}"
+
+    @staticmethod
+    def _safe_name_part(value: Any, fallback: Optional[str] = None) -> Optional[str]:
+        if isinstance(value, str) and value.strip():
+            text = value.strip()
+        elif fallback is not None:
+            text = fallback
+        else:
+            return None
+        return text.replace("/", "_").replace("\\", "_")
+
+    @staticmethod
+    def _infer_dataset_type(task_dir: Path, root_dir: Path) -> tuple[Optional[str], Optional[str]]:
+        try:
+            rel_path = task_dir.relative_to(root_dir)
+        except ValueError:
+            return None, None
+        if len(rel_path.parts) >= 3:
+            return rel_path.parts[0], rel_path.parts[1]
+        return None, None
+
+    @staticmethod
+    def _read_json_file(path: Path) -> Optional[Dict[str, Any]]:
+        if not path.exists():
+            return None
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                loaded = json.load(f)
+                if isinstance(loaded, dict):
+                    return loaded
+        except (OSError, json.JSONDecodeError, TypeError, ValueError):
+            return None
+        return None
