@@ -63,6 +63,7 @@ owner: Docs Owner
     "env_setup": [
       "source /path/to/env.sh"
     ],
+    "slurm_array": false,
     "slurm_config": {
       "nodes": 1,
       "ntasks": 1,
@@ -73,6 +74,13 @@ owner: Docs Owner
 ```
 
 常用扩展字段：`partition/qos/gpus_per_node/cpus_per_task/account`。
+
+支持 Slurm array 的 workflow 可设置：
+
+- `slurm_array=true`：将同质任务合并为 Slurm array，而不是逐个 `sbatch`。
+- `slurm_array_task_limit`：可选 array 并发上限，渲染为 `--array=0-N%limit`；必须为正整数。
+
+Labeling 启用 `labeling_task_classes` 时，array 会按 task class 分组提交，每个 class 一个 array job。class 名会经过 Slurm job name 规范化，用于 `#SBATCH -J` 与 `<work_dir>/array_jobs/<class>_<attempt>/`。
 
 ## 5. 各 Workflow 最小配置示例
 
@@ -248,6 +256,8 @@ SAI 上的 ABACUS labeling 如需同时处理普通单卡任务与 highmem/multi
   "submission": {
     "backend": "slurm",
     "env_setup": ["module load abacus/LTSv3.10.1-sm70-auto"],
+    "slurm_array": true,
+    "slurm_array_task_limit": 64,
     "slurm_config": {
       "partition": "4V100",
       "qos": "flood-1o2gpu",
@@ -287,6 +297,7 @@ SAI 上的 ABACUS labeling 如需同时处理普通单卡任务与 highmem/multi
 - `launcher_mode="abacus"`：runner 直接执行 `abacus`，并强制该 class 的 Slurm resources 为 `ntasks=1,gpus_per_node=1`；不会 source SAI rank-map。
 - `launcher_mode="mpi_abacus"`：runner 执行 `mpirun -np $SLURM_NTASKS --map-by $MAP_OPT -mca coll_hcoll_enable 0 abacus`，并自动补充 SAI rank-map source。
 - 没有配置 `labeling_task_classes` 时，DP-EVA 保持旧的单一 `submission` 行为，兼容既有配置。
+- SAI-1344 `16V100` 实测不接受 `flood-gpu`/`rush-gpu` 的 1GPU 请求（`QOSMinGRES`）。FP11 类似批量任务应使用 4GPU MPI fallback；若 `rush-gpu` array 命中 `QOSMaxSubmitJobPerUserLimit`，应改用 `flood-gpu` 完成批量提交。
 
 ### 5.7 Exploration
 
@@ -312,6 +323,7 @@ Exploration 是可选能力。使用 `backend: "atst-tools"` 前需安装 `dpeva
 
 ## 7. 变更记录
 
+- 2026-07-05：补充 `slurm_array` / `slurm_array_task_limit` 与 SAI-1344 FP11 4GPU MPI fallback 实测建议。
 - 2026-07-04：补充 Labeling `labeling_task_classes`，明确 SAI ABACUS 单卡与 MPI 多卡 launcher/resource mode。
 - 2026-06-12：补充 Collect LLPR / energy DPOSE ensemble 配置字段、状态复用和 strict parity 约束。
 - 2026-06-11：补充 Exploration manifest、输入结构快照与结果结构校验契约。

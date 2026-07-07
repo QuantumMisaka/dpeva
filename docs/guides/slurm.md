@@ -2,7 +2,7 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-06-10
+last-updated: 2026-07-05
 owner: Workflow Owner
 ---
 
@@ -11,7 +11,7 @@ owner: Workflow Owner
 - Status: active
 - Audience: Users / Developers / Infra
 - Applies-To: `submission.backend="slurm"`
-- Last-Updated: 2026-06-10
+- Last-Updated: 2026-07-05
 
 ## 1. 目的与范围
 
@@ -56,6 +56,24 @@ owner: Workflow Owner
 - `account`：计费账号
 - `gpus_per_node`：GPU 资源（Feature/Train/Infer 常用）
 - `cpus_per_task`：CPU 资源（Collect 常用）
+- `slurm_array`：支持 array 的 workflow 可设为 `true`，将同质任务按 Slurm array 提交
+- `slurm_array_task_limit`：array 并发上限，渲染为 `--array=0-N%limit`
+
+### 3.3 Labeling Slurm Array
+
+Labeling 启用 `submission.slurm_array=true` 后，DP-EVA 会按 `labeling_task_classes` 分组提交 array：
+
+- 每个 class 写入 `<work_dir>/array_jobs/<class-slug>_attempt_<n>/tasks.json` 与 `submit_array.slurm`。
+- `#SBATCH -J` 使用规范化后的 class/attempt 名称，例如 `fp-normal-att0`。
+- array worker 通过当前 Python 解释器直接执行 `dpeva/submission/array.py`，避免 `python -m` 的包初始化 warning。
+- `slurm_array_task_limit` 只控制并发，不改变 array 元素总数；若集群对 array 元素总提交数有限制，应调整 QOS、拆分数据或降低批量规模。
+
+SAI ABACUS 注意事项：
+
+- `source /etc/profile` 必须出现在 `#SBATCH` 指令之后、`module load` 之前。
+- `launcher_mode="mpi_abacus"` 会在 `source /etc/profile` 后自动插入 `source /opt/sai_config/mps_mapping.d/${SLURM_JOB_PARTITION}.bash`。
+- `launcher_mode="abacus"` 不应加载 SAI rank-map，也不应引用 `MAP_OPT`。
+- SAI-1344 `16V100` 上，`flood-gpu`/`rush-gpu` 的 1GPU 请求实测被 `QOSMinGRES` 拒绝；FP11 批量 fallback 使用 4GPU MPI，并优先选择能接受大 array 的 `flood-gpu`。
 
 ## 4. 工作流脚本与日志约定
 
@@ -155,6 +173,7 @@ tail -f 0/test_val/test_job.out | grep -F "DPEVA_TAG: WORKFLOW_FINISHED"
 
 ## 7. 变更记录
 
+- 2026-07-05：补充 Labeling Slurm array 行为、array worker 约定与 SAI-1344 FP11 QOS 实测注意事项。
 - 2026-03-11：更新配置字段入口为 API Reference，并同步 infer 日志文件名为 `test_job.out`。
 - 2026-03-03：更新完成标记语义，明确“部分失败不输出完成标记”。
 - 2026-02-18：补齐 Slurm 配置结构、日志命名与完成标记监控建议，并纳入常见故障排查路径。

@@ -2,7 +2,7 @@
 title: Archived Plans
 status: archived
 audience: Historians
-last-updated: 2026-07-04
+last-updated: 2026-07-07
 owner: Docs Owner
 ---
 
@@ -10,7 +10,7 @@ owner: Docs Owner
 
 - Status: archived
 - Audience: Historians
-- Last-Updated: 2026-07-04
+- Last-Updated: 2026-07-07
 
 本文档目录归档了 v0.8.1 周期已从 active 区移出的项目计划、执行计划与操作交接记录。
 
@@ -20,9 +20,9 @@ owner: Docs Owner
   - Type: Project Governance / Skill Implementation Plan
   - Status: archived
 - `2026-07-02-fp11-first-principles-labeling.md`
-  - Type: Operational Execution Plan / Blocked Handoff
+  - Type: Operational Execution Plan / Completed SAI-1344 Execution Record
   - Status: archived
-  - Note: Full FP11 production labeling rerun remains blocked until launcher semantics are corrected.
+  - Note: SAI-1344 Slurm-native FP11 labeling completed through recovery, extract/postprocess, stats generation, and backend reporting.
 - `2026-07-03-dataset-audit.md`
   - Type: Feature Implementation Plan Snapshot
   - Status: archived
