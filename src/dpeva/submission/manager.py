@@ -1,7 +1,10 @@
 import os
+import re
 import subprocess
 import logging
-from typing import Literal, Optional
+from typing import Iterable, List, Literal, Optional
+
+from .array import ArrayTaskSpec, build_array_command, write_array_manifest
 from .templates import TemplateEngine, JobConfig
 
 logger = logging.getLogger(__name__)
@@ -98,6 +101,48 @@ class JobManager:
         except subprocess.CalledProcessError as e:
             logger.error(f"Submission failed: {e.stderr}")
             raise e
+
+    @staticmethod
+    def parse_sbatch_job_id(output: str) -> str:
+        submitted = re.search(r"Submitted batch job\s+(\d+)", output)
+        if submitted:
+            return submitted.group(1)
+
+        if re.fullmatch(r"\s*\d+\s*", output):
+            return output.strip()
+
+        raise ValueError(f"Could not parse Slurm job id from output: {output}")
+
+    def submit_array(
+        self,
+        tasks: Iterable[ArrayTaskSpec],
+        job_config: JobConfig,
+        manifest_path: str,
+        script_path: str,
+        working_dir: str = ".",
+        array_task_limit: Optional[int] = None,
+    ) -> str:
+        if self.mode != "slurm":
+            raise ValueError("array submission requires slurm mode")
+
+        task_list: List[ArrayTaskSpec] = list(tasks)
+        if not task_list:
+            raise ValueError("array submission requires at least one task")
+
+        write_array_manifest(task_list, manifest_path)
+        job_config.command = build_array_command(manifest_path)
+        job_config.array = f"0-{len(task_list) - 1}"
+        if array_task_limit is not None:
+            job_config.array_task_limit = array_task_limit
+        if not job_config.output_log:
+            job_config.output_log = "slurm-%A_%a.out"
+        if not job_config.error_log:
+            job_config.error_log = "slurm-%A_%a.err"
+
+        self.generate_script(job_config, script_path)
+        os.makedirs(working_dir, exist_ok=True)
+        output = self.submit(script_path, working_dir=str(working_dir))
+        return self.parse_sbatch_job_id(output)
 
     def submit_python_script(self, script_content: str, script_name: str, job_config: JobConfig, working_dir: str = ".") -> str:
         """

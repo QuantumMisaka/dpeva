@@ -148,3 +148,75 @@ class TestJobManager:
         # Verify generate and submit called
         mock_gen.assert_called()
         mock_submit.assert_called()
+
+
+def test_generate_script_slurm_array_with_limit(tmp_path):
+    config = JobConfig(
+        job_name="array_job",
+        command="echo $SLURM_ARRAY_TASK_ID",
+        partition="debug",
+        array="0-7",
+        array_task_limit=3,
+        output_log="logs/%A_%a.out",
+        error_log="logs/%A_%a.err",
+    )
+    manager = JobManager(mode="slurm")
+    output_path = tmp_path / "array.slurm"
+
+    manager.generate_script(config, str(output_path))
+
+    content = output_path.read_text()
+    assert "#SBATCH --array=0-7%3" in content
+    assert "#SBATCH -o logs/%A_%a.out" in content
+    assert "#SBATCH -e logs/%A_%a.err" in content
+    assert "echo $SLURM_ARRAY_TASK_ID" in content
+
+
+def test_generate_script_slurm_array_without_limit(tmp_path):
+    config = JobConfig(job_name="array_job", command="hostname", array="1,3,5")
+    manager = JobManager(mode="slurm")
+    output_path = tmp_path / "array.slurm"
+
+    manager.generate_script(config, str(output_path))
+
+    assert "#SBATCH --array=1,3,5" in output_path.read_text()
+
+
+def test_job_config_positional_env_setup_remains_before_array_fields():
+    config = JobConfig(
+        "echo hi",
+        "job",
+        "debug",
+        1,
+        1,
+        1,
+        None,
+        None,
+        None,
+        "00:05:00",
+        None,
+        None,
+        [],
+        "module load python",
+    )
+
+    assert config.env_setup == "module load python"
+    assert config.array is None
+    assert config.array_task_limit is None
+
+
+def test_parse_sbatch_job_id_matches_submitted_batch_job_after_warning():
+    output = "warning 2026\nSubmitted batch job 24680"
+
+    assert JobManager.parse_sbatch_job_id(output) == "24680"
+
+
+def test_parse_sbatch_job_id_accepts_bare_number():
+    assert JobManager.parse_sbatch_job_id(" 24680\n") == "24680"
+
+
+def test_parse_sbatch_job_id_rejects_error_text_with_other_numbers():
+    output = "sbatch: error: partition 4V100 invalid"
+
+    with pytest.raises(ValueError, match="Could not parse Slurm job id"):
+        JobManager.parse_sbatch_job_id(output)

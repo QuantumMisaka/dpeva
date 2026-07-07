@@ -78,6 +78,19 @@ class JobConfig:
     # Common
     env_setup: Union[str, List[str]] = ""
 
+    # Slurm Array
+    array: Optional[str] = None
+    array_task_limit: Optional[int] = None
+
+    def _array_expression(self) -> Optional[str]:
+        if not self.array:
+            return None
+        if self.array_task_limit is None:
+            return self.array
+        if self.array_task_limit < 1:
+            raise ValueError("array_task_limit must be >= 1")
+        return f"{self.array}%{self.array_task_limit}"
+
     def to_dict(self) -> Dict[str, Any]:
         """
         Convert dataclass to dictionary with all values as strings.
@@ -109,6 +122,10 @@ class JobConfig:
 
         if self.error_log:
             optional_params.append(f"#SBATCH -e {self.error_log}")
+
+        array_expr = self._array_expression()
+        if array_expr:
+            optional_params.append(f"#SBATCH --array={array_expr}")
 
         if self.gpus_per_node:
             optional_params.append(f"#SBATCH --gpus-per-node={self.gpus_per_node}")

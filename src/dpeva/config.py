@@ -64,6 +64,15 @@ class SubmissionConfig(BaseModel):
         default="", 
         description="List of shell commands to execute before running the task (e.g., `module load cuda`)."
     )
+    slurm_array: bool = Field(
+        False,
+        description="When true, workflows that support homogeneous Slurm arrays may submit arrays instead of one job per task.",
+    )
+    slurm_array_task_limit: Optional[int] = Field(
+        None,
+        gt=0,
+        description="Optional Slurm array throttle, rendered as --array=0-N%limit.",
+    )
 
     @field_validator("env_setup")
     @classmethod
@@ -125,14 +134,18 @@ class BaseWorkflowConfig(BaseModel):
                 backend = data.get("backend", DEFAULT_BACKEND)
                 slurm_config = data.get("slurm_config", {})
                 env_setup = data.get("env_setup", "")
-                
-                # Only create if there's something non-default or if backend is present
-                # But to be safe, we always populate it
-                data["submission"] = {
+                submission_config = {
                     "backend": backend,
                     "slurm_config": slurm_config,
                     "env_setup": env_setup
                 }
+                for key in ("slurm_array", "slurm_array_task_limit"):
+                    if key in data:
+                        submission_config[key] = data[key]
+
+                # Only create if there's something non-default or if backend is present
+                # But to be safe, we always populate it
+                data["submission"] = submission_config
         return data
 
 class FeatureConfig(BaseWorkflowConfig):
@@ -270,11 +283,15 @@ class AnalysisConfig(BaseModel):
     @classmethod
     def extract_flat_submission_config(cls, data: Any) -> Any:
         if isinstance(data, dict) and "submission" not in data:
-            data["submission"] = {
+            submission_config = {
                 "backend": data.get("backend", DEFAULT_BACKEND),
                 "slurm_config": data.get("slurm_config", {}),
                 "env_setup": data.get("env_setup", "")
             }
+            for key in ("slurm_array", "slurm_array_task_limit"):
+                if key in data:
+                    submission_config[key] = data[key]
+            data["submission"] = submission_config
         return data
 
     @model_validator(mode='after')

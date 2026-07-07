@@ -10,6 +10,7 @@ import time
 import subprocess
 import re
 import sys
+import hashlib
 from pathlib import Path
 from typing import Any, List, Dict, Optional
 
@@ -19,6 +20,8 @@ from dpeva.config import LabelingConfig
 from dpeva.labeling.manager import LabelingManager
 from dpeva.labeling.integration import DataIntegrationManager
 from dpeva.submission.manager import JobManager
+from dpeva.submission.array import ArrayTaskSpec
+from dpeva.submission.names import normalize_slurm_job_name
 from dpeva.submission.templates import JobConfig
 from dpeva.constants import WORKFLOW_FINISHED_TAG
 from dpeva.io.dataset import load_systems
@@ -27,6 +30,18 @@ from dpeva.utils.logs import setup_workflow_logger, close_workflow_logger
 logger = logging.getLogger(__name__)
 
 SAI_RANK_MAP_SETUP = "source /opt/sai_config/mps_mapping.d/${SLURM_JOB_PARTITION}.bash"
+ACTIVE_SLURM_STATES = {
+    "BOOT_FAIL",
+    "CONFIGURING",
+    "COMPLETING",
+    "PENDING",
+    "REQUEUED",
+    "RESIZING",
+    "RUNNING",
+    "SIGNALING",
+    "STAGE_OUT",
+    "SUSPENDED",
+}
 
 class LabelingWorkflow:
     """
@@ -251,6 +266,9 @@ class LabelingWorkflow:
         return active_job_dirs
 
     def _submit_job_dirs(self, active_job_dirs: List[Path], attempt: int) -> List[str]:
+        if self.config.submission.backend == "slurm" and self.config.submission.slurm_array:
+            return self._submit_job_dirs_as_arrays(active_job_dirs, attempt)
+
         job_ids = []
         for job_dir in active_job_dirs:
             class_config = self._task_class_config_for_job_dir(job_dir)
@@ -265,7 +283,7 @@ class LabelingWorkflow:
                 job_name = f"fp_{class_name}_{job_dir.name}_att{attempt}"
             job_config = JobConfig(
                 command="",
-                job_name=job_name,
+                job_name=normalize_slurm_job_name(job_name),
                 partition=slurm_conf.get("partition"),
                 qos=slurm_conf.get("qos"),
                 nodes=slurm_conf.get("nodes", 1),
@@ -286,6 +304,74 @@ class LabelingWorkflow:
             except Exception as e:
                 logger.error(f"Failed to submit job for {job_dir}: {e}")
         return job_ids
+
+    def _submit_job_dirs_as_arrays(self, active_job_dirs: List[Path], attempt: int) -> List[str]:
+        grouped: Dict[str, List[Path]] = {}
+        class_config_by_key: Dict[str, Any] = {}
+        for job_dir in active_job_dirs:
+            class_config = self._task_class_config_for_job_dir(job_dir)
+            raw_class_name = self._class_value(class_config, "name", "default") or "default"
+            class_name = str(raw_class_name)
+            grouped.setdefault(class_name, []).append(job_dir)
+            class_config_by_key[class_name] = class_config
+
+        job_ids: List[str] = []
+        for class_name, job_dirs in grouped.items():
+            class_config = class_config_by_key[class_name]
+            launcher_mode = self._class_value(class_config, "launcher_mode", "auto")
+            slurm_conf = self._slurm_config_for_class(class_config)
+            env_setup = self._env_setup_for_class(class_config, launcher_mode)
+            tasks: List[ArrayTaskSpec] = []
+            for idx, job_dir in enumerate(sorted(job_dirs, key=lambda path: str(path))):
+                runner_content = self.manager.generate_runner_script(
+                    job_dir,
+                    launcher_mode=launcher_mode,
+                )
+                runner_path = job_dir / "run_batch.py"
+                runner_path.write_text(runner_content, encoding="utf-8")
+                tasks.append(
+                    ArrayTaskSpec(
+                        index=idx,
+                        name=job_dir.name,
+                        working_dir=job_dir,
+                        argv=[sys.executable, "-u", str(runner_path.resolve())],
+                    )
+                )
+
+            array_root = Path(self.config.work_dir) / "array_jobs" / f"{self._array_group_slug(class_name)}_attempt_{attempt}"
+            job_config = JobConfig(
+                command="",
+                job_name=normalize_slurm_job_name(f"fp-{class_name}-att{attempt}"),
+                partition=slurm_conf.get("partition"),
+                qos=slurm_conf.get("qos"),
+                nodes=slurm_conf.get("nodes", 1),
+                ntasks=slurm_conf.get("ntasks", 1),
+                gpus_per_node=slurm_conf.get("gpus_per_node"),
+                cpus_per_task=slurm_conf.get("cpus_per_task"),
+                walltime=slurm_conf.get("walltime", "24:00:00"),
+                env_setup=env_setup,
+            )
+            try:
+                job_id = self.job_manager.submit_array(
+                    tasks=tasks,
+                    job_config=job_config,
+                    manifest_path=str(array_root / "tasks.json"),
+                    script_path=str(array_root / "submit_array.slurm"),
+                    working_dir=str(array_root),
+                    array_task_limit=self.config.submission.slurm_array_task_limit,
+                )
+                job_ids.append(job_id)
+            except Exception as e:
+                logger.error(f"Failed to submit array for class {class_name}: {e}")
+        if active_job_dirs and not job_ids:
+            raise RuntimeError("Failed to submit any Slurm array jobs")
+        return job_ids
+
+    @staticmethod
+    def _array_group_slug(class_name: str) -> str:
+        safe_name = normalize_slurm_job_name(class_name, fallback="default", max_length=80)
+        digest = hashlib.sha1(class_name.encode("utf-8")).hexdigest()[:8]
+        return f"{safe_name}-{digest}"
 
     @staticmethod
     def _class_value(class_config: Any, key: str, default: Any = None) -> Any:
@@ -350,7 +436,12 @@ class LabelingWorkflow:
             ]
         elif launcher_mode == "mpi_abacus":
             if not any("mps_mapping.d" in line for line in lines):
-                lines.insert(0, SAI_RANK_MAP_SETUP)
+                profile_idx = next(
+                    (idx for idx, line in enumerate(lines) if line.strip() == "source /etc/profile"),
+                    None,
+                )
+                insert_idx = profile_idx + 1 if profile_idx is not None else 0
+                lines.insert(insert_idx, SAI_RANK_MAP_SETUP)
         return "\n".join(lines)
 
     @staticmethod
@@ -389,6 +480,17 @@ class LabelingWorkflow:
                 active_ids = result.stdout.strip().split()
                 
                 if not active_ids:
+                    active_states = self._query_active_slurm_accounting_states(clean_ids)
+                    if active_states:
+                        if wait_count % 10 == 0:
+                            states = ", ".join(sorted(set(active_states)))
+                            logger.info(
+                                "Slurm accounting still reports active jobs "
+                                f"({states}) after an empty squeue response..."
+                            )
+                        wait_count += 1
+                        time.sleep(interval)
+                        continue
                     logger.info("All jobs finished.")
                     break
                 
@@ -403,3 +505,32 @@ class LabelingWorkflow:
             except Exception as e:
                 logger.error(f"Failed to query Slurm queue: {e}")
                 time.sleep(interval)
+
+    @classmethod
+    def _query_active_slurm_accounting_states(cls, job_ids: List[str]) -> List[str]:
+        cmd = [
+            "sacct",
+            "-X",
+            "-j",
+            ",".join(job_ids),
+            "--format=State",
+            "-n",
+            "-P",
+        ]
+        result = subprocess.run(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            check=False,
+        )
+        active_states = []
+        for line in result.stdout.splitlines():
+            state = cls._base_slurm_state(line)
+            if state in ACTIVE_SLURM_STATES:
+                active_states.append(state)
+        return active_states
+
+    @staticmethod
+    def _base_slurm_state(raw_state: str) -> str:
+        return raw_state.strip().split("|", 1)[0].split()[0].upper() if raw_state.strip() else ""

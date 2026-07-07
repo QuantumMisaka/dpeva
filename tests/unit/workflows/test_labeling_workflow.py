@@ -1,5 +1,10 @@
 
+import json
+from pathlib import Path
+import sys
+
 import pytest
+import subprocess
 from unittest.mock import MagicMock, patch
 from dpeva.workflows.labeling import LabelingWorkflow
 from dpeva.config import LabelingConfig
@@ -346,6 +351,39 @@ class TestLabelingWorkflow:
         assert "source /opt/sai_config/mps_mapping.d/${SLURM_JOB_PARTITION}.bash" in highmem_config.env_setup
 
     @patch("dpeva.workflows.labeling.LabelingManager")
+    def test_submit_job_dirs_normalizes_task_class_job_names(self, MockManager, tmp_path):
+        config = LabelingConfig(
+            work_dir=str(tmp_path),
+            input_data_path=str(tmp_path / "data"),
+            submission={"backend": "slurm"},
+            dft_params={},
+            attempt_params=[],
+            pp_dir="/tmp/pp",
+            orb_dir="/tmp/orb",
+            labeling_task_classes=[
+                {
+                    "name": "normal/class",
+                    "selector": {"max_atoms": 180},
+                    "launcher_mode": "abacus",
+                }
+            ],
+        )
+        job_dir = tmp_path / "inputs" / "normal" / "N_4_0"
+        job_dir.mkdir(parents=True)
+        (job_dir / ".dpeva_job_class.json").write_text('{"task_class": "normal/class"}', encoding="utf-8")
+        MockManager.return_value.generate_runner_script.return_value = "print('normal')"
+
+        wf = LabelingWorkflow(config)
+        wf.job_manager.submit_python_script = MagicMock(return_value="100")
+
+        wf._submit_job_dirs([job_dir], attempt=0)
+
+        submitted_config = wf.job_manager.submit_python_script.call_args.args[2]
+        assert submitted_config.job_name == "fp_normal-class_N_4_0_att0"
+        assert "/" not in submitted_config.job_name
+        assert " " not in submitted_config.job_name
+
+    @patch("dpeva.workflows.labeling.LabelingManager")
     def test_multi_gpu_task_class_does_not_inherit_single_gpu_defaults(self, MockManager, tmp_path):
         config = LabelingConfig(
             work_dir=str(tmp_path),
@@ -373,6 +411,33 @@ class TestLabelingWorkflow:
 
         assert slurm_config["ntasks"] == 4
         assert slurm_config["gpus_per_node"] == 4
+
+    @patch("dpeva.workflows.labeling.time.sleep")
+    @patch("dpeva.workflows.labeling.subprocess.run")
+    def test_monitor_slurm_jobs_checks_sacct_when_squeue_is_transiently_empty(
+        self, mock_run, mock_sleep, config
+    ):
+        squeue_empty = subprocess.CompletedProcess(
+            ["squeue"], 0, stdout="", stderr=""
+        )
+        sacct_active = subprocess.CompletedProcess(
+            ["sacct"], 0, stdout="RUNNING\nPENDING\n", stderr=""
+        )
+        sacct_done = subprocess.CompletedProcess(
+            ["sacct"], 0, stdout="COMPLETED\n", stderr=""
+        )
+        mock_run.side_effect = [
+            squeue_empty,
+            sacct_active,
+            squeue_empty,
+            sacct_done,
+        ]
+
+        wf = LabelingWorkflow(config)
+        wf._monitor_slurm_jobs(["581295"], interval=1)
+
+        assert mock_sleep.call_count == 1
+        assert any(call.args[0][0] == "sacct" for call in mock_run.call_args_list)
 
     @patch("dpeva.workflows.labeling.time.sleep")
     @patch("dpeva.workflows.labeling.subprocess.run", side_effect=RuntimeError("squeue down"))
@@ -458,3 +523,300 @@ class TestLabelingWorkflow:
 
         mock_setup_logger.assert_called_once_with("dpeva", str(config.work_dir), "labeling_extract.log", capture_stdout=True)
         mock_close_logger.assert_called_once_with("dpeva", str(tmp_path / "labeling_extract.log"))
+
+    @patch("dpeva.workflows.labeling.LabelingManager")
+    def test_mpi_abacus_env_keeps_profile_before_rank_map(self, MockManager, tmp_path):
+        config = LabelingConfig(
+            work_dir=str(tmp_path),
+            input_data_path=str(tmp_path / "data"),
+            submission={
+                "backend": "slurm",
+                "env_setup": [
+                    "source /etc/profile",
+                    "module load abacus/LTSv3.10.1-sm70-auto",
+                ],
+                "slurm_config": {"partition": "16V100", "qos": "rush-gpu"},
+            },
+            dft_params={},
+            attempt_params=[],
+            pp_dir="/tmp/pp",
+            orb_dir="/tmp/orb",
+            labeling_task_classes=[
+                {
+                    "name": "highmem",
+                    "selector": {"min_atoms": 181},
+                    "launcher_mode": "mpi_abacus",
+                    "resource_mode": "multi_gpu_mpi",
+                }
+            ],
+        )
+        workflow = LabelingWorkflow(config)
+
+        env_setup = workflow._env_setup_for_class(config.labeling_task_classes[0], "mpi_abacus")
+
+        lines = env_setup.splitlines()
+        profile_idx = lines.index("source /etc/profile")
+        rank_map_idx = lines.index("source /opt/sai_config/mps_mapping.d/${SLURM_JOB_PARTITION}.bash")
+        assert rank_map_idx == profile_idx + 1
+
+    @patch("dpeva.workflows.labeling.LabelingManager")
+    def test_submit_job_dirs_groups_task_classes_into_slurm_arrays(self, MockManager, tmp_path):
+        config = LabelingConfig(
+            work_dir=str(tmp_path),
+            input_data_path=str(tmp_path / "data"),
+            submission={
+                "backend": "slurm",
+                "slurm_array": True,
+                "slurm_array_task_limit": 2,
+                "env_setup": [
+                    "source /etc/profile",
+                    "module load abacus/LTSv3.10.1-sm70-auto",
+                ],
+                "slurm_config": {"partition": "4V100", "qos": "flood-1o2gpu"},
+            },
+            dft_params={},
+            attempt_params=[],
+            pp_dir="/tmp/pp",
+            orb_dir="/tmp/orb",
+            labeling_task_classes=[
+                {
+                    "name": "normal",
+                    "selector": {"max_atoms": 180},
+                    "launcher_mode": "abacus",
+                    "resource_mode": "single_gpu",
+                },
+                {
+                    "name": "highmem",
+                    "selector": {"min_atoms": 181},
+                    "launcher_mode": "mpi_abacus",
+                    "resource_mode": "multi_gpu_mpi",
+                    "slurm_config": {"gpus_per_node": 4, "ntasks": 4, "qos": "flood-gpu"},
+                },
+            ],
+        )
+        normal_0 = tmp_path / "inputs" / "normal" / "N_1_0"
+        normal_1 = tmp_path / "inputs" / "normal" / "N_1_1"
+        highmem_0 = tmp_path / "inputs" / "highmem" / "N_1_0"
+        for job_dir, task_class in (
+            (normal_0, "normal"),
+            (normal_1, "normal"),
+            (highmem_0, "highmem"),
+        ):
+            job_dir.mkdir(parents=True)
+            (job_dir / ".dpeva_job_class.json").write_text(
+                f'{{"task_class": "{task_class}"}}',
+                encoding="utf-8",
+            )
+
+        manager = MockManager.return_value
+        manager.generate_runner_script.side_effect = ["print('n0')", "print('n1')", "print('h0')"]
+
+        workflow = LabelingWorkflow(config)
+        workflow.job_manager.submit_array = MagicMock(side_effect=["100", "200"])
+
+        job_ids = workflow._submit_job_dirs([normal_0, normal_1, highmem_0], attempt=0)
+
+        assert job_ids == ["100", "200"]
+        assert workflow.job_manager.submit_array.call_count == 2
+
+        normal_call, highmem_call = workflow.job_manager.submit_array.call_args_list
+        normal_tasks = normal_call.kwargs["tasks"]
+        highmem_tasks = highmem_call.kwargs["tasks"]
+        normal_config = normal_call.kwargs["job_config"]
+        highmem_config = highmem_call.kwargs["job_config"]
+
+        assert len(normal_tasks) == 2
+        assert len(highmem_tasks) == 1
+        assert normal_config.job_name == "fp-normal-att0"
+        assert highmem_config.job_name == "fp-highmem-att0"
+        assert normal_config.gpus_per_node == 1
+        assert highmem_config.gpus_per_node == 4
+        assert normal_call.kwargs["array_task_limit"] == 2
+        assert highmem_call.kwargs["array_task_limit"] == 2
+
+        for task in [*normal_tasks, *highmem_tasks]:
+            assert task.argv[0] == sys.executable
+            assert task.argv[1] == "-u"
+            assert task.argv[2].endswith("run_batch.py")
+
+        assert (normal_0 / "run_batch.py").read_text(encoding="utf-8") == "print('n0')"
+        assert (normal_1 / "run_batch.py").read_text(encoding="utf-8") == "print('n1')"
+        assert (highmem_0 / "run_batch.py").read_text(encoding="utf-8") == "print('h0')"
+
+        highmem_env_lines = highmem_config.env_setup.splitlines()
+        profile_idx = highmem_env_lines.index("source /etc/profile")
+        rank_map_idx = highmem_env_lines.index("source /opt/sai_config/mps_mapping.d/${SLURM_JOB_PARTITION}.bash")
+        assert rank_map_idx == profile_idx + 1
+
+    @patch("dpeva.workflows.labeling.LabelingManager")
+    def test_submit_job_dirs_uses_collision_safe_array_roots(self, MockManager, tmp_path):
+        config = LabelingConfig(
+            work_dir=str(tmp_path),
+            input_data_path=str(tmp_path / "data"),
+            submission={
+                "backend": "slurm",
+                "slurm_array": True,
+            },
+            dft_params={},
+            attempt_params=[],
+            pp_dir="/tmp/pp",
+            orb_dir="/tmp/orb",
+            labeling_task_classes=[
+                {"name": "class/a", "launcher_mode": "abacus"},
+                {"name": "class a", "launcher_mode": "abacus"},
+            ],
+        )
+        slash_class_job = tmp_path / "inputs" / "slash" / "N_1_0"
+        space_class_job = tmp_path / "inputs" / "space" / "N_1_0"
+        for job_dir, task_class in (
+            (slash_class_job, "class/a"),
+            (space_class_job, "class a"),
+        ):
+            job_dir.mkdir(parents=True)
+            (job_dir / ".dpeva_job_class.json").write_text(
+                json.dumps({"task_class": task_class}),
+                encoding="utf-8",
+            )
+
+        MockManager.return_value.generate_runner_script.side_effect = [
+            "print('slash')",
+            "print('space')",
+        ]
+        workflow = LabelingWorkflow(config)
+        workflow.job_manager.submit_array = MagicMock(side_effect=["100", "200"])
+
+        workflow._submit_job_dirs([slash_class_job, space_class_job], attempt=0)
+
+        calls = workflow.job_manager.submit_array.call_args_list
+        manifest_dirs = {Path(call.kwargs["manifest_path"]).parent for call in calls}
+        script_dirs = {Path(call.kwargs["script_path"]).parent for call in calls}
+        assert len(manifest_dirs) == 2
+        assert len(script_dirs) == 2
+        assert manifest_dirs == script_dirs
+
+    @patch("dpeva.workflows.labeling.LabelingManager")
+    def test_submit_job_dirs_as_arrays_raises_when_all_submissions_fail(self, MockManager, tmp_path):
+        config = LabelingConfig(
+            work_dir=str(tmp_path),
+            input_data_path=str(tmp_path / "data"),
+            submission={
+                "backend": "slurm",
+                "slurm_array": True,
+            },
+            dft_params={},
+            attempt_params=[],
+            pp_dir="/tmp/pp",
+            orb_dir="/tmp/orb",
+        )
+        job_dir = tmp_path / "inputs" / "N_1_0"
+        job_dir.mkdir(parents=True)
+        MockManager.return_value.generate_runner_script.return_value = "print('default')"
+
+        workflow = LabelingWorkflow(config)
+        workflow.job_manager.submit_array = MagicMock(side_effect=RuntimeError("submit failed"))
+
+        with pytest.raises(RuntimeError, match="Failed to submit any Slurm array jobs"):
+            workflow._submit_job_dirs([job_dir], attempt=0)
+
+    @patch("dpeva.workflows.labeling.LabelingManager")
+    def test_submit_job_dirs_as_arrays_returns_successes_when_some_groups_fail(self, MockManager, tmp_path):
+        config = LabelingConfig(
+            work_dir=str(tmp_path),
+            input_data_path=str(tmp_path / "data"),
+            submission={
+                "backend": "slurm",
+                "slurm_array": True,
+            },
+            dft_params={},
+            attempt_params=[],
+            pp_dir="/tmp/pp",
+            orb_dir="/tmp/orb",
+            labeling_task_classes=[
+                {"name": "normal", "launcher_mode": "abacus"},
+                {
+                    "name": "highmem",
+                    "launcher_mode": "mpi_abacus",
+                    "resource_mode": "multi_gpu_mpi",
+                },
+            ],
+        )
+        normal_job = tmp_path / "inputs" / "normal" / "N_1_0"
+        highmem_job = tmp_path / "inputs" / "highmem" / "N_1_0"
+        for job_dir, task_class in (
+            (normal_job, "normal"),
+            (highmem_job, "highmem"),
+        ):
+            job_dir.mkdir(parents=True)
+            (job_dir / ".dpeva_job_class.json").write_text(
+                json.dumps({"task_class": task_class}),
+                encoding="utf-8",
+            )
+        MockManager.return_value.generate_runner_script.side_effect = [
+            "print('normal')",
+            "print('highmem')",
+        ]
+
+        workflow = LabelingWorkflow(config)
+        workflow.job_manager.submit_array = MagicMock(
+            side_effect=["100", RuntimeError("submit failed")]
+        )
+
+        job_ids = workflow._submit_job_dirs([normal_job, highmem_job], attempt=0)
+
+        assert job_ids == ["100"]
+
+    @patch("dpeva.workflows.labeling.LabelingManager")
+    def test_submit_job_dirs_as_arrays_uses_default_class_for_unclassified_jobs(self, MockManager, tmp_path):
+        config = LabelingConfig(
+            work_dir=str(tmp_path),
+            input_data_path=str(tmp_path / "data"),
+            submission={
+                "backend": "slurm",
+                "slurm_array": True,
+            },
+            dft_params={},
+            attempt_params=[],
+            pp_dir="/tmp/pp",
+            orb_dir="/tmp/orb",
+        )
+        job_dir = tmp_path / "inputs" / "N_1_0"
+        job_dir.mkdir(parents=True)
+        MockManager.return_value.generate_runner_script.return_value = "print('default')"
+
+        workflow = LabelingWorkflow(config)
+        workflow.job_manager.submit_array = MagicMock(return_value="100")
+
+        job_ids = workflow._submit_job_dirs([job_dir], attempt=0)
+
+        assert job_ids == ["100"]
+        call = workflow.job_manager.submit_array.call_args
+        assert call.kwargs["job_config"].job_name == "fp-default-att0"
+        assert Path(call.kwargs["manifest_path"]).parent.name.startswith("default-")
+
+    @patch("dpeva.workflows.labeling.LabelingManager")
+    def test_submit_job_dirs_uses_individual_slurm_jobs_when_array_disabled(self, MockManager, tmp_path):
+        config = LabelingConfig(
+            work_dir=str(tmp_path),
+            input_data_path=str(tmp_path / "data"),
+            submission={
+                "backend": "slurm",
+                "slurm_array": False,
+            },
+            dft_params={},
+            attempt_params=[],
+            pp_dir="/tmp/pp",
+            orb_dir="/tmp/orb",
+        )
+        job_dir = tmp_path / "inputs" / "N_1_0"
+        job_dir.mkdir(parents=True)
+        MockManager.return_value.generate_runner_script.return_value = "print('single')"
+
+        workflow = LabelingWorkflow(config)
+        workflow.job_manager.submit_python_script = MagicMock(return_value="100")
+        workflow.job_manager.submit_array = MagicMock()
+
+        job_ids = workflow._submit_job_dirs([job_dir], attempt=0)
+
+        assert job_ids == ["100"]
+        workflow.job_manager.submit_python_script.assert_called_once()
+        workflow.job_manager.submit_array.assert_not_called()
