@@ -2,7 +2,7 @@
 title: Technical Reports
 status: active
 audience: Developers
-last-updated: 2026-07-04
+last-updated: 2026-07-07
 owner: Docs Owner
 ---
 
@@ -10,7 +10,7 @@ owner: Docs Owner
 
 - Status: active
 - Audience: All
-- Last-Updated: 2026-07-04
+- Last-Updated: 2026-07-07
 
 本文档目录用于存放“项目级、可共享、可追溯”的技术结论，不承载执行过程草稿。
 
@@ -40,7 +40,7 @@ owner: Docs Owner
 
 ## 4. Active Summary Reports
 
-- 当前无 active summary report。v0.8.0 release 总结已归档至 [docs/archive/v0.8.0/reports/2026-06-17-DP-EVA-v0.8.0-Release.md](../archive/v0.8.0/reports/2026-06-17-DP-EVA-v0.8.0-Release.md)。
+- 当前无 active summary report。最新 v0.8.1 release notes 已归档至 [docs/archive/v0.8.1/reports/2026-07-07-DP-EVA-v0.8.1-Release.md](../archive/v0.8.1/reports/2026-07-07-DP-EVA-v0.8.1-Release.md)。
 
 ## 5. Active Focused Reports
 
@@ -54,10 +54,14 @@ owner: Docs Owner
 
 ## 7. Recently Archived
 
+- [docs/archive/v0.8.1/reports/2026-07-07-DP-EVA-v0.8.1-Release.md](../archive/v0.8.1/reports/2026-07-07-DP-EVA-v0.8.1-Release.md)
+  - Type: Archived Summary Report
+  - Status: archived
+  - Reason: v0.8.1 release notes 已随 Slurm-native labeling、FP11 SAI-1344 执行记录和版本发布闭环归档
 - [docs/archive/v0.8.1/reports/README.md](../archive/v0.8.1/reports/README.md)
   - Type: Archived Report Index
   - Status: archived
-  - Reason: v0.8.1 本轮无 active report 正文迁入，版本归档由 plans/specs 索引承接
+  - Reason: v0.8.1 归档报告索引
 - [docs/archive/v0.8.0/reports/2026-06-27-HDF5-Last-Layer-Collect-Routing.md](../archive/v0.8.0/reports/2026-06-27-HDF5-Last-Layer-Collect-Routing.md)
   - Type: Archived Focused Report
   - Status: archived

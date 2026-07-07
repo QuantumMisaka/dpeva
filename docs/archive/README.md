@@ -2,7 +2,7 @@
 title: Archived Document
 status: archived
 audience: Historians
-last-updated: 2026-06-11
+last-updated: 2026-07-07
 ---
 
 # Archive（归档文档）
@@ -16,5 +16,5 @@ last-updated: 2026-06-11
 - 归档内容不作为现行规范来源；现行规则以 `docs/policy/`、`docs/reference/`、`docs/guides/` 为准。
 - 归档内容按版本目录组织，例如 `docs/archive/v0.7.1/reports/`、`docs/archive/v0.7.1/plans/`。
 - 历史规格位于各版本目录下的 `specs/`（若该版本存在），当前执行规格统一在 `docs/plans/` 或 `.trae/specs/` 维护。
-- 最新版本归档：`docs/archive/v0.8.0/`。
-- 当前保留的历史版本包括：`docs/archive/v0.6.4/`、`docs/archive/v0.6.5/`、`docs/archive/v0.6.6/`、`docs/archive/v0.6.8/`、`docs/archive/v0.6.9/`、`docs/archive/v0.7.1/`、`docs/archive/v0.8.0/`。
+- 最新版本归档：`docs/archive/v0.8.1/`。
+- 当前保留的历史版本包括：`docs/archive/v0.6.4/`、`docs/archive/v0.6.5/`、`docs/archive/v0.6.6/`、`docs/archive/v0.6.8/`、`docs/archive/v0.6.9/`、`docs/archive/v0.7.1/`、`docs/archive/v0.8.0/`、`docs/archive/v0.8.1/`。
