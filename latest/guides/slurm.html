@@ -37,7 +37,7 @@
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="../_static/documentation_options.js?v=d2c02a7d"></script>
+    <script src="../_static/documentation_options.js?v=7b805e1b"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -369,6 +369,7 @@ document.write(`
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#submission">3. Submission 配置结构</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">3.1 最小 Slurm 配置</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">3.2 常用扩展字段（按集群策略补齐）</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#labeling-slurm-array">3.3 Labeling Slurm Array</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">4. 工作流脚本与日志约定</a><ul class="nav section-nav flex-column">
@@ -406,7 +407,7 @@ document.write(`
 <li><p>Status: active</p></li>
 <li><p>Audience: Users / Developers / Infra</p></li>
 <li><p>Applies-To: <code class="docutils literal notranslate"><span class="pre">submission.backend=&quot;slurm&quot;</span></code></p></li>
-<li><p>Last-Updated: 2026-06-10</p></li>
+<li><p>Last-Updated: 2026-07-05</p></li>
 </ul>
 <section id="id1">
 <h2>1. 目的与范围<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
@@ -454,6 +455,25 @@ document.write(`
 <li><p><code class="docutils literal notranslate"><span class="pre">account</span></code>：计费账号</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">gpus_per_node</span></code>：GPU 资源（Feature/Train/Infer 常用）</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">cpus_per_task</span></code>：CPU 资源（Collect 常用）</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">slurm_array</span></code>：支持 array 的 workflow 可设为 <code class="docutils literal notranslate"><span class="pre">true</span></code>，将同质任务按 Slurm array 提交</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">slurm_array_task_limit</span></code>：array 并发上限，渲染为 <code class="docutils literal notranslate"><span class="pre">--array=0-N%limit</span></code></p></li>
+</ul>
+</section>
+<section id="labeling-slurm-array">
+<h3>3.3 Labeling Slurm Array<a class="headerlink" href="#labeling-slurm-array" title="Link to this heading">#</a></h3>
+<p>Labeling 启用 <code class="docutils literal notranslate"><span class="pre">submission.slurm_array=true</span></code> 后，DP-EVA 会按 <code class="docutils literal notranslate"><span class="pre">labeling_task_classes</span></code> 分组提交 array：</p>
+<ul class="simple">
+<li><p>每个 class 写入 <code class="docutils literal notranslate"><span class="pre">&lt;work_dir&gt;/array_jobs/&lt;class-slug&gt;_attempt_&lt;n&gt;/tasks.json</span></code> 与 <code class="docutils literal notranslate"><span class="pre">submit_array.slurm</span></code>。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">#SBATCH</span> <span class="pre">-J</span></code> 使用规范化后的 class/attempt 名称，例如 <code class="docutils literal notranslate"><span class="pre">fp-normal-att0</span></code>。</p></li>
+<li><p>array worker 通过当前 Python 解释器直接执行 <code class="docutils literal notranslate"><span class="pre">dpeva/submission/array.py</span></code>，避免 <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span></code> 的包初始化 warning。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">slurm_array_task_limit</span></code> 只控制并发，不改变 array 元素总数；若集群对 array 元素总提交数有限制，应调整 QOS、拆分数据或降低批量规模。</p></li>
+</ul>
+<p>SAI ABACUS 注意事项：</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">source</span> <span class="pre">/etc/profile</span></code> 必须出现在 <code class="docutils literal notranslate"><span class="pre">#SBATCH</span></code> 指令之后、<code class="docutils literal notranslate"><span class="pre">module</span> <span class="pre">load</span></code> 之前。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">launcher_mode=&quot;mpi_abacus&quot;</span></code> 会在 <code class="docutils literal notranslate"><span class="pre">source</span> <span class="pre">/etc/profile</span></code> 后自动插入 <code class="docutils literal notranslate"><span class="pre">source</span> <span class="pre">/opt/sai_config/mps_mapping.d/${SLURM_JOB_PARTITION}.bash</span></code>。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">launcher_mode=&quot;abacus&quot;</span></code> 不应加载 SAI rank-map，也不应引用 <code class="docutils literal notranslate"><span class="pre">MAP_OPT</span></code>。</p></li>
+<li><p>SAI-1344 <code class="docutils literal notranslate"><span class="pre">16V100</span></code> 上，<code class="docutils literal notranslate"><span class="pre">flood-gpu</span></code>/<code class="docutils literal notranslate"><span class="pre">rush-gpu</span></code> 的 1GPU 请求实测被 <code class="docutils literal notranslate"><span class="pre">QOSMinGRES</span></code> 拒绝；FP11 批量 fallback 使用 4GPU MPI，并优先选择能接受大 array 的 <code class="docutils literal notranslate"><span class="pre">flood-gpu</span></code>。</p></li>
 </ul>
 </section>
 </section>
@@ -565,6 +585,7 @@ dpeva<span class="w"> </span>collect<span class="w"> </span>configs/collect.json
 <section id="id16">
 <h2>7. 变更记录<a class="headerlink" href="#id16" title="Link to this heading">#</a></h2>
 <ul class="simple">
+<li><p>2026-07-05：补充 Labeling Slurm array 行为、array worker 约定与 SAI-1344 FP11 QOS 实测注意事项。</p></li>
 <li><p>2026-03-11：更新配置字段入口为 API Reference，并同步 infer 日志文件名为 <code class="docutils literal notranslate"><span class="pre">test_job.out</span></code>。</p></li>
 <li><p>2026-03-03：更新完成标记语义，明确“部分失败不输出完成标记”。</p></li>
 <li><p>2026-02-18：补齐 Slurm 配置结构、日志命名与完成标记监控建议，并纳入常见故障排查路径。</p></li>
@@ -622,6 +643,7 @@ dpeva<span class="w"> </span>collect<span class="w"> </span>configs/collect.json
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#submission">3. Submission 配置结构</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">3.1 最小 Slurm 配置</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">3.2 常用扩展字段（按集群策略补齐）</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#labeling-slurm-array">3.3 Labeling Slurm Array</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">4. 工作流脚本与日志约定</a><ul class="nav section-nav flex-column">

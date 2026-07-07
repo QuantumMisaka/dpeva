@@ -37,7 +37,7 @@
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="../_static/documentation_options.js?v=d2c02a7d"></script>
+    <script src="../_static/documentation_options.js?v=7b805e1b"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -906,7 +906,7 @@ document.write(`
 <ul class="simple">
 <li><p>Status: active</p></li>
 <li><p>Audience: Developers</p></li>
-<li><p>Last-Updated: 2026-06-10</p></li>
+<li><p>Last-Updated: 2026-07-07</p></li>
 <li><p>Related:</p>
 <ul>
 <li><p>配置字段字典：<code class="docutils literal notranslate"><span class="pre">API</span> <span class="pre">Reference</span></code>（由 <code class="docutils literal notranslate"><span class="pre">src/dpeva/config.py</span></code> 自动生成）</p></li>
@@ -916,8 +916,8 @@ document.write(`
 </li>
 </ul>
 <ul class="simple">
-<li><p><strong>版本</strong>: 0.8.0</p></li>
-<li><p><strong>生成日期</strong>: 2026-06-16</p></li>
+<li><p><strong>版本</strong>: 0.8.1</p></li>
+<li><p><strong>生成日期</strong>: 2026-07-07</p></li>
 <li><p><strong>作者</strong>: Quantum Misaka with Trae SOLO</p></li>
 </ul>
 <hr class="docutils" />
@@ -1638,6 +1638,17 @@ A: 这是预期行为。在联合模式下，<code class="docutils literal notra
 <section id="current-era-v0-8-x">
 <h4><strong>Current Era (v0.8.x)</strong><a class="headerlink" href="#current-era-v0-8-x" title="Link to this heading">#</a></h4>
 <ul class="simple">
+<li><p><strong>v0.8.1</strong> (2026-07-07):</p>
+<ul>
+<li><p><strong>[发布]</strong> 版本升级至 <code class="docutils literal notranslate"><span class="pre">0.8.1</span></code>，同步 <code class="docutils literal notranslate"><span class="pre">__init__</span></code>、README 版本徽章、Sphinx <code class="docutils literal notranslate"><span class="pre">conf.py</span></code> 与开发文档中的版本标识，并以 <code class="docutils literal notranslate"><span class="pre">v0.8.1</span></code> tag 固化发布点。</p></li>
+<li><p><strong>[Labeling]</strong> 落地 Slurm-native array backend：新增 manifest-backed array worker、<code class="docutils literal notranslate"><span class="pre">JobConfig.array</span></code> 渲染、array throttle、共享 Slurm job name 规范化与 <code class="docutils literal notranslate"><span class="pre">JobManager.submit_array</span></code>。</p></li>
+<li><p><strong>[Labeling]</strong> 加固 SAI/Slurm 监控：当 <code class="docutils literal notranslate"><span class="pre">squeue</span></code> 暂时返回空结果时，使用 <code class="docutils literal notranslate"><span class="pre">sacct</span> <span class="pre">-X</span></code> 对 active state 做二次确认，避免大型 array job 被误判完成。</p></li>
+<li><p><strong>[Labeling]</strong> 收口 task-class launcher 语义：普通 <code class="docutils literal notranslate"><span class="pre">abacus</span></code> task 不读取 <code class="docutils literal notranslate"><span class="pre">MAP_OPT</span></code>，仅 <code class="docutils literal notranslate"><span class="pre">launcher_mode=&quot;mpi_abacus&quot;</span></code> task class 注入 SAI rank-map 并使用 MPI map option。</p></li>
+<li><p><strong>[FP11 / SAI-1344]</strong> 增加 FP11 SAI-1344 配置生成、后端报告、恢复和收尾脚本，并归档完整生产运行记录；最终记录覆盖 recovery、extract/postprocess、stats 与 backend report。</p></li>
+<li><p><strong>[文档治理]</strong> 归档 v0.8.1 docs audit / operator skill、dataset audit、Slurm array backend 与 FP11 SAI-1344 执行记录，同步更新版本归档索引与发布报告。</p></li>
+<li><p><strong>[测试]</strong> 补充 Slurm array、job name、labeling workflow sacct fallback、FP11 SAI-1344 helper scripts 等单元测试，发布前通过相关单测、Ruff 与文档治理门禁。</p></li>
+</ul>
+</li>
 <li><p><strong>v0.8.0</strong> (2026-06-10):</p>
 <ul>
 <li><p><strong>[版本]</strong> 开启 v0.8.0 开发周期，移除 Labeling 对 GitLab <code class="docutils literal notranslate"><span class="pre">ase-abacus</span></code> fork 的运行时绑定，并以可选 backend 方式接入 <code class="docutils literal notranslate"><span class="pre">atst-tools</span></code> exploration 能力。</p></li>

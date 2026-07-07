@@ -37,7 +37,7 @@
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="../../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="../../_static/documentation_options.js?v=d2c02a7d"></script>
+    <script src="../../_static/documentation_options.js?v=7b805e1b"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -377,6 +377,8 @@ document.write(`
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.SubmissionConfig"><code class="docutils literal notranslate"><span class="pre">SubmissionConfig</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.SubmissionConfig.backend"><code class="docutils literal notranslate"><span class="pre">SubmissionConfig.backend</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.SubmissionConfig.env_setup"><code class="docutils literal notranslate"><span class="pre">SubmissionConfig.env_setup</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.SubmissionConfig.slurm_array"><code class="docutils literal notranslate"><span class="pre">SubmissionConfig.slurm_array</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.SubmissionConfig.slurm_array_task_limit"><code class="docutils literal notranslate"><span class="pre">SubmissionConfig.slurm_array_task_limit</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.SubmissionConfig.slurm_config"><code class="docutils literal notranslate"><span class="pre">SubmissionConfig.slurm_config</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.SubmissionConfig.validate_env_setup"><code class="docutils literal notranslate"><span class="pre">SubmissionConfig.validate_env_setup</span></code></a></li>
 </ul>
@@ -460,6 +462,18 @@ e.g. {'backend': 'slurm'} -&gt; {'submission': {'backend': 'slurm'}}</p>
 </dd></dl>
 
 <dl class="py attribute pydantic_field">
+<dt class="sig sig-object py" id="dpeva.config.SubmissionConfig.slurm_array">
+<em class="property"><span class="pre">field</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">slurm_array</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#dpeva.config.SubmissionConfig.slurm_array" title="Link to this definition">#</a></dt>
+<dd><p>When true, workflows that support homogeneous Slurm arrays may submit arrays instead of one job per task.</p>
+</dd></dl>
+
+<dl class="py attribute pydantic_field">
+<dt class="sig sig-object py" id="dpeva.config.SubmissionConfig.slurm_array_task_limit">
+<em class="property"><span class="pre">field</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">slurm_array_task_limit</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#dpeva.config.SubmissionConfig.slurm_array_task_limit" title="Link to this definition">#</a></dt>
+<dd><p>Optional Slurm array throttle, rendered as --array=0-N%limit.</p>
+</dd></dl>
+
+<dl class="py attribute pydantic_field">
 <dt class="sig sig-object py" id="dpeva.config.SubmissionConfig.slurm_config">
 <em class="property"><span class="pre">field</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">slurm_config</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></em><em class="property"> <span class="pre">[Optional]</span></em><a class="headerlink" href="#dpeva.config.SubmissionConfig.slurm_config" title="Link to this definition">#</a></dt>
 <dd><p>Slurm specific parameters (partition, nodes, etc).</p>
@@ -533,6 +547,8 @@ e.g. {'backend': 'slurm'} -&gt; {'submission': {'backend': 'slurm'}}</p>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.SubmissionConfig"><code class="docutils literal notranslate"><span class="pre">SubmissionConfig</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.SubmissionConfig.backend"><code class="docutils literal notranslate"><span class="pre">SubmissionConfig.backend</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.SubmissionConfig.env_setup"><code class="docutils literal notranslate"><span class="pre">SubmissionConfig.env_setup</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.SubmissionConfig.slurm_array"><code class="docutils literal notranslate"><span class="pre">SubmissionConfig.slurm_array</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.SubmissionConfig.slurm_array_task_limit"><code class="docutils literal notranslate"><span class="pre">SubmissionConfig.slurm_array_task_limit</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.SubmissionConfig.slurm_config"><code class="docutils literal notranslate"><span class="pre">SubmissionConfig.slurm_config</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.SubmissionConfig.validate_env_setup"><code class="docutils literal notranslate"><span class="pre">SubmissionConfig.validate_env_setup</span></code></a></li>
 </ul>

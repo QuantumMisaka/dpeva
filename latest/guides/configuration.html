@@ -37,7 +37,7 @@
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="../_static/documentation_options.js?v=d2c02a7d"></script>
+    <script src="../_static/documentation_options.js?v=7b805e1b"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -463,6 +463,7 @@ document.write(`
 <span class="w">    </span><span class="nt">&quot;env_setup&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
 <span class="w">      </span><span class="s2">&quot;source /path/to/env.sh&quot;</span>
 <span class="w">    </span><span class="p">],</span>
+<span class="w">    </span><span class="nt">&quot;slurm_array&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
 <span class="w">    </span><span class="nt">&quot;slurm_config&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
 <span class="w">      </span><span class="nt">&quot;nodes&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
 <span class="w">      </span><span class="nt">&quot;ntasks&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
@@ -473,6 +474,12 @@ document.write(`
 </pre></div>
 </div>
 <p>常用扩展字段：<code class="docutils literal notranslate"><span class="pre">partition/qos/gpus_per_node/cpus_per_task/account</span></code>。</p>
+<p>支持 Slurm array 的 workflow 可设置：</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">slurm_array=true</span></code>：将同质任务合并为 Slurm array，而不是逐个 <code class="docutils literal notranslate"><span class="pre">sbatch</span></code>。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">slurm_array_task_limit</span></code>：可选 array 并发上限，渲染为 <code class="docutils literal notranslate"><span class="pre">--array=0-N%limit</span></code>；必须为正整数。</p></li>
+</ul>
+<p>Labeling 启用 <code class="docutils literal notranslate"><span class="pre">labeling_task_classes</span></code> 时，array 会按 task class 分组提交，每个 class 一个 array job。class 名会经过 Slurm job name 规范化，用于 <code class="docutils literal notranslate"><span class="pre">#SBATCH</span> <span class="pre">-J</span></code> 与 <code class="docutils literal notranslate"><span class="pre">&lt;work_dir&gt;/array_jobs/&lt;class&gt;_&lt;attempt&gt;/</span></code>。</p>
 </section>
 </section>
 <section id="workflow">
@@ -645,6 +652,8 @@ document.write(`
 <span class="w">  </span><span class="nt">&quot;submission&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="nt">&quot;backend&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;slurm&quot;</span><span class="p">,</span>
 <span class="w">    </span><span class="nt">&quot;env_setup&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;module load abacus/LTSv3.10.1-sm70-auto&quot;</span><span class="p">],</span>
+<span class="w">    </span><span class="nt">&quot;slurm_array&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;slurm_array_task_limit&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">64</span><span class="p">,</span>
 <span class="w">    </span><span class="nt">&quot;slurm_config&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
 <span class="w">      </span><span class="nt">&quot;partition&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;4V100&quot;</span><span class="p">,</span>
 <span class="w">      </span><span class="nt">&quot;qos&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;flood-1o2gpu&quot;</span><span class="p">,</span>
@@ -685,6 +694,7 @@ document.write(`
 <li><p><code class="docutils literal notranslate"><span class="pre">launcher_mode=&quot;abacus&quot;</span></code>：runner 直接执行 <code class="docutils literal notranslate"><span class="pre">abacus</span></code>，并强制该 class 的 Slurm resources 为 <code class="docutils literal notranslate"><span class="pre">ntasks=1,gpus_per_node=1</span></code>；不会 source SAI rank-map。</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">launcher_mode=&quot;mpi_abacus&quot;</span></code>：runner 执行 <code class="docutils literal notranslate"><span class="pre">mpirun</span> <span class="pre">-np</span> <span class="pre">$SLURM_NTASKS</span> <span class="pre">--map-by</span> <span class="pre">$MAP_OPT</span> <span class="pre">-mca</span> <span class="pre">coll_hcoll_enable</span> <span class="pre">0</span> <span class="pre">abacus</span></code>，并自动补充 SAI rank-map source。</p></li>
 <li><p>没有配置 <code class="docutils literal notranslate"><span class="pre">labeling_task_classes</span></code> 时，DP-EVA 保持旧的单一 <code class="docutils literal notranslate"><span class="pre">submission</span></code> 行为，兼容既有配置。</p></li>
+<li><p>SAI-1344 <code class="docutils literal notranslate"><span class="pre">16V100</span></code> 实测不接受 <code class="docutils literal notranslate"><span class="pre">flood-gpu</span></code>/<code class="docutils literal notranslate"><span class="pre">rush-gpu</span></code> 的 1GPU 请求（<code class="docutils literal notranslate"><span class="pre">QOSMinGRES</span></code>）。FP11 类似批量任务应使用 4GPU MPI fallback；若 <code class="docutils literal notranslate"><span class="pre">rush-gpu</span></code> array 命中 <code class="docutils literal notranslate"><span class="pre">QOSMaxSubmitJobPerUserLimit</span></code>，应改用 <code class="docutils literal notranslate"><span class="pre">flood-gpu</span></code> 完成批量提交。</p></li>
 </ul>
 </section>
 <section id="exploration">
@@ -713,6 +723,7 @@ document.write(`
 <section id="id7">
 <h2>7. 变更记录<a class="headerlink" href="#id7" title="Link to this heading">#</a></h2>
 <ul class="simple">
+<li><p>2026-07-05：补充 <code class="docutils literal notranslate"><span class="pre">slurm_array</span></code> / <code class="docutils literal notranslate"><span class="pre">slurm_array_task_limit</span></code> 与 SAI-1344 FP11 4GPU MPI fallback 实测建议。</p></li>
 <li><p>2026-07-04：补充 Labeling <code class="docutils literal notranslate"><span class="pre">labeling_task_classes</span></code>，明确 SAI ABACUS 单卡与 MPI 多卡 launcher/resource mode。</p></li>
 <li><p>2026-06-12：补充 Collect LLPR / energy DPOSE ensemble 配置字段、状态复用和 strict parity 约束。</p></li>
 <li><p>2026-06-11：补充 Exploration manifest、输入结构快照与结果结构校验契约。</p></li>

@@ -36,7 +36,7 @@
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="../../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="../../_static/documentation_options.js?v=d2c02a7d"></script>
+    <script src="../../_static/documentation_options.js?v=7b805e1b"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -822,6 +822,15 @@ document.write(`
         <span class="n">default</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> 
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;List of shell commands to execute before running the task (e.g., `module load cuda`).&quot;</span>
     <span class="p">)</span>
+    <span class="n">slurm_array</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="kc">False</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;When true, workflows that support homogeneous Slurm arrays may submit arrays instead of one job per task.&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">slurm_array_task_limit</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="kc">None</span><span class="p">,</span>
+        <span class="n">gt</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Optional Slurm array throttle, rendered as --array=0-N</span><span class="si">%li</span><span class="s2">mit.&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
 
 <div class="viewcode-block" id="SubmissionConfig.validate_env_setup">
 <a class="viewcode-back" href="../../api/config/submission.html#dpeva.config.SubmissionConfig.validate_env_setup">[文档]</a>
@@ -897,14 +906,18 @@ document.write(`
                 <span class="n">backend</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;backend&quot;</span><span class="p">,</span> <span class="n">DEFAULT_BACKEND</span><span class="p">)</span>
                 <span class="n">slurm_config</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;slurm_config&quot;</span><span class="p">,</span> <span class="p">{})</span>
                 <span class="n">env_setup</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;env_setup&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
-                
-                <span class="c1"># Only create if there&#39;s something non-default or if backend is present</span>
-                <span class="c1"># But to be safe, we always populate it</span>
-                <span class="n">data</span><span class="p">[</span><span class="s2">&quot;submission&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="n">submission_config</span> <span class="o">=</span> <span class="p">{</span>
                     <span class="s2">&quot;backend&quot;</span><span class="p">:</span> <span class="n">backend</span><span class="p">,</span>
                     <span class="s2">&quot;slurm_config&quot;</span><span class="p">:</span> <span class="n">slurm_config</span><span class="p">,</span>
                     <span class="s2">&quot;env_setup&quot;</span><span class="p">:</span> <span class="n">env_setup</span>
                 <span class="p">}</span>
+                <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;slurm_array&quot;</span><span class="p">,</span> <span class="s2">&quot;slurm_array_task_limit&quot;</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+                        <span class="n">submission_config</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+
+                <span class="c1"># Only create if there&#39;s something non-default or if backend is present</span>
+                <span class="c1"># But to be safe, we always populate it</span>
+                <span class="n">data</span><span class="p">[</span><span class="s2">&quot;submission&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">submission_config</span>
         <span class="k">return</span> <span class="n">data</span></div>
 </div>
 
@@ -1054,11 +1067,15 @@ document.write(`
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">extract_flat_submission_config</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="s2">&quot;submission&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
-            <span class="n">data</span><span class="p">[</span><span class="s2">&quot;submission&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">submission_config</span> <span class="o">=</span> <span class="p">{</span>
                 <span class="s2">&quot;backend&quot;</span><span class="p">:</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;backend&quot;</span><span class="p">,</span> <span class="n">DEFAULT_BACKEND</span><span class="p">),</span>
                 <span class="s2">&quot;slurm_config&quot;</span><span class="p">:</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;slurm_config&quot;</span><span class="p">,</span> <span class="p">{}),</span>
                 <span class="s2">&quot;env_setup&quot;</span><span class="p">:</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;env_setup&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
             <span class="p">}</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;slurm_array&quot;</span><span class="p">,</span> <span class="s2">&quot;slurm_array_task_limit&quot;</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+                    <span class="n">submission_config</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+            <span class="n">data</span><span class="p">[</span><span class="s2">&quot;submission&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">submission_config</span>
         <span class="k">return</span> <span class="n">data</span></div>
 
 

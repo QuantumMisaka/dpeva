@@ -2,7 +2,7 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-06-16
+last-updated: 2026-07-07
 owner: Docs Owner
 ---
 
@@ -10,14 +10,14 @@ owner: Docs Owner
 
 - Status: active
 - Audience: Developers
-- Last-Updated: 2026-06-10
+- Last-Updated: 2026-07-07
 - Related:
   - 配置字段字典：`API Reference`（由 `src/dpeva/config.py` 自动生成）
   - 校验规则补充：`docs/reference/validation.md`
   - 上游软件与职责：`docs/reference/upstream-software.md`
 
-* **版本**: 0.8.0
-* **生成日期**: 2026-06-16
+* **版本**: 0.8.1
+* **生成日期**: 2026-07-07
 * **作者**: Quantum Misaka with Trae SOLO
 
 ---
@@ -594,6 +594,15 @@ DPEVA_TAG: WORKFLOW_FINISHED
 ### 6.2 版本历史
 
 #### **Current Era (v0.8.x)**
+
+*   **v0.8.1** (2026-07-07):
+    *   **[发布]** 版本升级至 `0.8.1`，同步 `__init__`、README 版本徽章、Sphinx `conf.py` 与开发文档中的版本标识，并以 `v0.8.1` tag 固化发布点。
+    *   **[Labeling]** 落地 Slurm-native array backend：新增 manifest-backed array worker、`JobConfig.array` 渲染、array throttle、共享 Slurm job name 规范化与 `JobManager.submit_array`。
+    *   **[Labeling]** 加固 SAI/Slurm 监控：当 `squeue` 暂时返回空结果时，使用 `sacct -X` 对 active state 做二次确认，避免大型 array job 被误判完成。
+    *   **[Labeling]** 收口 task-class launcher 语义：普通 `abacus` task 不读取 `MAP_OPT`，仅 `launcher_mode="mpi_abacus"` task class 注入 SAI rank-map 并使用 MPI map option。
+    *   **[FP11 / SAI-1344]** 增加 FP11 SAI-1344 配置生成、后端报告、恢复和收尾脚本，并归档完整生产运行记录；最终记录覆盖 recovery、extract/postprocess、stats 与 backend report。
+    *   **[文档治理]** 归档 v0.8.1 docs audit / operator skill、dataset audit、Slurm array backend 与 FP11 SAI-1344 执行记录，同步更新版本归档索引与发布报告。
+    *   **[测试]** 补充 Slurm array、job name、labeling workflow sacct fallback、FP11 SAI-1344 helper scripts 等单元测试，发布前通过相关单测、Ruff 与文档治理门禁。
 
 *   **v0.8.0** (2026-06-10):
     *   **[版本]** 开启 v0.8.0 开发周期，移除 Labeling 对 GitLab `ase-abacus` fork 的运行时绑定，并以可选 backend 方式接入 `atst-tools` exploration 能力。
