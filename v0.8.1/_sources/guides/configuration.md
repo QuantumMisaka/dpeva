@@ -1,0 +1,334 @@
+---
+title: Document
+status: active
+audience: Developers
+last-updated: 2026-07-04
+owner: Docs Owner
+---
+
+# 配置编写指南（Configuration）
+
+- Status: active
+- Audience: Users / Developers
+- Last-Updated: 2026-07-04
+
+## 1. 目的与范围
+
+本页说明“如何写配置、如何组织路径、如何最小化配置”。全量字段字典与校验规则请以 Reference 为准：
+
+- `API Reference`（Sphinx 生成的配置字段文档）
+- `../reference/validation.md`
+
+## 2. 相关方
+
+- 使用者：编写配置并运行工作流
+- 开发者：维护配置模型、路径解析与默认值
+- 平台维护：提供 Slurm 队列/环境初始化建议
+
+## 3. 路径解析规则（强烈建议使用相对路径）
+
+### 3.1 规则
+
+- 配置文件中推荐写相对路径，便于迁移与复现。
+- CLI 会把相对路径按“配置文件所在目录”解析为绝对路径。
+
+参考实现：`src/dpeva/utils/config.py` 的 `resolve_config_paths`。
+
+### 3.2 常见路径字段
+
+- `work_dir`：Train/Infer/Feature/Analysis 常用的工作目录
+- `project`：Collect 常用的项目目录
+- `data_path`：Feature/Infer 常用输入数据目录
+- `savedir`：Feature 描述符输出目录
+- `root_savedir`：Collect 输出目录
+
+## 4. Submission 配置（Local / Slurm）
+
+### 4.1 Local 最小配置
+
+```json
+{
+  "submission": {
+    "backend": "local"
+  }
+}
+```
+
+### 4.2 Slurm 最小配置
+
+```json
+{
+  "submission": {
+    "backend": "slurm",
+    "env_setup": [
+      "source /path/to/env.sh"
+    ],
+    "slurm_array": false,
+    "slurm_config": {
+      "nodes": 1,
+      "ntasks": 1,
+      "walltime": "00:30:00"
+    }
+  }
+}
+```
+
+常用扩展字段：`partition/qos/gpus_per_node/cpus_per_task/account`。
+
+支持 Slurm array 的 workflow 可设置：
+
+- `slurm_array=true`：将同质任务合并为 Slurm array，而不是逐个 `sbatch`。
+- `slurm_array_task_limit`：可选 array 并发上限，渲染为 `--array=0-N%limit`；必须为正整数。
+
+Labeling 启用 `labeling_task_classes` 时，array 会按 task class 分组提交，每个 class 一个 array job。class 名会经过 Slurm job name 规范化，用于 `#SBATCH -J` 与 `<work_dir>/array_jobs/<class>_<attempt>/`。
+
+## 5. 各 Workflow 最小配置示例
+
+以下示例用于“快速跑通”，完整字段见 Reference。
+
+### 5.1 Feature
+
+```json
+{
+  "work_dir": "./",
+  "data_path": "./other_dpdata_all",
+  "model_path": "./DPA-3.1-3M.pt",
+  "savedir": "./desc_pool",
+  "mode": "cli",
+  "submission": { "backend": "slurm" }
+}
+```
+
+DeepMD PyTorch 模型可使用 `dp embed` 导出 HDF5 embedding。该路线会在 `savedir/embedding.hdf5` 中保留 `descriptor`、`atomic_feature`、`structural_feature` 和 `atom_types`；HDF5 dataset 由 DeepMD 使用 gzip + shuffle 压缩。`feature_kind="descriptor"` 读取 `descriptor`，`feature_kind="fitting_last_layer"` 对应 `atomic_feature`。
+
+```json
+{
+  "work_dir": "./",
+  "data_path": "./other_dpdata_all",
+  "model_path": "./DPA4-Plus-OMat24-16M.pt",
+  "savedir": "./desc_pool_embed",
+  "model_head": "OC22",
+  "mode": "cli",
+  "feature_exporter": "embed",
+  "feature_kind": "fitting_last_layer",
+  "embedding_dtype": "fp32",
+  "submission": { "backend": "slurm" }
+}
+```
+
+兼容规则：
+
+- 默认 `feature_exporter="eval_desc"`，仍调用 `dp eval-desc` 并生成旧 `.npy` descriptor。
+- `feature_exporter="embed"` 支持 `feature_kind="descriptor"` 和 `feature_kind="fitting_last_layer"`。
+- Collect 的 `desc_dir`、`training_desc_dir`、LLPR feature 目录既可以指向旧 `.npy` 目录，也可以指向 `embedding.hdf5` 文件或包含该文件的目录。
+- Collect 默认把 `desc_dir` 与 `training_desc_dir` 当作 descriptor 读取；若这些目录来自 `feature_kind="fitting_last_layer"` 的 HDF5 embed 输出，需设置 `desc_feature_kind="fitting_last_layer"`，此时读取 HDF5 `atomic_feature`。
+
+### 5.2 Train
+
+```json
+{
+  "work_dir": "./",
+  "input_json_path": "input.json",
+  "training_data_path": "./sampled_dpdata",
+  "base_model_path": "DPA-3.1-3M.pt",
+  "num_models": 3,
+  "training_mode": "init",
+  "submission": { "backend": "slurm" }
+}
+```
+
+### 5.3 Infer
+
+```json
+{
+  "work_dir": "./",
+  "data_path": "./other_dpdata_all",
+  "task_name": "test_val",
+  "results_prefix": "results",
+  "auto_analysis": false,
+  "submission": { "backend": "slurm" }
+}
+```
+
+### 5.4 Collect
+
+```json
+{
+  "project": "./",
+  "desc_dir": "./desc_pool",
+  "desc_feature_kind": "descriptor",
+  "testdata_dir": "./other_dpdata_all",
+  "testing_dir": "test_val",
+  "results_prefix": "results",
+  "root_savedir": "dpeva_uq_result",
+  "sampler_type": "direct",
+  "direct_n_clusters": 20,
+  "direct_k": 1,
+  "submission": { "backend": "slurm" }
+}
+```
+
+当候选描述符来自 `dpeva feature` 的 `feature_exporter="embed"` 且 `feature_kind="fitting_last_layer"` 时，将 `desc_dir` 指向 HDF5 输出目录并设置：
+
+```json
+{
+  "desc_dir": "./desc_pool_embed",
+  "desc_feature_kind": "fitting_last_layer"
+}
+```
+
+LLPR / energy DPOSE 可作为 Collect UQ backend 使用。最小 energy LLPR 只需要训练集与候选集 last-layer feature 目录；请求 shallow ensemble 时必须提供真实最后一层权重和候选 base energy，默认 strict parity 不会用 synthetic weights 冒充 DPOSE：
+
+```json
+{
+  "uq_backend": "llpr",
+  "llpr_train_feature_dir": "./train_last_layer",
+  "llpr_candidate_feature_dir": "./candidate_last_layer",
+  "llpr_feature_normalization": "mean",
+  "llpr_num_ensemble_members": 8,
+  "llpr_last_layer_weights_path": "./last_layer_weights.npy",
+  "llpr_candidate_energy_path": "./candidate_energy.npy",
+  "llpr_collect_score": "energy_ensemble_std_per_atom"
+}
+```
+
+可选字段：
+
+- `llpr_model_path` / `llpr_model_head`：未显式提供 `llpr_last_layer_weights_path` 时，从 PyTorch checkpoint/state_dict 按 feature dimension 解析 energy fitting last linear weight。
+- `llpr_state_path` / `llpr_save_state_path`：复用或保存 LLPR covariance/Cholesky/alpha 状态。
+- `llpr_ensemble_output_path`：自定义 `energy_ensemble.npy` 输出路径；未设置时写到 Collect 输出根目录下。
+- `llpr_collect_score`：支持 `energy_uncertainty_per_atom`（默认）、`energy_ensemble_std_per_atom`、`force_uncertainty_max`。当前 detached feature workflow 只支持 energy；force DPOSE 仍需要可微 DeepMD PyTorch graph adapter。
+
+### 5.5 Analysis
+
+```json
+{
+  "mode": "model_test",
+  "result_dir": "0/test_val",
+  "results_prefix": "results",
+  "data_path": "sampled_dpdata",
+  "output_dir": "analysis",
+  "type_map": ["Fe", "C", "O", "H"],
+  "enable_cohesive_energy": true,
+  "allow_ref_energy_lstsq_completion": false,
+  "enhanced_parity_renderer": "auto"
+}
+```
+
+Analysis 相关建议：
+
+- Inference 若自定义了 `results_prefix`，Analysis 的 `results_prefix` 必须保持一致。
+- `model_test` 模式下若需要 Cohesive Energy，请优先提供 `data_path` 指向与 `result_dir` 对应的原始数据集，以避免仅靠文件名推断组分失败。
+- `enable_cohesive_energy` 控制是否启用 Cohesive Energy 统计与作图。
+- `allow_ref_energy_lstsq_completion` 控制当 `ref_energies` 不完整时是否允许最小二乘补全缺失元素参考能。
+- `enhanced_parity_renderer` 控制 enhanced parity 主图区渲染入口：
+  - `auto`：沿用 quantity-aware 默认策略，energy/cohesive 使用 scatter，force/virial 使用 hexbin。
+  - `scatter`：强制 enhanced parity 主图区全部使用 scatter。
+  - `hexbin`：强制 enhanced parity 主图区全部使用 hexbin。
+- `dataset` 模式若希望输出 Cohesive Energy 图，可将 `"enable_cohesive_energy": true` 并提供合理 `ref_energies`（或开启 `allow_ref_energy_lstsq_completion`）。
+- 新增图谱会额外输出：
+  - `dist_<quantity>_overlay.png`（Pred/True 叠加分布）
+  - `dist_<quantity>_with_error.png`（主分布 + 小幅 error 分布）
+  - `parity_<quantity>_enhanced.png`（含边缘分布的增强 parity）
+- 图中统计信息默认仅显示 `count/mean/std/min/max`，不再显示分位数。
+- `Error Distribution` 与 `parity_*_enhanced.png` 默认不显示统计信息框。
+- 单变量分布图默认不显示 `All Data` 图例；dataset 元素占比/存在性使用多色饼图。
+- quantity-aware 默认下，Force / Virial 的 hexbin enhanced parity 会在右侧信息栏同时展示 Error Density 与 colorbar，colorbar 表示每个 hexbin 中样本数量。
+
+### 5.6 Labeling
+
+```json
+{
+  "input_data_path": "./candidate_dpdata",
+  "work_dir": "./labeling_work",
+  "pp_dir": "./abacus_pp",
+  "orb_dir": "./abacus_orb",
+  "pp_map": { "Fe": "Fe.upf", "C": "C.upf", "O": "O.upf", "H": "H.upf" },
+  "orb_map": { "Fe": "Fe.orb", "C": "C.orb", "O": "O.orb", "H": "H.orb" },
+  "submission": { "backend": "slurm" }
+}
+```
+
+SAI 上的 ABACUS labeling 如需同时处理普通单卡任务与 highmem/multicard 任务，应使用 `labeling_task_classes` 显式拆分 launcher/resource mode：
+
+```json
+{
+  "submission": {
+    "backend": "slurm",
+    "env_setup": ["module load abacus/LTSv3.10.1-sm70-auto"],
+    "slurm_array": true,
+    "slurm_array_task_limit": 64,
+    "slurm_config": {
+      "partition": "4V100",
+      "qos": "flood-1o2gpu",
+      "walltime": "02:00:00"
+    }
+  },
+  "tasks_per_job": 1,
+  "labeling_task_classes": [
+    {
+      "name": "normal",
+      "selector": { "max_atoms": 180 },
+      "tasks_per_job": 1,
+      "launcher_mode": "abacus",
+      "resource_mode": "single_gpu",
+      "slurm_config": {
+        "ntasks": 1,
+        "gpus_per_node": 1,
+        "qos": "flood-1o2gpu"
+      }
+    },
+    {
+      "name": "highmem",
+      "selector": { "min_atoms": 181 },
+      "tasks_per_job": 1,
+      "launcher_mode": "mpi_abacus",
+      "resource_mode": "multi_gpu_mpi",
+      "slurm_config": {
+        "ntasks": 4,
+        "gpus_per_node": 4,
+        "qos": "flood-gpu"
+      }
+    }
+  ]
+}
+```
+
+- `launcher_mode="abacus"`：runner 直接执行 `abacus`，并强制该 class 的 Slurm resources 为 `ntasks=1,gpus_per_node=1`；不会 source SAI rank-map。
+- `launcher_mode="mpi_abacus"`：runner 执行 `mpirun -np $SLURM_NTASKS --map-by $MAP_OPT -mca coll_hcoll_enable 0 abacus`，并自动补充 SAI rank-map source。
+- 没有配置 `labeling_task_classes` 时，DP-EVA 保持旧的单一 `submission` 行为，兼容既有配置。
+- SAI-1344 `16V100` 实测不接受 `flood-gpu`/`rush-gpu` 的 1GPU 请求（`QOSMinGRES`）。FP11 类似批量任务应使用 4GPU MPI fallback；若 `rush-gpu` array 命中 `QOSMaxSubmitJobPerUserLimit`，应改用 `flood-gpu` 完成批量提交。
+
+### 5.7 Exploration
+
+```json
+{
+  "work_dir": "./explore_work",
+  "backend": "atst-tools",
+  "workflow_type": "md",
+  "backend_config_path": "./atst_md.yaml",
+  "result_structure_paths": ["./explore_work/result.extxyz"]
+}
+```
+
+Exploration 是可选能力。使用 `backend: "atst-tools"` 前需安装 `dpeva[explore]`，首版仅支持 `workflow_type` 为 `md` 或 `relax`。`backend_config_path` 保持后端原生格式，DPEVA 不重写 ATST YAML。
+
+运行完成后，DPEVA 会在 `work_dir/dpeva_exploration_result.json` 写入标准 manifest。若配置了 `input_structure_paths`，这些结构会作为可追溯输入快照写入 `work_dir/dpeva_inputs/`；若配置了 `result_structure_paths`，这些路径必须在 backend 成功后存在并可由 ASE 读取。
+
+## 6. 异常处理
+
+- 配置校验失败：对照 `/docs/reference/validation.md` 的跨字段依赖与范围约束
+- 输入路径不存在：检查相对路径是否以 config 所在目录为基准
+- 历史字段不兼容：优先以 `sampler_type + direct_* / step*_*` 的新参数体系为准
+
+## 7. 变更记录
+
+- 2026-07-05：补充 `slurm_array` / `slurm_array_task_limit` 与 SAI-1344 FP11 4GPU MPI fallback 实测建议。
+- 2026-07-04：补充 Labeling `labeling_task_classes`，明确 SAI ABACUS 单卡与 MPI 多卡 launcher/resource mode。
+- 2026-06-12：补充 Collect LLPR / energy DPOSE ensemble 配置字段、状态复用和 strict parity 约束。
+- 2026-06-11：补充 Exploration manifest、输入结构快照与结果结构校验契约。
+- 2026-06-10：新增 Exploration 最小配置示例，明确 `atst-tools` 为可选 backend。
+- 2026-03-30：Analysis 配置新增 `enhanced_parity_renderer`，并补充 quantity-aware parity 渲染策略说明。
+- 2026-03-16：Analysis 最小配置增加 `data_path`、`enable_cohesive_energy`、`allow_ref_energy_lstsq_completion`，并补充 Cohesive Energy 配置建议。
+- 2026-03-11：配置字段权威入口改为 API Reference，并补充 Labeling 最小配置示例。
+- 2026-02-18：补齐路径解析、Submission 结构与最小配置示例。

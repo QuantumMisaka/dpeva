@@ -1,0 +1,872 @@
+
+<!DOCTYPE html>
+
+
+<html lang="zh-CN" data-content_root="../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>SAI 服务器 DeepMD-kit 安装配置指南 &#8212; DP-EVA Documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/sphinx-book-theme.css?v=eba8b062" />
+    <link rel="stylesheet" type="text/css" href="../../_static/autodoc_pydantic.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="../../_static/documentation_options.js?v=7b805e1b"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script src="../../_static/translations.js?v=beaddf03"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'guides/developer/deepmd-kit-sai-build';</script>
+    <link rel="index" title="索引" href="../../genindex.html" />
+    <link rel="search" title="搜索" href="../../search.html" />
+    <link rel="next" title="Testing（测试指南）" href="../testing/README.html" />
+    <link rel="prev" title="变量说明文档维护指南" href="config-docs-maintenance.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="zh-CN"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">DP-EVA Documentation</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="搜索" aria-label="搜索" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">搜索</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">安装与环境准备（Installation）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quickstart（最短路径跑通）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cli.html">CLI 使用指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../configuration.html">配置编写指南（Configuration）</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">User Guides</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../slurm.html">Slurm 使用与排障指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../troubleshooting.html">Troubleshooting（常见问题与排查）</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../reference/index.html">Reference</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../reference/README.html">Reference（权威参考）</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../reference/validation.html">参数校验与约束（Validation Rules）</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../reference/upstream-software.html">上游软件与核心依赖（Upstream Software）</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Developer Guide</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../developer-guide.html">DP-EVA 项目开发文档</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../architecture/README.html">Architecture（系统结构）</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../api/config.html">Configuration Reference</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../api/config/submission.html">Common &amp; Submission Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/config/feature.html">Feature Generation Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/config/exploration.html">Exploration Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/config/training.html">Training Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/config/inference.html">Inference Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/config/collection.html">Collection (Active Learning) Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/config/labeling.html">Labeling Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/config/analysis.html">Analysis Configuration</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/workflows.html">Workflows API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/labeling.html">Labeling API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/sampling.html">Sampling API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/uncertain.html">Uncertainty API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/submission.html">Submission API</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Governance</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../docs-governance-quickstart.html">文档治理快速上手（开发者与 AI）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../process-asset-lifecycle.html">过程资产生命周期（AI 草案到项目文档）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../policy/README.html">Policy（制度与规范）</a></li>
+</ul>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../architecture/design-report.html">DP-EVA 项目设计模式与架构分析报告</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../architecture/decisions/README.html">README</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../architecture/decisions/2026-02-04-deepmd-dependency.html">ADR: DeepMD-kit 依赖管理策略</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../README.html">Guides（操作指南）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../deployment.html">GitHub Actions 文档部署指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../labeling-stats-repair.html">Labeling 历史统计修复</a></li>
+<li class="toctree-l1"><a class="reference internal" href="README.html">Developer Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="config-docs-maintenance.html">变量说明文档维护指南</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">SAI 服务器 DeepMD-kit 安装配置指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../testing/README.html">Testing（测试指南）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../testing/integration-config-templates.html">DP-EVA 集成测试最小配置模板（Slurm）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../testing/integration-slurm.html">DP-EVA 集成测试设计与交付报告（Slurm + Multi DataPool）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../testing/multi-datapool-artifacts.html">test-for-multiple-datapool 生产目录输入输出分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../policy/contributing.html">文档贡献指南（Contributing）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../policy/docs-structure.html">文档结构与命名规范（Docs Structure &amp; Naming）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../policy/maintenance.html">文档版本管理与维护机制（Maintenance）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../policy/quality.html">文档质量标准（Documentation Quality Standard）</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="下载此页面">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../../_sources/guides/developer/deepmd-kit-sai-build.md" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="下载源文件"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.md</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="列印成 PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="全屏模式"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="搜索" aria-label="搜索" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>SAI 服务器 DeepMD-kit 安装配置指南</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> 目录 </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">1. 方法来源</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">2. 当前已验证基线</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">3. 前置检查</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#wheel">4. 构建 wheel</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">5. 安装 wheel</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#sezm-dpa4-embedding">6. 安装 SeZM/DPA4 embedding 运行依赖</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#cpu-dp-embed-smoke-test">7. CPU 侧 <code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">embed</span></code> smoke test</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#gpu">8. GPU 验证</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">9. 常见问题</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dp-embed-dpa4-sezm-model-supports-but-got-ener">9.1 <code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">embed</span></code> 报 <code class="docutils literal notranslate"><span class="pre">DPA4/SeZM</span> <span class="pre">model</span> <span class="pre">supports</span> <span class="pre">...</span> <span class="pre">but</span> <span class="pre">got</span> <span class="pre">ener</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#sezm-neighbor-list-construction-requires-either-nvalchemiops-or-vesin">9.2 <code class="docutils literal notranslate"><span class="pre">SeZM</span> <span class="pre">neighbor-list</span> <span class="pre">construction</span> <span class="pre">requires</span> <span class="pre">either</span> <span class="pre">'nvalchemiops'</span> <span class="pre">or</span> <span class="pre">'vesin'</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#qosmingres">9.3 <code class="docutils literal notranslate"><span class="pre">QOSMinGRES</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#nvidia-smi">9.4 登录节点 <code class="docutils literal notranslate"><span class="pre">nvidia-smi</span></code> 失败</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">10. 维护原则</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="sai-deepmd-kit">
+<h1>SAI 服务器 DeepMD-kit 安装配置指南<a class="headerlink" href="#sai-deepmd-kit" title="Link to this heading">#</a></h1>
+<p>本页记录在本项目 SAI 服务器环境中，将 <code class="docutils literal notranslate"><span class="pre">dpeva-dpa4</span></code> Conda 环境里的
+<code class="docutils literal notranslate"><span class="pre">deepmd-kit</span></code> 与仓库内 <code class="docutils literal notranslate"><span class="pre">test/deepmd-kit</span></code> 源码同步的构建、安装和验证方法。</p>
+<p>适用场景：</p>
+<ul class="simple">
+<li><p>需要从 <code class="docutils literal notranslate"><span class="pre">test/deepmd-kit</span></code> 本地源码安装 DeepMD-kit，而不是使用 PyPI/Conda
+预构建版本。</p></li>
+<li><p>需要保留 <code class="docutils literal notranslate"><span class="pre">dpeva-dpa4</span></code> 环境中的 <code class="docutils literal notranslate"><span class="pre">torch</span> <span class="pre">2.11.0+cu126</span></code>。</p></li>
+<li><p>需要 CUDA 12.6.3 和 PyTorch 后端，并在 V100 GPU 上实际验证 <code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">embed</span></code>
+输出 <code class="docutils literal notranslate"><span class="pre">descriptor</span></code>、<code class="docutils literal notranslate"><span class="pre">atomic_feature</span></code>、<code class="docutils literal notranslate"><span class="pre">structural_feature</span></code>。</p></li>
+</ul>
+<section id="id1">
+<h2>1. 方法来源<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
+<p>本安装方法来自本仓库内的可审计来源，而不是外部临时命令：</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">test/deepmd-kit/pyproject.toml</span></code>：确认 DeepMD-kit 使用
+<code class="docutils literal notranslate"><span class="pre">scikit-build-core</span></code>/CMake 构建，并支持通过环境变量控制后端。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">test/deepmd-kit/CMakeLists.txt</span></code> 与构建日志：确认 CUDA toolkit、Torch
+库和 PyTorch 后端由 CMake 探测。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">test/deepmd-kit/doc/inference/embedding.md</span></code>：确认 <code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">embed</span></code> 的 CLI 用法和
+HDF5 输出数据集。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">test/deepmd-kit/source/tests/pt/model/test_embedding.py</span></code>：提供可运行的
+SeZM/DPA4 embedding 测试模型构造方式。</p></li>
+<li><p>SAI 平台规则：登录节点只做构建、提交和轻量检查；GPU 可用性必须通过
+Slurm 分配计算节点验证。</p></li>
+</ul>
+</section>
+<section id="id2">
+<h2>2. 当前已验证基线<a class="headerlink" href="#id2" title="Link to this heading">#</a></h2>
+<p>记录日期：2026-07-01。</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>项目</p></th>
+<th class="head"><p>已验证值</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Conda 环境</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">dpeva-dpa4</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>DeepMD-kit 源码</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">test/deepmd-kit</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p>源码提交</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">73de44b1f94471b2e3bdb6b11f57b34d7bc791bb</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>源码 describe</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">v3.2.0b0-67-g73de44b1</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p>安装版本</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">3.2.0b1.dev67+g73de44b1f</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>CUDA toolkit</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">/opt/devtools/nvidia/cuda-12.6.3</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p>NVCC</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">12.6.85</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>Torch</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">2.11.0+cu126</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p>Torch CUDA</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">12.6</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>GPU 架构</p></td>
+<td><p>V100 / <code class="docutils literal notranslate"><span class="pre">sm_70</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p>SeZM/DPA4 邻居表依赖</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">vesin</span> <span class="pre">0.5.8</span></code>, <code class="docutils literal notranslate"><span class="pre">vesin-torch</span> <span class="pre">0.5.8</span></code></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="id3">
+<h2>3. 前置检查<a class="headerlink" href="#id3" title="Link to this heading">#</a></h2>
+<p>从项目根目录执行：</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>/home/pku-jianghong/liuzhaoqing/work/ft2dp-dpeva/dpeva
+<span class="nb">source</span><span class="w"> </span>scripts/env/dpeva-dpa4.env
+
+python<span class="w"> </span>-W<span class="w"> </span>ignore<span class="w"> </span>-c<span class="w"> </span><span class="s1">&#39;import torch; print(torch.__version__); print(torch.version.cuda)&#39;</span>
+git<span class="w"> </span>-C<span class="w"> </span>test/deepmd-kit<span class="w"> </span>log<span class="w"> </span>-1<span class="w"> </span>--pretty<span class="o">=</span><span class="s1">&#39;commit %H%nsubject %s&#39;</span>
+git<span class="w"> </span>-C<span class="w"> </span>test/deepmd-kit<span class="w"> </span>describe<span class="w"> </span>--tags<span class="w"> </span>--always<span class="w"> </span>--dirty
+nvcc<span class="w"> </span>--version
+</pre></div>
+</div>
+<p>预期要点：</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">torch</span></code> 为 <code class="docutils literal notranslate"><span class="pre">2.11.0+cu126</span></code>。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">torch.version.cuda</span></code> 为 <code class="docutils literal notranslate"><span class="pre">12.6</span></code>。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">nvcc</span></code> 来自 <code class="docutils literal notranslate"><span class="pre">/opt/devtools/nvidia/cuda-12.6.3/bin/nvcc</span></code>。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">test/deepmd-kit</span></code> 工作树处于预期提交；若带 <code class="docutils literal notranslate"><span class="pre">-dirty</span></code>，先确认本地改动是否
+应进入安装版本。</p></li>
+</ul>
+</section>
+<section id="wheel">
+<h2>4. 构建 wheel<a class="headerlink" href="#wheel" title="Link to this heading">#</a></h2>
+<p>使用 wheel 构建而不是直接 editable 安装，便于保留构建产物和日志。关键点是
+<code class="docutils literal notranslate"><span class="pre">--no-build-isolation</span> <span class="pre">--no-deps</span></code>：构建使用当前 <code class="docutils literal notranslate"><span class="pre">dpeva-dpa4</span></code> 环境里的 Torch，
+避免 pip 重新解析或替换核心 CUDA/Torch 依赖。</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>/home/pku-jianghong/liuzhaoqing/work/ft2dp-dpeva/dpeva
+<span class="nb">source</span><span class="w"> </span>scripts/env/dpeva-dpa4.env
+
+<span class="nv">STAMP</span><span class="o">=</span><span class="k">$(</span>date<span class="w"> </span>+%Y%m%d-%H%M%S<span class="k">)</span>
+<span class="nv">LOGDIR</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$PWD</span><span class="s2">/logs/deepmd-dpeva-dpa4-</span><span class="nv">$STAMP</span><span class="s2">&quot;</span>
+mkdir<span class="w"> </span>-p<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$LOGDIR</span><span class="s2">/wheelhouse&quot;</span>
+
+git<span class="w"> </span>-C<span class="w"> </span>test/deepmd-kit<span class="w"> </span>log<span class="w"> </span>-1<span class="w"> </span>--pretty<span class="o">=</span><span class="s1">&#39;commit %H%nsubject %s&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>tee<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$LOGDIR</span><span class="s2">/build.log&quot;</span>
+git<span class="w"> </span>-C<span class="w"> </span>test/deepmd-kit<span class="w"> </span>describe<span class="w"> </span>--tags<span class="w"> </span>--always<span class="w"> </span>--dirty<span class="w"> </span><span class="p">|</span><span class="w"> </span>tee<span class="w"> </span>-a<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$LOGDIR</span><span class="s2">/build.log&quot;</span>
+python<span class="w"> </span>-W<span class="w"> </span>ignore<span class="w"> </span>-c<span class="w"> </span><span class="s1">&#39;import torch; print(&quot;torch&quot;, torch.__version__); print(&quot;torch_cuda&quot;, torch.version.cuda)&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>tee<span class="w"> </span>-a<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$LOGDIR</span><span class="s2">/build.log&quot;</span>
+nvcc<span class="w"> </span>--version<span class="w"> </span><span class="p">|</span><span class="w"> </span>sed<span class="w"> </span>-n<span class="w"> </span><span class="s1">&#39;1,6p&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>tee<span class="w"> </span>-a<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$LOGDIR</span><span class="s2">/build.log&quot;</span>
+
+<span class="nb">export</span><span class="w"> </span><span class="nv">MAX_JOBS</span><span class="o">=</span><span class="m">4</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">CMAKE_BUILD_PARALLEL_LEVEL</span><span class="o">=</span><span class="m">4</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">CMAKE_ARGS</span><span class="o">=</span><span class="s2">&quot;-DCMAKE_CUDA_ARCHITECTURES=70&quot;</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">DP_VARIANT</span><span class="o">=</span>cuda
+<span class="nb">export</span><span class="w"> </span><span class="nv">DP_ENABLE_PYTORCH</span><span class="o">=</span><span class="m">1</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">DP_ENABLE_TENSORFLOW</span><span class="o">=</span><span class="m">0</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">DP_ENABLE_PADDLE</span><span class="o">=</span><span class="m">0</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">DP_ENABLE_JAX</span><span class="o">=</span><span class="m">0</span>
+
+python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>wheel<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--no-build-isolation<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--no-deps<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--verbose<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--wheel-dir<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$LOGDIR</span><span class="s2">/wheelhouse&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>test/deepmd-kit<span class="w"> </span><span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>tee<span class="w"> </span>-a<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$LOGDIR</span><span class="s2">/build.log&quot;</span>
+</pre></div>
+</div>
+<p>构建日志中应出现类似信息：</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Found CUDAToolkit: /opt/devtools/nvidia/cuda-12.6.3
+Found CUDA in /opt/devtools/nvidia/cuda-12.6.3/bin, build nv GPU support
+PyTorch: CUDA detected: 12.6
+PyTorch: CUDA nvcc is: /opt/devtools/nvidia/cuda-12.6.3/bin/nvcc
+Found Torch: .../.conda/envs/dpeva-dpa4/.../torch/lib/libtorch.so
+Added CUDA NVCC flags for: -gencode;arch=compute_70,code=sm_70
+Enabled backends:
+  - PyTorch
+Created deepmd_kit-...whl
+</pre></div>
+</div>
+</section>
+<section id="id4">
+<h2>5. 安装 wheel<a class="headerlink" href="#id4" title="Link to this heading">#</a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>/home/pku-jianghong/liuzhaoqing/work/ft2dp-dpeva/dpeva
+<span class="nb">source</span><span class="w"> </span>scripts/env/dpeva-dpa4.env
+
+<span class="nv">LOGDIR</span><span class="o">=</span>/path/to/logs/deepmd-dpeva-dpa4-YYYYmmdd-HHMMSS
+python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>--no-deps<span class="w"> </span>--force-reinstall<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="s2">&quot;</span><span class="nv">$LOGDIR</span><span class="s2">&quot;</span>/wheelhouse/deepmd_kit-*.whl<span class="w"> </span><span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>tee<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$LOGDIR</span><span class="s2">/install.log&quot;</span>
+</pre></div>
+</div>
+<p>安装后核对：</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-W<span class="w"> </span>ignore<span class="w"> </span>-<span class="w"> </span><span class="s">&lt;&lt;&#39;PY&#39;</span>
+<span class="s">import importlib.metadata as md</span>
+<span class="s">import deepmd</span>
+<span class="s">import torch</span>
+
+<span class="s">print(&quot;deepmd-kit&quot;, md.version(&quot;deepmd-kit&quot;))</span>
+<span class="s">print(&quot;deepmd.__version__&quot;, getattr(deepmd, &quot;__version__&quot;, &quot;NO_ATTR&quot;))</span>
+<span class="s">print(&quot;deepmd.__file__&quot;, deepmd.__file__)</span>
+<span class="s">print(&quot;torch&quot;, torch.__version__)</span>
+<span class="s">print(&quot;torch_cuda&quot;, torch.version.cuda)</span>
+<span class="s">PY</span>
+
+dp<span class="w"> </span>--version
+dp<span class="w"> </span>--pt<span class="w"> </span>-h<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-E<span class="w"> </span><span class="s1">&#39;embed|eval-desc&#39;</span>
+dp<span class="w"> </span>--pt<span class="w"> </span>embed<span class="w"> </span>-h
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">--pt</span> <span class="pre">-h</span></code> 必须列出 <code class="docutils literal notranslate"><span class="pre">embed</span></code> 子命令。</p>
+</section>
+<section id="sezm-dpa4-embedding">
+<h2>6. 安装 SeZM/DPA4 embedding 运行依赖<a class="headerlink" href="#sezm-dpa4-embedding" title="Link to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">embed</span></code> 对 SeZM/DPA4 模型会走内建邻居表路径。当前 DeepMD-kit 源码要求
+<code class="docutils literal notranslate"><span class="pre">nvalchemiops</span></code> 或 <code class="docutils literal notranslate"><span class="pre">vesin</span></code> 至少一个可导入；本环境采用 <code class="docutils literal notranslate"><span class="pre">vesin[torch]</span></code>。</p>
+<p>先 dry-run，确认不会替换 Torch：</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">source</span><span class="w"> </span>scripts/env/dpeva-dpa4.env
+python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>--dry-run<span class="w"> </span><span class="s1">&#39;vesin[torch]&#39;</span>
+</pre></div>
+</div>
+<p>确认只会新增 <code class="docutils literal notranslate"><span class="pre">vesin</span></code> 与 <code class="docutils literal notranslate"><span class="pre">vesin-torch</span></code> 后安装：</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span><span class="s1">&#39;vesin[torch]&#39;</span>
+</pre></div>
+</div>
+<p>核对：</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-<span class="w"> </span><span class="s">&lt;&lt;&#39;PY&#39;</span>
+<span class="s">for name in (&quot;vesin&quot;, &quot;vesin.torch&quot;, &quot;nvalchemiops&quot;):</span>
+<span class="s">    try:</span>
+<span class="s">        mod = __import__(name)</span>
+<span class="s">        print(name, &quot;OK&quot;, getattr(mod, &quot;__version__&quot;, &quot;NO_VERSION&quot;))</span>
+<span class="s">    except Exception as exc:</span>
+<span class="s">        print(name, &quot;MISSING&quot;, type(exc).__name__, exc)</span>
+<span class="s">PY</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">nvalchemiops</span></code> 可缺失；只要 <code class="docutils literal notranslate"><span class="pre">vesin</span></code> 和 <code class="docutils literal notranslate"><span class="pre">vesin.torch</span></code> 可导入，SeZM/DPA4
+embedding 的邻居表构建即可运行。</p>
+</section>
+<section id="cpu-dp-embed-smoke-test">
+<h2>7. CPU 侧 <code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">embed</span></code> smoke test<a class="headerlink" href="#cpu-dp-embed-smoke-test" title="Link to this heading">#</a></h2>
+<p>建议用 <code class="docutils literal notranslate"><span class="pre">test/deepmd-kit/source/tests/pt/model/test_embedding.py</span></code> 中的小型 SeZM
+配置生成临时 checkpoint，再用 DeePMD system 目录测试 CLI。测试产物可放在本次
+<code class="docutils literal notranslate"><span class="pre">LOGDIR/embed-fixture/</span></code>。</p>
+<p>最小验收标准：</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">--pt</span> <span class="pre">embed</span></code> 退出码为 0。</p></li>
+<li><p>HDF5 中有 <code class="docutils literal notranslate"><span class="pre">descriptor</span></code>、<code class="docutils literal notranslate"><span class="pre">atomic_feature</span></code>、<code class="docutils literal notranslate"><span class="pre">structural_feature</span></code>。</p></li>
+<li><p>三个 dataset 的 dtype 与 <code class="docutils literal notranslate"><span class="pre">--dtype</span> <span class="pre">fp32</span></code> 一致，且数值全部 finite。</p></li>
+</ul>
+<p>示例 HDF5 读回检查：</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-<span class="w"> </span><span class="s">&lt;&lt;&#39;PY&#39;</span>
+<span class="s">import h5py</span>
+<span class="s">import numpy as np</span>
+
+<span class="s">path = &quot;embedding.hdf5&quot;</span>
+<span class="s">with h5py.File(path, &quot;r&quot;) as f:</span>
+<span class="s">    keys = []</span>
+<span class="s">    def walk(name, obj):</span>
+<span class="s">        if hasattr(obj, &quot;shape&quot;):</span>
+<span class="s">            arr = obj[()]</span>
+<span class="s">            keys.append(name)</span>
+<span class="s">            print(name, obj.shape, obj.dtype, bool(np.isfinite(arr).all()))</span>
+<span class="s">    f.visititems(walk)</span>
+<span class="s">    present = {k.split(&quot;/&quot;)[-1] for k in keys}</span>
+<span class="s">    missing = {&quot;descriptor&quot;, &quot;atomic_feature&quot;, &quot;structural_feature&quot;} - present</span>
+<span class="s">    if missing:</span>
+<span class="s">        raise SystemExit(f&quot;missing datasets: {sorted(missing)}&quot;)</span>
+<span class="s">PY</span>
+</pre></div>
+</div>
+</section>
+<section id="gpu">
+<h2>8. GPU 验证<a class="headerlink" href="#gpu" title="Link to this heading">#</a></h2>
+<p>登录节点没有可用 NVIDIA driver，不能作为 GPU 可用性证据。必须通过 Slurm
+分配 GPU 计算节点验证。</p>
+<p>单卡快速验证优先使用支持 1 GPU 的分区/QOS，例如：</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>srun<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--partition<span class="o">=</span>4V100<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--qos<span class="o">=</span>rush-1o2gpu<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--nodes<span class="o">=</span><span class="m">1</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--ntasks<span class="o">=</span><span class="m">1</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--gpus-per-node<span class="o">=</span><span class="m">1</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--time<span class="o">=</span><span class="m">00</span>:10:00<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>bash<span class="w"> </span>-lc<span class="w"> </span><span class="s1">&#39;source scripts/env/dpeva-dpa4.env &amp;&amp; python - &lt;&lt;PY</span>
+<span class="s1">import torch</span>
+<span class="s1">print(torch.__version__)</span>
+<span class="s1">print(torch.version.cuda)</span>
+<span class="s1">print(torch.cuda.is_available())</span>
+<span class="s1">print(torch.cuda.device_count())</span>
+<span class="s1">print(torch.cuda.get_device_name(0))</span>
+<span class="s1">PY&#39;</span>
+</pre></div>
+</div>
+<p>若单卡资源排队过久，<code class="docutils literal notranslate"><span class="pre">8V100V0</span></code> 可能要求每节点 GPU 数量按 4 的倍数申请；此时
+可用 <code class="docutils literal notranslate"><span class="pre">--gpus-per-node=4</span></code> 跑同一单进程验证。不要在同一时间保留多个等价验证作业；
+切换分区前先取消旧的等待作业。</p>
+<p>完整 GPU 验证需要同时检查版本、CUDA 可见性和 <code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">embed</span></code> 输出：</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>srun<span class="w"> </span>--partition<span class="o">=</span>8V100V0<span class="w"> </span>--nodes<span class="o">=</span><span class="m">1</span><span class="w"> </span>--ntasks<span class="o">=</span><span class="m">1</span><span class="w"> </span>--gpus-per-node<span class="o">=</span><span class="m">4</span><span class="w"> </span>--time<span class="o">=</span><span class="m">00</span>:10:00<span class="w"> </span>bash<span class="w"> </span>-lc<span class="w"> </span><span class="s1">&#39;</span>
+<span class="s1">set -euo pipefail</span>
+<span class="s1">cd /home/pku-jianghong/liuzhaoqing/work/ft2dp-dpeva/dpeva</span>
+<span class="s1">LOGDIR=/path/to/logs/deepmd-dpeva-dpa4-YYYYmmdd-HHMMSS</span>
+<span class="s1">source scripts/env/dpeva-dpa4.env</span>
+<span class="s1">export OMP_NUM_THREADS=1</span>
+
+<span class="s1">hostname</span>
+<span class="s1">nvidia-smi -L</span>
+<span class="s1">python -W ignore - &lt;&lt;PY</span>
+<span class="s1">import importlib.metadata as md</span>
+<span class="s1">import deepmd</span>
+<span class="s1">import torch</span>
+<span class="s1">import vesin</span>
+<span class="s1">import vesin.torch</span>
+
+<span class="s1">print(&quot;deepmd-kit&quot;, md.version(&quot;deepmd-kit&quot;))</span>
+<span class="s1">print(&quot;deepmd_version&quot;, getattr(deepmd, &quot;__version__&quot;, &quot;NO_ATTR&quot;))</span>
+<span class="s1">print(&quot;torch&quot;, torch.__version__)</span>
+<span class="s1">print(&quot;torch_cuda&quot;, torch.version.cuda)</span>
+<span class="s1">print(&quot;vesin&quot;, getattr(vesin, &quot;__version__&quot;, &quot;NO_VERSION&quot;))</span>
+<span class="s1">print(&quot;vesin_torch&quot;, getattr(vesin.torch, &quot;__version__&quot;, &quot;NO_VERSION&quot;))</span>
+<span class="s1">print(&quot;cuda_available&quot;, torch.cuda.is_available())</span>
+<span class="s1">print(&quot;cuda_device_count&quot;, torch.cuda.device_count())</span>
+<span class="s1">if not torch.cuda.is_available():</span>
+<span class="s1">    raise SystemExit(&quot;CUDA is not available&quot;)</span>
+<span class="s1">print(&quot;cuda_device_name&quot;, torch.cuda.get_device_name(0))</span>
+<span class="s1">PY</span>
+
+<span class="s1">out=&quot;${SLURM_TMPDIR:-/tmp}/dpeva-dpa4-sezm-embed-${SLURM_JOB_ID}.hdf5&quot;</span>
+<span class="s1">export out</span>
+<span class="s1">rm -f &quot;$out&quot;</span>
+<span class="s1">dp --pt embed \</span>
+<span class="s1">  -m &quot;$LOGDIR/embed-fixture/sezm_embed.pt&quot; \</span>
+<span class="s1">  -s &quot;$LOGDIR/embed-fixture/system&quot; \</span>
+<span class="s1">  -o &quot;$out&quot; \</span>
+<span class="s1">  --dtype fp32</span>
+
+<span class="s1">python - &lt;&lt;PY</span>
+<span class="s1">import os</span>
+<span class="s1">import h5py</span>
+<span class="s1">import numpy as np</span>
+
+<span class="s1">out = os.environ[&quot;out&quot;]</span>
+<span class="s1">print(&quot;hdf5_path&quot;, out)</span>
+<span class="s1">with h5py.File(out, &quot;r&quot;) as f:</span>
+<span class="s1">    keys = []</span>
+<span class="s1">    def walk(name, obj):</span>
+<span class="s1">        if hasattr(obj, &quot;shape&quot;):</span>
+<span class="s1">            arr = obj[()]</span>
+<span class="s1">            keys.append(name)</span>
+<span class="s1">            print(&quot;dataset&quot;, name, obj.shape, obj.dtype, bool(np.isfinite(arr).all()))</span>
+<span class="s1">    f.visititems(walk)</span>
+<span class="s1">    present = {k.split(&quot;/&quot;)[-1] for k in keys}</span>
+<span class="s1">    missing = {&quot;descriptor&quot;, &quot;atomic_feature&quot;, &quot;structural_feature&quot;} - present</span>
+<span class="s1">    if missing:</span>
+<span class="s1">        raise SystemExit(&quot;missing datasets: &quot; + &quot;, &quot;.join(sorted(missing)))</span>
+<span class="s1">PY</span>
+<span class="s1">&#39;</span>
+</pre></div>
+</div>
+<p>任务完成后用 Slurm 再确认退出状态：</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sacct<span class="w"> </span>-j<span class="w"> </span>&lt;jobid&gt;<span class="w"> </span>--format<span class="o">=</span>JobID,State,ExitCode,Elapsed,NodeList<span class="w"> </span>-P
+</pre></div>
+</div>
+</section>
+<section id="id5">
+<h2>9. 常见问题<a class="headerlink" href="#id5" title="Link to this heading">#</a></h2>
+<section id="dp-embed-dpa4-sezm-model-supports-but-got-ener">
+<h3>9.1 <code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">embed</span></code> 报 <code class="docutils literal notranslate"><span class="pre">DPA4/SeZM</span> <span class="pre">model</span> <span class="pre">supports</span> <span class="pre">...</span> <span class="pre">but</span> <span class="pre">got</span> <span class="pre">ener</span></code><a class="headerlink" href="#dp-embed-dpa4-sezm-model-supports-but-got-ener" title="Link to this heading">#</a></h3>
+<p>该错误说明测试模型不是当前 <code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">embed</span></code> SeZM/DPA4 路径支持的 fitting type。不要修改
+DeepMD-kit 代码绕过错误；换用同版本测试中构造的 SeZM/DPA4 checkpoint，或使用
+真实的 DPA4/SeZM 训练 checkpoint。</p>
+</section>
+<section id="sezm-neighbor-list-construction-requires-either-nvalchemiops-or-vesin">
+<h3>9.2 <code class="docutils literal notranslate"><span class="pre">SeZM</span> <span class="pre">neighbor-list</span> <span class="pre">construction</span> <span class="pre">requires</span> <span class="pre">either</span> <span class="pre">'nvalchemiops'</span> <span class="pre">or</span> <span class="pre">'vesin'</span></code><a class="headerlink" href="#sezm-neighbor-list-construction-requires-either-nvalchemiops-or-vesin" title="Link to this heading">#</a></h3>
+<p>安装 <code class="docutils literal notranslate"><span class="pre">vesin[torch]</span></code>。安装前先 <code class="docutils literal notranslate"><span class="pre">--dry-run</span></code>，确认不会替换当前 <code class="docutils literal notranslate"><span class="pre">torch</span></code>。</p>
+</section>
+<section id="qosmingres">
+<h3>9.3 <code class="docutils literal notranslate"><span class="pre">QOSMinGRES</span></code><a class="headerlink" href="#qosmingres" title="Link to this heading">#</a></h3>
+<p>资源形态不符合 SAI QOS/分区策略。1 GPU 作业使用支持单卡的 QOS，例如
+<code class="docutils literal notranslate"><span class="pre">4V100</span> <span class="pre">+</span> <span class="pre">rush-1o2gpu</span></code>；如果在 <code class="docutils literal notranslate"><span class="pre">8V100V0</span></code> 上验证，通常按每节点 4 GPU 申请。</p>
+</section>
+<section id="nvidia-smi">
+<h3>9.4 登录节点 <code class="docutils literal notranslate"><span class="pre">nvidia-smi</span></code> 失败<a class="headerlink" href="#nvidia-smi" title="Link to this heading">#</a></h3>
+<p>登录节点没有 NVIDIA driver 或不可访问 GPU 是正常现象。GPU 可用性结论必须来自
+Slurm 分配的计算节点。</p>
+</section>
+</section>
+<section id="id6">
+<h2>10. 维护原则<a class="headerlink" href="#id6" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p>每次升级 <code class="docutils literal notranslate"><span class="pre">test/deepmd-kit</span></code> 后，都重新记录源码提交、wheel 版本、Torch/CUDA 版本
+和 GPU smoke test job id。</p></li>
+<li><p>不要把 <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">deepmd-kit[...]</span></code> 作为本环境升级方式；本项目环境要求以
+<code class="docutils literal notranslate"><span class="pre">test/deepmd-kit</span></code> 源码和当前 <code class="docutils literal notranslate"><span class="pre">dpeva-dpa4</span></code> Torch/CUDA 栈为准。</p></li>
+<li><p>不要依赖交互式 shell 的隐式状态；Slurm 脚本中通过 <code class="docutils literal notranslate"><span class="pre">source</span> <span class="pre">scripts/env/dpeva-dpa4.env</span></code>
+显式加载环境。</p></li>
+<li><p>构建日志、wheel、安装日志和验证 fixture 应保留在 <code class="docutils literal notranslate"><span class="pre">logs/deepmd-dpeva-dpa4-*</span></code> 下，
+便于复盘。</p></li>
+</ul>
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="config-docs-maintenance.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">上一页</p>
+        <p class="prev-next-title">变量说明文档维护指南</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="../testing/README.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">下一页</p>
+        <p class="prev-next-title">Testing（测试指南）</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> 目录
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">1. 方法来源</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">2. 当前已验证基线</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">3. 前置检查</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#wheel">4. 构建 wheel</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">5. 安装 wheel</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#sezm-dpa4-embedding">6. 安装 SeZM/DPA4 embedding 运行依赖</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#cpu-dp-embed-smoke-test">7. CPU 侧 <code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">embed</span></code> smoke test</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#gpu">8. GPU 验证</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">9. 常见问题</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dp-embed-dpa4-sezm-model-supports-but-got-ener">9.1 <code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">embed</span></code> 报 <code class="docutils literal notranslate"><span class="pre">DPA4/SeZM</span> <span class="pre">model</span> <span class="pre">supports</span> <span class="pre">...</span> <span class="pre">but</span> <span class="pre">got</span> <span class="pre">ener</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#sezm-neighbor-list-construction-requires-either-nvalchemiops-or-vesin">9.2 <code class="docutils literal notranslate"><span class="pre">SeZM</span> <span class="pre">neighbor-list</span> <span class="pre">construction</span> <span class="pre">requires</span> <span class="pre">either</span> <span class="pre">'nvalchemiops'</span> <span class="pre">or</span> <span class="pre">'vesin'</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#qosmingres">9.3 <code class="docutils literal notranslate"><span class="pre">QOSMinGRES</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#nvidia-smi">9.4 登录节点 <code class="docutils literal notranslate"><span class="pre">nvidia-smi</span></code> 失败</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">10. 维护原则</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+作者： DP-EVA Developers
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2026, DP-EVA Developers.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>
