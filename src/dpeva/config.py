@@ -152,7 +152,10 @@ class FeatureConfig(BaseWorkflowConfig):
     """Configuration for Feature Generation Workflow."""
     data_path: Path = Field(..., description="Path to dataset.")
     model_path: Path = Field(..., description="Path to model file.")
-    model_head: str = Field(..., description="Model head name.")
+    model_head: str | None = Field(
+        None,
+        description="Model head name (optional for single-task models).",
+    )
     feature_kind: Literal["descriptor", "fitting_last_layer"] = Field(
         "descriptor",
         description=(
@@ -188,6 +191,16 @@ class FeatureConfig(BaseWorkflowConfig):
             model_name = self.model_path.stem
             data_name = self.data_path.name
             self.savedir = Path(f"desc-{model_name}-{data_name}")
+        return self
+
+    @model_validator(mode='after')
+    def validate_backend_capabilities(self):
+        """Reject feature exporters unavailable for the selected backend."""
+        if self.dp_backend == "pt-expt" and self.feature_exporter == "embed":
+            raise ValueError(
+                "dp_backend='pt-expt' does not support feature_exporter='embed'; "
+                "use feature_exporter='eval_desc' (dp --pt-expt eval-desc)."
+            )
         return self
 
 

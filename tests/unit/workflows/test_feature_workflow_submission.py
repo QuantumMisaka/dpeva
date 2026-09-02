@@ -122,6 +122,41 @@ class TestFeatureWorkflowSubmission:
         assert "DPEVA_TAG: WORKFLOW_FINISHED" in job_config.command
 
     @patch("dpeva.feature.managers.JobManager")
+    def test_cli_mode_supports_pt_expt_without_model_head(self, MockJobManager, config):
+        config["mode"] = "cli"
+        config["dp_backend"] = "pt-expt"
+        config.pop("model_head")
+
+        workflow = FeatureWorkflow(config)
+        workflow.run()
+
+        job_config = workflow.execution_manager.job_manager.generate_script.call_args[0][0]
+        assert "dp --pt-expt eval-desc" in job_config.command
+        assert "--head" not in job_config.command
+
+    @patch("dpeva.feature.managers.JobManager")
+    def test_pt_expt_embed_is_rejected_before_submission(self, MockJobManager, config):
+        config["dp_backend"] = "pt-expt"
+        config["feature_exporter"] = "embed"
+
+        with pytest.raises(ValueError, match="pt-expt.*eval-desc"):
+            FeatureWorkflow(config)
+
+        MockJobManager.assert_not_called()
+
+    @patch("dpeva.feature.managers.JobManager")
+    def test_python_slurm_worker_preserves_none_model_head(self, MockJobManager, config):
+        config["mode"] = "python"
+        config.pop("model_head")
+
+        workflow = FeatureWorkflow(config)
+        workflow.run()
+
+        worker_content = workflow.execution_manager.job_manager.submit_python_script.call_args[0][0]
+        assert "head=None" in worker_content
+        assert 'head="None"' not in worker_content
+
+    @patch("dpeva.feature.managers.JobManager")
     def test_cli_embed_supports_fitting_last_layer(self, MockJobManager, config):
         config["mode"] = "cli"
         config["feature_exporter"] = "embed"

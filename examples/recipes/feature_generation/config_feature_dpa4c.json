@@ -1,0 +1,14 @@
+{
+    "data_path": "./candidate_dpdata",
+    "model_path": "./dpa4c_model.pt",
+    "savedir": "./dpa4c_descriptors",
+    "model_head": null,
+    "dp_backend": "pt-expt",
+    "mode": "cli",
+    "feature_exporter": "eval_desc",
+    "feature_kind": "descriptor",
+    "omp_threads": 2,
+    "submission": {
+        "backend": "local"
+    }
+}

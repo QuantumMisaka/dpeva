@@ -19,7 +19,7 @@ DEFAULT_SLURM_CUSTOM_HEADERS: Final[str] = ""
 # Model Defaults
 DEFAULT_NUM_MODELS: Final[int] = 4
 DEFAULT_DP_BACKEND: Final[str] = "pt"
-VALID_DP_BACKENDS: Final[list] = ["pt", "tf", "jax", "pd"]
+VALID_DP_BACKENDS: Final[list] = ["pt", "pt-expt", "tf", "jax", "pd"]
 MIN_DEEPMD_VERSION: Final[str] = "3.1.2"
 
 # Feature/Descriptor Defaults

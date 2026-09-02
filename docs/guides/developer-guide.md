@@ -315,6 +315,7 @@ graph TD
 负责生成原子结构的描述符。
 *   **`DescriptorGenerator`**:
     *   **CLI 模式**: 调用 `dp eval-desc` 命令，支持 Slurm 提交。
+    *   **DPA4C**: 使用 `dp_backend="pt-expt"` 和 `feature_exporter="eval_desc"` 导出 descriptor；单任务模型无需配置 `model_head`。正式发布版本要求 DeepMD-kit 3.2.0 或更新版本。当前 `pt-expt` 不提供 `dp embed` 所需的组合 embedding 接口。
     *   **Python 模式**: 直接调用 `deepmd.infer` API，适合小规模或调试使用。
     *   **数据一致性**: 统一使用 `dpeva.io.dataset.load_systems` 加载数据，确保在 `mixed` 格式下与 CLI 模式行为一致。
     *   **单数据池兼容**: 智能识别 `desc_dir/System.npy` 格式的描述符文件，兼容单数据池模式下的平铺结构。
