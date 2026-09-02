@@ -448,8 +448,8 @@ document.write(`
 <section id="local">
 <h3>4.1 Local 最小配置<a class="headerlink" href="#local" title="Link to this heading">#</a></h3>
 <div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
-<span class="w">  </span><span class="nt">&quot;submission&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nt">&quot;backend&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;local&quot;</span>
+<span class="w">  </span><span class="nt">"submission"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"backend"</span><span class="p">:</span><span class="w"> </span><span class="s2">"local"</span>
 <span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
 </pre></div>
@@ -458,16 +458,16 @@ document.write(`
 <section id="slurm">
 <h3>4.2 Slurm 最小配置<a class="headerlink" href="#slurm" title="Link to this heading">#</a></h3>
 <div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
-<span class="w">  </span><span class="nt">&quot;submission&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nt">&quot;backend&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;slurm&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;env_setup&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-<span class="w">      </span><span class="s2">&quot;source /path/to/env.sh&quot;</span>
+<span class="w">  </span><span class="nt">"submission"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"backend"</span><span class="p">:</span><span class="w"> </span><span class="s2">"slurm"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"env_setup"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">      </span><span class="s2">"source /path/to/env.sh"</span>
 <span class="w">    </span><span class="p">],</span>
-<span class="w">    </span><span class="nt">&quot;slurm_array&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;slurm_config&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="nt">&quot;nodes&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
-<span class="w">      </span><span class="nt">&quot;ntasks&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
-<span class="w">      </span><span class="nt">&quot;walltime&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;00:30:00&quot;</span>
+<span class="w">    </span><span class="nt">"slurm_array"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"slurm_config"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">"nodes"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"ntasks"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"walltime"</span><span class="p">:</span><span class="w"> </span><span class="s2">"00:30:00"</span>
 <span class="w">    </span><span class="p">}</span>
 <span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
@@ -488,27 +488,27 @@ document.write(`
 <section id="feature">
 <h3>5.1 Feature<a class="headerlink" href="#feature" title="Link to this heading">#</a></h3>
 <div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
-<span class="w">  </span><span class="nt">&quot;work_dir&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;./&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;data_path&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;./other_dpdata_all&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;model_path&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;./DPA-3.1-3M.pt&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;savedir&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;./desc_pool&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;mode&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;cli&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;submission&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;backend&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;slurm&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="w">  </span><span class="nt">"work_dir"</span><span class="p">:</span><span class="w"> </span><span class="s2">"./"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"data_path"</span><span class="p">:</span><span class="w"> </span><span class="s2">"./other_dpdata_all"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"model_path"</span><span class="p">:</span><span class="w"> </span><span class="s2">"./DPA-3.1-3M.pt"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"savedir"</span><span class="p">:</span><span class="w"> </span><span class="s2">"./desc_pool"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"mode"</span><span class="p">:</span><span class="w"> </span><span class="s2">"cli"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"submission"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"backend"</span><span class="p">:</span><span class="w"> </span><span class="s2">"slurm"</span><span class="w"> </span><span class="p">}</span>
 <span class="p">}</span>
 </pre></div>
 </div>
 <p>DeepMD PyTorch 模型可使用 <code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">embed</span></code> 导出 HDF5 embedding。该路线会在 <code class="docutils literal notranslate"><span class="pre">savedir/embedding.hdf5</span></code> 中保留 <code class="docutils literal notranslate"><span class="pre">descriptor</span></code>、<code class="docutils literal notranslate"><span class="pre">atomic_feature</span></code>、<code class="docutils literal notranslate"><span class="pre">structural_feature</span></code> 和 <code class="docutils literal notranslate"><span class="pre">atom_types</span></code>；HDF5 dataset 由 DeepMD 使用 gzip + shuffle 压缩。<code class="docutils literal notranslate"><span class="pre">feature_kind=&quot;descriptor&quot;</span></code> 读取 <code class="docutils literal notranslate"><span class="pre">descriptor</span></code>，<code class="docutils literal notranslate"><span class="pre">feature_kind=&quot;fitting_last_layer&quot;</span></code> 对应 <code class="docutils literal notranslate"><span class="pre">atomic_feature</span></code>。</p>
 <div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
-<span class="w">  </span><span class="nt">&quot;work_dir&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;./&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;data_path&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;./other_dpdata_all&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;model_path&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;./DPA4-Plus-OMat24-16M.pt&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;savedir&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;./desc_pool_embed&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;model_head&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;OC22&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;mode&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;cli&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;feature_exporter&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;embed&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;feature_kind&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;fitting_last_layer&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;embedding_dtype&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;fp32&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;submission&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;backend&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;slurm&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="w">  </span><span class="nt">"work_dir"</span><span class="p">:</span><span class="w"> </span><span class="s2">"./"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"data_path"</span><span class="p">:</span><span class="w"> </span><span class="s2">"./other_dpdata_all"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"model_path"</span><span class="p">:</span><span class="w"> </span><span class="s2">"./DPA4-Plus-OMat24-16M.pt"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"savedir"</span><span class="p">:</span><span class="w"> </span><span class="s2">"./desc_pool_embed"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"model_head"</span><span class="p">:</span><span class="w"> </span><span class="s2">"OC22"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"mode"</span><span class="p">:</span><span class="w"> </span><span class="s2">"cli"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"feature_exporter"</span><span class="p">:</span><span class="w"> </span><span class="s2">"embed"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"feature_kind"</span><span class="p">:</span><span class="w"> </span><span class="s2">"fitting_last_layer"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"embedding_dtype"</span><span class="p">:</span><span class="w"> </span><span class="s2">"fp32"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"submission"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"backend"</span><span class="p">:</span><span class="w"> </span><span class="s2">"slurm"</span><span class="w"> </span><span class="p">}</span>
 <span class="p">}</span>
 </pre></div>
 </div>
@@ -523,13 +523,13 @@ document.write(`
 <section id="train">
 <h3>5.2 Train<a class="headerlink" href="#train" title="Link to this heading">#</a></h3>
 <div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
-<span class="w">  </span><span class="nt">&quot;work_dir&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;./&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;input_json_path&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;input.json&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;training_data_path&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;./sampled_dpdata&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;base_model_path&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;DPA-3.1-3M.pt&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;num_models&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;training_mode&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;init&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;submission&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;backend&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;slurm&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="w">  </span><span class="nt">"work_dir"</span><span class="p">:</span><span class="w"> </span><span class="s2">"./"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"input_json_path"</span><span class="p">:</span><span class="w"> </span><span class="s2">"input.json"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"training_data_path"</span><span class="p">:</span><span class="w"> </span><span class="s2">"./sampled_dpdata"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"base_model_path"</span><span class="p">:</span><span class="w"> </span><span class="s2">"DPA-3.1-3M.pt"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"num_models"</span><span class="p">:</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"training_mode"</span><span class="p">:</span><span class="w"> </span><span class="s2">"init"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"submission"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"backend"</span><span class="p">:</span><span class="w"> </span><span class="s2">"slurm"</span><span class="w"> </span><span class="p">}</span>
 <span class="p">}</span>
 </pre></div>
 </div>
@@ -537,12 +537,12 @@ document.write(`
 <section id="infer">
 <h3>5.3 Infer<a class="headerlink" href="#infer" title="Link to this heading">#</a></h3>
 <div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
-<span class="w">  </span><span class="nt">&quot;work_dir&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;./&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;data_path&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;./other_dpdata_all&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;task_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;test_val&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;results_prefix&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;results&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;auto_analysis&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;submission&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;backend&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;slurm&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="w">  </span><span class="nt">"work_dir"</span><span class="p">:</span><span class="w"> </span><span class="s2">"./"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"data_path"</span><span class="p">:</span><span class="w"> </span><span class="s2">"./other_dpdata_all"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"task_name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"test_val"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"results_prefix"</span><span class="p">:</span><span class="w"> </span><span class="s2">"results"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"auto_analysis"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"submission"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"backend"</span><span class="p">:</span><span class="w"> </span><span class="s2">"slurm"</span><span class="w"> </span><span class="p">}</span>
 <span class="p">}</span>
 </pre></div>
 </div>
@@ -550,37 +550,37 @@ document.write(`
 <section id="collect">
 <h3>5.4 Collect<a class="headerlink" href="#collect" title="Link to this heading">#</a></h3>
 <div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
-<span class="w">  </span><span class="nt">&quot;project&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;./&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;desc_dir&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;./desc_pool&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;desc_feature_kind&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;descriptor&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;testdata_dir&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;./other_dpdata_all&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;testing_dir&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;test_val&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;results_prefix&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;results&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;root_savedir&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;dpeva_uq_result&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;sampler_type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;direct&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;direct_n_clusters&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">20</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;direct_k&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;submission&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;backend&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;slurm&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="w">  </span><span class="nt">"project"</span><span class="p">:</span><span class="w"> </span><span class="s2">"./"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"desc_dir"</span><span class="p">:</span><span class="w"> </span><span class="s2">"./desc_pool"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"desc_feature_kind"</span><span class="p">:</span><span class="w"> </span><span class="s2">"descriptor"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"testdata_dir"</span><span class="p">:</span><span class="w"> </span><span class="s2">"./other_dpdata_all"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"testing_dir"</span><span class="p">:</span><span class="w"> </span><span class="s2">"test_val"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"results_prefix"</span><span class="p">:</span><span class="w"> </span><span class="s2">"results"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"root_savedir"</span><span class="p">:</span><span class="w"> </span><span class="s2">"dpeva_uq_result"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"sampler_type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"direct"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"direct_n_clusters"</span><span class="p">:</span><span class="w"> </span><span class="mi">20</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"direct_k"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"submission"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"backend"</span><span class="p">:</span><span class="w"> </span><span class="s2">"slurm"</span><span class="w"> </span><span class="p">}</span>
 <span class="p">}</span>
 </pre></div>
 </div>
 <p>当候选描述符来自 <code class="docutils literal notranslate"><span class="pre">dpeva</span> <span class="pre">feature</span></code> 的 <code class="docutils literal notranslate"><span class="pre">feature_exporter=&quot;embed&quot;</span></code> 且 <code class="docutils literal notranslate"><span class="pre">feature_kind=&quot;fitting_last_layer&quot;</span></code> 时，将 <code class="docutils literal notranslate"><span class="pre">desc_dir</span></code> 指向 HDF5 输出目录并设置：</p>
 <div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
-<span class="w">  </span><span class="nt">&quot;desc_dir&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;./desc_pool_embed&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;desc_feature_kind&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;fitting_last_layer&quot;</span>
+<span class="w">  </span><span class="nt">"desc_dir"</span><span class="p">:</span><span class="w"> </span><span class="s2">"./desc_pool_embed"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"desc_feature_kind"</span><span class="p">:</span><span class="w"> </span><span class="s2">"fitting_last_layer"</span>
 <span class="p">}</span>
 </pre></div>
 </div>
 <p>LLPR / energy DPOSE 可作为 Collect UQ backend 使用。最小 energy LLPR 只需要训练集与候选集 last-layer feature 目录；请求 shallow ensemble 时必须提供真实最后一层权重和候选 base energy，默认 strict parity 不会用 synthetic weights 冒充 DPOSE：</p>
 <div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
-<span class="w">  </span><span class="nt">&quot;uq_backend&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;llpr&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;llpr_train_feature_dir&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;./train_last_layer&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;llpr_candidate_feature_dir&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;./candidate_last_layer&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;llpr_feature_normalization&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;mean&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;llpr_num_ensemble_members&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">8</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;llpr_last_layer_weights_path&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;./last_layer_weights.npy&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;llpr_candidate_energy_path&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;./candidate_energy.npy&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;llpr_collect_score&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;energy_ensemble_std_per_atom&quot;</span>
+<span class="w">  </span><span class="nt">"uq_backend"</span><span class="p">:</span><span class="w"> </span><span class="s2">"llpr"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"llpr_train_feature_dir"</span><span class="p">:</span><span class="w"> </span><span class="s2">"./train_last_layer"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"llpr_candidate_feature_dir"</span><span class="p">:</span><span class="w"> </span><span class="s2">"./candidate_last_layer"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"llpr_feature_normalization"</span><span class="p">:</span><span class="w"> </span><span class="s2">"mean"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"llpr_num_ensemble_members"</span><span class="p">:</span><span class="w"> </span><span class="mi">8</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"llpr_last_layer_weights_path"</span><span class="p">:</span><span class="w"> </span><span class="s2">"./last_layer_weights.npy"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"llpr_candidate_energy_path"</span><span class="p">:</span><span class="w"> </span><span class="s2">"./candidate_energy.npy"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"llpr_collect_score"</span><span class="p">:</span><span class="w"> </span><span class="s2">"energy_ensemble_std_per_atom"</span>
 <span class="p">}</span>
 </pre></div>
 </div>
@@ -595,15 +595,15 @@ document.write(`
 <section id="analysis">
 <h3>5.5 Analysis<a class="headerlink" href="#analysis" title="Link to this heading">#</a></h3>
 <div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
-<span class="w">  </span><span class="nt">&quot;mode&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;model_test&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;result_dir&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;0/test_val&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;results_prefix&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;results&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;data_path&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;sampled_dpdata&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;output_dir&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;analysis&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;type_map&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;Fe&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;C&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;O&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;H&quot;</span><span class="p">],</span>
-<span class="w">  </span><span class="nt">&quot;enable_cohesive_energy&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;allow_ref_energy_lstsq_completion&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;enhanced_parity_renderer&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;auto&quot;</span>
+<span class="w">  </span><span class="nt">"mode"</span><span class="p">:</span><span class="w"> </span><span class="s2">"model_test"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"result_dir"</span><span class="p">:</span><span class="w"> </span><span class="s2">"0/test_val"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"results_prefix"</span><span class="p">:</span><span class="w"> </span><span class="s2">"results"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"data_path"</span><span class="p">:</span><span class="w"> </span><span class="s2">"sampled_dpdata"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"output_dir"</span><span class="p">:</span><span class="w"> </span><span class="s2">"analysis"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"type_map"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"Fe"</span><span class="p">,</span><span class="w"> </span><span class="s2">"C"</span><span class="p">,</span><span class="w"> </span><span class="s2">"O"</span><span class="p">,</span><span class="w"> </span><span class="s2">"H"</span><span class="p">],</span>
+<span class="w">  </span><span class="nt">"enable_cohesive_energy"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"allow_ref_energy_lstsq_completion"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"enhanced_parity_renderer"</span><span class="p">:</span><span class="w"> </span><span class="s2">"auto"</span>
 <span class="p">}</span>
 </pre></div>
 </div>
@@ -637,53 +637,53 @@ document.write(`
 <section id="labeling">
 <h3>5.6 Labeling<a class="headerlink" href="#labeling" title="Link to this heading">#</a></h3>
 <div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
-<span class="w">  </span><span class="nt">&quot;input_data_path&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;./candidate_dpdata&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;work_dir&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;./labeling_work&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;pp_dir&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;./abacus_pp&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;orb_dir&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;./abacus_orb&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;pp_map&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;Fe&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Fe.upf&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;C&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;C.upf&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;O&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;O.upf&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;H&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;H.upf&quot;</span><span class="w"> </span><span class="p">},</span>
-<span class="w">  </span><span class="nt">&quot;orb_map&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;Fe&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Fe.orb&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;C&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;C.orb&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;O&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;O.orb&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;H&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;H.orb&quot;</span><span class="w"> </span><span class="p">},</span>
-<span class="w">  </span><span class="nt">&quot;submission&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;backend&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;slurm&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="w">  </span><span class="nt">"input_data_path"</span><span class="p">:</span><span class="w"> </span><span class="s2">"./candidate_dpdata"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"work_dir"</span><span class="p">:</span><span class="w"> </span><span class="s2">"./labeling_work"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"pp_dir"</span><span class="p">:</span><span class="w"> </span><span class="s2">"./abacus_pp"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"orb_dir"</span><span class="p">:</span><span class="w"> </span><span class="s2">"./abacus_orb"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"pp_map"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"Fe"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Fe.upf"</span><span class="p">,</span><span class="w"> </span><span class="nt">"C"</span><span class="p">:</span><span class="w"> </span><span class="s2">"C.upf"</span><span class="p">,</span><span class="w"> </span><span class="nt">"O"</span><span class="p">:</span><span class="w"> </span><span class="s2">"O.upf"</span><span class="p">,</span><span class="w"> </span><span class="nt">"H"</span><span class="p">:</span><span class="w"> </span><span class="s2">"H.upf"</span><span class="w"> </span><span class="p">},</span>
+<span class="w">  </span><span class="nt">"orb_map"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"Fe"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Fe.orb"</span><span class="p">,</span><span class="w"> </span><span class="nt">"C"</span><span class="p">:</span><span class="w"> </span><span class="s2">"C.orb"</span><span class="p">,</span><span class="w"> </span><span class="nt">"O"</span><span class="p">:</span><span class="w"> </span><span class="s2">"O.orb"</span><span class="p">,</span><span class="w"> </span><span class="nt">"H"</span><span class="p">:</span><span class="w"> </span><span class="s2">"H.orb"</span><span class="w"> </span><span class="p">},</span>
+<span class="w">  </span><span class="nt">"submission"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"backend"</span><span class="p">:</span><span class="w"> </span><span class="s2">"slurm"</span><span class="w"> </span><span class="p">}</span>
 <span class="p">}</span>
 </pre></div>
 </div>
 <p>SAI 上的 ABACUS labeling 如需同时处理普通单卡任务与 highmem/multicard 任务，应使用 <code class="docutils literal notranslate"><span class="pre">labeling_task_classes</span></code> 显式拆分 launcher/resource mode：</p>
 <div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
-<span class="w">  </span><span class="nt">&quot;submission&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nt">&quot;backend&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;slurm&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;env_setup&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;module load abacus/LTSv3.10.1-sm70-auto&quot;</span><span class="p">],</span>
-<span class="w">    </span><span class="nt">&quot;slurm_array&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;slurm_array_task_limit&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">64</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;slurm_config&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="nt">&quot;partition&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;4V100&quot;</span><span class="p">,</span>
-<span class="w">      </span><span class="nt">&quot;qos&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;flood-1o2gpu&quot;</span><span class="p">,</span>
-<span class="w">      </span><span class="nt">&quot;walltime&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;02:00:00&quot;</span>
+<span class="w">  </span><span class="nt">"submission"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"backend"</span><span class="p">:</span><span class="w"> </span><span class="s2">"slurm"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"env_setup"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"module load abacus/LTSv3.10.1-sm70-auto"</span><span class="p">],</span>
+<span class="w">    </span><span class="nt">"slurm_array"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"slurm_array_task_limit"</span><span class="p">:</span><span class="w"> </span><span class="mi">64</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"slurm_config"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">"partition"</span><span class="p">:</span><span class="w"> </span><span class="s2">"4V100"</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"qos"</span><span class="p">:</span><span class="w"> </span><span class="s2">"flood-1o2gpu"</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"walltime"</span><span class="p">:</span><span class="w"> </span><span class="s2">"02:00:00"</span>
 <span class="w">    </span><span class="p">}</span>
 <span class="w">  </span><span class="p">},</span>
-<span class="w">  </span><span class="nt">&quot;tasks_per_job&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;labeling_task_classes&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">  </span><span class="nt">"tasks_per_job"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"labeling_task_classes"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
 <span class="w">    </span><span class="p">{</span>
-<span class="w">      </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;normal&quot;</span><span class="p">,</span>
-<span class="w">      </span><span class="nt">&quot;selector&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;max_atoms&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">180</span><span class="w"> </span><span class="p">},</span>
-<span class="w">      </span><span class="nt">&quot;tasks_per_job&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
-<span class="w">      </span><span class="nt">&quot;launcher_mode&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;abacus&quot;</span><span class="p">,</span>
-<span class="w">      </span><span class="nt">&quot;resource_mode&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;single_gpu&quot;</span><span class="p">,</span>
-<span class="w">      </span><span class="nt">&quot;slurm_config&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="nt">&quot;ntasks&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
-<span class="w">        </span><span class="nt">&quot;gpus_per_node&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
-<span class="w">        </span><span class="nt">&quot;qos&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;flood-1o2gpu&quot;</span>
+<span class="w">      </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"normal"</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"selector"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"max_atoms"</span><span class="p">:</span><span class="w"> </span><span class="mi">180</span><span class="w"> </span><span class="p">},</span>
+<span class="w">      </span><span class="nt">"tasks_per_job"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"launcher_mode"</span><span class="p">:</span><span class="w"> </span><span class="s2">"abacus"</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"resource_mode"</span><span class="p">:</span><span class="w"> </span><span class="s2">"single_gpu"</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"slurm_config"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">"ntasks"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">"gpus_per_node"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">"qos"</span><span class="p">:</span><span class="w"> </span><span class="s2">"flood-1o2gpu"</span>
 <span class="w">      </span><span class="p">}</span>
 <span class="w">    </span><span class="p">},</span>
 <span class="w">    </span><span class="p">{</span>
-<span class="w">      </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;highmem&quot;</span><span class="p">,</span>
-<span class="w">      </span><span class="nt">&quot;selector&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;min_atoms&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">181</span><span class="w"> </span><span class="p">},</span>
-<span class="w">      </span><span class="nt">&quot;tasks_per_job&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
-<span class="w">      </span><span class="nt">&quot;launcher_mode&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;mpi_abacus&quot;</span><span class="p">,</span>
-<span class="w">      </span><span class="nt">&quot;resource_mode&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;multi_gpu_mpi&quot;</span><span class="p">,</span>
-<span class="w">      </span><span class="nt">&quot;slurm_config&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="nt">&quot;ntasks&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">4</span><span class="p">,</span>
-<span class="w">        </span><span class="nt">&quot;gpus_per_node&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">4</span><span class="p">,</span>
-<span class="w">        </span><span class="nt">&quot;qos&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;flood-gpu&quot;</span>
+<span class="w">      </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"highmem"</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"selector"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"min_atoms"</span><span class="p">:</span><span class="w"> </span><span class="mi">181</span><span class="w"> </span><span class="p">},</span>
+<span class="w">      </span><span class="nt">"tasks_per_job"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"launcher_mode"</span><span class="p">:</span><span class="w"> </span><span class="s2">"mpi_abacus"</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"resource_mode"</span><span class="p">:</span><span class="w"> </span><span class="s2">"multi_gpu_mpi"</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"slurm_config"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">"ntasks"</span><span class="p">:</span><span class="w"> </span><span class="mi">4</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">"gpus_per_node"</span><span class="p">:</span><span class="w"> </span><span class="mi">4</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">"qos"</span><span class="p">:</span><span class="w"> </span><span class="s2">"flood-gpu"</span>
 <span class="w">      </span><span class="p">}</span>
 <span class="w">    </span><span class="p">}</span>
 <span class="w">  </span><span class="p">]</span>
@@ -700,11 +700,11 @@ document.write(`
 <section id="exploration">
 <h3>5.7 Exploration<a class="headerlink" href="#exploration" title="Link to this heading">#</a></h3>
 <div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
-<span class="w">  </span><span class="nt">&quot;work_dir&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;./explore_work&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;backend&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;atst-tools&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;workflow_type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;md&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;backend_config_path&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;./atst_md.yaml&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;result_structure_paths&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;./explore_work/result.extxyz&quot;</span><span class="p">]</span>
+<span class="w">  </span><span class="nt">"work_dir"</span><span class="p">:</span><span class="w"> </span><span class="s2">"./explore_work"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"backend"</span><span class="p">:</span><span class="w"> </span><span class="s2">"atst-tools"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"workflow_type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"md"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"backend_config_path"</span><span class="p">:</span><span class="w"> </span><span class="s2">"./atst_md.yaml"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"result_structure_paths"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"./explore_work/result.extxyz"</span><span class="p">]</span>
 <span class="p">}</span>
 </pre></div>
 </div>

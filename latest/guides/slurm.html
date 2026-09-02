@@ -431,16 +431,16 @@ document.write(`
 <section id="id3">
 <h3>3.1 最小 Slurm 配置<a class="headerlink" href="#id3" title="Link to this heading">#</a></h3>
 <div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
-<span class="w">  </span><span class="nt">&quot;submission&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nt">&quot;backend&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;slurm&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;env_setup&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-<span class="w">      </span><span class="s2">&quot;source /path/to/env.sh&quot;</span><span class="p">,</span>
-<span class="w">      </span><span class="s2">&quot;export DP_INTERFACE_PREC=high&quot;</span>
+<span class="w">  </span><span class="nt">"submission"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"backend"</span><span class="p">:</span><span class="w"> </span><span class="s2">"slurm"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"env_setup"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">      </span><span class="s2">"source /path/to/env.sh"</span><span class="p">,</span>
+<span class="w">      </span><span class="s2">"export DP_INTERFACE_PREC=high"</span>
 <span class="w">    </span><span class="p">],</span>
-<span class="w">    </span><span class="nt">&quot;slurm_config&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="nt">&quot;nodes&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
-<span class="w">      </span><span class="nt">&quot;ntasks&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
-<span class="w">      </span><span class="nt">&quot;walltime&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;00:30:00&quot;</span>
+<span class="w">    </span><span class="nt">"slurm_config"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">"nodes"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"ntasks"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"walltime"</span><span class="p">:</span><span class="w"> </span><span class="s2">"00:30:00"</span>
 <span class="w">    </span><span class="p">}</span>
 <span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
@@ -524,11 +524,11 @@ dpeva<span class="w"> </span>collect<span class="w"> </span>configs/collect.json
 </section>
 <section id="id10">
 <h3>5.2 监控完成标记<a class="headerlink" href="#id10" title="Link to this heading">#</a></h3>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>tail<span class="w"> </span>-f<span class="w"> </span><span class="m">0</span>/train.out<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-F<span class="w"> </span><span class="s2">&quot;DPEVA_TAG: WORKFLOW_FINISHED&quot;</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>tail<span class="w"> </span>-f<span class="w"> </span><span class="m">0</span>/train.out<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-F<span class="w"> </span><span class="s2">"DPEVA_TAG: WORKFLOW_FINISHED"</span>
 </pre></div>
 </div>
 <p>对于推理：</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>tail<span class="w"> </span>-f<span class="w"> </span><span class="m">0</span>/test_val/test_job.out<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-F<span class="w"> </span><span class="s2">&quot;DPEVA_TAG: WORKFLOW_FINISHED&quot;</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>tail<span class="w"> </span>-f<span class="w"> </span><span class="m">0</span>/test_val/test_job.out<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-F<span class="w"> </span><span class="s2">"DPEVA_TAG: WORKFLOW_FINISHED"</span>
 </pre></div>
 </div>
 </section>

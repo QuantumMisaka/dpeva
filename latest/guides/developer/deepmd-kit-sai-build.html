@@ -472,8 +472,8 @@ Slurm 分配计算节点验证。</p></li>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>/home/pku-jianghong/liuzhaoqing/work/ft2dp-dpeva/dpeva
 <span class="nb">source</span><span class="w"> </span>scripts/env/dpeva-dpa4.env
 
-python<span class="w"> </span>-W<span class="w"> </span>ignore<span class="w"> </span>-c<span class="w"> </span><span class="s1">&#39;import torch; print(torch.__version__); print(torch.version.cuda)&#39;</span>
-git<span class="w"> </span>-C<span class="w"> </span>test/deepmd-kit<span class="w"> </span>log<span class="w"> </span>-1<span class="w"> </span>--pretty<span class="o">=</span><span class="s1">&#39;commit %H%nsubject %s&#39;</span>
+python<span class="w"> </span>-W<span class="w"> </span>ignore<span class="w"> </span>-c<span class="w"> </span><span class="s1">'import torch; print(torch.__version__); print(torch.version.cuda)'</span>
+git<span class="w"> </span>-C<span class="w"> </span>test/deepmd-kit<span class="w"> </span>log<span class="w"> </span>-1<span class="w"> </span>--pretty<span class="o">=</span><span class="s1">'commit %H%nsubject %s'</span>
 git<span class="w"> </span>-C<span class="w"> </span>test/deepmd-kit<span class="w"> </span>describe<span class="w"> </span>--tags<span class="w"> </span>--always<span class="w"> </span>--dirty
 nvcc<span class="w"> </span>--version
 </pre></div>
@@ -496,17 +496,17 @@ nvcc<span class="w"> </span>--version
 <span class="nb">source</span><span class="w"> </span>scripts/env/dpeva-dpa4.env
 
 <span class="nv">STAMP</span><span class="o">=</span><span class="k">$(</span>date<span class="w"> </span>+%Y%m%d-%H%M%S<span class="k">)</span>
-<span class="nv">LOGDIR</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$PWD</span><span class="s2">/logs/deepmd-dpeva-dpa4-</span><span class="nv">$STAMP</span><span class="s2">&quot;</span>
-mkdir<span class="w"> </span>-p<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$LOGDIR</span><span class="s2">/wheelhouse&quot;</span>
+<span class="nv">LOGDIR</span><span class="o">=</span><span class="s2">"</span><span class="nv">$PWD</span><span class="s2">/logs/deepmd-dpeva-dpa4-</span><span class="nv">$STAMP</span><span class="s2">"</span>
+mkdir<span class="w"> </span>-p<span class="w"> </span><span class="s2">"</span><span class="nv">$LOGDIR</span><span class="s2">/wheelhouse"</span>
 
-git<span class="w"> </span>-C<span class="w"> </span>test/deepmd-kit<span class="w"> </span>log<span class="w"> </span>-1<span class="w"> </span>--pretty<span class="o">=</span><span class="s1">&#39;commit %H%nsubject %s&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>tee<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$LOGDIR</span><span class="s2">/build.log&quot;</span>
-git<span class="w"> </span>-C<span class="w"> </span>test/deepmd-kit<span class="w"> </span>describe<span class="w"> </span>--tags<span class="w"> </span>--always<span class="w"> </span>--dirty<span class="w"> </span><span class="p">|</span><span class="w"> </span>tee<span class="w"> </span>-a<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$LOGDIR</span><span class="s2">/build.log&quot;</span>
-python<span class="w"> </span>-W<span class="w"> </span>ignore<span class="w"> </span>-c<span class="w"> </span><span class="s1">&#39;import torch; print(&quot;torch&quot;, torch.__version__); print(&quot;torch_cuda&quot;, torch.version.cuda)&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>tee<span class="w"> </span>-a<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$LOGDIR</span><span class="s2">/build.log&quot;</span>
-nvcc<span class="w"> </span>--version<span class="w"> </span><span class="p">|</span><span class="w"> </span>sed<span class="w"> </span>-n<span class="w"> </span><span class="s1">&#39;1,6p&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>tee<span class="w"> </span>-a<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$LOGDIR</span><span class="s2">/build.log&quot;</span>
+git<span class="w"> </span>-C<span class="w"> </span>test/deepmd-kit<span class="w"> </span>log<span class="w"> </span>-1<span class="w"> </span>--pretty<span class="o">=</span><span class="s1">'commit %H%nsubject %s'</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>tee<span class="w"> </span><span class="s2">"</span><span class="nv">$LOGDIR</span><span class="s2">/build.log"</span>
+git<span class="w"> </span>-C<span class="w"> </span>test/deepmd-kit<span class="w"> </span>describe<span class="w"> </span>--tags<span class="w"> </span>--always<span class="w"> </span>--dirty<span class="w"> </span><span class="p">|</span><span class="w"> </span>tee<span class="w"> </span>-a<span class="w"> </span><span class="s2">"</span><span class="nv">$LOGDIR</span><span class="s2">/build.log"</span>
+python<span class="w"> </span>-W<span class="w"> </span>ignore<span class="w"> </span>-c<span class="w"> </span><span class="s1">'import torch; print("torch", torch.__version__); print("torch_cuda", torch.version.cuda)'</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>tee<span class="w"> </span>-a<span class="w"> </span><span class="s2">"</span><span class="nv">$LOGDIR</span><span class="s2">/build.log"</span>
+nvcc<span class="w"> </span>--version<span class="w"> </span><span class="p">|</span><span class="w"> </span>sed<span class="w"> </span>-n<span class="w"> </span><span class="s1">'1,6p'</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>tee<span class="w"> </span>-a<span class="w"> </span><span class="s2">"</span><span class="nv">$LOGDIR</span><span class="s2">/build.log"</span>
 
 <span class="nb">export</span><span class="w"> </span><span class="nv">MAX_JOBS</span><span class="o">=</span><span class="m">4</span>
 <span class="nb">export</span><span class="w"> </span><span class="nv">CMAKE_BUILD_PARALLEL_LEVEL</span><span class="o">=</span><span class="m">4</span>
-<span class="nb">export</span><span class="w"> </span><span class="nv">CMAKE_ARGS</span><span class="o">=</span><span class="s2">&quot;-DCMAKE_CUDA_ARCHITECTURES=70&quot;</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">CMAKE_ARGS</span><span class="o">=</span><span class="s2">"-DCMAKE_CUDA_ARCHITECTURES=70"</span>
 <span class="nb">export</span><span class="w"> </span><span class="nv">DP_VARIANT</span><span class="o">=</span>cuda
 <span class="nb">export</span><span class="w"> </span><span class="nv">DP_ENABLE_PYTORCH</span><span class="o">=</span><span class="m">1</span>
 <span class="nb">export</span><span class="w"> </span><span class="nv">DP_ENABLE_TENSORFLOW</span><span class="o">=</span><span class="m">0</span>
@@ -517,8 +517,8 @@ python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </sp
 <span class="w">  </span>--no-build-isolation<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--no-deps<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--verbose<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--wheel-dir<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$LOGDIR</span><span class="s2">/wheelhouse&quot;</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>test/deepmd-kit<span class="w"> </span><span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>tee<span class="w"> </span>-a<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$LOGDIR</span><span class="s2">/build.log&quot;</span>
+<span class="w">  </span>--wheel-dir<span class="w"> </span><span class="s2">"</span><span class="nv">$LOGDIR</span><span class="s2">/wheelhouse"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>test/deepmd-kit<span class="w"> </span><span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>tee<span class="w"> </span>-a<span class="w"> </span><span class="s2">"</span><span class="nv">$LOGDIR</span><span class="s2">/build.log"</span>
 </pre></div>
 </div>
 <p>构建日志中应出现类似信息：</p>
@@ -541,24 +541,24 @@ Created deepmd_kit-...whl
 
 <span class="nv">LOGDIR</span><span class="o">=</span>/path/to/logs/deepmd-dpeva-dpa4-YYYYmmdd-HHMMSS
 python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>--no-deps<span class="w"> </span>--force-reinstall<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span><span class="s2">&quot;</span><span class="nv">$LOGDIR</span><span class="s2">&quot;</span>/wheelhouse/deepmd_kit-*.whl<span class="w"> </span><span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>tee<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$LOGDIR</span><span class="s2">/install.log&quot;</span>
+<span class="w">  </span><span class="s2">"</span><span class="nv">$LOGDIR</span><span class="s2">"</span>/wheelhouse/deepmd_kit-*.whl<span class="w"> </span><span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>tee<span class="w"> </span><span class="s2">"</span><span class="nv">$LOGDIR</span><span class="s2">/install.log"</span>
 </pre></div>
 </div>
 <p>安装后核对：</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-W<span class="w"> </span>ignore<span class="w"> </span>-<span class="w"> </span><span class="s">&lt;&lt;&#39;PY&#39;</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-W<span class="w"> </span>ignore<span class="w"> </span>-<span class="w"> </span><span class="s">&lt;&lt;'PY'</span>
 <span class="s">import importlib.metadata as md</span>
 <span class="s">import deepmd</span>
 <span class="s">import torch</span>
 
-<span class="s">print(&quot;deepmd-kit&quot;, md.version(&quot;deepmd-kit&quot;))</span>
-<span class="s">print(&quot;deepmd.__version__&quot;, getattr(deepmd, &quot;__version__&quot;, &quot;NO_ATTR&quot;))</span>
-<span class="s">print(&quot;deepmd.__file__&quot;, deepmd.__file__)</span>
-<span class="s">print(&quot;torch&quot;, torch.__version__)</span>
-<span class="s">print(&quot;torch_cuda&quot;, torch.version.cuda)</span>
+<span class="s">print("deepmd-kit", md.version("deepmd-kit"))</span>
+<span class="s">print("deepmd.__version__", getattr(deepmd, "__version__", "NO_ATTR"))</span>
+<span class="s">print("deepmd.__file__", deepmd.__file__)</span>
+<span class="s">print("torch", torch.__version__)</span>
+<span class="s">print("torch_cuda", torch.version.cuda)</span>
 <span class="s">PY</span>
 
 dp<span class="w"> </span>--version
-dp<span class="w"> </span>--pt<span class="w"> </span>-h<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-E<span class="w"> </span><span class="s1">&#39;embed|eval-desc&#39;</span>
+dp<span class="w"> </span>--pt<span class="w"> </span>-h<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-E<span class="w"> </span><span class="s1">'embed|eval-desc'</span>
 dp<span class="w"> </span>--pt<span class="w"> </span>embed<span class="w"> </span>-h
 </pre></div>
 </div>
@@ -570,21 +570,21 @@ dp<span class="w"> </span>--pt<span class="w"> </span>embed<span class="w"> </sp
 <code class="docutils literal notranslate"><span class="pre">nvalchemiops</span></code> 或 <code class="docutils literal notranslate"><span class="pre">vesin</span></code> 至少一个可导入；本环境采用 <code class="docutils literal notranslate"><span class="pre">vesin[torch]</span></code>。</p>
 <p>先 dry-run，确认不会替换 Torch：</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">source</span><span class="w"> </span>scripts/env/dpeva-dpa4.env
-python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>--dry-run<span class="w"> </span><span class="s1">&#39;vesin[torch]&#39;</span>
+python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>--dry-run<span class="w"> </span><span class="s1">'vesin[torch]'</span>
 </pre></div>
 </div>
 <p>确认只会新增 <code class="docutils literal notranslate"><span class="pre">vesin</span></code> 与 <code class="docutils literal notranslate"><span class="pre">vesin-torch</span></code> 后安装：</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span><span class="s1">&#39;vesin[torch]&#39;</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span><span class="s1">'vesin[torch]'</span>
 </pre></div>
 </div>
 <p>核对：</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-<span class="w"> </span><span class="s">&lt;&lt;&#39;PY&#39;</span>
-<span class="s">for name in (&quot;vesin&quot;, &quot;vesin.torch&quot;, &quot;nvalchemiops&quot;):</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-<span class="w"> </span><span class="s">&lt;&lt;'PY'</span>
+<span class="s">for name in ("vesin", "vesin.torch", "nvalchemiops"):</span>
 <span class="s">    try:</span>
 <span class="s">        mod = __import__(name)</span>
-<span class="s">        print(name, &quot;OK&quot;, getattr(mod, &quot;__version__&quot;, &quot;NO_VERSION&quot;))</span>
+<span class="s">        print(name, "OK", getattr(mod, "__version__", "NO_VERSION"))</span>
 <span class="s">    except Exception as exc:</span>
-<span class="s">        print(name, &quot;MISSING&quot;, type(exc).__name__, exc)</span>
+<span class="s">        print(name, "MISSING", type(exc).__name__, exc)</span>
 <span class="s">PY</span>
 </pre></div>
 </div>
@@ -603,23 +603,23 @@ embedding 的邻居表构建即可运行。</p>
 <li><p>三个 dataset 的 dtype 与 <code class="docutils literal notranslate"><span class="pre">--dtype</span> <span class="pre">fp32</span></code> 一致，且数值全部 finite。</p></li>
 </ul>
 <p>示例 HDF5 读回检查：</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-<span class="w"> </span><span class="s">&lt;&lt;&#39;PY&#39;</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-<span class="w"> </span><span class="s">&lt;&lt;'PY'</span>
 <span class="s">import h5py</span>
 <span class="s">import numpy as np</span>
 
-<span class="s">path = &quot;embedding.hdf5&quot;</span>
-<span class="s">with h5py.File(path, &quot;r&quot;) as f:</span>
+<span class="s">path = "embedding.hdf5"</span>
+<span class="s">with h5py.File(path, "r") as f:</span>
 <span class="s">    keys = []</span>
 <span class="s">    def walk(name, obj):</span>
-<span class="s">        if hasattr(obj, &quot;shape&quot;):</span>
+<span class="s">        if hasattr(obj, "shape"):</span>
 <span class="s">            arr = obj[()]</span>
 <span class="s">            keys.append(name)</span>
 <span class="s">            print(name, obj.shape, obj.dtype, bool(np.isfinite(arr).all()))</span>
 <span class="s">    f.visititems(walk)</span>
-<span class="s">    present = {k.split(&quot;/&quot;)[-1] for k in keys}</span>
-<span class="s">    missing = {&quot;descriptor&quot;, &quot;atomic_feature&quot;, &quot;structural_feature&quot;} - present</span>
+<span class="s">    present = {k.split("/")[-1] for k in keys}</span>
+<span class="s">    missing = {"descriptor", "atomic_feature", "structural_feature"} - present</span>
 <span class="s">    if missing:</span>
-<span class="s">        raise SystemExit(f&quot;missing datasets: {sorted(missing)}&quot;)</span>
+<span class="s">        raise SystemExit(f"missing datasets: {sorted(missing)}")</span>
 <span class="s">PY</span>
 </pre></div>
 </div>
@@ -636,21 +636,21 @@ embedding 的邻居表构建即可运行。</p>
 <span class="w">  </span>--ntasks<span class="o">=</span><span class="m">1</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--gpus-per-node<span class="o">=</span><span class="m">1</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--time<span class="o">=</span><span class="m">00</span>:10:00<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>bash<span class="w"> </span>-lc<span class="w"> </span><span class="s1">&#39;source scripts/env/dpeva-dpa4.env &amp;&amp; python - &lt;&lt;PY</span>
+<span class="w">  </span>bash<span class="w"> </span>-lc<span class="w"> </span><span class="s1">'source scripts/env/dpeva-dpa4.env &amp;&amp; python - &lt;&lt;PY</span>
 <span class="s1">import torch</span>
 <span class="s1">print(torch.__version__)</span>
 <span class="s1">print(torch.version.cuda)</span>
 <span class="s1">print(torch.cuda.is_available())</span>
 <span class="s1">print(torch.cuda.device_count())</span>
 <span class="s1">print(torch.cuda.get_device_name(0))</span>
-<span class="s1">PY&#39;</span>
+<span class="s1">PY'</span>
 </pre></div>
 </div>
 <p>若单卡资源排队过久，<code class="docutils literal notranslate"><span class="pre">8V100V0</span></code> 可能要求每节点 GPU 数量按 4 的倍数申请；此时
 可用 <code class="docutils literal notranslate"><span class="pre">--gpus-per-node=4</span></code> 跑同一单进程验证。不要在同一时间保留多个等价验证作业；
 切换分区前先取消旧的等待作业。</p>
 <p>完整 GPU 验证需要同时检查版本、CUDA 可见性和 <code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">embed</span></code> 输出：</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>srun<span class="w"> </span>--partition<span class="o">=</span>8V100V0<span class="w"> </span>--nodes<span class="o">=</span><span class="m">1</span><span class="w"> </span>--ntasks<span class="o">=</span><span class="m">1</span><span class="w"> </span>--gpus-per-node<span class="o">=</span><span class="m">4</span><span class="w"> </span>--time<span class="o">=</span><span class="m">00</span>:10:00<span class="w"> </span>bash<span class="w"> </span>-lc<span class="w"> </span><span class="s1">&#39;</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>srun<span class="w"> </span>--partition<span class="o">=</span>8V100V0<span class="w"> </span>--nodes<span class="o">=</span><span class="m">1</span><span class="w"> </span>--ntasks<span class="o">=</span><span class="m">1</span><span class="w"> </span>--gpus-per-node<span class="o">=</span><span class="m">4</span><span class="w"> </span>--time<span class="o">=</span><span class="m">00</span>:10:00<span class="w"> </span>bash<span class="w"> </span>-lc<span class="w"> </span><span class="s1">'</span>
 <span class="s1">set -euo pipefail</span>
 <span class="s1">cd /home/pku-jianghong/liuzhaoqing/work/ft2dp-dpeva/dpeva</span>
 <span class="s1">LOGDIR=/path/to/logs/deepmd-dpeva-dpa4-YYYYmmdd-HHMMSS</span>
@@ -666,26 +666,26 @@ embedding 的邻居表构建即可运行。</p>
 <span class="s1">import vesin</span>
 <span class="s1">import vesin.torch</span>
 
-<span class="s1">print(&quot;deepmd-kit&quot;, md.version(&quot;deepmd-kit&quot;))</span>
-<span class="s1">print(&quot;deepmd_version&quot;, getattr(deepmd, &quot;__version__&quot;, &quot;NO_ATTR&quot;))</span>
-<span class="s1">print(&quot;torch&quot;, torch.__version__)</span>
-<span class="s1">print(&quot;torch_cuda&quot;, torch.version.cuda)</span>
-<span class="s1">print(&quot;vesin&quot;, getattr(vesin, &quot;__version__&quot;, &quot;NO_VERSION&quot;))</span>
-<span class="s1">print(&quot;vesin_torch&quot;, getattr(vesin.torch, &quot;__version__&quot;, &quot;NO_VERSION&quot;))</span>
-<span class="s1">print(&quot;cuda_available&quot;, torch.cuda.is_available())</span>
-<span class="s1">print(&quot;cuda_device_count&quot;, torch.cuda.device_count())</span>
+<span class="s1">print("deepmd-kit", md.version("deepmd-kit"))</span>
+<span class="s1">print("deepmd_version", getattr(deepmd, "__version__", "NO_ATTR"))</span>
+<span class="s1">print("torch", torch.__version__)</span>
+<span class="s1">print("torch_cuda", torch.version.cuda)</span>
+<span class="s1">print("vesin", getattr(vesin, "__version__", "NO_VERSION"))</span>
+<span class="s1">print("vesin_torch", getattr(vesin.torch, "__version__", "NO_VERSION"))</span>
+<span class="s1">print("cuda_available", torch.cuda.is_available())</span>
+<span class="s1">print("cuda_device_count", torch.cuda.device_count())</span>
 <span class="s1">if not torch.cuda.is_available():</span>
-<span class="s1">    raise SystemExit(&quot;CUDA is not available&quot;)</span>
-<span class="s1">print(&quot;cuda_device_name&quot;, torch.cuda.get_device_name(0))</span>
+<span class="s1">    raise SystemExit("CUDA is not available")</span>
+<span class="s1">print("cuda_device_name", torch.cuda.get_device_name(0))</span>
 <span class="s1">PY</span>
 
-<span class="s1">out=&quot;${SLURM_TMPDIR:-/tmp}/dpeva-dpa4-sezm-embed-${SLURM_JOB_ID}.hdf5&quot;</span>
+<span class="s1">out="${SLURM_TMPDIR:-/tmp}/dpeva-dpa4-sezm-embed-${SLURM_JOB_ID}.hdf5"</span>
 <span class="s1">export out</span>
-<span class="s1">rm -f &quot;$out&quot;</span>
+<span class="s1">rm -f "$out"</span>
 <span class="s1">dp --pt embed \</span>
-<span class="s1">  -m &quot;$LOGDIR/embed-fixture/sezm_embed.pt&quot; \</span>
-<span class="s1">  -s &quot;$LOGDIR/embed-fixture/system&quot; \</span>
-<span class="s1">  -o &quot;$out&quot; \</span>
+<span class="s1">  -m "$LOGDIR/embed-fixture/sezm_embed.pt" \</span>
+<span class="s1">  -s "$LOGDIR/embed-fixture/system" \</span>
+<span class="s1">  -o "$out" \</span>
 <span class="s1">  --dtype fp32</span>
 
 <span class="s1">python - &lt;&lt;PY</span>
@@ -693,22 +693,22 @@ embedding 的邻居表构建即可运行。</p>
 <span class="s1">import h5py</span>
 <span class="s1">import numpy as np</span>
 
-<span class="s1">out = os.environ[&quot;out&quot;]</span>
-<span class="s1">print(&quot;hdf5_path&quot;, out)</span>
-<span class="s1">with h5py.File(out, &quot;r&quot;) as f:</span>
+<span class="s1">out = os.environ["out"]</span>
+<span class="s1">print("hdf5_path", out)</span>
+<span class="s1">with h5py.File(out, "r") as f:</span>
 <span class="s1">    keys = []</span>
 <span class="s1">    def walk(name, obj):</span>
-<span class="s1">        if hasattr(obj, &quot;shape&quot;):</span>
+<span class="s1">        if hasattr(obj, "shape"):</span>
 <span class="s1">            arr = obj[()]</span>
 <span class="s1">            keys.append(name)</span>
-<span class="s1">            print(&quot;dataset&quot;, name, obj.shape, obj.dtype, bool(np.isfinite(arr).all()))</span>
+<span class="s1">            print("dataset", name, obj.shape, obj.dtype, bool(np.isfinite(arr).all()))</span>
 <span class="s1">    f.visititems(walk)</span>
-<span class="s1">    present = {k.split(&quot;/&quot;)[-1] for k in keys}</span>
-<span class="s1">    missing = {&quot;descriptor&quot;, &quot;atomic_feature&quot;, &quot;structural_feature&quot;} - present</span>
+<span class="s1">    present = {k.split("/")[-1] for k in keys}</span>
+<span class="s1">    missing = {"descriptor", "atomic_feature", "structural_feature"} - present</span>
 <span class="s1">    if missing:</span>
-<span class="s1">        raise SystemExit(&quot;missing datasets: &quot; + &quot;, &quot;.join(sorted(missing)))</span>
+<span class="s1">        raise SystemExit("missing datasets: " + ", ".join(sorted(missing)))</span>
 <span class="s1">PY</span>
-<span class="s1">&#39;</span>
+<span class="s1">'</span>
 </pre></div>
 </div>
 <p>任务完成后用 Slurm 再确认退出状态：</p>

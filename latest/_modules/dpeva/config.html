@@ -41,7 +41,6 @@
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
     <script src="../../_static/translations.js?v=beaddf03"></script>
-    <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
 
 
@@ -50,173 +49,11 @@
 
 const initStyles = () => {
     const defaultStyle = document.createElement('style');
-    defaultStyle.textContent = `pre.mermaid {
-    /* Same as .mermaid-container > pre */
-    display: block;
-    width: 100%;
-}
-
-pre.mermaid > svg {
-    /* Same as .mermaid-container > pre > svg */
-    height: 500px;
-    width: 100%;
-    max-width: 100% !important;
-}`;
+    defaultStyle.textContent = "pre.mermaid {\n    /* Same as .mermaid-container > pre */\n    display: block;\n    width: 100%;\n}\n\npre.mermaid > svg {\n    /* Same as .mermaid-container > pre > svg */\n    height: 500px;\n    width: 100%;\n    max-width: 100% !important;\n}";
     document.head.appendChild(defaultStyle);
 
     const fullscreenStyle = document.createElement('style');
-    fullscreenStyle.textContent = `.mermaid-container {
-    display: flex;
-    flex-direction: row;
-    width: 100%;
-}
-
-.mermaid-container > pre {
-    display: block;
-    width: 100%;
-}
-
-.mermaid-container > pre > svg {
-    height: 500px;
-    width: 100%;
-    max-width: 100% !important;
-}
-
-.mermaid-fullscreen-btn {
-    width: 28px;
-    height: 28px;
-    background: rgba(255, 255, 255, 0.95);
-    border: 1px solid rgba(0, 0, 0, 0.3);
-    border-radius: 4px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-    font-size: 14px;
-    line-height: 1;
-    padding: 0;
-    color: #333;
-}
-
-.mermaid-fullscreen-btn:hover {
-    opacity: 100% !important;
-    background: rgba(255, 255, 255, 1);
-    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
-    transform: scale(1.1);
-}
-
-.mermaid-fullscreen-btn.dark-theme {
-    background: rgba(50, 50, 50, 0.95);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    color: #e0e0e0;
-}
-
-.mermaid-fullscreen-btn.dark-theme:hover {
-    background: rgba(60, 60, 60, 1);
-    box-shadow: 0 3px 10px rgba(255, 255, 255, 0.2);
-}
-
-.mermaid-fullscreen-modal {
-    display: none;
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    width: 95vw;
-    height: 100vh;
-    background: rgba(255, 255, 255, 0.98);
-    z-index: 9999;
-    padding: 20px;
-    overflow: auto;
-}
-
-.mermaid-fullscreen-modal.dark-theme {
-    background: rgba(0, 0, 0, 0.98);
-}
-
-.mermaid-fullscreen-modal.active {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.mermaid-container-fullscreen {
-    position: relative;
-    width: 95vw;
-    height: 90vh;
-    max-width: 95vw;
-    max-height: 90vh;
-    background: white;
-    border-radius: 8px;
-    padding: 20px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-    overflow: auto;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.mermaid-container-fullscreen.dark-theme {
-    background: #1a1a1a;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
-}
-
-.mermaid-container-fullscreen pre.mermaid {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.mermaid-container-fullscreen .mermaid svg {
-    height: 100% !important;
-    width: 100% !important;
-    cursor: grab;
-}
-
-.mermaid-fullscreen-close {
-    position: fixed !important;
-    top: 20px !important;
-    right: 20px !important;
-    width: 40px;
-    height: 40px;
-    background: rgba(255, 255, 255, 0.95);
-    border: 1px solid rgba(0, 0, 0, 0.2);
-    border-radius: 50%;
-    cursor: pointer;
-    z-index: 10000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    transition: all 0.2s;
-    font-size: 24px;
-    line-height: 1;
-    color: #333;
-}
-
-.mermaid-fullscreen-close:hover {
-    background: white;
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
-    transform: scale(1.1);
-}
-
-.mermaid-fullscreen-close.dark-theme {
-    background: rgba(50, 50, 50, 0.95);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: #e0e0e0;
-}
-
-.mermaid-fullscreen-close.dark-theme:hover {
-    background: rgba(60, 60, 60, 1);
-    box-shadow: 0 6px 16px rgba(255, 255, 255, 0.2);
-}
-
-.mermaid-fullscreen-modal .mermaid-fullscreen-btn {
-    display: none !important;
-}`;
+    fullscreenStyle.textContent = ".mermaid-container {\n    position: relative;\n    display: flex;\n    flex-direction: row;\n    width: 100%;\n}\n\n.mermaid-container > pre {\n    display: block;\n    width: 100%;\n}\n\n.mermaid-container > pre > svg {\n    height: 500px;\n    width: 100%;\n    max-width: 100% !important;\n}\n\n.mermaid-fullscreen-btn {\n    position: absolute;\n    width: 28px;\n    height: 28px;\n    background: rgba(255, 255, 255, 0.95);\n    border: 1px solid rgba(0, 0, 0, 0.3);\n    border-radius: 4px;\n    cursor: pointer;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    transition: all 0.2s;\n    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);\n    font-size: 14px;\n    line-height: 1;\n    padding: 0;\n    color: #333;\n}\n\n.mermaid-fullscreen-btn:hover {\n    opacity: 100% !important;\n    background: rgba(255, 255, 255, 1);\n    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);\n    transform: scale(1.1);\n}\n\n.mermaid-fullscreen-btn.dark-theme {\n    background: rgba(50, 50, 50, 0.95);\n    border: 1px solid rgba(255, 255, 255, 0.3);\n    color: #e0e0e0;\n}\n\n.mermaid-fullscreen-btn.dark-theme:hover {\n    background: rgba(60, 60, 60, 1);\n    box-shadow: 0 3px 10px rgba(255, 255, 255, 0.2);\n}\n\n.mermaid-fullscreen-modal {\n    display: none;\n    position: fixed !important;\n    top: 0 !important;\n    left: 0 !important;\n    width: 95vw;\n    height: 100vh;\n    background: rgba(255, 255, 255, 0.98);\n    z-index: 9999;\n    padding: 20px;\n    overflow: auto;\n}\n\n.mermaid-fullscreen-modal.dark-theme {\n    background: rgba(0, 0, 0, 0.98);\n}\n\n.mermaid-fullscreen-modal.active {\n    display: flex;\n    align-items: center;\n    justify-content: center;\n}\n\n.mermaid-container-fullscreen {\n    position: relative;\n    width: 95vw;\n    height: 90vh;\n    max-width: 95vw;\n    max-height: 90vh;\n    background: white;\n    border-radius: 8px;\n    padding: 20px;\n    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);\n    overflow: auto;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n}\n\n.mermaid-container-fullscreen.dark-theme {\n    background: #1a1a1a;\n    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);\n}\n\n.mermaid-container-fullscreen pre.mermaid {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n}\n\n.mermaid-container-fullscreen .mermaid svg {\n    height: 100% !important;\n    width: 100% !important;\n    cursor: grab;\n}\n\n.mermaid-fullscreen-close {\n    position: fixed !important;\n    top: 20px !important;\n    right: 20px !important;\n    width: 40px;\n    height: 40px;\n    background: rgba(255, 255, 255, 0.95);\n    border: 1px solid rgba(0, 0, 0, 0.2);\n    border-radius: 50%;\n    cursor: pointer;\n    z-index: 10000;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);\n    transition: all 0.2s;\n    font-size: 24px;\n    line-height: 1;\n    color: #333;\n}\n\n.mermaid-fullscreen-close:hover {\n    background: white;\n    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);\n    transform: scale(1.1);\n}\n\n.mermaid-fullscreen-close.dark-theme {\n    background: rgba(50, 50, 50, 0.95);\n    border: 1px solid rgba(255, 255, 255, 0.2);\n    color: #e0e0e0;\n}\n\n.mermaid-fullscreen-close.dark-theme:hover {\n    background: rgba(60, 60, 60, 1);\n    box-shadow: 0 6px 16px rgba(255, 255, 255, 0.2);\n}\n\n.mermaid-fullscreen-modal .mermaid-fullscreen-btn {\n    display: none !important;\n}";
     document.head.appendChild(fullscreenStyle);
 }
 
@@ -261,6 +98,32 @@ let darkTheme = isDarkTheme();
 let modal = null;
 let modalContent = null;
 let previousScrollOffset = [window.scrollX, window.scrollY];
+let _lazyObserver = null;
+let _renderQueue = Promise.resolve();
+let closeModal = () => {};
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modal?.classList.contains('active')) {
+        closeModal();
+    }
+});
+
+// Apply d3 zoom to each SVG. Idempotent: an SVG already wrapped is skipped,
+// so this is safe to call both for the initial batch and for diagrams that
+// render lazily once they become visible.
+const addZoomToSvgs = (svgs) => {
+    svgs.each(function() {
+        if (this.getAttribute('data-zoom-applied') === 'true') return;
+        var svg = d3.select(this);
+        svg.html("<g class='wrapper'>" + svg.html() + "</g>");
+        var inner = svg.select("g");
+        var zoom = d3.zoom().on("zoom", function(event) {
+            inner.attr("transform", event.transform);
+        });
+        svg.call(zoom);
+        this.setAttribute('data-zoom-applied', 'true');
+    });
+};
 
 const runMermaid = async (rerun) => {
     console.log("Running mermaid diagrams, rerun =", rerun);
@@ -268,7 +131,15 @@ const runMermaid = async (rerun) => {
     let all_mermaids = document.querySelectorAll(".mermaid");
 
     if (rerun) {
+        // Disconnect any previous lazy rendering observer
+        if (_lazyObserver) {
+            _lazyObserver.disconnect();
+            _lazyObserver = null;
+        }
+
         all_mermaids.forEach((el) => {
+            el.removeAttribute('data-mermaid-deferred');
+            el.removeAttribute('data-mermaid-render-failed');
             if(!el.hasAttribute("data-original-code")) {
                 // store original code
                 // console.log(`Storing original code for first run: `, el.innerHTML);
@@ -285,42 +156,100 @@ const runMermaid = async (rerun) => {
                 el.setAttribute('data-original-code', el.innerHTML);
             }
         });
-        await mermaid.run();
+
+        // Separate visible and hidden elements. Mermaid's layout engine measures
+        // text dimensions via the DOM, which fails for elements hidden by a parent
+        // (e.g., Reveal.js non-active slides, sphinx-design unopened tabs),
+        // producing broken SVGs. Render visible elements now, defer hidden ones.
+        const visible = [];
+        const hidden = [];
+        all_mermaids.forEach((el) => {
+            // offsetParent is null for display:none ancestors.
+            // getClientRects().length > 0 catches position:fixed elements
+            // (which also have null offsetParent but are still visible).
+            if (el.offsetParent !== null || el.getClientRects().length > 0) {
+                visible.push(el);
+            } else {
+                hidden.push(el);
+                el.setAttribute('data-mermaid-deferred', 'true');
+            }
+        });
+
+        if (visible.length > 0) {
+            try {
+                await mermaid.run({ nodes: visible });
+            } catch (e) {
+                console.error("Mermaid rendering failed:", e);
+            }
+        }
+
+        // Lazily render hidden elements when they become visible.
+        // Uses a promise chain (_renderQueue) to serialize rendering,
+        // since IntersectionObserver may report multiple entries at once
+        // and mermaid.run() is not safe to call concurrently.
+        if (hidden.length > 0) {
+            if (typeof IntersectionObserver === 'undefined') {
+                console.warn("IntersectionObserver not available; hidden mermaid diagrams will not render.");
+            } else {
+                _renderQueue = Promise.resolve();
+                _lazyObserver = new IntersectionObserver((entries) => {
+                    for (const entry of entries) {
+                        if (entry.isIntersecting && entry.target.getAttribute("data-processed") !== "true") {
+                            _lazyObserver.unobserve(entry.target);
+                            const el = entry.target;
+                            _renderQueue = _renderQueue.then(async () => {
+                                try {
+                                    await mermaid.run({ nodes: [el] });
+                                    el.removeAttribute('data-mermaid-deferred');
+                                    // Apply zoom to the now-rendered diagram, matching
+                                    // the decoration visible diagrams receive.
+                                    if (false) {
+                                        addZoomToSvgs(d3.selectAll("").select(function() {
+                                            return this.querySelector("svg");
+                                        }));
+                                    }
+                                } catch (e) {
+                                    console.error("Mermaid deferred rendering failed:", e);
+                                    el.removeAttribute('data-mermaid-deferred');
+                                    el.setAttribute('data-mermaid-render-failed', 'true');
+                                }
+                            });
+                        }
+                    }
+                });
+                hidden.forEach((el) => _lazyObserver.observe(el));
+            }
+        }
     }
 
     all_mermaids = document.querySelectorAll(".mermaid");
-    const mermaids_processed = document.querySelectorAll(".mermaid[data-processed='true']");
+    // Exclude deferred (hidden) and render-failed elements from completion checks
+    const mermaids_active = document.querySelectorAll(".mermaid:not([data-mermaid-deferred]):not([data-mermaid-render-failed])");
+    const mermaids_processed = document.querySelectorAll(".mermaid:not([data-mermaid-deferred]):not([data-mermaid-render-failed])[data-processed='true']");
 
-    if ("False" === "True") {
-        const mermaids_to_add_zoom = -1 === -1 ? all_mermaids.length : -1;
+    if (false) {
+        const mermaids_to_add_zoom = 0 === -1 ? mermaids_active.length : 0;
         if(mermaids_to_add_zoom > 0) {
-            var svgs = d3.selectAll("");
-            if(all_mermaids.length !== mermaids_processed.length) {
+            var svgs = d3.selectAll("").select(function() {
+                return this.querySelector("svg");
+            });
+            // Wait until every active (visible) diagram has rendered. Deferred
+            // diagrams are excluded, so a fixed d3_node_count that counts a
+            // hidden diagram no longer loops forever waiting for its SVG.
+            if(mermaids_active.length !== mermaids_processed.length) {
                 setTimeout(() => runMermaid(false), 200);
                 return;
-            } else if(svgs.size() !== mermaids_to_add_zoom) {
-                setTimeout(() => runMermaid(false), 200);
-                return;
-            } else {
-                svgs.each(function() {
-                    var svg = d3.select(this);
-                    svg.html("<g class='wrapper'>" + svg.html() + "</g>");
-                    var inner = svg.select("g");
-                    var zoom = d3.zoom().on("zoom", function(event) {
-                        inner.attr("transform", event.transform);
-                    });
-                    svg.call(zoom);
-                });
             }
+            addZoomToSvgs(svgs);
         }
-    } else if(all_mermaids.length !== mermaids_processed.length) {
+    } else if(mermaids_active.length !== mermaids_processed.length) {
         // Wait for mermaid to process all diagrams
         setTimeout(() => runMermaid(false), 200);
         return;
     }
 
     // Stop here if not adding fullscreen capability
-    if ("True" !== "True") return;
+    if (!true) return;
 
     if (modal !== null ) {
         // Destroy existing modal
@@ -343,7 +272,7 @@ const runMermaid = async (rerun) => {
     modalContent = modal.querySelector('.mermaid-container-fullscreen');
     const closeBtn = modal.querySelector('.mermaid-fullscreen-close');
 
-    const closeModal = () => {
+    closeModal = () => {
         modal.classList.remove('active');
         modalContent.innerHTML = '';
         document.body.style.overflow = ''
@@ -354,12 +283,6 @@ const runMermaid = async (rerun) => {
     modal.addEventListener('click', (e) => {
         if (e.target === modal) closeModal();
     });
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && modal.classList.contains('active')) {
-            closeModal();
-        }
-    });
-
     document.querySelectorAll('.mermaid').forEach((mermaidDiv) => {
         if (mermaidDiv.parentNode.classList.contains('mermaid-container') ||
             mermaidDiv.closest('.mermaid-fullscreen-modal')) {
@@ -379,8 +302,8 @@ const runMermaid = async (rerun) => {
         const fullscreenBtn = document.createElement('button');
         fullscreenBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
         fullscreenBtn.setAttribute('aria-label', 'View diagram in fullscreen');
-        fullscreenBtn.textContent = '⛶';
-        fullscreenBtn.style.opacity = '50%';
+        fullscreenBtn.textContent = "\u26f6";
+        fullscreenBtn.style.opacity = "50%";
 
         // Calculate dynamic position based on diagram's margin and padding
         const diagramStyle = window.getComputedStyle(mermaidDiv);
@@ -392,7 +315,7 @@ const runMermaid = async (rerun) => {
         fullscreenBtn.style.right = `${marginRight + paddingRight + 4}px`;
 
         fullscreenBtn.addEventListener('click', () => {
-            previousScrollOffset = [window.scroll, window.scrollY];
+            previousScrollOffset = [window.scrollX, window.scrollY];
             const clone = mermaidDiv.cloneNode(true);
             modalContent.innerHTML = '';
             modalContent.appendChild(clone);
@@ -404,9 +327,9 @@ const runMermaid = async (rerun) => {
                 svg.style.width = '100%';
                 svg.style.height = 'auto';
                 svg.style.maxWidth = '100%';
-                svg.style.sdisplay = 'block';
+                svg.style.display = 'block';
 
-                if ("False" === "True") {
+                if (false) {
                     setTimeout(() => {
                         const g = svg.querySelector('g');
                         if (g) {
@@ -429,8 +352,11 @@ const runMermaid = async (rerun) => {
     });
 };
 
+
+
 const load = async () => {
     initStyles();
+
 
     await runMermaid(true);
 
@@ -440,10 +366,8 @@ const load = async () => {
             darkTheme = newDarkTheme;
             console.log("Theme change detected, re-running mermaid with", darkTheme ? "dark" : "default", "theme");
             await mermaid.initialize(
-                {...JSON.parse(
-                    `{"startOnLoad": false}`
-                ),
-                ...{ darkMode: darkTheme, theme: darkTheme ? 'dark' : 'default' },
+                {...{"startOnLoad": false},
+                ...{ darkMode: darkTheme, theme: darkTheme ? "dark" : "default" },
                 }
             );
             await runMermaid(true);
@@ -468,10 +392,8 @@ const load = async () => {
 
 console.log("Initializing mermaid with", darkTheme ? "dark" : "default", "theme");
 mermaid.initialize(
-    {...JSON.parse(
-        `{"startOnLoad": false}`
-    ),
-    ...{ darkMode: darkTheme, theme: darkTheme ? 'dark' : 'default' },
+    {...{"startOnLoad": false},
+    ...{ darkMode: darkTheme, theme: darkTheme ? "dark" : "default" },
     }
 );
 
@@ -754,9 +676,9 @@ document.write(`
                 <article class="bd-article">
                   
   <h1>dpeva.config 源代码</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span></span><span class="sd">"""</span>
 <span class="sd">Centralized Configuration Management using Pydantic V2.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
@@ -809,37 +731,37 @@ document.write(`
 <div class="viewcode-block" id="SubmissionConfig">
 <a class="viewcode-back" href="../../api/config/submission.html#dpeva.config.SubmissionConfig">[文档]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">SubmissionConfig</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Configuration for job submission.&quot;&quot;&quot;</span>
-    <span class="n">backend</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;local&quot;</span><span class="p">,</span> <span class="s2">&quot;slurm&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+<span class="w">    </span><span class="sd">"""Configuration for job submission."""</span>
+    <span class="n">backend</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"local"</span><span class="p">,</span> <span class="s2">"slurm"</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="n">DEFAULT_BACKEND</span><span class="p">,</span> 
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Execution backend.&quot;</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Execution backend."</span>
     <span class="p">)</span>
     <span class="n">slurm_config</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">,</span> 
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Slurm specific parameters (partition, nodes, etc).&quot;</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Slurm specific parameters (partition, nodes, etc)."</span>
     <span class="p">)</span>
     <span class="n">env_setup</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="n">default</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> 
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;List of shell commands to execute before running the task (e.g., `module load cuda`).&quot;</span>
+        <span class="n">default</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span> 
+        <span class="n">description</span><span class="o">=</span><span class="s2">"List of shell commands to execute before running the task (e.g., `module load cuda`)."</span>
     <span class="p">)</span>
     <span class="n">slurm_array</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="kc">False</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;When true, workflows that support homogeneous Slurm arrays may submit arrays instead of one job per task.&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"When true, workflows that support homogeneous Slurm arrays may submit arrays instead of one job per task."</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">slurm_array_task_limit</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="kc">None</span><span class="p">,</span>
         <span class="n">gt</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Optional Slurm array throttle, rendered as --array=0-N</span><span class="si">%li</span><span class="s2">mit.&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Optional Slurm array throttle, rendered as --array=0-N</span><span class="si">%li</span><span class="s2">mit."</span><span class="p">,</span>
     <span class="p">)</span>
 
 <div class="viewcode-block" id="SubmissionConfig.validate_env_setup">
 <a class="viewcode-back" href="../../api/config/submission.html#dpeva.config.SubmissionConfig.validate_env_setup">[文档]</a>
-    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;env_setup&quot;</span><span class="p">)</span>
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"env_setup"</span><span class="p">)</span>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">validate_env_setup</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Converts list of commands to a newline-separated string.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Converts list of commands to a newline-separated string."""</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
-            <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+            <span class="k">return</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">v</span></div>
 </div>
 
@@ -847,77 +769,77 @@ document.write(`
 <div class="viewcode-block" id="BaseWorkflowConfig">
 <a class="viewcode-back" href="../../api/config/submission.html#dpeva.config.BaseWorkflowConfig">[文档]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">BaseWorkflowConfig</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Base configuration for all workflows.&quot;&quot;&quot;</span>
-    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s1">&#39;ignore&#39;</span><span class="p">,</span> <span class="n">populate_by_name</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">protected_namespaces</span><span class="o">=</span><span class="p">())</span>
+<span class="w">    </span><span class="sd">"""Base configuration for all workflows."""</span>
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s1">'ignore'</span><span class="p">,</span> <span class="n">populate_by_name</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">protected_namespaces</span><span class="o">=</span><span class="p">())</span>
 
     <span class="n">work_dir</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default_factory</span><span class="o">=</span><span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">,</span> 
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Working directory.&quot;</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Working directory."</span>
     <span class="p">)</span>
-    <span class="n">omp_threads</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;auto&quot;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+    <span class="n">omp_threads</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"auto"</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="n">DEFAULT_OMP_THREADS</span><span class="p">,</span> 
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;OpenMP threads (set to &#39;auto&#39; to use all cores).&quot;</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"OpenMP threads (set to 'auto' to use all cores)."</span>
     <span class="p">)</span>
     <span class="n">dp_backend</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="n">DEFAULT_DP_BACKEND</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;DeepMD-kit backend (e.g. &#39;pt&#39;, &#39;tf&#39;, &#39;jax&#39;, &#39;pd&#39;).&quot;</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"DeepMD-kit backend (e.g. 'pt', 'tf', 'jax', 'pd')."</span>
     <span class="p">)</span>
     <span class="n">submission</span><span class="p">:</span> <span class="n">SubmissionConfig</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default_factory</span><span class="o">=</span><span class="n">SubmissionConfig</span><span class="p">,</span> 
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Submission configuration.&quot;</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Submission configuration."</span>
     <span class="p">)</span>
     
 <div class="viewcode-block" id="BaseWorkflowConfig.validate_dp_backend">
 <a class="viewcode-back" href="../../api/config/submission.html#dpeva.config.BaseWorkflowConfig.validate_dp_backend">[文档]</a>
-    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;dp_backend&quot;</span><span class="p">)</span>
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"dp_backend"</span><span class="p">)</span>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">validate_dp_backend</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validates that the DeepMD backend is supported.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Validates that the DeepMD backend is supported."""</span>
         <span class="k">if</span> <span class="n">v</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">VALID_DP_BACKENDS</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid dp_backend &#39;</span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2">&#39;. Valid options: </span><span class="si">{</span><span class="n">VALID_DP_BACKENDS</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Invalid dp_backend '</span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2">'. Valid options: </span><span class="si">{</span><span class="n">VALID_DP_BACKENDS</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">v</span></div>
 
 
 <div class="viewcode-block" id="BaseWorkflowConfig.validate_omp_threads">
 <a class="viewcode-back" href="../../api/config/submission.html#dpeva.config.BaseWorkflowConfig.validate_omp_threads">[文档]</a>
-    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;omp_threads&quot;</span><span class="p">)</span>
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"omp_threads"</span><span class="p">)</span>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">validate_omp_threads</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validates OMP thread count and resolves &#39;auto&#39;.&quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">v</span> <span class="o">==</span> <span class="s2">&quot;auto&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Validates OMP thread count and resolves 'auto'."""</span>
+        <span class="k">if</span> <span class="n">v</span> <span class="o">==</span> <span class="s2">"auto"</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">cpu_count</span><span class="p">()</span> <span class="ow">or</span> <span class="mi">1</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">and</span> <span class="n">v</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;omp_threads must be &gt;= 1&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"omp_threads must be &gt;= 1"</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">v</span></div>
 
 
 <div class="viewcode-block" id="BaseWorkflowConfig.extract_flat_submission_config">
 <a class="viewcode-back" href="../../api/config/submission.html#dpeva.config.BaseWorkflowConfig.extract_flat_submission_config">[文档]</a>
-    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s1">&#39;before&#39;</span><span class="p">)</span>
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s1">'before'</span><span class="p">)</span>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">extract_flat_submission_config</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Allow flat config to populate nested submission config for backward compatibility.</span>
-<span class="sd">        e.g. {&#39;backend&#39;: &#39;slurm&#39;} -&gt; {&#39;submission&#39;: {&#39;backend&#39;: &#39;slurm&#39;}}</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        e.g. {'backend': 'slurm'} -&gt; {'submission': {'backend': 'slurm'}}</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
             <span class="c1"># If submission is not explicitly provided, try to build it from flat keys</span>
-            <span class="k">if</span> <span class="s2">&quot;submission&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
-                <span class="n">backend</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;backend&quot;</span><span class="p">,</span> <span class="n">DEFAULT_BACKEND</span><span class="p">)</span>
-                <span class="n">slurm_config</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;slurm_config&quot;</span><span class="p">,</span> <span class="p">{})</span>
-                <span class="n">env_setup</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;env_setup&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="s2">"submission"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+                <span class="n">backend</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"backend"</span><span class="p">,</span> <span class="n">DEFAULT_BACKEND</span><span class="p">)</span>
+                <span class="n">slurm_config</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"slurm_config"</span><span class="p">,</span> <span class="p">{})</span>
+                <span class="n">env_setup</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"env_setup"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
                 <span class="n">submission_config</span> <span class="o">=</span> <span class="p">{</span>
-                    <span class="s2">&quot;backend&quot;</span><span class="p">:</span> <span class="n">backend</span><span class="p">,</span>
-                    <span class="s2">&quot;slurm_config&quot;</span><span class="p">:</span> <span class="n">slurm_config</span><span class="p">,</span>
-                    <span class="s2">&quot;env_setup&quot;</span><span class="p">:</span> <span class="n">env_setup</span>
+                    <span class="s2">"backend"</span><span class="p">:</span> <span class="n">backend</span><span class="p">,</span>
+                    <span class="s2">"slurm_config"</span><span class="p">:</span> <span class="n">slurm_config</span><span class="p">,</span>
+                    <span class="s2">"env_setup"</span><span class="p">:</span> <span class="n">env_setup</span>
                 <span class="p">}</span>
-                <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;slurm_array&quot;</span><span class="p">,</span> <span class="s2">&quot;slurm_array_task_limit&quot;</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"slurm_array"</span><span class="p">,</span> <span class="s2">"slurm_array_task_limit"</span><span class="p">):</span>
                     <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
                         <span class="n">submission_config</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
 
-                <span class="c1"># Only create if there&#39;s something non-default or if backend is present</span>
+                <span class="c1"># Only create if there's something non-default or if backend is present</span>
                 <span class="c1"># But to be safe, we always populate it</span>
-                <span class="n">data</span><span class="p">[</span><span class="s2">&quot;submission&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">submission_config</span>
+                <span class="n">data</span><span class="p">[</span><span class="s2">"submission"</span><span class="p">]</span> <span class="o">=</span> <span class="n">submission_config</span>
         <span class="k">return</span> <span class="n">data</span></div>
 </div>
 
@@ -925,45 +847,45 @@ document.write(`
 <div class="viewcode-block" id="FeatureConfig">
 <a class="viewcode-back" href="../../api/config/feature.html#dpeva.config.FeatureConfig">[文档]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">FeatureConfig</span><span class="p">(</span><span class="n">BaseWorkflowConfig</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Configuration for Feature Generation Workflow.&quot;&quot;&quot;</span>
-    <span class="n">data_path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Path to dataset.&quot;</span><span class="p">)</span>
-    <span class="n">model_path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Path to model file.&quot;</span><span class="p">)</span>
-    <span class="n">model_head</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Model head name.&quot;</span><span class="p">)</span>
-    <span class="n">feature_kind</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;descriptor&quot;</span><span class="p">,</span> <span class="s2">&quot;fitting_last_layer&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="s2">&quot;descriptor&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="sd">"""Configuration for Feature Generation Workflow."""</span>
+    <span class="n">data_path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Path to dataset."</span><span class="p">)</span>
+    <span class="n">model_path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Path to model file."</span><span class="p">)</span>
+    <span class="n">model_head</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Model head name."</span><span class="p">)</span>
+    <span class="n">feature_kind</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"descriptor"</span><span class="p">,</span> <span class="s2">"fitting_last_layer"</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="s2">"descriptor"</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="p">(</span>
-            <span class="s2">&quot;Feature type to export. `fitting_last_layer` requires Python mode &quot;</span>
-            <span class="s2">&quot;unless `feature_exporter=&#39;embed&#39;` is used.&quot;</span>
+            <span class="s2">"Feature type to export. `fitting_last_layer` requires Python mode "</span>
+            <span class="s2">"unless `feature_exporter='embed'` is used."</span>
         <span class="p">),</span>
     <span class="p">)</span>
-    <span class="n">feature_exporter</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;eval_desc&quot;</span><span class="p">,</span> <span class="s2">&quot;embed&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="s2">&quot;eval_desc&quot;</span><span class="p">,</span>
+    <span class="n">feature_exporter</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"eval_desc"</span><span class="p">,</span> <span class="s2">"embed"</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="s2">"eval_desc"</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="p">(</span>
-            <span class="s2">&quot;Feature export implementation for CLI mode. `eval_desc` preserves &quot;</span>
-            <span class="s2">&quot;legacy `.npy` descriptor output; `embed` writes DeepMD HDF5 embeddings.&quot;</span>
+            <span class="s2">"Feature export implementation for CLI mode. `eval_desc` preserves "</span>
+            <span class="s2">"legacy `.npy` descriptor output; `embed` writes DeepMD HDF5 embeddings."</span>
         <span class="p">),</span>
     <span class="p">)</span>
-    <span class="n">embedding_dtype</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;fp32&quot;</span><span class="p">,</span> <span class="s2">&quot;fp64&quot;</span><span class="p">,</span> <span class="s2">&quot;native&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="s2">&quot;fp32&quot;</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Output dtype used by DeepMD `dp embed`.&quot;</span><span class="p">,</span>
+    <span class="n">embedding_dtype</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"fp32"</span><span class="p">,</span> <span class="s2">"fp64"</span><span class="p">,</span> <span class="s2">"native"</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="s2">"fp32"</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Output dtype used by DeepMD `dp embed`."</span><span class="p">,</span>
     <span class="p">)</span>
     
-    <span class="n">output_mode</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;atomic&quot;</span><span class="p">,</span> <span class="s2">&quot;structural&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+    <span class="n">output_mode</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"atomic"</span><span class="p">,</span> <span class="s2">"structural"</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="n">DEFAULT_DESC_OUTPUT_MODE</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Descriptor output format. Options: `atomic` (per-atom features) or `structural` (global features).&quot;</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Descriptor output format. Options: `atomic` (per-atom features) or `structural` (global features)."</span>
     <span class="p">)</span>
     <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">DEFAULT_DESC_BATCH_SIZE</span><span class="p">,</span> <span class="n">gt</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-    <span class="n">mode</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;cli&quot;</span><span class="p">,</span> <span class="s2">&quot;python&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">DEFAULT_FEATURE_MODE</span>
+    <span class="n">mode</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"cli"</span><span class="p">,</span> <span class="s2">"python"</span><span class="p">]</span> <span class="o">=</span> <span class="n">DEFAULT_FEATURE_MODE</span>
     
     <span class="n">savedir</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 
-    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s1">&#39;after&#39;</span><span class="p">)</span>
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s1">'after'</span><span class="p">)</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">set_default_savedir</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sets default savedir based on model and data names.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Sets default savedir based on model and data names."""</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">savedir</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">model_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_path</span><span class="o">.</span><span class="n">stem</span>
             <span class="n">data_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_path</span><span class="o">.</span><span class="n">name</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">savedir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;desc-</span><span class="si">{</span><span class="n">model_name</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">data_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">savedir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="sa">f</span><span class="s2">"desc-</span><span class="si">{</span><span class="n">model_name</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">data_name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span></div>
 
 
@@ -971,290 +893,290 @@ document.write(`
 <div class="viewcode-block" id="ExplorationConfig">
 <a class="viewcode-back" href="../../api/config/exploration.html#dpeva.config.ExplorationConfig">[文档]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ExplorationConfig</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Configuration for optional trajectory exploration backends.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Configuration for optional trajectory exploration backends."""</span>
 
-    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s1">&#39;ignore&#39;</span><span class="p">,</span> <span class="n">populate_by_name</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">protected_namespaces</span><span class="o">=</span><span class="p">())</span>
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s1">'ignore'</span><span class="p">,</span> <span class="n">populate_by_name</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">protected_namespaces</span><span class="o">=</span><span class="p">())</span>
 
     <span class="n">work_dir</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default_factory</span><span class="o">=</span><span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Working directory.&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Working directory."</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="n">backend</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;atst-tools&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="s2">&quot;atst-tools&quot;</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Exploration backend name.&quot;</span><span class="p">,</span>
+    <span class="n">backend</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"atst-tools"</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="s2">"atst-tools"</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Exploration backend name."</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="n">workflow_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;md&quot;</span><span class="p">,</span> <span class="s2">&quot;relax&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+    <span class="n">workflow_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"md"</span><span class="p">,</span> <span class="s2">"relax"</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="o">...</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Exploration workflow type supported by the first ATST backend.&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Exploration workflow type supported by the first ATST backend."</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">backend_config_path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="o">...</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Path to the backend-native configuration file.&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Path to the backend-native configuration file."</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">input_structure_paths</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Optional input structures to pass through the exploration request.&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Optional input structures to pass through the exploration request."</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">result_structure_paths</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Optional result structures to collect after backend execution.&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Optional result structures to collect after backend execution."</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">metadata</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Backend-specific metadata carried through the request.&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Backend-specific metadata carried through the request."</span><span class="p">,</span>
     <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="AnalysisConfig">
 <a class="viewcode-back" href="../../api/config/analysis.html#dpeva.config.AnalysisConfig">[文档]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">AnalysisConfig</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Configuration for Analysis Workflow (Post-processing).&quot;&quot;&quot;</span>
-    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s1">&#39;ignore&#39;</span><span class="p">,</span> <span class="n">populate_by_name</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">protected_namespaces</span><span class="o">=</span><span class="p">())</span>
+<span class="w">    </span><span class="sd">"""Configuration for Analysis Workflow (Post-processing)."""</span>
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s1">'ignore'</span><span class="p">,</span> <span class="n">populate_by_name</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">protected_namespaces</span><span class="o">=</span><span class="p">())</span>
 
-    <span class="n">mode</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;model_test&quot;</span><span class="p">,</span> <span class="s2">&quot;dataset&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="s2">&quot;model_test&quot;</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Analysis mode.&quot;</span><span class="p">)</span>
-    <span class="n">result_dir</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Path to DP test results directory.&quot;</span><span class="p">)</span>
-    <span class="n">dataset_dir</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Path to dataset directory for dataset analysis mode.&quot;</span><span class="p">)</span>
-    <span class="n">output_dir</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">DEFAULT_ANALYSIS_OUTPUT_DIR</span><span class="p">),</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Output directory for analysis results.&quot;</span><span class="p">)</span>
+    <span class="n">mode</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"model_test"</span><span class="p">,</span> <span class="s2">"dataset"</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="s2">"model_test"</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Analysis mode."</span><span class="p">)</span>
+    <span class="n">result_dir</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Path to DP test results directory."</span><span class="p">)</span>
+    <span class="n">dataset_dir</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Path to dataset directory for dataset analysis mode."</span><span class="p">)</span>
+    <span class="n">output_dir</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">DEFAULT_ANALYSIS_OUTPUT_DIR</span><span class="p">),</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Output directory for analysis results."</span><span class="p">)</span>
     <span class="n">results_prefix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">DEFAULT_RESULTS_PREFIX</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Prefix of DP test result files (must match inference results_prefix).&quot;</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Prefix of DP test result files (must match inference results_prefix)."</span>
     <span class="p">)</span>
     <span class="n">type_map</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="kc">None</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Atom type map (e.g. [&#39;Fe&#39;, &#39;C&#39;]). Required for model_test mode when data_path is not provided.&quot;</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Atom type map (e.g. ['Fe', 'C']). Required for model_test mode when data_path is not provided."</span>
     <span class="p">)</span>
-    <span class="n">data_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Path to original dataset (for robust composition loading).&quot;</span><span class="p">)</span>
-    <span class="n">ref_energies</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Reference energies per element for cohesive energy calculation.&quot;</span><span class="p">)</span>
-    <span class="n">enable_cohesive_energy</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Whether to enable cohesive energy statistics and plotting.&quot;</span><span class="p">)</span>
+    <span class="n">data_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Path to original dataset (for robust composition loading)."</span><span class="p">)</span>
+    <span class="n">ref_energies</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Reference energies per element for cohesive energy calculation."</span><span class="p">)</span>
+    <span class="n">enable_cohesive_energy</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Whether to enable cohesive energy statistics and plotting."</span><span class="p">)</span>
     <span class="n">allow_ref_energy_lstsq_completion</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="kc">False</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Whether to fit missing element reference energies with least squares when provided ref_energies is incomplete.&quot;</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Whether to fit missing element reference energies with least squares when provided ref_energies is incomplete."</span>
     <span class="p">)</span>
-    <span class="n">plot_level</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;basic&quot;</span><span class="p">,</span> <span class="s2">&quot;full&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="s2">&quot;full&quot;</span><span class="p">,</span>
+    <span class="n">plot_level</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"basic"</span><span class="p">,</span> <span class="s2">"full"</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="s2">"full"</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="p">(</span>
-            <span class="s2">&quot;Plot output level. &#39;basic&#39; keeps the daily core scope &quot;</span>
-            <span class="s2">&quot;(parity, single distributions, error distributions, dataset element statistics), &quot;</span>
-            <span class="s2">&quot;while &#39;full&#39; adds publication/supplement plots &quot;</span>
-            <span class="s2">&quot;(enhanced parity, overlay, with_error, and dataset cohesive-energy distribution when available).&quot;</span>
+            <span class="s2">"Plot output level. 'basic' keeps the daily core scope "</span>
+            <span class="s2">"(parity, single distributions, error distributions, dataset element statistics), "</span>
+            <span class="s2">"while 'full' adds publication/supplement plots "</span>
+            <span class="s2">"(enhanced parity, overlay, with_error, and dataset cohesive-energy distribution when available)."</span>
         <span class="p">)</span>
     <span class="p">)</span>
-    <span class="n">enhanced_parity_renderer</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;auto&quot;</span><span class="p">,</span> <span class="s2">&quot;scatter&quot;</span><span class="p">,</span> <span class="s2">&quot;hexbin&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="s2">&quot;auto&quot;</span><span class="p">,</span>
+    <span class="n">enhanced_parity_renderer</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"auto"</span><span class="p">,</span> <span class="s2">"scatter"</span><span class="p">,</span> <span class="s2">"hexbin"</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="s2">"auto"</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="p">(</span>
-            <span class="s2">&quot;Renderer policy for enhanced parity main panels. &quot;</span>
-            <span class="s2">&quot;&#39;auto&#39; keeps quantity-aware defaults, while &#39;scatter&#39; and &#39;hexbin&#39; &quot;</span>
-            <span class="s2">&quot;force the same main renderer across enhanced parity plots.&quot;</span>
+            <span class="s2">"Renderer policy for enhanced parity main panels. "</span>
+            <span class="s2">"'auto' keeps quantity-aware defaults, while 'scatter' and 'hexbin' "</span>
+            <span class="s2">"force the same main renderer across enhanced parity plots."</span>
         <span class="p">),</span>
     <span class="p">)</span>
     <span class="n">slow_plot_threshold_seconds</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="mf">60.0</span><span class="p">,</span>
         <span class="n">gt</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Warning threshold for single plot elapsed time in seconds.&quot;</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Warning threshold for single plot elapsed time in seconds."</span>
     <span class="p">)</span>
     <span class="n">submission</span><span class="p">:</span> <span class="n">SubmissionConfig</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default_factory</span><span class="o">=</span><span class="n">SubmissionConfig</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Submission configuration.&quot;</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Submission configuration."</span>
     <span class="p">)</span>
     <span class="n">config_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="kc">None</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Path to configuration file for Slurm self-submission.&quot;</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Path to configuration file for Slurm self-submission."</span>
     <span class="p">)</span>
 
 <div class="viewcode-block" id="AnalysisConfig.extract_flat_submission_config">
 <a class="viewcode-back" href="../../api/config/analysis.html#dpeva.config.AnalysisConfig.extract_flat_submission_config">[文档]</a>
-    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s1">&#39;before&#39;</span><span class="p">)</span>
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s1">'before'</span><span class="p">)</span>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">extract_flat_submission_config</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="s2">&quot;submission&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="s2">"submission"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
             <span class="n">submission_config</span> <span class="o">=</span> <span class="p">{</span>
-                <span class="s2">&quot;backend&quot;</span><span class="p">:</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;backend&quot;</span><span class="p">,</span> <span class="n">DEFAULT_BACKEND</span><span class="p">),</span>
-                <span class="s2">&quot;slurm_config&quot;</span><span class="p">:</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;slurm_config&quot;</span><span class="p">,</span> <span class="p">{}),</span>
-                <span class="s2">&quot;env_setup&quot;</span><span class="p">:</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;env_setup&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+                <span class="s2">"backend"</span><span class="p">:</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"backend"</span><span class="p">,</span> <span class="n">DEFAULT_BACKEND</span><span class="p">),</span>
+                <span class="s2">"slurm_config"</span><span class="p">:</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"slurm_config"</span><span class="p">,</span> <span class="p">{}),</span>
+                <span class="s2">"env_setup"</span><span class="p">:</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"env_setup"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
             <span class="p">}</span>
-            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;slurm_array&quot;</span><span class="p">,</span> <span class="s2">&quot;slurm_array_task_limit&quot;</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"slurm_array"</span><span class="p">,</span> <span class="s2">"slurm_array_task_limit"</span><span class="p">):</span>
                 <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
                     <span class="n">submission_config</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
-            <span class="n">data</span><span class="p">[</span><span class="s2">&quot;submission&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">submission_config</span>
+            <span class="n">data</span><span class="p">[</span><span class="s2">"submission"</span><span class="p">]</span> <span class="o">=</span> <span class="n">submission_config</span>
         <span class="k">return</span> <span class="n">data</span></div>
 
 
-    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s1">&#39;after&#39;</span><span class="p">)</span>
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s1">'after'</span><span class="p">)</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">validate_mode_paths</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;model_test&quot;</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">result_dir</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;result_dir is required when mode=&#39;model_test&#39;&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;model_test&quot;</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">type_map</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;type_map is required when mode=&#39;model_test&#39; unless data_path is provided&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;dataset&quot;</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataset_dir</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;dataset_dir is required when mode=&#39;dataset&#39;&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s2">"model_test"</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">result_dir</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"result_dir is required when mode='model_test'"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s2">"model_test"</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">type_map</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"type_map is required when mode='model_test' unless data_path is provided"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s2">"dataset"</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataset_dir</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"dataset_dir is required when mode='dataset'"</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span></div>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">DataCleaningConfig</span><span class="p">(</span><span class="n">BaseWorkflowConfig</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Configuration for Data Cleaning Workflow.&quot;&quot;&quot;</span>
-    <span class="n">dataset_dir</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Path to labeled dataset directory (dpdata format).&quot;</span><span class="p">)</span>
-    <span class="n">result_dir</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Path to inference result directory (`*.out` files).&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="sd">"""Configuration for Data Cleaning Workflow."""</span>
+    <span class="n">dataset_dir</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Path to labeled dataset directory (dpdata format)."</span><span class="p">)</span>
+    <span class="n">result_dir</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Path to inference result directory (`*.out` files)."</span><span class="p">)</span>
     <span class="n">output_dir</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">Path</span><span class="p">(</span><span class="n">DEFAULT_CLEAN_OUTPUT_DIR</span><span class="p">),</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Output directory for cleaned dataset and summary files.&quot;</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Output directory for cleaned dataset and summary files."</span>
     <span class="p">)</span>
     <span class="n">results_prefix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">DEFAULT_CLEAN_RESULTS_PREFIX</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Prefix of inference result files, e.g. `results` for `results.e_peratom.out`.&quot;</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Prefix of inference result files, e.g. `results` for `results.e_peratom.out`."</span>
     <span class="p">)</span>
     <span class="n">energy_diff_threshold</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="kc">None</span><span class="p">,</span>
         <span class="n">ge</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Per-frame max allowed absolute energy difference in eV/atom. None disables this rule.&quot;</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Per-frame max allowed absolute energy difference in eV/atom. None disables this rule."</span>
     <span class="p">)</span>
     <span class="n">force_max_diff_threshold</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="kc">None</span><span class="p">,</span>
         <span class="n">ge</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Per-frame max allowed atomic force difference in eV/A. None disables this rule.&quot;</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Per-frame max allowed atomic force difference in eV/A. None disables this rule."</span>
     <span class="p">)</span>
     <span class="n">stress_max_diff_threshold</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="kc">None</span><span class="p">,</span>
         <span class="n">ge</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Per-frame max allowed virial-component difference from `v_peratom.out` or `v.out`. None disables this rule.&quot;</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Per-frame max allowed virial-component difference from `v_peratom.out` or `v.out`. None disables this rule."</span>
     <span class="p">)</span>
     <span class="n">strict_alignment</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">DEFAULT_CLEAN_STRICT_ALIGNMENT</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Whether to require strict system/frame alignment between dataset and inference results.&quot;</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Whether to require strict system/frame alignment between dataset and inference results."</span>
     <span class="p">)</span>
 
 <span class="k">class</span><span class="w"> </span><span class="nc">LabelingTaskSelectorConfig</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Selector used to assign generated labeling tasks to resource classes.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Selector used to assign generated labeling tasks to resource classes."""</span>
 
-    <span class="n">min_atoms</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Inclusive minimum atom count.&quot;</span><span class="p">)</span>
-    <span class="n">max_atoms</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Inclusive maximum atom count.&quot;</span><span class="p">)</span>
-    <span class="n">name_prefixes</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Task name prefixes to include.&quot;</span><span class="p">)</span>
-    <span class="n">name_regex</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Regular expression matched against task names.&quot;</span><span class="p">)</span>
-    <span class="n">dataset_names</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Dataset names to include.&quot;</span><span class="p">)</span>
-    <span class="n">stru_types</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Structure types to include.&quot;</span><span class="p">)</span>
+    <span class="n">min_atoms</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Inclusive minimum atom count."</span><span class="p">)</span>
+    <span class="n">max_atoms</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Inclusive maximum atom count."</span><span class="p">)</span>
+    <span class="n">name_prefixes</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Task name prefixes to include."</span><span class="p">)</span>
+    <span class="n">name_regex</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Regular expression matched against task names."</span><span class="p">)</span>
+    <span class="n">dataset_names</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Dataset names to include."</span><span class="p">)</span>
+    <span class="n">stru_types</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Structure types to include."</span><span class="p">)</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">LabelingTaskClassConfig</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Resource and launcher mode for a group of labeling tasks.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Resource and launcher mode for a group of labeling tasks."""</span>
 
-    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Stable task class name used under inputs/&lt;name&gt;/N_*.&quot;</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Stable task class name used under inputs/&lt;name&gt;/N_*."</span><span class="p">)</span>
     <span class="n">selector</span><span class="p">:</span> <span class="n">LabelingTaskSelectorConfig</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">LabelingTaskSelectorConfig</span><span class="p">)</span>
-    <span class="n">tasks_per_job</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">gt</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Override tasks_per_job for this class.&quot;</span><span class="p">)</span>
-    <span class="n">launcher_mode</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;abacus&quot;</span><span class="p">,</span> <span class="s2">&quot;mpi_abacus&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="s2">&quot;abacus&quot;</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;ABACUS launch mode. `mpi_abacus` adds mpirun and SAI rank-map handling.&quot;</span><span class="p">,</span>
+    <span class="n">tasks_per_job</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">gt</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Override tasks_per_job for this class."</span><span class="p">)</span>
+    <span class="n">launcher_mode</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"abacus"</span><span class="p">,</span> <span class="s2">"mpi_abacus"</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="s2">"abacus"</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"ABACUS launch mode. `mpi_abacus` adds mpirun and SAI rank-map handling."</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="n">resource_mode</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;single_gpu&quot;</span><span class="p">,</span> <span class="s2">&quot;multi_gpu_mpi&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="s2">&quot;single_gpu&quot;</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Resource intent used to apply Slurm defaults and reviewer-visible gates.&quot;</span><span class="p">,</span>
+    <span class="n">resource_mode</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"single_gpu"</span><span class="p">,</span> <span class="s2">"multi_gpu_mpi"</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="s2">"single_gpu"</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Resource intent used to apply Slurm defaults and reviewer-visible gates."</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="n">slurm_config</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Slurm overrides for this class.&quot;</span><span class="p">)</span>
+    <span class="n">slurm_config</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Slurm overrides for this class."</span><span class="p">)</span>
     <span class="n">env_setup</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="n">default</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Extra environment setup lines for this class.&quot;</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Extra environment setup lines for this class."</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;env_setup&quot;</span><span class="p">)</span>
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"env_setup"</span><span class="p">)</span>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">validate_env_setup</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
-            <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+            <span class="k">return</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">v</span>
 
-    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">&quot;after&quot;</span><span class="p">)</span>
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">validate_launcher_resource_pair</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">resource_mode</span> <span class="o">==</span> <span class="s2">&quot;single_gpu&quot;</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">launcher_mode</span> <span class="o">!=</span> <span class="s2">&quot;abacus&quot;</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;single_gpu task classes must use launcher_mode=&#39;abacus&#39;&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">resource_mode</span> <span class="o">==</span> <span class="s2">&quot;multi_gpu_mpi&quot;</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">launcher_mode</span> <span class="o">!=</span> <span class="s2">&quot;mpi_abacus&quot;</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;multi_gpu_mpi task classes must use launcher_mode=&#39;mpi_abacus&#39;&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">resource_mode</span> <span class="o">==</span> <span class="s2">"single_gpu"</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">launcher_mode</span> <span class="o">!=</span> <span class="s2">"abacus"</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"single_gpu task classes must use launcher_mode='abacus'"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">resource_mode</span> <span class="o">==</span> <span class="s2">"multi_gpu_mpi"</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">launcher_mode</span> <span class="o">!=</span> <span class="s2">"mpi_abacus"</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"multi_gpu_mpi task classes must use launcher_mode='mpi_abacus'"</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span>
 
 
 <div class="viewcode-block" id="InferenceConfig">
 <a class="viewcode-back" href="../../api/config/inference.html#dpeva.config.InferenceConfig">[文档]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">InferenceConfig</span><span class="p">(</span><span class="n">BaseWorkflowConfig</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Configuration for Inference Workflow.&quot;&quot;&quot;</span>
-    <span class="n">data_path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Path to test dataset.&quot;</span><span class="p">)</span>
-    <span class="n">model_head</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Model head name (optional for frozen models).&quot;</span><span class="p">)</span>
-    <span class="n">results_prefix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">DEFAULT_RESULTS_PREFIX</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Output file prefix.&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="sd">"""Configuration for Inference Workflow."""</span>
+    <span class="n">data_path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Path to test dataset."</span><span class="p">)</span>
+    <span class="n">model_head</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Model head name (optional for frozen models)."</span><span class="p">)</span>
+    <span class="n">results_prefix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">DEFAULT_RESULTS_PREFIX</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Output file prefix."</span><span class="p">)</span>
     <span class="n">task_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">DEFAULT_INFER_TASK_NAME</span>
     <span class="n">auto_analysis</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="kc">False</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Whether to trigger analysis after inference execution.&quot;</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Whether to trigger analysis after inference execution."</span>
     <span class="p">)</span>
-    <span class="n">ref_energies</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Reference energies per element for cohesive energy calculation.&quot;</span><span class="p">)</span></div>
+    <span class="n">ref_energies</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Reference energies per element for cohesive energy calculation."</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="LabelingConfig">
 <a class="viewcode-back" href="../../api/config/labeling.html#dpeva.config.LabelingConfig">[文档]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">LabelingConfig</span><span class="p">(</span><span class="n">BaseWorkflowConfig</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Configuration for Labeling Workflow (FP Calculation).&quot;&quot;&quot;</span>
-    <span class="n">input_data_path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Path to input dataset (dpdata compatible).&quot;</span><span class="p">)</span>
-    <span class="n">work_dir</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Path to labeling working directory.&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="sd">"""Configuration for Labeling Workflow (FP Calculation)."""</span>
+    <span class="n">input_data_path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Path to input dataset (dpdata compatible)."</span><span class="p">)</span>
+    <span class="n">work_dir</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Path to labeling working directory."</span><span class="p">)</span>
     
     <span class="c1"># FP Params</span>
-    <span class="n">dft_params</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;ABACUS INPUT parameters.&quot;</span><span class="p">)</span>
+    <span class="n">dft_params</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"ABACUS INPUT parameters."</span><span class="p">)</span>
     <span class="n">pp_map</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">,</span> 
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Dictionary mapping element symbols to pseudopotential filenames (e.g., `{&#39;Fe&#39;: &#39;Fe.upf&#39;}`).&quot;</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Dictionary mapping element symbols to pseudopotential filenames (e.g., `{'Fe': 'Fe.upf'}`)."</span>
     <span class="p">)</span>
     <span class="n">orb_map</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">,</span> 
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Dictionary mapping element symbols to orbital filenames (e.g., `{&#39;Fe&#39;: &#39;Fe.orb&#39;}`).&quot;</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Dictionary mapping element symbols to orbital filenames (e.g., `{'Fe': 'Fe.orb'}`)."</span>
     <span class="p">)</span>
-    <span class="n">pp_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Directory containing PP files.&quot;</span><span class="p">)</span>
-    <span class="n">orb_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Directory containing Orb files.&quot;</span><span class="p">)</span>
+    <span class="n">pp_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Directory containing PP files."</span><span class="p">)</span>
+    <span class="n">orb_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Directory containing Orb files."</span><span class="p">)</span>
     
     <span class="c1"># Generation</span>
     <span class="n">kpt_criteria</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">DEFAULT_LABELING_KPT_CRITERIA</span><span class="p">,</span> 
         <span class="n">gt</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;K-point density parameter (K*L). Determines grid density: `k_i = ceil(criteria / lattice_i)`.&quot;</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"K-point density parameter (K*L). Determines grid density: `k_i = ceil(criteria / lattice_i)`."</span>
     <span class="p">)</span>
     <span class="n">vacuum_thickness</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">DEFAULT_LABELING_VACUUM_THICKNESS</span><span class="p">,</span> 
         <span class="n">gt</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Minimum vacuum thickness in Angstroms for surface/cluster models.&quot;</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Minimum vacuum thickness in Angstroms for surface/cluster models."</span>
     <span class="p">)</span>
     
     <span class="c1"># Packing</span>
-    <span class="n">tasks_per_job</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">DEFAULT_LABELING_TASKS_PER_JOB</span><span class="p">,</span> <span class="n">gt</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Number of tasks per packed job.&quot;</span><span class="p">)</span>
+    <span class="n">tasks_per_job</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">DEFAULT_LABELING_TASKS_PER_JOB</span><span class="p">,</span> <span class="n">gt</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Number of tasks per packed job."</span><span class="p">)</span>
     <span class="n">labeling_task_classes</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">LabelingTaskClassConfig</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="p">(</span>
-            <span class="s2">&quot;Optional task-class resource definitions. When set, generated labeling &quot;</span>
-            <span class="s2">&quot;tasks are grouped under inputs/&lt;class&gt;/N_* and submitted with class-specific &quot;</span>
-            <span class="s2">&quot;launcher/resource modes.&quot;</span>
+            <span class="s2">"Optional task-class resource definitions. When set, generated labeling "</span>
+            <span class="s2">"tasks are grouped under inputs/&lt;class&gt;/N_* and submitted with class-specific "</span>
+            <span class="s2">"launcher/resource modes."</span>
         <span class="p">),</span>
     <span class="p">)</span>
     
     <span class="c1"># Cleaning &amp; Strategy</span>
-    <span class="n">mag_map</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Initial magnetic moments per element (e.g. {&#39;Fe&#39;: 5.0})&quot;</span><span class="p">)</span>
+    <span class="n">mag_map</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Initial magnetic moments per element (e.g. {'Fe': 5.0})"</span><span class="p">)</span>
     <span class="n">cleaning_thresholds</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="n">DEFAULT_LABELING_CLEANING_THRESHOLDS</span><span class="p">)</span>
-    <span class="n">attempt_params</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="n">DEFAULT_LABELING_ATTEMPT_PARAMS</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Parameters for each attempt (index=0 is initial).&quot;</span><span class="p">)</span>
-    <span class="n">ref_energies</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Reference energies per element.&quot;</span><span class="p">)</span>
+    <span class="n">attempt_params</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="n">DEFAULT_LABELING_ATTEMPT_PARAMS</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Parameters for each attempt (index=0 is initial)."</span><span class="p">)</span>
+    <span class="n">ref_energies</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Reference energies per element."</span><span class="p">)</span>
     
     <span class="c1"># Output format</span>
     <span class="n">output_format</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="n">DEFAULT_LABELING_OUTPUT_FORMAT</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Output format for cleaned/anomalies dataset (deepmd/npy or deepmd/npy/mixed)&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Output format for cleaned/anomalies dataset (deepmd/npy or deepmd/npy/mixed)"</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="n">integration_enabled</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Whether to integrate cleaned data into next-gen training data.&quot;</span><span class="p">)</span>
-    <span class="n">existing_training_data_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Path to existing training dataset.&quot;</span><span class="p">)</span>
-    <span class="n">merged_training_data_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Output path for merged training dataset.&quot;</span><span class="p">)</span>
+    <span class="n">integration_enabled</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Whether to integrate cleaned data into next-gen training data."</span><span class="p">)</span>
+    <span class="n">existing_training_data_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Path to existing training dataset."</span><span class="p">)</span>
+    <span class="n">merged_training_data_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Output path for merged training dataset."</span><span class="p">)</span>
     <span class="n">integration_output_format</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="n">DEFAULT_LABELING_INTEGRATION_OUTPUT_FORMAT</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Output format for merged training dataset (deepmd/npy or deepmd/npy/mixed)&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Output format for merged training dataset (deepmd/npy or deepmd/npy/mixed)"</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="n">integration_deduplicate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Whether to enable deduplication in integration.&quot;</span><span class="p">)</span>
+    <span class="n">integration_deduplicate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Whether to enable deduplication in integration."</span><span class="p">)</span>
 
 <div class="viewcode-block" id="LabelingConfig.validate_labeling_output_format">
 <a class="viewcode-back" href="../../api/config/labeling.html#dpeva.config.LabelingConfig.validate_labeling_output_format">[文档]</a>
-    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;output_format&quot;</span><span class="p">,</span> <span class="s2">&quot;integration_output_format&quot;</span><span class="p">)</span>
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"output_format"</span><span class="p">,</span> <span class="s2">"integration_output_format"</span><span class="p">)</span>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">validate_labeling_output_format</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">value</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">VALID_LABELING_OUTPUT_FORMATS</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;Unsupported output format: </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">. Supported formats: </span><span class="si">{</span><span class="n">VALID_LABELING_OUTPUT_FORMATS</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="sa">f</span><span class="s2">"Unsupported output format: </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">. Supported formats: </span><span class="si">{</span><span class="n">VALID_LABELING_OUTPUT_FORMATS</span><span class="si">}</span><span class="s2">"</span>
             <span class="p">)</span>
         <span class="k">return</span> <span class="n">value</span></div>
 </div>
@@ -1263,11 +1185,11 @@ document.write(`
 <div class="viewcode-block" id="TrainingConfig">
 <a class="viewcode-back" href="../../api/config/training.html#dpeva.config.TrainingConfig">[文档]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">TrainingConfig</span><span class="p">(</span><span class="n">BaseWorkflowConfig</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Configuration for Training Workflow.&quot;&quot;&quot;</span>
-    <span class="n">base_model_path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Path to base model.&quot;</span><span class="p">)</span>
-    <span class="n">num_models</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">DEFAULT_NUM_MODELS</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Number of models (&gt;=3 for UQ).&quot;</span><span class="p">)</span>
-    <span class="n">training_mode</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;init&quot;</span><span class="p">,</span> <span class="s2">&quot;cont&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="s2">&quot;init&quot;</span><span class="p">)</span>
-    <span class="n">model_head</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Model head name.&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="sd">"""Configuration for Training Workflow."""</span>
+    <span class="n">base_model_path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Path to base model."</span><span class="p">)</span>
+    <span class="n">num_models</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">DEFAULT_NUM_MODELS</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Number of models (&gt;=3 for UQ)."</span><span class="p">)</span>
+    <span class="n">training_mode</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"init"</span><span class="p">,</span> <span class="s2">"cont"</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="s2">"init"</span><span class="p">)</span>
+    <span class="n">model_head</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Model head name."</span><span class="p">)</span>
     
     <span class="n">input_json_path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">DEFAULT_INPUT_JSON</span><span class="p">)</span>
     <span class="n">seeds</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
@@ -1279,17 +1201,17 @@ document.write(`
 <div class="viewcode-block" id="CollectionConfig">
 <a class="viewcode-back" href="../../api/config/collection.html#dpeva.config.CollectionConfig">[文档]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">CollectionConfig</span><span class="p">(</span><span class="n">BaseWorkflowConfig</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Configuration for Collection (Active Learning) Workflow.&quot;&quot;&quot;</span>
-    <span class="n">project</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">DEFAULT_PROJECT_DIR</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Project directory.&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="sd">"""Configuration for Collection (Active Learning) Workflow."""</span>
+    <span class="n">project</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">DEFAULT_PROJECT_DIR</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Project directory."</span><span class="p">)</span>
     
     <span class="c1"># Paths</span>
-    <span class="n">desc_dir</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Descriptor directory.&quot;</span><span class="p">)</span>
-    <span class="n">testdata_dir</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Test data directory.&quot;</span><span class="p">)</span>
-    <span class="n">desc_feature_kind</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;descriptor&quot;</span><span class="p">,</span> <span class="s2">&quot;fitting_last_layer&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="s2">&quot;descriptor&quot;</span><span class="p">,</span>
+    <span class="n">desc_dir</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Descriptor directory."</span><span class="p">)</span>
+    <span class="n">testdata_dir</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Test data directory."</span><span class="p">)</span>
+    <span class="n">desc_feature_kind</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"descriptor"</span><span class="p">,</span> <span class="s2">"fitting_last_layer"</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="s2">"descriptor"</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="p">(</span>
-            <span class="s2">&quot;Feature kind stored in desc_dir/training_desc_dir. HDF5 descriptor &quot;</span>
-            <span class="s2">&quot;inputs read `descriptor`; fitting_last_layer inputs read `atomic_feature`.&quot;</span>
+            <span class="s2">"Feature kind stored in desc_dir/training_desc_dir. HDF5 descriptor "</span>
+            <span class="s2">"inputs read `descriptor`; fitting_last_layer inputs read `atomic_feature`."</span>
         <span class="p">),</span>
     <span class="p">)</span>
     
@@ -1301,48 +1223,48 @@ document.write(`
     
     <span class="c1"># Testing</span>
     <span class="n">testing_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">DEFAULT_TESTING_DIR</span>
-    <span class="n">results_prefix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">DEFAULT_RESULTS_PREFIX</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Output file prefix.&quot;</span><span class="p">)</span>
-    <span class="n">fig_dpi</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">FIG_DPI</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;DPI for visualization figures.&quot;</span><span class="p">)</span>
+    <span class="n">results_prefix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">DEFAULT_RESULTS_PREFIX</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Output file prefix."</span><span class="p">)</span>
+    <span class="n">fig_dpi</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">FIG_DPI</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"DPI for visualization figures."</span><span class="p">)</span>
     <span class="n">fig_base_font_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="mi">12</span><span class="p">,</span>
         <span class="n">ge</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
         <span class="n">le</span><span class="o">=</span><span class="mi">24</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Base font size for Collection figures; title, label, tick, and legend sizes are derived from this value.&quot;</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Base font size for Collection figures; title, label, tick, and legend sizes are derived from this value."</span>
     <span class="p">)</span>
     <span class="n">fig_tick_target_count</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="mi">6</span><span class="p">,</span>
         <span class="n">ge</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
         <span class="n">le</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Approximate number of major ticks used when linking x/y tick spacing in Collection 2D plots.&quot;</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Approximate number of major ticks used when linking x/y tick spacing in Collection 2D plots."</span>
     <span class="p">)</span>
     <span class="n">fig_legend_max_rows</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="mi">8</span><span class="p">,</span>
         <span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
         <span class="n">le</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Maximum preferred legend rows before Collection legends flow into multiple columns.&quot;</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Maximum preferred legend rows before Collection legends flow into multiple columns."</span>
     <span class="p">)</span>
     <span class="n">fig_legend_max_cols</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="mi">4</span><span class="p">,</span>
         <span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
         <span class="n">le</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Maximum legend columns used by Collection multi-pool summary figures.&quot;</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Maximum legend columns used by Collection multi-pool summary figures."</span>
     <span class="p">)</span>
     <span class="n">enable_diagnostic_plots</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="kc">False</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Enable optional Diagnostic-layer plots (default: False, Core plots only).&quot;</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Enable optional Diagnostic-layer plots (default: False, Core plots only)."</span>
     <span class="p">)</span>
     
     <span class="c1"># UQ Parameters</span>
-    <span class="n">num_models</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">DEFAULT_NUM_MODELS</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Number of models for UQ calculation.&quot;</span><span class="p">)</span>
-    <span class="n">uq_backend</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;qbc_rnd&quot;</span><span class="p">,</span> <span class="s2">&quot;llpr&quot;</span><span class="p">,</span> <span class="s2">&quot;hybrid&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="s2">&quot;qbc_rnd&quot;</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;UQ backend: existing QbC/RND, DeepMD last-layer LLPR, or hybrid reporting.&quot;</span><span class="p">,</span>
+    <span class="n">num_models</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">DEFAULT_NUM_MODELS</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Number of models for UQ calculation."</span><span class="p">)</span>
+    <span class="n">uq_backend</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"qbc_rnd"</span><span class="p">,</span> <span class="s2">"llpr"</span><span class="p">,</span> <span class="s2">"hybrid"</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="s2">"qbc_rnd"</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"UQ backend: existing QbC/RND, DeepMD last-layer LLPR, or hybrid reporting."</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="n">uq_select_scheme</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;tangent_lo&quot;</span><span class="p">,</span> <span class="s2">&quot;strict&quot;</span><span class="p">,</span> <span class="s2">&quot;circle_lo&quot;</span><span class="p">,</span> <span class="s2">&quot;crossline_lo&quot;</span><span class="p">,</span> <span class="s2">&quot;loose&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+    <span class="n">uq_select_scheme</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"tangent_lo"</span><span class="p">,</span> <span class="s2">"strict"</span><span class="p">,</span> <span class="s2">"circle_lo"</span><span class="p">,</span> <span class="s2">"crossline_lo"</span><span class="p">,</span> <span class="s2">"loose"</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="n">DEFAULT_UQ_SCHEME</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Strategy for selecting high-uncertainty data. Options: `tangent_lo`, `strict`, `circle_lo`, etc.&quot;</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Strategy for selecting high-uncertainty data. Options: `tangent_lo`, `strict`, `circle_lo`, etc."</span>
     <span class="p">)</span>
-    <span class="n">uq_trust_mode</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;auto&quot;</span><span class="p">,</span> <span class="s2">&quot;manual&quot;</span><span class="p">,</span> <span class="s2">&quot;no_filter&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;auto&quot;</span>
+    <span class="n">uq_trust_mode</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"auto"</span><span class="p">,</span> <span class="s2">"manual"</span><span class="p">,</span> <span class="s2">"no_filter"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"auto"</span>
     <span class="n">uq_trust_ratio</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">DEFAULT_UQ_TRUST_RATIO</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">le</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
     <span class="n">uq_trust_width</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">DEFAULT_UQ_TRUST_WIDTH</span><span class="p">,</span> <span class="n">gt</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
     
@@ -1363,24 +1285,24 @@ document.write(`
     <span class="c1"># DeepMD last-layer LLPR parameters</span>
     <span class="n">llpr_train_feature_dir</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="kc">None</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Training-set DeepMD last-layer feature directory used to fit LLPR covariance.&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Training-set DeepMD last-layer feature directory used to fit LLPR covariance."</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">llpr_candidate_feature_dir</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="kc">None</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Candidate-pool DeepMD last-layer feature directory used for LLPR scoring.&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Candidate-pool DeepMD last-layer feature directory used for LLPR scoring."</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">llpr_regularizer</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="mf">1e-8</span><span class="p">,</span> <span class="n">gt</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
-    <span class="n">llpr_calibration_method</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;squared_residuals&quot;</span><span class="p">,</span> <span class="s2">&quot;absolute_residuals&quot;</span><span class="p">,</span> <span class="s2">&quot;crps&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;squared_residuals&quot;</span>
+    <span class="n">llpr_calibration_method</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"squared_residuals"</span><span class="p">,</span> <span class="s2">"absolute_residuals"</span><span class="p">,</span> <span class="s2">"crps"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"squared_residuals"</span>
     <span class="n">llpr_num_ensemble_members</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
     <span class="n">llpr_random_seed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">llpr_targets</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;energy&quot;</span><span class="p">,</span> <span class="s2">&quot;force&quot;</span><span class="p">,</span> <span class="s2">&quot;energy_force&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;energy&quot;</span>
+    <span class="n">llpr_targets</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"energy"</span><span class="p">,</span> <span class="s2">"force"</span><span class="p">,</span> <span class="s2">"energy_force"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"energy"</span>
     <span class="n">llpr_collect_score</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span>
-        <span class="s2">&quot;energy_uncertainty_per_atom&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;energy_ensemble_std_per_atom&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;force_uncertainty_max&quot;</span><span class="p">,</span>
-    <span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;energy_uncertainty_per_atom&quot;</span>
+        <span class="s2">"energy_uncertainty_per_atom"</span><span class="p">,</span>
+        <span class="s2">"energy_ensemble_std_per_atom"</span><span class="p">,</span>
+        <span class="s2">"force_uncertainty_max"</span><span class="p">,</span>
+    <span class="p">]</span> <span class="o">=</span> <span class="s2">"energy_uncertainty_per_atom"</span>
     <span class="n">llpr_strict_metatrain_parity</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
-    <span class="n">llpr_feature_normalization</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;sum&quot;</span><span class="p">,</span> <span class="s2">&quot;mean&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;mean&quot;</span>
+    <span class="n">llpr_feature_normalization</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"sum"</span><span class="p">,</span> <span class="s2">"mean"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"mean"</span>
     <span class="n">llpr_model_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">llpr_model_head</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">llpr_last_layer_weights_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
@@ -1393,62 +1315,62 @@ document.write(`
     <span class="n">uq_auto_bounds</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
     
     <span class="c1"># Sampling</span>
-    <span class="n">sampler_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;direct&quot;</span><span class="p">,</span> <span class="s2">&quot;2-direct&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;direct&quot;</span>
+    <span class="n">sampler_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"direct"</span><span class="p">,</span> <span class="s2">"2-direct"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"direct"</span>
     
     <span class="c1"># Standard DIRECT Parameters</span>
-    <span class="n">direct_n_clusters</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">gt</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Target number of clusters for Standard DIRECT.&quot;</span><span class="p">)</span>
+    <span class="n">direct_n_clusters</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">gt</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Target number of clusters for Standard DIRECT."</span><span class="p">)</span>
     
     <span class="n">direct_k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">DEFAULT_DIRECT_K</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
     <span class="n">direct_thr_init</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">DEFAULT_DIRECT_THR_INIT</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
     
     <span class="c1"># 2-DIRECT Parameters</span>
-    <span class="n">step1_n_clusters</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">DEFAULT_STEP1_N_CLUSTERS</span><span class="p">,</span> <span class="n">gt</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Number of clusters for Step 1. If None, dynamic clustering based on threshold.&quot;</span><span class="p">)</span>
-    <span class="n">step1_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">DEFAULT_STEP1_THRESHOLD</span><span class="p">,</span> <span class="n">gt</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Threshold for Step 1 Birch clustering.&quot;</span><span class="p">)</span>
-    <span class="n">step2_n_clusters</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">DEFAULT_STEP2_N_CLUSTERS</span><span class="p">,</span> <span class="n">gt</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Number of clusters for Step 2. If None, dynamic clustering based on threshold.&quot;</span><span class="p">)</span>
-    <span class="n">step2_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">DEFAULT_STEP2_THRESHOLD</span><span class="p">,</span> <span class="n">gt</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Threshold for Step 2 Birch clustering.&quot;</span><span class="p">)</span>
-    <span class="n">step2_k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">DEFAULT_STEP2_K</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Number of samples per atomic cluster in Step 2.&quot;</span><span class="p">)</span>
-    <span class="n">step2_selection</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;smallest&quot;</span><span class="p">,</span> <span class="s2">&quot;center&quot;</span><span class="p">,</span> <span class="s2">&quot;random&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+    <span class="n">step1_n_clusters</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">DEFAULT_STEP1_N_CLUSTERS</span><span class="p">,</span> <span class="n">gt</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Number of clusters for Step 1. If None, dynamic clustering based on threshold."</span><span class="p">)</span>
+    <span class="n">step1_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">DEFAULT_STEP1_THRESHOLD</span><span class="p">,</span> <span class="n">gt</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Threshold for Step 1 Birch clustering."</span><span class="p">)</span>
+    <span class="n">step2_n_clusters</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">DEFAULT_STEP2_N_CLUSTERS</span><span class="p">,</span> <span class="n">gt</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Number of clusters for Step 2. If None, dynamic clustering based on threshold."</span><span class="p">)</span>
+    <span class="n">step2_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">DEFAULT_STEP2_THRESHOLD</span><span class="p">,</span> <span class="n">gt</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Threshold for Step 2 Birch clustering."</span><span class="p">)</span>
+    <span class="n">step2_k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">DEFAULT_STEP2_K</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Number of samples per atomic cluster in Step 2."</span><span class="p">)</span>
+    <span class="n">step2_selection</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"smallest"</span><span class="p">,</span> <span class="s2">"center"</span><span class="p">,</span> <span class="s2">"random"</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">DEFAULT_STEP2_SELECTION</span><span class="p">,</span> 
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Selection criteria for Step 2. &#39;smallest&#39;: fewest atoms; &#39;center&#39;: closest to cluster centroid; &#39;random&#39;: random sampling.&quot;</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Selection criteria for Step 2. 'smallest': fewest atoms; 'center': closest to cluster centroid; 'random': random sampling."</span>
     <span class="p">)</span>
     
     <span class="c1"># Config File Path (for self-submission)</span>
     <span class="n">config_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 
-    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s1">&#39;after&#39;</span><span class="p">)</span>
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s1">'after'</span><span class="p">)</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">validate_manual_trust_bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validates that manual trust bounds are properly set.&quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">llpr_collect_score</span> <span class="o">==</span> <span class="s2">&quot;force_uncertainty_max&quot;</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">llpr_targets</span> <span class="o">==</span> <span class="s2">&quot;energy&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Validates that manual trust bounds are properly set."""</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">llpr_collect_score</span> <span class="o">==</span> <span class="s2">"force_uncertainty_max"</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">llpr_targets</span> <span class="o">==</span> <span class="s2">"energy"</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;llpr_collect_score=&#39;force_uncertainty_max&#39; requires &quot;</span>
-                <span class="s2">&quot;llpr_targets=&#39;force&#39; or &#39;energy_force&#39;.&quot;</span>
+                <span class="s2">"llpr_collect_score='force_uncertainty_max' requires "</span>
+                <span class="s2">"llpr_targets='force' or 'energy_force'."</span>
             <span class="p">)</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">llpr_collect_score</span> <span class="o">==</span> <span class="s2">&quot;energy_ensemble_std_per_atom&quot;</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">llpr_num_ensemble_members</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">llpr_collect_score</span> <span class="o">==</span> <span class="s2">"energy_ensemble_std_per_atom"</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">llpr_num_ensemble_members</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;llpr_collect_score=&#39;energy_ensemble_std_per_atom&#39; requires &quot;</span>
-                <span class="s2">&quot;llpr_num_ensemble_members.&quot;</span>
+                <span class="s2">"llpr_collect_score='energy_ensemble_std_per_atom' requires "</span>
+                <span class="s2">"llpr_num_ensemble_members."</span>
             <span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">llpr_num_ensemble_members</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">llpr_strict_metatrain_parity</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">llpr_candidate_energy_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="s2">&quot;llpr_num_ensemble_members requires llpr_candidate_energy_path &quot;</span>
-                    <span class="s2">&quot;when llpr_strict_metatrain_parity=True.&quot;</span>
+                    <span class="s2">"llpr_num_ensemble_members requires llpr_candidate_energy_path "</span>
+                    <span class="s2">"when llpr_strict_metatrain_parity=True."</span>
                 <span class="p">)</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">llpr_last_layer_weights_path</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">llpr_model_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="s2">&quot;llpr_num_ensemble_members requires llpr_last_layer_weights_path &quot;</span>
-                    <span class="s2">&quot;or llpr_model_path when llpr_strict_metatrain_parity=True.&quot;</span>
+                    <span class="s2">"llpr_num_ensemble_members requires llpr_last_layer_weights_path "</span>
+                    <span class="s2">"or llpr_model_path when llpr_strict_metatrain_parity=True."</span>
                 <span class="p">)</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">uq_trust_mode</span> <span class="o">==</span> <span class="s2">&quot;manual&quot;</span><span class="p">:</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">uq_backend</span> <span class="o">==</span> <span class="s2">&quot;llpr&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">uq_trust_mode</span> <span class="o">==</span> <span class="s2">"manual"</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">uq_backend</span> <span class="o">==</span> <span class="s2">"llpr"</span><span class="p">:</span>
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">uq_llpr_energy_trust_lo</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;In &#39;manual&#39; LLPR mode, uq_llpr_energy_trust_lo must be provided.&quot;</span><span class="p">)</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"In 'manual' LLPR mode, uq_llpr_energy_trust_lo must be provided."</span><span class="p">)</span>
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">uq_llpr_energy_trust_hi</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">uq_llpr_energy_trust_hi</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">uq_llpr_energy_trust_lo</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">uq_trust_width</span>
                 <span class="k">return</span> <span class="bp">self</span>
             <span class="c1"># QbC Validation &amp; Calculation</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">uq_qbc_trust_lo</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;In &#39;manual&#39; trust mode, uq_qbc_trust_lo must be provided.&quot;</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"In 'manual' trust mode, uq_qbc_trust_lo must be provided."</span><span class="p">)</span>
             
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">uq_qbc_trust_hi</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="c1"># Use specific width if available, else global</span>
@@ -1456,18 +1378,18 @@ document.write(`
                 <span class="k">if</span> <span class="n">width</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">uq_qbc_trust_hi</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">uq_qbc_trust_lo</span> <span class="o">+</span> <span class="n">width</span>
                 <span class="k">else</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;In &#39;manual&#39; trust mode, provide uq_qbc_trust_hi OR width.&quot;</span><span class="p">)</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"In 'manual' trust mode, provide uq_qbc_trust_hi OR width."</span><span class="p">)</span>
             
             <span class="c1"># RND Validation &amp; Calculation</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">uq_rnd_rescaled_trust_lo</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;In &#39;manual&#39; trust mode, uq_rnd_rescaled_trust_lo must be provided.&quot;</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"In 'manual' trust mode, uq_rnd_rescaled_trust_lo must be provided."</span><span class="p">)</span>
                 
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">uq_rnd_rescaled_trust_hi</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">width</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">uq_rnd_rescaled_trust_width</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">uq_rnd_rescaled_trust_width</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">uq_trust_width</span>
                 <span class="k">if</span> <span class="n">width</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">uq_rnd_rescaled_trust_hi</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">uq_rnd_rescaled_trust_lo</span> <span class="o">+</span> <span class="n">width</span>
                 <span class="k">else</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;In &#39;manual&#39; trust mode, provide uq_rnd_rescaled_trust_hi OR width.&quot;</span><span class="p">)</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"In 'manual' trust mode, provide uq_rnd_rescaled_trust_hi OR width."</span><span class="p">)</span>
                     
         <span class="k">return</span> <span class="bp">self</span></div>
 

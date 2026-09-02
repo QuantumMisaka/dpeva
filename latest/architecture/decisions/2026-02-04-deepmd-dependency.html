@@ -572,17 +572,17 @@ document.write(`
 <h4>4.1 依赖声明规范化<a class="headerlink" href="#id7" title="Link to this heading">#</a></h4>
 <p>建议根据使用程度分级声明（示例）：</p>
 <div class="highlight-toml notranslate"><div class="highlight"><pre><span></span><span class="k">[project]</span>
-<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;dpeva&quot;</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"dpeva"</span>
 <span class="n">dependencies</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span>
-<span class="w">    </span><span class="s2">&quot;dpdata&gt;=0.2.13&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="s2">&quot;numpy&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="s2">&quot;pandas&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="s2">&quot;pydantic&gt;=2.0&quot;</span>
+<span class="w">    </span><span class="s2">"dpdata&gt;=0.2.13"</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">"numpy"</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">"pandas"</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">"pydantic&gt;=2.0"</span>
 <span class="p">]</span>
 
 <span class="k">[project.optional-dependencies]</span>
 <span class="n">local</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span>
-<span class="w">    </span><span class="s2">&quot;deepmd-kit&gt;=2.2.0&quot;</span>
+<span class="w">    </span><span class="s2">"deepmd-kit&gt;=2.2.0"</span>
 <span class="p">]</span>
 </pre></div>
 </div>
@@ -594,13 +594,13 @@ document.write(`
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">packaging</span><span class="w"> </span><span class="kn">import</span> <span class="n">version</span>
 
-<span class="n">MIN_DEEPMD_VERSION</span> <span class="o">=</span> \<span class="s2">&quot;2.0.0</span><span class="se">\&quot;</span>
+<span class="n">MIN_DEEPMD_VERSION</span> <span class="o">=</span> \<span class="s2">"2.0.0</span><span class="se">\"</span>
 
 <span class="k">def</span><span class="w"> </span><span class="nf">check_deepmd_version</span><span class="p">():</span>
     <span class="k">try</span><span class="p">:</span>
-        <span class="n">out</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">check_output</span><span class="p">([</span>\<span class="s2">&quot;dp</span><span class="se">\&quot;</span><span class="s2">, </span><span class="se">\&quot;</span><span class="s2">--version</span><span class="se">\&quot;</span><span class="s2">], text=True).strip()</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">check_output</span><span class="p">([</span>\<span class="s2">"dp</span><span class="se">\"</span><span class="s2">, </span><span class="se">\"</span><span class="s2">--version</span><span class="se">\"</span><span class="s2">], text=True).strip()</span>
     <span class="k">except</span> <span class="p">(</span><span class="ne">FileNotFoundError</span><span class="p">,</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">CalledProcessError</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>\<span class="s2">&quot;DeepMD-kit not found. Please install deepmd-kit and ensure &#39;dp&#39; is in PATH.</span><span class="se">\&quot;</span><span class="s2">)</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>\<span class="s2">"DeepMD-kit not found. Please install deepmd-kit and ensure 'dp' is in PATH.</span><span class="se">\"</span><span class="s2">)</span>
 </pre></div>
 </div>
 </section>
