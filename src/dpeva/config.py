@@ -193,6 +193,16 @@ class FeatureConfig(BaseWorkflowConfig):
             self.savedir = Path(f"desc-{model_name}-{data_name}")
         return self
 
+    @model_validator(mode='after')
+    def validate_backend_capabilities(self):
+        """Reject feature exporters unavailable for the selected backend."""
+        if self.dp_backend == "pt-expt" and self.feature_exporter == "embed":
+            raise ValueError(
+                "dp_backend='pt-expt' does not support feature_exporter='embed'; "
+                "use feature_exporter='eval_desc' (dp --pt-expt eval-desc)."
+            )
+        return self
+
 
 class ExplorationConfig(BaseModel):
     """Configuration for optional trajectory exploration backends."""

@@ -135,6 +135,16 @@ class TestFeatureWorkflowSubmission:
         assert "--head" not in job_config.command
 
     @patch("dpeva.feature.managers.JobManager")
+    def test_pt_expt_embed_is_rejected_before_submission(self, MockJobManager, config):
+        config["dp_backend"] = "pt-expt"
+        config["feature_exporter"] = "embed"
+
+        with pytest.raises(ValueError, match="pt-expt.*eval-desc"):
+            FeatureWorkflow(config)
+
+        MockJobManager.assert_not_called()
+
+    @patch("dpeva.feature.managers.JobManager")
     def test_python_slurm_worker_preserves_none_model_head(self, MockJobManager, config):
         config["mode"] = "python"
         config.pop("model_head")
