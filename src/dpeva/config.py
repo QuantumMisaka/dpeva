@@ -152,7 +152,10 @@ class FeatureConfig(BaseWorkflowConfig):
     """Configuration for Feature Generation Workflow."""
     data_path: Path = Field(..., description="Path to dataset.")
     model_path: Path = Field(..., description="Path to model file.")
-    model_head: str = Field(..., description="Model head name.")
+    model_head: str | None = Field(
+        None,
+        description="Model head name (optional for single-task models).",
+    )
     feature_kind: Literal["descriptor", "fitting_last_layer"] = Field(
         "descriptor",
         description=(

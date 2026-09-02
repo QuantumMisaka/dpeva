@@ -80,7 +80,7 @@ class FeatureExecutionManager:
         data_path: str,
         output_dir: str,
         model_path: str,
-        head: str,
+        head: str | None,
         sub_pools: List[str],
         blocking: bool = True,
         feature_exporter: str = "eval_desc",
@@ -195,8 +195,16 @@ class FeatureExecutionManager:
         self.logger.info(f"Submitting {feature_exporter} job for {data_path}")
         self.job_manager.submit(script_path, working_dir=abs_output_dir)
 
-    def submit_python_slurm_job(self, data_path: str, output_dir: str, model_path: str, head: str, 
-                               batch_size: int, output_mode: str, feature_kind: str = "descriptor"):
+    def submit_python_slurm_job(
+        self,
+        data_path: str,
+        output_dir: str,
+        model_path: str,
+        head: str | None,
+        batch_size: int,
+        output_mode: str,
+        feature_kind: str = "descriptor",
+    ):
         """
         Submit a Python script job to Slurm.
         """
@@ -220,7 +228,7 @@ def main():
     # Initialize components
     generator = DescriptorGenerator(
         model_path="{model_path}",
-        head="{head}",
+        head={head!r},
         batch_size={batch_size},
         omp_threads={self.omp_threads}
     )

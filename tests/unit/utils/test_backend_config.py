@@ -20,6 +20,17 @@ class TestDPCommandBuilderBackend:
         assert DPCommandBuilder._backend == "jax"
         assert DPCommandBuilder._get_base_cmd() == "dp --jax"
 
+    def test_set_backend_pt_expt(self):
+        """Verify the PyTorch exportable backend."""
+        DPCommandBuilder.set_backend("pt-expt")
+        assert DPCommandBuilder._get_base_cmd() == "dp --pt-expt"
+        assert "dp --pt-expt eval-desc" in DPCommandBuilder.eval_desc(
+            model="model.pt",
+            system="data",
+            output="desc",
+        )
+        DPCommandBuilder.set_backend("pt")
+
     def test_invalid_backend(self):
         """Verify setting invalid backend raises ValueError."""
         with pytest.raises(ValueError):
