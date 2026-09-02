@@ -1229,6 +1229,7 @@ document.write(`
 <li><p><strong><code class="docutils literal notranslate"><span class="pre">DescriptorGenerator</span></code></strong>:</p>
 <ul>
 <li><p><strong>CLI 模式</strong>: 调用 <code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">eval-desc</span></code> 命令，支持 Slurm 提交。</p></li>
+<li><p><strong>DPA4C</strong>: 使用 <code class="docutils literal notranslate"><span class="pre">dp_backend=&quot;pt-expt&quot;</span></code> 和 <code class="docutils literal notranslate"><span class="pre">feature_exporter=&quot;eval_desc&quot;</span></code> 导出 descriptor；单任务模型无需配置 <code class="docutils literal notranslate"><span class="pre">model_head</span></code>。正式发布版本要求 DeepMD-kit 3.2.0 或更新版本。当前 <code class="docutils literal notranslate"><span class="pre">pt-expt</span></code> 不提供 <code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">embed</span></code> 所需的组合 embedding 接口。</p></li>
 <li><p><strong>Python 模式</strong>: 直接调用 <code class="docutils literal notranslate"><span class="pre">deepmd.infer</span></code> API，适合小规模或调试使用。</p></li>
 <li><p><strong>数据一致性</strong>: 统一使用 <code class="docutils literal notranslate"><span class="pre">dpeva.io.dataset.load_systems</span></code> 加载数据，确保在 <code class="docutils literal notranslate"><span class="pre">mixed</span></code> 格式下与 CLI 模式行为一致。</p></li>
 <li><p><strong>单数据池兼容</strong>: 智能识别 <code class="docutils literal notranslate"><span class="pre">desc_dir/System.npy</span></code> 格式的描述符文件，兼容单数据池模式下的平铺结构。</p></li>

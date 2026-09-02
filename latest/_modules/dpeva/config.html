@@ -850,7 +850,10 @@ document.write(`
 <span class="w">    </span><span class="sd">"""Configuration for Feature Generation Workflow."""</span>
     <span class="n">data_path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Path to dataset."</span><span class="p">)</span>
     <span class="n">model_path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Path to model file."</span><span class="p">)</span>
-    <span class="n">model_head</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Model head name."</span><span class="p">)</span>
+    <span class="n">model_head</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Model head name (optional for single-task models)."</span><span class="p">,</span>
+    <span class="p">)</span>
     <span class="n">feature_kind</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"descriptor"</span><span class="p">,</span> <span class="s2">"fitting_last_layer"</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="s2">"descriptor"</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="p">(</span>
@@ -886,7 +889,20 @@ document.write(`
             <span class="n">model_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_path</span><span class="o">.</span><span class="n">stem</span>
             <span class="n">data_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_path</span><span class="o">.</span><span class="n">name</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">savedir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="sa">f</span><span class="s2">"desc-</span><span class="si">{</span><span class="n">model_name</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">data_name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+<div class="viewcode-block" id="FeatureConfig.validate_backend_capabilities">
+<a class="viewcode-back" href="../../api/config/feature.html#dpeva.config.FeatureConfig.validate_backend_capabilities">[文档]</a>
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s1">'after'</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_backend_capabilities</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Reject feature exporters unavailable for the selected backend."""</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dp_backend</span> <span class="o">==</span> <span class="s2">"pt-expt"</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">feature_exporter</span> <span class="o">==</span> <span class="s2">"embed"</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"dp_backend='pt-expt' does not support feature_exporter='embed'; "</span>
+                <span class="s2">"use feature_exporter='eval_desc' (dp --pt-expt eval-desc)."</span>
+            <span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span></div>
+</div>
 
 
 

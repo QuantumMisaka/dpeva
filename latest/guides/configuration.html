@@ -497,6 +497,25 @@ document.write(`
 <span class="p">}</span>
 </pre></div>
 </div>
+<p>DPA4C 模型使用 DeepMD 的 exportable PyTorch backend。用于 DIRECT 采样的
+descriptor 可通过 <code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">--pt-expt</span> <span class="pre">eval-desc</span></code> 提取，单任务模型无需设置 head：</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="nt">"work_dir"</span><span class="p">:</span><span class="w"> </span><span class="s2">"./"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"data_path"</span><span class="p">:</span><span class="w"> </span><span class="s2">"./candidate_dpdata"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"model_path"</span><span class="p">:</span><span class="w"> </span><span class="s2">"./dpa4c_model.pt"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"savedir"</span><span class="p">:</span><span class="w"> </span><span class="s2">"./dpa4c_descriptors"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"model_head"</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"dp_backend"</span><span class="p">:</span><span class="w"> </span><span class="s2">"pt-expt"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"mode"</span><span class="p">:</span><span class="w"> </span><span class="s2">"cli"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"feature_exporter"</span><span class="p">:</span><span class="w"> </span><span class="s2">"eval_desc"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"feature_kind"</span><span class="p">:</span><span class="w"> </span><span class="s2">"descriptor"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"submission"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"backend"</span><span class="p">:</span><span class="w"> </span><span class="s2">"local"</span><span class="w"> </span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>正式的 DPA4C 支持需要 DeepMD-kit 3.2.0 或更新版本。当前 <code class="docutils literal notranslate"><span class="pre">pt-expt</span></code>
+backend 提供 descriptor 提取，但尚未提供 <code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">embed</span></code> 所需的组合
+<code class="docutils literal notranslate"><span class="pre">eval_embedding</span></code> 接口，因此这一路径应使用 <code class="docutils literal notranslate"><span class="pre">eval_desc</span></code>。</p>
 <p>DeepMD PyTorch 模型可使用 <code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">embed</span></code> 导出 HDF5 embedding。该路线会在 <code class="docutils literal notranslate"><span class="pre">savedir/embedding.hdf5</span></code> 中保留 <code class="docutils literal notranslate"><span class="pre">descriptor</span></code>、<code class="docutils literal notranslate"><span class="pre">atomic_feature</span></code>、<code class="docutils literal notranslate"><span class="pre">structural_feature</span></code> 和 <code class="docutils literal notranslate"><span class="pre">atom_types</span></code>；HDF5 dataset 由 DeepMD 使用 gzip + shuffle 压缩。<code class="docutils literal notranslate"><span class="pre">feature_kind=&quot;descriptor&quot;</span></code> 读取 <code class="docutils literal notranslate"><span class="pre">descriptor</span></code>，<code class="docutils literal notranslate"><span class="pre">feature_kind=&quot;fitting_last_layer&quot;</span></code> 对应 <code class="docutils literal notranslate"><span class="pre">atomic_feature</span></code>。</p>
 <div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
 <span class="w">  </span><span class="nt">"work_dir"</span><span class="p">:</span><span class="w"> </span><span class="s2">"./"</span><span class="p">,</span>
