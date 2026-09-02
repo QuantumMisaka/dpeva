@@ -99,6 +99,28 @@ Labeling 启用 `labeling_task_classes` 时，array 会按 task class 分组提�
 }
 ```
 
+DPA4C 模型使用 DeepMD 的 exportable PyTorch backend。用于 DIRECT 采样的
+descriptor 可通过 `dp --pt-expt eval-desc` 提取，单任务模型无需设置 head：
+
+```json
+{
+  "work_dir": "./",
+  "data_path": "./candidate_dpdata",
+  "model_path": "./dpa4c_model.pt",
+  "savedir": "./dpa4c_descriptors",
+  "model_head": null,
+  "dp_backend": "pt-expt",
+  "mode": "cli",
+  "feature_exporter": "eval_desc",
+  "feature_kind": "descriptor",
+  "submission": { "backend": "local" }
+}
+```
+
+正式的 DPA4C 支持需要 DeepMD-kit 3.2.0 或更新版本。当前 `pt-expt`
+backend 提供 descriptor 提取，但尚未提供 `dp embed` 所需的组合
+`eval_embedding` 接口，因此这一路径应使用 `eval_desc`。
+
 DeepMD PyTorch 模型可使用 `dp embed` 导出 HDF5 embedding。该路线会在 `savedir/embedding.hdf5` 中保留 `descriptor`、`atomic_feature`、`structural_feature` 和 `atom_types`；HDF5 dataset 由 DeepMD 使用 gzip + shuffle 压缩。`feature_kind="descriptor"` 读取 `descriptor`，`feature_kind="fitting_last_layer"` 对应 `atomic_feature`。
 
 ```json

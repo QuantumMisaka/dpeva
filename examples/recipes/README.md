@@ -64,6 +64,11 @@ Pre-calculates descriptors (e.g., using `dp eval-desc`) for use in the Collectio
 dpeva feature examples/recipes/feature_generation/config_feature.json
 ```
 
+For DPA4C descriptor extraction through DeepMD's exportable PyTorch backend:
+```bash
+dpeva feature examples/recipes/feature_generation/config_feature_dpa4c.json
+```
+
 ## 5. Standalone Sampling Tools
 
 For users who want to use the sampling algorithms directly without the full DP-EVA workflow.
