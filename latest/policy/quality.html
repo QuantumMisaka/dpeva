@@ -453,7 +453,9 @@ document.write(`
 <li><p><strong>Governance Gate</strong>：<code class="docutils literal notranslate"><span class="pre">scripts/doc_check.py</span></code> 通过，结构/元信息/链接/绝对路径检查均通过</p></li>
 <li><p><strong>Freshness Gate</strong>：<code class="docutils literal notranslate"><span class="pre">scripts/check_docs_freshness.py</span> <span class="pre">--days</span> <span class="pre">90</span></code> 通过</p></li>
 <li><p><strong>Ownership Gate</strong>：<code class="docutils literal notranslate"><span class="pre">active</span></code> 文档 owner 覆盖率=100%，并与 <code class="docutils literal notranslate"><span class="pre">docs/governance/inventory/owners-matrix.md</span></code> 一致</p></li>
-<li><p><strong>PR Gate</strong>：PR 模板文档清单项全部勾选，若为接口变更必须包含 docs 更新说明</p></li>
+<li><p><strong>PR Gate</strong>：PR 模板须如实填写变更影响、必要同步、验证证据与风险；若为接口变更，
+必须包含 docs 更新说明。仅当新增或更新 active 文档时要求 owner/owners；仅当工作属于
+重大架构、迁移或发布时按文档生命周期维护计划/报告。</p></li>
 </ul>
 </section>
 </section>

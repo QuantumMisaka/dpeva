@@ -416,10 +416,14 @@ make<span class="w"> </span>-C<span class="w"> </span>docs<span class="w"> </spa
 <h2>4. PR 必填治理信息<a class="headerlink" href="#pr" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p>使用 <code class="docutils literal notranslate"><span class="pre">.github/PULL_REQUEST_TEMPLATE.md</span></code></p></li>
-<li><p>说明是否涉及对外契约变更</p></li>
-<li><p>给出已更新的文档路径</p></li>
+<li><p>在模板中说明变更摘要和是否涉及对外契约变更</p></li>
+<li><p>若涉及对外契约，列出已更新的文档、recipe 与依赖/运行环境说明路径</p></li>
+<li><p>记录实际执行的验证命令、结果与未覆盖项</p></li>
+<li><p>说明兼容性、迁移与回滚；无影响时明确写出</p></li>
 <li><p>若涉及治理文件，需通过 CODEOWNERS 审查</p></li>
 </ul>
+<p>重大架构、迁移或发布工作仍应按项目文档生命周期维护 plan/report；这不是每个普通 PR
+都必须勾选的模板项。</p>
 </section>
 <section id="id4">
 <h2>5. AI 开发者执行建议<a class="headerlink" href="#id4" title="Link to this heading">#</a></h2>

@@ -2,7 +2,7 @@
 title: 文档贡献指南 (Contributing)
 status: active
 audience: Developers / Maintainers
-last-updated: 2026-06-10
+last-updated: 2026-09-02
 owner: Docs Owner
 ---
 
@@ -68,6 +68,8 @@ owner: Docs Owner
 - 示例一致性：示例配置字段与 Pydantic 模型一致
 - 风险说明：对破坏性变更提供迁移说明与旧路径跳转入口（如确需重命名/重排）
 - 责任归属：确认本次变更文档具备 `owner` 或 `owners`
+- 模板证据：在英文 PR 模板中记录影响、必要同步、验证结果和风险；不适用项明确标为
+  `None` 或说明原因。
 
 ## 7. 稳态化提交流程（标准）
 
@@ -75,10 +77,15 @@ owner: Docs Owner
    - `python3 scripts/doc_check.py`
    - `python3 scripts/check_docs_freshness.py --days 90`
    - `make html SPHINXOPTS="-W --keep-going"`
-2. 在 PR 描述中回答：
-   - 是否涉及 CLI/配置/输出契约变更
-   - 若涉及，已同步更新哪些文档与示例
+2. 在英文 PR 描述中填写：
+   - 变更摘要和 public-contract impact；
+   - 必要的文档、recipe、依赖或运行环境同步；
+   - 可复现的验证命令、结果与未覆盖项；
+   - 兼容性、迁移和回滚信息。
 3. 由对应 Owner 或 Code Owner 完成审查后合并。
+
+计划与报告适用于重大架构、迁移或发布工作，并按文档生命周期维护；普通 PR 不以归档
+计划/报告作为模板必填项。
 
 ## 8. 模板
 

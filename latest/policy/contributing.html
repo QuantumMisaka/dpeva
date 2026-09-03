@@ -457,6 +457,8 @@ document.write(`
 <li><p>示例一致性：示例配置字段与 Pydantic 模型一致</p></li>
 <li><p>风险说明：对破坏性变更提供迁移说明与旧路径跳转入口（如确需重命名/重排）</p></li>
 <li><p>责任归属：确认本次变更文档具备 <code class="docutils literal notranslate"><span class="pre">owner</span></code> 或 <code class="docutils literal notranslate"><span class="pre">owners</span></code></p></li>
+<li><p>模板证据：在英文 PR 模板中记录影响、必要同步、验证结果和风险；不适用项明确标为
+<code class="docutils literal notranslate"><span class="pre">None</span></code> 或说明原因。</p></li>
 </ul>
 </section>
 <section id="id7">
@@ -469,14 +471,18 @@ document.write(`
 <li><p><code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">html</span> <span class="pre">SPHINXOPTS=&quot;-W</span> <span class="pre">--keep-going&quot;</span></code></p></li>
 </ul>
 </li>
-<li><p>在 PR 描述中回答：</p>
+<li><p>在英文 PR 描述中填写：</p>
 <ul class="simple">
-<li><p>是否涉及 CLI/配置/输出契约变更</p></li>
-<li><p>若涉及，已同步更新哪些文档与示例</p></li>
+<li><p>变更摘要和 public-contract impact；</p></li>
+<li><p>必要的文档、recipe、依赖或运行环境同步；</p></li>
+<li><p>可复现的验证命令、结果与未覆盖项；</p></li>
+<li><p>兼容性、迁移和回滚信息。</p></li>
 </ul>
 </li>
 <li><p>由对应 Owner 或 Code Owner 完成审查后合并。</p></li>
 </ol>
+<p>计划与报告适用于重大架构、迁移或发布工作，并按文档生命周期维护；普通 PR 不以归档
+计划/报告作为模板必填项。</p>
 </section>
 <section id="id8">
 <h2>8. 模板<a class="headerlink" href="#id8" title="Link to this heading">#</a></h2>
