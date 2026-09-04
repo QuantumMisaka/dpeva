@@ -51,6 +51,27 @@ def test_feature_workflow_local_rejects_empty_recursion_output(tmp_path, caplog)
     assert WORKFLOW_FINISHED_TAG not in caplog.text
 
 
+def test_feature_workflow_propagates_recursion_failure_without_marker(tmp_path, caplog):
+    from dpeva.workflows.feature import FeatureWorkflow
+
+    data = tmp_path / "data"
+    data.mkdir()
+    config = {
+        "data_path": str(data),
+        "model_path": str(tmp_path / "model.pt"),
+        "savedir": str(tmp_path / "out"),
+        "mode": "python",
+        "submission": {"backend": "local"},
+    }
+    with patch("dpeva.workflows.feature.DescriptorGenerator"), patch(
+        "dpeva.feature.managers.FeatureExecutionManager.run_local_python_recursion",
+        side_effect=WorkflowError("leaf system failed"),
+    ):
+        with pytest.raises(WorkflowError, match="leaf system failed"):
+            FeatureWorkflow(config).run()
+    assert WORKFLOW_FINISHED_TAG not in caplog.text
+
+
 @pytest.mark.parametrize("feature_exporter", ["eval_desc", "embed"])
 def test_multi_pool_checks_require_every_pool(feature_exporter, tmp_path):
     from dpeva.feature.managers import FeatureExecutionManager

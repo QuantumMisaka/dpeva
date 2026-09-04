@@ -1,11 +1,21 @@
 import pytest
 
-from dpeva.run.status import (
+from dpeva.run import (
     InvalidStateTransition,
     RunEventKind,
     RunState,
     transition,
 )
+from dpeva.run.status import (
+    InvalidStateTransition as StatusInvalidStateTransition,
+)
+
+
+def test_public_run_package_exports_canonical_symbols() -> None:
+    assert InvalidStateTransition is StatusInvalidStateTransition
+    assert {RunState.CREATED.value, RunState.FINISHED.value} == {"created", "finished"}
+    assert RunEventKind.RESUME.value == "resume"
+    assert transition(RunState.CREATED, RunState.VALIDATED) is RunState.VALIDATED
 
 
 def test_canonical_state_values_are_closed() -> None:
@@ -55,6 +65,17 @@ def test_simulated_slurm_lifecycle_marks_submission_before_running() -> None:
     assert transition(state, RunState.RUNNING) is RunState.RUNNING
 
 
+@pytest.mark.parametrize("current", [RunState.CREATED, RunState.VALIDATED, RunState.SUBMITTED])
+def test_any_pre_execution_state_can_reach_failed(current: RunState) -> None:
+    assert transition(current, RunState.FAILED) is RunState.FAILED
+
+
+def test_simulated_slurm_success_and_failure_terminal_paths() -> None:
+    submitted = transition(RunState.VALIDATED, RunState.SUBMITTED)
+    assert transition(transition(submitted, RunState.RUNNING), RunState.FINISHED) is RunState.FINISHED
+    assert transition(submitted, RunState.FAILED) is RunState.FAILED
+
+
 @pytest.mark.parametrize(
     ("current", "target"),
     [
@@ -75,3 +96,16 @@ def test_partial_and_failed_recovery_are_explicit() -> None:
     assert transition(RunState.FAILED, RunState.RUNNING, RunEventKind.RECOVERY) is RunState.RUNNING
     with pytest.raises(InvalidStateTransition):
         transition(RunState.PARTIAL, RunState.RUNNING)
+
+
+@pytest.mark.parametrize("event", [RunEventKind.RESUME, RunEventKind.RECOVERY])
+def test_recovered_partial_run_can_finish(event: RunEventKind) -> None:
+    running = transition(RunState.PARTIAL, RunState.RUNNING, event)
+    assert transition(running, RunState.FINISHED) is RunState.FINISHED
+
+
+@pytest.mark.parametrize("event", [RunEventKind.RESUME, RunEventKind.RECOVERY])
+def test_recovered_failed_run_can_finish_or_fail(event: RunEventKind) -> None:
+    running = transition(RunState.FAILED, RunState.RUNNING, event)
+    assert transition(running, RunState.FINISHED) is RunState.FINISHED
+    assert transition(running, RunState.FAILED) is RunState.FAILED
