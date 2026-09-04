@@ -37,19 +37,19 @@ dpeva --help
 dpeva train --help
 ```
 
-### 3.2 通用命令格式
+### 3.2 工作流命令格式
 
 ```bash
-dpeva <subcommand> <config_path>
+dpeva <workflow> <config_path>
 ```
 
 可选参数：
 
 ```bash
-dpeva --no-banner <subcommand> <config_path>
+dpeva --no-banner <workflow> <config_path>
 ```
 
-CLI 会在参数解析阶段对 `<config_path>` 执行统一前置校验（存在性、可读性、JSON 文件后缀）。
+除 `doctor` 外的工作流都要求提供 `<config_path>`；CLI 会在参数解析阶段对它执行统一前置校验（存在性、可读性、JSON 文件后缀）。`doctor` 是不需要配置文件的独立环境检查命令，格式见下节。
 
 实现入口：`src/dpeva/cli.py`（基于 `argparse`）。
 
@@ -66,7 +66,7 @@ dpeva doctor --json
 
 ## 4. 子命令职责、输入输出与配置
 
-所有子命令的第一个参数均为配置 JSON 路径。配置字段的权威查表入口：
+除 `doctor` 外，所有工作流子命令的第一个参数均为配置 JSON 路径；`doctor` 不接收配置路径。配置字段的权威查表入口：
 
 - API Reference（Sphinx 生成的配置字段文档）
 - ../reference/validation.md

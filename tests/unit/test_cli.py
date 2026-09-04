@@ -152,6 +152,32 @@ def test_doctor_human_output_is_default(monkeypatch, capsys):
     )
 
 
+def test_doctor_human_output_failed_exits_one(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "dpeva.run.doctor.build_doctor_report",
+        lambda: DoctorReport(
+            status="failed",
+            checks=[
+                DoctorCheck(
+                    name="deepmd",
+                    status="missing",
+                    detail="dp executable not found",
+                )
+            ],
+        ),
+    )
+    monkeypatch.setattr(cli, "show_banner", lambda: None)
+    monkeypatch.setattr(sys, "argv", ["dpeva", "doctor"])
+
+    with pytest.raises(SystemExit) as exc:
+        cli.main()
+
+    assert exc.value.code == 1
+    captured = capsys.readouterr()
+    assert captured.err == ""
+    assert captured.out == "deepmd: missing - dp executable not found\n"
+
+
 def test_load_and_resolve_config_reports_invalid_json(tmp_path):
     config_path = _write_config(tmp_path, "{invalid_json")
     with pytest.raises(cli.CLIUserInputError, match="Invalid JSON in config file"):
