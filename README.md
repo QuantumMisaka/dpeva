@@ -36,6 +36,17 @@ cd dpeva
 pip install -e .
 ```
 
+核心安装不包含 DeepMD-kit；不使用 DeepMD 工作流时可保持该最小安装。需要
+训练、推理或特征工作流时，安装用户运行时 extra：
+
+```bash
+pip install -e '.[deepmd]'
+```
+
+研究生产环境请在独立环境文件或锁文件中固定 `deepmd-kit==3.2.0`，并保留
+`dp --version` 证据；`dpeva[deepmd]` 的 `>=3.2,<3.3` 只是用户依赖解析范围，
+不代表该范围内所有版本行为等价。
+
 Optional trajectory exploration through `atst-tools` is installed separately:
 
 ```bash

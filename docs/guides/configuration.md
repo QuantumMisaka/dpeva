@@ -141,7 +141,10 @@ descriptor 可通过 `dp --pt-expt eval-desc` 提取，单任务模型无需设�
 }
 ```
 
-正式的 DPA4C 支持需要 DeepMD-kit 3.2.0 或更新版本。当前 `pt-expt`
+正式的 DPA4C 支持走 DeepMD-kit 3.2 兼容性通道。用户运行时可安装
+`dpeva[deepmd]`，其依赖范围为 `deepmd-kit>=3.2,<3.3`；该范围内的版本不应被
+视为行为完全等价。研究生产环境必须单独锁定 `deepmd-kit==3.2.0`，并记录
+`dp --version`，不能用范围依赖代替精确锁定。当前 `pt-expt`
 backend 提供 descriptor 提取，但尚未提供 `dp embed` 所需的组合
 `eval_embedding` 接口，因此这一路径应使用 `eval_desc`。
 

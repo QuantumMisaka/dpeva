@@ -6,20 +6,23 @@ last-updated: 2026-06-10
 owner: Docs Owner
 ---
 
-# 上游软件与核心依赖（Upstream Software）
+# 上游软件与依赖边界（Upstream Software）
 
 - Status: active
 - Audience: Users / Developers
 - Last-Updated: 2026-06-10
 
-本文档汇总 DP-EVA 的核心上游软件，说明其仓库位置与在本项目中的职责边界。
+本文档汇总 DP-EVA 的上游软件，说明其仓库位置、安装层级与在本项目中的职责边界。
 
-## 1. DeePMD-kit
+## 1. DeePMD-kit（可选运行时依赖）
 
 - 仓库地址：https://github.com/deepmodeling/deepmd-kit/
 - 核心功能：机器学习势训练和推理平台。
+- 安装层级：不属于核心安装；需要 DeepMD 工作流时安装 `dpeva[deepmd]`。
+- 版本边界：用户 extra 允许 `deepmd-kit>=3.2,<3.3`。该范围是依赖解析边界，不能据此宣称其中每个版本的行为完全等价。
+- 研究生产锁定：正式结果使用独立环境锁定 `deepmd-kit==3.2.0`，并在运行记录中保存 `dp --version`；不能用宽范围 extra 替代研究环境锁。
 - 在 DP-EVA 中的作用：
-  - 作为训练、测试与描述符评估的核心计算后端。
+  - 作为训练、测试与描述符评估的计算后端。
   - 通过 `dp` 命令参与 `train / infer / feature` 等流程。
 
 ## 2. dpdata
@@ -67,7 +70,7 @@ owner: Docs Owner
 
 | 依赖 | 主要阶段 | 角色定位 |
 |---|---|---|
-| DeepMD-kit | Train / Infer / Feature | 机器学习势训练与推理核心引擎 |
+| DeepMD-kit | Train / Infer / Feature（可选） | 机器学习势训练与推理计算引擎；用户 extra `dpeva[deepmd]`，研究生产锁定 `==3.2.0` |
 | dpdata | Data IO / Labeling / Analysis | 结构数据格式与系统组织层 |
 | ABACUS | Labeling | 第一性原理计算后端 |
 | ASE | Labeling / Exploration | 原子结构对象与结构读写基础 |
