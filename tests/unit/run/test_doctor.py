@@ -3,6 +3,7 @@ import json
 import subprocess
 
 import dpeva
+from packaging.version import Version
 from dpeva.run.doctor import DoctorCheck, DoctorReport, build_doctor_report, probe_deepmd
 
 
@@ -68,6 +69,53 @@ def test_probe_deepmd_incompatible_is_structured() -> None:
         "name": "deepmd",
         "status": "incompatible",
         "version": "3.3.0",
+        "detail": "required >= 3.2.0, < 3.3",
+    }
+
+
+def test_probe_deepmd_nonzero_exit_is_structured_error() -> None:
+    def failed(*args, **kwargs):
+        return subprocess.CompletedProcess(args[0], 2, "", "dp: failed to query version")
+
+    check = probe_deepmd(run=failed)
+
+    assert check.model_dump() == {
+        "name": "deepmd",
+        "status": "error",
+        "version": None,
+        "detail": "dp: failed to query version",
+    }
+
+
+def test_probe_deepmd_below_minimum_is_structured_incompatible() -> None:
+    def below_minimum(*args, **kwargs):
+        return subprocess.CompletedProcess(args[0], 0, "DeePMD-kit v3.1.9", "")
+
+    check = probe_deepmd(run=below_minimum)
+
+    assert check.model_dump() == {
+        "name": "deepmd",
+        "status": "incompatible",
+        "version": "3.1.9",
+        "detail": "required >= 3.2.0, < 3.3",
+    }
+
+
+def test_probe_deepmd_accepts_dev_source_release() -> None:
+    source_version = "0.1.dev1+g27a18b604"
+    assert Version(source_version).is_devrelease
+
+    def source_build(*args, **kwargs):
+        return subprocess.CompletedProcess(
+            args[0], 0, f"DeePMD-kit v{source_version}", ""
+        )
+
+    check = probe_deepmd(run=source_build)
+
+    assert check.model_dump() == {
+        "name": "deepmd",
+        "status": "ok",
+        "version": source_version,
         "detail": "required >= 3.2.0, < 3.3",
     }
 
