@@ -138,6 +138,44 @@ def test_recovery_clears_current_failure_but_keeps_event_history(tmp_path) -> No
     ]
 
 
+@pytest.mark.parametrize(
+    ("status", "event_kind"),
+    [("failed", RunEventKind.RECOVERY), ("partial", RunEventKind.RESUME)],
+)
+def test_loaded_legacy_terminal_event_is_enriched_before_recovery(
+    tmp_path, status, event_kind
+) -> None:
+    path = tmp_path / f"legacy-{status}.json"
+    path.write_text(
+        json.dumps(
+            {
+                "schema_version": "1.0",
+                "run_id": f"legacy-{status}",
+                "workflow": "infer",
+                "status": status,
+                "events": [{"state": status, "kind": "transition", "attempt_id": 1}],
+                "failure": {"category": "EXECUTION", "message": f"legacy {status}"},
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    recorder = StatusRecorder.load(path)
+    assert recorder.manifest.events[-1].failure is None
+    recorder.transition(RunState.RUNNING, event=event_kind)
+
+    loaded = StatusRecorder.load(path)
+    assert loaded.manifest.failure is None
+    assert loaded.manifest.events[0].failure == FailureRecord(
+        category="EXECUTION", message=f"legacy {status}"
+    )
+    assert json.loads(path.read_text(encoding="utf-8"))["events"][0]["failure"] == {
+        "category": "EXECUTION",
+        "message": f"legacy {status}",
+    }
+
+
 def test_explicit_event_is_persisted_without_changing_state(tmp_path) -> None:
     recorder = StatusRecorder.create(tmp_path / "run.json", "run-1", "infer")
     recorder.record_event(kind="force")

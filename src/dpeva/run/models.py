@@ -39,8 +39,6 @@ class RunEvent(RunModel):
     @model_validator(mode="after")
     def validate_failure_state(self) -> "RunEvent":
         failure_states = {RunState.PARTIAL, RunState.FAILED}
-        if self.state in failure_states and self.failure is None:
-            raise ValueError(f"{self.state.value} events require failure evidence")
         if self.state not in failure_states and self.failure is not None:
             raise ValueError(
                 "event failure evidence is only valid for failed/partial states, "

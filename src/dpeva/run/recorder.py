@@ -79,8 +79,18 @@ class StatusRecorder:
         failures therefore leave the recorder unchanged.
         """
 
-        next_state = transition(self._manifest.status, target, event)
+        current_state = self._manifest.status
+        next_state = transition(current_state, target, event)
         candidate = self._manifest.model_copy(deep=True)
+        prior_failure = candidate.failure
+        if (
+            current_state in {RunState.PARTIAL, RunState.FAILED}
+            and next_state not in {RunState.PARTIAL, RunState.FAILED}
+            and prior_failure is not None
+        ):
+            candidate = self._enrich_terminal_failure(
+                candidate, current_state, prior_failure, self.attempt_id
+            )
         candidate.status = next_state
         if next_state not in {RunState.PARTIAL, RunState.FAILED}:
             # Recovery starts a new current attempt. The prior failed state
@@ -185,6 +195,23 @@ class StatusRecorder:
         # ``model_copy(update=...)`` does not validate updates in Pydantic v2.
         # Round-trip through the model to enforce all field and root rules.
         return RunManifest.model_validate(candidate.model_dump())
+
+    @staticmethod
+    def _enrich_terminal_failure(
+        candidate: RunManifest, state: RunState, failure: FailureRecord, attempt_id: int
+    ) -> RunManifest:
+        for index in range(len(candidate.events) - 1, -1, -1):
+            event = candidate.events[index]
+            if event.state is state:
+                if event.failure is None:
+                    candidate.events[index] = event.model_copy(update={"failure": failure})
+                return candidate
+        # A malformed-but-schema-valid legacy manifest may omit event history;
+        # retain its manifest-level evidence in a synthetic terminal event.
+        candidate.events.append(
+            RunEvent(state=state, attempt_id=attempt_id, failure=failure)
+        )
+        return candidate
 
     def _persist(self, candidate: RunManifest) -> None:
         candidate = self._validate(candidate)
