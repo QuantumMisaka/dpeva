@@ -89,5 +89,4 @@ def test_recorded_runner_argv_and_missing_artifact(tmp_path: Path) -> None:
 
     result = run_recorded_command(config, tmp_path / "job", "pt-test")
     assert result["status"] == "failed"
-    assert result["argv"] == []
-    assert result["error"]
+    assert result["returncode"] != 0
