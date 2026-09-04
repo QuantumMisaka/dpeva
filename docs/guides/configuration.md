@@ -266,6 +266,8 @@ LLPR / energy DPOSE 可作为 Collect UQ backend 使用。最小 energy LLPR 只
 当前整合仅保留 `existing-training` / `new-labeled` 逻辑来源标签，不生成无法解析的
 parent manifest ref；待父清单随 bundle 一并固化后再扩展该引用。
 帧数或 type map 冲突会在导出和下游交接前失败。
+发布目标使用不覆盖语义；`PublicationDurabilityError` 表示 bundle 已发布但目录持久化
+确认失败，不能对同一路径盲目重跑，应检查已发布证据或改用新的输出路径。
 
 ### 5.6 Analysis
 
@@ -303,7 +305,7 @@ Analysis 相关建议：
 - 单变量分布图默认不显示 `All Data` 图例；dataset 元素占比/存在性使用多色饼图。
 - quantity-aware 默认下，Force / Virial 的 hexbin enhanced parity 会在右侧信息栏同时展示 Error Density 与 colorbar，colorbar 表示每个 hexbin 中样本数量。
 
-### 5.6 Labeling
+### 5.7 Labeling
 
 ```json
 {
@@ -367,7 +369,7 @@ SAI 上的 ABACUS labeling 如需同时处理普通单卡任务与 highmem/multi
 - 没有配置 `labeling_task_classes` 时，DP-EVA 保持旧的单一 `submission` 行为，兼容既有配置。
 - SAI-1344 `16V100` 实测不接受 `flood-gpu`/`rush-gpu` 的 1GPU 请求（`QOSMinGRES`）。FP11 类似批量任务应使用 4GPU MPI fallback；若 `rush-gpu` array 命中 `QOSMaxSubmitJobPerUserLimit`，应改用 `flood-gpu` 完成批量提交。
 
-### 5.7 Exploration
+### 5.8 Exploration
 
 ```json
 {

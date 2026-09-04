@@ -5,7 +5,10 @@ from unittest.mock import patch
 
 import pytest
 
-from dpeva.labeling.integration import DataIntegrationManager
+from dpeva.labeling.integration import (
+    DataIntegrationManager,
+    PublicationDurabilityError,
+)
 
 
 class _FakeMultiSystems(list):
@@ -361,3 +364,54 @@ def test_integration_manager_publication_failures_leave_no_final_bundle(
 
     assert not out_dir.exists()
     assert not list(tmp_path.glob(".merged.staging-*"))
+
+
+@patch("dpeva.labeling.integration.dpdata.MultiSystems", _FakeMultiSystems)
+@patch("dpeva.labeling.integration.load_systems")
+def test_competing_final_target_is_never_overwritten(mock_load_systems, tmp_path):
+    new_dir = tmp_path / "new_cleaned"
+    out_dir = tmp_path / "merged"
+    new_dir.mkdir()
+    mock_load_systems.return_value = [_FakeSystem([[[0.0, 0.0, 0.0]]])]
+    manager = DataIntegrationManager()
+    original_rename = manager._rename_noreplace
+
+    def competitor(source, target):
+        target.mkdir()
+        (target / "competitor.marker").write_text("keep")
+        return original_rename(source, target)
+
+    with patch.object(manager, "_rename_noreplace", side_effect=competitor):
+        with pytest.raises(FileExistsError, match="appeared during publication"):
+            manager.integrate(new_labeled_data_path=new_dir, merged_output_path=out_dir)
+
+    assert (out_dir / "competitor.marker").read_text() == "keep"
+    assert not list(tmp_path.glob(".merged.staging-*"))
+
+
+@patch("dpeva.labeling.integration.dpdata.MultiSystems", _FakeMultiSystems)
+@patch("dpeva.labeling.integration.load_systems")
+def test_post_rename_durability_failure_keeps_published_bundle(
+    mock_load_systems, tmp_path
+):
+    new_dir = tmp_path / "new_cleaned"
+    out_dir = tmp_path / "merged"
+    new_dir.mkdir()
+    mock_load_systems.return_value = [_FakeSystem([[[0.0, 0.0, 0.0]]])]
+    manager = DataIntegrationManager()
+    original_fsync = manager._fsync_directory
+
+    def fail_parent(path, *, strict=False):
+        if path == tmp_path and strict:
+            raise OSError("injected directory fsync failure")
+        return original_fsync(path, strict=strict)
+
+    with patch.object(manager, "_fsync_directory", side_effect=fail_parent):
+        with pytest.raises(PublicationDurabilityError, match="Bundle already published"):
+            manager.integrate(new_labeled_data_path=new_dir, merged_output_path=out_dir)
+
+    assert out_dir.is_dir()
+    assert (out_dir / "integration_summary.json").exists()
+    assert not list(tmp_path.glob(".merged.staging-*"))
+    with pytest.raises(FileExistsError, match="refusing overwrite"):
+        manager.integrate(new_labeled_data_path=new_dir, merged_output_path=out_dir)

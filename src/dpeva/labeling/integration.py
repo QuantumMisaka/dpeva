@@ -1,3 +1,5 @@
+import ctypes
+import errno
 import hashlib
 import json
 import logging
@@ -16,6 +18,14 @@ from dpeva.run.dataset import DatasetManifest, DatasetParent, validate_lineage_c
 
 
 logger = logging.getLogger(__name__)
+
+
+class PublicationError(RuntimeError):
+    """Raised when the final bundle cannot be published safely."""
+
+
+class PublicationDurabilityError(PublicationError):
+    """The bundle is published, but its directory durability is unconfirmed."""
 
 
 class DataIntegrationManager:
@@ -170,8 +180,15 @@ class DataIntegrationManager:
             }
             self._write_json_atomic(staging_path / "integration_summary.json", summary)
             self._fsync_directory(staging_path)
-            os.rename(staging_path, merged_output_path)
-            self._fsync_directory(merged_output_path.parent)
+            self._rename_noreplace(staging_path, merged_output_path)
+            try:
+                self._fsync_directory(merged_output_path.parent, strict=True)
+            except OSError as exc:
+                raise PublicationDurabilityError(
+                    "Bundle already published at "
+                    f"{merged_output_path}, but durability confirmation failed; "
+                    "inspect the bundle and retry at a new output path"
+                ) from exc
         except Exception:
             if staging_path.exists():
                 shutil.rmtree(staging_path)
@@ -288,11 +305,51 @@ class DataIntegrationManager:
         return digest.hexdigest()
 
     @staticmethod
-    def _fsync_directory(path: Path) -> None:
-        """Best-effort directory durability for the bundle rename."""
+    def _rename_noreplace(source: Path, target: Path) -> None:
+        """Atomically rename a directory without replacing a competitor."""
+        if os.name != "posix" or not hasattr(ctypes.CDLL(None), "renameat2"):
+            raise PublicationError(
+                "safe atomic publication requires Linux renameat2(RENAME_NOREPLACE)"
+            )
+        libc = ctypes.CDLL(None, use_errno=True)
+        renameat2 = libc.renameat2
+        renameat2.argtypes = [
+            ctypes.c_int,
+            ctypes.c_char_p,
+            ctypes.c_int,
+            ctypes.c_char_p,
+            ctypes.c_uint,
+        ]
+        renameat2.restype = ctypes.c_int
+        result = renameat2(
+            -100,
+            os.fsencode(source),
+            -100,
+            os.fsencode(target),
+            1,
+        )
+        if result == 0:
+            return
+        error = ctypes.get_errno()
+        if error == errno.EEXIST:
+            raise FileExistsError(
+                f"Merged output path appeared during publication: {target}"
+            )
+        if error in {errno.ENOSYS, errno.EINVAL, errno.ENOTSUP}:
+            raise PublicationError(
+                "safe atomic publication requires Linux "
+                "renameat2(RENAME_NOREPLACE)"
+            )
+        raise OSError(error, os.strerror(error), str(target))
+
+    @staticmethod
+    def _fsync_directory(path: Path, *, strict: bool = False) -> None:
+        """Confirm directory durability, optionally failing closed."""
         try:
             fd = os.open(path, os.O_RDONLY)
         except OSError:
+            if strict:
+                raise
             return
         try:
             os.fsync(fd)

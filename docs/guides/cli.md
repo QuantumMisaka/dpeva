@@ -183,6 +183,9 @@ dpeva infer config.json --run-id infer-20260904-a1b2c3
     SHA-256。清单记录父数据集、合并后的帧/体系数、去重移除数、type map 和逻辑来源引用；
     当前整合不会伪造不可解析的 parent manifest ref，仅保留逻辑来源标签；
     帧数或 type map 冲突会在下游交接前失败。
+  - 发布采用 Linux `renameat2(RENAME_NOREPLACE)`，不覆盖并发产生的目标目录；若最终目录
+    已发布但目录持久化确认失败，会报告 `PublicationDurabilityError`。此时保留已发布 bundle，
+    应先检查其清单与摘要，再选择新的输出路径重试。
 
 ### 4.7 analysis（双模式分析）
 
