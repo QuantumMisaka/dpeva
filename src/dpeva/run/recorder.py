@@ -89,11 +89,17 @@ class StatusRecorder:
             candidate.failure = None
         kind = event.value if event is not None else "transition"
         candidate.events.append(
-            RunEvent(state=next_state, kind=kind, attempt_id=self.attempt_id)
+            RunEvent(
+                state=next_state,
+                kind=kind,
+                attempt_id=self.attempt_id,
+                failure=candidate.failure
+                if next_state in {RunState.PARTIAL, RunState.FAILED}
+                else None,
+            )
         )
         candidate = self._validate(candidate)
         self._persist(candidate)
-        self._manifest = candidate
         return next_state
 
     def fail(self, *, category: str, message: str) -> RunState:
@@ -107,14 +113,12 @@ class StatusRecorder:
         candidate.jobs.append(job)
         candidate = self._validate(candidate)
         self._persist(candidate)
-        self._manifest = candidate
 
     def add_artifact(self, artifact: ArtifactRecord) -> None:
         candidate = self._manifest.model_copy(deep=True)
         candidate.artifacts.append(artifact)
         candidate = self._validate(candidate)
         self._persist(candidate)
-        self._manifest = candidate
 
     def update_metadata(
         self,
@@ -137,7 +141,6 @@ class StatusRecorder:
             candidate.inputs = copy.deepcopy(inputs)
         candidate = self._validate(candidate)
         self._persist(candidate)
-        self._manifest = candidate
 
     def record_event(
         self,
@@ -170,10 +173,11 @@ class StatusRecorder:
         candidate = self._manifest.model_copy(deep=True)
         candidate.status = next_state
         candidate.failure = FailureRecord(category=category, message=message)
-        candidate.events.append(RunEvent(state=next_state, attempt_id=self.attempt_id))
+        candidate.events.append(
+            RunEvent(state=next_state, attempt_id=self.attempt_id, failure=candidate.failure)
+        )
         candidate = self._validate(candidate)
         self._persist(candidate)
-        self._manifest = candidate
         return next_state
 
     @staticmethod
@@ -193,6 +197,10 @@ class StatusRecorder:
                 handle.flush()
                 os.fsync(handle.fileno())
             os.replace(temporary, self.path)
+            # A successful replace is the publication point. If the directory
+            # fsync reports a durability error, keep memory aligned with the
+            # on-disk candidate while surfacing that error to the caller.
+            self._manifest = candidate
             self._fsync_parent_directory()
         except BaseException:
             try:
@@ -205,26 +213,31 @@ class StatusRecorder:
         flags = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0)
         try:
             directory_fd = os.open(str(self.path.parent), flags)
-        except OSError:
-            # Directory handles/fsync are unavailable on some platforms. The
-            # file has still been flushed and the rename remains atomic there.
+        except OSError as error:
+            if not self._is_unsupported_directory_error(error):
+                raise
+            # Directory handles are unavailable on a few platforms/filesystems;
+            # the file has still been flushed and the rename remains atomic.
             return
         try:
             try:
                 os.fsync(directory_fd)
             except OSError as error:
                 # A few platforms/filesystems do not support directory fsync;
-                # propagate other errors so the recorder does not publish a
-                # candidate that failed its durability step.
-                unsupported = {
-                    errno.EBADF,
-                    errno.EINVAL,
-                    errno.ENOSYS,
-                    errno.ENOTSUP,
-                    errno.EOPNOTSUPP,
-                }
-                if error.errno in unsupported:
+                # propagate other errors so callers can react to the reduced
+                # durability guarantee after publication.
+                if self._is_unsupported_directory_error(error):
                     return
                 raise
         finally:
             os.close(directory_fd)
+
+    @staticmethod
+    def _is_unsupported_directory_error(error: OSError) -> bool:
+        return error.errno in {
+            errno.EBADF,
+            errno.EINVAL,
+            errno.ENOSYS,
+            errno.ENOTSUP,
+            errno.EOPNOTSUPP,
+        }

@@ -16,13 +16,6 @@ class RunModel(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
-class RunEvent(RunModel):
-    state: RunState
-    at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    kind: Literal["transition", "resume", "recovery", "force"] = "transition"
-    attempt_id: int = Field(default=1, ge=1)
-
-
 class FailureRecord(RunModel):
     category: Literal[
         "CONFIG",
@@ -34,6 +27,26 @@ class FailureRecord(RunModel):
         "UPSTREAM",
     ]
     message: str
+
+
+class RunEvent(RunModel):
+    state: RunState
+    at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    kind: Literal["transition", "resume", "recovery", "force"] = "transition"
+    attempt_id: int = Field(default=1, ge=1)
+    failure: FailureRecord | None = None
+
+    @model_validator(mode="after")
+    def validate_failure_state(self) -> "RunEvent":
+        failure_states = {RunState.PARTIAL, RunState.FAILED}
+        if self.state in failure_states and self.failure is None:
+            raise ValueError(f"{self.state.value} events require failure evidence")
+        if self.state not in failure_states and self.failure is not None:
+            raise ValueError(
+                "event failure evidence is only valid for failed/partial states, "
+                f"got {self.state.value}"
+            )
+        return self
 
 
 class ArtifactRecord(RunModel):

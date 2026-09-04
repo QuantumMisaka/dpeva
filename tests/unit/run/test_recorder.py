@@ -1,3 +1,4 @@
+import errno
 import json
 
 import pytest
@@ -122,6 +123,13 @@ def test_recovery_clears_current_failure_but_keeps_event_history(tmp_path) -> No
 
     assert recorder.manifest.status is RunState.RUNNING
     assert recorder.manifest.failure is None
+    assert recorder.manifest.events[2].failure == FailureRecord(
+        category="EXECUTION", message="first attempt failed"
+    )
+    loaded = StatusRecorder.load(tmp_path / "run.json")
+    assert loaded.manifest.events[2].failure == FailureRecord(
+        category="EXECUTION", message="first attempt failed"
+    )
     assert [event.state for event in recorder.manifest.events] == [
         RunState.VALIDATED,
         RunState.RUNNING,
@@ -205,9 +213,56 @@ def test_parent_directory_fsync_failure_does_not_publish_state(tmp_path, monkeyp
     with pytest.raises(OSError, match="directory fsync failed"):
         recorder.transition(RunState.VALIDATED)
 
-    assert recorder.manifest.status is RunState.CREATED
+    assert recorder.manifest.status is RunState.VALIDATED
     assert path.read_text(encoding="utf-8") != original
     assert not (tmp_path / "run.json.tmp").exists()
+
+    recorder.transition(RunState.RUNNING)
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    assert [event["state"] for event in payload["events"]] == ["validated", "running"]
+
+
+@pytest.mark.parametrize("error_number", [errno.EACCES, errno.ENOENT, errno.EMFILE])
+def test_directory_open_errors_are_not_silenced(tmp_path, monkeypatch, error_number) -> None:
+    recorder = StatusRecorder.create(tmp_path / "run.json", "run-1", "infer")
+
+    monkeypatch.setattr(
+        "dpeva.run.recorder.os.open",
+        lambda *args, **kwargs: (_ for _ in ()).throw(OSError(error_number, "directory open failed")),
+    )
+    with pytest.raises(OSError) as exc_info:
+        recorder.transition(RunState.VALIDATED)
+    assert exc_info.value.errno == error_number
+    assert recorder.manifest.status is RunState.VALIDATED
+
+
+def test_known_unsupported_directory_open_is_safe(tmp_path, monkeypatch) -> None:
+    recorder = StatusRecorder.create(tmp_path / "run.json", "run-1", "infer")
+    monkeypatch.setattr(
+        "dpeva.run.recorder.os.open",
+        lambda *args, **kwargs: (_ for _ in ()).throw(OSError(errno.EINVAL, "unsupported")),
+    )
+
+    recorder.transition(RunState.VALIDATED)
+    assert recorder.manifest.status is RunState.VALIDATED
+
+
+def test_known_unsupported_directory_fsync_is_safe(tmp_path, monkeypatch) -> None:
+    recorder = StatusRecorder.create(tmp_path / "run.json", "run-1", "infer")
+    calls = 0
+    real_fsync = __import__("os").fsync
+
+    def unsupported_directory_fsync(fd):
+        nonlocal calls
+        calls += 1
+        if calls == 2:
+            raise OSError(errno.EINVAL, "unsupported")
+        return real_fsync(fd)
+
+    monkeypatch.setattr("dpeva.run.recorder.os.fsync", unsupported_directory_fsync)
+    recorder.transition(RunState.VALIDATED)
+
+    assert recorder.manifest.status is RunState.VALIDATED
 
 
 def test_persistence_fsyncs_parent_directory(tmp_path, monkeypatch) -> None:
@@ -231,6 +286,13 @@ def test_manifest_is_closed_and_nested_records_are_json_serializable() -> None:
         )
     with pytest.raises(ValidationError):
         RunEvent.model_validate({"state": "created", "mystery": 1})
+    with pytest.raises(ValidationError):
+        RunEvent.model_validate(
+            {
+                "state": "running",
+                "failure": {"category": "EXECUTION", "message": "invalid"},
+            }
+        )
 
     manifest = RunManifest(
         run_id="run-1",
