@@ -102,9 +102,8 @@ class InferenceWorkflow:
                 context.recorder.transition(RunState.RUNNING, RunEventKind.RESUME)
                 state = RunState.RUNNING
             if state is RunState.VALIDATED:
-                context.recorder.transition(
-                    RunState.SUBMITTED if backend == "slurm" else RunState.RUNNING
-                )
+                if backend != "slurm":
+                    context.recorder.transition(RunState.RUNNING)
             elif state is RunState.SUBMITTED and backend == "local":
                 context.recorder.transition(RunState.RUNNING)
             records = self._run_body()
@@ -112,6 +111,23 @@ class InferenceWorkflow:
                 context.recorder.add_job(record)
 
             if self.execution_manager.backend == "slurm":
+                submitted = [record for record in records if record.status is RunState.SUBMITTED]
+                failed = [record for record in records if record.status is RunState.FAILED]
+                if not submitted:
+                    context.recorder.fail(category="EXECUTION", message="all inference jobs failed")
+                    raise WorkflowError("all inference jobs failed")
+                if failed:
+                    if context.recorder.manifest.status in {
+                        RunState.VALIDATED,
+                        RunState.SUBMITTED,
+                    }:
+                        context.recorder.transition(RunState.RUNNING)
+                    context.recorder.partial(
+                        category="EXECUTION", message="one or more inference jobs failed"
+                    )
+                    raise PartialWorkflowError("one or more inference jobs failed")
+                if context.recorder.manifest.status is RunState.VALIDATED:
+                    context.recorder.transition(RunState.SUBMITTED)
                 if self.config.auto_analysis:
                     self.logger.warning("auto_analysis=true is ignored when backend is not local.")
                     self.logger.info("Inference jobs submitted. Run analysis workflow separately after jobs finish.")

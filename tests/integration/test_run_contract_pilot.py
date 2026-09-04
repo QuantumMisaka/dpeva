@@ -7,7 +7,7 @@ import pytest
 
 from dpeva.config import FeatureConfig, InferenceConfig
 from dpeva.run.context import RunOptions
-from dpeva.run.artifacts import ArtifactValidationError
+from dpeva.run.artifacts import ArtifactValidationError, validate_feature_outputs
 from dpeva.utils.exceptions import PartialWorkflowError, WorkflowError
 from dpeva.workflows.feature import FeatureWorkflow
 from dpeva.workflows.infer import InferenceWorkflow
@@ -304,3 +304,172 @@ def test_cli_partial_exit_and_snapshots(tmp_path, monkeypatch) -> None:
     payload = json.loads((run_dir / "run.json").read_text())
     assert payload["status"] == "finished"
     assert any(event["kind"] == "force" and event["reason"] == "verified retry" for event in payload["events"])
+
+
+@pytest.mark.parametrize("response", [None, "not an sbatch response"])
+def test_feature_malformed_slurm_response_is_failed(tmp_path, monkeypatch, response) -> None:
+    config = _feature_config(tmp_path, backend="slurm")
+    monkeypatch.setattr("dpeva.submission.manager.JobManager.submit", lambda *a, **k: response)
+    with pytest.raises((TypeError, ValueError)):
+        FeatureWorkflow(config, run_options=RunOptions(run_id="feature-bad-slurm")).run()
+    payload = json.loads(
+        (config.savedir / ".dpeva/runs/feature-bad-slurm/run.json").read_text()
+    )
+    assert payload["status"] == "failed"
+    assert payload["failure"]["category"] == "EXECUTION"
+
+
+def test_infer_slurm_partial_and_resume_submitted(tmp_path, monkeypatch) -> None:
+    config = _infer_config(tmp_path, backend="slurm")
+    model = config.work_dir / "1" / "model.ckpt.pt"
+    model.parent.mkdir(parents=True)
+    model.write_bytes(b"model")
+    calls = {"count": 0}
+
+    def submit(self, script_path, working_dir="."):
+        calls["count"] += 1
+        if calls["count"] == 1:
+            return "Submitted batch job 8123"
+        raise subprocess.CalledProcessError(2, ["sbatch", str(script_path)])
+
+    monkeypatch.setattr("dpeva.submission.manager.JobManager.submit", submit)
+    with pytest.raises(PartialWorkflowError):
+        InferenceWorkflow(config, run_options=RunOptions(run_id="infer-slurm-partial")).run()
+    run_path = config.work_dir / ".dpeva/runs/infer-slurm-partial/run.json"
+    payload = json.loads(run_path.read_text())
+    assert payload["status"] == "partial"
+    assert payload["failure"]["category"] == "EXECUTION"
+    assert payload["jobs"][0]["job_id"] == "8123"
+
+
+def test_infer_slurm_all_fail_is_execution_failure(tmp_path, monkeypatch) -> None:
+    config = _infer_config(tmp_path, backend="slurm")
+
+    def fail_submit(*args, **kwargs):
+        raise subprocess.CalledProcessError(2, ["sbatch"])
+
+    monkeypatch.setattr("dpeva.submission.manager.JobManager.submit", fail_submit)
+    with pytest.raises(WorkflowError, match="all inference jobs failed"):
+        InferenceWorkflow(
+            config, run_options=RunOptions(run_id="infer-slurm-failed")
+        ).run()
+    payload = json.loads(
+        (config.work_dir / ".dpeva/runs/infer-slurm-failed/run.json").read_text()
+    )
+    assert payload["status"] == "failed"
+    assert payload["failure"]["category"] == "EXECUTION"
+    assert payload["jobs"][0]["failure_category"] == "EXECUTION"
+
+
+@pytest.mark.parametrize("response", [None, "sbatch output without a job id"])
+def test_infer_malformed_slurm_response_is_execution_failure(
+    tmp_path, monkeypatch, response
+) -> None:
+    config = _infer_config(tmp_path, backend="slurm")
+    monkeypatch.setattr(
+        "dpeva.submission.manager.JobManager.submit", lambda *a, **k: response
+    )
+    with pytest.raises(WorkflowError, match="all inference jobs failed"):
+        InferenceWorkflow(
+            config, run_options=RunOptions(run_id="infer-slurm-malformed")
+        ).run()
+    payload = json.loads(
+        (config.work_dir / ".dpeva/runs/infer-slurm-malformed/run.json").read_text()
+    )
+    assert payload["status"] == "failed"
+    assert payload["failure"]["category"] == "EXECUTION"
+    assert payload["jobs"][0]["failure_category"] == "EXECUTION"
+
+
+def test_infer_resume_of_submitted_slurm_is_legal(tmp_path, monkeypatch) -> None:
+    config = _infer_config(tmp_path, backend="slurm")
+    monkeypatch.setattr(
+        "dpeva.submission.manager.JobManager.submit",
+        lambda *a, **k: "Submitted batch job 8124",
+    )
+    InferenceWorkflow(config, run_options=RunOptions(run_id="infer-slurm-resume")).run()
+    InferenceWorkflow(
+        config,
+        run_options=RunOptions(run_id="infer-slurm-resume", resume=True),
+    ).run()
+    payload = json.loads(
+        (config.work_dir / ".dpeva/runs/infer-slurm-resume/run.json").read_text()
+    )
+    assert payload["status"] == "submitted"
+    assert any(event["kind"] == "resume" for event in payload["events"])
+
+
+def test_infer_analysis_failure_preserves_artifacts_and_failed_state(tmp_path, monkeypatch) -> None:
+    config = _infer_config(tmp_path)
+    config.auto_analysis = True
+
+    def submit(self, script_path, working_dir="."):
+        Path(working_dir, "results.e.out").write_text("prediction\n")
+        return ""
+
+    monkeypatch.setattr("dpeva.submission.manager.JobManager.submit", submit)
+    workflow = InferenceWorkflow(
+        config,
+        run_options=RunOptions(run_id="infer-analysis-failed"),
+    )
+    workflow.analyze_results = lambda: (_ for _ in ()).throw(RuntimeError("analysis failed"))
+    with pytest.raises(RuntimeError, match="analysis failed"):
+        workflow.run()
+    payload = json.loads(
+        (config.work_dir / ".dpeva/runs/infer-analysis-failed/run.json").read_text()
+    )
+    assert payload["status"] == "failed"
+    assert payload["failure"]["category"] == "EXECUTION"
+    assert payload["artifacts"][0]["status"] == "verified"
+
+
+def test_infer_mixed_artifact_and_execution_failures_are_deterministic(tmp_path, monkeypatch) -> None:
+    config = _infer_config(tmp_path)
+    model = config.work_dir / "1" / "model.ckpt.pt"
+    model.parent.mkdir(parents=True)
+    model.write_bytes(b"model")
+    model = config.work_dir / "2" / "model.ckpt.pt"
+    model.parent.mkdir(parents=True)
+    model.write_bytes(b"model")
+
+    def submit(self, script_path, working_dir="."):
+        index = Path(working_dir).parts[-2]
+        if index == "0":
+            Path(working_dir, "results.e.out").write_text("prediction\n")
+            return ""
+        if index == "1":
+            Path(working_dir, "results.e.out").touch()
+            return ""
+        raise subprocess.CalledProcessError(3, ["bash", str(script_path)])
+
+    monkeypatch.setattr("dpeva.submission.manager.JobManager.submit", submit)
+    with pytest.raises(PartialWorkflowError):
+        InferenceWorkflow(config, run_options=RunOptions(run_id="infer-mixed-failures")).run()
+    payload = json.loads(
+        (config.work_dir / ".dpeva/runs/infer-mixed-failures/run.json").read_text()
+    )
+    assert payload["status"] == "partial"
+    assert payload["failure"]["category"] == "EXECUTION"
+    assert [job["failure_category"] for job in payload["jobs"][1:]] == ["ARTIFACT", "EXECUTION"]
+
+
+def test_embed_validator_requires_exact_embedding_per_pool(tmp_path) -> None:
+    for pool in ("pool0", "pool1"):
+        pool_dir = tmp_path / pool
+        pool_dir.mkdir()
+        (pool_dir / "embedding.hdf5").write_bytes(b"hdf5")
+    outputs = validate_feature_outputs(
+        tmp_path, "embed", expected_pools=["pool0", "pool1"]
+    )
+    assert [path.name for path in outputs] == ["embedding.hdf5", "embedding.hdf5"]
+
+
+@pytest.mark.parametrize("layout", ["missing", "wrong-location"])
+def test_embed_validator_rejects_missing_or_recursive_output(tmp_path, layout) -> None:
+    (tmp_path / "pool0").mkdir()
+    if layout == "wrong-location":
+        nested = tmp_path / "pool0" / "nested"
+        nested.mkdir()
+        (nested / "embedding.hdf5").write_bytes(b"hdf5")
+    with pytest.raises(ArtifactValidationError, match="pool0"):
+        validate_feature_outputs(tmp_path, "embed", expected_pools=["pool0"])

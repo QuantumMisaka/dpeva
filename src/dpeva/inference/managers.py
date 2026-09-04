@@ -225,11 +225,11 @@ class InferenceExecutionManager:
                     script_path, working_dir=job_work_dir
                 )
                 if self.backend == "slurm":
-                    # Test doubles may not provide sbatch output; real Slurm
-                    # submissions must carry a parseable job id.
-                    job_id = None
-                    if isinstance(submission_output, str):
-                        job_id = self.job_manager.parse_sbatch_job_id(submission_output)
+                    if not isinstance(submission_output, str):
+                        raise TypeError("Slurm submission did not return text output")
+                    job_id = self.job_manager.parse_sbatch_job_id(submission_output)
+                    if not job_id:
+                        raise ValueError("Slurm submission returned no job id")
                     records.append(
                         JobRecord(
                             name=f"model-{i}",

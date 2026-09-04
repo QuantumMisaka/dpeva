@@ -26,7 +26,12 @@ def validate_feature_outputs(
     if expected_pools:
         outputs: list[Path] = []
         for pool in expected_pools:
-            pool_outputs = sorted((output_dir / pool).rglob(pattern))
+            pool_root = output_dir / pool
+            pool_outputs = (
+                [pool_root / "embedding.hdf5"]
+                if exporter == "embed"
+                else sorted(pool_root.rglob(pattern))
+            )
             try:
                 outputs.extend(_require_nonempty(pool_outputs, f"feature artifacts for pool {pool!r}"))
             except ArtifactValidationError as exc:
@@ -34,7 +39,11 @@ def validate_feature_outputs(
                     f"missing or empty feature artifacts for pool {pool!r} under {output_dir}"
                 ) from exc
         return outputs
-    outputs = sorted(output_dir.rglob(pattern))
+    outputs = (
+        [output_dir / "embedding.hdf5"]
+        if exporter == "embed"
+        else sorted(output_dir.rglob(pattern))
+    )
     return _require_nonempty(outputs, f"feature artifacts under {output_dir}")
 
 

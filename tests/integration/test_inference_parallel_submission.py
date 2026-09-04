@@ -41,6 +41,8 @@ def test_inference_parallel_submission(slurm_config):
     with patch("dpeva.inference.managers.JobManager") as MockJobManager:
         # The JobManager() call returns an instance, we need to mock THAT instance
         mock_job_instance = MockJobManager.return_value
+        mock_job_instance.submit.return_value = "Submitted batch job 110"
+        mock_job_instance.parse_sbatch_job_id.return_value = "110"
         
         # Initialize workflow
         workflow = InferenceWorkflow(config_dict)

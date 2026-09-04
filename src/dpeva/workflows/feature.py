@@ -105,18 +105,19 @@ class FeatureWorkflow:
                 context.recorder.transition(RunState.RUNNING, RunEventKind.RESUME)
                 state = RunState.RUNNING
             if state is RunState.VALIDATED:
-                context.recorder.transition(
-                    RunState.SUBMITTED if backend == "slurm" else RunState.RUNNING
-                )
+                if backend != "slurm":
+                    context.recorder.transition(RunState.RUNNING)
             elif state is RunState.SUBMITTED and backend == "local":
                 context.recorder.transition(RunState.RUNNING)
             submission_output = self._run_body()
             if backend == "slurm":
-                job_id = None
-                if isinstance(submission_output, str):
-                    job_id = self.execution_manager.job_manager.parse_sbatch_job_id(
-                        submission_output
-                    )
+                if not isinstance(submission_output, str):
+                    raise TypeError("Slurm submission did not return text output")
+                job_id = self.execution_manager.job_manager.parse_sbatch_job_id(
+                    submission_output
+                )
+                if not job_id:
+                    raise ValueError("Slurm submission returned no job id")
                 context.recorder.add_job(
                     JobRecord(
                         name="feature",
@@ -125,6 +126,8 @@ class FeatureWorkflow:
                         status=RunState.SUBMITTED,
                     )
                 )
+                if context.recorder.manifest.status is RunState.VALIDATED:
+                    context.recorder.transition(RunState.SUBMITTED)
                 return
             outputs = validate_feature_outputs(
                 self.output_dir_path,

@@ -41,6 +41,8 @@ def test_run_command_generation(tmp_path, mock_job_manager):
     }
     
     workflow = InferenceWorkflow(config)
+    mock_job_manager.submit.return_value = "Submitted batch job 109"
+    mock_job_manager.parse_sbatch_job_id.return_value = "109"
     
     # Simulate running inside slurm to skip self-submission
     with patch.dict(os.environ, {"DPEVA_INTERNAL_BACKEND": "slurm"}):
@@ -121,6 +123,7 @@ def test_auto_analysis_ignored_for_non_local(tmp_path, mock_job_manager):
     }
     workflow = InferenceWorkflow(config)
     mock_job_manager.submit.return_value = "Submitted batch job 123"
+    mock_job_manager.parse_sbatch_job_id.return_value = "123"
     with patch.object(workflow, "analyze_results") as mock_analyze, patch.object(workflow.logger, "warning") as mock_warning:
         with patch.dict(os.environ, {"DPEVA_INTERNAL_BACKEND": "slurm"}):
             workflow.run()

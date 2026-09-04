@@ -35,6 +35,8 @@ class TestFeatureWorkflowSubmission:
         # Access the execution manager's job manager mock
         # Note: workflow.execution_manager initializes its own JobManager.
         # We need to mock the JobManager class used inside FeatureExecutionManager.
+        MockJobManager.return_value.submit.return_value = "Submitted batch job 101"
+        MockJobManager.return_value.parse_sbatch_job_id.return_value = "101"
         
         # Run
         workflow.run()
@@ -63,6 +65,8 @@ class TestFeatureWorkflowSubmission:
         """
         config["mode"] = "python"
         workflow = FeatureWorkflow(config)
+        MockJobManager.return_value.submit_python_script.return_value = "Submitted batch job 102"
+        MockJobManager.return_value.parse_sbatch_job_id.return_value = "102"
         
         # Run
         workflow.run()
@@ -110,6 +114,8 @@ class TestFeatureWorkflowSubmission:
     def test_run_python_mode_slurm_uses_worker_submission(self, MockJobManager, config):
         config["mode"] = "python"
         workflow = FeatureWorkflow(config)
+        MockJobManager.return_value.submit_python_script.return_value = "Submitted batch job 103"
+        MockJobManager.return_value.parse_sbatch_job_id.return_value = "103"
 
         workflow.run()
 
@@ -121,6 +127,8 @@ class TestFeatureWorkflowSubmission:
         config["mode"] = "cli"
         with patch("dpeva.workflows.feature.FeatureIOManager") as mock_io_cls:
             mock_io_cls.return_value.detect_multi_pool_structure.return_value = []
+            MockJobManager.return_value.submit.return_value = "Submitted batch job 104"
+            MockJobManager.return_value.parse_sbatch_job_id.return_value = "104"
             workflow = FeatureWorkflow(config)
             workflow.run()
 
@@ -135,6 +143,8 @@ class TestFeatureWorkflowSubmission:
         config.pop("model_head")
 
         workflow = FeatureWorkflow(config)
+        MockJobManager.return_value.submit.return_value = "Submitted batch job 106"
+        MockJobManager.return_value.parse_sbatch_job_id.return_value = "106"
         workflow.run()
 
         job_config = workflow.execution_manager.job_manager.generate_script.call_args[0][0]
@@ -157,6 +167,8 @@ class TestFeatureWorkflowSubmission:
         config.pop("model_head")
 
         workflow = FeatureWorkflow(config)
+        MockJobManager.return_value.submit_python_script.return_value = "Submitted batch job 108"
+        MockJobManager.return_value.parse_sbatch_job_id.return_value = "108"
         workflow.run()
 
         worker_content = workflow.execution_manager.job_manager.submit_python_script.call_args[0][0]
@@ -171,6 +183,8 @@ class TestFeatureWorkflowSubmission:
         config["embedding_dtype"] = "fp32"
 
         workflow = FeatureWorkflow(config)
+        MockJobManager.return_value.submit.return_value = "Submitted batch job 107"
+        MockJobManager.return_value.parse_sbatch_job_id.return_value = "107"
         workflow.run()
 
         job_config = workflow.execution_manager.job_manager.generate_script.call_args[0][0]
