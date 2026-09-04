@@ -39,7 +39,7 @@ exit 0
 ## 已交付 artifact 与 schema
 
 - 数据谱系模型与计数守恒校验：`src/dpeva/run/dataset.py`，`DatasetManifest` / `DatasetParent` schema `1.0`。12,105 + 4,317 = 16,422 的回归边界已由 unit 测试覆盖。
-- 标注整合输出：调用方指定的 `<merged_training_data_path>/dataset-manifest.json` 当前代兼容指针、不可变的 `dataset-manifest-<generation>.json`、`integration_summary.json` 以及 bundle generation manifest。summary 返回 `dataset_manifest_path`，并记录生成代与 SHA-256。
+- 标注整合输出：调用方指定的 `<merged_training_data_path>/` 下包含导出的数据、当前代兼容指针 `dataset-manifest.json`、不可变的 `dataset-manifest-<generation>.json` 和 `integration_summary.json`。summary 返回 `dataset_manifest_path`，并记录生成代与 SHA-256。
 - 模型证据引用：`src/dpeva/run/model.py`，`ModelArtifactRef` schema `1.0`；明确区分 checkpoint/frozen/exportable/pretrained-alias 及 regular/EMA 角色。
 - 候选评估卡片：`src/dpeva/evaluation/card.py`，`EvaluationCard` schema `1.0`，固定六个 metrics 维度；通过 `src/dpeva/cli.py` 的 `dpeva eval-card CONFIG.json` 生成调用方配置的 `evaluation-card.json`。输出采用不可覆盖发布语义。
 - 可移植 recipe：`examples/recipes/evaluation/config_eval_card.json`；不包含 campaign-local 绝对路径或 FT2DP 任务状态。
