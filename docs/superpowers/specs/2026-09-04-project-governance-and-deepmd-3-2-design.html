@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="DP-EVA 项目治理与 DeepMD-kit 3.2 兼容性设计规格">
+  <title>DP-EVA 项目治理与 DeepMD-kit 3.2 兼容性设计规格</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #17202a;
+      --muted: #52606d;
+      --line: #cbd2d9;
+      --paper: #ffffff;
+      --wash: #f5f7f8;
+      --accent: #146c5b;
+      --note: #8a5a00;
+      --danger: #a61b1b;
+      --good: #126e48;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        color-scheme: dark;
+        --ink: #e6edf3;
+        --muted: #9aa7b4;
+        --line: #3d4751;
+        --paper: #161b22;
+        --wash: #0d1117;
+        --accent: #4cc38a;
+        --note: #d4a72c;
+        --danger: #ff7b72;
+        --good: #56d364;
+      }
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--wash);
+      color: var(--ink);
+      font: 16px/1.58 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    @media (min-width: 960px) {
+      body {
+        display: grid;
+        grid-template-columns: 270px minmax(0, 1fr);
+        grid-template-areas:
+          "header header"
+          "nav    main"
+          "footer footer";
+        column-gap: 2rem;
+        max-width: 1260px;
+        margin-inline: auto;
+        padding-inline: 1rem;
+      }
+      header { grid-area: header; }
+      nav { grid-area: nav; position: sticky; top: 1rem; align-self: start; max-height: calc(100vh - 2rem); overflow: auto; }
+      main { grid-area: main; }
+      footer { grid-area: footer; }
+    }
+    header, nav, main, footer { width: min(100% - 2rem, 1040px); margin-inline: auto; }
+    @media (min-width: 960px) {
+      header, nav, main, footer { width: auto; margin-inline: 0; }
+    }
+    header { padding: 3rem 0 1.5rem; border-bottom: 3px solid var(--accent); }
+    h1 { margin: 0 0 .75rem; font-size: clamp(2rem, 5vw, 2.8rem); line-height: 1.12; }
+    h2 { margin: 0 0 .75rem; font-size: 1.4rem; }
+    h3 { margin: 1.25rem 0 .45rem; font-size: 1.05rem; }
+    h4 { margin: 1rem 0 .35rem; font-size: .98rem; }
+    p, ul, ol, pre { margin: .5rem 0 1rem; }
+    a { color: var(--accent); }
+    .meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: .75rem; }
+    .meta p { margin: 0; }
+    nav { padding: 1.25rem 0; font-size: .93rem; }
+    nav ol { padding-left: 1.25rem; }
+    main { background: var(--paper); border: 1px solid var(--line); }
+    section { padding: 1.6rem; border-top: 1px solid var(--line); }
+    section:first-child { border-top: 0; }
+    table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+    th, td { padding: .65rem; border: 1px solid var(--line); text-align: left; vertical-align: top; }
+    th { background: var(--wash); }
+    code { padding: .1rem .3rem; background: var(--wash); }
+    pre { padding: 1rem; overflow: auto; background: var(--wash); border: 1px solid var(--line); }
+    pre code { padding: 0; }
+    .decision {
+      border-left: 4px solid var(--accent);
+      padding: .65rem .9rem;
+      margin: 1rem 0;
+      background: var(--wash);
+      border-radius: 0 4px 4px 0;
+    }
+    .open { border-left-color: var(--note); }
+    .risk { border-left-color: var(--danger); }
+    .good { color: var(--good); font-weight: 650; }
+    .must { color: var(--danger); font-weight: 650; }
+    .small { color: var(--muted); font-size: .92rem; }
+    footer { padding: 1.5rem 0 3rem; color: var(--muted); }
+    @media (max-width: 700px) {
+      nav ol { columns: 1; }
+      section { padding: 1rem; }
+      .table-wrap { overflow-x: auto; }
+    }
+    @media print {
+      body { background: #fff; font-size: 10.5pt; }
+      body, header, nav, main, footer { display: block; width: 100%; max-width: none; }
+      nav { display: none; }
+      main { border: 0; }
+      section { break-inside: avoid; }
+      .decision { break-inside: avoid; background: none; border-left-width: 2px; }
+      a { color: inherit; text-decoration: none; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>DP-EVA 项目治理与 DeepMD-kit 3.2 兼容性设计规格</h1>
+    <div class="meta">
+      <p><strong>状态：</strong>Approved for implementation planning</p>
+      <p><strong>Owner：</strong>Project Maintainers</p>
+      <p><strong>更新：</strong>2026-09-04</p>
+      <p><strong>设计级别：</strong>L3α / Architecture &amp; Governance</p>
+    </div>
+  </header>
+
+  <nav aria-label="文档目录">
+    <h2>目录</h2>
+    <ol>
+      <li><a href="#summary">执行摘要</a></li>
+      <li><a href="#context">事实背景与问题定义</a></li>
+      <li><a href="#goals">目标与非目标</a></li>
+      <li><a href="#principles">设计原则</a></li>
+      <li><a href="#requirements">需求与验收信号</a></li>
+      <li><a href="#decisions">方案比较与决策</a></li>
+      <li><a href="#boundaries">产品与事实源边界</a></li>
+      <li><a href="#architecture">目标架构与组件</a></li>
+      <li><a href="#contracts">核心持久化契约</a></li>
+      <li><a href="#deepmd">DeepMD-kit 3.2 治理</a></li>
+      <li><a href="#development">开发治理模式</a></li>
+      <li><a href="#errors">状态机与错误处理</a></li>
+      <li><a href="#testing">测试与证据门禁</a></li>
+      <li><a href="#docs">文档与决策治理</a></li>
+      <li><a href="#rollout">迁移、发布与回滚</a></li>
+      <li><a href="#risks">风险与待批准点</a></li>
+      <li><a href="#evidence">依据与证据边界</a></li>
+    </ol>
+  </nav>
+
+  <main>
+    <section id="summary">
+      <h2>1. 执行摘要</h2>
+      <p>DP-EVA 已具备训练、推理、特征、采集、标注、分析、清洗和探索等独立工作流，也拥有 2D-UQ、DIRECT/2-DIRECT、LLPR、ABACUS 标注、Slurm array、DPA4/DPA4C descriptor 等较丰富的科学与工程能力。但当前仓库的可信边界仍停留在“独立工作流工具箱”：作业成功语义、跨迭代数据谱系、模型产物身份、环境能力、候选评估卡和发布证据没有形成统一闭环。</p>
+      <p>本设计选择<strong>能力驱动、契约优先的渐进式治理</strong>：不重写现有科学算法，不把 DP-EVA 扩张为包办一切的训练实验平台，而是在现有 workflow 层之下建立 Reliable Scientific Run Contract，在外部依赖边界建立 DeepMD Compatibility Lane，并用分层验证把软件行为、SAI 运行和科研结论连接起来。</p>
+      <div class="decision">
+        <p><strong>核心裁决：</strong>DP-EVA 的下一阶段主线不是新增更多算法，而是把“失败语义 + run manifest + dataset lineage + model artifact identity + eval-card + DeepMD capability matrix”固化为可靠科研运行内核。</p>
+        <p><strong>产品边界：</strong>DP-EVA 负责主动数据与候选证据；FT2DP 工作区负责模型训练和系统评估实验矩阵；下游费托模拟工作区以吸附能、NEB、MD 等应用任务裁决最终模型。</p>
+      </div>
+      <p class="small">本 SPEC 是本地唯一规范源。当前批准仅授权生成 writing-plans；在实施计划获得显式批准前，不授权代码实施、环境升级、SAI 作业提交、发布或远程镜像。</p>
+    </section>
+
+    <section id="context">
+      <h2>2. 事实背景与问题定义</h2>
+      <h3>2.1 已验证的软件状态</h3>
+      <ul>
+        <li>单元测试与覆盖率门禁总体健康，但 integration suite 当前并非全绿，完整集成测试也未进入常规 CI。</li>
+        <li>默认 Local/Slurm 脚本缺少 fail-closed shell 语义，末尾无条件 completion marker 可掩盖上游命令失败；本地多进程训练未聚合子进程退出码。</li>
+        <li>基础 Pydantic 配置允许额外字段静默忽略，与项目“Errors Should Never Pass Silently”原则冲突。</li>
+        <li>输出目录存在覆盖式重建路径，尚无统一 run identity、不可变产物约定或显式 resume/force 语义。</li>
+        <li>文档治理体系已建立，但路线图、环境文档、traceability matrix 和真实实现之间存在漂移。</li>
+      </ul>
+      <h3>2.2 已发生的科研治理失效</h3>
+      <p>FT2DP v2.2 活跃任务记录已经确认：iter11 最后一波 4,317 帧未与此前 12,105 帧累积集完成合并；该组训练与“域内”评测实际仅消费末波 4,317 帧，即应然 16,422 帧累积数据的 26.3%，此前 12,105 帧没有参与。这证明当前缺口不是抽象的“最好有 provenance”，而是已经改变实验结论的数据谱系断链。</p>
+      <h3>2.3 DeepMD-kit 3.2.0 带来的契约升级</h3>
+      <p>DeepMD-kit v3.2.0 是正式稳定版，新增 DPA4/DPA4C，并扩展 pt_expt 训练、微调、change-bias、descriptor、LMDB、EMA、预训练模型注册表、.pt2 部署和 Agent Skills。DP-EVA 与上游的接口因此从少量 CLI 字符串提升为：</p>
+      <pre><code>operation × backend × model family × artifact kind × dataset format × runtime environment</code></pre>
+      <p>版本号合格不等于目标能力可用；必须以能力矩阵和真实行为验收替代“能 import / 能显示 help 即兼容”的弱判断。</p>
+      <h3>2.4 科研目标和个人工程品味约束</h3>
+      <ul>
+        <li>科学目标仍是利用预训练知识，以 2D-UQ 与 DIRECT 提高数据效率，并将候选模型交付至 Fe–C–H–O 表面、吸附和反应路径应用。</li>
+        <li>治理优先级为可控、可复现、可回滚、可发布，高于再增加一个功能。</li>
+        <li>验证必须断言行为和产物，不以 grep 源码字符串或仅比较文件 hash 代替功能验证；hash 只作为身份与完整性证据。</li>
+        <li>本地设计文档是唯一规范源；科研运行事实不得被多处手工镜像。</li>
+      </ul>
+    </section>
+
+    <section id="goals">
+      <h2>3. 目标与非目标</h2>
+      <h3>3.1 目标</h3>
+      <ul>
+        <li>让每个 workflow 具有明确、机器可读、可恢复的运行状态和失败证据。</li>
+        <li>让每个数据集可以回答“来自哪里、增加了什么、是否重复、为何得到当前帧数”。</li>
+        <li>让每个模型引用可以回答“是什么格式、由什么环境产生、支持哪些操作、regular/EMA 如何对应”。</li>
+        <li>建立 DeepMD-kit 3.2 系列的支持区间、精确生产锁、能力矩阵和升级门禁。</li>
+        <li>把候选模型评估固化为机器生成 eval-card，服务 FT2DP 训练评估与下游费托应用交接。</li>
+        <li>将 PR、CPU contract、SAI GPU qualification、文档和发布检查收敛为分层而非重复的开发治理管线。</li>
+        <li>保持现有工作流独立启动和底层模块复用，不以大规模重写换取表面一致性。</li>
+      </ul>
+      <h3>3.2 非目标</h3>
+      <ul>
+        <li>不把 DP-EVA 重写成通用 HPC 调度器、实验追踪平台或完整训练矩阵管理系统。</li>
+        <li>不在本项目复制 DeepMD-kit 内部训练器、模型实现或官方 Agent Skills。</li>
+        <li>不引入 DeepMD-kit submodule/fork，不以源码镜像作为普通用户安装路径。</li>
+        <li>不承诺 3.2.0 的 JAX、TF2、DPA-ADAPT、GROMACS 等全部新增能力。</li>
+        <li>不在本 SPEC 内决定新的科学采样算法、论文结论或最终费托模型。</li>
+        <li>不以一次全仓 DDD/mypy 重构作为治理落地前置条件。</li>
+      </ul>
+    </section>
+
+    <section id="principles">
+      <h2>4. 设计原则</h2>
+      <ol>
+        <li><strong>Fail closed：</strong>关键步骤失败时全局状态不得成功；完成标记只能由验证后的终态写入。</li>
+        <li><strong>Capability over version：</strong>版本用于划定支持区间，真实能力以探测和行为测试为准。</li>
+        <li><strong>Immutable evidence：</strong>历史运行与数据身份不可被无声覆盖；重新运行产生新 identity，或通过显式 resume/force 留痕。</li>
+        <li><strong>Single source of truth：</strong>代码契约在仓库，科研活动状态在外层任务跟踪，执行状态在 SAI；通过引用和 manifest 连接，不复制活状态。</li>
+        <li><strong>Layered gates：</strong>廉价检查在 PR，重型真实检查在 SAI；每层只证明自身覆盖范围。</li>
+        <li><strong>YAGNI：</strong>先治理被真实事故证明的边界；DPA-ADAPT、全后端、全自动循环等延后。</li>
+        <li><strong>Agent-readable, human-ratified：</strong>状态和证据机器可读，科学裁决仍由研究者批准。</li>
+        <li><strong>Minimal sufficient verification：</strong>门禁数量服从风险，不以堆叠检查制造虚假安全感。</li>
+      </ol>
+    </section>
+
+    <section id="requirements">
+      <h2>5. 需求与验收信号</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>ID</th><th>需求</th><th>可观察验收信号</th></tr></thead>
+          <tbody>
+            <tr><td>R1</td><td>所有生成脚本采用 fail-closed 语义，完成状态不掩盖命令失败。</td><td>执行一个必然失败的任务：退出码非零、状态为 failed、没有 finished marker；恢复正常命令后同一测试通过。</td></tr>
+            <tr><td>R2</td><td>统一 canonical 运行状态全集：created、validated、submitted、running、partial、failed、finished；resume/recovery 作为事件而非新状态。</td><td>Local 与模拟 Slurm 生命周期测试生成合法状态序列；非法迁移被拒绝；恢复后的终态仍规范化为 failed 或 finished。</td></tr>
+            <tr><td>R3</td><td>每次受治理运行生成 schema-versioned run manifest。</td><td>成功和失败运行均生成可校验 JSON；记录配置、版本、输入、JobID、日志、产物和状态。</td></tr>
+            <tr><td>R4</td><td>数据集合并/清洗/采集生成 lineage manifest 和计数不变量。</td><td>12,105 + 4,317 的 fixture 合并得到 16,422；遗漏来源、重复或 type-map 冲突使门禁失败。</td></tr>
+            <tr><td>R5</td><td>模型引用显式区分 checkpoint、frozen、exportable、pretrained alias、regular 和 EMA。</td><td>同一 inference 配置可枚举 regular/EMA；不兼容 backend/artifact 在提交前失败并给出原因。</td></tr>
+            <tr><td>R6</td><td>DeepMD 支持区间、生产锁和能力状态由单一 manifest 描述。</td><td>机器校验能回答指定 operation/backend/model/artifact/data/environment 的 supported 状态和证据。</td></tr>
+            <tr><td>R7</td><td>提供显式 doctor/preflight，不在 import 时隐式探测外部命令。</td><td><code>dpeva doctor --json</code> 在有/无 DeepMD、版本不兼容和能力缺失环境中给出稳定 schema 与正确退出码。</td></tr>
+            <tr><td>R8</td><td>DeepMD 3.2 CPU contract tests 进入常规 CI。</td><td>真实执行 pt test/eval-desc/embed 与 pt_expt eval-desc；断言数值形状、产物和失败行为，不只断言命令字符串。</td></tr>
+            <tr><td>R9</td><td>影响 DeepMD 能力声明的发布必须完成 SAI GPU qualification。</td><td>报告记录精确 env lock、GPU、JobID、日志、fixture、regular/EMA 或 DPA4C 产物与结论。</td></tr>
+            <tr><td>R10</td><td>候选评估由机器生成 eval-card。</td><td>一条命令生成域内累积集、iter11 末波、历史域、MatPES 保持、训练成本和表面切片结果；缺项显式标记。</td></tr>
+            <tr><td>R11</td><td>配置未知字段默认拒绝，旧扁平字段通过显式迁移层兼容。</td><td>拼错字段触发校验错误；受支持旧配置输出迁移 warning 和规范化快照。</td></tr>
+            <tr><td>R12</td><td>工作流输出默认不无声覆盖历史证据。</td><td>已有 run identity 再运行默认失败或创建新 run；只有显式 resume/force 才改变既有目录并记录动作。</td></tr>
+            <tr><td>R13</td><td>CI、本地 gate、文档说明和发布 checklist 的检查集合保持可追溯一致。</td><td>机器检查比较 gate manifest 与 workflow jobs；新增对外契约同步触发 docs/recipes 检查。</td></tr>
+            <tr><td>R14</td><td>治理规则具备依据、owner、触发痕迹和退役机制。</td><td>季度审计可列出无触发规则；无证据规则被降级、合并或移除。</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="decisions">
+      <h2>6. 方案比较与决策</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>方案</th><th>内容</th><th>收益</th><th>主要代价</th><th>裁决</th></tr></thead>
+          <tbody>
+            <tr><td>A. 最小版本升级</td><td>只把最低版本改为 3.2.0，更新少量示例。</td><td>成本低、短期可发布。</td><td>无法解决假成功、模型格式、能力差异、数据谱系和 SAI 证据；继续把兼容性建立在假设上。</td><td>拒绝。</td></tr>
+            <tr><td>B. 能力驱动的可靠运行契约</td><td>在现有 workflow 上增加 manifest、状态机、能力矩阵、分层验证和候选卡。</td><td>直接覆盖已发生事故；渐进迁移；保持科学算法和产品边界。</td><td>涉及公共 schema、配置迁移、CI 和 SAI 协调，需要 L3 计划。</td><td class="good">采用。</td></tr>
+            <tr><td>C. 全栈平台重写</td><td>把训练矩阵、数据仓库、调度、应用验证全部并入 DP-EVA。</td><td>单一入口、理论上自动化最高。</td><td>范围和耦合急剧扩大；与外层 FT2DP/费托工作区职责冲突；中期节点前风险不可控。</td><td>拒绝；未来只有重复闭环证明需要时再评估。</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="decision">
+        <p><strong>依赖决策：</strong>延续“外部环境依赖 + 版本约束 + 运行时能力检查”，不引入 submodule。推荐将 DeepMD 从无界强依赖迁移为受版本范围约束的 optional extra；科研生产环境以精确 lock 和资格报告冻结。</p>
+        <p><strong>版本决策：</strong>DP-EVA 下一兼容基线为 <code>&gt;=3.2,&lt;3.3</code>；正式科研生产先锁定 3.2.0 的精确构建。3.2.x 补丁进入资格环境验证后再晋级，master/dev 永不直接生产正式结果。</p>
+        <p><strong>兼容决策：</strong>3.1.x 降为 legacy/best-effort，不再承诺 DPA4/DPA4C；迁移期允许旧配置读取，但所有新 capability claim 只针对 3.2 系列。</p>
+      </div>
+    </section>
+
+    <section id="boundaries">
+      <h2>7. 产品与事实源边界</h2>
+      <pre><code>DP-EVA repository
+  source/config/CLI contracts
+  scientific data selection and labeling workflows
+  run/dataset/model/evaluation schemas
+  compatibility declarations and validation tools
+        |
+        v manifest + immutable references
+FT2DP campaign workspace
+  base-model and fine-tuning experiment matrix
+  active task tracker and campaign decisions
+  candidate package assembly
+        |
+        v candidate package + eval-card
+Fischer-Tropsch application workspace
+  adsorption / surface reconstruction / NEB / MD
+  final scientific model decision and feedback
+        |
+        v validated feedback dataset/reference
+DP-EVA / next campaign iteration</code></pre>
+      <h3>7.1 事实源规则</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>事实</th><th>唯一规范源</th><th>DP-EVA 中的表示</th></tr></thead>
+          <tbody>
+            <tr><td>软件公共契约</td><td>DP-EVA source + reference docs</td><td>直接定义。</td></tr>
+            <tr><td>开发设计与计划</td><td>本地 spec/plan</td><td>状态、owner、链接；不自动双向镜像。</td></tr>
+            <tr><td>当前科研任务状态</td><td>FT2DP 活任务文档</td><td>只保存稳定接口和引用，不复制活 checklist。</td></tr>
+            <tr><td>作业真实状态</td><td>SAI scheduler + logs + artifacts</td><td>manifest 保存采样时刻、JobID 和证据指针。</td></tr>
+            <tr><td>最终模型裁决</td><td>下游费托应用工作区</td><td>作为 candidate feedback 输入，不在 DP-EVA 自动宣称。</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="architecture">
+      <h2>8. 目标架构与组件</h2>
+      <pre><code>CLI / Python API
+  Config Migration &amp; Strict Validation
+  Preflight / Doctor
+            |
+            v
+Workflow Orchestration (existing workflows)
+  train | infer | feature | collect | label | analysis | clean | explore
+            |
+            v
+Reliable Scientific Run Contract
+  RunContext          StatusRecorder       ArtifactRegistry
+  DatasetLineage      ModelArtifactRef     EvaluationCard
+            |
+            v
+Adapters
+  DeepMDAdapter       SubmissionAdapter    ABACUS/ATST adapters
+            |
+            v
+Local / Slurm / external campaign workspaces</code></pre>
+      <h3>8.1 Config Migration &amp; Strict Validation</h3>
+      <p>负责把受支持的旧扁平配置迁移为规范 schema，再以 <code>extra="forbid"</code> 验证。迁移 warning、输入 schema 版本和规范化配置快照进入 run manifest。旧键只在有明确映射和退役期限时保留。</p>
+      <h3>8.2 Preflight / Doctor</h3>
+      <p>显式探测 DP-EVA、DeepMD、dpdata、Torch/CUDA、CLI 子命令、backend、可见 GPU 和可选后端。输出人类文本或稳定 JSON；不在 <code>import dpeva</code> 时启动 subprocess。doctor 只报告环境能力，workflow preflight 进一步验证特定模型、数据和操作组合。</p>
+      <h3>8.3 RunContext</h3>
+      <p>在 workflow 开始时创建 run identity、目录、规范化配置和初始 manifest；为子步骤提供同一上下文。默认 run identity 由时间、短随机标识和 workflow 名组成，内容 hash 作为输入身份，不单独作为行为正确性证明。</p>
+      <h3>8.4 StatusRecorder</h3>
+      <p>实现合法状态迁移、事件时间、错误分类和终态写入。completion marker 是状态机的兼容输出，不是成功判据本身。Slurm 提交只进入 submitted；只有轮询/回收并验证产物后才进入 finished。</p>
+      <h3>8.5 ArtifactRegistry</h3>
+      <p>登记配置、日志、checkpoint、descriptor、标注数据、分析表和图。每个 artifact 有 kind、path、producer、完整性摘要和状态；敏感路径可记录逻辑 URI 或相对引用，避免把机器绝对路径固化进可发布文档。</p>
+      <h3>8.6 DatasetLineage</h3>
+      <p>记录父集合、变换、帧数、体系数、type map、来源清单、重复/交集摘要和输出。collect、label integration、clean 和外部 merge 均复用同一契约，不在 workflow 层复制计算逻辑。</p>
+      <h3>8.7 ModelArtifactRef</h3>
+      <p>统一表示本地路径、预训练 alias、regular/EMA、checkpoint/frozen/exportable、backend、head 和环境。模型 alias 在生产作业前解析到本地不可变文件并记录 checksum，禁止计算节点运行时隐式联网下载。</p>
+      <h3>8.8 DeepMDAdapter</h3>
+      <p>取代 <code>DPCommandBuilder</code> 的类级全局 backend 状态。adapter 实例根据 operation 和 capability matrix 构造命令、执行 preflight、声明预期产物并提供验证器。它仍以 CLI 为主，不包装 DeepMD 的全部功能。</p>
+      <h3>8.9 EvaluationCard</h3>
+      <p>将当前人工汇总升级为 schema-versioned 机器产物：记录域内累积集、iter11 末波、历史域、MatPES 保持、训练成本、表面切片和下游反馈。缺失指标不得被零值或空表掩盖，必须标记 not-run/not-applicable/failed。</p>
+    </section>
+
+    <section id="contracts">
+      <h2>9. 核心持久化契约</h2>
+      <h3>9.1 Run Manifest</h3>
+      <pre><code>{
+  "schema_version": "1.0",
+  "run_id": "feature-20260904T120000Z-a1b2c3",
+  "workflow": "feature",
+  "status": "finished",
+  "source": {"dpeva_version": "...", "git_commit": "...", "dirty": false},
+  "environment": {"doctor_report": "doctor.json", "lock": "env-lock.json"},
+  "config": {"original": "config.json", "resolved": "config.resolved.json"},
+  "inputs": [{"kind": "model", "ref": "model-ref.json"},
+             {"kind": "dataset", "ref": "dataset-manifest.json"}],
+  "jobs": [{"backend": "slurm", "job_id": "...", "status": "finished"}],
+  "artifacts": [{"kind": "descriptor", "path": "...", "status": "verified"}],
+  "events": [{"state": "running", "at": "..."}],
+  "failure": null
+}</code></pre>
+      <h3>9.2 Dataset Manifest</h3>
+      <p>最小字段包括 schema、dataset_id、parents、transformation、frame/system counts、type map、format、source entries、intersection summary、content identity 和验证结果。大数据集不强制逐帧 hash；允许按 set 文件摘要、Merkle/清单或抽样策略，并明确证据强度。</p>
+      <h3>9.3 Model Reference</h3>
+      <p>最小字段包括 artifact kind、family、backend、path/alias、resolved path、checksum、head、regular/EMA role、DeepMD version、producer run、supported operations。文件后缀只作为探测提示，不作为唯一真相。</p>
+      <h3>9.4 Compatibility Manifest</h3>
+      <p>以版本控制的 YAML/JSON 定义 capability key、状态、最低/最高版本、模型族、artifact、数据格式、环境类别、验证命令和最近证据。只允许 <code>supported</code>、<code>experimental</code>、<code>unsupported</code>、<code>blocked-upstream</code> 四种状态。</p>
+      <h3>9.5 Schema 演进</h3>
+      <ul>
+        <li>所有 schema 必须有显式版本；1.x 内向后兼容增加可选字段，破坏性变化升主版本。</li>
+        <li>读旧写新：迁移器保留原始输入、记录迁移事件，不原地改写历史 manifest。</li>
+        <li>历史 artifact 不因 schema 升级而失效；无法迁移时标记 legacy，而非伪造新字段。</li>
+      </ul>
+    </section>
+
+    <section id="deepmd">
+      <h2>10. DeepMD-kit 3.2 兼容性治理</h2>
+      <h3>10.1 版本与安装</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>层</th><th>策略</th><th>说明</th></tr></thead>
+          <tbody>
+            <tr><td>Python package contract</td><td><code>deepmd-kit&gt;=3.2,&lt;3.3</code> optional extra</td><td>避免未来 major/minor 未验证升级；允许不需要 DeepMD 的工作流轻量安装。</td></tr>
+            <tr><td>CI stable</td><td>精确 3.2.0 lock</td><td>保证重复性；升级由显式 PR 触发。</td></tr>
+            <tr><td>SAI production</td><td>精确版本 + build source + Torch/CUDA + GPU arch</td><td>论文和候选包必须引用资格报告。</td></tr>
+            <tr><td>Upstream watch</td><td>最新 3.2.x / dev</td><td>仅预警与预资格，不产正式结果。</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h3>10.2 初始能力口径</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>能力</th><th>初始状态</th><th>晋级条件</th></tr></thead>
+          <tbody>
+            <tr><td>PT DPA4 train / fine-tune / test</td><td>experimental</td><td>CPU contract + SAI V100 单/多卡 smoke + 产物验证。</td></tr>
+            <tr><td>PT checkpoint embed</td><td>experimental</td><td>HDF5 schema、数值形状与 collect 消费 E2E 通过。</td></tr>
+            <tr><td>pt_expt periodic DPA4C eval-desc</td><td>experimental</td><td>周期 fixture 与真实候选池完成数值、形状和产物对照；失败语义修复。</td></tr>
+            <tr><td>pt_expt DPA4C embed</td><td>unsupported</td><td>上游明确提供并完成真实行为验证后重新评估。</td></tr>
+            <tr><td>LMDB training input</td><td>experimental</td><td>与 NPY 同输入语义对照、frame count 和短训练一致性验证。</td></tr>
+            <tr><td>regular / EMA candidate evaluation</td><td>experimental</td><td>发现、显式引用、评估卡和回归测试完成。</td></tr>
+            <tr><td>pretrained DPA4 aliases</td><td>experimental</td><td>下载、缓存、checksum、离线复用和 head 识别通过。</td></tr>
+            <tr><td>.pt2 deployment</td><td>experimental</td><td>转换、加载、数值对照与目标运行时验证。</td></tr>
+            <tr><td>pt_expt non-PBC inference / eval-desc</td><td>blocked-upstream</td><td>公开问题关闭且修复版本通过本地非周期对照后，先降级为 experimental 再重新资格验证。</td></tr>
+            <tr><td>DPA-ADAPT、JAX、TF2 新路线</td><td>unsupported</td><td>独立科学需求和设计批准。</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h3>10.3 Upstream Watch</h3>
+      <p>定时任务每周读取 GitHub release、PyPI 和已登记上游 issue，生成差异报告。它可以创建维护 issue，但不得自动修改生产 lock、自动发布或宣称兼容。补丁晋级必须经过 compatibility PR 和对应资格门禁。</p>
+      <h3>10.4 官方 Agent Skills</h3>
+      <p>DP-EVA 文档可引用 DeepMD 官方 Skills 作为上游操作知识，不复制其内容。DP-EVA 自身只维护跨 workflow 的项目契约、preflight 和证据协议，避免两套上游操作说明漂移。</p>
+    </section>
+
+    <section id="development">
+      <h2>11. 开发治理模式</h2>
+      <h3>11.1 变更分级</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>级别</th><th>适用变更</th><th>必需产物与门禁</th></tr></thead>
+          <tbody>
+            <tr><td>L1</td><td>局部、可逆、不改变契约的修正。</td><td>最小 diff + 相关行为检查；无需 spec/plan。</td></tr>
+            <tr><td>L2</td><td>有界行为变更、bug、局部重构。</td><td>先有能暴露缺失行为的证据；RED-GREEN；按风险 task review。</td></tr>
+            <tr><td>L3</td><td>公共 API/schema、持久化数据、环境基线、架构或治理机制。</td><td>SPEC → 用户批准 → PLAN → 分阶段实施 → 独立终审。</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h3>11.2 需求到证据的闭环</h3>
+      <pre><code>Issue / scientific need
+  -> acceptance criteria
+  -> spec or bounded design
+  -> implementation plan
+  -> behavior tests + runtime evidence
+  -> docs/recipes/schema update
+  -> independent review
+  -> release/campaign qualification
+  -> report/archive</code></pre>
+      <h3>11.3 PR 最小契约</h3>
+      <ul>
+        <li>说明变更级别、用户可观察行为、非目标、回滚方式。</li>
+        <li>若改变 CLI/config/output/status/schema/DeepMD 能力，必须同步文档、recipe 和 compatibility manifest。</li>
+        <li>验证记录必须列出精确命令、结果和未覆盖边界；“单测全绿”不得外推为 GPU/Slurm 兼容。</li>
+        <li>治理机制实质变化在最终合入前执行项目规定的独立治理终审；草案自审不等于 gate。</li>
+      </ul>
+      <h3>11.4 Owner 边界</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Owner 角色</th><th>责任</th></tr></thead>
+          <tbody>
+            <tr><td>Project Maintainer</td><td>产品边界、release、schema 主版本与最终兼容声明。</td></tr>
+            <tr><td>Workflow Owner</td><td>工作流行为、预期产物、错误分类和局部测试。</td></tr>
+            <tr><td>Compatibility Owner</td><td>DeepMD matrix、上游 watch、CPU/SAI qualification。</td></tr>
+            <tr><td>Scientific Owner</td><td>评估协议、数据切片、候选与下游裁决。</td></tr>
+            <tr><td>Docs Owner</td><td>入口、traceability、生命周期、归档和 freshness。</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>小团队允许一人承担多角色，但 PR/checklist 必须说明当前帽子，避免“代码作者自行宣称科学结论与兼容性”成为默认。</p>
+    </section>
+
+    <section id="errors">
+      <h2>12. 状态机与错误处理</h2>
+      <h3>12.1 Canonical 状态机</h3>
+      <pre><code>created
+  | validate success
+  v
+validated -------------------------> failed
+  | local start          | submit
+  v                      v
+running <------------ submitted
+  |  \                   |
+  |   \ child subset     | scheduler/execution failure
+  |    v                 v
+  |  partial ----------> failed
+  |    | explicit resume/recovery event
+  |    +---------------> running
+  |
+  +-- execution success + artifact verification --> finished
+
+failed -- explicit resume/recovery event --> running --> finished | failed</code></pre>
+      <p><code>created</code>、<code>validated</code>、<code>submitted</code>、<code>running</code>、<code>partial</code>、<code>failed</code>、<code>finished</code> 是唯一 canonical 状态全集。<code>resume</code> 与 <code>recovery</code> 只记录为带 attempt id 的事件；<code>finished-after-explicit-recovery</code> 不是新状态，恢复成功后的终态仍为 <code>finished</code>。</p>
+      <ul>
+        <li><code>submitted</code> 只证明调度器接受作业，不代表计算完成。</li>
+        <li><code>finished</code> 同时要求执行成功、预期产物存在且验证器通过。</li>
+        <li><code>partial</code> 表示部分子任务成功但整体验收未完成；默认 CLI 退出非零。</li>
+        <li>失败运行也必须保留 manifest、日志、已产生 artifact 和 recovery hint。</li>
+      </ul>
+      <h3>12.2 错误分类</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>类别</th><th>例子</th><th>行为</th></tr></thead>
+          <tbody>
+            <tr><td>CONFIG</td><td>未知字段、非法 backend/head 组合</td><td>提交前失败，不创建计算作业。</td></tr>
+            <tr><td>CAPABILITY</td><td>pt_expt embed、不兼容 artifact</td><td>指出 matrix 状态和支持替代路径。</td></tr>
+            <tr><td>ENVIRONMENT</td><td>DeepMD/Torch/CUDA 缺失或版本错配</td><td>doctor/preflight 失败，附环境证据。</td></tr>
+            <tr><td>EXECUTION</td><td>dp/ABACUS/ATST 非零退出</td><td>failed；不写 finished；保留 stderr/log。</td></tr>
+            <tr><td>ARTIFACT</td><td>命令返回 0 但 descriptor/checkpoint 缺失</td><td>failed，记录 expected/observed。</td></tr>
+            <tr><td>DATA_INTEGRITY</td><td>帧数不变量、type-map、重复冲突</td><td>阻止后续训练/交接，生成审计报告。</td></tr>
+            <tr><td>UPSTREAM</td><td>DeepMD 已知 bug</td><td>blocked-upstream 或 experimental，不伪装为本项目修复。</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h3>12.3 恢复与覆盖</h3>
+      <p>默认重跑创建新 run。<code>--resume</code> 仅恢复 schema 明确支持的未完成步骤；<code>--force</code> 是高可见动作，必须保存旧 manifest/产物引用和操作者理由。任何删除仍遵守项目可恢复删除纪律。</p>
+    </section>
+
+    <section id="testing">
+      <h2>13. 测试与证据门禁</h2>
+      <h3>13.1 验证层次</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>层</th><th>运行位置</th><th>证明什么</th><th>不证明什么</th></tr></thead>
+          <tbody>
+            <tr><td>Static</td><td>PR CI</td><td>格式、类型收敛区、schema、文档结构。</td><td>DeepMD 数值行为、GPU、Slurm。</td></tr>
+            <tr><td>Unit</td><td>PR CI</td><td>状态机、迁移器、命令构造、manifest 校验。</td><td>外部 CLI 实际可用。</td></tr>
+            <tr><td>CPU contract</td><td>PR/定时 CI</td><td>精确 DeepMD 稳定版上的真实 CLI/API 契约。</td><td>V100、多 GPU、集群调度。</td></tr>
+            <tr><td>Local E2E</td><td>PR 或 release CI</td><td>workflow 从输入到语义产物的闭环和失败传播。</td><td>真实 Slurm/GPU。</td></tr>
+            <tr><td>SAI qualification</td><td>受控 SAI</td><td>目标 GPU、Torch/CUDA、Slurm、DPA4/DPA4C 真实路径。</td><td>所有集群或未来版本。</td></tr>
+            <tr><td>Scientific acceptance</td><td>FT2DP/费托工作区</td><td>候选是否满足数据与应用目标。</td><td>软件对所有体系普遍正确。</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h3>13.2 DeepMD 3.2 CPU Contract 初始集合</h3>
+      <ul>
+        <li><code>dp --version</code> 与 doctor schema。</li>
+        <li><code>dp --pt show</code> 的 model family/head/type-map 探测。</li>
+        <li>PT <code>test</code>、<code>eval-desc</code>、<code>embed</code> 的真实小 fixture。</li>
+        <li>pt_expt DPA4C <code>eval-desc</code>；pt_expt embed 在提交前被明确拒绝。</li>
+        <li>regular/EMA 引用与结果隔离。</li>
+        <li>NPY/mixed/LMDB 的计数和短路径语义对照。</li>
+        <li>外部命令失败、返回 0 但产物缺失、部分子任务失败三类负向行为。</li>
+      </ul>
+      <h3>13.3 测试纪律</h3>
+      <ul>
+        <li>行为测试必须执行目标路径并检查退出码、状态和语义产物。</li>
+        <li>命令字符串单测可以保留为局部构造检查，但不能承担兼容性验收。</li>
+        <li>数值对照使用物理上有意义的容差；不得以 fixture 全文件 hash 代替数值语义。</li>
+        <li>hash 用于证明 artifact 身份、传输完整性和 lineage，不用于证明算法正确。</li>
+        <li>skip 必须带原因和 owner；release blocker 不得通过 skip 变绿。</li>
+      </ul>
+      <h3>13.4 Gate Manifest</h3>
+      <p>使用单一 gate manifest 描述 lint、unit、coverage、CPU contract、integration、docs、audit 和 qualification 的命令与适用触发条件。本地 <code>gate.sh</code> 与 GitHub Actions 从同一清单派生或由一致性测试约束，防止“本地全绿”和“CI 全绿”语义分叉。</p>
+    </section>
+
+    <section id="docs">
+      <h2>14. 文档与决策治理</h2>
+      <h3>14.1 文档层级</h3>
+      <ul>
+        <li><strong>AGENTS.md：</strong>仅保留最小入口、事实源和关键门禁指针。</li>
+        <li><strong>developer-guide：</strong>承接稳定开发契约，不承载活科研进度。</li>
+        <li><strong>reference：</strong>schema、CLI、配置和 capability matrix 的权威解释。</li>
+        <li><strong>spec/plan/report：</strong>分别保存决策、实施和验收证据；完成版本后归档。</li>
+        <li><strong>外层 task/checkpoint：</strong>保存 FT2DP 活动状态与研究者 ruling。</li>
+      </ul>
+      <h3>14.2 Traceability</h3>
+      <p>每项公共能力都应能从 feature/requirement 链接到代码、测试、recipe、文档、owner 和最近资格证据。矩阵自动检查路径存在与更新时间，但不通过源代码字符串匹配推断功能正确。</p>
+      <h3>14.3 Ruling 纪律</h3>
+      <p>执行计划中的必要裁决记录“决定—理由—错了的代价”，并回写对应 plan/report。Ruling 不是绕过验收的豁免；改变公共契约时必须回到 spec/plan。</p>
+      <h3>14.4 Use-it-or-lose-it</h3>
+      <p>治理规则、检查和文档每季度检查触发痕迹。长期无命中、无事故依据或与其他门禁重复的规则应合并、降级或移除，避免治理管线成为只增不减的负担。</p>
+    </section>
+
+    <section id="rollout">
+      <h2>15. 迁移、发布与回滚</h2>
+      <h3>15.1 Phase 0：可靠性止血</h3>
+      <ul>
+        <li>修复脚本和多进程失败传播，完成标记改由产物验证后的状态机写入。</li>
+        <li>逐一复现并把当前 3 个 integration failures 归类为产品缺陷、fixture/测试基础设施缺陷或 harness/环境假象；只有确认的产品失效才转化为 R1/R2 负向回归，测试基础设施问题在原测试层修复并留证。</li>
+        <li>冻结新 capability claim，直到假成功路径关闭。</li>
+      </ul>
+      <p><strong>出口：</strong>R1、R2 的负向测试通过；任何失败任务不再被报告为 finished；3 个既有 integration failures 均有可复现证据、归类结论与对应处置，未激活环境等 harness 假象不被误记为产品根因。</p>
+      <h3>15.2 Phase 1：契约内核</h3>
+      <ul>
+        <li>实现 schema 包、RunContext、StatusRecorder、doctor 和 artifact validators。</li>
+        <li>先接入 feature/infer，再接入 train/collect/label/clean/explore，避免一次性横切全仓。</li>
+        <li>配置切换为“先迁移、后严格验证”。</li>
+      </ul>
+      <p><strong>出口：</strong></p>
+      <ul>
+        <li>R3：至少 feature 与 infer 的成功、失败、partial 路径均产出合规 manifest。</li>
+        <li>R7：<code>dpeva doctor --json</code> 在 DeepMD 可用、缺失、版本或能力不兼容三类环境中返回稳定 schema、正确状态和退出码；<code>import dpeva</code> 不再启动外部探测。</li>
+        <li>R11：未知/拼错字段在提交前失败；受支持旧配置完成“保留原文—显式迁移 warning—输出规范化快照”的闭环。</li>
+        <li>R12：同一 run identity 的默认重跑不得覆盖既有证据；新 run、显式 resume 与显式 force 均产生可区分事件和产物记录。</li>
+      </ul>
+      <h3>15.3 Phase 2A：科研谱系与候选卡</h3>
+      <ul>
+        <li>落地 dataset lineage 和 merge invariants。</li>
+        <li>落地 ModelArtifactRef、regular/EMA 和 eval-card。</li>
+        <li>将 FT2DP 四件套与表面切片接入候选包。</li>
+      </ul>
+      <p><strong>出口：</strong>用 12,105 + 4,317 的回归场景证明漏合并会阻断；一条命令生成完整候选卡。</p>
+      <h3>15.4 Phase 2B：DeepMD 3.2 Compatibility Lane</h3>
+      <ul>
+        <li>依赖分层、stable lock、capability manifest 和 CPU contract CI。</li>
+        <li>完成 SAI V100 DPA4/DPA4C 资格验证，更新旧 dev67/旧路径文档。</li>
+        <li>按证据把能力从 experimental 晋级 supported。</li>
+      </ul>
+      <p><strong>出口：</strong>DeepMD 3.2 兼容报告、env lock、JobID、日志和能力矩阵一致。Phase 2A 与 2B 在 Phase 1 的 schema 和状态契约冻结后可并行实施，分别由 Scientific Owner 与 Compatibility Owner 负责。</p>
+      <h3>15.5 Phase 3：受控科学扩展</h3>
+      <ul>
+        <li>DPA4 五档基座 alias、LMDB、.pt2、DPA4C 采样引擎。</li>
+        <li>Energy-LLPR 统计验证；Force-DPOSE 保持实验性直至稳定接口和 GPU fixture 就绪。</li>
+        <li>只有人工闭环稳定重复至少两轮后，才设计自动 cycle runner。</li>
+      </ul>
+      <h3>15.6 兼容与回滚</h3>
+      <ul>
+        <li>旧配置通过迁移层读取一个明确退役周期；原始配置保留。</li>
+        <li>旧输出目录仍可解析为 legacy run，但不伪造新 manifest 的未知字段。</li>
+        <li>新 schema 先 opt-in 试点，稳定后成为默认；必要时可切回 legacy execution adapter。</li>
+        <li>生产 DeepMD 升级通过独立环境晋级；回滚只切换环境锁和 capability evidence，不覆盖历史结果。</li>
+        <li>任何批量迁移先生成 dry-run 报告和备份引用，不删除科研资产。</li>
+      </ul>
+      <h3>15.7 发布语义</h3>
+      <p>Phase 0 可作为 0.8.x 可靠性修复；schema、strict config、依赖分层和新模型引用属于显著公共契约变化，建议进入 0.9.0。不得在未完成资格验证前将 experimental 能力写入 release notes 为“正式支持”。</p>
+      <h3>15.8 实施计划分解</h3>
+      <p>本 SPEC 固化共同架构，但范围不应塞入一个实施计划。批准后至少拆成以下可独立验收、按顺序或并行执行的 plans：</p>
+      <ol>
+        <li><strong>Plan A — Reliable Execution Kernel：</strong>R1、R2、失败传播，以及现有 integration failures 的逐项复现、归类和对应修复。<a href="../plans/2026-09-04-reliable-execution-kernel.md">实施计划</a></li>
+        <li><strong>Plan B — Run Contract &amp; Strict Config：</strong>R3、R7、R11、R12 和 schema/migration 基座。<a href="../plans/2026-09-04-run-contract-strict-config.md">实施计划</a></li>
+        <li><strong>Plan C — Dataset Lineage &amp; Eval Card：</strong>R4、R5、R10，对接 FT2DP 候选包。<a href="../plans/2026-09-04-dataset-lineage-eval-card.md">实施计划</a></li>
+        <li><strong>Plan D — DeepMD 3.2 Compatibility Lane：</strong>R6、R8、R9、依赖分层、CPU/SAI 资格验证。<a href="../plans/2026-09-04-deepmd-3-2-compatibility-lane.md">实施计划</a></li>
+        <li><strong>Plan E — Governance Alignment：</strong>R13、R14、gate manifest、traceability 和文档收口。<a href="../plans/2026-09-04-governance-alignment.md">实施计划</a></li>
+      </ol>
+      <p>Plan A 是所有后续计划的硬依赖；Plan B 完成 schema 最小基座后，Plan C 与 Plan D 可并行；Plan E 随各计划增量落地并在 0.9.0 发布前最终收口。</p>
+      <h3>15.9 轻治理实施约束</h3>
+      <ul>
+        <li>当前执行批次只覆盖 Phase 0、Phase 1、Phase 2A、Phase 2B 与治理收口；Phase 3 必须由新的科学需求和独立批准启动。</li>
+        <li>Plan A、Plan B 分别设置停止点；只要可靠性止血或 feature/infer 试点尚未给出正收益证据，就不得横向接入其余 workflow。</li>
+        <li>schema 只保留已被 R1–R12 消费的字段；不得为推测中的平台化、全自动循环或未知后端预留抽象层。</li>
+        <li>新增 gate 必须替代重复检查或带来独有失败检出能力；Plan E 不以增加 gate 数量作为完成信号。</li>
+      </ul>
+    </section>
+
+    <section id="risks">
+      <h2>16. 风险与批准记录</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>风险</th><th>概率/影响</th><th>缓解</th><th>Owner</th></tr></thead>
+          <tbody>
+            <tr><td>治理范围过大拖慢中期科研主线</td><td>中 / 高</td><td>Phase 0 优先；Phase 1 先 feature/infer；不把全仓重构设为前置。</td><td>Project Maintainer</td></tr>
+            <tr><td>manifest/schema 演化造成兼容负担</td><td>中 / 中</td><td>小 schema、显式版本、读旧写新、先试点后默认。</td><td>Project Maintainer</td></tr>
+            <tr><td>真实 DeepMD fixture 过大或 CI 太慢</td><td>中 / 中</td><td>最小官方兼容 fixture；重型 DPA4/DPA4C 下沉到 SAI。</td><td>Compatibility Owner</td></tr>
+            <tr><td>3.2.0 新发布仍有 pt_expt/non-PBC 风险</td><td>中 / 高</td><td>周期 DPA4C 路径为 experimental；non-PBC 路径为 blocked-upstream；分别验证并关注补丁。</td><td>Compatibility Owner</td></tr>
+            <tr><td>事实源再次分叉</td><td>中 / 高</td><td>不镜像活状态；manifest 保存引用和证据时间，不复制 checklist。</td><td>Docs Owner</td></tr>
+            <tr><td>门禁只存在于文档而未被使用</td><td>中 / 高</td><td>gate manifest、触发痕迹、季度 use-it-or-lose-it 审计。</td><td>Project Maintainer</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="decision">
+        <p><strong>批准记录（2026-09-04）：</strong>维护者接受方案 B、产品边界、DeepMD <code>&gt;=3.2,&lt;3.3</code> optional extra + 生产精确 lock，以及 Phase 0→1→2A/2B 的实施顺序。</p>
+        <p><strong>附加裁决：</strong>治理范围过重与 schema 兼容负担是前两项优先风险；实施必须遵守 §15.9 的停止点和按证据扩展原则。Phase 3 不随本次批准自动进入执行。</p>
+      </div>
+      <div class="decision risk">
+        <p><strong>终审要求：</strong>本 SPEC 涉及治理机制、公共 schema 和运行安全姿态。草案批准后进入 writing-plans；最终合入前必须执行项目规定的独立治理终审。若跨家族 reviewer 不可用，只能标记“跨家族未完成、建议补审”，不得伪造 gate 通过。</p>
+      </div>
+    </section>
+
+    <section id="evidence">
+      <h2>17. 依据与证据边界</h2>
+      <h3>17.1 仓库内依据</h3>
+      <ul>
+        <li><a href="../../guides/developer-guide.md">开发主手册</a>：项目定位、错误处理原则、工作流和文档门禁。</li>
+        <li><a href="../../architecture/decisions/2026-02-04-deepmd-dependency.md">DeepMD 依赖 ADR</a>：外部依赖、版本约束和运行时检查方向。</li>
+        <li><a href="../../../src/dpeva/submission/templates.py">submission templates</a> 与 <a href="../../../src/dpeva/training/managers.py">training manager</a>：脚本失败传播和完成标记问题。</li>
+        <li><a href="../../../src/dpeva/config.py">config.py</a>：extra ignore、backend 和 pt_expt/embed 边界。</li>
+        <li><a href="../../../src/dpeva/inference/managers.py">inference manager</a>：连续目录与 <code>model.ckpt.pt</code> 发现假设。</li>
+        <li><a href="../../../src/dpeva/constants.py">constants.py</a> 与 <a href="../../../pyproject.toml">pyproject.toml</a>：3.1.2 最低版本和无界 DeepMD 依赖。</li>
+        <li><a href="../../../.github/workflows/python-quality.yml">Python Quality CI</a> 与 <a href="../../../scripts/gate.sh">local gate</a>：现有验证层次和语义差异。</li>
+      </ul>
+      <h3>17.2 上游一手依据</h3>
+      <ul>
+        <li><a href="https://github.com/deepmodeling/deepmd-kit/releases/tag/v3.2.0">DeepMD-kit v3.2.0 official release</a>：正式版本、DPA4/DPA4C、pt_expt、LMDB、EMA、预训练模型和 Agent Skills。</li>
+        <li><a href="https://docs.deepmodeling.com/projects/deepmd/en/v3.2.0/cli.html">DeepMD-kit v3.2.0 CLI reference</a>：backend、train/test/eval-desc/embed/change-bias/show/pretrained 契约。</li>
+        <li><a href="https://docs.deepmodeling.com/projects/deepmd/en/stable/">DeepMD-kit stable documentation</a>：预训练—微调/训练—验证—部署工作流和 DPA4 能力边界。</li>
+        <li><a href="https://github.com/deepmodeling/deepmd-kit/issues/6002">DeepMD-kit issue #6002</a>：3.2.0 pt_expt non-PBC 的公开复现报告；本 SPEC 仅据此标记风险，不宣称上游已确认或修复。</li>
+      </ul>
+      <h3>17.3 本轮实测边界</h3>
+      <ul>
+        <li>本机 <code>ft2dp-post</code> 环境报告 DeepMD-kit 3.2.0；<code>dp --pt-expt eval-desc -h</code>、<code>train -h</code> 与 pretrained model list 可读。</li>
+        <li>上述 help/版本结果只证明接口暴露，不证明 DPA4/DPA4C 在目标 GPU、数据和模型上的数值正确；因此初始状态均为 experimental，等待行为资格验证。</li>
+        <li>FT2DP 数据谱系事故依据外层活任务与检查点记录；本仓库不复制其活状态，只把由事故推出的治理需求固化为 R4。</li>
+        <li>用户个人科研材料和已确认品味是设计取舍输入，不成为软件运行事实或自动验收结果。</li>
+      </ul>
+    </section>
+  </main>
+
+  <footer>
+    DP-EVA local normative design · approved for implementation planning 2026-09-04 · Evidence sources: repository audit, FT2DP campaign records, DeepMD-kit v3.2.0 official release/documentation, and user-confirmed engineering taste.
+  </footer>
+</body>
+</html>
