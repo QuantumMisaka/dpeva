@@ -27,10 +27,10 @@ submitting another SAI job or promoting any capability.
 
 ## Verification
 
-- Focused compatibility/qualification tests: `64 passed` (compatibility and
-  qualification unit scopes; no skips).
-- `tests/unit/scripts/test_deepmd_32_qualification.py`: `22 passed`.
-- Full unit suite: `822 passed, 5 warnings` (intentional deprecated facade
+- Focused Round 4 compatibility/qualification tests: `51 passed` in the
+  project `dpeva-dpa4` environment.
+- `tests/unit/scripts/test_deepmd_32_qualification.py`: `23 passed`.
+- Full unit suite: `823 passed, 5 warnings` (intentional deprecated facade
   warnings).
 - `ft2dp-post` local DeepMD contracts: `6 passed, 4 skipped`; skips are the
   missing PT and DPA4C model fixtures.
@@ -76,3 +76,17 @@ GPU/runtime qualification.
   attestation-spec schema and uniqueness, compares specs to the current
   manifest only as a freshness check, and generates attestations solely from
   those launch specs and validated finished command records.
+
+## Final-fix round 4
+
+- The qualification collector treats the verified `environment/gpu.json`
+  value as the sole GPU identity. An optional `--gpu` value is only an
+  expected diagnostic and must match after whitespace normalization; an
+  A100/V100 mismatch fails closed and emits no attestations.
+- Finished status is now decided only after numeric selected/submission/
+  command JobID agreement, non-empty launch-bound specs, and construction of
+  exactly one valid attestation per unique spec. Construction failures,
+  duplicate/missing cases, and empty evidence force `status=failed` and an
+  empty attestation list; `--require-complete` therefore rejects them.
+- Added regression coverage for mismatched and matching GPU expectations,
+  missing/nonnumeric job identity, and the candidate-attestation gate.

@@ -70,6 +70,8 @@ def test_collector_refuses_partial_success(tmp_path: Path) -> None:
     assert report["job_id"] == "123"
     assert "dpa4c-periodic-eval-desc" in report["failed_commands"]
     assert report["attestations"] == []
+    with pytest.raises(RuntimeError, match="incomplete"):
+        collect_qualification(tmp_path, job_id="123", require_complete=True)
 
 
 def test_collector_rejects_mutable_latest(tmp_path: Path) -> None:
@@ -116,7 +118,21 @@ def test_collector_accepts_directory_artifact_only_after_complete_records(tmp_pa
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(record), encoding="utf-8")
     _complete_environment(tmp_path)
-    report = collect_qualification(tmp_path, job_id="123", finalize=True)
+    (tmp_path / "submission.json").write_text(json.dumps({"job_id": "123"}), encoding="utf-8")
+    mismatch = collect_qualification(tmp_path, job_id="123", gpu="Tesla A100")
+    assert mismatch["status"] == "failed"
+    assert mismatch["attestations"] == []
+    assert any("GPU expectation" in error for error in mismatch["invalid_evidence"])
+    command_path = tmp_path / "commands" / "pt-test.json"
+    command = json.loads(command_path.read_text(encoding="utf-8"))
+    command["status"] = "failed"
+    command_path.write_text(json.dumps(command), encoding="utf-8")
+    bad_status = collect_qualification(tmp_path, job_id="123")
+    assert bad_status["status"] == "failed"
+    assert bad_status["attestations"] == []
+    command["status"] = "finished"
+    command_path.write_text(json.dumps(command), encoding="utf-8")
+    report = collect_qualification(tmp_path, job_id="123", gpu=" GPU 0: Tesla V100 ", finalize=True)
     assert report["status"] == "finished"
     assert (tmp_path / "qualification.json").is_file()
     assert len(report["attestations"]) == 7
@@ -129,6 +145,16 @@ def test_collector_accepts_directory_artifact_only_after_complete_records(tmp_pa
         sai_verification_cases=("pt-test", "pt-test-ema"),
     )
     assert validate_promotion_evidence(record, tmp_path)
+
+
+def test_collector_rejects_missing_and_nonnumeric_job_identity(tmp_path: Path) -> None:
+    """A complete-looking command set cannot promote without bound numeric IDs."""
+
+    (tmp_path / "submission.json").write_text(json.dumps({"job_id": "not-a-job"}), encoding="utf-8")
+    report = collect_qualification(tmp_path, job_id="", finalize=False)
+    assert report["status"] == "failed"
+    assert report["attestations"] == []
+    assert any("job_id must be numeric" in error for error in report["invalid_evidence"])
 
 
 def test_prepare_records_models_without_copying(tmp_path: Path) -> None:

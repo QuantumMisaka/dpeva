@@ -197,13 +197,26 @@ def collect_qualification(job_dir: Path, *, job_id: str | None = None, gpu: str 
         if extra.stem not in REQUIRED_CASES:
             unknown.append(extra.stem)
     environment_missing = [name for name in ("pip-freeze.json", "deepmd-version.json", "torch-cuda.json", "gpu.json") if not (job_dir / "environment" / name).is_file()]
-    submission = _load(job_dir / "submission.json") if (job_dir / "submission.json").is_file() else {}
-    selected_job_id = job_id or str(submission.get("job_id") or os.environ.get("SLURM_JOB_ID", ""))
-    if submission.get("job_id") and job_id and str(submission["job_id"]) != str(job_id):
-        raise ValueError("submission JobID does not match job reference")
-    recorded_ids = {str(record["job_id"]) for record in records.values() if record.get("job_id")}
-    if selected_job_id and recorded_ids and recorded_ids != {str(selected_job_id)}:
-        raise ValueError("command JobIDs do not match recorded JobID")
+    identity_errors: list[str] = []
+    try:
+        submission = _load(job_dir / "submission.json") if (job_dir / "submission.json").is_file() else {}
+    except (OSError, TypeError, ValueError, json.JSONDecodeError):
+        submission = {}
+        identity_errors.append("submission.json is malformed")
+    submission_job_id = str(submission.get("job_id", ""))
+    selected_job_id = str(job_id or submission_job_id or os.environ.get("SLURM_JOB_ID", ""))
+    if not re.fullmatch(r"\d+", selected_job_id):
+        identity_errors.append("selected job_id must be numeric")
+    if not re.fullmatch(r"\d+", submission_job_id):
+        identity_errors.append("submission job_id must be numeric")
+    elif submission_job_id != selected_job_id:
+        identity_errors.append("submission JobID does not match selected JobID")
+    for case, record in records.items():
+        record_job_id = record.get("job_id")
+        if not isinstance(record_job_id, str) or not re.fullmatch(r"\d+", record_job_id):
+            identity_errors.append(f"{case} command job_id must be numeric")
+        elif record_job_id != selected_job_id:
+            identity_errors.append(f"{case} command JobID does not match selected JobID")
     environment: dict[str, Any] = {}
     environment_invalid: list[str] = []
     for name, key in (("deepmd-version.json", "deepmd_version"), ("torch-cuda.json", "torch_cuda"), ("gpu.json", "gpu"), ("pip-freeze.json", "pip_freeze")):
@@ -214,23 +227,75 @@ def collect_qualification(job_dir: Path, *, job_id: str | None = None, gpu: str 
             except (TypeError, ValueError, json.JSONDecodeError):
                 environment[key] = {"error": "malformed environment evidence"}
                 environment_invalid.append(name)
-    gpu_value = gpu
-    if gpu_value is None:
-        gpu_record = environment.get("gpu", {})
-        gpu_value = gpu_record.get("value") if isinstance(gpu_record, dict) else None
+    # The recorded environment is the only authoritative GPU identity.  The
+    # CLI value is retained solely as an expected-value diagnostic and must
+    # agree after whitespace normalization.
+    gpu_record = environment.get("gpu", {})
+    measured_gpu = gpu_record.get("value") if isinstance(gpu_record, dict) else None
+    gpu_value = measured_gpu
+    if gpu is not None and (not isinstance(measured_gpu, str) or gpu.strip() != measured_gpu.strip()):
+        identity_errors.append("collector GPU expectation does not match environment/gpu.json")
     version_record = environment.get("deepmd_version", {})
     version_value = version_record.get("value") if isinstance(version_record, dict) else None
     if version_value != "DeePMD-kit v3.2.0" and "deepmd-version.json" not in environment_invalid:
         environment_invalid.append("deepmd-version.json")
-    gpu_record = environment.get("gpu", {})
-    gpu_value_from_record = gpu_record.get("value") if isinstance(gpu_record, dict) else None
-    if gpu_value is not None:
-        gpu_value_from_record = gpu_value
-    if not isinstance(gpu_value_from_record, str) or "v100" not in gpu_value_from_record.lower():
+    if not isinstance(measured_gpu, str) or "v100" not in measured_gpu.lower():
         if "gpu.json" not in environment_invalid:
             environment_invalid.append("gpu.json")
     bound_specs, spec_errors = _load_bound_attestation_specs(job_dir)
-    status = "finished" if not missing and not unknown and not malformed and not failed and not environment_missing and not environment_invalid and not spec_errors else "failed"
+    invalid_evidence = [*spec_errors, *identity_errors]
+    if not bound_specs:
+        invalid_evidence.append("bound capability attestation specs must be non-empty")
+    candidate_errors: list[str] = []
+    attestations: list[dict[str, Any]] = []
+    # Construct candidate attestations before deciding aggregate status. A
+    # failed command or construction anomaly must never leak a finished
+    # attestation into a failed aggregate.
+    if bound_specs and not identity_errors and not environment_invalid and not environment_missing and not spec_errors:
+        for spec in bound_specs:
+            case = spec["case"]
+            command_record = records.get(case)
+            if command_record is None:
+                candidate_errors.append(f"missing command record for attestation case {case}")
+                continue
+            try:
+                attestation = CapabilityAttestation(
+                    status="finished",
+                    returncode=command_record["returncode"],
+                    capability_key=CapabilityKey.model_validate(spec["capability_key"]),
+                    verification_command=spec["verification_command"],
+                    deepmd_version=version_value,
+                    source="sai-v100-qualification",
+                    case=case,
+                    job_id=selected_job_id,
+                    gpu=measured_gpu,
+                )
+            except Exception as exc:
+                candidate_errors.append(f"invalid attestation for {case}: {exc}")
+                continue
+            attestations.append(attestation.model_dump(mode="json"))
+        spec_cases = [spec["case"] for spec in bound_specs]
+        attestation_cases = [item.get("case") for item in attestations]
+        if len(attestations) != len(spec_cases):
+            candidate_errors.append("attestation count does not equal bound spec count")
+        if len(attestation_cases) != len(set(attestation_cases)):
+            candidate_errors.append("duplicate attestation cases")
+        if set(attestation_cases) != set(spec_cases):
+            candidate_errors.append("attestation cases do not match bound specs")
+    if candidate_errors:
+        invalid_evidence.extend(candidate_errors)
+        attestations = []
+    status = "finished" if (
+        not missing and not unknown and not malformed and not failed
+        and not environment_missing and not environment_invalid
+        and not invalid_evidence and bound_specs and attestations
+        and len(attestations) == len({spec["case"] for spec in bound_specs})
+    ) else "failed"
+    # Attestations are an output of a finished aggregate, never a partial
+    # preview of one. This also covers command records that fail artifact or
+    # status validation while still carrying a superficially valid returncode.
+    if status != "finished":
+        attestations = []
     report: dict[str, Any] = {
         "schema_version": "1.0", "qualification": "deepmd-3.2-sai-v100", "status": status,
         "job_id": selected_job_id,
@@ -242,36 +307,10 @@ def collect_qualification(job_dir: Path, *, job_id: str | None = None, gpu: str 
         "malformed_commands": malformed,
         "missing_environment": environment_missing,
         "invalid_environment": environment_invalid,
-        "invalid_evidence": spec_errors,
+        "invalid_evidence": invalid_evidence,
         "commands": records,
         "collected_at": datetime.now(timezone.utc).isoformat(),
     }
-    attestations: list[dict[str, Any]] = []
-    if status == "finished" and selected_job_id and str(selected_job_id).isdigit():
-        version_record = environment.get("deepmd_version", {})
-        version = version_record.get("value") if isinstance(version_record, dict) else None
-        # Bind every attestation to the same aggregate GPU identity, including
-        # an explicit collector override used for scheduler evidence.
-        gpu_identity = gpu_value
-        for spec in bound_specs:
-            case = spec["case"]
-            command_record = records.get(case, {})
-            try:
-                attestation = CapabilityAttestation(
-                    status="finished",
-                    returncode=command_record["returncode"],
-                    capability_key=CapabilityKey.model_validate(spec["capability_key"]),
-                    verification_command=spec["verification_command"],
-                    deepmd_version=version,
-                    source="sai-v100-qualification",
-                    case=case,
-                    job_id=selected_job_id,
-                    gpu=gpu_identity,
-                )
-            except Exception:
-                attestations = []
-                break
-            attestations.append(attestation.model_dump(mode="json"))
     report["attestations"] = attestations
     # Inspection never freezes the final aggregate. Only the EXIT trap or an
     # explicitly complete external collection may finalize it.
@@ -285,7 +324,7 @@ def collect_qualification(job_dir: Path, *, job_id: str | None = None, gpu: str 
         return existing
     if not finalize and not (require_complete and status == "finished"):
         if require_complete and status != "finished":
-            raise RuntimeError("qualification evidence is incomplete: " + ", ".join(missing + unknown + malformed + failed + environment_missing + spec_errors))
+            raise RuntimeError("qualification evidence is incomplete: " + ", ".join(missing + unknown + malformed + failed + environment_missing + invalid_evidence))
         return report
     fd, name = tempfile.mkstemp(prefix=".qualification.", dir=str(job_dir), text=True)
     try:
@@ -301,7 +340,7 @@ def collect_qualification(job_dir: Path, *, job_id: str | None = None, gpu: str 
         except FileNotFoundError:
             pass
     if require_complete and status != "finished":
-        raise RuntimeError("qualification evidence is incomplete: " + ", ".join(missing + failed + environment_missing + spec_errors))
+        raise RuntimeError("qualification evidence is incomplete: " + ", ".join(missing + failed + environment_missing + invalid_evidence))
     return report
 
 
