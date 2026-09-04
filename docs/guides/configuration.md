@@ -258,10 +258,12 @@ LLPR / energy DPOSE 可作为 Collect UQ backend 使用。最小 energy LLPR 只
 ```
 
 整合成功后，在 `merged_training_data_path` 下同时生成
-`integration_summary.json` 和 `dataset-manifest.json`；summary 的
-`dataset_manifest_path` 是清单引用。清单只记录 `existing-training`、`new-labeled`
-等逻辑来源，不固化机器绝对路径，并记录父集合帧数、去重移除帧数、最终帧/体系数和
-canonical type map。帧数或 type map 冲突会在导出和下游交接前失败。
+`integration_summary.json`、当前代兼容指针 `dataset-manifest.json` 和不可变的
+`dataset-manifest-<generation>.json`。summary 的 `dataset_manifest_path` 是相对于
+输出目录的不可变清单引用，并同时记录 generation 与 SHA-256。清单只记录
+`existing-training`、`new-labeled` 等逻辑来源，不固化机器绝对路径，并记录父集合帧数、
+去重移除帧数、最终帧/体系数、canonical type map 以及导出文件 SHA-256 的证据强度。
+帧数或 type map 冲突会在导出和下游交接前失败。
 
 ### 5.6 Analysis
 

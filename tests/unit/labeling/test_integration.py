@@ -11,6 +11,8 @@ class _FakeMultiSystems(list):
     def to(self, fmt, output):
         Path(output).mkdir(parents=True, exist_ok=True)
         (Path(output) / "export.ok").write_text(fmt)
+        payload = "|".join(repr(system.data.get("coords")) for system in self)
+        (Path(output) / "frames.payload").write_text(payload)
 
 
 class _FakeSystem:
@@ -61,9 +63,13 @@ def test_integration_manager_export(mock_load_systems, tmp_path):
         result["existing_frame_count"],
         result["new_frame_count"],
     ]
-    assert result["dataset_manifest_path"] == str(out_dir / "dataset-manifest.json")
+    assert result["dataset_manifest_path"].startswith("dataset-manifest-")
+    assert (out_dir / result["dataset_manifest_path"]).exists()
     assert manifest["source_entries"] == ["existing-training", "new-labeled"]
     assert all(not Path(entry).is_absolute() for entry in manifest["source_entries"])
+    relocated = tmp_path / "relocated"
+    out_dir.rename(relocated)
+    assert (relocated / result["dataset_manifest_path"]).exists()
 
 
 @patch("dpeva.labeling.integration.dpdata.MultiSystems", _FakeMultiSystems)
@@ -92,7 +98,8 @@ def test_integration_manager_deduplicate(mock_load_systems, tmp_path):
     manifest = json.loads((out_dir / "dataset-manifest.json").read_text())
     assert manifest["frame_count"] == 1
     assert manifest["removed_frame_count"] == 1
-    assert result["dataset_manifest_path"] == str(out_dir / "dataset-manifest.json")
+    assert result["dataset_manifest_path"].startswith("dataset-manifest-")
+    assert (out_dir / result["dataset_manifest_path"]).exists()
 
 
 @patch("dpeva.labeling.integration.dpdata.MultiSystems", _FakeMultiSystems)
@@ -234,3 +241,58 @@ def test_integration_manager_rejects_count_conflict_before_export(mock_load_syst
     assert not (out_dir / "export.ok").exists()
     assert not (out_dir / "integration_summary.json").exists()
     assert not (out_dir / "dataset-manifest.json").exists()
+
+
+@patch("dpeva.labeling.integration.dpdata.MultiSystems", _FakeMultiSystems)
+@patch("dpeva.labeling.integration.load_systems")
+def test_integration_manager_missing_existing_path_fails_before_export(mock_load_systems, tmp_path):
+    new_dir = tmp_path / "new_cleaned"
+    out_dir = tmp_path / "merged"
+    new_dir.mkdir()
+    missing = tmp_path / "missing-training"
+
+    with pytest.raises(FileNotFoundError, match="Existing training data path not found"):
+        DataIntegrationManager().integrate(
+            new_labeled_data_path=new_dir,
+            merged_output_path=out_dir,
+            existing_training_data_path=missing,
+        )
+
+    mock_load_systems.assert_not_called()
+    assert not out_dir.exists()
+
+
+@patch("dpeva.labeling.integration.dpdata.MultiSystems", _FakeMultiSystems)
+@patch("dpeva.labeling.integration.load_systems")
+def test_summary_replace_failure_keeps_previous_generation_reference(mock_load_systems, tmp_path):
+    new_dir = tmp_path / "new_cleaned"
+    out_dir = tmp_path / "merged"
+    new_dir.mkdir()
+    first = _FakeSystem([[[0.0, 0.0, 0.0]]])
+    second = _FakeSystem([[[2.0, 0.0, 0.0]]])
+    mock_load_systems.side_effect = [[first], [second], [second]]
+    manager = DataIntegrationManager()
+
+    first_summary = manager.integrate(new_labeled_data_path=new_dir, merged_output_path=out_dir)
+    old_summary_bytes = (out_dir / "integration_summary.json").read_bytes()
+    old_manifest_name = first_summary["dataset_manifest_path"]
+    old_root_manifest_bytes = (out_dir / "dataset-manifest.json").read_bytes()
+
+    original_write = manager._write_json_atomic
+
+    def fail_summary(path, payload):
+        if path.name == "integration_summary.json":
+            raise OSError("injected summary publication failure")
+        return original_write(path, payload)
+
+    with patch.object(manager, "_write_json_atomic", side_effect=fail_summary):
+        with pytest.raises(OSError, match="summary publication failure"):
+            manager.integrate(new_labeled_data_path=new_dir, merged_output_path=out_dir)
+
+    assert (out_dir / "integration_summary.json").read_bytes() == old_summary_bytes
+    assert (out_dir / "dataset-manifest.json").read_bytes() == old_root_manifest_bytes
+    assert (out_dir / old_manifest_name).exists()
+
+    retried_summary = manager.integrate(new_labeled_data_path=new_dir, merged_output_path=out_dir)
+    assert retried_summary["dataset_manifest_path"] != old_manifest_name
+    assert (out_dir / retried_summary["dataset_manifest_path"]).exists()

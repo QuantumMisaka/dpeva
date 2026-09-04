@@ -1,9 +1,13 @@
+import hashlib
 import json
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import dpdata
+import pytest
 
 from dpeva.config import LabelingConfig
+from dpeva.labeling.integration import DataIntegrationManager
 from dpeva.workflows.analysis import AnalysisWorkflow
 from dpeva.workflows.labeling import LabelingWorkflow
 
@@ -58,10 +62,12 @@ def test_e2e_cycle_label_integration_analysis(
         }
         with open(manifest_path, "w") as f:
             json.dump(manifest, f, indent=4)
+        with open(merged / "dataset-manifest-e2e.json", "w") as f:
+            json.dump(manifest, f, indent=4)
         summary = {
             "output_path": str(merged),
             "merged_system_count_after_dedup": 1,
-            "dataset_manifest_path": str(manifest_path),
+            "dataset_manifest_path": "dataset-manifest-e2e.json",
         }
         with open(merged / "integration_summary.json", "w") as f:
             json.dump(summary, f, indent=4)
@@ -85,7 +91,7 @@ def test_e2e_cycle_label_integration_analysis(
     assert (merged_path / "integration_summary.json").exists()
     assert (merged_path / "dataset-manifest.json").exists()
     summary = json.loads((merged_path / "integration_summary.json").read_text())
-    assert summary["dataset_manifest_path"] == str(merged_path / "dataset-manifest.json")
+    assert not Path(summary["dataset_manifest_path"]).is_absolute()
     MockIntegrationManager.return_value.integrate.assert_called_once()
 
     analysis_config = {
@@ -96,3 +102,28 @@ def test_e2e_cycle_label_integration_analysis(
     }
     AnalysisWorkflow(analysis_config).run()
     MockDatasetAnalysisManager.return_value.analyze.assert_called_once()
+
+
+def test_real_label_integration_emits_immutable_lineage(tmp_path):
+    source = Path(__file__).parent / "data" / "sampled_dpdata" / "122"
+    if not source.is_dir():
+        pytest.skip(f"integration fixture not found: {source}")
+
+    summary = DataIntegrationManager(
+        deduplicate=True, output_format="deepmd/npy"
+    ).integrate(
+        new_labeled_data_path=source,
+        merged_output_path=tmp_path / "merged_training_data",
+        existing_training_data_path=source,
+    )
+
+    output = tmp_path / "merged_training_data"
+    manifest_path = output / summary["dataset_manifest_path"]
+    manifest = json.loads(manifest_path.read_text())
+    assert manifest["content_identity"].startswith("sha256:")
+    assert manifest["content_identity_strength"] == "exported-files-sha256"
+    assert summary["dataset_manifest_path"] == manifest_path.name
+    assert not Path(summary["dataset_manifest_path"]).is_absolute()
+    assert summary["dataset_manifest_sha256"] == hashlib.sha256(
+        (json.dumps(manifest, indent=4, sort_keys=True) + "\n").encode("utf-8")
+    ).hexdigest()

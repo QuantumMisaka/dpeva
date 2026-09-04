@@ -37,7 +37,11 @@ class DataIntegrationManager:
 
         reference_atom_names = None
         reference_type_map = None
-        if existing_training_data_path is not None and existing_training_data_path.exists():
+        if existing_training_data_path is not None:
+            if not existing_training_data_path.exists():
+                raise FileNotFoundError(
+                    f"Existing training data path not found: {existing_training_data_path}"
+                )
             existing_systems = load_systems(str(existing_training_data_path), fmt="auto")
             existing_count = len(existing_systems)
             existing_frames = self._count_total_frames(existing_systems)
@@ -90,11 +94,25 @@ class DataIntegrationManager:
                 "integration frame count conflict: merged output exceeds source frame count"
             )
 
+        parent_refs = {
+            "existing-training": self._source_manifest_ref(
+                existing_training_data_path, "existing-training"
+            ),
+            "new-labeled": self._source_manifest_ref(new_labeled_data_path, "new-labeled"),
+        }
         manifest = DatasetManifest(
             dataset_id=f"integration-{hashlib.sha256(str(merged_output_path).encode()).hexdigest()[:12]}",
             parents=[
-                DatasetParent(dataset_id="existing-training", frame_count=existing_frames),
-                DatasetParent(dataset_id="new-labeled", frame_count=new_frames),
+                DatasetParent(
+                    dataset_id="existing-training",
+                    frame_count=existing_frames,
+                    manifest_ref=parent_refs["existing-training"],
+                ),
+                DatasetParent(
+                    dataset_id="new-labeled",
+                    frame_count=new_frames,
+                    manifest_ref=parent_refs["new-labeled"],
+                ),
             ],
             transformation="merge",
             frame_count=merged_frames_after_dedup,
@@ -115,6 +133,14 @@ class DataIntegrationManager:
 
         merged_output_path.mkdir(parents=True, exist_ok=True)
         merged.to(self.output_format, str(merged_output_path))
+        content_identity = self._hash_exported_dataset(merged_output_path)
+        manifest = manifest.model_copy(
+            update={
+                "content_identity": f"sha256:{content_identity}",
+                "content_identity_strength": "exported-files-sha256",
+            }
+        )
+        validate_lineage_counts(manifest)
         summary = {
             "existing_system_count": existing_count,
             "new_system_count": new_count,
@@ -133,10 +159,23 @@ class DataIntegrationManager:
             "compatibility_issues": compatibility_issues,
             "output_path": str(merged_output_path),
         }
-        manifest_path = merged_output_path / "dataset-manifest.json"
-        self._write_json_atomic(manifest_path, manifest.model_dump(mode="json"))
-        summary["dataset_manifest_path"] = str(manifest_path)
-        self._write_json_atomic(merged_output_path / "integration_summary.json", summary)
+        generation = content_identity[:16]
+        immutable_manifest_name = f"dataset-manifest-{generation}.json"
+        immutable_manifest_path = merged_output_path / immutable_manifest_name
+        manifest_payload = manifest.model_dump(mode="json")
+        manifest_bytes = self._json_bytes(manifest_payload)
+        self._write_immutable_json(immutable_manifest_path, manifest_bytes)
+        summary["dataset_manifest_path"] = immutable_manifest_name
+        summary["dataset_manifest_generation"] = generation
+        summary["dataset_manifest_sha256"] = hashlib.sha256(manifest_bytes).hexdigest()
+        self._write_json_atomic(
+            merged_output_path / "integration_summary.json", summary
+        )
+        # Keep the historical root name as a current-generation compatibility
+        # pointer. Summaries always reference the immutable generation file.
+        self._write_json_atomic(
+            merged_output_path / "dataset-manifest.json", manifest_payload
+        )
         logger.info(
             "Integration summary: existing=%s, new=%s, merged_before_de-dup=%s, merged_after_de-dup=%s",
             existing_count,
@@ -201,22 +240,69 @@ class DataIntegrationManager:
         return reference_type_map
 
     @staticmethod
-    def _write_json_atomic(path: Path, payload: dict[str, object]) -> None:
-        """Publish a JSON artifact with a same-directory atomic replacement."""
+    def _source_manifest_ref(path: Optional[Path], logical_name: str) -> str | None:
+        """Return a logical parent manifest reference when one is available."""
+        if path is None:
+            return None
+        candidate = path / "dataset-manifest.json"
+        if candidate.is_file():
+            return f"{logical_name}/dataset-manifest.json"
+        return None
+
+    @staticmethod
+    def _json_bytes(payload: dict[str, object]) -> bytes:
+        return (json.dumps(payload, indent=4, sort_keys=True) + "\n").encode("utf-8")
+
+    @classmethod
+    def _write_immutable_json(cls, path: Path, payload: bytes) -> None:
+        """Publish a generation artifact without replacing prior evidence."""
+        if path.exists():
+            if path.read_bytes() != payload:
+                raise FileExistsError(f"immutable manifest already exists with different content: {path.name}")
+            return
+        cls._write_bytes_atomic(path, payload)
+
+    @staticmethod
+    def _write_bytes_atomic(path: Path, payload: bytes) -> None:
         path.parent.mkdir(parents=True, exist_ok=True)
         fd, temporary_name = tempfile.mkstemp(
             prefix=f".{path.name}.", suffix=".tmp", dir=path.parent
         )
         try:
-            with os.fdopen(fd, "w", encoding="utf-8") as stream:
-                json.dump(payload, stream, indent=4)
-                stream.write("\n")
+            with os.fdopen(fd, "wb") as stream:
+                stream.write(payload)
                 stream.flush()
                 os.fsync(stream.fileno())
             os.replace(temporary_name, path)
         finally:
             if os.path.exists(temporary_name):
                 os.unlink(temporary_name)
+
+    @staticmethod
+    def _hash_exported_dataset(output_path: Path) -> str:
+        """Hash exported data files, excluding JSON evidence and temp files."""
+        digest = hashlib.sha256()
+        files = sorted(
+            path
+            for path in output_path.rglob("*")
+            if path.is_file()
+            and not path.name.startswith(".")
+            and path.suffix.lower() != ".json"
+        )
+        for path in files:
+            digest.update(path.relative_to(output_path).as_posix().encode("utf-8"))
+            digest.update(b"\0")
+            with path.open("rb") as stream:
+                while chunk := stream.read(1024 * 1024):
+                    digest.update(chunk)
+        return digest.hexdigest()
+
+    @staticmethod
+    def _write_json_atomic(path: Path, payload: dict[str, object]) -> None:
+        """Publish a JSON artifact with a same-directory atomic replacement."""
+        DataIntegrationManager._write_bytes_atomic(
+            path, DataIntegrationManager._json_bytes(payload)
+        )
 
     @staticmethod
     def _reorder_system_to_reference(system, atom_names: List[str], reference_atom_names: List[str], source: str):

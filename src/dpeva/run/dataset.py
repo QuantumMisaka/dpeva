@@ -36,6 +36,9 @@ class DatasetManifest(DatasetModel):
     source_entries: list[str] = Field(default_factory=list)
     intersection_summary: dict[str, int] = Field(default_factory=dict)
     content_identity: str | None = None
+    content_identity_strength: Literal[
+        "none", "structural", "exported-files-sha256"
+    ] = "none"
 
     @model_validator(mode="after")
     def validate_lineage_shape(self) -> "DatasetManifest":
