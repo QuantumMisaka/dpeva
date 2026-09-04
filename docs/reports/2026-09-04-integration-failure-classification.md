@@ -60,13 +60,13 @@ Failed to load libcuda.so`, while `run_test.sh` still emits
 `results.*.out` artifacts are produced. This is intentionally preserved for
 the execution fail-closed fix in Task 3.
 
-## Phase 0 checkpoint evidence (Task 5)
+## Phase 0 checkpoint evidence (Task 5; initial checkpoint superseded)
 
 The focused R1/R2 negative behavior suite was run in the declared environment:
 
 ```text
 conda run -n dpeva-dpa4 pytest tests/unit/run/test_status.py tests/unit/submission/test_guards.py tests/unit/workflows/test_workflow_completion_marker.py tests/unit/training/test_training_managers.py tests/unit/feature/test_execution_manager.py tests/unit/inference/test_inference_execution_manager.py -q
-48 passed in 1.44s
+48 passed in 1.65s
 ```
 
 The full integration suite was then run as required:
@@ -105,7 +105,7 @@ capability is unavailable. The prior Task 3 negative regression remains
 classified above: a failing `dp test` must not be followed by a completion
 marker or accepted artifacts.
 
-The guard itself was focused-checked:
+The rejected guard itself was focused-checked:
 
 ```text
 conda run -n dpeva-dpa4 pytest tests/integration/test_slurm_multidatapool_e2e.py -q
@@ -114,38 +114,80 @@ SKIPPED: local DeepMD integration capability unavailable: required environment f
 SKIPPED: Set DPEVA_RUN_SLURM_ITEST=1 to enable Slurm integration tests
 ```
 
-After the guard, the complete integration suite accounted for all 16 collected
-tests with no failures:
+The initial capability guard was rejected in review because a historical
+`/opt/envs/deepmd3.1.2.env` path and a `libcuda.so` filename probe are not a
+portable runtime capability. That guard was removed. The local fixture now
+derives its setup from the current `sys.executable` environment by prepending
+that interpreter's `bin` directory to `PATH`, so the generated `dp` command
+uses the same runtime as the test runner.
+
+The complete integration suite was rerun without a local capability skip:
 
 ```text
 conda run -n dpeva-dpa4 pytest tests/integration -q
-8 passed, 8 skipped in 3.46s
+1 failed, 9 passed, 7 skipped in 126.82s (0:02:06)
 ```
 
-The eight skips were the existing five GPU-only DeepMD cases, one missing-data
-labeling reproduction, one Slurm backend case without `DPEVA_RUN_SLURM_ITEST=1`,
-and the local multidatapool case with the capability-based reason:
+The seven skips were the existing five GPU-only DeepMD cases, one missing-data
+labeling reproduction, and one Slurm backend case without
+`DPEVA_RUN_SLURM_ITEST=1`. The local multidatapool case executed and failed in
+inference; its generated `run_test.sh` returned non-zero and its `test.log`
+recorded:
 
 ```text
-local DeepMD integration capability unavailable: required environment file is missing (/opt/envs/deepmd3.1.2.env)
+RuntimeError: failed to compute neighbors: Failed to load libcuda.so. Try appending the directory containing this library to your $LD_LIBRARY_PATH environment variable.
 ```
 
-The local skip is emitted before `_source_data_root`, work directory creation,
-or any workflow job creation. The repository-level checks also passed:
+This is a real executed workflow failure, not a skip. The guarded command
+returned exit status 1 before producing `results.*.out`, and no completion
+marker was accepted. Therefore the integration suite is not green and the
+repository-level checks do not establish a Phase 0 GO.
+
+The portable setup behavior was first exposed by this RED test:
+
+```text
+conda run -n dpeva-dpa4 pytest tests/integration/test_slurm_multidatapool_e2e.py::test_local_runtime_setup_is_derived_from_current_interpreter -q
+F                                                                        [100%]
+E       assert []
+1 failed in 0.44s
+```
+
+After implementation, the same test was GREEN:
+
+```text
+conda run -n dpeva-dpa4 pytest tests/integration/test_slurm_multidatapool_e2e.py::test_local_runtime_setup_is_derived_from_current_interpreter -q
+.                                                                        [100%]
+1 passed in 0.37s
+```
+
+The repository-level checks were run after the fixture change and passed:
 
 ```text
 conda run -n dpeva-dpa4 ruff check src tests scripts
 All checks passed!
 
 conda run -n dpeva-dpa4 pytest tests/unit -q
-536 passed in 19.62s
+536 passed in 21.04s
 
 git diff --check
 (no output; exit 0)
 ```
 
-All R1/R2 negative tests and the classified integration suite are therefore
-green. Plan B is unblocked; Plans C–E remain subject to their subsequent
-controller gates.
+The R1/R2 negative tests and repository checks are green, but the required
+local integration chain is not. Per the controller ruling, a true executed
+DeepMD failure cannot be converted to a capability skip. Plans B–E remain
+blocked.
 
-Phase 0 checkpoint: GO — R1/R2 negative tests and the classified integration suite pass.
+Phase 0 checkpoint: STOP
+
+Failing command:
+
+```text
+conda run -n dpeva-dpa4 pytest tests/integration -q
+```
+
+First actionable failure:
+
+```text
+RuntimeError: failed to compute neighbors: Failed to load libcuda.so. Try appending the directory containing this library to your $LD_LIBRARY_PATH environment variable.
+```

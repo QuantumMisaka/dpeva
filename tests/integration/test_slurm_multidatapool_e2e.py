@@ -2,7 +2,6 @@ import json
 import os
 import shlex
 import shutil
-import subprocess
 import sys
 from pathlib import Path
 
@@ -42,51 +41,26 @@ def _require_slurm():
         pytest.skip("squeue not found in PATH")
 
 
-def _require_local_deepmd_runtime() -> None:
-    """Skip before job creation when the local DeepMD fixture cannot run."""
-    env_file = Path("/opt/envs/deepmd3.1.2.env")
-    if not env_file.is_file():
-        pytest.skip(
-            f"local DeepMD integration capability unavailable: required environment "
-            f"file is missing ({env_file})"
-        )
-
-    probe = subprocess.run(
-        [
-            "bash",
-            "-lc",
-            "source {env_file} && {python} -c "
-            "\"import ctypes; import deepmd; ctypes.CDLL('libcuda.so')\"".format(
-                env_file=shlex.quote(str(env_file)),
-                python=shlex.quote(sys.executable),
-            ),
-        ],
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    if probe.returncode != 0:
-        detail = (probe.stderr or probe.stdout).strip().splitlines()
-        reason = detail[-1] if detail else f"probe exited {probe.returncode}"
-        pytest.skip(
-            "local DeepMD integration capability unavailable after environment "
-            f"setup: {reason}"
-        )
-
-
 def _env_setup_lines(backend: str) -> list[str]:
     raw = os.environ.get("DPEVA_TEST_ENV_SETUP", "").strip()
-    
-    # For local backend, we might need specific setup or just rely on current env
-    if backend == "local" and not raw:
-        return []
 
     if not raw:
+        if backend == "local":
+            runtime_bin = Path(sys.executable).resolve().parent
+            return [f"export PATH={shlex.quote(str(runtime_bin))}:$PATH"]
         return [
             "source /opt/envs/deepmd3.1.2.env",
             "export DP_INTERFACE_PREC=high",
         ]
     return [line for line in raw.splitlines() if line.strip()]
+
+
+def test_local_runtime_setup_is_derived_from_current_interpreter() -> None:
+    setup = _env_setup_lines("local")
+
+    assert setup
+    assert str(Path(sys.executable).resolve().parent) in setup[0]
+    assert "/opt/envs/deepmd3.1.2.env" not in "\n".join(setup)
 
 
 def _maybe_set_partition(slurm_cfg: dict, key: str) -> None:
@@ -114,8 +88,6 @@ def _write_config(path: Path, cfg: dict) -> None:
 def test_multidatapool_e2e(tmp_path: Path, backend: str):
     if backend == "slurm":
         _require_slurm()
-    else:
-        _require_local_deepmd_runtime()
     
     # For local execution, we might want to skip if dependencies (like deepmd) are not installed in current env
     # But we assume the dev env has them.
@@ -145,11 +117,11 @@ def test_multidatapool_e2e(tmp_path: Path, backend: str):
     # Helper to configure backend
     def _configure_backend(cfg):
         cfg["submission"]["backend"] = backend
+        cfg["submission"]["env_setup"] = _env_setup_lines(backend)
         if backend == "local":
             # Clear slurm config for clarity, though it should be ignored
             cfg["submission"]["slurm_config"] = {}
         else:
-             cfg["submission"]["env_setup"] = _env_setup_lines(backend)
              # Use test-specific partition/qos
              _maybe_set_partition(cfg["submission"]["slurm_config"], "DPEVA_TEST_GPU_PARTITION")
              _maybe_set_qos(cfg["submission"]["slurm_config"], "DPEVA_TEST_GPU_QOS")
