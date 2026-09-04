@@ -128,6 +128,19 @@ class FeatureWorkflow:
                         output_mode=self.output_mode,
                         feature_kind=self.feature_kind,
                     )
+                    artifacts = [
+                        os.path.join(root, filename)
+                        for root, _, filenames in os.walk(self.output_dir)
+                        for filename in filenames
+                        if filename.endswith(".npy")
+                    ]
+                    if not any(
+                        os.path.isfile(path) and os.path.getsize(path) > 0
+                        for path in artifacts
+                    ):
+                        raise WorkflowError(
+                            "Feature generation produced no non-empty .npy artifacts"
+                        )
                     self.logger.info(WORKFLOW_FINISHED_TAG)
                     
                 except ImportError:

@@ -176,14 +176,23 @@ class FeatureExecutionManager:
         else:
             raise ValueError(f"Unsupported feature exporter: {feature_exporter}")
             
-        checks = (
-            [f"test -s {shlex.quote(output_hdf5)}"]
-            if feature_exporter == "embed"
-            else [
+        if feature_exporter == "embed":
+            output_paths = [
+                os.path.join(abs_output_dir, pool, "embedding.hdf5")
+                for pool in sub_pools
+            ] if sub_pools else [output_hdf5]
+            checks = [f"test -s {shlex.quote(path)}" for path in output_paths]
+        elif sub_pools:
+            checks = [
+                f"find {shlex.quote(os.path.join(abs_output_dir, pool))} "
+                "-type f -name '*.npy' -size +0c -print -quit | grep -q ."
+                for pool in sub_pools
+            ]
+        else:
+            checks = [
                 f"find {shlex.quote(abs_output_dir)} -type f -name '*.npy' "
                 "-size +0c -print -quit | grep -q ."
             ]
-        )
         cmd = guarded_command(command=cmd, artifact_checks=checks)
 
         # Filter Slurm config
@@ -378,6 +387,15 @@ if __name__ == "__main__":
             raise WorkflowError(
                 f"feature generation failed for {len(failures)} system(s): {failures}"
             )
+
+        artifacts = [
+            os.path.join(root, filename)
+            for root, _, filenames in os.walk(abs_output_dir)
+            for filename in filenames
+            if filename.endswith(".npy")
+        ]
+        if not any(os.path.isfile(path) and os.path.getsize(path) > 0 for path in artifacts):
+            raise WorkflowError("Feature generation produced no non-empty .npy artifacts")
 
     def _compute_feature(self, generator, data_path: str, output_mode: str, feature_kind: str):
         if feature_kind == "descriptor":

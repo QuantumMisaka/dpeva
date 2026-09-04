@@ -238,23 +238,21 @@ class TestFeatureExecutionManager:
         
         manager = FeatureExecutionManager("local", {}, "", "pt", 1)
         
-        with patch("numpy.save") as mock_save:
-            manager.run_local_python_recursion(
-                mock_generator,
-                str(data_root),
-                str(output_root)
-            )
-            
-            # Check calls
-            assert mock_generator.compute_descriptors.call_count == 2
-            
-            # Check save paths
-            save_paths = [args[0] for args, _ in mock_save.call_args_list]
-            expected = [
-                str(output_root / "sys1.npy"),
-                str(output_root / "group" / "sys2.npy")
-            ]
-            assert sorted(save_paths) == sorted(expected)
+        manager.run_local_python_recursion(
+            mock_generator,
+            str(data_root),
+            str(output_root)
+        )
+
+        # Check calls
+        assert mock_generator.compute_descriptors.call_count == 2
+
+        # Check save paths
+        expected = [
+            output_root / "sys1.npy",
+            output_root / "group" / "sys2.npy"
+        ]
+        assert all(path.is_file() and path.stat().st_size > 0 for path in expected)
 
     @patch("dpeva.feature.managers.FeatureIOManager")
     def test_run_local_python_recursion_aggregates_leaf_failure(self, MockIO, tmp_path, caplog):

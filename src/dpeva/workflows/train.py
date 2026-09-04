@@ -131,4 +131,8 @@ class TrainingWorkflow:
         self.logger.info("Starting parallel training...")
         self.execution_manager.submit_jobs(script_paths, task_dirs, blocking=True)
         self.logger.info("Training Workflow Submission Completed.")
-        self.logger.info(WORKFLOW_FINISHED_TAG)
+        # Slurm submission only establishes the ``submitted`` state.  The
+        # generated job emits the compatibility marker after it has actually
+        # completed and passed its artifact checks.
+        if self.config.submission.backend == "local":
+            self.logger.info(WORKFLOW_FINISHED_TAG)

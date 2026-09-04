@@ -1,4 +1,7 @@
+import os
 from unittest.mock import patch
+
+import numpy as np
 import pytest
 
 from dpeva.utils.exceptions import WorkflowError
@@ -72,6 +75,10 @@ def test_feature_workflow_python_mode(tmp_path):
         
         with patch("dpeva.workflows.feature.DescriptorGenerator") as MockGen:
             workflow = FeatureWorkflow(config_dict)
+            exec_instance.run_local_python_recursion.side_effect = lambda *args, **kwargs: (
+                os.makedirs(config_dict["savedir"], exist_ok=True),
+                np.save(os.path.join(config_dict["savedir"], "system.npy"), np.ones(1)),
+            )
             workflow.run()
             
             # Verify Generator Init

@@ -40,3 +40,38 @@ def test_recovery_requires_an_explicit_event() -> None:
 def test_finished_is_terminal() -> None:
     with pytest.raises(InvalidStateTransition):
         transition(RunState.FINISHED, RunState.RUNNING, RunEventKind.RESUME)
+
+
+def test_local_lifecycle_reaches_finished() -> None:
+    state = RunState.CREATED
+    for target in (RunState.VALIDATED, RunState.RUNNING, RunState.FINISHED):
+        state = transition(state, target)
+    assert state is RunState.FINISHED
+
+
+def test_simulated_slurm_lifecycle_marks_submission_before_running() -> None:
+    state = transition(RunState.CREATED, RunState.VALIDATED)
+    state = transition(state, RunState.SUBMITTED)
+    assert transition(state, RunState.RUNNING) is RunState.RUNNING
+
+
+@pytest.mark.parametrize(
+    ("current", "target"),
+    [
+        (RunState.CREATED, RunState.RUNNING),
+        (RunState.SUBMITTED, RunState.FINISHED),
+        (RunState.PARTIAL, RunState.FINISHED),
+        (RunState.FAILED, RunState.FINISHED),
+        (RunState.FINISHED, RunState.FAILED),
+    ],
+)
+def test_illegal_transitions_are_rejected(current: RunState, target: RunState) -> None:
+    with pytest.raises(InvalidStateTransition):
+        transition(current, target)
+
+
+def test_partial_and_failed_recovery_are_explicit() -> None:
+    assert transition(RunState.PARTIAL, RunState.RUNNING, RunEventKind.RESUME) is RunState.RUNNING
+    assert transition(RunState.FAILED, RunState.RUNNING, RunEventKind.RECOVERY) is RunState.RUNNING
+    with pytest.raises(InvalidStateTransition):
+        transition(RunState.PARTIAL, RunState.RUNNING)

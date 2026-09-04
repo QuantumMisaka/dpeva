@@ -1,4 +1,7 @@
 
+import os
+
+import numpy as np
 import pytest
 from unittest.mock import patch
 from dpeva.workflows.feature import FeatureWorkflow
@@ -90,6 +93,10 @@ class TestFeatureWorkflowSubmission:
         # Mock execution manager's run_local_python_recursion to avoid FS operations
         with patch("dpeva.feature.managers.FeatureExecutionManager.run_local_python_recursion") as mock_recursion:
             workflow = FeatureWorkflow(config)
+            mock_recursion.side_effect = lambda *args, **kwargs: (
+                os.makedirs(config["savedir"], exist_ok=True),
+                np.save(os.path.join(config["savedir"], "system.npy"), np.ones(1)),
+            )
             workflow.run()
             
             mock_recursion.assert_called_once()
