@@ -314,7 +314,7 @@ if __name__ == "__main__":
         abs_data_path = os.path.abspath(data_path)
         abs_output_dir = os.path.abspath(output_dir)
         os.makedirs(abs_output_dir, exist_ok=True)
-        failures = []
+        failures: list[str] = []
         
         self.logger.info(f"Scanning {abs_data_path} for systems...")
         
@@ -322,7 +322,6 @@ if __name__ == "__main__":
             """Recursively processes directories to generate descriptors."""
             # Check if leaf system
             if io_manager.is_leaf_system(current_path):
-                sys_name = os.path.basename(current_path)
                 try:
                     desc = self._compute_feature(
                         generator,
@@ -341,18 +340,18 @@ if __name__ == "__main__":
                     self.logger.info(f"Saved descriptors to {out_file}")
                     return
                 except Exception as e:
-                    self.logger.error(f"Failed to process {sys_name}: {e}")
-                    failures.append(f"{sys_name}: {e}")
+                    self.logger.error(f"Failed to process {current_path}: {e}")
+                    failures.append(f"{current_path}: {e}")
                     return
 
             # If not leaf, iterate subdirs
             try:
                 subdirs = [d for d in os.listdir(current_path) if os.path.isdir(os.path.join(current_path, d))]
-            except OSError:
-                failures.append(f"{current_path}: unable to list directory")
+            except OSError as e:
+                failures.append(f"{current_path}: {e}")
                 return
 
-            for d in subdirs:
+            for d in sorted(subdirs):
                 process_recursive(os.path.join(current_path, d), os.path.join(current_output_dir, d))
 
         # Initial call
@@ -364,7 +363,7 @@ if __name__ == "__main__":
                 np.save(out_file, desc)
                 self.logger.info(f"Saved descriptors to {out_file}")
             except Exception as e:
-                failures.append(f"{os.path.basename(abs_data_path)}: {e}")
+                failures.append(f"{abs_data_path}: {e}")
         else:
             # Recursive scan
             try:
@@ -372,11 +371,13 @@ if __name__ == "__main__":
             except OSError as e:
                 failures.append(f"{abs_data_path}: {e}")
             else:
-                for d in subdirs:
+                for d in sorted(subdirs):
                     process_recursive(os.path.join(abs_data_path, d), os.path.join(abs_output_dir, d))
 
         if failures:
-            raise WorkflowError("Feature generation failed: " + "; ".join(failures))
+            raise WorkflowError(
+                f"feature generation failed for {len(failures)} system(s): {failures}"
+            )
 
     def _compute_feature(self, generator, data_path: str, output_mode: str, feature_kind: str):
         if feature_kind == "descriptor":

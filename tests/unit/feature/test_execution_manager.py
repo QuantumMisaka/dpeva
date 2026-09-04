@@ -2,6 +2,7 @@ import pytest
 import numpy as np
 import subprocess
 from unittest.mock import MagicMock, patch
+from dpeva.constants import WORKFLOW_FINISHED_TAG
 from dpeva.feature.managers import FeatureExecutionManager, FeatureIOManager
 from dpeva.utils.command import DPCommandBuilder
 from dpeva.utils.exceptions import WorkflowError
@@ -256,20 +257,33 @@ class TestFeatureExecutionManager:
             assert sorted(save_paths) == sorted(expected)
 
     @patch("dpeva.feature.managers.FeatureIOManager")
-    def test_run_local_python_recursion_raises_on_leaf_failure(self, MockIO, tmp_path):
+    def test_run_local_python_recursion_aggregates_leaf_failure(self, MockIO, tmp_path, caplog):
         data_root = tmp_path / "data"
         (data_root / "sys1").mkdir(parents=True)
+        (data_root / "group" / "sys2").mkdir(parents=True)
         output_root = tmp_path / "output"
+        failed_path = data_root / "group" / "sys2"
 
         io_instance = MockIO.return_value
-        io_instance.is_leaf_system.side_effect = lambda path: str(path).endswith("sys1")
+        io_instance.is_leaf_system.side_effect = lambda path: str(path).endswith(("sys1", "sys2"))
         mock_generator = MagicMock()
-        mock_generator.compute_descriptors.side_effect = RuntimeError("compute failed")
+
+        def compute_descriptors(path, output_mode):
+            if str(path) == str(failed_path):
+                raise RuntimeError("compute failed")
+            return np.ones((2, 3))
+
+        mock_generator.compute_descriptors.side_effect = compute_descriptors
 
         manager = FeatureExecutionManager("local", {}, "", "pt", 1)
 
-        with pytest.raises(WorkflowError, match="sys1.*compute failed"):
+        with pytest.raises(WorkflowError, match=str(failed_path)):
             manager.run_local_python_recursion(mock_generator, str(data_root), str(output_root))
+
+        successful_output = output_root / "sys1.npy"
+        assert successful_output.is_file()
+        assert successful_output.stat().st_size > 0
+        assert WORKFLOW_FINISHED_TAG not in caplog.text
 
 class TestFeatureIOManager:
     def test_detect_multi_pool_structure(self, tmp_path):

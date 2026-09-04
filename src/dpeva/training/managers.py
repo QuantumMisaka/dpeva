@@ -8,6 +8,7 @@ from dpeva.constants import DEFAULT_TRAINING_SEEDS
 from dpeva.submission import JobManager, JobConfig
 from dpeva.submission.guards import guarded_command
 from dpeva.utils.command import DPCommandBuilder
+from dpeva.utils.exceptions import WorkflowError
 
 class TrainingConfigManager:
     """
@@ -234,6 +235,9 @@ class TrainingExecutionManager:
             if blocking:
                 for p in processes:
                     p.join()
+                failed = [index for index, process in enumerate(processes) if process.exitcode != 0]
+                if failed:
+                    raise WorkflowError(f"training tasks failed: {failed}")
                 self.logger.info("All local training tasks completed.")
             else:
                 self.logger.info("Local training tasks started in background.")

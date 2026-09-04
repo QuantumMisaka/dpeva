@@ -1,8 +1,9 @@
 
 import os
 import pytest
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 from dpeva.training.managers import TrainingConfigManager, TrainingExecutionManager
+from dpeva.utils.exceptions import WorkflowError
 
 class TestTrainingConfigManager:
 
@@ -216,7 +217,8 @@ class TestTrainingExecutionManager:
         
         scripts = ["script1.sh", "script2.sh"]
         task_dirs = ["dir1", "dir2"]
-        
+        mock_proc.return_value.exitcode = 0
+
         manager.submit_jobs(scripts, task_dirs, blocking=True)
         
         # Verify Process was instantiated 2 times
@@ -227,3 +229,12 @@ class TestTrainingExecutionManager:
         
         # Verify join() was called 2 times (since blocking=True)
         assert mock_proc.return_value.join.call_count == 2
+
+    @patch("dpeva.training.managers.multiprocessing.Process")
+    def test_submit_jobs_rejects_failed_child(self, mock_process, manager):
+        first = MagicMock(exitcode=0)
+        second = MagicMock(exitcode=7)
+        mock_process.side_effect = [first, second]
+
+        with pytest.raises(WorkflowError, match=r"training tasks failed: \[1\]"):
+            manager.submit_jobs(["a.sh", "b.sh"], ["a", "b"], blocking=True)
