@@ -46,3 +46,20 @@ remains an explicitly named evidence profile and is not included in `release`.
 Task 2 must migrate local and CI entry points to invoke profile/gate names and
 remove duplicated command definitions. This task does not change CI or
 `scripts/gate.sh`.
+
+## Fix round 1
+
+- The Python 3.10 documentation workflow installation now includes `tomli`,
+  matching the runner's import fallback.
+- The unit suite reloads the runner in an isolated module while simulating a
+  missing `tomllib` and supplying a `tomli` stub, then exercises manifest
+  loading through the fallback path. This verifies executable behavior rather
+  than only checking source text.
+- Removed the extra EOF blank line from `scripts/run_gate.py`.
+
+Verification for this round:
+
+- `conda run -n dpeva-dpa4 pytest tests/unit/scripts/test_run_gate.py -q` — `12 passed`.
+- `conda run -n dpeva-dpa4 ruff check scripts/run_gate.py tests/unit/scripts/test_run_gate.py` — passed.
+- `conda run -n dpeva-dpa4 pytest tests/unit -q` — `835 passed`, 5 warnings.
+- `git diff --check` — passed.

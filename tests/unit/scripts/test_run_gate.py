@@ -1,6 +1,10 @@
 from __future__ import annotations
 
+import builtins
+import importlib.util
 import subprocess
+import sys
+import types
 from pathlib import Path
 
 import pytest
@@ -119,3 +123,43 @@ def test_missing_executable_returns_nonzero_without_shell(tmp_path: Path) -> Non
     )
 
     assert run_names(["missing"], manifest=manifest) != 0
+
+
+def test_python310_tomli_fallback_is_executable(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    module_name = "scripts._run_gate_tomli_fallback_test"
+    module_path = Path(__file__).parents[3] / "scripts" / "run_gate.py"
+    parsed = {
+        "schema_version": "1.0",
+        "gates": {
+            "example": {
+                "argv": ["true"],
+                "layer": "test",
+                "owner": "owner",
+                "basis": "basis",
+            }
+        },
+        "profiles": {"local": ["example"]},
+    }
+    fake_tomli = types.ModuleType("tomli")
+    fake_tomli.TOMLDecodeError = ValueError
+    fake_tomli.load = lambda _handle: parsed
+    monkeypatch.setitem(sys.modules, "tomli", fake_tomli)
+
+    original_import = builtins.__import__
+
+    def import_without_tomllib(name: str, *args: object, **kwargs: object) -> object:
+        if name == "tomllib":
+            raise ModuleNotFoundError("simulated Python 3.10 environment")
+        return original_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", import_without_tomllib)
+    spec = importlib.util.spec_from_file_location(module_name, module_path)
+    assert spec is not None and spec.loader is not None
+    fallback_module = importlib.util.module_from_spec(spec)
+    monkeypatch.setitem(sys.modules, module_name, fallback_module)
+    spec.loader.exec_module(fallback_module)
+
+    assert fallback_module.tomllib is fake_tomli
+    source = tmp_path / "manifest.toml"
+    source.write_text("ignored by fake parser", encoding="utf-8")
+    assert fallback_module.resolve_profile(fallback_module.load_manifest(source), "local") == ["example"]
