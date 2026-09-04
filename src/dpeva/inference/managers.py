@@ -167,11 +167,14 @@ class InferenceExecutionManager:
                 artifact_checks=[
                     "\n".join(
                         [
-                            f"compgen -G {shlex.quote(results_prefix + '.*.out')} "
-                            "| while IFS= read -r artifact; do",
-                            '    if test -s "$artifact"; then exit 0; fi',
-                            "done",
-                            "exit 1",
+                            "check_nonempty_artifact() {",
+                            "    local artifact",
+                            "    while IFS= read -r artifact; do",
+                            '        if test -s "$artifact"; then return 0; fi',
+                            f"    done < <(compgen -G {shlex.quote(results_prefix + '.*.out')})",
+                            "    return 1",
+                            "}",
+                            "check_nonempty_artifact",
                         ]
                     ),
                 ],

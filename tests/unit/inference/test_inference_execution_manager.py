@@ -225,6 +225,35 @@ class TestInferenceExecutionManager:
         assert result.returncode != 0
         assert "DPEVA_TAG: WORKFLOW_FINISHED" not in result.stdout
 
+    def test_nonempty_inference_artifact_emits_finished(self, manager_local, tmp_path):
+        work_dir = tmp_path / "work"
+        model = work_dir / "model_0.pt"
+        work_dir.mkdir()
+        model.touch()
+
+        manager_local.submit_jobs(
+            models_paths=[str(model)],
+            data_path=str(tmp_path / "data"),
+            work_dir=str(work_dir),
+            task_name="task",
+            head="head",
+            results_prefix="results",
+        )
+
+        task_dir = work_dir / "0" / "task"
+        (task_dir / "results.0.out").write_text("prediction\n", encoding="utf-8")
+        generated = manager_local.job_manager.generate_script.call_args[0][0].command
+        command = generated.replace(generated.splitlines()[0], "true", 1)
+        result = subprocess.run(
+            ["bash", "-c", "set -Eeuo pipefail\n" + command],
+            cwd=task_dir,
+            text=True,
+            capture_output=True,
+        )
+
+        assert result.returncode == 0
+        assert "DPEVA_TAG: WORKFLOW_FINISHED" in result.stdout
+
     def test_submit_jobs_uses_default_env_setup_for_local_backend(self, manager_local, tmp_path):
         work_dir = tmp_path / "work"
         work_dir.mkdir()
