@@ -4,6 +4,7 @@ import logging
 from pathlib import Path
 from typing import Any, Union, Dict, Optional
 
+import dpeva
 from dpeva.config import InferenceConfig
 from dpeva.inference.managers import InferenceIOManager, InferenceExecutionManager
 from dpeva.constants import WORKFLOW_FINISHED_TAG, LOG_FILE_INFER, FILENAME_METRICS_JSON
@@ -91,6 +92,14 @@ class InferenceWorkflow:
             options=self.run_options,
             original_config=self.original_config,
             normalized_config=self.config.model_dump(mode="json"),
+            source={"dpeva_version": dpeva.__version__},
+            inputs=[
+                {"kind": "dataset", "ref": str(Path(self.data_path).expanduser().resolve())},
+                *[
+                    {"kind": "model", "ref": str(Path(model).expanduser().resolve())}
+                    for model in self.models_paths
+                ],
+            ],
         )
         try:
             backend = self.execution_manager.backend

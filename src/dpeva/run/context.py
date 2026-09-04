@@ -64,6 +64,8 @@ class RunContext:
         options: RunOptions,
         original_config: dict[str, Any],
         normalized_config: dict[str, Any],
+        source: dict[str, Any] | None = None,
+        inputs: list[dict[str, str]] | None = None,
     ) -> "RunContext":
         root = Path(work_dir).expanduser().resolve()
         _validate_component(workflow, "workflow")
@@ -82,6 +84,8 @@ class RunContext:
                 workflow,
                 original_config,
                 normalized_config,
+                source,
+                inputs,
             )
 
         run_dir = runs_root / options.run_id
@@ -95,6 +99,8 @@ class RunContext:
                 options,
                 original_config,
                 normalized_config,
+                source,
+                inputs,
             )
 
         try:
@@ -108,6 +114,8 @@ class RunContext:
             workflow,
             original_config,
             normalized_config,
+            source,
+            inputs,
         )
 
     @classmethod
@@ -118,6 +126,8 @@ class RunContext:
         workflow: str,
         original_config: dict[str, Any],
         normalized_config: dict[str, Any],
+        source: dict[str, Any] | None,
+        inputs: list[dict[str, str]] | None,
     ) -> "RunContext":
         timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
         for _ in range(100):
@@ -134,6 +144,8 @@ class RunContext:
                 workflow,
                 original_config,
                 normalized_config,
+                source,
+                inputs,
             )
         raise FileExistsError("could not allocate a unique generated run id")
 
@@ -146,6 +158,8 @@ class RunContext:
         workflow: str,
         original_config: dict[str, Any],
         normalized_config: dict[str, Any],
+        source: dict[str, Any] | None,
+        inputs: list[dict[str, str]] | None,
     ) -> "RunContext":
         published_snapshots: list[Path] = []
         try:
@@ -161,6 +175,8 @@ class RunContext:
                     "original": "config.original.json",
                     "resolved": "config.resolved.json",
                 },
+                source=source,
+                inputs=inputs,
             )
         except BaseException as error:
             _preserve_initialization_failure(
@@ -169,6 +185,8 @@ class RunContext:
                 workflow,
                 error,
                 published_snapshots,
+                source,
+                inputs,
             )
             raise
         return cls(root, run_dir, run_id, workflow, 1, recorder)
@@ -197,6 +215,8 @@ class RunContext:
         options: RunOptions,
         original_config: dict[str, Any],
         normalized_config: dict[str, Any],
+        source: dict[str, Any] | None,
+        inputs: list[dict[str, str]] | None,
     ) -> "RunContext":
         with _run_lock(run_dir):
             recorder = _load_existing(run_dir, workflow)
@@ -230,6 +250,8 @@ class RunContext:
                         "original": original_path.name,
                         "resolved": resolved_path.name,
                     },
+                    source=source,
+                    inputs=inputs,
                     attempt_id=previous_attempt,
                     events=[
                         RunEvent(
@@ -376,6 +398,8 @@ def _preserve_initialization_failure(
     workflow: str,
     error: BaseException,
     published_snapshots: Sequence[Path],
+    source: dict[str, Any] | None = None,
+    inputs: list[dict[str, str]] | None = None,
 ) -> None:
     """Leave a failed manifest behind when a newly allocated run cannot initialize."""
 
@@ -401,6 +425,8 @@ def _preserve_initialization_failure(
                 run_id,
                 workflow,
                 config=config,
+                source=source,
+                inputs=inputs,
             )
         if recorder.manifest.status not in _TERMINAL_STATES:
             recorder.fail(

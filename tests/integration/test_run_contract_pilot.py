@@ -137,6 +137,11 @@ def test_feature_success_manifest_contains_verified_output(tmp_path, monkeypatch
         (config.savedir / ".dpeva/runs/feature-success/run.json").read_text()
     )
     assert payload["status"] == "finished"
+    assert payload["source"] == {"dpeva_version": "0.8.1"}
+    assert payload["inputs"] == [
+        {"kind": "dataset", "ref": str(config.data_path.resolve())},
+        {"kind": "model", "ref": str(config.model_path.resolve())},
+    ]
     assert payload["artifacts"][0]["status"] == "verified"
 
 
@@ -194,6 +199,11 @@ def test_infer_success_manifest_and_artifact(tmp_path, monkeypatch) -> None:
         (config.work_dir / ".dpeva/runs/infer-success/run.json").read_text()
     )
     assert payload["status"] == "finished"
+    assert payload["source"] == {"dpeva_version": "0.8.1"}
+    assert payload["inputs"] == [
+        {"kind": "dataset", "ref": str(config.data_path.resolve())},
+        {"kind": "model", "ref": str((config.work_dir / "0" / "model.ckpt.pt").resolve())},
+    ]
     assert payload["jobs"][0]["status"] == "finished"
     assert payload["artifacts"][0]["status"] == "verified"
 

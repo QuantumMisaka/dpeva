@@ -3,6 +3,7 @@ import logging
 from pathlib import Path
 from typing import Any, Union, Dict
 
+import dpeva
 from dpeva.config import FeatureConfig
 from dpeva.feature.managers import FeatureIOManager, FeatureExecutionManager
 from dpeva.feature.generator import DescriptorGenerator
@@ -94,6 +95,11 @@ class FeatureWorkflow:
             options=self.run_options,
             original_config=self.original_config,
             normalized_config=self.config.model_dump(mode="json"),
+            source={"dpeva_version": dpeva.__version__},
+            inputs=[
+                {"kind": "dataset", "ref": str(Path(self.data_path).expanduser().resolve())},
+                {"kind": "model", "ref": str(Path(self.model_path).expanduser().resolve())},
+            ],
         )
         try:
             backend = self.config.submission.backend

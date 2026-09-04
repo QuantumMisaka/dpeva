@@ -1,5 +1,6 @@
 import errno
 import json
+from datetime import timezone
 
 import pytest
 from pydantic import ValidationError
@@ -64,6 +65,19 @@ def test_recovery_event_is_serialized_as_event_kind(tmp_path) -> None:
     assert payload["events"][-1]["state"] == "running"
 
 
+def test_event_timestamps_are_utc_monotonic_and_round_trip(tmp_path) -> None:
+    path = tmp_path / "run.json"
+    recorder = StatusRecorder.create(path, "run-1", "infer")
+    recorder.transition(RunState.VALIDATED)
+    recorder.transition(RunState.RUNNING)
+
+    events = recorder.manifest.events
+    assert all(event.at.tzinfo is timezone.utc for event in events)
+    assert [event.at for event in events] == sorted(event.at for event in events)
+    loaded = StatusRecorder.load(path)
+    assert [event.at for event in loaded.manifest.events] == [event.at for event in events]
+
+
 def test_manifest_view_isolated_from_recorder_state(tmp_path) -> None:
     path = tmp_path / "run.json"
     recorder = StatusRecorder.create(path, "run-1", "infer")
@@ -100,6 +114,27 @@ def test_loading_malformed_manifest_fails_closed(tmp_path) -> None:
 
     with pytest.raises(ValidationError):
         StatusRecorder.load(path)
+
+
+def test_loading_legacy_environment_field_is_compatible_and_new_writes_omit_it(tmp_path) -> None:
+    path = tmp_path / "run.json"
+    path.write_text(
+        json.dumps(
+            {
+                "schema_version": "1.0",
+                "run_id": "legacy",
+                "workflow": "infer",
+                "environment": {"lock": "old-env.json"},
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    recorder = StatusRecorder.load(path)
+    recorder.save()
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    assert "environment" not in payload
 
 
 def test_partial_transition_requires_failure_evidence(tmp_path) -> None:

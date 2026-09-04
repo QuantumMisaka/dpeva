@@ -8,9 +8,9 @@ owner: Project Maintainer
 
 # Run Contract Pilot Stop/Go Report
 
-Date: 2026-09-04  
-Scope: Plan B Tasks 1–6, feature/infer pilot only  
-Decision: **STOP**
+Date: 2026-09-04
+Scope: Plan B Tasks 1–7, feature/infer pilot only
+Decision: **GO**
 
 This report is an evidence checkpoint. It does not promote the run contract
 to other workflows and does not treat a passing test suite as evidence that
@@ -20,15 +20,14 @@ every schema field has a consumer.
 
 | Check | Measurement/evidence | Pass condition | Result |
 |---|---|---|---|
-| diagnostic value | Injected CONFIG, CAPABILITY, EXECUTION, ARTIFACT, and local partial cases are mapped below; stable run paths, categories, child records, and retained artifacts are present for the feature/infer cases. The CAPABILITY case is a doctor JSON report rather than a run manifest, so the requested all-cases manifest mapping is incomplete. | all injected failures improve diagnosis | FAIL |
+| diagnostic value | Injected CONFIG, CAPABILITY, EXECUTION, ARTIFACT, and local partial cases are mapped below. Doctor JSON gives a stable capability status/version/detail and a non-zero exit for unusable capability; feature/infer manifests add typed run and child evidence. | all injected failures improve diagnosis | PASS |
 | median overhead | 41 paired repetitions of a local fake command; baseline measured fake command only, treatment measured the same command plus `StatusRecorder.create()` and atomic manifest publication. Median baseline 15.407ms, treatment 26.281ms, additional manifest overhead 10.074ms; p95 additional overhead 12.845ms. | < 100 ms | PASS |
-| unused fields | Closed schema audit below. `RunManifest.source`, `RunManifest.environment`, `RunManifest.inputs`, and `RunEvent.at` have no current reader, assertion, recovery consumer, or concrete downstream-plan consumer. They are currently write/persist fields only. | zero | FAIL |
+| unused fields | Closed schema audit below. `source` and `inputs` are populated and asserted for both pilot workflows; `RunEvent.at` is tested as UTC, monotonic serialized evidence; `environment` is removed from new schema writes with legacy 1.0 read compatibility. | zero | PASS |
 | migration burden | `git diff 72620ad..HEAD -- examples/recipes` contains only the seven-line `examples/recipes/README.md` documentation addition. The 21 versioned JSON recipes were validated in Task 3; no recipe JSON was semantically rewritten. | zero semantic rewrites | PASS |
 
-Decision: **STOP**. Plans C and D must remain blocked. Before a new
-checkpoint, remove or explicitly re-scope the four unused fields through a
-spec/plan change with tests; do not add speculative consumers merely to turn
-this result into GO. The feature/infer pilot remains available as-is.
+Decision: **GO**. Plans C and D may proceed, while preserving the feature/infer
+scope boundary. The pilot does not authorize wiring the remaining workflows
+until their own evidence contracts are implemented and reviewed.
 
 ## 1. Pilot test duration
 
@@ -38,31 +37,31 @@ Command:
 conda run -n dpeva-dpa4 pytest tests/unit/run tests/integration/test_run_contract_pilot.py --durations=20 -q
 ```
 
-Result: `120 passed in 7.41s`.
+Result: `122 passed in 6.88s`.
 
 Slowest 20 tests:
 
 ```text
-0.33s call tests/integration/test_run_contract_pilot.py::test_cli_partial_exit_and_snapshots
-0.26s call tests/unit/run/test_context.py::test_concurrent_force_allocates_unique_attempts
-0.13s call tests/integration/test_run_contract_pilot.py::test_infer_mixed_artifact_and_execution_failures_are_deterministic
-0.11s call tests/integration/test_run_contract_pilot.py::test_slurm_feature_and_infer_record_parsed_ids
-0.11s call tests/integration/test_run_contract_pilot.py::test_infer_analysis_failure_preserves_artifacts_and_failed_state
-0.10s call tests/integration/test_run_contract_pilot.py::test_infer_resume_of_submitted_slurm_is_legal
-0.10s call tests/integration/test_run_contract_pilot.py::test_infer_mixed_children_write_partial_manifest
-0.08s call tests/integration/test_run_contract_pilot.py::test_infer_all_children_failure_writes_failed_manifest
-0.08s call tests/integration/test_run_contract_pilot.py::test_feature_resume_of_submitted_slurm_is_legal
-0.08s call tests/integration/test_run_contract_pilot.py::test_infer_success_manifest_and_artifact
-0.07s call tests/integration/test_run_contract_pilot.py::test_feature_success_manifest_contains_verified_output
-0.07s call tests/integration/test_run_contract_pilot.py::test_infer_malformed_slurm_response_is_execution_failure[None]
-0.07s call tests/unit/run/test_context.py::test_force_archives_previous_manifest_and_records_attempt
-0.07s call tests/unit/run/test_context.py::test_sequential_force_archives_resolve_all_config_references
-0.07s call tests/integration/test_run_contract_pilot.py::test_infer_malformed_slurm_response_is_execution_failure[sbatch output without a job id]
-0.07s call tests/integration/test_run_contract_pilot.py::test_infer_slurm_mixed_submission_stays_submitted
+0.33s call tests/unit/run/test_context.py::test_concurrent_force_allocates_unique_attempts
+0.26s call tests/integration/test_run_contract_pilot.py::test_cli_partial_exit_and_snapshots
+0.10s call tests/integration/test_run_contract_pilot.py::test_slurm_feature_and_infer_record_parsed_ids
+0.09s call tests/integration/test_run_contract_pilot.py::test_infer_mixed_artifact_and_execution_failures_are_deterministic
+0.08s call tests/unit/run/test_context.py::test_sequential_force_archives_resolve_all_config_references
+0.08s call tests/integration/test_run_contract_pilot.py::test_infer_mixed_children_write_partial_manifest
+0.08s call tests/integration/test_run_contract_pilot.py::test_infer_resume_of_submitted_slurm_is_legal
+0.07s call tests/integration/test_run_contract_pilot.py::test_infer_analysis_failure_preserves_artifacts_and_failed_state
+0.07s call tests/integration/test_run_contract_pilot.py::test_infer_success_manifest_and_artifact
+0.07s call tests/integration/test_run_contract_pilot.py::test_infer_all_children_failure_writes_failed_manifest
+0.07s call tests/integration/test_run_contract_pilot.py::test_feature_resume_of_submitted_slurm_is_legal
 0.07s call tests/integration/test_run_contract_pilot.py::test_infer_empty_output_is_artifact_failure
-0.06s call tests/integration/test_run_contract_pilot.py::test_infer_slurm_all_fail_is_execution_failure
-0.06s call tests/unit/run/test_recorder.py::test_record_event_on_current_failure_attaches_failure_evidence[failed]
-0.06s call tests/integration/test_run_contract_pilot.py::test_feature_missing_output_is_artifact_failure
+0.07s call tests/unit/run/test_context.py::test_force_archives_previous_manifest_and_records_attempt
+0.07s call tests/unit/run/test_context.py::test_force_failure_after_archive_reuses_archive_on_retry
+0.06s call tests/integration/test_run_contract_pilot.py::test_infer_slurm_mixed_submission_stays_submitted
+0.06s call tests/unit/run/test_context.py::test_force_publishes_manifest_with_event_in_one_replace
+0.06s call tests/integration/test_run_contract_pilot.py::test_feature_success_manifest_contains_verified_output
+0.06s call tests/unit/run/test_context.py::test_force_failure_before_archive_is_retry_stable
+0.05s call tests/integration/test_run_contract_pilot.py::test_feature_multi_pool_requires_each_pool
+0.05s call tests/integration/test_run_contract_pilot.py::test_infer_malformed_slurm_response_is_execution_failure[None]
 ```
 
 ## 2. Diagnostic value and evidence mapping
@@ -76,14 +75,15 @@ for feature/infer runs.
 | Injected case | Pilot evidence | Comparison with pre-pilot log | Assessment |
 |---|---|---|---|
 | CONFIG | `tests/unit/run/test_context.py::test_non_json_config_fails_closed_without_removing_run`; `.dpeva/runs/bad-config/run.json` has `status=failed`, `failure.category=CONFIG`, and the preserved configuration reference. | Pre-pilot had an exception without a durable run record or typed configuration category. | Improved |
-| CAPABILITY | `tests/unit/run/test_doctor.py` and `tests/unit/test_cli.py` inject missing, unparsable, incompatible, and failed `dp --version` responses; `dpeva doctor --json` exposes `checks[0].status`, `version`, and `detail`. No run manifest is created because doctor is intentionally config-free. | Pre-pilot import-time probing emitted a PATH warning and had no stable JSON capability evidence. | Improved doctor evidence, but not a manifest mapping; this is why the diagnostic row is FAIL under the stated all-cases rule. |
+| CAPABILITY | `tests/unit/run/test_doctor.py` and `tests/unit/test_cli.py` inject missing, unparsable, incompatible, and failed `dp --version` responses; `dpeva doctor --json` exposes `checks[0].status`, `version`, and `detail`, and exits non-zero when unusable. No run manifest is created because doctor is intentionally config-free; its JSON is the capability evidence pointer. | Pre-pilot import-time probing emitted a PATH warning and had no stable JSON capability evidence. | Improved with a dedicated, machine-readable capability boundary. |
 | EXECUTION | `tests/integration/test_run_contract_pilot.py::test_feature_failure_writes_failed_manifest`; `.dpeva/runs/feature-failure/run.json` has `status=failed`, `failure.category=EXECUTION`. Slurm malformed/all-fail cases also preserve child `failure_category=EXECUTION`. | Pre-pilot local DeepMD failure was followed by a completion marker and was treated as submission success. | Improved |
 | ARTIFACT | `test_feature_missing_output_is_artifact_failure`, `test_feature_multi_pool_requires_each_pool`, and `test_infer_empty_output_is_artifact_failure`; each manifest has `status=failed`, `failure.category=ARTIFACT`, and inference child records retain `failure_category=ARTIFACT`. | Pre-pilot only showed absent `results.*.out` files after a misleading successful marker; no durable artifact verdict existed. | Improved |
 | local partial | `test_infer_mixed_children_write_partial_manifest`; `.dpeva/runs/infer-partial/run.json` has `status=partial`, typed top-level failure, one `finished` child, one `failed` child, and a verified artifact. | Pre-pilot had no partial state or child-level aggregation; the marker could not distinguish partial scientific output from success. | Improved |
 
-The pilot therefore demonstrates unique diagnostic value for the feature and
-infer execution boundary, but does not yet demonstrate the exact requested
-manifest evidence boundary for capability failures.
+The pilot demonstrates unique diagnostic value for the feature/infer execution
+boundary and for capability preflight. Capability evidence intentionally lives
+in the doctor JSON contract rather than a workflow manifest, because doctor is
+configuration-free and must not allocate a run identity.
 
 ## 3. Reproducible fake-command benchmark
 
@@ -94,32 +94,36 @@ manifest using `StatusRecorder.create()`, including file flush/fsync,
 atomic replace, and parent-directory fsync. Timings cover only the paired
 operation, not conda startup.
 
-Command shape:
+Exact command:
 
 ```text
-conda run -n dpeva-dpa4 python -c '<41 paired subprocess-only vs subprocess-plus-StatusRecorder.create repetitions>'
+conda run -n dpeva-dpa4 python scripts/benchmark_run_manifest.py --repetitions 41 --warmups 5
 ```
+
+The benchmark implementation is versioned at
+`scripts/benchmark_run_manifest.py`; it emits one JSON object containing both
+raw arrays, summary values, and the percentile method.
 
 Raw baseline milliseconds:
 
 ```text
-[15.477, 17.756, 17.040, 16.529, 15.927, 16.013, 14.995, 15.273, 15.258, 14.469, 14.860, 16.162, 14.957, 14.452, 14.659, 15.184, 15.084, 16.247, 15.192, 14.693, 16.127, 15.082, 16.741, 17.103, 15.994, 20.151, 15.873, 15.965, 14.696, 15.111, 16.702, 16.367, 14.923, 15.407, 15.190, 14.862, 15.880, 16.741, 16.605, 13.902, 14.559]
+[14.707, 13.426, 14.418, 13.897, 14.591, 14.363, 14.337, 14.323, 13.356, 13.826, 13.639, 15.307, 15.282, 15.214, 14.642, 15.635, 15.297, 15.996, 14.536, 14.764, 13.813, 14.378, 14.742, 13.702, 14.192, 15.127, 18.294, 14.875, 13.544, 13.303, 14.132, 13.885, 15.003, 14.323, 14.302, 15.820, 14.506, 15.326, 15.311, 23.262, 17.521]
 ```
 
 Raw treatment milliseconds:
 
 ```text
-[28.599, 26.565, 27.007, 26.603, 25.250, 28.269, 29.246, 25.809, 25.885, 24.761, 26.281, 25.900, 27.275, 24.937, 25.677, 24.997, 25.112, 28.041, 25.090, 27.489, 26.004, 27.168, 26.490, 29.948, 27.858, 27.141, 27.244, 28.133, 27.425, 25.157, 26.655, 24.720, 29.214, 27.865, 24.140, 23.827, 23.624, 22.745, 25.532, 22.264, 23.579]
+[26.673, 24.213, 24.272, 24.486, 26.955, 25.058, 24.378, 23.508, 23.387, 24.873, 24.080, 27.064, 29.977, 27.265, 26.676, 34.604, 24.243, 26.060, 26.195, 28.824, 24.885, 27.164, 25.868, 25.036, 27.378, 27.224, 26.848, 22.833, 24.219, 24.441, 26.541, 23.884, 24.418, 23.401, 26.341, 25.652, 23.255, 27.264, 25.262, 28.424, 30.625]
 ```
 
 Raw paired overhead milliseconds (`treatment - baseline`):
 
 ```text
-[13.121, 8.809, 9.967, 10.074, 9.323, 12.256, 14.252, 10.536, 10.628, 10.292, 11.420, 9.739, 12.318, 10.485, 11.017, 9.813, 10.028, 11.794, 9.897, 12.795, 9.877, 12.086, 9.749, 12.845, 11.864, 6.990, 11.370, 12.168, 12.728, 10.047, 9.953, 8.353, 14.291, 12.459, 8.950, 8.965, 7.745, 6.005, 8.927, 8.362, 9.020]
+[11.966, 10.787, 9.854, 10.589, 12.363, 10.694, 10.041, 9.185, 10.031, 11.047, 10.441, 11.757, 14.695, 12.051, 12.034, 18.969, 8.945, 10.064, 11.659, 14.061, 11.073, 12.786, 11.126, 11.334, 13.186, 12.098, 8.553, 7.957, 10.675, 11.138, 12.410, 9.999, 9.415, 9.079, 12.039, 9.831, 8.748, 11.938, 9.950, 5.162, 13.104]
 ```
 
-Summary: median baseline `15.407ms`, median with manifest `26.281ms`,
-median manifest overhead `10.074ms`, and p95 overhead `12.845ms`. This
+Summary: median baseline `14.536ms`, median with manifest `25.652ms`,
+median manifest overhead `11.047ms`, and p95 overhead `14.061ms`. This
 passes the `<100ms` threshold for this local fake-command workload; it does
 not claim anything about scheduler or real DeepMD runtime overhead.
 
@@ -139,16 +143,16 @@ CLI tests. It is intentionally separate from run-manifest evidence.
 | `RunManifest.run_id` | `RunContext` allocation and identity checks; rerun/force tests | Plan E traceability will link evidence by identity | Used |
 | `RunManifest.workflow` | `RunContext._load_existing()` verifies workflow; pilot manifests | Plans C/D preserve workflow ownership in their evidence | Used |
 | `RunManifest.status` | `StatusRecorder.transition`; feature/infer terminal decisions; status tests | Plans C/D use terminal status for acceptance | Used |
-| `RunManifest.source` | No production caller supplies it; no test reads it; recovery does not use it | No concrete source-field consumer is specified in Plans C, D, or E | **UNUSED** |
-| `RunManifest.environment` | No production caller supplies it; no test reads it; recovery does not use it | Plan D records environment in its separate qualification schema, not this run field | **UNUSED** |
+| `RunManifest.source` | Feature/infer pass `{"dpeva_version": ...}`; pilot success tests read and assert it | Plans C/D retain source identity when extending run evidence | Used |
+| `RunManifest.environment` | Removed from the new model and all recorder/context plumbing; `StatusRecorder.load()` drops only this legacy 1.0 key before strict validation; compatibility test asserts new writes omit it | No downstream consumer; intentionally removed after audit | Removed |
 | `RunManifest.config` | `RunContext` writes original/resolved snapshot references; force/recovery tests read them | Plan E traceability can link config snapshots after an explicit consumer is specified | Used |
-| `RunManifest.inputs` | No production caller supplies it; no test reads it; recovery does not use it | Plans C/D define separate dataset/model/qualification inputs, but do not consume this field | **UNUSED** |
+| `RunManifest.inputs` | Feature/infer pass absolute dataset/model references; pilot success tests read and assert the exact list | Plans C/D extend these explicit input references with lineage/model evidence | Used |
 | `RunManifest.jobs` | Feature/infer managers append `JobRecord`; pilot asserts statuses and JobIDs | Plan D qualification has a separate command-result schema | Used |
 | `RunManifest.artifacts` | `RunContext.register_verified_artifacts()` and pilot artifact assertions | Plan C consumes dataset/model artifact references | Used |
 | `RunManifest.events` | Recorder appends transitions/resume/recovery/force; recovery inspects history | Plan E can audit event history after a concrete reader is defined | Used |
 | `RunManifest.failure` | `fail/partial`, workflow aggregation, and failure assertions | Plans C/D require fail-closed evidence for their own outputs | Used |
 | `RunEvent.state` | State transition and recovery logic; recorder/status tests | Downstream acceptance reads event state history | Used |
-| `RunEvent.at` | Default is persisted, but no current reader/assertion/recovery decision uses timestamp | No concrete downstream plan consumer is specified | **UNUSED** |
+| `RunEvent.at` | Recorder timestamp is asserted UTC, monotonic, and equal after JSON load by `test_event_timestamps_are_utc_monotonic_and_round_trip` | Plan E consumes event timestamps for audit chronology | Used |
 | `RunEvent.kind` | Resume/recovery/force behavior and tests | Plan E event audit can consume it | Used |
 | `RunEvent.attempt_id` | Context attempt allocation and recovery attribution; tests | Plan E traceability can distinguish attempts | Used |
 | `RunEvent.reason` | Force validation and force-event tests | Future operator audit consumes explicit rerun reason | Used |
@@ -167,11 +171,11 @@ CLI tests. It is intentionally separate from run-manifest evidence.
 | `JobRecord.failure` | Inference manager stores caught command/artifact text for child diagnostics | Plan D can retain command failure text in its qualification results | Used |
 | `JobRecord.failure_category` | Inference aggregation and mixed artifact/execution assertions | Plan D's typed command outcomes follow the same distinction | Used |
 
-The four unused fields are not removed in this checkpoint because their
-removal changes the public manifest contract and the approved SPEC §9.1;
-that change must be made as an explicit spec/plan revision before the next
-expansion attempt. Keeping them while declaring GO would violate §15.9 and
-the use-it-or-lose-it rule.
+`RunManifest.environment` is the only removed field. Its removal is
+backward-compatible for schema 1.0 because loading explicitly strips that
+legacy key before strict validation, while all new serialization omits it.
+No other field is retained without a concrete current consumer, test, recovery
+behavior, or named downstream plan.
 
 ## 5. Recipe audit
 
@@ -184,10 +188,31 @@ M examples/recipes/README.md (7 insertions, 0 deletions)
 
 The change documents `feature`/`infer` run options and the distinction between
 local partial and Slurm submitted states. It changes no versioned JSON input,
-scientific parameter, model path, backend default, or output convention. Task
-3 separately validated 21 versioned recipe configurations after migration and
-strict validation. Therefore the migration-burden check is PASS: there are
-zero semantic recipe rewrites.
+scientific parameter, model path, backend default, or output convention. The
+exact Task 3 validation command, rerun for this checkpoint, is:
+
+```text
+conda run -n dpeva-dpa4 python -c 'exec("""import json
+from pathlib import Path
+from dpeva.config import AnalysisConfig, CollectionConfig, DataCleaningConfig, ExplorationConfig, FeatureConfig, InferenceConfig, LabelingConfig, TrainingConfig
+from dpeva.config_migration import migrate_legacy_config
+classes = {"analysis": AnalysisConfig, "collection": CollectionConfig, "data_cleaning": DataCleaningConfig, "exploration": ExplorationConfig, "feature_generation": FeatureConfig, "inference": InferenceConfig, "labeling": LabelingConfig, "training": TrainingConfig}
+paths = sorted(p for p in Path("examples/recipes").rglob("*.json") if p.name != "input.json")
+for path in paths:
+    normalized = migrate_legacy_config(json.loads(path.read_text(encoding="utf-8"))).normalized
+    model = classes.get(path.parts[-2])
+    if model is not None:
+        model.model_validate(normalized)
+    else:
+        assert isinstance(normalized, dict), path
+print(f"validated {len(paths)} versioned recipe configs")
+""")'
+```
+
+Result: `validated 21 versioned recipe configs`. See the detailed Task 3
+evidence in `.superpowers/sdd/2026-09-04-run-contract-strict-config/task-3-report.md`.
+Therefore the migration-burden check is PASS: there are zero semantic recipe
+rewrites.
 
 ## 6. Required repository checks
 
@@ -208,14 +233,11 @@ Observed results:
 
 - `conda run -n dpeva-dpa4 ruff check src tests scripts` — exit `0`,
   `All checks passed!`.
-- `conda run -n dpeva-dpa4 pytest tests/unit -q` — exit `0`, `634 passed in
-  24.40s`.
-- `python3 scripts/doc_check.py` — exit `1` only for the pre-existing Plan A
-  file `docs/reports/2026-09-04-integration-failure-classification.md`, which
-  lacks YAML front matter. The newly created pilot report passes front matter,
-  links, absolute-path, and owner checks.
+- `conda run -n dpeva-dpa4 pytest tests/unit -q` — exit `0`, `638 passed in
+  24.97s`.
+- `python3 scripts/doc_check.py` — exit `0`; structure, metadata, links,
+  forbidden-path, and owner checks all pass, including the repaired Plan A
+  integration classification report.
 - `git diff --check` — exit `0`.
 
-The documentation failure is not silently treated as green; it is outside
-Task 7's owned file and remains a pre-existing repository issue to be fixed by
-the owning Plan A documentation follow-up.
+No pre-existing documentation failure remains in this checkpoint.

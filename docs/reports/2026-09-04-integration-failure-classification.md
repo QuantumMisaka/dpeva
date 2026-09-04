@@ -1,3 +1,11 @@
+---
+title: Integration Failure Classification
+status: active
+audience: Developers / AI Agents
+last-updated: 2026-09-04
+owner: Project Maintainer
+---
+
 # Integration Failure Classification (2026-09-04)
 
 ## Scope

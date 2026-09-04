@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import copy
 import errno
+import json
 import os
 from pathlib import Path
 from typing import Any, Literal
@@ -47,7 +48,6 @@ class StatusRecorder:
         workflow: str,
         *,
         source: dict[str, Any] | None = None,
-        environment: dict[str, str] | None = None,
         config: dict[str, str] | None = None,
         inputs: list[dict[str, str]] | None = None,
         events: list[RunEvent] | None = None,
@@ -57,7 +57,6 @@ class StatusRecorder:
             run_id=run_id,
             workflow=workflow,
             source=copy.deepcopy(source) if source is not None else {},
-            environment=copy.deepcopy(environment) if environment is not None else {},
             config=copy.deepcopy(config) if config is not None else {},
             inputs=copy.deepcopy(inputs) if inputs is not None else [],
             events=copy.deepcopy(events) if events is not None else [],
@@ -70,7 +69,13 @@ class StatusRecorder:
     @classmethod
     def load(cls, path: str | Path, *, attempt_id: int = 1) -> "StatusRecorder":
         manifest_path = Path(path)
-        manifest = RunManifest.model_validate_json(manifest_path.read_text(encoding="utf-8"))
+        payload = json.loads(manifest_path.read_text(encoding="utf-8"))
+        if not isinstance(payload, dict):
+            raise ValueError("run manifest must contain a JSON object")
+        # Preserve read compatibility for schema 1.0 manifests written before
+        # the pilot audit, while ensuring new writes omit this unused field.
+        payload.pop("environment", None)
+        manifest = RunManifest.model_validate(payload)
         return cls(manifest_path, manifest, attempt_id=attempt_id)
 
     def transition(self, target: RunState, event: RunEventKind | None = None) -> RunState:
@@ -141,7 +146,6 @@ class StatusRecorder:
         self,
         *,
         source: dict[str, Any] | None = None,
-        environment: dict[str, str] | None = None,
         config: dict[str, str] | None = None,
         inputs: list[dict[str, str]] | None = None,
     ) -> None:
@@ -150,8 +154,6 @@ class StatusRecorder:
         candidate = self._manifest.model_copy(deep=True)
         if source is not None:
             candidate.source = copy.deepcopy(source)
-        if environment is not None:
-            candidate.environment = copy.deepcopy(environment)
         if config is not None:
             candidate.config = copy.deepcopy(config)
         if inputs is not None:

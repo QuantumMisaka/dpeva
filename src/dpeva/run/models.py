@@ -79,7 +79,6 @@ class RunManifest(RunModel):
     workflow: str
     status: RunState = RunState.CREATED
     source: dict[str, Any] = Field(default_factory=dict)
-    environment: dict[str, str] = Field(default_factory=dict)
     config: dict[str, str] = Field(default_factory=dict)
     inputs: list[dict[str, str]] = Field(default_factory=list)
     jobs: list[JobRecord] = Field(default_factory=list)
