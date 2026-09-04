@@ -37,6 +37,7 @@ def test_feature_workflow_local_rejects_empty_recursion_output(tmp_path, caplog)
 
     data = tmp_path / "data"
     data.mkdir()
+    (tmp_path / "model.pt").touch()
     config = {
         "data_path": str(data),
         "model_path": str(tmp_path / "model.pt"),
@@ -58,6 +59,7 @@ def test_feature_workflow_propagates_recursion_failure_without_marker(tmp_path, 
 
     data = tmp_path / "data"
     data.mkdir()
+    (tmp_path / "model.pt").touch()
     config = {
         "data_path": str(data),
         "model_path": str(tmp_path / "model.pt"),

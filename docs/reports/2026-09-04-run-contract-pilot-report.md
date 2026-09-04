@@ -108,23 +108,23 @@ raw arrays, summary values, and the percentile method.
 Raw baseline milliseconds:
 
 ```text
-[12.8, 12.883, 13.274, 14.781, 12.957, 13.413, 15.558, 12.656, 14.317, 13.123, 14.022, 14.539, 14.733, 12.585, 13.429, 13.281, 13.702, 13.913, 12.565, 21.124, 14.16, 14.023, 13.357, 13.008, 13.495, 12.898, 13.326, 12.496, 13.606, 13.337, 15.09, 12.992, 12.901, 12.218, 12.887, 16.612, 14.084, 13.157, 12.911, 14.559, 13.693]
+[13.089, 13.722, 13.298, 12.712, 14.476, 13.189, 14.209, 13.703, 13.915, 12.885, 13.024, 12.809, 14.075, 13.041, 13.134, 13.648, 12.941, 12.541, 13.621, 14.22, 13.17, 13.751, 13.136, 13.319, 13.313, 14.028, 12.68, 12.598, 13.525, 13.428, 12.875, 13.318, 12.91, 13.463, 13.814, 13.345, 12.841, 12.776, 13.61, 13.15, 13.093]
 ```
 
 Raw treatment milliseconds:
 
 ```text
-[22.752, 21.539, 23.105, 22.304, 21.494, 23.758, 22.511, 20.833, 20.887, 24.999, 22.218, 21.719, 23.276, 21.912, 22.819, 21.942, 24.407, 23.247, 22.661, 24.181, 22.91, 24.69, 22.953, 23.064, 22.472, 22.44, 22.868, 21.992, 22.691, 22.884, 23.837, 21.534, 23.162, 23.207, 22.407, 24.864, 23.753, 23.014, 23.334, 23.418, 22.557]
+[22.467, 23.435, 21.868, 23.542, 21.81, 22.974, 21.657, 21.486, 21.372, 21.593, 22.38, 21.483, 22.964, 22.426, 22.158, 22.67, 22.213, 21.844, 23.544, 22.89, 24.905, 25.13, 22.269, 21.98, 21.068, 25.097, 21.582, 21.881, 23.617, 22.794, 22.392, 23.723, 22.389, 23.747, 21.509, 22.924, 22.489, 22.58, 22.443, 22.268, 23.201]
 ```
 
 Raw paired overhead milliseconds (`treatment - baseline`):
 
 ```text
-[9.952, 8.656, 9.831, 7.523, 8.537, 10.345, 6.953, 8.177, 6.569, 11.876, 8.196, 7.18, 8.542, 9.327, 9.39, 8.661, 10.705, 9.334, 10.097, 3.057, 8.75, 10.667, 9.596, 10.056, 8.977, 9.542, 9.542, 9.496, 9.085, 9.547, 8.747, 8.542, 10.261, 10.989, 9.52, 8.252, 9.669, 9.858, 10.423, 8.859, 8.864]
+[9.378, 9.713, 8.57, 10.83, 7.334, 9.784, 7.448, 7.783, 7.456, 8.707, 9.356, 8.674, 8.89, 9.385, 9.023, 9.023, 9.272, 9.303, 9.922, 8.67, 11.735, 11.379, 9.133, 8.661, 7.755, 11.069, 8.902, 9.283, 10.092, 9.366, 9.517, 10.405, 9.48, 10.284, 7.694, 9.579, 9.648, 9.804, 8.834, 9.118, 10.107]
 ```
 
-Summary: median baseline `13.357ms`, median with manifest `22.868ms`,
-median manifest overhead `9.334ms`, and p95 overhead `10.705ms`. This
+Summary: median baseline `13.298ms`, median with manifest `22.426ms`,
+median manifest overhead `9.303ms`, and p95 overhead `11.069ms`. This
 passes the `<100ms` threshold for this local fake-command workload; it does
 not claim anything about scheduler or real DeepMD runtime overhead.
 
@@ -193,6 +193,13 @@ input, and concrete log evidence is bounded and publishable: no absolute
 machine paths are emitted, model files use streaming SHA-256, and dataset
 directories use an explicitly labeled bounded structural identity. Inference
 terminal evidence preserves the original exception text.
+Resume now compares raw/resolved/metadata snapshots plus freshly collected
+source and input identities while holding the run lock; mismatches leave the
+manifest unchanged. New-run identity collection occurs after minimal
+manifest allocation, so unreadable inputs produce a governed failed manifest.
+Git identity is claimed only when the package source is tracked by the
+discovered repository, and feature/infer log discovery registers concrete
+non-empty ``eval_desc`` log/error files wherever pool layouts place them.
 
 ## 6. Recipe audit
 
@@ -250,8 +257,8 @@ Observed results:
 
 - `conda run -n dpeva-dpa4 ruff check src tests scripts` — exit `0`,
   `All checks passed!`.
-- `conda run -n dpeva-dpa4 pytest tests/unit -q` — exit `0`, `648 passed in
-  23.35s`.
+- `conda run -n dpeva-dpa4 pytest tests/unit -q` — exit `0`, `657 passed in
+  24.47s`.
 - `python3 scripts/doc_check.py` — exit `0`; structure, metadata, links,
   forbidden-path, and owner checks all pass, including the repaired Plan A
   integration classification report.

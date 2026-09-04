@@ -4,7 +4,7 @@ import re
 import subprocess
 import importlib
 from collections.abc import Callable, Sequence
-from typing import Literal
+from typing import Any, Literal
 
 from packaging.version import InvalidVersion, Version
 from pydantic import BaseModel, Field
@@ -27,7 +27,7 @@ class DoctorCheck(BaseModel):
 
 class DoctorReport(BaseModel):
     model_config = {"extra": "forbid"}
-    schema_version: str = "1.0"
+    schema_version: Literal["1.0"] = "1.0"
     status: Literal["ok", "failed"]
     checks: list[DoctorCheck]
 
@@ -86,6 +86,8 @@ def build_doctor_report(
     *,
     run: Callable[..., subprocess.CompletedProcess[str]] = subprocess.run,
     include_optional: bool = True,
+    torch_module: Any | None = None,
+    cuda_probe: Callable[[Any], bool] | None = None,
 ) -> DoctorReport:
     """Build a stable capability report.
 
@@ -96,7 +98,8 @@ def build_doctor_report(
     report's top-level status.
     """
     observed = list(checks) if checks is not None else _default_checks(
-        run=run, include_optional=include_optional
+        run=run, include_optional=include_optional, torch_module=torch_module,
+        cuda_probe=cuda_probe,
     )
     status = "ok" if all(item.status == "ok" or item.required is False for item in observed) else "failed"
     return DoctorReport(status=status, checks=observed)
@@ -149,14 +152,17 @@ def _probe_python_package(name: str, *, required: bool) -> DoctorCheck:
     )
 
 
-def _probe_torch_cuda() -> DoctorCheck:
+def _probe_torch_cuda(
+    torch_module: Any | None = None,
+    cuda_probe: Callable[[Any], bool] | None = None,
+) -> DoctorCheck:
     try:
-        torch = importlib.import_module("torch")
+        torch = torch_module if torch_module is not None else importlib.import_module("torch")
     except (ImportError, ModuleNotFoundError) as exc:
         return DoctorCheck(name="torch.cuda", status="missing", detail=f"torch unavailable: {exc}", required=False)
     except Exception as exc:
         return DoctorCheck(name="torch.cuda", status="error", detail=f"torch CUDA probe failed: {exc}", required=False)
-    available = bool(torch.cuda.is_available())
+    available = bool(cuda_probe(torch) if cuda_probe is not None else torch.cuda.is_available())
     return DoctorCheck(
         name="torch.cuda",
         status="ok" if available else "unavailable",
@@ -170,12 +176,14 @@ def _default_checks(
     *,
     run: Callable[..., subprocess.CompletedProcess[str]] = subprocess.run,
     include_optional: bool = True,
+    torch_module: Any | None = None,
+    cuda_probe: Callable[[Any], bool] | None = None,
 ) -> list[DoctorCheck]:
     checks = [probe_deepmd(run=run)]
     checks.extend(probe_deepmd_operations(run=run))
     checks.append(_probe_python_package("dpdata", required=True))
     checks.append(_probe_python_package("torch", required=True))
-    checks.append(_probe_torch_cuda())
+    checks.append(_probe_torch_cuda(torch_module=torch_module, cuda_probe=cuda_probe))
     gpu = _probe_command("gpu.visibility", ["nvidia-smi", "-L"], run=run, required=False)
     if gpu.status == "missing":
         gpu.status = "unavailable"

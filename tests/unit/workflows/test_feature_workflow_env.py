@@ -71,6 +71,7 @@ def test_feature_workflow_python_mode(tmp_path):
     }
     
     (tmp_path / "data").mkdir()
+    (tmp_path / "model.pt").touch()
     
     with patch("dpeva.workflows.feature.FeatureExecutionManager") as MockExec:
         # Mock backend attribute

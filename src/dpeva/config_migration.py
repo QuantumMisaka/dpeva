@@ -52,7 +52,13 @@ def migrate_legacy_config(raw: dict[str, Any]) -> MigrationResult:
     Unknown fields are intentionally left for strict Pydantic models to reject.
     """
 
+    input_schema_version = str(raw.get("schema_version", "1.0"))
+    if input_schema_version != "1.0":
+        raise ValueError(f"unsupported schema_version: {input_schema_version}")
     normalized = deepcopy(raw)
+    # The envelope version belongs to migration metadata, not to the strict
+    # workflow payload.  Preserve the exact source in ``original`` below.
+    normalized.pop("schema_version", None)
     warnings: list[MigrationWarning] = []
     has_nested_submission = "submission" in normalized
     submission = normalized.get("submission", {})
@@ -63,7 +69,7 @@ def migrate_legacy_config(raw: dict[str, Any]) -> MigrationResult:
             normalized=normalized,
             warnings=(),
             original=deepcopy(raw),
-            input_schema_version=str(raw.get("schema_version", "1.0")),
+            input_schema_version=input_schema_version,
         )
 
     submission = deepcopy(submission)
@@ -89,5 +95,5 @@ def migrate_legacy_config(raw: dict[str, Any]) -> MigrationResult:
         normalized=normalized,
         warnings=tuple(warnings),
         original=deepcopy(raw),
-        input_schema_version=str(raw.get("schema_version", "1.0")),
+        input_schema_version=input_schema_version,
     )

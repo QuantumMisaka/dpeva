@@ -95,15 +95,15 @@ class InferenceWorkflow:
             options=self.run_options,
             original_config=self.original_config,
             normalized_config=self.config.model_dump(mode="json"),
-            source=source_identity(),
-            inputs=[
-                input_identity(self.data_path, "dataset", self.work_dir),
+            config_metadata=self.config_metadata,
+            source_factory=source_identity,
+            input_factories=[
+                lambda: input_identity(self.data_path, "dataset", self.work_dir),
                 *[
-                    input_identity(model, "model", self.work_dir)
+                    lambda model=model: input_identity(model, "model", self.work_dir, require_exists=True)
                     for model in self.models_paths
                 ],
             ],
-            config_metadata=self.config_metadata,
         )
         try:
             backend = self.execution_manager.backend
@@ -191,13 +191,14 @@ class InferenceWorkflow:
             raise
 
     def _register_existing_logs(self, context: RunContext) -> None:
-        candidates = [Path(self.work_dir) / LOG_FILE_INFER]
-        for index in range(len(self.models_paths)):
-            job_dir = Path(self.work_dir) / str(index)
-            if self.task_name:
-                job_dir /= self.task_name
-            candidates.append(job_dir / "test.log")
-        paths = [path for path in candidates if path.is_file() and path.stat().st_size > 0]
+        names = {LOG_FILE_INFER, "test.log", "eval_desc.log", "eval_desc.err", "eval-desc.log", "eval-desc.err"}
+        found: dict[Path, None] = {}
+        root = Path(self.work_dir).expanduser().resolve()
+        if root.is_dir():
+            for path in root.rglob("*"):
+                if path.is_file() and path.name in names and path.stat().st_size > 0:
+                    found[path.resolve()] = None
+        paths = list(found)
         if paths:
             context.register_verified_artifacts("log", paths)
 

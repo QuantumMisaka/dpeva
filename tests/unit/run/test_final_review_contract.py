@@ -7,10 +7,11 @@ from pathlib import Path
 import pytest
 
 import dpeva.cli as cli
-from dpeva.config_migration import MigrationResult, MigrationWarning
-from dpeva.run.context import RunContext, RunOptions
+from dpeva.config_migration import MigrationResult, MigrationWarning, migrate_legacy_config
+from dpeva.run.context import RunContext, RunOptions, input_identity, source_identity
 from dpeva.run.doctor import DoctorCheck, build_doctor_report
 from dpeva.run.status import RunState
+from dpeva.workflows.feature import FeatureWorkflow
 
 
 def test_migration_result_keeps_exact_raw_input_and_schema_metadata() -> None:
@@ -44,6 +45,15 @@ def test_cli_config_loader_reads_source_once(monkeypatch, tmp_path: Path) -> Non
     assert result.normalized["submission"]["backend"] == "local"
 
 
+def test_schema_version_is_consumed_and_unsupported_version_rejected() -> None:
+    result = migrate_legacy_config({"schema_version": "1.0", "data_path": "data"})
+    assert result.input_schema_version == "1.0"
+    assert "schema_version" not in result.normalized
+
+    with pytest.raises(ValueError, match="schema_version"):
+        migrate_legacy_config({"schema_version": "2.0", "data_path": "data"})
+
+
 def test_context_persists_config_metadata_reference_and_payload(tmp_path: Path) -> None:
     context = RunContext.create(
         tmp_path,
@@ -62,6 +72,17 @@ def test_context_persists_config_metadata_reference_and_payload(tmp_path: Path) 
     assert manifest["config"]["metadata"] == "config.metadata.json"
     assert "environment" not in manifest
     assert json.loads((context.run_dir / "config.metadata.json").read_text())["schema_version"] == "1.0"
+
+
+def test_context_always_writes_empty_warning_metadata(tmp_path: Path) -> None:
+    context = RunContext.create(tmp_path, "feature", RunOptions(run_id="default-metadata"), {}, {})
+    metadata_ref = context.recorder.manifest.config["metadata"]
+    metadata = json.loads((context.run_dir / metadata_ref).read_text(encoding="utf-8"))
+    assert metadata == {
+        "schema_version": "1.0",
+        "input_schema_version": "1.0",
+        "migration_warnings": [],
+    }
 
 
 def test_force_archives_config_metadata_reference(tmp_path: Path) -> None:
@@ -101,6 +122,159 @@ def test_resume_submitted_run_rejects_before_new_context(tmp_path: Path) -> None
             {},
             {},
         )
+
+
+def test_resume_rejects_changed_config_and_identity_without_mutating_manifest(tmp_path: Path) -> None:
+    model = tmp_path / "model.pt"
+    model.write_bytes(b"model-v1")
+    inputs = [input_identity(model, "model", tmp_path)]
+    source = {"package_version": "0.8.1", "git_commit": "a" * 40, "dirty": False}
+    context = RunContext.create(
+        tmp_path,
+        "feature",
+        RunOptions(run_id="resume-compare"),
+        {"x": 1},
+        {"x": 1},
+        source=source,
+        inputs=inputs,
+    )
+    context.recorder.transition(RunState.VALIDATED)
+    context.recorder.transition(RunState.RUNNING)
+    before = (context.run_dir / "run.json").read_bytes()
+
+    with pytest.raises(ValueError, match="configuration"):
+        RunContext.create(
+            tmp_path,
+            "feature",
+            RunOptions(run_id="resume-compare", resume=True),
+            {"x": 2},
+            {"x": 1},
+            source=source,
+            inputs=inputs,
+        )
+    assert (context.run_dir / "run.json").read_bytes() == before
+
+    resumed = RunContext.create(
+        tmp_path,
+        "feature",
+        RunOptions(run_id="resume-compare", resume=True),
+        {"x": 1},
+        {"x": 1},
+        source=source,
+        inputs=[input_identity(model, "model", tmp_path)],
+    )
+    assert resumed.attempt_id == 2
+    before_resume = (context.run_dir / "run.json").read_bytes()
+
+    model.write_bytes(b"model-v2")
+    with pytest.raises(ValueError, match="input identity"):
+        RunContext.create(
+            tmp_path,
+            "feature",
+            RunOptions(run_id="resume-compare", resume=True),
+            {"x": 1},
+            {"x": 1},
+            source=source,
+            inputs=[input_identity(model, "model", tmp_path)],
+        )
+    assert (context.run_dir / "run.json").read_bytes() == before_resume
+
+
+def test_new_run_input_collection_failure_leaves_failed_manifest(tmp_path: Path) -> None:
+    with pytest.raises(FileNotFoundError):
+        RunContext.create(
+            tmp_path,
+            "feature",
+            RunOptions(run_id="missing-input"),
+            {},
+            {},
+            input_factories=[lambda: input_identity(tmp_path / "missing.pt", "model", tmp_path, require_exists=True)],
+        )
+    payload = json.loads(
+        (tmp_path / ".dpeva/runs/missing-input/run.json").read_text(encoding="utf-8")
+    )
+    assert payload["status"] == "failed"
+
+
+def test_resume_rejects_changed_source_and_dataset_structure(tmp_path: Path) -> None:
+    dataset = tmp_path / "dataset"
+    dataset.mkdir()
+    (dataset / "type.raw").write_text("0\n")
+    source = {"package_version": "0.8.1", "git_commit": "b" * 40, "dirty": False}
+    original = {"dataset": "dataset"}
+    inputs = [input_identity(dataset, "dataset", tmp_path)]
+    context = RunContext.create(
+        tmp_path, "feature", RunOptions(run_id="identity-compare"), original, original,
+        source=source, inputs=inputs, config_metadata={"schema_version": "1.0", "migration_warnings": []},
+    )
+    context.recorder.transition(RunState.VALIDATED)
+    before = (context.run_dir / "run.json").read_bytes()
+    with pytest.raises(ValueError, match="source identity"):
+        RunContext.create(
+            tmp_path, "feature", RunOptions(run_id="identity-compare", resume=True), original, original,
+            source={**source, "git_commit": "c" * 40}, inputs=inputs,
+            config_metadata={"schema_version": "1.0", "migration_warnings": []},
+        )
+    assert (context.run_dir / "run.json").read_bytes() == before
+    with pytest.raises(ValueError, match="configuration metadata"):
+        RunContext.create(
+            tmp_path, "feature", RunOptions(run_id="identity-compare", resume=True), original, original,
+            source=source, inputs=inputs,
+            config_metadata={"schema_version": "1.0", "migration_warnings": ["changed"]},
+        )
+    assert (context.run_dir / "run.json").read_bytes() == before
+    (dataset / "new.raw").write_text("1\n")
+    with pytest.raises(ValueError, match="input identity"):
+        RunContext.create(
+            tmp_path, "feature", RunOptions(run_id="identity-compare", resume=True), original, original,
+            source=source, inputs=[input_identity(dataset, "dataset", tmp_path)],
+            config_metadata={"schema_version": "1.0", "migration_warnings": []},
+        )
+    assert (context.run_dir / "run.json").read_bytes() == before
+
+
+def test_source_identity_requires_tracked_package_file_and_counts_untracked(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    source = repo / "src/dpeva/__init__.py"
+    source.parent.mkdir(parents=True)
+    source.write_text("# source")
+    (repo / ".git").mkdir()
+    statuses = {"clean": "", "dirty": "?? src/new.py\n"}
+    for label, status in statuses.items():
+        calls: list[list[str]] = []
+
+        def run(command, **kwargs):
+            calls.append(command)
+            if command[1:3] == ["rev-parse", "--show-toplevel"]:
+                return subprocess.CompletedProcess(command, 0, str(repo), "")
+            if command[1:3] == ["ls-files", "--error-unmatch"]:
+                return subprocess.CompletedProcess(command, 0, "src/dpeva/__init__.py\n", "")
+            if command[1:3] == ["rev-parse", "HEAD"]:
+                return subprocess.CompletedProcess(command, 0, "d" * 40 + "\n", "")
+            return subprocess.CompletedProcess(command, 0, status, "")
+
+        identity = source_identity(source, run=run)
+        assert identity["git_commit"] == "d" * 40
+        assert identity["dirty"] is (label == "dirty")
+        assert all(str(repo) not in value for value in identity.values() if isinstance(value, str))
+        assert ["git", "status", "--porcelain", "--untracked-files=all"] in calls
+
+
+def test_source_identity_does_not_claim_enclosing_consumer_repo(tmp_path: Path) -> None:
+    consumer = tmp_path / "consumer"
+    source = consumer / "vendor/dpeva/__init__.py"
+    source.parent.mkdir(parents=True)
+    source.write_text("# wheel")
+    (consumer / ".git").mkdir()
+
+    def run(command, **kwargs):
+        if command[1:3] == ["rev-parse", "--show-toplevel"]:
+            return subprocess.CompletedProcess(command, 0, str(consumer), "")
+        return subprocess.CompletedProcess(command, 1, "", "not tracked")
+
+    identity = source_identity(source, run=run)
+    assert "git_commit" not in identity
+    assert "dirty" not in identity
 
 
 def test_doctor_keeps_optional_hardware_failure_out_of_required_status() -> None:
@@ -153,3 +327,44 @@ def test_doctor_default_probes_required_operation_surfaces(monkeypatch) -> None:
     assert ["dp", "test", "-h"] in calls
     assert ["dp", "eval-desc", "-h"] in calls
     assert ["dp", "embed", "-h"] in calls
+
+
+def test_doctor_torch_cuda_probe_is_injectable(monkeypatch) -> None:
+    class FakeCuda:
+        @staticmethod
+        def is_available() -> bool:
+            raise AssertionError("default CUDA probe must not run")
+
+    class FakeTorch:
+        cuda = FakeCuda()
+        version = type("Version", (), {"cuda": "12.4"})()
+
+    monkeypatch.setattr(
+        "dpeva.run.doctor._probe_python_package",
+        lambda name, *, required: DoctorCheck(name=name, status="ok", detail="ok", required=required),
+    )
+    def run(command, **kwargs):
+        return subprocess.CompletedProcess(command, 0, "v3.2.0", "")
+    report = build_doctor_report(
+        run=run, include_optional=False, torch_module=FakeTorch(), cuda_probe=lambda module: True
+    )
+    assert report.schema_version == "1.0"
+    assert report.status == "ok"
+    assert next(check for check in report.checks if check.name == "torch.cuda").status == "ok"
+
+
+def test_feature_registers_concrete_eval_desc_logs_with_checksums(tmp_path: Path) -> None:
+    pool = tmp_path / "pool-000" / "eval_desc"
+    pool.mkdir(parents=True)
+    (pool / "eval_desc.log").write_text("descriptor output\n")
+    (pool / "eval_desc.err").write_text("warning\n")
+    context = RunContext.create(tmp_path, "feature", RunOptions(run_id="logs"), {}, {})
+    workflow = object.__new__(FeatureWorkflow)
+    workflow.output_dir = str(tmp_path)
+    workflow._register_existing_logs(context)
+    records = context.recorder.manifest.artifacts
+    assert {record.path for record in records} == {
+        "pool-000/eval_desc/eval_desc.log",
+        "pool-000/eval_desc/eval_desc.err",
+    }
+    assert all(record.checksum and record.status == "verified" for record in records)

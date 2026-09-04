@@ -56,8 +56,8 @@ def test_resume_increments_attempt_and_records_event(tmp_path) -> None:
         tmp_path,
         "feature",
         RunOptions(run_id="run", resume=True),
-        {"x": 2},
-        {"x": 2},
+        {"x": 1},
+        {"x": 1},
     )
 
     assert resumed.attempt_id == 2
@@ -414,9 +414,11 @@ def test_sequential_force_archives_resolve_all_config_references(tmp_path) -> No
     ]
     for manifest_path in manifests:
         manifest = json.loads(manifest_path.read_text())
-        for reference in manifest["config"].values():
+        for key, reference in manifest["config"].items():
             assert (run_dir / reference).is_file()
-            assert json.loads((run_dir / reference).read_text())["x"] in {1, 2, 3}
+            payload = json.loads((run_dir / reference).read_text())
+            if key != "metadata":
+                assert payload["x"] in {1, 2, 3}
 
 
 def test_non_json_config_fails_closed_without_removing_run(tmp_path) -> None:

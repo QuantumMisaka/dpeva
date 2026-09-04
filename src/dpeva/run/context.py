@@ -12,6 +12,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
+from collections.abc import Callable
 from typing import Any, Sequence
 
 import fcntl
@@ -26,6 +27,11 @@ _TERMINAL_STATES = frozenset({RunState.FAILED, RunState.FINISHED})
 _CHECKSUM_CHUNK_SIZE = 1024 * 1024
 _STRUCTURAL_ENTRY_LIMIT = 256
 _STRUCTURAL_NODE_LIMIT = 4096
+_DEFAULT_CONFIG_METADATA: dict[str, Any] = {
+    "schema_version": "1.0",
+    "input_schema_version": "1.0",
+    "migration_warnings": [],
+}
 
 
 @dataclass(frozen=True)
@@ -70,6 +76,8 @@ class RunContext:
         source: dict[str, Any] | None = None,
         inputs: list[dict[str, str]] | None = None,
         config_metadata: dict[str, Any] | None = None,
+        source_factory: Callable[[], dict[str, Any]] | None = None,
+        input_factories: Sequence[Callable[[], dict[str, str]]] | None = None,
     ) -> "RunContext":
         root = Path(work_dir).expanduser().resolve()
         _validate_component(workflow, "workflow")
@@ -91,11 +99,16 @@ class RunContext:
                 source,
                 inputs,
                 config_metadata,
+                source_factory,
+                input_factories,
             )
 
         run_dir = runs_root / options.run_id
         if options.resume:
-            return cls._resume_existing(root, run_dir, workflow)
+            return cls._resume_existing(
+                root, run_dir, workflow, original_config, normalized_config,
+                source, inputs, config_metadata, source_factory, input_factories,
+            )
         if options.force:
             return cls._force_existing(
                 root,
@@ -107,6 +120,8 @@ class RunContext:
                 source,
                 inputs,
                 config_metadata,
+                source_factory,
+                input_factories,
             )
 
         try:
@@ -123,6 +138,8 @@ class RunContext:
             source,
             inputs,
             config_metadata,
+            source_factory,
+            input_factories,
         )
 
     @classmethod
@@ -136,6 +153,8 @@ class RunContext:
         source: dict[str, Any] | None,
         inputs: list[dict[str, str]] | None,
         config_metadata: dict[str, Any] | None,
+        source_factory: Callable[[], dict[str, Any]] | None,
+        input_factories: Sequence[Callable[[], dict[str, str]]] | None,
     ) -> "RunContext":
         timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
         for _ in range(100):
@@ -155,6 +174,8 @@ class RunContext:
                 source,
                 inputs,
                 config_metadata,
+                source_factory,
+                input_factories,
             )
         raise FileExistsError("could not allocate a unique generated run id")
 
@@ -170,6 +191,8 @@ class RunContext:
         source: dict[str, Any] | None,
         inputs: list[dict[str, str]] | None,
         config_metadata: dict[str, Any] | None,
+        source_factory: Callable[[], dict[str, Any]] | None,
+        input_factories: Sequence[Callable[[], dict[str, str]]] | None,
     ) -> "RunContext":
         published_snapshots: list[Path] = []
         try:
@@ -181,17 +204,17 @@ class RunContext:
                 "original": "config.original.json",
                 "resolved": "config.resolved.json",
             }
-            if config_metadata is not None:
-                _atomic_json_write(run_dir / "config.metadata.json", config_metadata)
-                published_snapshots.append(run_dir / "config.metadata.json")
-                config_references["metadata"] = "config.metadata.json"
+            metadata = _metadata_or_default(config_metadata)
+            _atomic_json_write(run_dir / "config.metadata.json", metadata)
+            published_snapshots.append(run_dir / "config.metadata.json")
+            config_references["metadata"] = "config.metadata.json"
             recorder = StatusRecorder.create(
                 run_dir / "run.json",
                 run_id,
                 workflow,
                 config=config_references,
-                source=source,
-                inputs=inputs,
+                source=source if source_factory is None else {},
+                inputs=inputs if input_factories is None else [],
             )
         except BaseException as error:
             _preserve_initialization_failure(
@@ -204,12 +227,33 @@ class RunContext:
                 inputs,
             )
             raise
-        return cls(root, run_dir, run_id, workflow, 1, recorder)
+        context = cls(root, run_dir, run_id, workflow, 1, recorder)
+        if source_factory is not None or input_factories is not None:
+            try:
+                context._populate_evidence(source_factory, input_factories)
+            except BaseException as error:
+                context.recorder.fail(category="ARTIFACT", message=str(error))
+                raise
+        return context
 
     @classmethod
-    def _resume_existing(cls, root: Path, run_dir: Path, workflow: str) -> "RunContext":
+    def _resume_existing(
+        cls, root: Path, run_dir: Path, workflow: str,
+        original_config: dict[str, Any], normalized_config: dict[str, Any],
+        source: dict[str, Any] | None, inputs: list[dict[str, str]] | None,
+        config_metadata: dict[str, Any] | None,
+        source_factory: Callable[[], dict[str, Any]] | None,
+        input_factories: Sequence[Callable[[], dict[str, str]]] | None,
+    ) -> "RunContext":
         with _run_lock(run_dir):
             recorder = _load_existing(run_dir, workflow)
+            supplied_source, supplied_inputs = _materialize_evidence(
+                source, inputs, source_factory, input_factories
+            )
+            _compare_resume_evidence(
+                recorder, run_dir, original_config, normalized_config,
+                _metadata_or_default(config_metadata), supplied_source, supplied_inputs,
+            )
             current = recorder.manifest.status
             if current in _TERMINAL_STATES:
                 raise ValueError(
@@ -237,6 +281,8 @@ class RunContext:
         source: dict[str, Any] | None,
         inputs: list[dict[str, str]] | None,
         config_metadata: dict[str, Any] | None,
+        source_factory: Callable[[], dict[str, Any]] | None,
+        input_factories: Sequence[Callable[[], dict[str, str]]] | None,
     ) -> "RunContext":
         with _run_lock(run_dir):
             recorder = _load_existing(run_dir, workflow)
@@ -257,9 +303,10 @@ class RunContext:
                 staged_snapshots.append(original_stage)
                 _atomic_json_write(resolved_stage, normalized_config, overwrite=False)
                 staged_snapshots.append(resolved_stage)
-                if config_metadata is not None:
-                    _atomic_json_write(metadata_stage, config_metadata, overwrite=False)
-                    staged_snapshots.append(metadata_stage)
+                _atomic_json_write(
+                    metadata_stage, _metadata_or_default(config_metadata), overwrite=False
+                )
+                staged_snapshots.append(metadata_stage)
                 _archive_manifest(run_dir, previous_manifest, previous_attempt - 1)
                 _publish_snapshot(original_stage, original_path)
                 published_snapshots.append(original_path)
@@ -271,18 +318,17 @@ class RunContext:
                     "original": original_path.name,
                     "resolved": resolved_path.name,
                 }
-                if config_metadata is not None:
-                    _publish_snapshot(metadata_stage, metadata_path)
-                    published_snapshots.append(metadata_path)
-                    staged_snapshots.remove(metadata_stage)
-                    config_references["metadata"] = metadata_path.name
+                _publish_snapshot(metadata_stage, metadata_path)
+                published_snapshots.append(metadata_path)
+                staged_snapshots.remove(metadata_stage)
+                config_references["metadata"] = metadata_path.name
                 fresh = StatusRecorder.create(
                     run_dir / "run.json",
                     recorder.manifest.run_id,
                     workflow,
                     config=config_references,
-                    source=source,
-                    inputs=inputs,
+                    source=source if source_factory is None else {},
+                    inputs=inputs if input_factories is None else [],
                     attempt_id=previous_attempt,
                     events=[
                         RunEvent(
@@ -300,7 +346,23 @@ class RunContext:
                     [*staged_snapshots, *published_snapshots],
                 )
                 raise
-            return cls(root, run_dir, recorder.manifest.run_id, workflow, previous_attempt, fresh)
+            context = cls(root, run_dir, recorder.manifest.run_id, workflow, previous_attempt, fresh)
+            if source_factory is not None or input_factories is not None:
+                try:
+                    context._populate_evidence(source_factory, input_factories)
+                except BaseException as error:
+                    context.recorder.fail(category="ARTIFACT", message=str(error))
+                    raise
+            return context
+
+    def _populate_evidence(
+        self,
+        source_factory: Callable[[], dict[str, Any]] | None,
+        input_factories: Sequence[Callable[[], dict[str, str]]] | None,
+    ) -> None:
+        source = source_factory() if source_factory is not None else None
+        inputs = [factory() for factory in (input_factories or ())]
+        self.recorder.update_metadata(source=source, inputs=inputs)
 
     def register_verified_artifacts(self, kind: str, paths: Sequence[Path]) -> None:
         """Register existing, non-empty files with streaming SHA-256 identity."""
@@ -338,6 +400,65 @@ class RunContext:
 def _validate_component(value: str, label: str) -> None:
     if not isinstance(value, str) or not _SAFE_COMPONENT.fullmatch(value):
         raise ValueError(f"{label} must be a safe single path component")
+
+
+def _metadata_or_default(metadata: dict[str, Any] | None) -> dict[str, Any]:
+    return dict(_DEFAULT_CONFIG_METADATA if metadata is None else metadata)
+
+
+def _materialize_evidence(
+    source: dict[str, Any] | None,
+    inputs: list[dict[str, str]] | None,
+    source_factory: Callable[[], dict[str, Any]] | None,
+    input_factories: Sequence[Callable[[], dict[str, str]]] | None,
+) -> tuple[dict[str, Any], list[dict[str, str]]]:
+    observed_source = source_factory() if source_factory is not None else (source or {})
+    observed_inputs = (
+        [factory() for factory in input_factories]
+        if input_factories is not None
+        else (inputs or [])
+    )
+    return observed_source, observed_inputs
+
+
+def _read_config_snapshot(recorder: StatusRecorder, run_dir: Path, key: str) -> Any:
+    reference = recorder.manifest.config.get(key)
+    if not isinstance(reference, str) or Path(reference).is_absolute():
+        raise ValueError(f"configuration evidence missing or unsafe: {key}")
+    snapshot = (run_dir / reference).resolve(strict=False)
+    try:
+        snapshot.relative_to(run_dir.resolve())
+    except ValueError:
+        raise ValueError(f"configuration evidence escapes run directory: {key}") from None
+    try:
+        return json.loads(snapshot.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as error:
+        raise ValueError(f"configuration evidence unreadable: {key}: {error}") from error
+
+
+def _compare_resume_evidence(
+    recorder: StatusRecorder,
+    run_dir: Path,
+    original_config: dict[str, Any],
+    normalized_config: dict[str, Any],
+    config_metadata: dict[str, Any],
+    source: dict[str, Any],
+    inputs: list[dict[str, str]],
+) -> None:
+    # Legacy manifests predating immutable config snapshots remain resumable;
+    # there is no referenced evidence to compare.  New manifests always carry
+    # all three references and therefore take the strict path below.
+    if recorder.manifest.config:
+        if _read_config_snapshot(recorder, run_dir, "original") != original_config:
+            raise ValueError("configuration evidence mismatch: original configuration")
+        if _read_config_snapshot(recorder, run_dir, "resolved") != normalized_config:
+            raise ValueError("configuration evidence mismatch: resolved configuration")
+        if _read_config_snapshot(recorder, run_dir, "metadata") != config_metadata:
+            raise ValueError("configuration metadata mismatch")
+    if recorder.manifest.source != source:
+        raise ValueError("source identity mismatch")
+    if recorder.manifest.inputs != inputs:
+        raise ValueError("input identity mismatch")
 
 
 def _load_existing(run_dir: Path, workflow: str) -> StatusRecorder:
@@ -514,7 +635,11 @@ def _sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
-def source_identity() -> dict[str, Any]:
+def source_identity(
+    source_file: str | Path | None = None,
+    *,
+    run: Callable[..., subprocess.CompletedProcess[str]] = subprocess.run,
+) -> dict[str, Any]:
     """Return publishable package/source identity without machine paths."""
 
     import dpeva
@@ -523,31 +648,64 @@ def source_identity() -> dict[str, Any]:
         "dpeva_version": dpeva.__version__,
         "package_version": dpeva.__version__,
     }
-    repository = Path(__file__).resolve().parents[2]
+    source = Path(source_file or __file__).expanduser().resolve(strict=False)
+    repository = _discover_tracked_repository(source, run=run)
+    if repository is None:
+        return identity
     try:
-        commit = subprocess.run(
-            ["git", "rev-parse", "HEAD"],
-            cwd=repository,
-            check=True,
-            text=True,
-            capture_output=True,
-        ).stdout.strip()
-        if commit:
-            identity["git_commit"] = commit
-        dirty = subprocess.run(
-            ["git", "status", "--porcelain", "--untracked-files=no"],
-            cwd=repository,
-            check=True,
-            text=True,
-            capture_output=True,
-        ).stdout
-        identity["dirty"] = bool(dirty.strip())
+        commit_result = run(
+            ["git", "rev-parse", "HEAD"], cwd=repository, check=False,
+            text=True, capture_output=True,
+        )
+        status_result = run(
+            ["git", "status", "--porcelain", "--untracked-files=all"],
+            cwd=repository, check=False, text=True, capture_output=True,
+        )
     except (OSError, subprocess.SubprocessError):
-        pass
+        return identity
+    if commit_result.returncode == 0 and commit_result.stdout.strip():
+        identity["git_commit"] = commit_result.stdout.strip()
+    if status_result.returncode == 0:
+        identity["dirty"] = bool(status_result.stdout.strip())
     return identity
 
 
-def input_identity(path: str | Path, kind: str, work_dir: str | Path) -> dict[str, str]:
+def _discover_tracked_repository(
+    source: Path,
+    *,
+    run: Callable[..., subprocess.CompletedProcess[str]],
+) -> Path | None:
+    """Find the nearest git root which actually tracks the package source."""
+    for candidate in (source.parent, *source.parents):
+        if not (candidate / ".git").exists():
+            continue
+        try:
+            root_result = run(
+                ["git", "rev-parse", "--show-toplevel"], cwd=candidate,
+                check=False, text=True, capture_output=True,
+            )
+            if root_result.returncode != 0 or not root_result.stdout.strip():
+                continue
+            repository = Path(root_result.stdout.strip()).resolve()
+            relative = source.relative_to(repository)
+            tracked = run(
+                ["git", "ls-files", "--error-unmatch", "--", relative.as_posix()],
+                cwd=repository, check=False, text=True, capture_output=True,
+            )
+            if tracked.returncode == 0 and tracked.stdout.strip():
+                return repository
+        except (OSError, subprocess.SubprocessError, ValueError):
+            continue
+    return None
+
+
+def input_identity(
+    path: str | Path,
+    kind: str,
+    work_dir: str | Path,
+    *,
+    require_exists: bool = False,
+) -> dict[str, str]:
     """Describe an input with a relative reference and truthful identity scope."""
 
     candidate = Path(path).expanduser().resolve(strict=False)
@@ -568,6 +726,8 @@ def input_identity(path: str | Path, kind: str, work_dir: str | Path) -> dict[st
             identity_bound=f"first-{_STRUCTURAL_ENTRY_LIMIT}-files/{_STRUCTURAL_NODE_LIMIT}-nodes",
         )
     else:
+        if require_exists:
+            raise FileNotFoundError(f"input does not exist: {candidate}")
         result.update(identity="unavailable", identity_scope="unverified")
     return result
 

@@ -98,12 +98,12 @@ class FeatureWorkflow:
             options=self.run_options,
             original_config=self.original_config,
             normalized_config=self.config.model_dump(mode="json"),
-            source=source_identity(),
-            inputs=[
-                input_identity(self.data_path, "dataset", self.output_dir),
-                input_identity(self.model_path, "model", self.output_dir),
-            ],
             config_metadata=self.config_metadata,
+            source_factory=source_identity,
+            input_factories=[
+                lambda: input_identity(self.data_path, "dataset", self.output_dir),
+                lambda: input_identity(self.model_path, "model", self.output_dir, require_exists=True),
+            ],
         )
         try:
             backend = self.config.submission.backend
@@ -158,10 +158,20 @@ class FeatureWorkflow:
             raise
 
     def _register_existing_logs(self, context: RunContext) -> None:
-        paths = [self.output_dir_path / LOG_FILE_FEATURE]
-        paths = [path for path in paths if path.is_file() and path.stat().st_size > 0]
+        paths = self._discover_log_files()
         if paths:
             context.register_verified_artifacts("log", paths)
+
+    def _discover_log_files(self) -> list[Path]:
+        """Discover concrete feature and DeepMD eval-desc logs in pool layouts."""
+        names = {LOG_FILE_FEATURE, "eval_desc.log", "eval_desc.err", "eval-desc.log", "eval-desc.err"}
+        found: dict[Path, None] = {}
+        root = self.output_dir_path
+        if root.is_dir():
+            for path in root.rglob("*"):
+                if path.is_file() and path.name in names and path.stat().st_size > 0:
+                    found[path.resolve()] = None
+        return list(found)
 
     @property
     def output_dir_path(self) -> Path:
