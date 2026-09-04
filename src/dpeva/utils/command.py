@@ -28,7 +28,7 @@ class DPCommandBuilder:
         warnings.warn(
             "DPCommandBuilder is deprecated; inject DeepMDAdapter instead",
             DeprecationWarning,
-            stacklevel=2,
+            stacklevel=3,
         )
 
     @staticmethod

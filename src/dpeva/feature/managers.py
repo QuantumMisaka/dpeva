@@ -2,7 +2,6 @@ import os
 import glob
 import logging
 import shlex
-import warnings
 import numpy as np
 from typing import List, Dict
 
@@ -78,13 +77,9 @@ class FeatureExecutionManager:
         self.env_setup = env_setup or ""
         self.omp_threads = omp_threads
         
-        if adapter is None:
-            warnings.warn(
-                "FeatureExecutionManager uses the legacy unchecked DeepMD adapter; "
-                "provide an authorized DeepMDAdapter",
-                DeprecationWarning,
-                stacklevel=2,
-            )
+        # Legacy bridge is temporary until this manager receives complete
+        # scientific capability context; keep the migration boundary explicit
+        # without emitting one warning per manager instance.
         self.adapter = adapter or DeepMDAdapter.for_legacy_unchecked(dp_backend)
         self.dp_backend = self.adapter.backend
         self.job_manager = JobManager(mode=backend)

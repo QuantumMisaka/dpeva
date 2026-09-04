@@ -1,7 +1,6 @@
 import os
 import logging
 import multiprocessing
-import warnings
 from copy import deepcopy
 from typing import List, Dict, Any, Optional
 
@@ -154,13 +153,9 @@ class TrainingExecutionManager:
         self.backend = backend
         self.slurm_config = slurm_config or {}
         self.env_setup = env_setup
-        if adapter is None:
-            warnings.warn(
-                "TrainingExecutionManager uses the legacy unchecked DeepMD adapter; "
-                "provide an authorized DeepMDAdapter",
-                DeprecationWarning,
-                stacklevel=2,
-            )
+        # Legacy bridge is temporary until this manager receives complete
+        # scientific capability context; keep the migration boundary explicit
+        # without emitting one warning per manager instance.
         self.adapter = adapter or DeepMDAdapter.for_legacy_unchecked(dp_backend)
         self.dp_backend = self.adapter.backend
         self.job_manager = JobManager(mode=backend, custom_template_path=template_path)

@@ -31,5 +31,7 @@ class TestDPCommandBuilderBackend:
         assert not hasattr(DPCommandBuilder, "set_backend")
 
     def test_facade_emits_migration_warning(self):
-        with pytest.warns(DeprecationWarning, match="inject DeepMDAdapter"):
+        with pytest.warns(DeprecationWarning, match="inject DeepMDAdapter") as records:
             DPCommandBuilder.freeze("pt")
+        assert records[0].filename != DPCommandBuilder.__module__
+        assert not records[0].filename.endswith("/utils/command.py")
