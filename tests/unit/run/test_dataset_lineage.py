@@ -85,6 +85,24 @@ def test_negative_counts_are_rejected_at_schema_boundary() -> None:
         _manifest(removed_frame_count=-1)
 
 
+@pytest.mark.parametrize(
+    "field",
+    [
+        "parent.frame_count",
+        "frame_count",
+        "removed_frame_count",
+        "system_count",
+    ],
+)
+@pytest.mark.parametrize("value", ["0", 0.0, True])
+def test_count_fields_require_strict_integers(field: str, value: object) -> None:
+    with pytest.raises(ValidationError):
+        if field == "parent.frame_count":
+            DatasetParent(dataset_id="invalid", frame_count=value)
+        else:
+            _manifest(**{field: value})
+
+
 def test_duplicate_type_map_entries_are_rejected() -> None:
     with pytest.raises(ValidationError, match="type_map entries must be unique"):
         _manifest(type_map=["Fe", "C", "Fe"])

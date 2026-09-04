@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, StrictInt, model_validator
 
 
 class DatasetModel(BaseModel):
@@ -17,7 +17,7 @@ class DatasetParent(DatasetModel):
     """A dataset contributing frames to a derived dataset."""
 
     dataset_id: str = Field(min_length=1)
-    frame_count: int = Field(ge=0)
+    frame_count: StrictInt = Field(ge=0)
     manifest_ref: str | None = None
 
 
@@ -28,9 +28,9 @@ class DatasetManifest(DatasetModel):
     dataset_id: str = Field(min_length=1)
     parents: list[DatasetParent]
     transformation: Literal["merge", "collect", "label", "clean", "import"]
-    frame_count: int = Field(ge=0)
-    removed_frame_count: int = Field(default=0, ge=0)
-    system_count: int = Field(ge=0)
+    frame_count: StrictInt = Field(ge=0)
+    removed_frame_count: StrictInt = Field(default=0, ge=0)
+    system_count: StrictInt = Field(ge=0)
     type_map: list[str]
     format: str
     source_entries: list[str] = Field(default_factory=list)

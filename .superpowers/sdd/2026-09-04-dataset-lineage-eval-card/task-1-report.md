@@ -45,3 +45,21 @@ tasks.
 
 No frame-level identity algorithm is introduced here. Later integration code
 must supply the observed counts and use this validator before handoff.
+
+## Fix round 1/5: strict count types
+
+The count fields now use Pydantic `StrictInt` with the existing `ge=0`
+constraints. This prevents numeric strings, integral floats, and booleans from
+being coerced into frame or system counts. A parameterized regression covers
+all four count fields across all three rejected input classes.
+
+Verification for this round:
+
+- RED: the new parameterized suite failed with 12 expected `DID NOT RAISE`
+  failures against the coercing implementation.
+- GREEN: `conda run -n dpeva-dpa4 pytest tests/unit/run/test_dataset_lineage.py -q`
+  — `22 passed`.
+- `conda run -n dpeva-dpa4 pytest tests/unit/run -q` — `151 passed`.
+- `conda run -n dpeva-dpa4 pytest tests/unit -q` — `690 passed`.
+- `conda run -n dpeva-dpa4 ruff check src/dpeva/run/dataset.py src/dpeva/run/__init__.py tests/unit/run/test_dataset_lineage.py` — passed.
+- `git diff --check` — passed.
