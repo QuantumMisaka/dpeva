@@ -162,11 +162,18 @@ class StatusRecorder:
         """Persist an explicit non-transition event, such as a force action."""
 
         candidate = self._manifest.model_copy(deep=True)
+        event_state = state or candidate.status
+        event_failure = (
+            candidate.failure
+            if event_state in {RunState.PARTIAL, RunState.FAILED}
+            else None
+        )
         candidate.events.append(
             RunEvent(
-                state=state or candidate.status,
+                state=event_state,
                 kind=kind,
                 attempt_id=attempt_id if attempt_id is not None else self.attempt_id,
+                failure=event_failure,
             )
         )
         candidate = self._validate(candidate)
@@ -202,7 +209,7 @@ class StatusRecorder:
     ) -> RunManifest:
         for index in range(len(candidate.events) - 1, -1, -1):
             event = candidate.events[index]
-            if event.state is state:
+            if event.state is state and event.kind == "transition":
                 if event.failure is None:
                     candidate.events[index] = event.model_copy(update={"failure": failure})
                 return candidate

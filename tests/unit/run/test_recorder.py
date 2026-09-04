@@ -176,6 +176,78 @@ def test_loaded_legacy_terminal_event_is_enriched_before_recovery(
     }
 
 
+def test_legacy_recovery_enriches_transition_not_force_event(tmp_path) -> None:
+    path = tmp_path / "legacy-force.json"
+    path.write_text(
+        json.dumps(
+            {
+                "schema_version": "1.0",
+                "run_id": "legacy-force",
+                "workflow": "infer",
+                "status": "failed",
+                "events": [
+                    {"state": "failed", "kind": "transition", "attempt_id": 1},
+                    {"state": "failed", "kind": "force", "attempt_id": 1},
+                ],
+                "failure": {"category": "EXECUTION", "message": "legacy failure"},
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    recorder = StatusRecorder.load(path)
+    recorder.transition(RunState.RUNNING, event=RunEventKind.RECOVERY)
+    events = recorder.manifest.events
+
+    assert events[0].failure == FailureRecord(category="EXECUTION", message="legacy failure")
+    assert events[1].failure is None
+
+
+def test_legacy_recovery_without_transition_adds_unambiguous_terminal_event(tmp_path) -> None:
+    path = tmp_path / "legacy-no-transition.json"
+    path.write_text(
+        json.dumps(
+            {
+                "schema_version": "1.0",
+                "run_id": "legacy-no-transition",
+                "workflow": "infer",
+                "status": "failed",
+                "events": [{"state": "failed", "kind": "force", "attempt_id": 1}],
+                "failure": {"category": "EXECUTION", "message": "legacy failure"},
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    recorder = StatusRecorder.load(path)
+    recorder.transition(RunState.RUNNING, event=RunEventKind.RECOVERY)
+    events = recorder.manifest.events
+
+    assert events[0].kind == "force"
+    assert events[0].failure is None
+    assert events[1].kind == "transition"
+    assert events[1].state is RunState.FAILED
+    assert events[1].failure == FailureRecord(category="EXECUTION", message="legacy failure")
+
+
+@pytest.mark.parametrize("status", [RunState.FAILED, RunState.PARTIAL])
+def test_record_event_on_current_failure_attaches_failure_evidence(tmp_path, status) -> None:
+    recorder = StatusRecorder.create(tmp_path / f"{status.value}.json", "run-1", "infer")
+    recorder.transition(RunState.VALIDATED)
+    recorder.transition(RunState.RUNNING)
+    if status is RunState.FAILED:
+        recorder.fail(category="EXECUTION", message="child failed")
+    else:
+        recorder.partial(category="EXECUTION", message="child incomplete")
+
+    recorder.record_event(kind="force")
+
+    assert recorder.manifest.events[-1].state is status
+    assert recorder.manifest.events[-1].failure == recorder.manifest.failure
+
+
 def test_explicit_event_is_persisted_without_changing_state(tmp_path) -> None:
     recorder = StatusRecorder.create(tmp_path / "run.json", "run-1", "infer")
     recorder.record_event(kind="force")
