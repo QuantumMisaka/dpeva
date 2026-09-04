@@ -1,0 +1,65 @@
+name: DeepMD 3.2 CPU Contract
+
+on:
+  schedule:
+    - cron: "0 3 * * 1"
+  push:
+    branches: ["main", "develop"]
+    paths:
+      - "src/dpeva/compatibility/**"
+      - "src/dpeva/io/**"
+      - "tests/contract/deepmd/**"
+      - "pyproject.toml"
+      - "pytest.ini"
+      - ".github/workflows/deepmd-contract.yml"
+  pull_request:
+    branches: ["main", "develop"]
+    paths:
+      - "src/dpeva/compatibility/**"
+      - "src/dpeva/io/**"
+      - "tests/contract/deepmd/**"
+      - "pyproject.toml"
+      - "pytest.ini"
+      - ".github/workflows/deepmd-contract.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deepmd-contract-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  cpu-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      # Licensed/research fixtures are injected by the repository environment.
+      # Public model preparation is deliberately outside this ordinary job.
+      DPEVA_DEEPMD_CONTRACT_ARTIFACT_DIR: build/deepmd-cpu-contract
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+          cache: "pip"
+
+      - name: Install exact DeepMD contract environment
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e '.[dev]'
+          python -m pip install 'deepmd-kit==3.2.0'
+
+      - name: Run DeepMD CPU contract
+        run: pytest -m deepmd_contract tests/contract/deepmd -q
+
+      - name: Upload DeepMD contract evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: deepmd-cpu-contract
+          path: build/deepmd-cpu-contract
+          if-no-files-found: warn

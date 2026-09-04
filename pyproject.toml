@@ -79,3 +79,8 @@ dpeva = ["compatibility/*.json"]
 
 [tool.setuptools.dynamic]
 version = {attr = "dpeva.__version__"}
+
+[tool.pytest.ini_options]
+markers = [
+    "deepmd_contract: real DeepMD 3.2 CPU CLI/API contract",
+]
