@@ -33,10 +33,9 @@ concurrency:
 jobs:
   cpu-contract:
     runs-on: ubuntu-latest
+    environment: deepmd-contract
     timeout-minutes: 30
     env:
-      # Licensed/research fixtures are injected by the repository environment.
-      # Public model preparation is deliberately outside this ordinary job.
       DPEVA_DEEPMD_CONTRACT_ARTIFACT_DIR: build/deepmd-cpu-contract
     steps:
       - uses: actions/checkout@v4
@@ -53,8 +52,58 @@ jobs:
           python -m pip install -e '.[dev]'
           python -m pip install 'deepmd-kit==3.2.0'
 
+      - name: Prepare protected DeepMD contract fixture bundle
+        env:
+          DPEVA_DEEPMD_CONTRACT_FIXTURE_URL: ${{ secrets.DPEVA_DEEPMD_CONTRACT_FIXTURE_URL || vars.DPEVA_DEEPMD_CONTRACT_FIXTURE_URL }}
+          DPEVA_DEEPMD_CONTRACT_FIXTURE_SHA256: ${{ secrets.DPEVA_DEEPMD_CONTRACT_FIXTURE_SHA256 || vars.DPEVA_DEEPMD_CONTRACT_FIXTURE_SHA256 }}
+        run: |
+          set -euo pipefail
+          : "${DPEVA_DEEPMD_CONTRACT_FIXTURE_URL:?DPEVA_DEEPMD_CONTRACT_FIXTURE_URL is required}"
+          : "${DPEVA_DEEPMD_CONTRACT_FIXTURE_SHA256:?DPEVA_DEEPMD_CONTRACT_FIXTURE_SHA256 is required}"
+          fixture_dir="$RUNNER_TEMP/dpeva-deepmd-contract"
+          archive="$fixture_dir/fixture.tar.gz"
+          mkdir -p "$fixture_dir"
+          if ! curl --fail --silent --location \
+            --output "$archive" "$DPEVA_DEEPMD_CONTRACT_FIXTURE_URL" \
+            2>"$fixture_dir/curl.stderr"; then
+            echo "DeepMD contract fixture download failed" >&2
+            exit 1
+          fi
+          if ! printf '%s  %s\n' "$DPEVA_DEEPMD_CONTRACT_FIXTURE_SHA256" "$archive" \
+            | sha256sum --check --status; then
+            echo "DeepMD contract fixture checksum verification failed" >&2
+            exit 1
+          fi
+          tar --extract --gzip --file "$archive" --directory "$fixture_dir"
+          bundle_root="$fixture_dir/dpeva-deepmd-contract"
+          test -f "$bundle_root/pt-model/model.pt"
+          test -f "$bundle_root/dpa4c-model/model.pt2"
+          test -f "$bundle_root/periodic-data/type.raw"
+          test -d "$bundle_root/periodic-data/set.000"
+          {
+            echo "DPEVA_DEEPMD_PT_MODEL=$bundle_root/pt-model/model.pt"
+            echo "DPEVA_DEEPMD_DPA4C_MODEL=$bundle_root/dpa4c-model/model.pt2"
+            echo "DPEVA_DEEPMD_PERIODIC_DATA=$bundle_root/periodic-data"
+            echo "DPEVA_DEEPMD_CONTRACT_REQUIRED=1"
+          } >> "$GITHUB_ENV"
+
       - name: Run DeepMD CPU contract
         run: pytest -m deepmd_contract tests/contract/deepmd -q
+
+      - name: Reject skipped DeepMD contract cases
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          summary = json.loads(
+              Path("build/deepmd-cpu-contract/pytest-session.json").read_text()
+          )
+          if summary["skipped"]:
+              raise SystemExit(
+                  f"required DeepMD contract unexpectedly skipped {summary['skipped']} test(s)"
+              )
+          PY
 
       - name: Upload DeepMD contract evidence
         if: always()

@@ -19,8 +19,17 @@ _FIXTURE_ENV = {
     "dpa4c_model": "DPEVA_DEEPMD_DPA4C_MODEL",
     "periodic_data": "DPEVA_DEEPMD_PERIODIC_DATA",
 }
+CONTRACT_REQUIRED_ENV = "DPEVA_DEEPMD_CONTRACT_REQUIRED"
 _CONTRACT_LOG_DIR: Path | None = None
 _COMMAND_INDEX = 0
+
+
+class FixtureConfigurationError(RuntimeError):
+    """A required contract fixture is absent or invalid."""
+
+
+def _required_mode() -> bool:
+    return os.environ.get(CONTRACT_REQUIRED_ENV) == "1"
 
 
 def pytest_configure(config: pytest.Config) -> None:
@@ -41,11 +50,15 @@ def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
 
     if _CONTRACT_LOG_DIR is None:
         return
+    terminal_reporter = session.config.pluginmanager.get_plugin("terminalreporter")
+    skipped = len(terminal_reporter.stats.get("skipped", [])) if terminal_reporter else 0
     (_CONTRACT_LOG_DIR / "pytest-session.json").write_text(
         json.dumps(
             {
                 "exitstatus": exitstatus,
                 "testsfailed": session.testsfailed,
+                "testscollected": session.testscollected,
+                "skipped": skipped,
                 "deepmd_contract": True,
             },
             indent=2,
@@ -55,14 +68,32 @@ def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
     )
 
 
-def _resolve_required_path(env_name: str) -> Path:
+def _resolve_required_path(env_name: str, *, required: bool | None = None) -> Path:
+    required = _required_mode() if required is None else required
     value = os.environ.get(env_name)
     if not value:
-        pytest.skip(f"{env_name} is not set; owner: Compatibility Owner")
+        message = f"{env_name} is not set; owner: Compatibility Owner"
+        if required:
+            raise FixtureConfigurationError(
+                f"{message}; {CONTRACT_REQUIRED_ENV}=1 requires this fixture"
+            )
+        pytest.skip(message)
     path = Path(value).expanduser().resolve()
     if not path.exists():
-        pytest.fail(f"{env_name}={path} does not exist; owner: Compatibility Owner")
+        message = f"{env_name}={path} does not exist; owner: Compatibility Owner"
+        if required:
+            raise FixtureConfigurationError(message)
+        pytest.fail(message)
     return path
+
+
+@pytest.fixture(scope="session", autouse=True)
+def validate_required_contract_fixtures() -> None:
+    """Validate protected bundle paths before any contract test command."""
+
+    if _required_mode():
+        for env_name in _FIXTURE_ENV.values():
+            _resolve_required_path(env_name, required=True)
 
 
 @pytest.fixture(scope="session")
@@ -157,4 +188,3 @@ def classify_contract_result(
     if any(not path.exists() for path in required_paths):
         return "ARTIFACT"
     return "FINISHED"
-
