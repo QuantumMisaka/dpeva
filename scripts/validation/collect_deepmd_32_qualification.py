@@ -96,7 +96,7 @@ def _validate_record(record: dict[str, Any], case: str, job_dir: Path) -> list[s
         except ValueError:
             errors.append("artifact path escapes job directory")
             continue
-        if not resolved.exists() or _artifact_sha256(resolved) != item["sha256"]:
+        if item.get("exists") is not True or not resolved.exists() or _artifact_sha256(resolved) != item["sha256"]:
             errors.append("artifact missing or hash changed")
     return errors
 

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -14,7 +15,12 @@ from scripts.validation.submit_deepmd_32_qualification import parse_job_id, subm
 
 
 def _write_command_result(root: Path, case: str, *, returncode: int = 0, artifacts: list[str] | None = None) -> None:
-    checks = [{"path": str(root / artifact), "exists": True} for artifact in artifacts or []]
+    checks = []
+    for artifact in artifacts or []:
+        path_value = root / artifact
+        path_value.parent.mkdir(parents=True, exist_ok=True)
+        path_value.write_bytes(b"artifact")
+        checks.append({"path": str(path_value), "exists": True, "sha256": hashlib.sha256(b"artifact").hexdigest()})
     path = root / "commands" / f"{case}.json"
     path.parent.mkdir(parents=True, exist_ok=True)
     now = datetime.now(timezone.utc).isoformat()
@@ -58,6 +64,27 @@ def test_collector_rejects_unrecorded_job_dir_cli(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError, match="recorded submission"):
         main(["--job-dir", str(tmp_path)])
+
+
+def test_collector_accepts_directory_artifact_only_after_complete_records(tmp_path: Path) -> None:
+    from scripts.validation.collect_deepmd_32_qualification import REQUIRED_CASES, _artifact_sha256
+
+    launch = tmp_path / "launch.json"
+    launch.write_text('{"schema_version":"1.0"}', encoding="utf-8")
+    for case in REQUIRED_CASES:
+        artifact_dir = tmp_path / "artifacts" / case
+        artifact_dir.mkdir(parents=True, exist_ok=True)
+        (artifact_dir / "result").write_text(case, encoding="utf-8")
+        now = datetime.now(timezone.utc).isoformat()
+        artifact = {"path": str(artifact_dir), "exists": True, "sha256": _artifact_sha256(artifact_dir)}
+        record = {"schema_version": "1.0", "case": case, "argv": [case], "job_id": "123", "started_at": now, "ended_at": now, "returncode": 0, "status": "finished", "declared_artifacts": [str(artifact_dir)], "artifact_checks": [artifact]}
+        path = tmp_path / "commands" / f"{case}.json"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(record), encoding="utf-8")
+    _complete_environment(tmp_path)
+    report = collect_qualification(tmp_path, job_id="123", finalize=True)
+    assert report["status"] == "finished"
+    assert (tmp_path / "qualification.json").is_file()
 
 
 def test_prepare_records_models_without_copying(tmp_path: Path) -> None:
@@ -112,6 +139,20 @@ def test_submit_dry_run_writes_immutable_reference(tmp_path: Path) -> None:
     assert (Path(result["job_dir"]) / "submission.json").is_file()
 
 
+@pytest.mark.parametrize("cpu_directive", ["#SBATCH --cpus=1", "#SBATCH --cpus-per-task=1", "#SBATCH --cpus-per-task 1"])
+def test_submit_rejects_cpu_directives(tmp_path: Path, cpu_directive: str) -> None:
+    model_root = tmp_path / "models"
+    model_root.mkdir()
+    for name in ("model.ckpt.pt", "model_ema.ckpt.pt"):
+        (model_root / name).write_bytes(name.encode())
+    input_path = tmp_path / "input.json"
+    prepare(model_root, input_path)
+    slurm = tmp_path / "job.slurm"
+    slurm.write_text("\n".join(("#!/bin/bash", "#SBATCH --partition=4V100", "#SBATCH --nodes=1", "#SBATCH --ntasks=1", "#SBATCH --gpus-per-node=1", "#SBATCH --qos=improper-gpu", "#SBATCH --time=00:30:00", cpu_directive)) + "\n", encoding="utf-8")
+    with pytest.raises(ValueError, match="bounded SAI"):
+        submit(input_path, slurm, tmp_path / "latest.json", job_root=tmp_path / "external", dry_run=True)
+
+
 def test_recorded_runner_argv_and_missing_artifact(tmp_path: Path) -> None:
     config = tmp_path / "input.json"
     config.write_text(json.dumps({"schema_version": "1.0", "fixture": {"path": str(tmp_path)}, "models": {"regular": {"path": str(tmp_path / "r"), "sha256": ""}, "ema": {"path": str(tmp_path / "e"), "sha256": ""}}}), encoding="utf-8")
@@ -120,3 +161,15 @@ def test_recorded_runner_argv_and_missing_artifact(tmp_path: Path) -> None:
     result = run_recorded_command(config, tmp_path / "job", "pt-test")
     assert result["status"] == "failed"
     assert result["returncode"] != 0
+
+
+def test_preflight_writes_record_from_fresh_job_dir(tmp_path: Path) -> None:
+    from scripts.validation.run_recorded_command import run_recorded_command
+
+    config = tmp_path / "input.json"
+    config.write_text('{"schema_version":"1.0"}', encoding="utf-8")
+    job_dir = tmp_path / "fresh-job"
+    job_dir.mkdir()
+    result = run_recorded_command(config, job_dir, "preflight")
+    assert result["status"] == "failed"
+    assert (job_dir / "commands" / "preflight.json").is_file()

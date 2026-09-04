@@ -78,6 +78,9 @@ def _spec(config: dict[str, Any], case: str, job_dir: Path) -> tuple[list[str], 
 
 def _preflight(config_path: Path, job_dir: Path) -> dict[str, Any]:
     """Revalidate the launch contract on the compute node before any case."""
+    job_dir.mkdir(parents=True, exist_ok=True)
+    (job_dir / "commands").mkdir(parents=True, exist_ok=True)
+    (job_dir / "logs").mkdir(parents=True, exist_ok=True)
     result_path = job_dir / "commands" / "preflight.json"
     started = _now()
     argv = ["preflight", str(job_dir / "launch.json")]
@@ -152,7 +155,7 @@ def run_recorded_command(config_path: Path, job_dir: Path, case: str) -> dict[st
                 if not isinstance(value, dict) or not {"torch", "cuda", "available"} <= value.keys():
                     raise ValueError("torch-cuda probe did not return torch/cuda/available")
             declared[0].write_text(json.dumps({"schema_version": "1.0", "case": case, "argv": argv, "returncode": proc.returncode, "value": value}, indent=2) + "\n", encoding="utf-8")
-        artifact_checks = [{"path": str(path), "exists": path.exists(), "sha256": _sha256(path) if path.is_file() else None} for path in declared]
+        artifact_checks = [{"path": str(path), "exists": path.exists(), "sha256": _sha256(path) if path.exists() else ""} for path in declared]
         artifacts_ok = all(item["exists"] for item in artifact_checks)
         returncode = int(proc.returncode)
         status = "finished" if returncode == 0 and artifacts_ok else "failed"

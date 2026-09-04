@@ -8,6 +8,7 @@ import hashlib
 import json
 import os
 import re
+import shlex
 import subprocess
 import tempfile
 import uuid
@@ -93,8 +94,21 @@ def submit(input_path: Path, slurm_script: Path, write_ref: Path, *, job_root: P
     if not slurm_script.is_file():
         raise FileNotFoundError(slurm_script)
     script_text = slurm_script.read_text(encoding="utf-8")
-    required_directives = ("--partition=4V100", "--nodes=1", "--ntasks=1", "--gpus-per-node=1", "--qos=improper-gpu", "--time=00:30:00")
-    if any(directive not in script_text for directive in required_directives) or "--mem" in script_text or "--cpus-per" in script_text:
+    directives: dict[str, str] = {}
+    for line in script_text.splitlines():
+        stripped = line.strip()
+        if not stripped.startswith("#SBATCH"):
+            continue
+        tokens = shlex.split(stripped[len("#SBATCH"):].strip())
+        if not tokens or not tokens[0].startswith("--"):
+            continue
+        key, _, value = tokens[0].partition("=")
+        if not value and len(tokens) > 1:
+            value = tokens[1]
+        directives[key] = value
+    required_directives = {"--partition": "4V100", "--nodes": "1", "--ntasks": "1", "--gpus-per-node": "1", "--qos": "improper-gpu", "--time": "00:30:00"}
+    forbidden_cpu = any(key == "--cpus" or key.startswith("--cpus-") for key in directives)
+    if any(directives.get(key) != value for key, value in required_directives.items()) or "--mem" in directives or forbidden_cpu:
         raise ValueError("Slurm script does not satisfy the bounded SAI qualification contract")
     if not dry_run and os.environ.get("CONDA_PREFIX"):
         raise RuntimeError("qualification submission requires a clean login environment; unset CONDA_PREFIX")
