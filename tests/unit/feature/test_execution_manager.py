@@ -4,6 +4,7 @@ import subprocess
 from unittest.mock import MagicMock, patch
 from dpeva.constants import WORKFLOW_FINISHED_TAG
 from dpeva.feature.managers import FeatureExecutionManager, FeatureIOManager
+from dpeva.compatibility import DeepMDAdapter
 from dpeva.utils.command import DPCommandBuilder
 from dpeva.utils.exceptions import WorkflowError
 
@@ -166,9 +167,8 @@ class TestFeatureExecutionManager:
         assert "/output/embedding.hdf5" not in job_config.command
 
     def test_command_builder_embed_quotes_dtype_and_head(self):
-        DPCommandBuilder.set_backend("pt")
-
         cmd = DPCommandBuilder.embed(
+            "pt",
             model="model path.pt",
             system="data path",
             output="out/embedding.hdf5",
@@ -180,6 +180,25 @@ class TestFeatureExecutionManager:
             "dp --pt embed -s 'data path' -m 'model path.pt' "
             "-o out/embedding.hdf5 --dtype fp64 --head OC20M"
         )
+
+    def test_injected_adapter_owns_command_backend(self, mock_job_manager, tmp_path):
+        manager = FeatureExecutionManager(
+            backend="slurm",
+            slurm_config={},
+            env_setup="",
+            dp_backend="pt",
+            omp_threads=1,
+            adapter=DeepMDAdapter("tf"),
+        )
+        manager.submit_cli_job(
+            data_path="data",
+            output_dir=str(tmp_path / "output"),
+            model_path="model.pt",
+            head=None,
+            sub_pools=[],
+        )
+        command = mock_job_manager.return_value.generate_script.call_args[0][0].command
+        assert "dp --tf eval-desc" in command
 
     def test_submit_python_slurm_job(self, mock_job_manager, tmp_path):
         """Test Python Slurm job submission."""

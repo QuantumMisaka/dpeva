@@ -7,6 +7,7 @@ from .deepmd import (
     CapabilityRecord,
     CapabilityUnavailable,
 )
+from .adapter import DeepMDAdapter
 
 __all__ = [
     "CapabilityEvidence",
@@ -14,4 +15,5 @@ __all__ = [
     "CapabilityMatrix",
     "CapabilityRecord",
     "CapabilityUnavailable",
+    "DeepMDAdapter",
 ]

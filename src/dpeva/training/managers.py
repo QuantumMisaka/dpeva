@@ -5,9 +5,9 @@ from copy import deepcopy
 from typing import List, Dict, Any, Optional
 
 from dpeva.constants import DEFAULT_TRAINING_SEEDS
+from dpeva.compatibility import DeepMDAdapter
 from dpeva.submission import JobManager, JobConfig
 from dpeva.submission.guards import guarded_command
-from dpeva.utils.command import DPCommandBuilder
 from dpeva.utils.exceptions import WorkflowError
 
 class TrainingConfigManager:
@@ -141,13 +141,20 @@ class TrainingExecutionManager:
     - Job script generation
     - Job submission
     """
-    def __init__(self, backend: str, slurm_config: Dict, env_setup: str, dp_backend: str, template_path: Optional[str] = None):
+    def __init__(
+        self,
+        backend: str,
+        slurm_config: Dict,
+        env_setup: str,
+        dp_backend: str,
+        template_path: Optional[str] = None,
+        adapter: DeepMDAdapter | None = None,
+    ):
         self.backend = backend
         self.slurm_config = slurm_config or {}
         self.env_setup = env_setup
-        self.dp_backend = dp_backend
-        
-        DPCommandBuilder.set_backend(self.dp_backend)
+        self.adapter = adapter or DeepMDAdapter(dp_backend)
+        self.dp_backend = self.adapter.backend
         self.job_manager = JobManager(mode=backend, custom_template_path=template_path)
         self.logger = logging.getLogger(__name__)
 
@@ -157,11 +164,11 @@ class TrainingExecutionManager:
         # Construct Command
         gpus_per_node = self.slurm_config.get("gpus_per_node", 0)
         
-        dp_freeze_cmd = DPCommandBuilder.freeze()
+        dp_freeze_cmd = self.adapter.freeze()
         
         if gpus_per_node > 1:
             # Multi-GPU Mode
-            dp_train_cmd = DPCommandBuilder.train(
+            dp_train_cmd = self.adapter.train(
                 "input.json", 
                 finetune_path=base_model_name,
                 skip_neighbor_stat=True,
@@ -180,7 +187,7 @@ class TrainingExecutionManager:
             ]
         else:
             # Single GPU/CPU
-            dp_train_cmd = DPCommandBuilder.train(
+            dp_train_cmd = self.adapter.train(
                 "input.json", 
                 finetune_path=base_model_name,
                 log_file="train.log"

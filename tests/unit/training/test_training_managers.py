@@ -3,6 +3,7 @@ import os
 import pytest
 from unittest.mock import MagicMock, patch
 from dpeva.training.managers import TrainingConfigManager, TrainingExecutionManager
+from dpeva.compatibility import DeepMDAdapter
 from dpeva.utils.exceptions import WorkflowError
 
 class TestTrainingConfigManager:
@@ -206,6 +207,18 @@ class TestTrainingExecutionManager:
             assert "torchrun" in job_config.command
             assert "dp --pt train" in job_config.command
             assert "--skip-neighbor-stat" in job_config.command
+
+    def test_injected_adapter_owns_command_backend(self, tmp_path):
+        manager = TrainingExecutionManager(
+            backend="local",
+            slurm_config={},
+            env_setup="",
+            dp_backend="pt",
+            adapter=DeepMDAdapter("tf"),
+        )
+        with patch("dpeva.submission.manager.JobManager.generate_script") as mock_gen:
+            manager.generate_script(0, str(tmp_path), "base.ckpt", omp_threads=1)
+        assert "dp --tf train" in mock_gen.call_args[0][0].command
 
     @patch("dpeva.training.managers.multiprocessing.Process")
     def test_submit_jobs_local_parallel_multiprocessing(self, mock_proc, manager, tmp_path):

@@ -4,6 +4,7 @@ import subprocess
 from unittest.mock import patch
 
 from dpeva.inference.managers import InferenceExecutionManager
+from dpeva.compatibility import DeepMDAdapter
 
 class TestInferenceExecutionManager:
 
@@ -253,6 +254,25 @@ class TestInferenceExecutionManager:
 
         assert result.returncode == 0
         assert "DPEVA_TAG: WORKFLOW_FINISHED" in result.stdout
+
+    def test_injected_adapter_owns_command_backend(self, manager_local, tmp_path):
+        manager_local.adapter = DeepMDAdapter("tf")
+        work_dir = tmp_path / "work"
+        work_dir.mkdir()
+        model = work_dir / "model_0.pt"
+        model.touch()
+
+        manager_local.submit_jobs(
+            models_paths=[str(model)],
+            data_path=str(tmp_path / "data"),
+            work_dir=str(work_dir),
+            task_name="task",
+            head="head",
+            results_prefix="res",
+        )
+
+        command = manager_local.job_manager.generate_script.call_args[0][0].command
+        assert "dp --tf test" in command
 
     def test_submit_jobs_uses_default_env_setup_for_local_backend(self, manager_local, tmp_path):
         work_dir = tmp_path / "work"

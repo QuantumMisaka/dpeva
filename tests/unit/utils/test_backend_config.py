@@ -1,53 +1,31 @@
 import pytest
+
 from dpeva.utils.command import DPCommandBuilder
 
+
 class TestDPCommandBuilderBackend:
-    """Test DPCommandBuilder backend configuration."""
+    """The deprecated facade must remain explicit and stateless."""
 
-    def test_default_backend(self):
-        """Verify default backend."""
-        assert DPCommandBuilder._backend == "pt"
+    def test_explicit_backend_is_used_per_call(self):
+        assert DPCommandBuilder._get_base_cmd("tf") == "dp --tf"
+        assert DPCommandBuilder._get_base_cmd("jax") == "dp --jax"
+        assert DPCommandBuilder._get_base_cmd("pt") == "dp --pt"
 
-    def test_set_backend_tf(self):
-        """Verify setting backend to TensorFlow."""
-        DPCommandBuilder.set_backend("tf")
-        assert DPCommandBuilder._backend == "tf"
-        assert DPCommandBuilder._get_base_cmd() == "dp --tf"
-
-    def test_set_backend_jax(self):
-        """Verify setting backend to JAX."""
-        DPCommandBuilder.set_backend("jax")
-        assert DPCommandBuilder._backend == "jax"
-        assert DPCommandBuilder._get_base_cmd() == "dp --jax"
-
-    def test_set_backend_pt_expt(self):
-        """Verify the PyTorch exportable backend."""
-        DPCommandBuilder.set_backend("pt-expt")
-        assert DPCommandBuilder._get_base_cmd() == "dp --pt-expt"
-        assert "dp --pt-expt eval-desc" in DPCommandBuilder.eval_desc(
-            model="model.pt",
-            system="data",
-            output="desc",
+    def test_pt_expt_command(self):
+        command = DPCommandBuilder.eval_desc(
+            "pt-expt", model="model.pt", system="data", output="desc"
         )
-        DPCommandBuilder.set_backend("pt")
+        assert "dp --pt-expt eval-desc" in command
 
     def test_invalid_backend(self):
-        """Verify setting invalid backend raises ValueError."""
         with pytest.raises(ValueError):
-            DPCommandBuilder.set_backend("invalid")
+            DPCommandBuilder._get_base_cmd("invalid")
 
-    def test_all_commands_reflect_backend(self):
-        """Verify generated commands use the set backend."""
-        DPCommandBuilder.set_backend("pt")
-        
-        train_cmd = DPCommandBuilder.train("input.json")
-        assert "dp --pt train" in train_cmd
-        
-        freeze_cmd = DPCommandBuilder.freeze()
-        assert "dp --pt freeze" in freeze_cmd
-        
-        # Reset to default
-        DPCommandBuilder.set_backend("pt")
+    def test_all_commands_accept_backend(self):
+        assert "dp --pt train" in DPCommandBuilder.train("pt", "input.json")
+        assert "dp --pt freeze" in DPCommandBuilder.freeze("pt")
+        assert "dp --pt test" in DPCommandBuilder.test("pt", "model.pt", "data", "results")
 
-if __name__ == "__main__":
-    pytest.main([__file__])
+    def test_no_global_backend_state(self):
+        assert not hasattr(DPCommandBuilder, "_backend")
+        assert not hasattr(DPCommandBuilder, "set_backend")

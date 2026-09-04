@@ -6,9 +6,9 @@ import numpy as np
 from typing import List, Dict
 
 from dpeva.constants import WORKFLOW_FINISHED_TAG
+from dpeva.compatibility import DeepMDAdapter
 from dpeva.submission import JobManager, JobConfig
 from dpeva.submission.guards import guarded_command
-from dpeva.utils.command import DPCommandBuilder
 from dpeva.utils.exceptions import WorkflowError
 
 logger = logging.getLogger(__name__)
@@ -63,14 +63,22 @@ class FeatureExecutionManager:
     - Python script generation and submission (Slurm)
     - Local Python execution orchestration
     """
-    def __init__(self, backend: str, slurm_config: Dict, env_setup: str, dp_backend: str, omp_threads: int):
+    def __init__(
+        self,
+        backend: str,
+        slurm_config: Dict,
+        env_setup: str,
+        dp_backend: str,
+        omp_threads: int,
+        adapter: DeepMDAdapter | None = None,
+    ):
         self.backend = backend
         self.slurm_config = slurm_config or {}
         self.env_setup = env_setup or ""
-        self.dp_backend = dp_backend
         self.omp_threads = omp_threads
         
-        DPCommandBuilder.set_backend(self.dp_backend)
+        self.adapter = adapter or DeepMDAdapter(dp_backend)
+        self.dp_backend = self.adapter.backend
         self.job_manager = JobManager(mode=backend)
         self.logger = logging.getLogger(__name__)
         
@@ -112,7 +120,7 @@ class FeatureExecutionManager:
 
                     cmd += f"mkdir -p {pool_out}\n"
 
-                    pool_cmd = DPCommandBuilder.eval_desc(
+                    pool_cmd = self.adapter.eval_desc(
                         model=model_path,
                         system=pool_in,
                         output=pool_out,
@@ -123,7 +131,7 @@ class FeatureExecutionManager:
                     cmd += f"echo 'Processing pool: {pool}'\n"
                     cmd += f"{pool_cmd}\n"
             else:
-                cmd = DPCommandBuilder.eval_desc(
+                cmd = self.adapter.eval_desc(
                     model=model_path,
                     system=abs_data_path,
                     output=abs_output_dir,
@@ -149,7 +157,7 @@ class FeatureExecutionManager:
                     output_hdf5 = os.path.join(pool_out, "embedding.hdf5")
 
                     cmd += f"mkdir -p {pool_out}\n"
-                    pool_cmd = DPCommandBuilder.embed(
+                    pool_cmd = self.adapter.embed(
                         model=model_path,
                         system=pool_in,
                         output=output_hdf5,
@@ -161,7 +169,7 @@ class FeatureExecutionManager:
                     cmd += f"{pool_cmd}\n"
             else:
                 output_hdf5 = os.path.join(abs_output_dir, "embedding.hdf5")
-                cmd = DPCommandBuilder.embed(
+                cmd = self.adapter.embed(
                     model=model_path,
                     system=abs_data_path,
                     output=output_hdf5,

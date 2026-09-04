@@ -9,11 +9,11 @@ from typing import List, Dict, Optional, Tuple
 from collections import Counter
 
 from dpeva.constants import FILENAME_STATS_JSON
+from dpeva.compatibility import DeepMDAdapter
 from dpeva.submission import JobManager, JobConfig
 from dpeva.submission.guards import guarded_command
 from dpeva.io.dataproc import DPTestResultParser
 from dpeva.io.dataset import load_systems
-from dpeva.utils.command import DPCommandBuilder
 from dpeva.run.artifacts import ArtifactValidationError, validate_inference_outputs
 from dpeva.run.models import JobRecord
 from dpeva.run.model import ModelArtifactRef, load_model_ref, resolve_model_refs
@@ -130,14 +130,22 @@ class InferenceExecutionManager:
     - Command construction
     - Job submission
     """
-    def __init__(self, backend: str, slurm_config: Dict, env_setup: str, dp_backend: str, omp_threads: int):
+    def __init__(
+        self,
+        backend: str,
+        slurm_config: Dict,
+        env_setup: str,
+        dp_backend: str,
+        omp_threads: int,
+        adapter: DeepMDAdapter | None = None,
+    ):
         self.backend = backend
         self.slurm_config = slurm_config or {}
         self.env_setup = env_setup
-        self.dp_backend = dp_backend
         self.omp_threads = omp_threads
         
-        DPCommandBuilder.set_backend(self.dp_backend)
+        self.adapter = adapter or DeepMDAdapter(dp_backend)
+        self.dp_backend = self.adapter.backend
         self.job_manager = JobManager(mode=backend)
         self.logger = logging.getLogger(__name__)
         self.last_artifacts: dict[str, list[str]] = {}
@@ -184,7 +192,7 @@ class InferenceExecutionManager:
             
             log_file = "test.log" if self.backend == "local" else None
             
-            cmd = DPCommandBuilder.test(
+            cmd = self.adapter.test(
                 model=abs_model_path,
                 system=abs_data_path,
                 prefix=results_prefix,
