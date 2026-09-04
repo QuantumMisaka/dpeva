@@ -33,6 +33,11 @@ def resolve_config_paths(config: Dict[str, Any], config_file_path: str, path_key
             "llpr_model_path", "llpr_last_layer_weights_path",
             "llpr_candidate_energy_path", "llpr_state_path",
             "llpr_save_state_path", "llpr_ensemble_output_path", "model_ref_paths",
+            # Evaluation-card evidence is resolved from the configuration
+            # file, so a portable recipe can be copied as a package.
+            "output_path", "model_ref_path", "in_domain_cumulative_path", "iter11_last_wave_path",
+            "historical_domain_path", "matpes_retention_path", "training_cost_path",
+            "surface_slice_path", "dataset_manifest_paths",
         ]
         
     for key in path_keys:
@@ -47,7 +52,7 @@ def resolve_config_paths(config: Dict[str, Any], config_file_path: str, path_key
                     config[key] = os.path.abspath(os.path.join(config_dir, val))
                 else:
                     config[key] = val
-            elif isinstance(val, list) and key == "model_ref_paths":
+            elif isinstance(val, list) and key in {"model_ref_paths", "dataset_manifest_paths"}:
                 resolved_paths = []
                 for item in val:
                     if not isinstance(item, str):

@@ -32,6 +32,22 @@ def test_cli_dispatch_train_without_banner(monkeypatch, tmp_path):
     assert called["train"] is True
 
 
+def test_cli_dispatch_eval_card_without_banner(monkeypatch, tmp_path):
+    called = {"eval_card": False}
+    config_path = _write_config(tmp_path)
+
+    def fake_eval_card(args):
+        called["eval_card"] = True
+        assert args.config == config_path
+
+    monkeypatch.setattr(cli, "handle_eval_card", fake_eval_card)
+    monkeypatch.setattr(cli, "show_banner", lambda: (_ for _ in ()).throw(AssertionError("banner should not be called")))
+    monkeypatch.setattr(sys, "argv", ["dpeva", "--no-banner", "eval-card", config_path])
+
+    cli.main()
+    assert called["eval_card"] is True
+
+
 def test_cli_exit_on_handler_error(monkeypatch, tmp_path):
     config_path = _write_config(tmp_path)
 

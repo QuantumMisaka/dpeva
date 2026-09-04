@@ -13,6 +13,7 @@ import sys
 import json
 import logging
 import os
+import tempfile
 from dpeva.config_migration import MigrationResult, migrate_legacy_config
 from dpeva.utils.config import resolve_config_paths
 from dpeva.utils.banner import show_banner
@@ -321,6 +322,59 @@ def handle_doctor(args):
     if report.status != "ok":
         raise SystemExit(1)
 
+
+def _publish_evaluation_card(path, card) -> None:
+    """Publish one valid card atomically without replacing existing evidence."""
+    output_path = os.path.abspath(os.path.expanduser(os.fspath(path)))
+    output_parent = os.path.dirname(output_path)
+    os.makedirs(output_parent, exist_ok=True)
+    payload = card.model_dump_json(indent=2) + "\n"
+    temporary_path = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="w",
+            encoding="utf-8",
+            dir=output_parent,
+            prefix=f".{os.path.basename(output_path)}.",
+            suffix=".tmp",
+            delete=False,
+        ) as handle:
+            temporary_path = handle.name
+            handle.write(payload)
+            handle.flush()
+            os.fsync(handle.fileno())
+
+        # A hard link is an atomic no-replace publication primitive on the
+        # local filesystems used for evidence.  It closes the race between a
+        # preflight existence check and publication, preserving immutable
+        # candidate evidence if another process wins the destination.
+        os.link(temporary_path, output_path)
+        os.unlink(temporary_path)
+        temporary_path = None
+        directory_fd = os.open(output_parent, os.O_RDONLY)
+        try:
+            os.fsync(directory_fd)
+        finally:
+            os.close(directory_fd)
+    finally:
+        if temporary_path is not None:
+            try:
+                os.unlink(temporary_path)
+            except FileNotFoundError:
+                pass
+
+
+def handle_eval_card(args) -> None:
+    """Assemble and atomically publish one candidate evaluation card."""
+    from dpeva.config import EvaluationCardConfig
+    from dpeva.evaluation.card import build_evaluation_card
+
+    migrated = load_and_resolve_config(args.config)
+    config = EvaluationCardConfig.model_validate(_normalized_config(migrated))
+    card = build_evaluation_card(config)
+    _publish_evaluation_card(config.output_path, card)
+    logging.info("Evaluation card written: %s", config.output_path)
+
 def main():
     """
     Main entry point for the CLI.
@@ -395,6 +449,12 @@ def main():
     p_doctor = subparsers.add_parser("doctor", help="Report runtime capabilities")
     p_doctor.add_argument("--json", action="store_true", help="Emit a stable JSON report")
     p_doctor.set_defaults(func=handle_doctor)
+
+    p_eval_card = subparsers.add_parser(
+        "eval-card", help="Assemble one candidate evaluation card from evidence references"
+    )
+    p_eval_card.add_argument("config", type=validate_config_path, help="Path to configuration JSON")
+    p_eval_card.set_defaults(func=handle_eval_card)
 
     args = parser.parse_args()
     

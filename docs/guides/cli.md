@@ -19,7 +19,7 @@ owner: Docs Owner
 
 范围：
 
-- `dpeva train / infer / feature / explore / collect / label / analysis / clean / doctor`
+- `dpeva train / infer / feature / explore / collect / label / analysis / clean / doctor / eval-card`
 - `--no-banner`
 
 ## 2. 相关方
@@ -81,6 +81,21 @@ dpeva doctor --json
 
 - API Reference（Sphinx 生成的配置字段文档）
 - ../reference/validation.md
+
+### 4.9 eval-card（候选评估卡片）
+
+`eval-card` 将已存在的模型引用、数据谱系和评测证据组装为一个机器可读的候选交接卡片；
+它不会启动评测、复制活动中的 FT2DP 任务清单或推断科学排名。六个固定维度始终存在，
+未提供证据标记为 `not-run`，配置了但无法读取或校验的证据标记为 `failed`，并保留证据路径。
+
+```bash
+dpeva eval-card examples/recipes/evaluation/config_eval_card.json
+```
+
+配置文件中的相对路径均相对该配置文件所在目录解析，包括 `output_path`、
+`model_ref_path`、六个可选 metric 路径和 `dataset_manifest_paths`。输出卡片以原子方式发布，
+不会覆盖已存在的目标文件；如需生成新的候选卡片，请使用新的输出路径。配置模板见
+`examples/recipes/evaluation/config_eval_card.json`。
 
 ### 4.1 train（并行微调训练）
 

@@ -1,0 +1,13 @@
+{
+  "candidate_id": "candidate-1",
+  "model_ref_path": "./model-ref.json",
+  "output_path": "./evaluation-card.json",
+  "in_domain_cumulative_path": null,
+  "iter11_last_wave_path": null,
+  "historical_domain_path": null,
+  "matpes_retention_path": null,
+  "training_cost_path": null,
+  "surface_slice_path": null,
+  "dataset_manifest_paths": [],
+  "downstream_feedback_ref": null
+}

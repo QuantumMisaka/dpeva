@@ -137,3 +137,16 @@ For programmatic workflow demos and helper scripts, use:
   - Run with `dpeva clean examples/recipes/data_cleaning/config_clean_all_thresholds.json`
 
 - 当前仓库仅维护这一份数据清洗模板；如需 force-only 或 passthrough 变体，请在该文件基础上裁剪阈值字段。
+
+## 11. Candidate Evaluation Card (`evaluation/`)
+
+- `evaluation/config_eval_card.json` assembles one candidate's model reference,
+  dataset-manifest references, and six explicit evaluation dimensions.
+- Paths are relative to the recipe file and are intended to be replaced with
+  evidence from a concrete candidate package. Missing metric evidence remains
+  visible as `not-run`; no active FT2DP task status is copied into the card.
+
+**Usage:**
+```bash
+dpeva eval-card examples/recipes/evaluation/config_eval_card.json
+```
