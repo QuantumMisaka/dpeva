@@ -183,9 +183,34 @@ def test_python_quality_jobs_use_gate_names() -> None:
 def test_docs_jobs_use_gate_names() -> None:
     build = Path(".github/workflows/docs-check.yml").read_text(encoding="utf-8")
     lint = Path(".github/workflows/doc-lint.yml").read_text(encoding="utf-8")
+    verify = Path("scripts/verify_docs.sh").read_text(encoding="utf-8")
+    deploy = Path(".github/workflows/docs-deploy.yml").read_text(encoding="utf-8")
 
     assert "pip install -e .[docs] tomli" in build
     for name in ("docs_build", "docs_artifacts", "docs_linkcheck"):
         assert f"python scripts/run_gate.py {name}" in build
     for name in ("docs", "docs_freshness"):
         assert f"python scripts/run_gate.py {name}" in lint
+    for name in ("docs", "docs_freshness", "docs_build"):
+        assert f"python scripts/run_gate.py {name}" in verify
+    assert "make clean" in verify
+    assert "build/html/guides/quickstart.html" in verify
+    assert "pip install -e .[docs] tomli" in deploy
+    assert "python scripts/run_gate.py docs_build" in deploy
+
+
+def test_docs_workflows_watch_gate_manifest() -> None:
+    for workflow in (".github/workflows/docs-check.yml", ".github/workflows/doc-lint.yml"):
+        text = Path(workflow).read_text(encoding="utf-8")
+        assert '"scripts/run_gate.py"' in text
+        assert '"scripts/gates.toml"' in text
+
+
+def test_docs_entry_points_do_not_duplicate_manifest_commands() -> None:
+    verify = Path("scripts/verify_docs.sh").read_text(encoding="utf-8")
+    deploy = Path(".github/workflows/docs-deploy.yml").read_text(encoding="utf-8")
+
+    for text in (verify, deploy):
+        assert "make html" not in text
+        assert "doc_check.py" not in text
+        assert "check_docs_freshness.py" not in text

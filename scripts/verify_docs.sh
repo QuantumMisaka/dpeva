@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -Eeuo pipefail
 
 echo "=========================================="
 echo "DP-EVA Documentation Verification Script"
@@ -15,13 +15,14 @@ fi
 cd "$PROJECT_ROOT"
 
 echo "Running documentation governance checks..."
-python3 scripts/doc_check.py
-python3 scripts/check_docs_freshness.py --days 90
+python scripts/run_gate.py docs
+python scripts/run_gate.py docs_freshness
 
 echo "Building HTML documentation..."
 cd docs
 make clean
-if make html SPHINXOPTS="-W --keep-going"; then
+cd "$PROJECT_ROOT"
+if python scripts/run_gate.py docs_build; then
     echo "✅ Documentation built successfully."
 else
     echo "❌ Documentation build FAILED."
@@ -29,6 +30,7 @@ else
 fi
 
 echo "Verifying output artifacts..."
+cd docs
 REQUIRED_FILES=(
     "build/html/index.html"
     "build/html/api/config.html"
