@@ -1,6 +1,7 @@
 import os
 import logging
 import multiprocessing
+import warnings
 from copy import deepcopy
 from typing import List, Dict, Any, Optional
 
@@ -153,7 +154,14 @@ class TrainingExecutionManager:
         self.backend = backend
         self.slurm_config = slurm_config or {}
         self.env_setup = env_setup
-        self.adapter = adapter or DeepMDAdapter(dp_backend)
+        if adapter is None:
+            warnings.warn(
+                "TrainingExecutionManager uses the legacy unchecked DeepMD adapter; "
+                "provide an authorized DeepMDAdapter",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+        self.adapter = adapter or DeepMDAdapter.for_legacy_unchecked(dp_backend)
         self.dp_backend = self.adapter.backend
         self.job_manager = JobManager(mode=backend, custom_template_path=template_path)
         self.logger = logging.getLogger(__name__)

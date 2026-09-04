@@ -2,6 +2,7 @@ import os
 import json
 import logging
 import shlex
+import warnings
 import numpy as np
 import pandas as pd
 from pathlib import Path
@@ -144,7 +145,14 @@ class InferenceExecutionManager:
         self.env_setup = env_setup
         self.omp_threads = omp_threads
         
-        self.adapter = adapter or DeepMDAdapter(dp_backend)
+        if adapter is None:
+            warnings.warn(
+                "InferenceExecutionManager uses the legacy unchecked DeepMD adapter; "
+                "provide an authorized DeepMDAdapter",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+        self.adapter = adapter or DeepMDAdapter.for_legacy_unchecked(dp_backend)
         self.dp_backend = self.adapter.backend
         self.job_manager = JobManager(mode=backend)
         self.logger = logging.getLogger(__name__)

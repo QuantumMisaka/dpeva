@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import shlex
+import warnings
 from typing import Optional
 
 from dpeva.compatibility.adapter import DeepMDAdapter
@@ -20,7 +21,15 @@ class DPCommandBuilder:
 
     @staticmethod
     def _adapter(backend: str) -> DeepMDAdapter:
-        return DeepMDAdapter(backend)
+        return DeepMDAdapter.for_legacy_unchecked(backend)
+
+    @staticmethod
+    def _warn_deprecated() -> None:
+        warnings.warn(
+            "DPCommandBuilder is deprecated; inject DeepMDAdapter instead",
+            DeprecationWarning,
+            stacklevel=2,
+        )
 
     @staticmethod
     def _get_base_cmd(backend: str) -> str:
@@ -35,12 +44,14 @@ class DPCommandBuilder:
         skip_neighbor_stat: bool = False,
         log_file: Optional[str] = None,
     ) -> str:
+        DPCommandBuilder._warn_deprecated()
         return DPCommandBuilder._adapter(backend).train(
             input_file, finetune_path, init_model_path, skip_neighbor_stat, log_file
         )
 
     @staticmethod
     def freeze(backend: str, output: Optional[str] = None) -> str:
+        DPCommandBuilder._warn_deprecated()
         return DPCommandBuilder._adapter(backend).freeze(output)
 
     @staticmethod
@@ -52,6 +63,7 @@ class DPCommandBuilder:
         head: Optional[str] = None,
         log_file: Optional[str] = None,
     ) -> str:
+        DPCommandBuilder._warn_deprecated()
         return DPCommandBuilder._adapter(backend).eval_desc(
             model, system, output, head, log_file
         )
@@ -66,6 +78,7 @@ class DPCommandBuilder:
         dtype: str = "fp32",
         log_file: Optional[str] = None,
     ) -> str:
+        DPCommandBuilder._warn_deprecated()
         return DPCommandBuilder._adapter(backend).embed(
             model, system, output, head, dtype, log_file
         )
@@ -79,6 +92,7 @@ class DPCommandBuilder:
         head: Optional[str] = None,
         log_file: Optional[str] = None,
     ) -> str:
+        DPCommandBuilder._warn_deprecated()
         return DPCommandBuilder._adapter(backend).test(
             model, system, prefix, head, log_file
         )

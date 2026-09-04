@@ -256,7 +256,7 @@ class TestInferenceExecutionManager:
         assert "DPEVA_TAG: WORKFLOW_FINISHED" in result.stdout
 
     def test_injected_adapter_owns_command_backend(self, manager_local, tmp_path):
-        manager_local.adapter = DeepMDAdapter("tf")
+        manager_local.adapter = DeepMDAdapter.for_legacy_unchecked("tf")
         work_dir = tmp_path / "work"
         work_dir.mkdir()
         model = work_dir / "model_0.pt"

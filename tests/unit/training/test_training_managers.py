@@ -214,7 +214,7 @@ class TestTrainingExecutionManager:
             slurm_config={},
             env_setup="",
             dp_backend="pt",
-            adapter=DeepMDAdapter("tf"),
+            adapter=DeepMDAdapter.for_legacy_unchecked("tf"),
         )
         with patch("dpeva.submission.manager.JobManager.generate_script") as mock_gen:
             manager.generate_script(0, str(tmp_path), "base.ckpt", omp_threads=1)

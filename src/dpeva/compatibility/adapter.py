@@ -35,6 +35,24 @@ class DeepMDAdapter:
     backend: str
     matrix: CapabilityMatrix = field(default_factory=CapabilityMatrix.load_default)
     allow_experimental: bool = False
+    legacy_unchecked: bool = field(default=False, repr=False)
+
+    @classmethod
+    def for_legacy_unchecked(
+        cls,
+        backend: str,
+        matrix: CapabilityMatrix | None = None,
+        *,
+        allow_experimental: bool = False,
+    ) -> "DeepMDAdapter":
+        """Create the temporary adapter for pre-schema legacy manager paths."""
+
+        return cls(
+            backend,
+            matrix or CapabilityMatrix.load_default(),
+            allow_experimental,
+            legacy_unchecked=True,
+        )
 
     def __post_init__(self) -> None:
         if self.backend not in VALID_DP_BACKENDS:
@@ -51,6 +69,7 @@ class DeepMDAdapter:
         key_or_matrix: CapabilityKey | CapabilityMatrix,
         key: CapabilityKey | None = None,
         allow_experimental: bool | None = None,
+        operation: str | None = None,
     ) -> CapabilityRecord:
         """Authorize one exact capability key for this backend.
 
@@ -74,6 +93,11 @@ class DeepMDAdapter:
             raise CapabilityUnavailable(
                 f"adapter backend {self.backend} does not match {capability_key.backend}"
             )
+        if operation is not None and capability_key.operation != operation:
+            raise CapabilityUnavailable(
+                f"capability key operation {capability_key.operation!r} does not match "
+                f"command operation {operation!r}"
+            )
         return matrix.require(
             capability_key,
             allow_experimental=(
@@ -83,6 +107,17 @@ class DeepMDAdapter:
             ),
         )
 
+    def _authorize(
+        self, operation: str, capability_key: CapabilityKey | None
+    ) -> None:
+        if self.legacy_unchecked:
+            return
+        if capability_key is None:
+            raise CapabilityUnavailable(
+                f"{operation} command requires a complete capability_key"
+            )
+        self.preflight(capability_key, operation=operation)
+
     def train(
         self,
         input_file: str,
@@ -90,7 +125,10 @@ class DeepMDAdapter:
         init_model_path: str | None = None,
         skip_neighbor_stat: bool = False,
         log_file: str | None = None,
+        *,
+        capability_key: CapabilityKey | None = None,
     ) -> str:
+        self._authorize("train", capability_key)
         argv = [*self.base_command, "train", input_file]
         if skip_neighbor_stat:
             argv.append("--skip-neighbor-stat")
@@ -100,7 +138,13 @@ class DeepMDAdapter:
             argv.extend(["--init-model", init_model_path])
         return _with_log(shlex.join(argv), log_file)
 
-    def freeze(self, output: str | None = None) -> str:
+    def freeze(
+        self,
+        output: str | None = None,
+        *,
+        capability_key: CapabilityKey | None = None,
+    ) -> str:
+        self._authorize("freeze", capability_key)
         argv = [*self.base_command, "freeze"]
         if output:
             argv.extend(["-o", output])
@@ -113,7 +157,10 @@ class DeepMDAdapter:
         prefix: str,
         head: str | None = None,
         log_file: str | None = None,
+        *,
+        capability_key: CapabilityKey | None = None,
     ) -> str:
+        self._authorize("test", capability_key)
         argv = [*self.base_command, "test", "-s", system, "-m", model, "-d", prefix]
         if head:
             argv.extend(["--head", head])
@@ -126,7 +173,10 @@ class DeepMDAdapter:
         output: str,
         head: str | None = None,
         log_file: str | None = None,
+        *,
+        capability_key: CapabilityKey | None = None,
     ) -> str:
+        self._authorize("eval-desc", capability_key)
         argv = [*self.base_command, "eval-desc", "-s", system, "-m", model, "-o", output]
         if head:
             argv.extend(["--head", head])
@@ -140,7 +190,10 @@ class DeepMDAdapter:
         head: str | None = None,
         dtype: str = "fp32",
         log_file: str | None = None,
+        *,
+        capability_key: CapabilityKey | None = None,
     ) -> str:
+        self._authorize("embed", capability_key)
         argv = [
             *self.base_command,
             "embed",

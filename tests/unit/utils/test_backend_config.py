@@ -29,3 +29,7 @@ class TestDPCommandBuilderBackend:
     def test_no_global_backend_state(self):
         assert not hasattr(DPCommandBuilder, "_backend")
         assert not hasattr(DPCommandBuilder, "set_backend")
+
+    def test_facade_emits_migration_warning(self):
+        with pytest.warns(DeprecationWarning, match="inject DeepMDAdapter"):
+            DPCommandBuilder.freeze("pt")

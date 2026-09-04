@@ -188,7 +188,7 @@ class TestFeatureExecutionManager:
             env_setup="",
             dp_backend="pt",
             omp_threads=1,
-            adapter=DeepMDAdapter("tf"),
+            adapter=DeepMDAdapter.for_legacy_unchecked("tf"),
         )
         manager.submit_cli_job(
             data_path="data",
