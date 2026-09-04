@@ -13,7 +13,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from dpeva.compatibility import CapabilityAttestation, CapabilityMatrix
+from dpeva.compatibility import CapabilityAttestation, CapabilityKey, CapabilityMatrix
 
 REQUIRED_CASES = (
     "preflight",
@@ -103,6 +103,55 @@ def _validate_record(record: dict[str, Any], case: str, job_dir: Path) -> list[s
     return errors
 
 
+def _load_bound_attestation_specs(job_dir: Path) -> tuple[list[dict[str, Any]], list[str]]:
+    """Load specs bound by launch input and report any freshness violation."""
+
+    errors: list[str] = []
+    try:
+        launch = _load(job_dir / "launch.json")
+        input_path = Path(str(launch["input_path"])).expanduser().resolve()
+        if _artifact_sha256(input_path) != launch["input_sha256"]:
+            errors.append("qualification input hash changed")
+        input_payload = _load(input_path)
+        raw_specs = input_payload["capability_attestation_specs"]
+        if not isinstance(raw_specs, list):
+            raise ValueError("capability attestation specs must be a list")
+        specs: list[dict[str, Any]] = []
+        cases: set[str] = set()
+        for raw in raw_specs:
+            if not isinstance(raw, dict) or set(raw) != {"case", "capability_key", "verification_command", "source"}:
+                raise ValueError("malformed capability attestation spec")
+            key = CapabilityKey.model_validate(raw["capability_key"])
+            if raw["source"] != "sai-v100-qualification" or not isinstance(raw["case"], str) or raw["case"] in cases:
+                raise ValueError("invalid or duplicate capability attestation spec case")
+            if not isinstance(raw["verification_command"], str) or not raw["verification_command"]:
+                raise ValueError("capability attestation spec command is empty")
+            cases.add(raw["case"])
+            specs.append({
+                "case": raw["case"],
+                "capability_key": key.model_dump(),
+                "verification_command": raw["verification_command"],
+                "source": raw["source"],
+            })
+        expected = [
+            {
+                "case": case,
+                "capability_key": record.key.model_dump(),
+                "verification_command": record.verification_command,
+                "source": "sai-v100-qualification",
+            }
+            for record in CapabilityMatrix.load_default().records
+            if record.sai_verification_cases
+            for case in record.sai_verification_cases
+        ]
+        if specs != expected:
+            errors.append("capability attestation specs are stale relative to manifest")
+        return specs, errors
+    except (KeyError, OSError, TypeError, ValueError, json.JSONDecodeError) as exc:
+        errors.append(f"invalid launch-bound capability specs: {exc}")
+        return [], errors
+
+
 def resolve_job_ref(ref_path: Path) -> tuple[Path, str]:
     pointer = _load(ref_path)
     job_dir_value = pointer.get("job_dir") or pointer.get("external_job_dir")
@@ -180,7 +229,8 @@ def collect_qualification(job_dir: Path, *, job_id: str | None = None, gpu: str 
     if not isinstance(gpu_value_from_record, str) or "v100" not in gpu_value_from_record.lower():
         if "gpu.json" not in environment_invalid:
             environment_invalid.append("gpu.json")
-    status = "finished" if not missing and not unknown and not malformed and not failed and not environment_missing and not environment_invalid else "failed"
+    bound_specs, spec_errors = _load_bound_attestation_specs(job_dir)
+    status = "finished" if not missing and not unknown and not malformed and not failed and not environment_missing and not environment_invalid and not spec_errors else "failed"
     report: dict[str, Any] = {
         "schema_version": "1.0", "qualification": "deepmd-3.2-sai-v100", "status": status,
         "job_id": selected_job_id,
@@ -192,6 +242,7 @@ def collect_qualification(job_dir: Path, *, job_id: str | None = None, gpu: str 
         "malformed_commands": malformed,
         "missing_environment": environment_missing,
         "invalid_environment": environment_invalid,
+        "invalid_evidence": spec_errors,
         "commands": records,
         "collected_at": datetime.now(timezone.utc).isoformat(),
     }
@@ -199,22 +250,18 @@ def collect_qualification(job_dir: Path, *, job_id: str | None = None, gpu: str 
     if status == "finished" and selected_job_id and str(selected_job_id).isdigit():
         version_record = environment.get("deepmd_version", {})
         version = version_record.get("value") if isinstance(version_record, dict) else None
-        gpu_record = environment.get("gpu", {})
-        gpu_identity = gpu_record.get("value") if isinstance(gpu_record, dict) else gpu_value
-        specs = [
-            (case, record)
-            for record in CapabilityMatrix.load_default().records
-            if record.sai_verification_cases
-            for case in record.sai_verification_cases
-        ]
-        for case, record in specs:
+        # Bind every attestation to the same aggregate GPU identity, including
+        # an explicit collector override used for scheduler evidence.
+        gpu_identity = gpu_value
+        for spec in bound_specs:
+            case = spec["case"]
             command_record = records.get(case, {})
             try:
                 attestation = CapabilityAttestation(
                     status="finished",
                     returncode=command_record["returncode"],
-                    capability_key=record.key,
-                    verification_command=record.verification_command,
+                    capability_key=CapabilityKey.model_validate(spec["capability_key"]),
+                    verification_command=spec["verification_command"],
                     deepmd_version=version,
                     source="sai-v100-qualification",
                     case=case,
@@ -238,7 +285,7 @@ def collect_qualification(job_dir: Path, *, job_id: str | None = None, gpu: str 
         return existing
     if not finalize and not (require_complete and status == "finished"):
         if require_complete and status != "finished":
-            raise RuntimeError("qualification evidence is incomplete: " + ", ".join(missing + unknown + malformed + failed + environment_missing))
+            raise RuntimeError("qualification evidence is incomplete: " + ", ".join(missing + unknown + malformed + failed + environment_missing + spec_errors))
         return report
     fd, name = tempfile.mkstemp(prefix=".qualification.", dir=str(job_dir), text=True)
     try:
@@ -254,7 +301,7 @@ def collect_qualification(job_dir: Path, *, job_id: str | None = None, gpu: str 
         except FileNotFoundError:
             pass
     if require_complete and status != "finished":
-        raise RuntimeError("qualification evidence is incomplete: " + ", ".join(missing + failed + environment_missing))
+        raise RuntimeError("qualification evidence is incomplete: " + ", ".join(missing + failed + environment_missing + spec_errors))
     return report
 
 

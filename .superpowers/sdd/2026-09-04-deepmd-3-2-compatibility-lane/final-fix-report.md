@@ -27,10 +27,10 @@ submitting another SAI job or promoting any capability.
 
 ## Verification
 
-- Focused compatibility/qualification tests: `62 passed` (compatibility and
+- Focused compatibility/qualification tests: `64 passed` (compatibility and
   qualification unit scopes; no skips).
 - `tests/unit/scripts/test_deepmd_32_qualification.py`: `22 passed`.
-- Full unit suite: `820 passed, 5 warnings` (intentional deprecated facade
+- Full unit suite: `822 passed, 5 warnings` (intentional deprecated facade
   warnings).
 - `ft2dp-post` local DeepMD contracts: `6 passed, 4 skipped`; skips are the
   missing PT and DPA4C model fixtures.
@@ -63,3 +63,16 @@ GPU/runtime qualification.
   evidence. Test/eval/embed SAI case mappings cover regular and EMA cases;
   planned routes have null cases and cannot be promoted. Candidate evaluation
   is explicitly planned policy-only and has no CLI verification command.
+
+## Final-fix round 3
+
+- The gate now directly validates every future `supported` manifest row and
+  rejects arbitrary existing JSON, report anchors, and empty evidence.
+- SAI aggregate validation requires the exact finished aggregate envelope,
+  numeric JobID, V100 identity, complete per-record case set, and consistent
+  key/command/source/version/JobID/GPU on every attestation. Missing,
+  duplicate, cross-job, and cross-GPU cases fail closed.
+- Collector input is launch-bound by path and SHA-256. It validates the input
+  attestation-spec schema and uniqueness, compares specs to the current
+  manifest only as a freshness check, and generates attestations solely from
+  those launch specs and validated finished command records.

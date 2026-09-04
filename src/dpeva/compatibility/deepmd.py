@@ -255,23 +255,57 @@ def _evidence_matches(record: CapabilityRecord, payload: dict[str, object], *, s
     # command records and prose reports are deliberately insufficient.
     from .attestation import CapabilityAttestation
 
-    raw = payload.get("attestations")
-    candidates = raw if isinstance(raw, list) else [payload]
+    is_aggregate = "attestations" in payload
+    if is_aggregate:
+        if (
+            payload.get("schema_version") != "1.0"
+            or payload.get("status") != "finished"
+        ):
+            return False
+        if sai:
+            if payload.get("qualification") != "deepmd-3.2-sai-v100":
+                return False
+            aggregate_job = payload.get("job_id")
+            aggregate_gpu = payload.get("gpu")
+            if not isinstance(aggregate_job, (int, str)) or isinstance(aggregate_job, bool) or not str(aggregate_job).isdigit():
+                return False
+            if not isinstance(aggregate_gpu, str) or "v100" not in aggregate_gpu.lower():
+                return False
+        raw = payload.get("attestations")
+        if not isinstance(raw, list):
+            return False
+        candidates = raw
+    else:
+        candidates = [payload]
     expected_source = "sai-v100-qualification" if sai else "cpu-contract"
+    if is_aggregate and not record.sai_verification_cases and sai:
+        return False
+    matches = []
     for candidate in candidates:
         if not isinstance(candidate, dict):
             continue
         try:
             attestation = CapabilityAttestation.model_validate(candidate)
         except Exception:
-            continue
+            return False
+        if is_aggregate and sai and (
+            str(attestation.job_id) != str(payload.get("job_id"))
+            or attestation.gpu != payload.get("gpu")
+        ):
+            return False
         if (
             attestation.source == expected_source
             and attestation.capability_key == record.key
             and attestation.verification_command == record.verification_command
         ):
-            return True
-    return False
+            matches.append(attestation)
+    if len(matches) != 1 and not (sai and len(matches) == len(record.sai_verification_cases or ())):
+        return False
+    if sai:
+        expected_cases = tuple(record.sai_verification_cases or ())
+        observed_cases = tuple(attestation.case for attestation in matches)
+        return len(matches) == len(expected_cases) and len(set(observed_cases)) == len(observed_cases) and set(observed_cases) == set(expected_cases)
+    return len(matches) == 1
 
 
 def validate_promotion_evidence(record: CapabilityRecord, repo_root: str | Path) -> bool:

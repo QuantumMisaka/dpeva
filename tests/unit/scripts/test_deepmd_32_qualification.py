@@ -69,6 +69,7 @@ def test_collector_refuses_partial_success(tmp_path: Path) -> None:
     assert report["status"] == "failed"
     assert report["job_id"] == "123"
     assert "dpa4c-periodic-eval-desc" in report["failed_commands"]
+    assert report["attestations"] == []
 
 
 def test_collector_rejects_mutable_latest(tmp_path: Path) -> None:
@@ -96,8 +97,14 @@ def test_collector_rejects_unrecorded_job_dir_cli(tmp_path: Path) -> None:
 def test_collector_accepts_directory_artifact_only_after_complete_records(tmp_path: Path) -> None:
     from scripts.validation.collect_deepmd_32_qualification import REQUIRED_CASES, _artifact_sha256
 
+    model_root = tmp_path / "models"
+    model_root.mkdir()
+    for name in ("model.ckpt.pt", "model_ema.ckpt.pt"):
+        (model_root / name).write_bytes(name.encode())
+    input_path = tmp_path / "input.json"
+    prepare(model_root, input_path)
     launch = tmp_path / "launch.json"
-    launch.write_text('{"schema_version":"1.0"}', encoding="utf-8")
+    launch.write_text(json.dumps({"schema_version": "1.0", "input_path": str(input_path), "input_sha256": _sha256(input_path)}), encoding="utf-8")
     for case in REQUIRED_CASES:
         artifact_dir = tmp_path / "artifacts" / case
         artifact_dir.mkdir(parents=True, exist_ok=True)
@@ -119,7 +126,7 @@ def test_collector_accepts_directory_artifact_only_after_complete_records(tmp_pa
         verification_command="pytest tests/contract/deepmd/test_cli_contract.py::test_pt_test_requires_numeric_output -q",
         required_evidence=("sai-v100-qualification",), verification_status="implemented",
         evidence_ref=CapabilityEvidence(sai_qualification="qualification.json"),
-        sai_verification_cases=("pt-test",),
+        sai_verification_cases=("pt-test", "pt-test-ema"),
     )
     assert validate_promotion_evidence(record, tmp_path)
 

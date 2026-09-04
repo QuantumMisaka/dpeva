@@ -30,6 +30,8 @@ class CapabilityAttestation(BaseModel):
         if self.returncode != 0:
             raise ValueError("finished attestation requires returncode 0")
         if self.source == "sai-v100-qualification":
+            if self.case is None:
+                raise ValueError("SAI attestation requires a qualification case")
             if self.job_id is None or not str(self.job_id).isdigit():
                 raise ValueError("SAI attestation requires numeric job_id")
             if not self.gpu or "v100" not in self.gpu.lower():

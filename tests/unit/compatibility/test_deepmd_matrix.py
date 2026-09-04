@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import copy
 from collections import Counter
 from pathlib import Path
 
@@ -211,29 +212,34 @@ def test_unknown_status_is_rejected(tmp_path: Path) -> None:
         CapabilityMatrix.load(path)
 
 
-def _evidence_path(reference: str) -> Path | None:
-    """Resolve a repository-local evidence reference, ignoring its anchor."""
-
-    target = reference.split("#", 1)[0]
-    if "://" in target:
-        return None
-    return Path(target)
-
-
 def test_supported_capabilities_have_complete_evidence() -> None:
-    """Promotion is impossible without materialized, exact evidence refs."""
+    """Every supported row must pass the real promotion gate."""
 
     matrix = CapabilityMatrix.load_default()
     for record in matrix.records:
         if record.status != "supported":
             continue
-        assert record.evidence_ref is not None
-        cpu_path = _evidence_path(record.evidence_ref.cpu_contract)
-        assert cpu_path is not None and cpu_path.is_file()
-        if record.key.environment.startswith("sai-"):
-            assert record.evidence_ref.sai_qualification
-            sai_path = _evidence_path(record.evidence_ref.sai_qualification)
-            assert sai_path is not None and sai_path.is_file()
+        assert validate_promotion_evidence(record, Path.cwd())
+
+
+def test_supported_mutation_cannot_promote_arbitrary_existing_json(tmp_path: Path) -> None:
+    """A future status edit cannot pass merely by pointing at any JSON file."""
+
+    payload = json.loads(Path("src/dpeva/compatibility/deepmd-3.2.json").read_text(encoding="utf-8"))
+    payload["records"][0].update({
+        "status": "supported",
+        "verification_command": "pytest tests/contract/deepmd/test_cli_contract.py::test_pt_test_requires_numeric_output -q",
+        "required_evidence": ["cpu-contract"],
+        "verification_status": "implemented",
+        "evidence_ref": {"cpu_contract": "src/dpeva/compatibility/deepmd-3.2.json"},
+        "sai_verification_cases": None,
+    })
+    arbitrary = tmp_path / "arbitrary.json"
+    arbitrary.write_text("{}\n", encoding="utf-8")
+    payload["records"][0]["evidence_ref"] = {"cpu_contract": arbitrary.name}
+    (tmp_path / "manifest.json").write_text(json.dumps(payload), encoding="utf-8")
+    record = CapabilityMatrix.load(tmp_path / "manifest.json").records[0]
+    assert not validate_promotion_evidence(record, tmp_path)
 
 
 def test_current_matrix_has_explicit_unqualified_status_distribution() -> None:
@@ -364,3 +370,42 @@ def test_promotion_gate_requires_sai_job_and_gpu_evidence(tmp_path: Path) -> Non
     assert validate_promotion_evidence(record, tmp_path)
     (tmp_path / "sai.json").unlink()
     assert not validate_promotion_evidence(record, tmp_path)
+
+
+def test_sai_aggregate_requires_exact_case_set_and_identity(tmp_path: Path) -> None:
+    command = "pytest tests/contract/deepmd/test.py::test_case -q"
+    key = _key(operation="test", backend="pt", model_family="DPA4", artifact="checkpoint", environment="cpu")
+    attestations = [
+        CapabilityAttestation(
+            status="finished", returncode=0, capability_key=key,
+            verification_command=command, deepmd_version="DeePMD-kit v3.2.0",
+            source="sai-v100-qualification", case=case, job_id=123, gpu="Tesla V100",
+        ).model_dump(mode="json")
+        for case in ("pt-test", "pt-test-ema")
+    ]
+    aggregate = {
+        "schema_version": "1.0", "qualification": "deepmd-3.2-sai-v100",
+        "status": "finished", "job_id": "123", "gpu": "Tesla V100",
+        "attestations": attestations,
+    }
+    (tmp_path / "sai.json").write_text(json.dumps(aggregate), encoding="utf-8")
+    record = CapabilityRecord(
+        key=key, status="supported", version_range=">=3.2,<3.3",
+        verification_command=command,
+        required_evidence=("sai-v100-qualification",), verification_status="implemented",
+        evidence_ref=CapabilityEvidence(sai_qualification="sai.json"),
+        sai_verification_cases=("pt-test", "pt-test-ema"),
+    )
+    assert validate_promotion_evidence(record, tmp_path)
+    for mutation in ("missing", "duplicate", "job", "gpu"):
+        changed = copy.deepcopy(aggregate)
+        if mutation == "missing":
+            changed["attestations"].pop()
+        elif mutation == "duplicate":
+            changed["attestations"][1]["case"] = "pt-test"
+        elif mutation == "job":
+            changed["attestations"][1]["job_id"] = "999"
+        else:
+            changed["attestations"][1]["gpu"] = "Tesla A100"
+        (tmp_path / "sai.json").write_text(json.dumps(changed), encoding="utf-8")
+        assert not validate_promotion_evidence(record, tmp_path), mutation
