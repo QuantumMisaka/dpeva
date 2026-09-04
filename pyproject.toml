@@ -74,5 +74,8 @@ dpeva = "dpeva.cli:main"
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.package-data]
+dpeva = ["compatibility/*.json"]
+
 [tool.setuptools.dynamic]
 version = {attr = "dpeva.__version__"}

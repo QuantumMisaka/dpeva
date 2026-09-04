@@ -1,0 +1,171 @@
+{
+  "schema_version": "1.0",
+  "deepmd_version": "3.2",
+  "records": [
+    {
+      "key": {
+        "operation": "train",
+        "backend": "pt",
+        "model_family": "DPA4",
+        "artifact": "checkpoint",
+        "data_format": "deepmd/npy",
+        "environment": "cpu"
+      },
+      "status": "experimental",
+      "version_range": ">=3.2,<3.3",
+      "verification_command": "pytest tests/contract/deepmd/test_dpa4_train.py -q",
+      "evidence_ref": null,
+      "upstream_issue": null
+    },
+    {
+      "key": {
+        "operation": "fine-tune",
+        "backend": "pt",
+        "model_family": "DPA4",
+        "artifact": "checkpoint",
+        "data_format": "deepmd/npy",
+        "environment": "cpu"
+      },
+      "status": "experimental",
+      "version_range": ">=3.2,<3.3",
+      "verification_command": "pytest tests/contract/deepmd/test_dpa4_fine_tune.py -q",
+      "evidence_ref": null,
+      "upstream_issue": null
+    },
+    {
+      "key": {
+        "operation": "test",
+        "backend": "pt",
+        "model_family": "DPA4",
+        "artifact": "checkpoint",
+        "data_format": "deepmd/npy",
+        "environment": "cpu"
+      },
+      "status": "experimental",
+      "version_range": ">=3.2,<3.3",
+      "verification_command": "pytest tests/contract/deepmd/test_dpa4_test.py -q",
+      "evidence_ref": null,
+      "upstream_issue": null
+    },
+    {
+      "key": {
+        "operation": "embed",
+        "backend": "pt",
+        "model_family": "DPA4",
+        "artifact": "checkpoint",
+        "data_format": "deepmd/npy",
+        "environment": "cpu"
+      },
+      "status": "experimental",
+      "version_range": ">=3.2,<3.3",
+      "verification_command": "pytest tests/contract/deepmd/test_dpa4_embed.py -q",
+      "evidence_ref": null,
+      "upstream_issue": null
+    },
+    {
+      "key": {
+        "operation": "eval-desc",
+        "backend": "pt-expt",
+        "model_family": "DPA4C",
+        "artifact": "exportable",
+        "data_format": "deepmd/npy",
+        "environment": "cpu-periodic"
+      },
+      "status": "experimental",
+      "version_range": ">=3.2,<3.3",
+      "verification_command": "pytest tests/contract/deepmd/test_dpa4c_eval_desc.py -q",
+      "evidence_ref": null,
+      "upstream_issue": null
+    },
+    {
+      "key": {
+        "operation": "embed",
+        "backend": "pt-expt",
+        "model_family": "DPA4C",
+        "artifact": "exportable",
+        "data_format": "deepmd/npy",
+        "environment": "cpu-periodic"
+      },
+      "status": "unsupported",
+      "version_range": ">=3.2,<3.3",
+      "verification_command": "dp --pt-expt embed -h",
+      "evidence_ref": null,
+      "upstream_issue": null
+    },
+    {
+      "key": {
+        "operation": "train",
+        "backend": "pt",
+        "model_family": "DPA4",
+        "artifact": "checkpoint",
+        "data_format": "deepmd/lmdb",
+        "environment": "cpu"
+      },
+      "status": "experimental",
+      "version_range": ">=3.2,<3.3",
+      "verification_command": "pytest tests/contract/deepmd/test_lmdb_training.py -q",
+      "evidence_ref": null,
+      "upstream_issue": null
+    },
+    {
+      "key": {
+        "operation": "candidate-evaluation",
+        "backend": "pt",
+        "model_family": "DPA4",
+        "artifact": "checkpoint",
+        "data_format": "deepmd/npy",
+        "environment": "cpu"
+      },
+      "status": "experimental",
+      "version_range": ">=3.2,<3.3",
+      "verification_command": "pytest tests/contract/deepmd/test_candidate_evaluation.py -q",
+      "evidence_ref": null,
+      "upstream_issue": null
+    },
+    {
+      "key": {
+        "operation": "pretrained-download",
+        "backend": "pt",
+        "model_family": "DPA4",
+        "artifact": "pretrained-alias",
+        "data_format": "deepmd/npy",
+        "environment": "cpu"
+      },
+      "status": "experimental",
+      "version_range": ">=3.2,<3.3",
+      "verification_command": "pytest tests/contract/deepmd/test_pretrained_alias.py -q",
+      "evidence_ref": null,
+      "upstream_issue": null
+    },
+    {
+      "key": {
+        "operation": "deploy",
+        "backend": "pt",
+        "model_family": "DPA4",
+        "artifact": "pt2",
+        "data_format": "deepmd/npy",
+        "environment": "cpu"
+      },
+      "status": "experimental",
+      "version_range": ">=3.2,<3.3",
+      "verification_command": "pytest tests/contract/deepmd/test_pt2_deployment.py -q",
+      "evidence_ref": null,
+      "upstream_issue": null
+    },
+    {
+      "key": {
+        "operation": "eval-desc",
+        "backend": "pt-expt",
+        "model_family": "DPA4C",
+        "artifact": "exportable",
+        "data_format": "deepmd/npy",
+        "environment": "cpu-non-pbc"
+      },
+      "status": "blocked-upstream",
+      "version_range": ">=3.2,<3.3",
+      "verification_command": "pytest tests/contract/deepmd/test_dpa4c_non_pbc.py -q",
+      "evidence_ref": null,
+      "upstream_issue": "https://github.com/deepmodeling/deepmd-kit/issues/6002"
+    }
+  ]
+}
