@@ -367,6 +367,13 @@ class LabelingTaskClassConfig(StrictConfigModel):
 class InferenceConfig(BaseWorkflowConfig):
     """Configuration for Inference Workflow."""
     data_path: Path = Field(..., description="Path to test dataset.")
+    model_ref_paths: list[Path] = Field(
+        default_factory=list,
+        description=(
+            "Explicit JSON ModelArtifactRef files.  When empty, inference "
+            "uses the one-release legacy numeric-directory discovery bridge."
+        ),
+    )
     model_head: Optional[str] = Field(None, description="Model head name (optional for frozen models).")
     results_prefix: str = Field(DEFAULT_RESULTS_PREFIX, description="Output file prefix.")
     task_name: str = DEFAULT_INFER_TASK_NAME

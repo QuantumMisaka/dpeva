@@ -8,18 +8,23 @@ from dpeva.constants import FILENAME_STATS_JSON
 from dpeva.inference.managers import InferenceIOManager
 
 
-def test_discover_models_stops_at_first_missing_index(tmp_path):
+def test_discover_models_handles_gaps_and_ema(tmp_path):
     work_dir = tmp_path / "work"
     (work_dir / "0").mkdir(parents=True)
     (work_dir / "0" / "model.ckpt.pt").touch()
     (work_dir / "2").mkdir(parents=True)
     (work_dir / "2" / "model.ckpt.pt").touch()
+    (work_dir / "0" / "model_ema.ckpt.pt").touch()
 
     manager = InferenceIOManager(str(work_dir))
 
     models = manager.discover_models()
 
-    assert models == [str(work_dir / "0" / "model.ckpt.pt")]
+    assert models == [
+        str(work_dir / "0" / "model.ckpt.pt"),
+        str(work_dir / "0" / "model_ema.ckpt.pt"),
+        str(work_dir / "2" / "model.ckpt.pt"),
+    ]
 
 
 def test_load_composition_info_returns_none_for_invalid_path(tmp_path):

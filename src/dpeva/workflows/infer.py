@@ -10,6 +10,7 @@ from dpeva.constants import WORKFLOW_FINISHED_TAG, LOG_FILE_INFER, FILENAME_METR
 from dpeva.utils.logs import setup_workflow_logger
 from dpeva.utils.exceptions import PartialWorkflowError, WorkflowError
 from dpeva.run.context import RunContext, RunOptions, input_identity, source_identity
+from dpeva.run.model import ModelArtifactRef, require_operation
 from dpeva.run.models import JobRecord
 from dpeva.run.status import RunEventKind, RunState
 
@@ -68,8 +69,23 @@ class InferenceWorkflow:
         self.task_name = self.config.task_name
         self.head = self.config.model_head
         
-        # Model discovery
-        self.models_paths = self.io_manager.discover_models()
+        # Model identity. Explicit references are authoritative; the empty
+        # configuration remains a one-release bridge for existing work dirs.
+        if self.config.model_ref_paths:
+            self.model_refs: list[ModelArtifactRef] = self.io_manager.load_model_refs(
+                self.config.model_ref_paths
+            )
+        else:
+            self.logger.warning(
+                "model_ref_paths is empty; using legacy numeric-directory model discovery "
+                "for this release (family=legacy-unknown)"
+            )
+            self.model_refs = self.io_manager.discover_model_refs(
+                family="legacy-unknown", backend=self.config.dp_backend
+            )
+        for ref in self.model_refs:
+            require_operation(ref, "test")
+        self.models_paths = self.io_manager.paths_from_refs(self.model_refs)
         self.logger.info(f"Discovered {len(self.models_paths)} models in {self.work_dir}")
 
     def _setup_logger(self):

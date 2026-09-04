@@ -16,6 +16,7 @@ from dpeva.io.dataset import load_systems
 from dpeva.utils.command import DPCommandBuilder
 from dpeva.run.artifacts import ArtifactValidationError, validate_inference_outputs
 from dpeva.run.models import JobRecord
+from dpeva.run.model import ModelArtifactRef, load_model_ref, resolve_model_refs
 from dpeva.run.status import RunState
 
 logger = logging.getLogger(__name__)
@@ -33,18 +34,33 @@ class InferenceIOManager:
         self.logger = logging.getLogger(__name__)
 
     def discover_models(self) -> List[str]:
-        """Discover models in work_dir subdirectories (0/, 1/, ...)."""
-        models_paths = []
-        if os.path.exists(self.work_dir):
-            i = 0
-            while True:
-                possible_model = os.path.join(self.work_dir, str(i), "model.ckpt.pt")
-                if os.path.exists(possible_model):
-                    models_paths.append(possible_model)
-                    i += 1
-                else:
-                    break
-        return models_paths
+        """Return legacy-discovered model paths, including regular and EMA files.
+
+        New callers should retain the references from :meth:`discover_model_refs`;
+        this path-only method remains for the public manager compatibility API.
+        """
+        return self.paths_from_refs(
+            self.discover_model_refs(family="legacy-unknown", backend="pt-expt")
+        )
+
+    def discover_model_refs(self, *, family: str, backend: str) -> list[ModelArtifactRef]:
+        """Discover explicit references from the legacy numeric layout."""
+        return resolve_model_refs(Path(self.work_dir), family=family, backend=backend)
+
+    @staticmethod
+    def paths_from_refs(refs: list[ModelArtifactRef]) -> List[str]:
+        """Convert validated references at the execution-manager boundary."""
+        paths: list[str] = []
+        for ref in refs:
+            path = ref.resolved_path or ref.path
+            if path:
+                paths.append(path)
+        return paths
+
+    @staticmethod
+    def load_model_refs(paths: list[Path]) -> list[ModelArtifactRef]:
+        """Load explicit reference files without any implicit discovery."""
+        return [load_model_ref(path) for path in paths]
 
     def load_composition_info(self, data_path: str) -> Tuple[Optional[List[Dict]], Optional[List[int]]]:
         """Load composition info using dpdata."""

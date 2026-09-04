@@ -3,6 +3,14 @@ from .models import ArtifactRecord, FailureRecord, JobRecord, RunEvent, RunManif
 from .recorder import StatusRecorder
 from .context import RunContext, RunOptions
 from .dataset import DatasetManifest, DatasetParent, LineageValidationError, validate_lineage_counts
+from .model import (
+    ModelArtifactKind,
+    ModelArtifactRef,
+    ModelRole,
+    load_model_ref,
+    require_operation,
+    resolve_model_refs,
+)
 
 __all__ = [
     "ArtifactRecord",
@@ -21,4 +29,10 @@ __all__ = [
     "LineageValidationError",
     "transition",
     "validate_lineage_counts",
+    "ModelArtifactKind",
+    "ModelArtifactRef",
+    "ModelRole",
+    "load_model_ref",
+    "require_operation",
+    "resolve_model_refs",
 ]
