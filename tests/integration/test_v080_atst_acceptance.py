@@ -85,7 +85,7 @@ def test_v080_explore_cli_acceptance_writes_manifest(monkeypatch, tmp_path: Path
         encoding="utf-8",
     )
     fake_atst.write_text(
-        "#!/usr/bin/env python\n"
+        f"#!{sys.executable}\n"
         "from pathlib import Path\n"
         "Path('result.extxyz').write_text('1\\nProperties=species:S:1:pos:R:3\\nH 0 0 0\\n', encoding='utf-8')\n",
         encoding="utf-8",

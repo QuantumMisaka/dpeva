@@ -30,7 +30,7 @@ def test_e2e_cycle_label_integration_analysis(
     job_bundle = tmp_path / "bundle_0"
     job_bundle.mkdir()
     label_manager.prepare_tasks.return_value = [job_bundle]
-    label_manager.process_results.return_value = ([], [])
+    label_manager.extract_results.return_value = ([], [], [])
 
     def _collect_and_export():
         cleaned = tmp_path / "outputs" / "cleaned"
