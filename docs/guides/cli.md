@@ -186,6 +186,8 @@ dpeva infer config.json --run-id infer-20260904-a1b2c3
   - 发布采用 Linux `renameat2(RENAME_NOREPLACE)`，不覆盖并发产生的目标目录；若最终目录
     已发布但目录持久化确认失败，会报告 `PublicationDurabilityError`。此时保留已发布 bundle，
     应先检查其清单与摘要，再选择新的输出路径重试。
+    staging 目录持久化确认失败时不会执行 rename，临时目录会清理且最终路径保持不存在；
+    不支持 `renameat2(RENAME_NOREPLACE)` 的平台直接失败，不回退到普通 rename。
 
 ### 4.7 analysis（双模式分析）
 

@@ -179,7 +179,13 @@ class DataIntegrationManager:
                 "dataset_manifest_sha256": hashlib.sha256(manifest_bytes).hexdigest(),
             }
             self._write_json_atomic(staging_path / "integration_summary.json", summary)
-            self._fsync_directory(staging_path)
+            try:
+                self._fsync_directory(staging_path, strict=True)
+            except OSError as exc:
+                raise PublicationDurabilityError(
+                    "Bundle not published because staging durability confirmation "
+                    f"failed at {staging_path}"
+                ) from exc
             self._rename_noreplace(staging_path, merged_output_path)
             try:
                 self._fsync_directory(merged_output_path.parent, strict=True)
@@ -335,7 +341,7 @@ class DataIntegrationManager:
             raise FileExistsError(
                 f"Merged output path appeared during publication: {target}"
             )
-        if error in {errno.ENOSYS, errno.EINVAL, errno.ENOTSUP}:
+        if error in {errno.ENOSYS, errno.EINVAL, errno.ENOTSUP, errno.EOPNOTSUPP}:
             raise PublicationError(
                 "safe atomic publication requires Linux "
                 "renameat2(RENAME_NOREPLACE)"

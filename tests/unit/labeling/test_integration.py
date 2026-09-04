@@ -1,3 +1,4 @@
+import errno
 import hashlib
 import json
 from pathlib import Path
@@ -8,6 +9,7 @@ import pytest
 from dpeva.labeling.integration import (
     DataIntegrationManager,
     PublicationDurabilityError,
+    PublicationError,
 )
 
 
@@ -415,3 +417,70 @@ def test_post_rename_durability_failure_keeps_published_bundle(
     assert not list(tmp_path.glob(".merged.staging-*"))
     with pytest.raises(FileExistsError, match="refusing overwrite"):
         manager.integrate(new_labeled_data_path=new_dir, merged_output_path=out_dir)
+
+
+@patch("dpeva.labeling.integration.dpdata.MultiSystems", _FakeMultiSystems)
+@patch("dpeva.labeling.integration.load_systems")
+def test_staging_durability_failure_never_publishes_final(
+    mock_load_systems, tmp_path
+):
+    new_dir = tmp_path / "new_cleaned"
+    out_dir = tmp_path / "merged"
+    new_dir.mkdir()
+    mock_load_systems.return_value = [_FakeSystem([[[0.0, 0.0, 0.0]]])]
+    manager = DataIntegrationManager()
+
+    def fail_staging(path, *, strict=False):
+        if strict:
+            raise OSError("injected staging directory fsync failure")
+
+    with patch.object(manager, "_fsync_directory", side_effect=fail_staging):
+        with pytest.raises(PublicationDurabilityError, match="Bundle not published"):
+            manager.integrate(new_labeled_data_path=new_dir, merged_output_path=out_dir)
+
+    assert not out_dir.exists()
+    assert not list(tmp_path.glob(".merged.staging-*"))
+
+
+def test_rename_noreplace_unsupported_fails_closed_without_fallback(tmp_path):
+    source = tmp_path / "staging"
+    target = tmp_path / "merged"
+    source.mkdir()
+    (source / "payload").write_text("source")
+
+    with patch("dpeva.labeling.integration.ctypes.CDLL", return_value=object()):
+        with patch("dpeva.labeling.integration.os.rename") as plain_rename:
+            with pytest.raises(PublicationError, match="renameat2"):
+                DataIntegrationManager._rename_noreplace(source, target)
+
+    plain_rename.assert_not_called()
+    assert source.exists()
+    assert not target.exists()
+
+
+class _FakeRenameAt2:
+    def __call__(self, *args):
+        return -1
+
+
+class _FakeLibc:
+    def __init__(self):
+        self.renameat2 = _FakeRenameAt2()
+
+
+@pytest.mark.parametrize("error", [errno.ENOSYS, errno.EINVAL, errno.ENOTSUP])
+def test_rename_noreplace_syscall_failure_fails_closed(error, tmp_path):
+    source = tmp_path / "staging"
+    target = tmp_path / "merged"
+    source.mkdir()
+    (source / "payload").write_text("source")
+
+    with patch("dpeva.labeling.integration.ctypes.CDLL", return_value=_FakeLibc()):
+        with patch("dpeva.labeling.integration.ctypes.get_errno", return_value=error):
+            with patch("dpeva.labeling.integration.os.rename") as plain_rename:
+                with pytest.raises(PublicationError, match="renameat2"):
+                    DataIntegrationManager._rename_noreplace(source, target)
+
+    plain_rename.assert_not_called()
+    assert source.exists()
+    assert not target.exists()

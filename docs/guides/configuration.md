@@ -268,6 +268,8 @@ parent manifest ref；待父清单随 bundle 一并固化后再扩展该引用�
 帧数或 type map 冲突会在导出和下游交接前失败。
 发布目标使用不覆盖语义；`PublicationDurabilityError` 表示 bundle 已发布但目录持久化
 确认失败，不能对同一路径盲目重跑，应检查已发布证据或改用新的输出路径。
+staging 目录的持久化确认失败则不会发布最终目录；不支持
+`renameat2(RENAME_NOREPLACE)` 的平台直接 fail-closed，不使用普通 rename 回退。
 
 ### 5.6 Analysis
 
