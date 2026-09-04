@@ -6,6 +6,7 @@ from .deepmd import (
     CapabilityMatrix,
     CapabilityRecord,
     CapabilityUnavailable,
+    validate_promotion_evidence,
 )
 from .adapter import DeepMDAdapter
 
@@ -15,5 +16,6 @@ __all__ = [
     "CapabilityMatrix",
     "CapabilityRecord",
     "CapabilityUnavailable",
+    "validate_promotion_evidence",
     "DeepMDAdapter",
 ]

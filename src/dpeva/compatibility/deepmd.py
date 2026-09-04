@@ -23,6 +23,15 @@ CapabilityStatus = Literal[
     "unsupported",
     "blocked-upstream",
 ]
+EvidenceKind = Literal["cpu-contract", "sai-v100-qualification"]
+VerificationStatus = Literal["implemented", "planned", "blocked"]
+SAI_VERIFICATION_CASES = frozenset(
+    {
+        "preflight", "pip-freeze", "deepmd-version", "torch-cuda", "gpu",
+        "pt-test", "pt-test-ema", "pt-eval-desc", "pt-eval-desc-ema",
+        "pt-embed", "pt-embed-ema", "dpa4c-periodic-eval-desc",
+    }
+)
 
 
 class CapabilityKey(BaseModel):
@@ -43,7 +52,7 @@ class CapabilityEvidence(BaseModel):
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
-    cpu_contract: StrictStr = Field(min_length=1)
+    cpu_contract: StrictStr | None = Field(default=None, min_length=1)
     sai_qualification: StrictStr | None = None
 
 
@@ -55,13 +64,26 @@ class CapabilityRecord(BaseModel):
     key: CapabilityKey
     status: CapabilityStatus
     version_range: StrictStr = Field(min_length=1)
-    verification_command: StrictStr = Field(min_length=1)
+    verification_command: StrictStr | None = Field(default=None, min_length=1)
+    required_evidence: tuple[EvidenceKind, ...] = ()
+    verification_status: VerificationStatus = "implemented"
     evidence_ref: CapabilityEvidence | None = None
     upstream_issue: StrictStr | None = None
     covered_roles: tuple[Literal["regular", "ema"], ...] | None = None
+    sai_verification_case: StrictStr | None = None
 
     @model_validator(mode="after")
     def validate_status_metadata(self) -> "CapabilityRecord":
+        if self.verification_status in {"planned", "blocked"} and self.verification_command is not None:
+            raise ValueError("planned/blocked capability must not declare verification_command")
+        if self.verification_status == "implemented" and not self.verification_command:
+            raise ValueError("implemented capability requires verification_command")
+        if len(self.required_evidence) != len(set(self.required_evidence)):
+            raise ValueError("required_evidence must not contain duplicates")
+        if self.sai_verification_case is not None and not self.sai_verification_case:
+            raise ValueError("sai_verification_case must not be empty")
+        if self.sai_verification_case not in (None, *SAI_VERIFICATION_CASES):
+            raise ValueError("sai_verification_case is not a required qualification case")
         if self.status == "blocked-upstream" and not self.upstream_issue:
             raise ValueError("blocked-upstream capability requires upstream_issue")
         if self.status != "blocked-upstream" and self.upstream_issue is not None:
@@ -73,6 +95,12 @@ class CapabilityRecord(BaseModel):
                 )
         elif self.covered_roles is not None:
             raise ValueError("covered_roles is only valid for candidate-evaluation")
+        if self.status == "supported" and self.verification_status != "implemented":
+            raise ValueError("supported capability requires implemented verification")
+        if self.status == "supported":
+            missing = [kind for kind in self.required_evidence if not self.evidence_ref]
+            if missing:
+                raise ValueError("supported capability requires evidence_ref")
         return self
 
 
@@ -182,10 +210,95 @@ class CapabilityMatrix:
         return record
 
 
+def _evidence_path(reference: str, repo_root: Path) -> Path | None:
+    """Resolve a repository-local JSON evidence reference, fail closed."""
+
+    if not reference or "#" in reference or "://" in reference:
+        return None
+    path = (repo_root / reference).resolve()
+    try:
+        path.relative_to(repo_root.resolve())
+    except ValueError:
+        return None
+    return path if path.suffix == ".json" and path.is_file() else None
+
+
+def _read_json_evidence(reference: str | None, repo_root: Path) -> dict[str, object] | None:
+    if not reference:
+        return None
+    path = _evidence_path(reference, repo_root)
+    if path is None:
+        return None
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError):
+        return None
+    return payload if isinstance(payload, dict) else None
+
+
+def _evidence_matches(record: CapabilityRecord, payload: dict[str, object], *, sai: bool) -> bool:
+    if payload.get("schema_version") != "1.0" or payload.get("status") != "finished":
+        return False
+    if payload.get("returncode") != 0:
+        return False
+    key = payload.get("capability_key") or payload.get("key")
+    if not isinstance(key, dict) or key != record.key.model_dump():
+        return False
+    command = payload.get("verification_command") or payload.get("command")
+    if command != record.verification_command:
+        return False
+    if payload.get("passed") is False:
+        return False
+    version = payload.get("deepmd_version")
+    if version is None and isinstance(payload.get("environment"), dict):
+        environment = payload["environment"]
+        version = environment.get("deepmd_version")
+        if isinstance(version, dict):
+            version = version.get("value")
+    if version != "DeePMD-kit v3.2.0":
+        return False
+    if sai:
+        job_id = payload.get("job_id")
+        gpu = payload.get("gpu")
+        if not isinstance(job_id, (int, str)) or isinstance(job_id, bool) or not str(job_id).isdigit():
+            return False
+        if not isinstance(gpu, str) or "v100" not in gpu.lower():
+            return False
+        if payload.get("qualification_status", payload.get("status")) != "finished":
+            return False
+    return True
+
+
+def validate_promotion_evidence(record: CapabilityRecord, repo_root: str | Path) -> bool:
+    """Return whether one record has exact, repository-local promotion evidence.
+
+    This is intentionally a pure read-only gate.  It never changes the
+    manifest, accepts no report anchors, and requires a separate JSON object
+    for each declared evidence kind.
+    """
+
+    if not isinstance(record, CapabilityRecord):
+        return False
+    if record.verification_status != "implemented" or not record.verification_command:
+        return False if record.status == "supported" else True
+    if record.status != "supported":
+        return True
+    refs = record.evidence_ref
+    if refs is None:
+        return False
+    root = Path(repo_root).expanduser().resolve()
+    for kind in record.required_evidence:
+        reference = refs.cpu_contract if kind == "cpu-contract" else refs.sai_qualification
+        payload = _read_json_evidence(reference, root)
+        if payload is None or not _evidence_matches(record, payload, sai=kind == "sai-v100-qualification"):
+            return False
+    return True
+
 __all__ = [
     "CapabilityEvidence",
     "CapabilityKey",
     "CapabilityMatrix",
     "CapabilityRecord",
     "CapabilityUnavailable",
+    "validate_promotion_evidence",
 ]

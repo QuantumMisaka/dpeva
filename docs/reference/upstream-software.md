@@ -41,6 +41,13 @@ CPU evidence，以及需要时的 SAI evidence 均存在并通过，Compatibilit
 诊断；本报告不把 scheduler cancellation 归因于 harness，也不声称 GPU/runtime
 正确性。
 
+当前 manifest 共 17 条（11 experimental、4 unsupported、2
+blocked-upstream、0 supported）。每条记录还声明 `verification_status` 与
+`required_evidence`；`implemented` 必须绑定可收集的 pytest node，尚未具备测试的
+train/fine-tune/freeze、LMDB、pretrained alias 和 deploy 路线保持 planned，不能把
+占位命令当作已执行证据。`candidate-evaluation` 是供上层 generic preflight 使用的
+policy capability，不映射为 DeepMD CLI command。
+
 ## 2. dpdata
 
 - 仓库地址：https://github.com/deepmodeling/dpdata

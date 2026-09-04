@@ -15,9 +15,23 @@ import uuid
 from pathlib import Path
 from typing import Any
 
+REQUIRED_CASES = (
+    "pip-freeze", "deepmd-version", "torch-cuda", "gpu",
+    "pt-test", "pt-test-ema", "pt-eval-desc", "pt-eval-desc-ema",
+    "pt-embed", "pt-embed-ema", "dpa4c-periodic-eval-desc",
+)
+
 
 def _sha256(path: Path) -> str:
     digest = hashlib.sha256()
+    if path.is_dir():
+        for child in sorted(path.rglob("*")):
+            if child.is_file():
+                digest.update(str(child.relative_to(path)).encode("utf-8"))
+                with child.open("rb") as stream:
+                    for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+                        digest.update(chunk)
+        return digest.hexdigest()
     with path.open("rb") as stream:
         for chunk in iter(lambda: stream.read(1024 * 1024), b""):
             digest.update(chunk)
@@ -34,13 +48,18 @@ def _load_input(path: Path) -> dict[str, Any]:
         if not artifact.is_file() or _sha256(artifact) != item.get("sha256"):
             raise ValueError(f"model {role} is absent or SHA-256 changed: {artifact}")
     fixture = Path(data.get("fixture", {}).get("path", "")).expanduser()
-    if not fixture.is_dir():
+    fixture_hash = data.get("fixture", {}).get("sha256")
+    if not fixture.is_dir() or not isinstance(fixture_hash, str) or _sha256(fixture) != fixture_hash:
         raise ValueError(f"periodic fixture is absent: {fixture}")
     dpa4c = data.get("dpa4c_model_path")
+    if not dpa4c:
+        raise ValueError("DPEVA_DEEPMD_DPA4C_MODEL is required for qualification")
     if dpa4c:
         dpa4c_path = Path(dpa4c).expanduser()
         if not dpa4c_path.is_file() or not data.get("dpa4c_model_sha256") or _sha256(dpa4c_path) != data["dpa4c_model_sha256"]:
             raise ValueError(f"DPA4C model is absent: {dpa4c_path}")
+    if tuple(data.get("required_cases", ())) != REQUIRED_CASES:
+        raise ValueError("qualification input required_cases do not match the harness")
     return data
 
 
@@ -128,6 +147,7 @@ def submit(input_path: Path, slurm_script: Path, write_ref: Path, *, job_root: P
         "expected_deepmd_version": "DeePMD-kit v3.2.0", "expected_gpu": "V100",
         "qualification_env_name": "dpeva-dpa4-320",
         "dpa4c_model_sha256": data.get("dpa4c_model_sha256"),
+        "fixture_sha256": data["fixture"]["sha256"],
         "job_dir": str(job_dir), "status": "launched",
     }
     _exclusive_json(job_dir / "launch.json", launch)

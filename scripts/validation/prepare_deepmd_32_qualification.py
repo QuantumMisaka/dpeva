@@ -20,6 +20,14 @@ import numpy as np
 
 def sha256(path: Path) -> str:
     digest = hashlib.sha256()
+    if path.is_dir():
+        for child in sorted(path.rglob("*")):
+            if child.is_file():
+                digest.update(str(child.relative_to(path)).encode("utf-8"))
+                with child.open("rb") as stream:
+                    for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+                        digest.update(chunk)
+        return digest.hexdigest()
     with path.open("rb") as stream:
         for chunk in iter(lambda: stream.read(1024 * 1024), b""):
             digest.update(chunk)
@@ -63,9 +71,17 @@ def prepare(model_root: Path, output: Path) -> dict[str, Any]:
     missing = [str(path) for path in (regular, ema) if not path.is_file()]
     if missing:
         raise FileNotFoundError("required research model artifact is missing: " + ", ".join(missing))
+    dpa4c_value = os.environ.get("DPEVA_DEEPMD_DPA4C_MODEL")
+    if not dpa4c_value:
+        raise FileNotFoundError("DPEVA_DEEPMD_DPA4C_MODEL is required for qualification")
+    dpa4c_path = Path(dpa4c_value).expanduser().resolve()
+    if not dpa4c_path.is_file():
+        raise FileNotFoundError(f"DPEVA_DEEPMD_DPA4C_MODEL is not a file: {dpa4c_path}")
 
     root = output.parent
     root.mkdir(parents=True, exist_ok=True)
+    if output.exists():
+        raise FileExistsError(f"refusing to overwrite prepared input: {output}")
     fixture = _write_fixture(root)
     payload: dict[str, Any] = {
         "schema_version": "1.0",
@@ -76,23 +92,17 @@ def prepare(model_root: Path, output: Path) -> dict[str, Any]:
             "ema": {"path": str(ema), "sha256": sha256(ema)},
         },
         "fixture": fixture,
-        "dpa4c_model_path": os.environ.get("DPEVA_DEEPMD_DPA4C_MODEL"),
-        "dpa4c_model_sha256": (
-            sha256(Path(os.environ["DPEVA_DEEPMD_DPA4C_MODEL"]).expanduser().resolve())
-            if os.environ.get("DPEVA_DEEPMD_DPA4C_MODEL")
-            and Path(os.environ["DPEVA_DEEPMD_DPA4C_MODEL"]).expanduser().is_file()
-            else None
-        ),
+        "dpa4c_model_path": str(dpa4c_path),
+        "dpa4c_model_sha256": sha256(dpa4c_path),
         "required_cases": [
             "pip-freeze", "deepmd-version", "torch-cuda", "gpu",
             "pt-test", "pt-test-ema", "pt-eval-desc", "pt-eval-desc-ema",
             "pt-embed", "pt-embed-ema", "dpa4c-periodic-eval-desc",
         ],
     }
+    payload["fixture"]["sha256"] = sha256(Path(payload["fixture"]["path"]))
     # Atomic only within the caller-owned build directory; never replace an
     # existing input declaration.
-    if output.exists():
-        raise FileExistsError(f"refusing to overwrite prepared input: {output}")
     fd, name = tempfile.mkstemp(prefix=f".{output.name}.", dir=str(root), text=True)
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as stream:

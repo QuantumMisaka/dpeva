@@ -13,6 +13,12 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+REQUIRED_CASES = (
+    "pip-freeze", "deepmd-version", "torch-cuda", "gpu",
+    "pt-test", "pt-test-ema", "pt-eval-desc", "pt-eval-desc-ema",
+    "pt-embed", "pt-embed-ema", "dpa4c-periodic-eval-desc",
+)
+
 
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
@@ -102,18 +108,27 @@ def _preflight(config_path: Path, job_dir: Path) -> dict[str, Any]:
         if _sha256(script_path) != launch["slurm_script_sha256"]:
             errors.append("Slurm script was mutated after submission")
         config = _load(input_path)
+        if tuple(config.get("required_cases", ())) != REQUIRED_CASES:
+            errors.append("qualification required_cases do not match harness")
         for role in ("regular", "ema"):
             item = config["models"][role]
             model = Path(item["path"]).expanduser().resolve()
             if not model.is_file() or _sha256(model) != item["sha256"]:
                 errors.append(f"{role} model hash changed")
         dpa4c = config.get("dpa4c_model_path")
-        if dpa4c:
+        if not dpa4c:
+            errors.append("DPEVA_DEEPMD_DPA4C_MODEL is missing from qualification input")
+        else:
             dpa4c_path = Path(dpa4c).expanduser()
             if not dpa4c_path.is_file() or not config.get("dpa4c_model_sha256") or _sha256(dpa4c_path) != config["dpa4c_model_sha256"]:
                 errors.append("DPA4C model hash changed or path is absent")
         fixture = Path(config["fixture"]["path"]).expanduser().resolve()
-        if not fixture.is_dir() or not (fixture / "type.raw").is_file() or not (fixture / "type_map.raw").is_file():
+        if (
+            not fixture.is_dir()
+            or not (fixture / "type.raw").is_file()
+            or not (fixture / "type_map.raw").is_file()
+            or _sha256(fixture) != config["fixture"].get("sha256")
+        ):
             errors.append("periodic fixture is not a valid DeepMD/npy root")
         checks.append({"name": "launch", "ok": not errors})
         version = subprocess.run(["dp", "--version"], capture_output=True, text=True, check=False)

@@ -14,6 +14,26 @@ from scripts.validation.prepare_deepmd_32_qualification import prepare
 from scripts.validation.submit_deepmd_32_qualification import parse_job_id, submit
 
 
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    if path.is_dir():
+        for child in sorted(path.rglob("*")):
+            if child.is_file():
+                digest.update(str(child.relative_to(path)).encode())
+                digest.update(child.read_bytes())
+        return digest.hexdigest()
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+@pytest.fixture(autouse=True)
+def _dpa4c_model_env(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Give preparation tests an explicit disposable DPA4C model input."""
+
+    model = tmp_path / "dpa4c-model.pt"
+    model.write_bytes(b"dpa4c fixture")
+    monkeypatch.setenv("DPEVA_DEEPMD_DPA4C_MODEL", str(model))
+
+
 def _write_command_result(root: Path, case: str, *, returncode: int = 0, artifacts: list[str] | None = None) -> None:
     checks = []
     for artifact in artifacts or []:
@@ -96,10 +116,22 @@ def test_prepare_records_models_without_copying(tmp_path: Path) -> None:
     payload = prepare(model_root, output)
     assert payload["fixture"]["type_map"] == ["Fe", "C", "H", "O"]
     assert payload["fixture"]["periodic"] is True
+    assert payload["fixture"]["sha256"] == _sha256(Path(payload["fixture"]["path"]))
+    assert payload["dpa4c_model_sha256"] == _sha256(Path(payload["dpa4c_model_path"]))
     assert Path(payload["models"]["regular"]["path"]) == model_root / "model.ckpt.pt"
     assert not (output.parent / "input" / "model.ckpt.pt").exists()
     with pytest.raises(FileExistsError):
         prepare(model_root, output)
+
+
+def test_prepare_requires_dpa4c_model_reference(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    model_root = tmp_path / "models"
+    model_root.mkdir()
+    (model_root / "model.ckpt.pt").write_bytes(b"regular")
+    (model_root / "model_ema.ckpt.pt").write_bytes(b"ema")
+    monkeypatch.delenv("DPEVA_DEEPMD_DPA4C_MODEL")
+    with pytest.raises(FileNotFoundError, match="DPEVA_DEEPMD_DPA4C_MODEL"):
+        prepare(model_root, tmp_path / "input.json")
 
 
 def test_prepared_fixture_is_real_periodic_deepmd_npy(tmp_path: Path) -> None:
@@ -141,6 +173,20 @@ def test_submit_dry_run_writes_immutable_reference(tmp_path: Path) -> None:
     submission = json.loads((Path(result["job_dir"]) / "submission.json").read_text(encoding="utf-8"))
     assert launch["qualification_env_name"] == "dpeva-dpa4-320"
     assert submission["qualification_env_name"] == launch["qualification_env_name"]
+
+
+def test_submit_rehashes_fixture_before_submission(tmp_path: Path) -> None:
+    model_root = tmp_path / "models"
+    model_root.mkdir()
+    for name in ("model.ckpt.pt", "model_ema.ckpt.pt"):
+        (model_root / name).write_bytes(name.encode())
+    input_path = tmp_path / "input.json"
+    payload = prepare(model_root, input_path)
+    (Path(payload["fixture"]["path"]) / "type.raw").write_text("0 1 2 9\n", encoding="utf-8")
+    slurm = tmp_path / "job.slurm"
+    slurm.write_text("\n".join(("#!/bin/bash", "#SBATCH --partition=4V100", "#SBATCH --nodes=1", "#SBATCH --ntasks=1", "#SBATCH --gpus-per-node=1", "#SBATCH --qos=improper-gpu", "#SBATCH --time=00:30:00")) + "\n", encoding="utf-8")
+    with pytest.raises(ValueError, match="periodic fixture"):
+        submit(input_path, slurm, tmp_path / "latest.json", job_root=tmp_path / "external", dry_run=True)
 
 
 def test_slurm_script_selects_qualified_environment_before_source() -> None:

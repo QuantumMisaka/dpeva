@@ -20,7 +20,8 @@ This directory provides `input.json` templates for DPA4 training in the DP-EVA e
 These templates are configuration examples, not a DeepMD 3.2 qualification.
 Install the optional runtime extra, but lock `deepmd-kit==3.2.0` for research
 production and retain `dp --version` in the run evidence. The compatibility
-manifest currently declares zero `supported` capabilities: local CPU contract
+manifest currently declares zero `supported` capabilities (17 records: 11
+experimental, 4 unsupported, 2 blocked-upstream): local CPU contract
 evidence is 6 passed / 4 explicit fixture skips, and the single SAI V100
 attempt (JobID `1126627`) was cancelled by the scheduler before its payload
 ran. Do not infer GPU/runtime correctness or promote a capability from the

@@ -128,7 +128,11 @@ class DeepMDAdapter:
         *,
         capability_key: CapabilityKey | None = None,
     ) -> str:
-        self._authorize("train", capability_key)
+        # DeepMD exposes fine-tuning as a separate policy capability even
+        # though both routes use the ``train`` executable subcommand.  Never
+        # let a normal-train key silently authorize a fine-tune invocation.
+        operation = "fine-tune" if finetune_path else "train"
+        self._authorize(operation, capability_key)
         argv = [*self.base_command, "train", input_file]
         if skip_neighbor_stat:
             argv.append("--skip-neighbor-stat")
