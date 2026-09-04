@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
@@ -16,7 +17,8 @@ def _write_command_result(root: Path, case: str, *, returncode: int = 0, artifac
     checks = [{"path": str(root / artifact), "exists": True} for artifact in artifacts or []]
     path = root / "commands" / f"{case}.json"
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps({"case": case, "returncode": returncode, "status": "finished" if returncode == 0 else "failed", "artifact_checks": checks}), encoding="utf-8")
+    now = datetime.now(timezone.utc).isoformat()
+    path.write_text(json.dumps({"schema_version": "1.0", "case": case, "argv": [case], "job_id": "123", "started_at": now, "ended_at": now, "returncode": returncode, "status": "finished" if returncode == 0 else "failed", "declared_artifacts": artifacts or [], "artifact_checks": checks}), encoding="utf-8")
 
 
 def _complete_environment(root: Path) -> None:
@@ -43,6 +45,21 @@ def test_collector_rejects_mutable_latest(tmp_path: Path) -> None:
         collect_qualification(latest)
 
 
+def test_inspection_does_not_freeze_incomplete_final(tmp_path: Path) -> None:
+    (tmp_path / "launch.json").write_text('{"schema_version":"1.0"}', encoding="utf-8")
+    report = collect_qualification(tmp_path)
+    assert report["status"] == "failed"
+    assert not (tmp_path / "qualification.json").exists()
+
+
+def test_collector_rejects_unrecorded_job_dir_cli(tmp_path: Path) -> None:
+    (tmp_path / "launch.json").write_text('{"schema_version":"1.0"}', encoding="utf-8")
+    from scripts.validation.collect_deepmd_32_qualification import main
+
+    with pytest.raises(ValueError, match="recorded submission"):
+        main(["--job-dir", str(tmp_path)])
+
+
 def test_prepare_records_models_without_copying(tmp_path: Path) -> None:
     model_root = tmp_path / "models"
     model_root.mkdir()
@@ -56,6 +73,19 @@ def test_prepare_records_models_without_copying(tmp_path: Path) -> None:
     assert not (output.parent / "input" / "model.ckpt.pt").exists()
     with pytest.raises(FileExistsError):
         prepare(model_root, output)
+
+
+def test_prepared_fixture_is_real_periodic_deepmd_npy(tmp_path: Path) -> None:
+    dpdata = pytest.importorskip("dpdata")
+    model_root = tmp_path / "models"
+    model_root.mkdir()
+    (model_root / "model.ckpt.pt").write_bytes(b"regular")
+    (model_root / "model_ema.ckpt.pt").write_bytes(b"ema")
+    payload = prepare(model_root, tmp_path / "input.json")
+    system = dpdata.LabeledSystem(payload["fixture"]["path"], fmt="deepmd/npy")
+    assert system.get_nframes() == 1
+    assert system.get_ntypes() == 4
+    assert system["cells"].shape == (1, 3, 3)
 
 
 def test_job_id_parser_is_fail_closed() -> None:
@@ -74,7 +104,7 @@ def test_submit_dry_run_writes_immutable_reference(tmp_path: Path) -> None:
     input_path = tmp_path / "input.json"
     prepare(model_root, input_path)
     slurm = tmp_path / "job.slurm"
-    slurm.write_text("#!/bin/bash\n", encoding="utf-8")
+    slurm.write_text("\n".join(("#!/bin/bash", "#SBATCH --partition=4V100", "#SBATCH --nodes=1", "#SBATCH --ntasks=1", "#SBATCH --gpus-per-node=1", "#SBATCH --qos=improper-gpu", "#SBATCH --time=00:30:00")) + "\n", encoding="utf-8")
     ref = tmp_path / "latest.json"
     result = submit(input_path, slurm, ref, job_root=tmp_path / "external", dry_run=True)
     assert result["status"] == "dry-run"

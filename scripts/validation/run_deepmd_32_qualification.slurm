@@ -42,6 +42,7 @@ on_exit() {
     python "$REPO_ROOT/scripts/validation/collect_deepmd_32_qualification.py" \
         --job-dir "$DPEVA_QUALIFICATION_DIR" \
         --job-id "${SLURM_JOB_ID:-}" \
+        --finalize \
         >/dev/null
     collector_rc=$?
     # An EXIT trap must never turn a failed command into a successful job, nor
@@ -55,11 +56,14 @@ trap on_exit EXIT
 
 source "$REPO_ROOT/scripts/env/dpeva-dpa4.env"
 
-for case_name in \
-    pip-freeze deepmd-version torch-cuda gpu \
-    pt-test pt-test-ema pt-eval-desc pt-eval-desc-ema \
-    pt-embed pt-embed-ema dpa4c-periodic-eval-desc; do
-    run_case "$case_name"
-done
+run_case preflight
+if (( job_rc == 0 )); then
+    for case_name in \
+        pip-freeze deepmd-version torch-cuda gpu \
+        pt-test pt-test-ema pt-eval-desc pt-eval-desc-ema \
+        pt-embed pt-embed-ema dpa4c-periodic-eval-desc; do
+        run_case "$case_name"
+    done
+fi
 
 exit "$job_rc"

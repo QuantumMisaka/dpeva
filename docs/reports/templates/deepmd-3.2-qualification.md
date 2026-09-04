@@ -18,6 +18,8 @@ promote capabilities automatically and does not claim scientific superiority.
 - Torch/CUDA: `qualification.json` → `environment/torch-cuda.json`
 - JobID and immutable job directory: `qualification.json` / `submission.json`
 - Environment lock: `environment/pip-freeze.json`
+- Compute-node preflight: `commands/preflight.json` rehashes the launch
+  contract and input/model/script artifacts before scientific commands run.
 
 ## Command evidence
 

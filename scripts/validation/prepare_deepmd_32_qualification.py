@@ -37,7 +37,8 @@ def _write_fixture(root: Path) -> dict[str, Any]:
     np.save(set_dir / "energy.npy", np.array([[0.0]], dtype=np.float64))
     np.save(set_dir / "force.npy", np.zeros((1, 12), dtype=np.float64))
     np.save(set_dir / "virial.npy", np.zeros((1, 9), dtype=np.float64))
-    (set_dir / "type.raw").write_text("0 1 2 3\n", encoding="utf-8")
+    # DeepMD/npy expects type.raw at the system root (not inside set.000).
+    (data / "type.raw").write_text("0 1 2 3\n", encoding="utf-8")
     (data / "type_map.raw").write_text("Fe\nC\nH\nO\n", encoding="utf-8")
     return {
         "path": str(data.resolve()),
@@ -48,6 +49,7 @@ def _write_fixture(root: Path) -> dict[str, Any]:
         "frame_count": 1,
         "atom_count": 4,
         "qualification_only": True,
+        "model_input_semantics": "periodic DPA4 FT2DP type-map fixture; execution qualification only",
     }
 
 
@@ -75,6 +77,12 @@ def prepare(model_root: Path, output: Path) -> dict[str, Any]:
         },
         "fixture": fixture,
         "dpa4c_model_path": os.environ.get("DPEVA_DEEPMD_DPA4C_MODEL"),
+        "dpa4c_model_sha256": (
+            sha256(Path(os.environ["DPEVA_DEEPMD_DPA4C_MODEL"]).expanduser().resolve())
+            if os.environ.get("DPEVA_DEEPMD_DPA4C_MODEL")
+            and Path(os.environ["DPEVA_DEEPMD_DPA4C_MODEL"]).expanduser().is_file()
+            else None
+        ),
         "required_cases": [
             "pip-freeze", "deepmd-version", "torch-cuda", "gpu",
             "pt-test", "pt-test-ema", "pt-eval-desc", "pt-eval-desc-ema",

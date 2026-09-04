@@ -38,7 +38,7 @@ def _load_input(path: Path) -> dict[str, Any]:
     dpa4c = data.get("dpa4c_model_path")
     if dpa4c:
         dpa4c_path = Path(dpa4c).expanduser()
-        if not dpa4c_path.is_file():
+        if not dpa4c_path.is_file() or not data.get("dpa4c_model_sha256") or _sha256(dpa4c_path) != data["dpa4c_model_sha256"]:
             raise ValueError(f"DPA4C model is absent: {dpa4c_path}")
     return data
 
@@ -69,20 +69,52 @@ def _atomic_json(path: Path, payload: dict[str, Any]) -> None:
             pass
 
 
+def _exclusive_json(path: Path, payload: dict[str, Any]) -> None:
+    """Write a launch declaration once; never replace a launch contract."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, name = tempfile.mkstemp(prefix=f".{path.name}.", dir=str(path.parent), text=True)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as stream:
+            json.dump(payload, stream, indent=2)
+            stream.write("\n")
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.link(name, path)
+    finally:
+        try:
+            Path(name).unlink()
+        except FileNotFoundError:
+            pass
+
+
 def submit(input_path: Path, slurm_script: Path, write_ref: Path, *, job_root: Path | None = None, dry_run: bool = False) -> dict[str, Any]:
     input_path = input_path.expanduser().resolve()
     slurm_script = slurm_script.expanduser().resolve()
     if not slurm_script.is_file():
         raise FileNotFoundError(slurm_script)
+    script_text = slurm_script.read_text(encoding="utf-8")
+    required_directives = ("--partition=4V100", "--nodes=1", "--ntasks=1", "--gpus-per-node=1", "--qos=improper-gpu", "--time=00:30:00")
+    if any(directive not in script_text for directive in required_directives) or "--mem" in script_text or "--cpus-per" in script_text:
+        raise ValueError("Slurm script does not satisfy the bounded SAI qualification contract")
     if not dry_run and os.environ.get("CONDA_PREFIX"):
         raise RuntimeError("qualification submission requires a clean login environment; unset CONDA_PREFIX")
-    _load_input(input_path)
+    data = _load_input(input_path)
     root = (job_root or Path(os.environ.get("DPEVA_QUALIFICATION_ROOT", str(Path.home() / "scratch" / "dpeva-deepmd-qualification")))).expanduser().resolve()
     if dry_run:
         root = root / "dry-run"
     root.mkdir(parents=True, exist_ok=True)
     job_dir = root / f"deepmd-32-{uuid.uuid4().hex}"
     job_dir.mkdir()
+    nonce = uuid.uuid4().hex
+    launch = {
+        "schema_version": "1.0", "nonce": nonce,
+        "input_path": str(input_path), "input_sha256": _sha256(input_path),
+        "slurm_script_path": str(slurm_script), "slurm_script_sha256": _sha256(slurm_script),
+        "expected_deepmd_version": "DeePMD-kit v3.2.0", "expected_gpu": "V100",
+        "dpa4c_model_sha256": data.get("dpa4c_model_sha256"),
+        "job_dir": str(job_dir), "status": "launched",
+    }
+    _exclusive_json(job_dir / "launch.json", launch)
     command = ["sbatch", "--export=NONE", str(slurm_script), str(input_path), str(job_dir)]
     if dry_run:
         job_id, output = "DRY-RUN", "Submitted batch job 0"
@@ -92,8 +124,8 @@ def submit(input_path: Path, slurm_script: Path, write_ref: Path, *, job_root: P
         if result.returncode != 0:
             raise RuntimeError(f"sbatch failed ({result.returncode}): {output.strip()}")
         job_id = parse_job_id(output)
-    _atomic_json(job_dir / "submission.json", {"schema_version": "1.0", "job_id": job_id, "input": str(input_path), "slurm_script": str(slurm_script), "input_sha256": _sha256(input_path), "script_sha256": _sha256(slurm_script), "command": command, "dry_run": dry_run})
-    ref = {"schema_version": "1.0", "job_id": job_id, "job_dir": str(job_dir), "external_job_dir": str(job_dir), "status": "submitted" if not dry_run else "dry-run"}
+    _exclusive_json(job_dir / "submission.json", {"schema_version": "1.0", "job_id": job_id, "input": str(input_path), "slurm_script": str(slurm_script), "input_sha256": launch["input_sha256"], "script_sha256": launch["slurm_script_sha256"], "nonce": nonce, "job_dir": str(job_dir), "command": command, "dry_run": dry_run})
+    ref = {"schema_version": "1.0", "job_id": job_id, "job_dir": str(job_dir), "external_job_dir": str(job_dir), "nonce": nonce, "status": "submitted" if not dry_run else "dry-run"}
     _atomic_json(write_ref.expanduser().resolve(), ref)
     print(json.dumps(ref, sort_keys=True))
     return ref

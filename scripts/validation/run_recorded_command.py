@@ -20,10 +20,23 @@ def _now() -> str:
 
 def _sha256(path: Path) -> str:
     digest = hashlib.sha256()
+    if path.is_dir():
+        for child in sorted(path.rglob("*")):
+            if child.is_file():
+                digest.update(str(child.relative_to(path)).encode())
+                with child.open("rb") as stream:
+                    for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+                        digest.update(chunk)
+        return digest.hexdigest()
     with path.open("rb") as stream:
         for chunk in iter(lambda: stream.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def _write_result(path: Path, record: dict[str, Any]) -> dict[str, Any]:
+    path.write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
+    return record
 
 
 def _load(path: Path) -> dict[str, Any]:
@@ -63,7 +76,60 @@ def _spec(config: dict[str, Any], case: str, job_dir: Path) -> tuple[list[str], 
     raise ValueError(f"unknown qualification case: {case}")
 
 
+def _preflight(config_path: Path, job_dir: Path) -> dict[str, Any]:
+    """Revalidate the launch contract on the compute node before any case."""
+    result_path = job_dir / "commands" / "preflight.json"
+    started = _now()
+    argv = ["preflight", str(job_dir / "launch.json")]
+    errors: list[str] = []
+    checks: list[dict[str, Any]] = []
+    try:
+        launch = _load(job_dir / "launch.json")
+        input_path = Path(str(launch["input_path"])).expanduser().resolve()
+        script_path = Path(str(launch["slurm_script_path"])).expanduser().resolve()
+        if Path(str(launch["job_dir"])).expanduser().resolve() != job_dir.resolve():
+            errors.append("launch job directory does not match execution directory")
+        if input_path != config_path.resolve() or _sha256(input_path) != launch["input_sha256"]:
+            errors.append("qualification input was mutated or is not the launched input")
+        if _sha256(script_path) != launch["slurm_script_sha256"]:
+            errors.append("Slurm script was mutated after submission")
+        config = _load(input_path)
+        for role in ("regular", "ema"):
+            item = config["models"][role]
+            model = Path(item["path"]).expanduser().resolve()
+            if not model.is_file() or _sha256(model) != item["sha256"]:
+                errors.append(f"{role} model hash changed")
+        dpa4c = config.get("dpa4c_model_path")
+        if dpa4c:
+            dpa4c_path = Path(dpa4c).expanduser()
+            if not dpa4c_path.is_file() or not config.get("dpa4c_model_sha256") or _sha256(dpa4c_path) != config["dpa4c_model_sha256"]:
+                errors.append("DPA4C model hash changed or path is absent")
+        fixture = Path(config["fixture"]["path"]).expanduser().resolve()
+        if not fixture.is_dir() or not (fixture / "type.raw").is_file() or not (fixture / "type_map.raw").is_file():
+            errors.append("periodic fixture is not a valid DeepMD/npy root")
+        checks.append({"name": "launch", "ok": not errors})
+        version = subprocess.run(["dp", "--version"], capture_output=True, text=True, check=False)
+        checks.append({"name": "deepmd_version", "argv": ["dp", "--version"], "returncode": version.returncode, "value": version.stdout.strip()})
+        if version.returncode != 0 or version.stdout.strip() != launch["expected_deepmd_version"]:
+            errors.append("DeepMD version is not exact 3.2.0")
+        gpu = subprocess.run(["nvidia-smi", "-L"], capture_output=True, text=True, check=False)
+        checks.append({"name": "gpu", "argv": ["nvidia-smi", "-L"], "returncode": gpu.returncode, "value": gpu.stdout})
+        if gpu.returncode != 0 or "V100" not in gpu.stdout.upper():
+            errors.append("GPU evidence does not identify V100")
+        torch_probe = subprocess.run([sys.executable, "-c", "import json, torch; print(json.dumps({'torch': torch.__version__, 'cuda': torch.version.cuda, 'available': torch.cuda.is_available()}))"], capture_output=True, text=True, check=False)
+        torch_value = json.loads(torch_probe.stdout) if torch_probe.returncode == 0 else {}
+        checks.append({"name": "torch_cuda", "argv": [sys.executable, "-c", "torch cuda probe"], "returncode": torch_probe.returncode, "value": torch_value})
+        if torch_probe.returncode != 0 or not isinstance(torch_value, dict) or not torch_value.get("available") or not torch_value.get("cuda"):
+            errors.append("Torch CUDA is unavailable")
+        record = {"schema_version": "1.0", "case": "preflight", "argv": argv, "job_id": os.environ.get("SLURM_JOB_ID"), "started_at": started, "ended_at": _now(), "returncode": 0 if not errors else 1, "status": "finished" if not errors else "failed", "declared_artifacts": [str(job_dir / "launch.json")], "artifact_checks": [{"path": str(job_dir / "launch.json"), "exists": True, "sha256": _sha256(job_dir / "launch.json")}], "checks": checks, "error": "; ".join(errors) if errors else None}
+    except Exception as exc:
+        record = {"schema_version": "1.0", "case": "preflight", "argv": argv, "job_id": os.environ.get("SLURM_JOB_ID"), "started_at": started, "ended_at": _now(), "returncode": 2, "status": "failed", "declared_artifacts": [], "artifact_checks": [], "checks": checks, "error": str(exc)}
+    return _write_result(result_path, record)
+
+
 def run_recorded_command(config_path: Path, job_dir: Path, case: str) -> dict[str, Any]:
+    if case == "preflight":
+        return _preflight(config_path.expanduser().resolve(), job_dir.expanduser().resolve())
     config = _load(config_path)
     command_dir, log_dir = job_dir / "commands", job_dir / "logs"
     command_dir.mkdir(parents=True, exist_ok=True)
@@ -77,10 +143,15 @@ def run_recorded_command(config_path: Path, job_dir: Path, case: str) -> dict[st
         proc = subprocess.run(argv, cwd=str(job_dir), capture_output=True, text=True, check=False)
         (log_dir / f"{case}.stdout").write_text(proc.stdout, encoding="utf-8")
         (log_dir / f"{case}.stderr").write_text(proc.stderr, encoding="utf-8")
-        if case in {"pip-freeze", "deepmd-version", "gpu"} and proc.returncode == 0:
+        if case in {"pip-freeze", "deepmd-version", "torch-cuda", "gpu"} and proc.returncode == 0:
             # Keep the human-readable command log, while making the value
             # itself machine-readable and tied to its argv/exit status.
-            declared[0].write_text(json.dumps({"schema_version": "1.0", "case": case, "argv": argv, "returncode": proc.returncode, "value": proc.stdout}, indent=2) + "\n", encoding="utf-8")
+            value: Any = proc.stdout
+            if case == "torch-cuda":
+                value = json.loads(proc.stdout)
+                if not isinstance(value, dict) or not {"torch", "cuda", "available"} <= value.keys():
+                    raise ValueError("torch-cuda probe did not return torch/cuda/available")
+            declared[0].write_text(json.dumps({"schema_version": "1.0", "case": case, "argv": argv, "returncode": proc.returncode, "value": value}, indent=2) + "\n", encoding="utf-8")
         artifact_checks = [{"path": str(path), "exists": path.exists(), "sha256": _sha256(path) if path.is_file() else None} for path in declared]
         artifacts_ok = all(item["exists"] for item in artifact_checks)
         returncode = int(proc.returncode)
@@ -89,8 +160,7 @@ def run_recorded_command(config_path: Path, job_dir: Path, case: str) -> dict[st
         record = {"schema_version": "1.0", "case": case, "argv": argv, "job_id": os.environ.get("SLURM_JOB_ID"), "started_at": start, "ended_at": _now(), "returncode": returncode, "status": status, "declared_artifacts": [str(path) for path in declared], "artifact_checks": artifact_checks, "error": error}
     except Exception as exc:
         record = {"schema_version": "1.0", "case": case, "argv": [], "job_id": os.environ.get("SLURM_JOB_ID"), "started_at": start, "ended_at": _now(), "returncode": 2, "status": "failed", "declared_artifacts": [], "artifact_checks": [], "error": str(exc)}
-    result_path.write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
-    return record
+    return _write_result(result_path, record)
 
 
 def main(argv: list[str] | None = None) -> int:
