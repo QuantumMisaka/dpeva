@@ -1,0 +1,30 @@
+name: Governance Audit
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 3 1 1,4,7,10 *"
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Generate governance audit report
+        run: python scripts/audit_governance_rules.py --format json --output governance-audit.json
+
+      - name: Upload governance audit report
+        uses: actions/upload-artifact@v4
+        with:
+          name: governance-audit
+          path: governance-audit.json

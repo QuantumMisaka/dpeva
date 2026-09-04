@@ -2,7 +2,7 @@
 title: 文档版本管理与维护机制 (Maintenance)
 status: active
 audience: Maintainers
-last-updated: 2026-06-10
+last-updated: 2026-09-05
 owner: Docs Owner
 ---
 
@@ -119,3 +119,10 @@ Owner 可以是角色而非具体姓名；但每篇 `active` 文档必须有 Own
   - 任何 Markdown 文件的增删改，必须检查 `docs/source/**/*.rst` 是否有对应的 `toctree` 引用需要更新。
   - 运行 `make html` 确保无 `WARNING: toctree contains reference to nonexisting document` 报错。
 
+## 8. 轻量治理规则审计
+
+- `docs/governance/rules.json` 只登记有明确 Owner、依据和可执行 enforcement path 的活动治理机制，最多八条；它不复制 SPEC 的需求清单。
+- 季度 `governance-audit` workflow 仅生成并上传报告，不自动改写、删除文件或创建 Issue；默认报告模式即使发现问题也返回成功。
+- 发布评审如需阻断语义，维护者显式运行
+  `python scripts/audit_governance_rules.py --strict`；修复或退役规则后更新
+  `last_reviewed` 或移除记录。

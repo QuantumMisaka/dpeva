@@ -1,0 +1,35 @@
+[
+  {
+    "rule_id": "GATE-SINGLE-SOURCE",
+    "owner": "Project Maintainer",
+    "basis": "SPEC R13",
+    "enforcement_paths": [
+      "scripts/gates.toml",
+      "scripts/run_gate.py"
+    ],
+    "last_reviewed": "2026-09-04",
+    "review_interval_days": 90
+  },
+  {
+    "rule_id": "CAPABILITY-TRACEABILITY",
+    "owner": "Docs Owner",
+    "basis": "SPEC R13",
+    "enforcement_paths": [
+      "scripts/check_traceability.py",
+      "docs/governance/traceability/capability-evidence.json"
+    ],
+    "last_reviewed": "2026-09-04",
+    "review_interval_days": 90
+  },
+  {
+    "rule_id": "GOVERNANCE-RETIREMENT",
+    "owner": "Project Maintainer",
+    "basis": "SPEC R14",
+    "enforcement_paths": [
+      "scripts/audit_governance_rules.py",
+      ".github/workflows/governance-audit.yml"
+    ],
+    "last_reviewed": "2026-09-04",
+    "review_interval_days": 90
+  }
+]
