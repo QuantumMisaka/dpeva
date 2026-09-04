@@ -72,9 +72,6 @@ class StatusRecorder:
         payload = json.loads(manifest_path.read_text(encoding="utf-8"))
         if not isinstance(payload, dict):
             raise ValueError("run manifest must contain a JSON object")
-        # Preserve read compatibility for schema 1.0 manifests written before
-        # the pilot audit, while ensuring new writes omit this unused field.
-        payload.pop("environment", None)
         manifest = RunManifest.model_validate(payload)
         return cls(manifest_path, manifest, attempt_id=attempt_id)
 
@@ -249,8 +246,14 @@ class StatusRecorder:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         temporary = self.path.with_suffix(self.path.suffix + ".tmp")
         try:
+            # Preserve legacy evidence when present, but omit this optional
+            # field from newly-created manifests. Keep other null fields stable.
+            serialized = candidate.model_dump_json(
+                indent=2,
+                exclude={"environment"} if candidate.environment is None else None,
+            )
             with temporary.open("w", encoding="utf-8") as handle:
-                handle.write(candidate.model_dump_json(indent=2))
+                handle.write(serialized)
                 handle.write("\n")
                 handle.flush()
                 os.fsync(handle.fileno())

@@ -21,8 +21,8 @@ every schema field has a consumer.
 | Check | Measurement/evidence | Pass condition | Result |
 |---|---|---|---|
 | diagnostic value | Injected CONFIG, CAPABILITY, EXECUTION, ARTIFACT, and local partial cases are mapped below. Doctor JSON gives a stable capability status/version/detail and a non-zero exit for unusable capability; feature/infer manifests add typed run and child evidence. | all injected failures improve diagnosis | PASS |
-| median overhead | 41 paired repetitions of a local fake command; baseline measured fake command only, treatment measured the same command plus `StatusRecorder.create()` and atomic manifest publication. Median baseline 15.407ms, treatment 26.281ms, additional manifest overhead 10.074ms; p95 additional overhead 12.845ms. | < 100 ms | PASS |
-| unused fields | Closed schema audit below. `source` and `inputs` are populated and asserted for both pilot workflows; `RunEvent.at` is tested as UTC, monotonic serialized evidence; `environment` is removed from new schema writes with legacy 1.0 read compatibility. | zero | PASS |
+| median overhead | 41 paired repetitions of a local fake command; baseline measured fake command only, treatment measured the same command plus `StatusRecorder.create()` and atomic manifest publication. Median baseline 14.536ms, treatment 25.652ms, additional manifest overhead 11.047ms; p95 additional overhead 14.061ms. | < 100 ms | PASS |
+| unused fields | Closed schema audit below. `source` and `inputs` are populated and asserted for both pilot workflows; `RunEvent.at` is tested as UTC, monotonic serialized evidence; legacy `environment` is preserved when present while new writes omit it. | zero | PASS |
 | migration burden | `git diff 72620ad..HEAD -- examples/recipes` contains only the seven-line `examples/recipes/README.md` documentation addition. The 21 versioned JSON recipes were validated in Task 3; no recipe JSON was semantically rewritten. | zero semantic rewrites | PASS |
 
 Decision: **GO**. Plans C and D may proceed, while preserving the feature/infer
@@ -37,13 +37,13 @@ Command:
 conda run -n dpeva-dpa4 pytest tests/unit/run tests/integration/test_run_contract_pilot.py --durations=20 -q
 ```
 
-Result: `122 passed in 6.88s`.
+Result: `124 passed in 6.79s`.
 
 Slowest 20 tests:
 
 ```text
-0.33s call tests/unit/run/test_context.py::test_concurrent_force_allocates_unique_attempts
 0.26s call tests/integration/test_run_contract_pilot.py::test_cli_partial_exit_and_snapshots
+0.24s call tests/unit/run/test_context.py::test_concurrent_force_allocates_unique_attempts
 0.10s call tests/integration/test_run_contract_pilot.py::test_slurm_feature_and_infer_record_parsed_ids
 0.09s call tests/integration/test_run_contract_pilot.py::test_infer_mixed_artifact_and_execution_failures_are_deterministic
 0.08s call tests/unit/run/test_context.py::test_sequential_force_archives_resolve_all_config_references
@@ -144,7 +144,7 @@ CLI tests. It is intentionally separate from run-manifest evidence.
 | `RunManifest.workflow` | `RunContext._load_existing()` verifies workflow; pilot manifests | Plans C/D preserve workflow ownership in their evidence | Used |
 | `RunManifest.status` | `StatusRecorder.transition`; feature/infer terminal decisions; status tests | Plans C/D use terminal status for acceptance | Used |
 | `RunManifest.source` | Feature/infer pass `{"dpeva_version": ...}`; pilot success tests read and assert it | Plans C/D retain source identity when extending run evidence | Used |
-| `RunManifest.environment` | Removed from the new model and all recorder/context plumbing; `StatusRecorder.load()` drops only this legacy 1.0 key before strict validation; compatibility test asserts new writes omit it | No downstream consumer; intentionally removed after audit | Removed |
+| `RunManifest.environment` | Optional legacy-only schema 1.0 evidence; `StatusRecorder.load()` validates and preserves a present mapping through save/transition/resume, while force archives retain the old mapping and the new current manifest omits `None`; exact compatibility tests cover each path | Legacy compatibility/preservation is the consumer; no new pilot data is written | Legacy-preserved |
 | `RunManifest.config` | `RunContext` writes original/resolved snapshot references; force/recovery tests read them | Plan E traceability can link config snapshots after an explicit consumer is specified | Used |
 | `RunManifest.inputs` | Feature/infer pass absolute dataset/model references; pilot success tests read and assert the exact list | Plans C/D extend these explicit input references with lineage/model evidence | Used |
 | `RunManifest.jobs` | Feature/infer managers append `JobRecord`; pilot asserts statuses and JobIDs | Plan D qualification has a separate command-result schema | Used |
@@ -171,11 +171,12 @@ CLI tests. It is intentionally separate from run-manifest evidence.
 | `JobRecord.failure` | Inference manager stores caught command/artifact text for child diagnostics | Plan D can retain command failure text in its qualification results | Used |
 | `JobRecord.failure_category` | Inference aggregation and mixed artifact/execution assertions | Plan D's typed command outcomes follow the same distinction | Used |
 
-`RunManifest.environment` is the only removed field. Its removal is
-backward-compatible for schema 1.0 because loading explicitly strips that
-legacy key before strict validation, while all new serialization omits it.
-No other field is retained without a concrete current consumer, test, recovery
-behavior, or named downstream plan.
+`RunManifest.environment` is retained only as optional legacy schema 1.0
+evidence. Loading, state transitions, resume, and force archiving preserve a
+present mapping unchanged; newly-created and newly-forced current manifests
+omit the unset field. Legacy compatibility/preservation is the consumer, not
+new pilot data collection. No other field is retained without a concrete
+current consumer, test, recovery behavior, or named downstream plan.
 
 ## 5. Recipe audit
 
@@ -233,8 +234,8 @@ Observed results:
 
 - `conda run -n dpeva-dpa4 ruff check src tests scripts` — exit `0`,
   `All checks passed!`.
-- `conda run -n dpeva-dpa4 pytest tests/unit -q` — exit `0`, `638 passed in
-  24.97s`.
+- `conda run -n dpeva-dpa4 pytest tests/unit -q` — exit `0`, `640 passed in
+  23.53s`.
 - `python3 scripts/doc_check.py` — exit `0`; structure, metadata, links,
   forbidden-path, and owner checks all pass, including the repaired Plan A
   integration classification report.

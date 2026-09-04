@@ -79,6 +79,9 @@ class RunManifest(RunModel):
     workflow: str
     status: RunState = RunState.CREATED
     source: dict[str, Any] = Field(default_factory=dict)
+    # Schema 1.0 manifests may carry this legacy evidence. New writers leave
+    # it unset; loaders and state transitions must preserve it verbatim.
+    environment: dict[str, str] | None = None
     config: dict[str, str] = Field(default_factory=dict)
     inputs: list[dict[str, str]] = Field(default_factory=list)
     jobs: list[JobRecord] = Field(default_factory=list)

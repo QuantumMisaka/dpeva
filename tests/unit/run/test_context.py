@@ -111,6 +111,30 @@ def test_force_archives_previous_manifest_and_records_attempt(tmp_path) -> None:
     assert json.loads((forced.run_dir / "config.original.json").read_text()) == {"x": 1}
 
 
+def test_force_preserves_legacy_environment_only_in_archive(tmp_path) -> None:
+    initial = RunContext.create(tmp_path, "feature", RunOptions(run_id="run"), {}, {})
+    manifest_path = initial.run_dir / "run.json"
+    payload = json.loads(manifest_path.read_text(encoding="utf-8"))
+    payload["environment"] = {"lock": "old-env.json"}
+    manifest_path.write_text(json.dumps(payload) + "\n", encoding="utf-8")
+    previous = manifest_path.read_bytes()
+
+    forced = RunContext.create(
+        tmp_path,
+        "feature",
+        RunOptions(run_id="run", force=True, reason="legacy preservation"),
+        {},
+        {},
+    )
+
+    archive = forced.run_dir / "attempts" / "attempt-0001.json"
+    assert archive.read_bytes() == previous
+    assert json.loads(archive.read_text(encoding="utf-8"))["environment"] == {
+        "lock": "old-env.json"
+    }
+    assert "environment" not in json.loads(manifest_path.read_text(encoding="utf-8"))
+
+
 def test_force_rejects_malformed_existing_manifest_without_overwrite(tmp_path) -> None:
     run_dir = tmp_path / ".dpeva" / "runs" / "run"
     run_dir.mkdir(parents=True)

@@ -6,6 +6,7 @@ import pytest
 from pydantic import ValidationError
 
 from dpeva.run import InvalidStateTransition, RunEventKind, RunState
+from dpeva.run.context import RunContext, RunOptions
 from dpeva.run.models import ArtifactRecord, FailureRecord, JobRecord, RunEvent, RunManifest
 from dpeva.run.recorder import StatusRecorder
 
@@ -116,7 +117,7 @@ def test_loading_malformed_manifest_fails_closed(tmp_path) -> None:
         StatusRecorder.load(path)
 
 
-def test_loading_legacy_environment_field_is_compatible_and_new_writes_omit_it(tmp_path) -> None:
+def test_loading_legacy_environment_field_is_preserved_on_save(tmp_path) -> None:
     path = tmp_path / "run.json"
     path.write_text(
         json.dumps(
@@ -132,9 +133,65 @@ def test_loading_legacy_environment_field_is_compatible_and_new_writes_omit_it(t
     )
 
     recorder = StatusRecorder.load(path)
+    assert recorder.manifest.environment == {"lock": "old-env.json"}
     recorder.save()
     payload = json.loads(path.read_text(encoding="utf-8"))
-    assert "environment" not in payload
+    assert payload["environment"] == {"lock": "old-env.json"}
+
+
+def test_legacy_environment_survives_transition_and_resume(tmp_path) -> None:
+    path = tmp_path / "run.json"
+    path.write_text(
+        json.dumps(
+            {
+                "schema_version": "1.0",
+                "run_id": "legacy",
+                "workflow": "infer",
+                "environment": {"lock": "old-env.json"},
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    recorder = StatusRecorder.load(path)
+    recorder.transition(RunState.VALIDATED)
+    assert json.loads(path.read_text(encoding="utf-8"))["environment"] == {
+        "lock": "old-env.json"
+    }
+
+    run_dir = tmp_path / ".dpeva" / "runs" / "resumable"
+    run_dir.mkdir(parents=True)
+    resume_path = run_dir / "run.json"
+    resume_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "1.0",
+                "run_id": "resumable",
+                "workflow": "feature",
+                "status": "running",
+                "environment": {"lock": "old-env.json"},
+                "events": [
+                    {"state": "validated", "attempt_id": 1},
+                    {"state": "running", "attempt_id": 1},
+                ],
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    resumed = RunContext.create(
+        tmp_path,
+        "feature",
+        RunOptions(run_id="resumable", resume=True),
+        {},
+        {},
+    )
+    assert resumed.recorder.manifest.environment == {"lock": "old-env.json"}
+    assert json.loads(resume_path.read_text(encoding="utf-8"))["environment"] == {
+        "lock": "old-env.json"
+    }
 
 
 def test_partial_transition_requires_failure_evidence(tmp_path) -> None:
