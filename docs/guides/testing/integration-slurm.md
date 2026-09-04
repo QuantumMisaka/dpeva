@@ -99,6 +99,25 @@ Collect 阶段也必须具备统一完成锚点。当前已在 [collect.py](http
 
 ## 6. 运行说明（面向 Slurm 环境）
 
+### 6.1 DeepMD 3.2 V100 qualification
+
+DeepMD 3.2 的 SAI qualification 使用
+`scripts/validation/prepare_deepmd_32_qualification.py`、
+`submit_deepmd_32_qualification.py` 与
+`collect_deepmd_32_qualification.py`。准备阶段必须传入显式 model root；脚本只记录
+regular/EMA checkpoint 路径和 SHA-256，不复制科研产物。计算节点显式 source
+`scripts/env/dpeva-dpa4.env`，生成 `commands/*.json`、环境锁、GPU/Torch/CUDA 与
+artifact checks。默认作业约束是 `4V100`、单节点单任务单 GPU、`improper-gpu`、最长
+30 分钟，禁止额外 `mem`/`cpus` 资源声明。
+
+提交前应在干净登录 shell 中完成 rehash；提交脚本只执行一次 `sbatch`，并把结果写入
+唯一外部 job directory 和原子更新的 `latest.json`。`latest.json` 是引用，不是可供
+collector 直接扫描的目录；collector 只接受其中记录的不可变 job directory，并在
+`--require-complete` 下要求所有命令、环境和 artifact 证据完成。提交本身不等于作业完成。
+
+本仓库不声明该 qualification 的科学数值结论；报告模板见
+`docs/reports/templates/deepmd-3.2-qualification.md`。
+
 运行前置：
 
 - `sbatch`、`squeue` 可用
