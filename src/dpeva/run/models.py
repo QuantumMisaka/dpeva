@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from dpeva.run.status import RunState
 
@@ -65,3 +65,15 @@ class RunManifest(RunModel):
     artifacts: list[ArtifactRecord] = Field(default_factory=list)
     events: list[RunEvent] = Field(default_factory=list)
     failure: FailureRecord | None = None
+
+    @model_validator(mode="after")
+    def validate_failure_state(self) -> "RunManifest":
+        failure_states = {RunState.PARTIAL, RunState.FAILED}
+        if self.status in failure_states and self.failure is None:
+            raise ValueError(f"{self.status.value} runs require failure evidence")
+        if self.status not in failure_states and self.failure is not None:
+            raise ValueError(
+                "failure evidence is only valid for failed/partial runs, "
+                f"got {self.status.value}"
+            )
+        return self

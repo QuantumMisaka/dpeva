@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+import copy
+import errno
 import os
 from pathlib import Path
+from typing import Any, Literal
 
 from dpeva.run.models import (
     ArtifactRecord,
@@ -16,12 +19,25 @@ from dpeva.run.status import RunEventKind, RunState, transition
 
 
 class StatusRecorder:
-    """Persist a run manifest after every valid state or evidence update."""
+    """Persist a run manifest after every valid state or evidence update.
+
+    The published manifest is private. ``manifest`` returns a deep copy so a
+    caller cannot bypass transition and schema validation by mutating a nested
+    list or record in place.
+    """
 
     def __init__(self, path: Path, manifest: RunManifest, *, attempt_id: int = 1) -> None:
+        if attempt_id < 1:
+            raise ValueError("attempt_id must be positive")
         self.path = path
-        self.manifest = manifest
+        self._manifest = manifest
         self.attempt_id = attempt_id
+
+    @property
+    def manifest(self) -> RunManifest:
+        """Return an isolated snapshot of the last durably published manifest."""
+
+        return self._manifest.model_copy(deep=True)
 
     @classmethod
     def create(
@@ -30,25 +46,23 @@ class StatusRecorder:
         run_id: str,
         workflow: str,
         *,
-        source: dict[str, object] | None = None,
+        source: dict[str, Any] | None = None,
         environment: dict[str, str] | None = None,
         config: dict[str, str] | None = None,
         inputs: list[dict[str, str]] | None = None,
         attempt_id: int = 1,
     ) -> "StatusRecorder":
-        recorder = cls(
-            Path(path),
-            RunManifest(
-                run_id=run_id,
-                workflow=workflow,
-                source=source or {},
-                environment=environment or {},
-                config=config or {},
-                inputs=inputs or [],
-            ),
-            attempt_id=attempt_id,
+        manifest = RunManifest(
+            run_id=run_id,
+            workflow=workflow,
+            source=copy.deepcopy(source) if source is not None else {},
+            environment=copy.deepcopy(environment) if environment is not None else {},
+            config=copy.deepcopy(config) if config is not None else {},
+            inputs=copy.deepcopy(inputs) if inputs is not None else [],
         )
-        recorder._write()
+        recorder = cls(Path(path), manifest, attempt_id=attempt_id)
+        recorder._persist(manifest)
+        recorder._manifest = manifest
         return recorder
 
     @classmethod
@@ -60,57 +74,157 @@ class StatusRecorder:
     def transition(self, target: RunState, event: RunEventKind | None = None) -> RunState:
         """Validate and persist one state transition.
 
-        Validation is performed before mutating the in-memory manifest, so an
-        illegal transition leaves both memory and the persisted evidence intact.
+        A candidate is constructed and durably written before it becomes the
+        recorder's published in-memory state. Illegal transitions and I/O
+        failures therefore leave the recorder unchanged.
         """
 
-        next_state = transition(self.manifest.status, target, event)
+        next_state = transition(self._manifest.status, target, event)
+        candidate = self._manifest.model_copy(deep=True)
+        candidate.status = next_state
+        if next_state not in {RunState.PARTIAL, RunState.FAILED}:
+            # Recovery starts a new current attempt. The prior failed state
+            # remains in events; current failure evidence must not leak into a
+            # running/validated/submitted/finished manifest.
+            candidate.failure = None
         kind = event.value if event is not None else "transition"
-        self.manifest.status = next_state
-        self.manifest.events.append(
+        candidate.events.append(
             RunEvent(state=next_state, kind=kind, attempt_id=self.attempt_id)
         )
-        self._write()
+        candidate = self._validate(candidate)
+        self._persist(candidate)
+        self._manifest = candidate
         return next_state
 
     def fail(self, *, category: str, message: str) -> RunState:
-        self._record_terminal_failure(RunState.FAILED, category=category, message=message)
-        return self.manifest.status
+        return self._record_terminal_failure(RunState.FAILED, category=category, message=message)
 
     def partial(self, *, category: str, message: str) -> RunState:
-        self._record_terminal_failure(RunState.PARTIAL, category=category, message=message)
-        return self.manifest.status
+        return self._record_terminal_failure(RunState.PARTIAL, category=category, message=message)
 
     def add_job(self, job: JobRecord) -> None:
-        self.manifest.jobs.append(job)
-        self._write()
+        candidate = self._manifest.model_copy(deep=True)
+        candidate.jobs.append(job)
+        candidate = self._validate(candidate)
+        self._persist(candidate)
+        self._manifest = candidate
 
     def add_artifact(self, artifact: ArtifactRecord) -> None:
-        self.manifest.artifacts.append(artifact)
-        self._write()
+        candidate = self._manifest.model_copy(deep=True)
+        candidate.artifacts.append(artifact)
+        candidate = self._validate(candidate)
+        self._persist(candidate)
+        self._manifest = candidate
+
+    def update_metadata(
+        self,
+        *,
+        source: dict[str, Any] | None = None,
+        environment: dict[str, str] | None = None,
+        config: dict[str, str] | None = None,
+        inputs: list[dict[str, str]] | None = None,
+    ) -> None:
+        """Update manifest metadata through the same atomic publication path."""
+
+        candidate = self._manifest.model_copy(deep=True)
+        if source is not None:
+            candidate.source = copy.deepcopy(source)
+        if environment is not None:
+            candidate.environment = copy.deepcopy(environment)
+        if config is not None:
+            candidate.config = copy.deepcopy(config)
+        if inputs is not None:
+            candidate.inputs = copy.deepcopy(inputs)
+        candidate = self._validate(candidate)
+        self._persist(candidate)
+        self._manifest = candidate
+
+    def record_event(
+        self,
+        *,
+        kind: Literal["transition", "resume", "recovery", "force"],
+        state: RunState | None = None,
+        attempt_id: int | None = None,
+    ) -> None:
+        """Persist an explicit non-transition event, such as a force action."""
+
+        candidate = self._manifest.model_copy(deep=True)
+        candidate.events.append(
+            RunEvent(
+                state=state or candidate.status,
+                kind=kind,
+                attempt_id=attempt_id if attempt_id is not None else self.attempt_id,
+            )
+        )
+        candidate = self._validate(candidate)
+        self._persist(candidate)
+        self._manifest = candidate
 
     def save(self) -> None:
-        """Persist caller-managed manifest evidence atomically."""
+        """Re-persist the last published manifest without accepting external mutation."""
 
-        self._write()
+        self._persist(self._manifest)
 
-    def _record_terminal_failure(self, target: RunState, *, category: str, message: str) -> None:
-        next_state = transition(self.manifest.status, target)
-        failure = FailureRecord(category=category, message=message)
-        self.manifest.status = next_state
-        self.manifest.failure = failure
-        self.manifest.events.append(
-            RunEvent(state=next_state, attempt_id=self.attempt_id)
-        )
-        self._write()
+    def _record_terminal_failure(self, target: RunState, *, category: str, message: str) -> RunState:
+        next_state = transition(self._manifest.status, target)
+        candidate = self._manifest.model_copy(deep=True)
+        candidate.status = next_state
+        candidate.failure = FailureRecord(category=category, message=message)
+        candidate.events.append(RunEvent(state=next_state, attempt_id=self.attempt_id))
+        candidate = self._validate(candidate)
+        self._persist(candidate)
+        self._manifest = candidate
+        return next_state
 
-    def _write(self) -> None:
+    @staticmethod
+    def _validate(candidate: RunManifest) -> RunManifest:
+        # ``model_copy(update=...)`` does not validate updates in Pydantic v2.
+        # Round-trip through the model to enforce all field and root rules.
+        return RunManifest.model_validate(candidate.model_dump())
+
+    def _persist(self, candidate: RunManifest) -> None:
+        candidate = self._validate(candidate)
         self.path.parent.mkdir(parents=True, exist_ok=True)
         temporary = self.path.with_suffix(self.path.suffix + ".tmp")
-        with temporary.open("w", encoding="utf-8") as handle:
-            handle.write(self.manifest.model_dump_json(indent=2))
-            handle.write("\n")
-            handle.flush()
-            os.fsync(handle.fileno())
-        os.replace(temporary, self.path)
+        try:
+            with temporary.open("w", encoding="utf-8") as handle:
+                handle.write(candidate.model_dump_json(indent=2))
+                handle.write("\n")
+                handle.flush()
+                os.fsync(handle.fileno())
+            os.replace(temporary, self.path)
+            self._fsync_parent_directory()
+        except BaseException:
+            try:
+                temporary.unlink(missing_ok=True)
+            except OSError:
+                pass
+            raise
 
+    def _fsync_parent_directory(self) -> None:
+        flags = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0)
+        try:
+            directory_fd = os.open(str(self.path.parent), flags)
+        except OSError:
+            # Directory handles/fsync are unavailable on some platforms. The
+            # file has still been flushed and the rename remains atomic there.
+            return
+        try:
+            try:
+                os.fsync(directory_fd)
+            except OSError as error:
+                # A few platforms/filesystems do not support directory fsync;
+                # propagate other errors so the recorder does not publish a
+                # candidate that failed its durability step.
+                unsupported = {
+                    errno.EBADF,
+                    errno.EINVAL,
+                    errno.ENOSYS,
+                    errno.ENOTSUP,
+                    errno.EOPNOTSUPP,
+                }
+                if error.errno in unsupported:
+                    return
+                raise
+        finally:
+            os.close(directory_fd)
