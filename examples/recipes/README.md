@@ -147,6 +147,5 @@ For programmatic workflow demos and helper scripts, use:
   visible as `not-run`; no active FT2DP task status is copied into the card.
 
 **Usage:**
-```bash
-dpeva eval-card examples/recipes/evaluation/config_eval_card.json
-```
+`examples/recipes/evaluation/config_eval_card.json` is a template only: replace the model-ref and any
+metric/manifest references with real candidate-package artifacts before running `dpeva eval-card`.

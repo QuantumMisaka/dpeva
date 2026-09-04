@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, StrictInt, model_validator
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictInt, model_validator
 
 
 class DatasetModel(BaseModel):
@@ -21,6 +21,26 @@ class DatasetParent(DatasetModel):
     manifest_ref: str | None = None
 
 
+class DatasetIntersectionSummary(DatasetModel):
+    """Machine-readable evidence for overlap handling during integration."""
+
+    method: Literal["not-run", "coordinate-sha1"] = "not-run"
+    overlap_frame_count: StrictInt = Field(default=0, ge=0)
+    removed_frame_count: StrictInt = Field(default=0, ge=0)
+    evidence_ref: str | None = None
+
+
+class DatasetValidationResult(DatasetModel):
+    """The result and rule version of the lineage validation performed."""
+
+    rule_version: Literal["1.0"] = "1.0"
+    status: Literal["passed", "failed"]
+    counts_reconciled: StrictBool
+    sources_declared: StrictBool
+    intersections_explained: StrictBool
+    type_map_compatible: StrictBool
+
+
 class DatasetManifest(DatasetModel):
     """Schema-versioned evidence for a dataset transformation."""
 
@@ -34,11 +54,14 @@ class DatasetManifest(DatasetModel):
     type_map: list[str]
     format: str
     source_entries: list[str] = Field(default_factory=list)
-    intersection_summary: dict[str, int] = Field(default_factory=dict)
+    intersection_summary: DatasetIntersectionSummary = Field(
+        default_factory=DatasetIntersectionSummary
+    )
     content_identity: str | None = None
     content_identity_strength: Literal[
         "none", "structural", "exported-files-sha256"
     ] = "none"
+    validation_result: DatasetValidationResult
 
     @model_validator(mode="after")
     def validate_lineage_shape(self) -> "DatasetManifest":
@@ -67,11 +90,46 @@ def validate_lineage_counts(manifest: DatasetManifest) -> None:
     Derived datasets must account for every parent frame and every removal.
     """
 
-    if not manifest.parents:
-        return
-
-    expected = sum(parent.frame_count for parent in manifest.parents) - manifest.removed_frame_count
-    if expected != manifest.frame_count:
+    expected = (
+        sum(parent.frame_count for parent in manifest.parents) - manifest.removed_frame_count
+        if manifest.parents
+        else manifest.frame_count
+    )
+    result = manifest.validation_result
+    summary = manifest.intersection_summary
+    sources = set(manifest.source_entries)
+    source_ids = {parent.dataset_id for parent in manifest.parents}
+    sources_declared = source_ids.issubset(sources) and bool(sources)
+    counts_reconciled = expected == manifest.frame_count
+    intersections_explained = (
+        summary.removed_frame_count == manifest.removed_frame_count
+        and (
+            summary.overlap_frame_count == 0
+            and manifest.removed_frame_count == 0
+            or (
+                summary.method != "not-run"
+                and bool(summary.evidence_ref)
+                and summary.removed_frame_count == manifest.removed_frame_count
+                and (
+                    summary.overlap_frame_count == summary.removed_frame_count
+                    or summary.removed_frame_count == 0
+                )
+            )
+        )
+    )
+    if not counts_reconciled:
         raise LineageValidationError(
             f"lineage frame count mismatch: expected {expected}, observed {manifest.frame_count}"
         )
+    if not sources_declared:
+        raise LineageValidationError("lineage source entries do not declare every parent dataset")
+    if not intersections_explained:
+        raise LineageValidationError("intersection/removal evidence is missing or inconsistent")
+    if result.status != "passed" or not (
+        result.rule_version == "1.0"
+        and result.counts_reconciled
+        and result.sources_declared
+        and result.intersections_explained
+        and result.type_map_compatible
+    ):
+        raise LineageValidationError("dataset validation_result does not record a passed validation")

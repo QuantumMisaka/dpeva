@@ -2,6 +2,7 @@ import pytest
 from pydantic import ValidationError
 
 from dpeva.run.dataset import (
+    DatasetIntersectionSummary,
     DatasetManifest,
     DatasetParent,
     LineageValidationError,
@@ -22,8 +23,23 @@ def _manifest(**overrides: object) -> DatasetManifest:
         "system_count": 2,
         "type_map": ["Fe", "C", "H", "O"],
         "format": "deepmd/npy/mixed",
+        "source_entries": ["iter10-cumulative", "iter11-new"],
+        "validation_result": {
+            "status": "passed",
+            "counts_reconciled": True,
+            "sources_declared": True,
+            "intersections_explained": True,
+            "type_map_compatible": True,
+        },
     }
     values.update(overrides)
+    if values.get("removed_frame_count", 0):
+        values["intersection_summary"] = {
+            "method": "coordinate-sha1",
+            "overlap_frame_count": values["removed_frame_count"],
+            "removed_frame_count": values["removed_frame_count"],
+            "evidence_ref": "fixture:dedup",
+        }
     return DatasetManifest(**values)
 
 
@@ -111,3 +127,21 @@ def test_duplicate_type_map_entries_are_rejected() -> None:
 def test_unknown_fields_are_rejected() -> None:
     with pytest.raises(ValidationError, match="extra_field"):
         _manifest(extra_field="must not be silently ignored")
+
+
+def test_overlap_without_removal_evidence_fails() -> None:
+    manifest = _manifest(
+        frame_count=16422,
+        intersection_summary=DatasetIntersectionSummary(
+            method="not-run", overlap_frame_count=1, removed_frame_count=0
+        ),
+    )
+    with pytest.raises(LineageValidationError, match="intersection/removal evidence"):
+        validate_lineage_counts(manifest)
+
+
+def test_validation_result_is_required_and_machine_readable() -> None:
+    with pytest.raises(ValidationError, match="validation_result"):
+        values = _manifest().model_dump()
+        values.pop("validation_result")
+        DatasetManifest(**values)

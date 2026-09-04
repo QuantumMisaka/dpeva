@@ -21,7 +21,8 @@ owner: Scientific Owner
 ## Global Constraints
 
 - Requires Plan B pilot checkpoint `GO` and schema `1.0` conventions.
-- DP-EVA stores immutable evidence references, not live FT2DP task state (`#boundaries`).
+- DP-EVA stores evidence references to immutable, validated artifacts, not live FT2DP task state
+  (`#boundaries`); relative paths provide portability only and are not the immutability mechanism.
 - The 12,105 + 4,317 = 16,422 invariant is a mandatory regression boundary.
 - Missing evaluation dimensions are explicit `not-run`, `not-applicable`, or `failed`; never encode them as zero.
 - Do not implement a campaign database, automatic scientific ranking, or Phase 3 algorithms.
@@ -118,8 +119,9 @@ class DatasetManifest(DatasetModel):
     type_map: list[str]
     format: str
     source_entries: list[str] = Field(default_factory=list)
-    intersection_summary: dict[str, int] = Field(default_factory=dict)
+    intersection_summary: DatasetIntersectionSummary
     content_identity: str | None = None
+    validation_result: DatasetValidationResult
 
 
 class LineageValidationError(ValueError):
@@ -155,7 +157,9 @@ git commit -m "feat: add dataset lineage invariants"
 - Modify: `docs/guides/configuration.md`
 
 **Test strategy:**
-- Behavior boundary: successful integration writes `dataset-manifest.json`; count/type-map conflicts fail before downstream handoff.
+- Behavior boundary: successful integration writes `dataset-manifest.json`; count/type-map conflicts,
+  undeclared sources, and unexplained overlap fail before downstream handoff. Explicit deduplication
+  persists overlap/removal evidence and a versioned validation result.
 - Existing suite to extend: labeling integration unit and E2E tests.
 - New test file justification: none.
 - Temporary probes: none.
@@ -468,7 +472,9 @@ git commit -m "feat: add candidate evaluation card schema"
 - Create: `tests/integration/test_evaluation_card_cli.py`
 
 **Test strategy:**
-- Behavior boundary: one command creates a stable card containing all six dimensions and immutable references; missing inputs remain visible.
+- Behavior boundary: one command creates a stable card containing all six dimensions and references to
+  immutable, validated evidence; missing inputs remain visible. Local references are portable POSIX paths
+  relative to the card directory and must not leak machine absolute paths.
 - Existing suite to extend: CLI tests.
 - New test file justification: command-to-file handoff spans configuration, assembler, and JSON persistence.
 - Temporary probes: none.
@@ -514,7 +520,10 @@ Register `eval-card` with the same validated JSON path behavior as other command
 
 - [ ] **Step 3: Add the recipe without campaign-local absolute paths**
 
-The recipe uses relative references for `model_ref_path`, optional metric JSON files, `output_path`, and `downstream_feedback_ref`; it must not duplicate FT2DP task status.
+The recipe uses relative references for `model_ref_path`, optional metric JSON files, `output_path`, and
+`downstream_feedback_ref`; it is a template requiring real model-ref and metric artifacts, not a directly
+executable command. It must not duplicate FT2DP task status. Generated cards store POSIX references relative
+to the card directory; readers resolve input paths first and never persist machine absolute paths.
 
 ```json
 {
@@ -570,7 +579,9 @@ Expected: all commands exit `0`.
 
 Run: `python -c "import json; from dpeva.config import EvaluationCardConfig; EvaluationCardConfig.model_validate(json.load(open('examples/recipes/evaluation/config_eval_card.json')))" && pytest tests/integration/test_evaluation_card_cli.py -q`
 
-Expected: exit `0`; the recipe validates and the integration test proves generated schema `1.0` output with unsupplied dimensions represented as `not-run` rather than zero.
+Expected: exit `0`; the template shape validates, while execution requires the caller to populate real
+model-ref and metric artifacts. The integration test proves generated schema `1.0` output with unsupplied
+dimensions represented as `not-run` rather than zero and all local references portable.
 
 - [ ] **Step 3: Write and commit the acceptance report**
 

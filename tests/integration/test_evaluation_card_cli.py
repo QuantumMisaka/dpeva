@@ -50,9 +50,9 @@ def test_eval_card_cli_writes_all_dimensions_from_config_relative_paths(
     payload = json.loads(output.read_text(encoding="utf-8"))
     assert len(payload["metrics"]) == 6
     assert payload["metrics"]["surface_slice"]["status"] == "passed"
-    assert payload["metrics"]["surface_slice"]["evidence_ref"] == str(metric.resolve())
+    assert payload["metrics"]["surface_slice"]["evidence_ref"] == "../evidence/surface.json"
     assert payload["metrics"]["in_domain_cumulative"]["status"] == "not-run"
-    assert payload["downstream_feedback_ref"] == str((tmp_path / "evidence" / "downstream-review.json").resolve())
+    assert payload["downstream_feedback_ref"] == "../evidence/downstream-review.json"
 
 
 def test_eval_card_cli_does_not_replace_existing_output(

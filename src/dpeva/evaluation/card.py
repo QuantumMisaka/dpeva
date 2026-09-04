@@ -9,6 +9,9 @@ represented as ``not-run`` and invalid configured metric evidence as
 from __future__ import annotations
 
 import json
+import math
+import os
+import re
 from pathlib import Path
 from typing import Any, Literal
 
@@ -29,6 +32,7 @@ _DIMENSIONS = (
     "training_cost",
     "surface_slice",
 )
+_URI_SCHEME = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*:")
 
 
 class EvaluationMetric(BaseModel):
@@ -99,10 +103,17 @@ def _load_dataset_manifest(path: Path) -> Path:
     return manifest_path
 
 
-def _metric_from_file(path: Path) -> EvaluationMetric:
-    """Load one strict metric object and attach its immutable source path."""
+def _portable_local_ref(path: Path, base_dir: Path) -> str:
+    """Return a POSIX logical reference relative to the card directory."""
+
+    return Path(os.path.relpath(path.resolve(), base_dir.resolve())).as_posix()
+
+
+def _metric_from_file(path: Path, *, base_dir: Path) -> EvaluationMetric:
+    """Load one strict metric object and attach a portable source reference."""
 
     evidence_path = Path(path).expanduser().resolve()
+    evidence_ref = _portable_local_ref(evidence_path, base_dir)
     try:
         if not evidence_path.is_file():
             raise ValueError(f"metric evidence does not exist or is not a file: {evidence_path}")
@@ -112,10 +123,11 @@ def _metric_from_file(path: Path) -> EvaluationMetric:
         )
         if not isinstance(payload, dict):
             raise ValueError("metric evidence must be a JSON object")
+        _validate_finite_values(payload)
         metric = EvaluationMetric.model_validate(payload)
     except (OSError, TypeError, ValueError, ValidationError) as exc:
-        return EvaluationMetric(status="failed", evidence_ref=str(evidence_path), detail=str(exc))
-    return metric.model_copy(update={"evidence_ref": str(evidence_path)})
+        return EvaluationMetric(status="failed", evidence_ref=evidence_ref, detail=str(exc))
+    return metric.model_copy(update={"evidence_ref": evidence_ref})
 
 
 def _reject_non_finite_constant(value: str) -> Any:
@@ -124,14 +136,31 @@ def _reject_non_finite_constant(value: str) -> Any:
     raise ValueError(f"non-finite JSON constant is not allowed: {value}")
 
 
+def _validate_finite_values(value: Any, path: str = "value") -> None:
+    """Reject non-finite floats, including values produced by ``1e999``."""
+
+    if isinstance(value, float) and not math.isfinite(value):
+        raise ValueError(f"non-finite metric value at {path}")
+    if isinstance(value, dict):
+        for key, item in value.items():
+            _validate_finite_values(item, f"{path}.{key}")
+    elif isinstance(value, list):
+        for index, item in enumerate(value):
+            _validate_finite_values(item, f"{path}[{index}]")
+
+
 def build_evaluation_card(config: EvaluationCardConfig) -> EvaluationCard:
     """Assemble a complete card from strict references and optional metrics."""
 
     if not isinstance(config, EvaluationCardConfig):
         raise TypeError("config must be an EvaluationCardConfig")
 
+    card_dir = Path(config.output_path).expanduser().resolve().parent
     model_ref_path = _load_model_reference(config.model_ref_path)
-    dataset_refs = [str(_load_dataset_manifest(path)) for path in config.dataset_manifest_paths]
+    dataset_refs = [
+        _portable_local_ref(_load_dataset_manifest(path), card_dir)
+        for path in config.dataset_manifest_paths
+    ]
     configured_paths: dict[str, Path | None] = {
         "in_domain_cumulative": config.in_domain_cumulative_path,
         "iter11_last_wave": config.iter11_last_wave_path,
@@ -141,13 +170,18 @@ def build_evaluation_card(config: EvaluationCardConfig) -> EvaluationCard:
         "surface_slice": config.surface_slice_path,
     }
     metrics = {
-        name: EvaluationMetric(status="not-run") if path is None else _metric_from_file(path)
+        name: EvaluationMetric(status="not-run")
+        if path is None
+        else _metric_from_file(path, base_dir=card_dir)
         for name, path in configured_paths.items()
     }
+    feedback_ref = config.downstream_feedback_ref
+    if feedback_ref and not _URI_SCHEME.match(feedback_ref):
+        feedback_ref = _portable_local_ref(Path(feedback_ref), card_dir)
     return EvaluationCard(
         candidate_id=config.candidate_id,
-        model_ref=str(model_ref_path),
+        model_ref=_portable_local_ref(model_ref_path, card_dir),
         dataset_refs=dataset_refs,
         metrics=metrics,
-        downstream_feedback_ref=config.downstream_feedback_ref,
+        downstream_feedback_ref=feedback_ref,
     )

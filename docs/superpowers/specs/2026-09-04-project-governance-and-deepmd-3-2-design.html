@@ -228,7 +228,7 @@
             <tr><td>R1</td><td>所有生成脚本采用 fail-closed 语义，完成状态不掩盖命令失败。</td><td>执行一个必然失败的任务：退出码非零、状态为 failed、没有 finished marker；恢复正常命令后同一测试通过。</td></tr>
             <tr><td>R2</td><td>统一 canonical 运行状态全集：created、validated、submitted、running、partial、failed、finished；resume/recovery 作为事件而非新状态。</td><td>Local 与模拟 Slurm 生命周期测试生成合法状态序列；非法迁移被拒绝；恢复后的终态仍规范化为 failed 或 finished。</td></tr>
             <tr><td>R3</td><td>每次受治理运行生成 schema-versioned run manifest。</td><td>成功和失败运行均生成可校验 JSON；记录配置、版本、输入、JobID、日志、产物和状态。</td></tr>
-            <tr><td>R4</td><td>数据集合并/清洗/采集生成 lineage manifest 和计数不变量。</td><td>12,105 + 4,317 的 fixture 合并得到 16,422；遗漏来源、重复或 type-map 冲突使门禁失败。</td></tr>
+            <tr><td>R4</td><td>数据集合并/清洗/采集生成 lineage manifest 和计数不变量。</td><td>12,105 + 4,317 的 fixture 合并得到 16,422；未声明来源、未解释的重复/交集或 type-map 冲突使门禁失败。允许显式去重，但必须持久化 intersection/removal evidence 和 validation result。</td></tr>
             <tr><td>R5</td><td>模型引用显式区分 checkpoint、frozen、exportable、pretrained alias、regular 和 EMA。</td><td>同一 inference 配置可枚举 regular/EMA；不兼容 backend/artifact 在提交前失败并给出原因。</td></tr>
             <tr><td>R6</td><td>DeepMD 支持区间、生产锁和能力状态由单一 manifest 描述。</td><td>机器校验能回答指定 operation/backend/model/artifact/data/environment 的 supported 状态和证据。</td></tr>
             <tr><td>R7</td><td>提供显式 doctor/preflight，不在 import 时隐式探测外部命令。</td><td><code>dpeva doctor --json</code> 在有/无 DeepMD、版本不兼容和能力缺失环境中给出稳定 schema 与正确退出码。</td></tr>
@@ -359,7 +359,7 @@ Local / Slurm / external campaign workspaces</code></pre>
   "failure": null
 }</code></pre>
       <h3>9.2 Dataset Manifest</h3>
-      <p>最小字段包括 schema、dataset_id、parents、transformation、frame/system counts、type map、format、source entries、intersection summary、content identity 和验证结果。大数据集不强制逐帧 hash；允许按 set 文件摘要、Merkle/清单或抽样策略，并明确证据强度。</p>
+      <p>最小字段包括 schema、dataset_id、parents、transformation、frame/system counts、type map、format、source entries、intersection summary、content identity 和机器可读 validation result（含 rule version、status 及 counts/sources/intersections/type-map 四项结果）。未声明来源、未解释的重复/交集或 type-map 冲突必须失败；显式去重必须持久化 removed/overlap evidence。大数据集不强制逐帧 hash；允许按 set 文件摘要、Merkle/清单或抽样策略，并明确证据强度。</p>
       <h3>9.3 Model Reference</h3>
       <p>最小字段包括 artifact kind、family、backend、path/alias、resolved path、checksum、head、regular/EMA role、DeepMD version、producer run、supported operations。文件后缀只作为探测提示，不作为唯一真相。</p>
       <h3>9.4 Compatibility Manifest</h3>

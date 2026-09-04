@@ -88,14 +88,21 @@ dpeva doctor --json
 它不会启动评测、复制活动中的 FT2DP 任务清单或推断科学排名。六个固定维度始终存在，
 未提供证据标记为 `not-run`，配置了但无法读取或校验的证据标记为 `failed`，并保留证据路径。
 
+`examples/recipes/evaluation/config_eval_card.json` 是配置模板，不是可直接执行的
+candidate artifact。填入真实 model-ref、dataset manifest 和 metric 文件后，再运行：
+
 ```bash
-dpeva eval-card examples/recipes/evaluation/config_eval_card.json
+dpeva eval-card path/to/filled-eval-card.json
 ```
 
 配置文件中的相对路径均相对该配置文件所在目录解析，包括 `output_path`、
 `model_ref_path`、六个可选 metric 路径和 `dataset_manifest_paths`。输出卡片以原子方式发布，
 不会覆盖已存在的目标文件；如需生成新的候选卡片，请使用新的输出路径。配置模板见
 `examples/recipes/evaluation/config_eval_card.json`。
+卡片中的本地 `model_ref`、`dataset_refs`、metric `evidence_ref` 和本地下游反馈引用均是
+相对于卡片目录的 POSIX 逻辑引用；将包含这些目标的 candidate package 整体搬迁后仍可解析。
+相对路径只解决可移植定位，不单独提供不可变性；不可变性由引用目标自身的 no-overwrite、校验和
+及其验证契约承担。HTTP/其他下游 URI 保持原样。
 
 ### 4.1 train（并行微调训练）
 
@@ -197,12 +204,12 @@ dpeva infer config.json --run-id infer-20260904-a1b2c3
     `dataset_manifest_path` 是相对于输出目录的不可变清单引用，同时记录 generation 和
     SHA-256。清单记录父数据集、合并后的帧/体系数、去重移除数、type map 和逻辑来源引用；
     当前整合不会伪造不可解析的 parent manifest ref，仅保留逻辑来源标签；
-    帧数或 type map 冲突会在下游交接前失败。
-  - 发布采用 Linux `renameat2(RENAME_NOREPLACE)`，不覆盖并发产生的目标目录；若最终目录
-    已发布但目录持久化确认失败，会报告 `PublicationDurabilityError`。此时保留已发布 bundle，
-    应先检查其清单与摘要，再选择新的输出路径重试。
-    staging 目录持久化确认失败时不会执行 rename，临时目录会清理且最终路径保持不存在；
-    不支持 `renameat2(RENAME_NOREPLACE)` 的平台直接失败，不回退到普通 rename。
+    未声明来源、未解释的重复/交集或 type map 冲突会在下游交接前失败；显式去重会保存
+    overlap/removal evidence 与机器可读 `validation_result`（含 rule version）。
+  - 发布采用 sibling staging 目录与 Linux `renameat2(RENAME_NOREPLACE)`，在进程可见范围内
+    原子且不覆盖并发产生的目标目录；不支持该原语的平台直接失败，不回退到普通 rename。
+    该发布语义不提供 crash 后目录持久化或递归 fsync dpdata 树的保证；JSON 文件可能进行
+    文件级 flush，不能外推为整个 bundle 的 durability 保证。
 
 ### 4.7 analysis（双模式分析）
 

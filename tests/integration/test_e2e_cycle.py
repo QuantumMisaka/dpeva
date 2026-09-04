@@ -57,8 +57,16 @@ def test_e2e_cycle_label_integration_analysis(
             "type_map": ["Fe", "C"],
             "format": "deepmd/npy/mixed",
             "source_entries": ["new-labeled"],
-            "intersection_summary": {},
+            "intersection_summary": {
+                "method": "not-run", "overlap_frame_count": 0,
+                "removed_frame_count": 0, "evidence_ref": None,
+            },
             "content_identity": None,
+            "validation_result": {
+                "status": "passed", "counts_reconciled": True,
+                "sources_declared": True, "intersections_explained": True,
+                "type_map_compatible": True,
+            },
         }
         with open(manifest_path, "w") as f:
             json.dump(manifest, f, indent=4)

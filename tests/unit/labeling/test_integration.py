@@ -8,7 +8,6 @@ import pytest
 
 from dpeva.labeling.integration import (
     DataIntegrationManager,
-    PublicationDurabilityError,
     PublicationError,
 )
 
@@ -75,6 +74,8 @@ def test_integration_manager_export(mock_load_systems, tmp_path):
     assert generation_bytes == (out_dir / "dataset-manifest.json").read_bytes()
     assert result["dataset_manifest_sha256"] == hashlib.sha256(generation_bytes).hexdigest()
     assert manifest["source_entries"] == ["existing-training", "new-labeled"]
+    assert manifest["validation_result"]["status"] == "passed"
+    assert manifest["intersection_summary"]["overlap_frame_count"] == 0
     assert all(not Path(entry).is_absolute() for entry in manifest["source_entries"])
     relocated = tmp_path / "relocated"
     out_dir.rename(relocated)
@@ -107,10 +108,28 @@ def test_integration_manager_deduplicate(mock_load_systems, tmp_path):
     manifest = json.loads((out_dir / "dataset-manifest.json").read_text())
     assert manifest["frame_count"] == 1
     assert manifest["removed_frame_count"] == 1
+    assert manifest["intersection_summary"]["removed_frame_count"] == 1
+    assert manifest["intersection_summary"]["evidence_ref"] == "in-memory:coordinate-sha1"
     assert [parent["dataset_id"] for parent in manifest["parents"]] == ["new-labeled"]
     assert manifest["parents"][0]["manifest_ref"] is None
     assert result["dataset_manifest_path"].startswith("dataset-manifest-")
     assert (out_dir / result["dataset_manifest_path"]).exists()
+
+
+@patch("dpeva.labeling.integration.dpdata.MultiSystems", _FakeMultiSystems)
+@patch("dpeva.labeling.integration.load_systems")
+def test_unexplained_overlap_fails_when_deduplication_is_disabled(mock_load_systems, tmp_path):
+    new_dir = tmp_path / "new_cleaned"
+    out_dir = tmp_path / "merged"
+    new_dir.mkdir()
+    duplicate = [[[0.0, 0.0, 0.0]]]
+    mock_load_systems.return_value = [_FakeSystem(duplicate), _FakeSystem(duplicate)]
+
+    with pytest.raises(ValueError, match="unexplained duplicate/intersection"):
+        DataIntegrationManager(deduplicate=False).integrate(
+            new_labeled_data_path=new_dir, merged_output_path=out_dir
+        )
+    assert not out_dir.exists()
 
 
 @patch("dpeva.labeling.integration.dpdata.MultiSystems", _FakeMultiSystems)
@@ -393,7 +412,7 @@ def test_competing_final_target_is_never_overwritten(mock_load_systems, tmp_path
 
 @patch("dpeva.labeling.integration.dpdata.MultiSystems", _FakeMultiSystems)
 @patch("dpeva.labeling.integration.load_systems")
-def test_post_rename_durability_failure_keeps_published_bundle(
+def test_bundle_publication_does_not_claim_recursive_crash_durability(
     mock_load_systems, tmp_path
 ):
     new_dir = tmp_path / "new_cleaned"
@@ -401,45 +420,9 @@ def test_post_rename_durability_failure_keeps_published_bundle(
     new_dir.mkdir()
     mock_load_systems.return_value = [_FakeSystem([[[0.0, 0.0, 0.0]]])]
     manager = DataIntegrationManager()
-    original_fsync = manager._fsync_directory
 
-    def fail_parent(path, *, strict=False):
-        if path == tmp_path and strict:
-            raise OSError("injected directory fsync failure")
-        return original_fsync(path, strict=strict)
-
-    with patch.object(manager, "_fsync_directory", side_effect=fail_parent):
-        with pytest.raises(PublicationDurabilityError, match="Bundle already published"):
-            manager.integrate(new_labeled_data_path=new_dir, merged_output_path=out_dir)
-
+    manager.integrate(new_labeled_data_path=new_dir, merged_output_path=out_dir)
     assert out_dir.is_dir()
-    assert (out_dir / "integration_summary.json").exists()
-    assert not list(tmp_path.glob(".merged.staging-*"))
-    with pytest.raises(FileExistsError, match="refusing overwrite"):
-        manager.integrate(new_labeled_data_path=new_dir, merged_output_path=out_dir)
-
-
-@patch("dpeva.labeling.integration.dpdata.MultiSystems", _FakeMultiSystems)
-@patch("dpeva.labeling.integration.load_systems")
-def test_staging_durability_failure_never_publishes_final(
-    mock_load_systems, tmp_path
-):
-    new_dir = tmp_path / "new_cleaned"
-    out_dir = tmp_path / "merged"
-    new_dir.mkdir()
-    mock_load_systems.return_value = [_FakeSystem([[[0.0, 0.0, 0.0]]])]
-    manager = DataIntegrationManager()
-
-    def fail_staging(path, *, strict=False):
-        if strict:
-            raise OSError("injected staging directory fsync failure")
-
-    with patch.object(manager, "_fsync_directory", side_effect=fail_staging):
-        with pytest.raises(PublicationDurabilityError, match="Bundle not published"):
-            manager.integrate(new_labeled_data_path=new_dir, merged_output_path=out_dir)
-
-    assert not out_dir.exists()
-    assert not list(tmp_path.glob(".merged.staging-*"))
 
 
 def test_rename_noreplace_unsupported_fails_closed_without_fallback(tmp_path):

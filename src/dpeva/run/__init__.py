@@ -2,7 +2,14 @@ from .status import InvalidStateTransition, RunEventKind, RunState, transition
 from .models import ArtifactRecord, FailureRecord, JobRecord, RunEvent, RunManifest
 from .recorder import StatusRecorder
 from .context import RunContext, RunOptions
-from .dataset import DatasetManifest, DatasetParent, LineageValidationError, validate_lineage_counts
+from .dataset import (
+    DatasetIntersectionSummary,
+    DatasetManifest,
+    DatasetParent,
+    DatasetValidationResult,
+    LineageValidationError,
+    validate_lineage_counts,
+)
 from .model import (
     ModelArtifactKind,
     ModelArtifactRef,
@@ -27,6 +34,8 @@ __all__ = [
     "StatusRecorder",
     "DatasetManifest",
     "DatasetParent",
+    "DatasetIntersectionSummary",
+    "DatasetValidationResult",
     "LineageValidationError",
     "transition",
     "validate_lineage_counts",
