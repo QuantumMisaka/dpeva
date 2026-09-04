@@ -39,3 +39,15 @@ def test_dev_extra_is_independent_of_deepmd_and_exploration() -> None:
 
     assert all(not item.startswith("deepmd-kit") for item in dev)
     assert all(not item.startswith("atst-tools") for item in dev)
+
+
+def test_installation_guide_describes_explicit_deepmd_modes() -> None:
+    guide = Path("docs/guides/installation.md").read_text(encoding="utf-8")
+
+    assert "python -m pip install -e ." in guide
+    assert "python -m pip install -e '.[dev]'" in guide
+    assert "python -m pip install -e '.[deepmd]'" in guide
+    assert "deepmd-kit>=3.2,<3.3" in guide
+    assert "deepmd-kit==3.2.0" in guide
+    assert "dpeva doctor" in guide
+    assert "导入 `dpeva` 时会给出警告" not in guide

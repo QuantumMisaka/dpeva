@@ -31,8 +31,10 @@ owner: Workflow Owner
 
 ## 4. 安装方式
 
-### 4.1 可编辑安装（推荐用于开发/使用）
+### 4.1 Core：基础安装（不含 DeepMD）
 
+核心安装适用于不调用 DeepMD 的数据、标注、分析及文档工作。它不安装
+`deepmd-kit`，因此没有 `dp` 命令也可以导入 `dpeva` 并查看 CLI 帮助。
 在项目根目录执行：
 
 ```bash
@@ -45,13 +47,49 @@ python -m pip install -e .
 dpeva --help
 ```
 
-### 4.2 开发依赖（可选）
+### 4.2 Dev：开发与测试依赖（可选）
 
 ```bash
 python -m pip install -e '.[dev]'
 ```
 
-### 4.3 Exploration 可选依赖
+`dev` extra 只提供测试、格式化和类型检查工具，不隐式安装 DeepMD 或
+`atst-tools`。需要 DeepMD 的测试时，显式叠加下一节的 runtime extra。
+
+### 4.3 DeepMD runtime：用户运行时依赖（可选）
+
+训练、推理或特征工作流需要 `dp` 时，在 core 安装上显式启用 DeepMD：
+
+```bash
+python -m pip install -e '.[deepmd]'
+```
+
+该 extra 的依赖范围是 `deepmd-kit>=3.2,<3.3`。这是用户环境的依赖解析
+边界，不表示该范围内的每个版本行为完全等价。
+
+验证运行时能力：
+
+```bash
+dpeva doctor
+dp --version
+```
+
+`doctor` 是显式环境检查；缺少 `dp` 时 core 安装与 `import dpeva` 仍应可用，
+需要 DeepMD 的具体工作流才会在执行阶段报告缺失能力。
+
+### 4.4 Research production：研究生产精确锁定
+
+正式科研结果使用独立环境，并将 DeepMD 精确锁定为 `deepmd-kit==3.2.0`：
+
+```bash
+python -m pip install -e '.[deepmd]' 'deepmd-kit==3.2.0'
+```
+
+同时保存环境锁文件、`dpeva doctor --json` 和 `dp --version` 输出作为运行
+记录。研究生产环境不能只依赖 `>=3.2,<3.3` 范围来声称可复现，也不能把范围内
+其他版本未经验证的行为当作 3.2.0 等价物。
+
+### 4.5 Exploration 可选依赖
 
 `dpeva explore` 通过可选 `atst-tools` backend 调用轨迹探索工作流。该依赖不进入核心安装，需要时单独启用：
 
@@ -71,24 +109,11 @@ atst --help
 - `dpeva[explore]` 只安装 DP-EVA 的 exploration backend 依赖。
 - ABACUS、DeePMD 模型文件、赝势和轨道文件仍由具体 ATST 配置与运行环境提供。
 
-## 5. 外部依赖：DeepMD-kit
+## 5. 外部环境说明
 
-DP-EVA 的多数 Workflow 依赖 DeepMD-kit 的 `dp` 命令（例如 `dp train/test/eval-desc`）。
-
-要求：
-
-- `dp` 命令可在 `PATH` 中找到
-
-验证：
-
-```bash
-dp --version
-```
-
-说明：
-
-- 若 `dp` 不可用，导入 `dpeva` 时会给出警告提示，但并不阻止安装。
-- 在 Slurm 环境中，建议通过 `submission.env_setup` 显式加载 DeepMD 环境（不要依赖交互式 shell）。
+DP-EVA 的 DeepMD 工作流通过 `dp` 命令调用 DeepMD-kit（例如
+`dp train/test/eval-desc`）。在 Slurm 环境中，建议通过
+`submission.env_setup` 显式加载已锁定的 DeepMD 环境，不要依赖交互式 shell。
 
 参考：
 
