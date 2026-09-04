@@ -14,7 +14,7 @@ from importlib import resources
 from pathlib import Path
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, StrictStr, ValidationError, model_validator
+from pydantic import BaseModel, ConfigDict, Field, StrictStr, model_validator
 
 
 CapabilityStatus = Literal[
@@ -41,7 +41,7 @@ class CapabilityKey(BaseModel):
 class CapabilityEvidence(BaseModel):
     """References to the two evidence layers used for promotion."""
 
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="forbid", frozen=True)
 
     cpu_contract: StrictStr = Field(min_length=1)
     sai_qualification: StrictStr | None = None
@@ -50,7 +50,7 @@ class CapabilityEvidence(BaseModel):
 class CapabilityRecord(BaseModel):
     """One exact capability status and its verification metadata."""
 
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="forbid", frozen=True)
 
     key: CapabilityKey
     status: CapabilityStatus
@@ -58,6 +58,7 @@ class CapabilityRecord(BaseModel):
     verification_command: StrictStr = Field(min_length=1)
     evidence_ref: CapabilityEvidence | None = None
     upstream_issue: StrictStr | None = None
+    covered_roles: tuple[Literal["regular", "ema"], ...] | None = None
 
     @model_validator(mode="after")
     def validate_status_metadata(self) -> "CapabilityRecord":
@@ -65,17 +66,24 @@ class CapabilityRecord(BaseModel):
             raise ValueError("blocked-upstream capability requires upstream_issue")
         if self.status != "blocked-upstream" and self.upstream_issue is not None:
             raise ValueError("upstream_issue is only valid for blocked-upstream capability")
+        if self.key.operation == "candidate-evaluation":
+            if self.covered_roles != ("regular", "ema"):
+                raise ValueError(
+                    "candidate-evaluation must explicitly cover regular and ema roles"
+                )
+        elif self.covered_roles is not None:
+            raise ValueError("covered_roles is only valid for candidate-evaluation")
         return self
 
 
 class _CapabilityManifest(BaseModel):
     """Private on-disk envelope; unknown schema fields are never ignored."""
 
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="forbid", frozen=True)
 
     schema_version: Literal["1.0"] = "1.0"
     deepmd_version: Literal["3.2"] = "3.2"
-    records: list[CapabilityRecord]
+    records: tuple[CapabilityRecord, ...]
 
     @model_validator(mode="after")
     def validate_records(self) -> "_CapabilityManifest":

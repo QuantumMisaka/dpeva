@@ -120,7 +120,8 @@
       "version_range": ">=3.2,<3.3",
       "verification_command": "pytest tests/contract/deepmd/test_candidate_evaluation.py -q",
       "evidence_ref": null,
-      "upstream_issue": null
+      "upstream_issue": null,
+      "covered_roles": ["regular", "ema"]
     },
     {
       "key": {
@@ -166,6 +167,66 @@
       "verification_command": "pytest tests/contract/deepmd/test_dpa4c_non_pbc.py -q",
       "evidence_ref": null,
       "upstream_issue": "https://github.com/deepmodeling/deepmd-kit/issues/6002"
+    },
+    {
+      "key": {
+        "operation": "inference",
+        "backend": "pt-expt",
+        "model_family": "DPA4C",
+        "artifact": "exportable",
+        "data_format": "deepmd/npy",
+        "environment": "cpu-non-pbc"
+      },
+      "status": "blocked-upstream",
+      "version_range": ">=3.2,<3.3",
+      "verification_command": "pytest tests/contract/deepmd/test_dpa4c_non_pbc.py -q",
+      "evidence_ref": null,
+      "upstream_issue": "https://github.com/deepmodeling/deepmd-kit/issues/6002"
+    },
+    {
+      "key": {
+        "operation": "train",
+        "backend": "dpa-adapt",
+        "model_family": "DPA4",
+        "artifact": "checkpoint",
+        "data_format": "deepmd/npy",
+        "environment": "cpu"
+      },
+      "status": "unsupported",
+      "version_range": ">=3.2,<3.3",
+      "verification_command": "dpeva doctor --json",
+      "evidence_ref": null,
+      "upstream_issue": null
+    },
+    {
+      "key": {
+        "operation": "train",
+        "backend": "jax",
+        "model_family": "DPA4",
+        "artifact": "checkpoint",
+        "data_format": "deepmd/npy",
+        "environment": "cpu"
+      },
+      "status": "unsupported",
+      "version_range": ">=3.2,<3.3",
+      "verification_command": "dpeva doctor --json",
+      "evidence_ref": null,
+      "upstream_issue": null
+    },
+    {
+      "key": {
+        "operation": "train",
+        "backend": "tf2",
+        "model_family": "DPA4",
+        "artifact": "checkpoint",
+        "data_format": "deepmd/npy",
+        "environment": "cpu"
+      },
+      "status": "unsupported",
+      "version_range": ">=3.2,<3.3",
+      "verification_command": "dpeva doctor --json",
+      "evidence_ref": null,
+      "upstream_issue": null
     }
   ]
 }
