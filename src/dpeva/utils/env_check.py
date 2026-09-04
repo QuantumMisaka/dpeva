@@ -1,56 +1,13 @@
-import subprocess
 import warnings
-import re
-from packaging import version
-from dpeva.constants import MIN_DEEPMD_VERSION, BANNER_SEPARATOR_LEN
 
-def check_deepmd_version():
-    """
-    Check if the installed DeepMD-kit version meets the minimum requirement.
-    Raises a warning if the version is too old or if 'dp' command is missing.
-    """
-    try:
-        # Check CLI version
-        # dp --version output example: "DeePMD-kit v2.2.9" or "DeePMD-kit 3.0.0"
-        out = subprocess.check_output(["dp", "--version"], text=True, stderr=subprocess.STDOUT).strip()
-        
-        # Robust parsing: extract the first PEP 440-ish version-like string.
-        # Source builds may report versions such as "0.1.dev1+g27a18b604".
-        match = re.search(r"v?(\d+(?:\.\d+)+(?:[A-Za-z0-9_.!+\-]*)?)", out)
-        
-        if match:
-            v_str = match.group(1)
-            current_ver = version.parse(v_str)
-            min_ver = version.parse(MIN_DEEPMD_VERSION)
+from dpeva.run.doctor import DoctorCheck, probe_deepmd
 
-            if current_ver.is_devrelease:
-                return
-            
-            if current_ver < min_ver:
-                warnings.warn(
-                    f"\n{'='*BANNER_SEPARATOR_LEN}\n"
-                    f"WARNING: DeepMD-kit version {v_str} is older than the recommended version {MIN_DEEPMD_VERSION}.\n"
-                    f"Some features may not work as expected.\n"
-                    f"Please upgrade DeepMD-kit: pip install --upgrade deepmd-kit\n"
-                    f"{'='*BANNER_SEPARATOR_LEN}",
-                    UserWarning,
-                    stacklevel=2
-                )
-        else:
-            # If output format is unexpected, just warn we couldn't parse it but don't fail
-            warnings.warn(f"Could not parse DeepMD-kit version from output: '{out}'", UserWarning)
-            
-    except FileNotFoundError:
-        warnings.warn(
-            f"\n{'='*BANNER_SEPARATOR_LEN}\n"
-            f"WARNING: 'dp' command not found in PATH.\n"
-            f"DeepMD-kit is required for most workflows.\n"
-            f"Please ensure it is installed and added to PATH.\n"
-            f"{'='*BANNER_SEPARATOR_LEN}",
-            UserWarning,
-            stacklevel=2
-        )
-    except Exception as e:
-        # Don't crash app on version check failure
-        # In testing environments, subprocess might fail in various ways (e.g. no shell), so we suppress generic errors or log them softly.
-        warnings.warn(f"Failed to check DeepMD-kit version: {e}", UserWarning)
+
+def check_deepmd_version() -> DoctorCheck:
+    """Probe DeepMD explicitly (deprecated; use :func:`probe_deepmd`)."""
+    warnings.warn(
+        "check_deepmd_version() is deprecated; use probe_deepmd() instead",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return probe_deepmd()
