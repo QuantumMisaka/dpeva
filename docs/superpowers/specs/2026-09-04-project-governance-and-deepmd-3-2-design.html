@@ -359,7 +359,7 @@ Local / Slurm / external campaign workspaces</code></pre>
   "failure": null
 }</code></pre>
       <h3>9.2 Dataset Manifest</h3>
-      <p>最小字段包括 schema、dataset_id、parents、transformation、frame/system counts、type map、format、source entries、intersection summary、content identity 和机器可读 validation result（含 rule version、status 及 counts/sources/intersections/type-map 四项结果）。未声明来源、未解释的重复/交集或 type-map 冲突必须失败；显式去重必须持久化 removed/overlap evidence。大数据集不强制逐帧 hash；允许按 set 文件摘要、Merkle/清单或抽样策略，并明确证据强度。</p>
+      <p>最小字段包括 schema、dataset_id、parents、transformation、frame/system counts、type map、format、source entries、intersection summary、content identity 和机器可读 validation result（含 rule version、status 及 counts/sources/intersections/type-map 四项结果）。未声明来源、未解释的重复/交集或 type-map 冲突必须失败；显式去重必须持久化 removed/overlap evidence。intersection summary 的 <code>frame-identity-v1</code> 仅用于逐帧结构交集并要求 overlap=removed；无交集但发生一般变换过滤时必须使用 <code>filter-v1</code> 与 evidence；零移除时使用 <code>not-run</code>。大数据集不强制逐帧 hash；允许按 set 文件摘要、Merkle/清单或抽样策略，并明确证据强度。</p>
       <h3>9.3 Model Reference</h3>
       <p>最小字段包括 artifact kind、family、backend、path/alias、resolved path、checksum、head、regular/EMA role、DeepMD version、producer run、supported operations。文件后缀只作为探测提示，不作为唯一真相。</p>
       <h3>9.4 Compatibility Manifest</h3>

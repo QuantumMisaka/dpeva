@@ -162,6 +162,8 @@ git commit -m "feat: add dataset lineage invariants"
   persists overlap/removal evidence and a versioned validation result. The overlap check must use
   real `dpdata.System.sub_system()` frame identity before `MultiSystems` coalescing; identity includes
   canonical structure/PBC/type-map fields and compares all labels actually present before removing a frame.
+  Manifest validation distinguishes `frame-identity-v1` overlap evidence from `filter-v1` evidence for
+  non-overlap removals; zero removal is `not-run`.
 - Existing suite to extend: labeling integration unit and E2E tests.
 - New test file justification: none.
 - Temporary probes: none.

@@ -22,9 +22,9 @@ class DatasetParent(DatasetModel):
 
 
 class DatasetIntersectionSummary(DatasetModel):
-    """Machine-readable evidence for overlap handling during integration."""
+    """Machine-readable evidence for overlap and non-overlap filtering."""
 
-    method: Literal["not-run", "frame-identity-v1"] = "not-run"
+    method: Literal["not-run", "frame-identity-v1", "filter-v1"] = "not-run"
     overlap_frame_count: StrictInt = Field(default=0, ge=0)
     removed_frame_count: StrictInt = Field(default=0, ge=0)
     evidence_ref: str | None = None
@@ -103,18 +103,23 @@ def validate_lineage_counts(manifest: DatasetManifest) -> None:
     counts_reconciled = expected == manifest.frame_count
     if summary.overlap_frame_count > 0:
         intersections_explained = (
-            summary.method != "not-run"
+            summary.method == "frame-identity-v1"
             and bool(summary.evidence_ref)
             and summary.overlap_frame_count == summary.removed_frame_count
             and summary.removed_frame_count == manifest.removed_frame_count
         )
+    elif manifest.removed_frame_count > 0:
+        intersections_explained = (
+            summary.method == "filter-v1"
+            and bool(summary.evidence_ref)
+            and summary.removed_frame_count == manifest.removed_frame_count
+        )
     else:
         intersections_explained = (
-            summary.removed_frame_count == manifest.removed_frame_count
-            and (
-                manifest.removed_frame_count == 0
-                or (summary.method != "not-run" and bool(summary.evidence_ref))
-            )
+            summary.method == "not-run"
+            and summary.evidence_ref is None
+            and summary.removed_frame_count == 0
+            and summary.overlap_frame_count == 0
         )
     if not counts_reconciled:
         raise LineageValidationError(

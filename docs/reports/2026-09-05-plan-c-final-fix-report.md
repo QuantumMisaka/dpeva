@@ -35,6 +35,9 @@ owner: Scientific Owner
 - Ruling：交集证据采用真实 dpdata `System.sub_system()` 拆出的逐帧 identity，identity 覆盖
   canonical coords/cells、PBC/nopbc、atom types/type map/names 和 shape；标签字段另行纳入
   label identity。方法版本为 `frame-identity-v1`，不宣称逐帧全局 hash 或科学等价性。
+- Ruling：summary 严格分离 system count 与 frame count；pre/post system count 来自真实
+  `MultiSystems` coalesce 后的 `len(...)`，frame count 独立按帧守恒。`filter-v1` 专用于无交集的
+  一般移除，零移除固定为 `not-run`。
 - Ruling：整合发布不再报告 `PublicationDurabilityError`；失败边界是 export/manifest/summary
   写入失败、目标已存在、或平台不支持 `renameat2(RENAME_NOREPLACE)`。
 - 偏差：candidate package 的搬迁前提是被引用的 evidence artifacts 与 card 按原相对布局共同搬迁；
@@ -47,9 +50,9 @@ owner: Scientific Owner
 
 ```text
 pytest tests/unit/run/test_dataset_lineage.py tests/unit/evaluation/test_card.py tests/unit/labeling/test_integration.py tests/integration/test_evaluation_card_cli.py tests/integration/test_e2e_cycle.py -q
-77 passed（含真实 dpdata 帧 identity/冲突测试与 relocation 解析）
+81 passed（含真实 dpdata system/frame count、identity/冲突测试与 relocation 解析）
 pytest tests/unit -q
-748 passed
+752 passed
 pytest tests/integration/test_e2e_cycle.py tests/integration/test_evaluation_card_cli.py -q
 7 passed
 pytest tests/integration -q

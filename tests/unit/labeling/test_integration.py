@@ -142,6 +142,9 @@ def test_real_dpdata_integration_deduplicates_before_export(mock_load_systems, t
         new_labeled_data_path=new_dir, merged_output_path=out_dir
     )
 
+    assert result["merged_system_count_before_dedup"] == 1
+    assert result["merged_system_count_after_dedup"] == 1
+    assert result["filtered_system_count"] == 0
     assert result["merged_frame_count_before_dedup"] == 2
     assert result["merged_frame_count_after_dedup"] == 1
     manifest = json.loads((out_dir / "dataset-manifest.json").read_text())
@@ -169,6 +172,63 @@ def test_real_dpdata_label_conflict_fails_before_export(mock_load_systems, tmp_p
             new_labeled_data_path=new_dir, merged_output_path=out_dir
         )
     assert not out_dir.exists()
+
+
+@patch("dpeva.labeling.integration.load_systems")
+def test_real_dpdata_system_and_frame_counts_are_distinct(mock_load_systems, tmp_path):
+    new_dir = tmp_path / "new_cleaned"
+    out_dir = tmp_path / "merged"
+    new_dir.mkdir()
+    mock_load_systems.return_value = [
+        _real_system(
+            [
+                [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]],
+                [[2.0, 0.0, 0.0], [3.0, 0.0, 0.0]],
+            ],
+            energies=[1.0, 2.0],
+        ),
+        _real_system(
+            [[[4.0, 0.0, 0.0], [5.0, 0.0, 0.0]]],
+            energies=[3.0],
+        ),
+    ]
+
+    result = DataIntegrationManager(deduplicate=False, output_format="deepmd/npy").integrate(
+        new_labeled_data_path=new_dir, merged_output_path=out_dir
+    )
+
+    # Both input systems have the same formula and coalesce in dpdata, while
+    # their three frames remain independently accounted for.
+    assert result["merged_system_count_before_dedup"] == 1
+    assert result["merged_system_count_after_dedup"] == 1
+    assert result["filtered_system_count"] == 0
+    assert result["merged_frame_count_before_dedup"] == 3
+    assert result["merged_frame_count_after_dedup"] == 3
+
+
+@patch("dpeva.labeling.integration.load_systems")
+def test_real_dpdata_frame_dedup_does_not_report_system_removal(mock_load_systems, tmp_path):
+    new_dir = tmp_path / "new_cleaned"
+    out_dir = tmp_path / "merged"
+    new_dir.mkdir()
+    mock_load_systems.return_value = [
+        _real_system(
+            [
+                [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]],
+                [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]],
+            ],
+            energies=[1.0, 1.0],
+        )
+    ]
+
+    result = DataIntegrationManager(deduplicate=True, output_format="deepmd/npy").integrate(
+        new_labeled_data_path=new_dir, merged_output_path=out_dir
+    )
+
+    assert result["filtered_frame_count"] == 1
+    assert result["filtered_system_count"] == 0
+    manifest = json.loads((out_dir / "dataset-manifest.json").read_text())
+    assert manifest["system_count"] == 1
 
 
 @patch("dpeva.labeling.integration.dpdata.MultiSystems", _FakeMultiSystems)

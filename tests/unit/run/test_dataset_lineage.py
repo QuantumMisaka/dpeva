@@ -35,8 +35,8 @@ def _manifest(**overrides: object) -> DatasetManifest:
     values.update(overrides)
     if values.get("removed_frame_count", 0) and "intersection_summary" not in overrides:
         values["intersection_summary"] = {
-            "method": "frame-identity-v1",
-            "overlap_frame_count": values["removed_frame_count"],
+            "method": "filter-v1",
+            "overlap_frame_count": 0,
             "removed_frame_count": values["removed_frame_count"],
             "evidence_ref": "fixture:dedup",
         }
@@ -153,6 +153,35 @@ def test_overlap_and_removed_counts_must_match_even_with_evidence() -> None:
     )
     with pytest.raises(LineageValidationError, match="intersection/removal evidence"):
         validate_lineage_counts(manifest)
+
+
+def test_nonzero_filter_cannot_masquerade_as_frame_overlap() -> None:
+    manifest = _manifest(
+        frame_count=16421,
+        removed_frame_count=1,
+        intersection_summary=DatasetIntersectionSummary(
+            method="frame-identity-v1",
+            overlap_frame_count=0,
+            removed_frame_count=1,
+            evidence_ref="fixture:filter",
+        ),
+    )
+    with pytest.raises(LineageValidationError, match="intersection/removal evidence"):
+        validate_lineage_counts(manifest)
+
+
+def test_nonzero_filter_uses_explicit_filter_method() -> None:
+    manifest = _manifest(
+        frame_count=16421,
+        removed_frame_count=1,
+        intersection_summary=DatasetIntersectionSummary(
+            method="filter-v1",
+            overlap_frame_count=0,
+            removed_frame_count=1,
+            evidence_ref="fixture:filter",
+        ),
+    )
+    validate_lineage_counts(manifest)
 
 
 def test_validation_result_is_required_and_machine_readable() -> None:

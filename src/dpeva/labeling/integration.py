@@ -100,7 +100,8 @@ class DataIntegrationManager:
                 raise
             input_frames.extend(self._iter_frames(system))
 
-        before_dedup = len(input_frames)
+        pre_dedup_merged = self._build_multisystems(input_frames)
+        before_system_count = len(pre_dedup_merged)
         kept_frames, overlap_frame_count = self._analyze_frames(input_frames)
         if overlap_frame_count and not self.deduplicate:
             raise ValueError(
@@ -109,10 +110,9 @@ class DataIntegrationManager:
             )
         if self.deduplicate:
             input_frames = kept_frames
-        for frame in input_frames:
-            merged.append(frame)
-        after_dedup = len(input_frames)
-        filtered_count = before_dedup - after_dedup
+        merged = self._build_multisystems(input_frames)
+        after_system_count = len(merged)
+        filtered_system_count = before_system_count - after_system_count
         merged_frames_before_dedup = existing_frames + new_frames
         merged_frames_after_dedup = self._count_total_frames(merged)
         filtered_frames = merged_frames_before_dedup - merged_frames_after_dedup
@@ -136,7 +136,7 @@ class DataIntegrationManager:
             transformation="merge",
             frame_count=merged_frames_after_dedup,
             removed_frame_count=filtered_frames,
-            system_count=after_dedup,
+            system_count=after_system_count,
             type_map=list(reference_type_map or reference_atom_names or []),
             format=self.output_format,
             source_entries=source_entries,
@@ -192,9 +192,9 @@ class DataIntegrationManager:
             summary = {
                 "existing_system_count": existing_count,
                 "new_system_count": new_count,
-                "merged_system_count_before_dedup": before_dedup,
-                "merged_system_count_after_dedup": after_dedup,
-                "filtered_system_count": filtered_count,
+                "merged_system_count_before_dedup": before_system_count,
+                "merged_system_count_after_dedup": after_system_count,
+                "filtered_system_count": filtered_system_count,
                 "existing_frame_count": existing_frames,
                 "new_frame_count": new_frames,
                 "merged_frame_count_before_dedup": merged_frames_before_dedup,
@@ -221,8 +221,8 @@ class DataIntegrationManager:
             "Integration summary: existing=%s, new=%s, merged_before_de-dup=%s, merged_after_de-dup=%s",
             existing_count,
             new_count,
-            before_dedup,
-            after_dedup,
+            before_system_count,
+            after_system_count,
         )
         logger.info(
             "Integration frame summary: existing=%s, new=%s, merged_before_de-dup=%s, merged_after_de-dup=%s",
@@ -408,6 +408,14 @@ class DataIntegrationManager:
             raise ValueError("multi-frame input does not expose dpdata System.sub_system")
         for frame_index in range(nframes):
             yield sub_system(frame_index)
+
+    @staticmethod
+    def _build_multisystems(frames):
+        """Build a real pre/post merge so system counts reflect dpdata coalescing."""
+        merged = dpdata.MultiSystems()
+        for frame in frames:
+            merged.append(frame)
+        return merged
 
     @classmethod
     def _analyze_frames(cls, systems):

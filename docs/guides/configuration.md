@@ -265,7 +265,7 @@ LLPR / energy DPOSE 可作为 Collect UQ backend 使用。最小 energy LLPR 只
 去重移除帧数、最终帧/体系数、canonical type map 以及导出文件 SHA-256 的证据强度。
 当前整合仅保留 `existing-training` / `new-labeled` 逻辑来源标签，不生成无法解析的
 parent manifest ref；待父清单随 bundle 一并固化后再扩展该引用。
-未声明来源、未解释的重复/交集或 type map 冲突会在导出和下游交接前失败；显式去重会在清单中保存 overlap/removal evidence 与 `validation_result`（含 rule version）。
+未声明来源、未解释的重复/交集或 type map 冲突会在导出和下游交接前失败；显式去重会在清单中保存 overlap/removal evidence 与 `validation_result`（含 rule version）。`intersection_summary.method` 使用 `frame-identity-v1` 表示逐帧交集（必须 overlap=removed），使用 `filter-v1` 表示无交集的一般过滤；零移除使用 `not-run`。
 发布目标使用进程可见的不覆盖语义：同文件系统的 sibling staging 目录通过
 `renameat2(RENAME_NOREPLACE)` 原子发布，竞争目标不会被覆盖；不支持该原语的平台直接
 fail-closed，不使用普通 rename 回退。该契约不声称 crash 后的目录持久化或递归 fsync
