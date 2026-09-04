@@ -15,7 +15,7 @@ from typing import Any, Sequence
 
 import fcntl
 
-from dpeva.run.models import ArtifactRecord
+from dpeva.run.models import ArtifactRecord, RunEvent
 from dpeva.run.recorder import StatusRecorder
 from dpeva.run.status import RunState
 
@@ -39,7 +39,7 @@ class RunOptions:
             raise ValueError("--resume and --force are mutually exclusive")
         if (self.resume or self.force) and not self.run_id:
             raise ValueError("--resume/--force requires --run-id")
-        if self.force and not self.reason:
+        if self.force and (not isinstance(self.reason, str) or not self.reason.strip()):
             raise ValueError("--force requires --reason")
         if self.run_id is not None:
             _validate_component(self.run_id, "run_id")
@@ -147,9 +147,12 @@ class RunContext:
         original_config: dict[str, Any],
         normalized_config: dict[str, Any],
     ) -> "RunContext":
+        published_snapshots: list[Path] = []
         try:
             _atomic_json_write(run_dir / "config.original.json", original_config)
+            published_snapshots.append(run_dir / "config.original.json")
             _atomic_json_write(run_dir / "config.resolved.json", normalized_config)
+            published_snapshots.append(run_dir / "config.resolved.json")
             recorder = StatusRecorder.create(
                 run_dir / "run.json",
                 run_id,
@@ -160,7 +163,13 @@ class RunContext:
                 },
             )
         except BaseException as error:
-            _preserve_initialization_failure(run_dir, run_id, workflow, error)
+            _preserve_initialization_failure(
+                run_dir,
+                run_id,
+                workflow,
+                error,
+                published_snapshots,
+            )
             raise
         return cls(root, run_dir, run_id, workflow, 1, recorder)
 
@@ -193,17 +202,26 @@ class RunContext:
             recorder = _load_existing(run_dir, workflow)
             previous_manifest = (run_dir / "run.json").read_bytes()
             previous_attempt = _next_attempt_id(recorder)
-            _archive_manifest(run_dir, previous_manifest, previous_attempt - 1)
 
             version = previous_attempt
             original_path = run_dir / f"config.original.attempt-{version:04d}.json"
             resolved_path = run_dir / f"config.resolved.attempt-{version:04d}.json"
-            written_snapshots: list[Path] = []
+            original_stage = run_dir / f".config.original.attempt-{version:04d}.json.stage"
+            resolved_stage = run_dir / f".config.resolved.attempt-{version:04d}.json.stage"
+            staged_snapshots: list[Path] = []
+            published_snapshots: list[Path] = []
             try:
-                _atomic_json_write(original_path, original_config, overwrite=False)
-                written_snapshots.append(original_path)
-                _atomic_json_write(resolved_path, normalized_config, overwrite=False)
-                written_snapshots.append(resolved_path)
+                _atomic_json_write(original_stage, original_config, overwrite=False)
+                staged_snapshots.append(original_stage)
+                _atomic_json_write(resolved_stage, normalized_config, overwrite=False)
+                staged_snapshots.append(resolved_stage)
+                _archive_manifest(run_dir, previous_manifest, previous_attempt - 1)
+                _publish_snapshot(original_stage, original_path)
+                published_snapshots.append(original_path)
+                staged_snapshots.remove(original_stage)
+                _publish_snapshot(resolved_stage, resolved_path)
+                published_snapshots.append(resolved_path)
+                staged_snapshots.remove(resolved_stage)
                 fresh = StatusRecorder.create(
                     run_dir / "run.json",
                     recorder.manifest.run_id,
@@ -213,17 +231,20 @@ class RunContext:
                         "resolved": resolved_path.name,
                     },
                     attempt_id=previous_attempt,
-                )
-                fresh.record_event(
-                    kind="force",
-                    attempt_id=previous_attempt,
-                    reason=options.reason,
+                    events=[
+                        RunEvent(
+                            state=RunState.CREATED,
+                            kind="force",
+                            attempt_id=previous_attempt,
+                            reason=options.reason,
+                        )
+                    ],
                 )
             except BaseException:
                 _clean_unpublished_config_snapshots(
                     run_dir,
                     previous_manifest,
-                    written_snapshots,
+                    [*staged_snapshots, *published_snapshots],
                 )
                 raise
             return cls(root, run_dir, recorder.manifest.run_id, workflow, previous_attempt, fresh)
@@ -314,20 +335,22 @@ def _archive_manifest(run_dir: Path, payload: bytes, attempt_id: int) -> None:
     if attempts_dir.is_symlink():
         raise ValueError("attempt archive directory must not be a symlink")
     attempts_dir.mkdir(exist_ok=True)
-    candidate_id = max(1, attempt_id)
-    while True:
-        archive = attempts_dir / f"attempt-{candidate_id:04d}.json"
-        try:
-            with archive.open("xb") as handle:
-                handle.write(payload)
-                handle.flush()
-                os.fsync(handle.fileno())
+    archive = attempts_dir / f"attempt-{max(1, attempt_id):04d}.json"
+    if archive.exists():
+        if archive.read_bytes() == payload:
             return
-        except FileExistsError:
-            candidate_id += 1
-        except BaseException:
-            archive.unlink(missing_ok=True)
-            raise
+        raise FileExistsError(f"attempt archive identity collision: {archive}")
+    try:
+        with archive.open("xb") as handle:
+            handle.write(payload)
+            handle.flush()
+            os.fsync(handle.fileno())
+    except FileExistsError:
+        if archive.read_bytes() != payload:
+            raise FileExistsError(f"attempt archive identity collision: {archive}") from None
+    except BaseException:
+        archive.unlink(missing_ok=True)
+        raise
 
 
 def _atomic_json_write(path: Path, value: dict[str, Any], *, overwrite: bool = True) -> None:
@@ -348,7 +371,11 @@ def _atomic_json_write(path: Path, value: dict[str, Any], *, overwrite: bool = T
 
 
 def _preserve_initialization_failure(
-    run_dir: Path, run_id: str, workflow: str, error: BaseException
+    run_dir: Path,
+    run_id: str,
+    workflow: str,
+    error: BaseException,
+    published_snapshots: Sequence[Path],
 ) -> None:
     """Leave a failed manifest behind when a newly allocated run cannot initialize."""
 
@@ -357,7 +384,24 @@ def _preserve_initialization_failure(
         if manifest_path.exists():
             recorder = StatusRecorder.load(manifest_path)
         else:
-            recorder = StatusRecorder.create(manifest_path, run_id, workflow)
+            config = {
+                "original": path.name
+                for path in published_snapshots
+                if path.name == "config.original.json"
+            }
+            config.update(
+                {
+                    "resolved": path.name
+                    for path in published_snapshots
+                    if path.name == "config.resolved.json"
+                }
+            )
+            recorder = StatusRecorder.create(
+                manifest_path,
+                run_id,
+                workflow,
+                config=config,
+            )
         if recorder.manifest.status not in _TERMINAL_STATES:
             recorder.fail(
                 category="CONFIG",
@@ -381,7 +425,21 @@ def _clean_unpublished_config_snapshots(
     except OSError:
         return
     for path in paths:
-        path.unlink(missing_ok=True)
+        if path.name.encode() not in previous_manifest:
+            path.unlink(missing_ok=True)
+
+
+def _publish_snapshot(stage: Path, target: Path) -> None:
+    """Publish one staged snapshot without replacing an existing evidence file."""
+
+    if target.is_symlink():
+        raise ValueError(f"config snapshot target must not be a symlink: {target}")
+    if target.exists():
+        if target.read_bytes() != stage.read_bytes():
+            raise FileExistsError(f"config snapshot identity collision: {target}")
+        stage.unlink()
+        return
+    os.replace(stage, target)
 
 
 def _sha256(path: Path) -> str:

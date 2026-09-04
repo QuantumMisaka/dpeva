@@ -1,8 +1,10 @@
 import hashlib
 import json
+import os
 import re
 import subprocess
 import sys
+from pathlib import Path
 
 import pytest
 from pydantic import ValidationError
@@ -127,6 +129,33 @@ def test_force_rejects_malformed_existing_manifest_without_overwrite(tmp_path) -
     assert not (run_dir / "attempts").exists()
 
 
+def test_force_reason_must_not_be_whitespace_only() -> None:
+    with pytest.raises(ValueError, match="reason"):
+        RunOptions(run_id="run", force=True, reason="  \n\t")
+
+
+def test_initialization_failure_manifest_references_published_snapshots(tmp_path, monkeypatch) -> None:
+    import dpeva.run.context as context_module
+
+    original_write = context_module._atomic_json_write
+
+    def fail_resolved(path, value, **kwargs):
+        if path.name == "config.resolved.json":
+            raise OSError("second snapshot failed")
+        return original_write(path, value, **kwargs)
+
+    monkeypatch.setattr(context_module, "_atomic_json_write", fail_resolved)
+    with pytest.raises(OSError, match="second snapshot"):
+        RunContext.create(tmp_path, "feature", RunOptions(run_id="run"), {"x": 1}, {"x": 2})
+
+    run_dir = tmp_path / ".dpeva" / "runs" / "run"
+    payload = json.loads((run_dir / "run.json").read_text())
+    assert payload["status"] == "failed"
+    assert payload["config"] == {"original": "config.original.json"}
+    assert json.loads((run_dir / "config.original.json").read_text()) == {"x": 1}
+    assert not (run_dir / "config.resolved.json").exists()
+
+
 def test_register_verified_artifacts_records_relative_path_and_streaming_hash(tmp_path) -> None:
     artifact = tmp_path / "outputs" / "features.npy"
     artifact.parent.mkdir()
@@ -219,12 +248,21 @@ def test_concurrent_force_allocates_unique_attempts(tmp_path) -> None:
         "RunOptions(run_id='run', force=True, reason='concurrent retry'), "
         "{'worker': True}, {'worker': True}).attempt_id)"
     )
+    repo_src = str(Path(__file__).resolve().parents[3] / "src")
     processes = [
+        # Explicitly propagate the source tree so this remains independent of
+        # the parent's editable-install implementation.
         subprocess.Popen(
             [sys.executable, "-c", worker, str(tmp_path)],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
+            env={
+                **os.environ,
+                "PYTHONPATH": os.pathsep.join(
+                    [repo_src, os.environ.get("PYTHONPATH", "")]
+                ),
+            },
         )
         for _ in range(2)
     ]
@@ -238,6 +276,123 @@ def test_concurrent_force_allocates_unique_attempts(tmp_path) -> None:
     assert payload["events"][0]["reason"] == "concurrent retry"
     assert (tmp_path / ".dpeva/runs/run/attempts/attempt-0001.json").exists()
     assert (tmp_path / ".dpeva/runs/run/attempts/attempt-0002.json").exists()
+
+
+def test_force_publishes_manifest_with_event_in_one_replace(tmp_path, monkeypatch) -> None:
+    import dpeva.run.recorder as recorder_module
+
+    RunContext.create(tmp_path, "feature", RunOptions(run_id="run"), {}, {})
+    original_replace = recorder_module.os.replace
+    run_replacements = 0
+
+    def count_run_replace(source, destination):
+        nonlocal run_replacements
+        if str(destination).endswith("run.json"):
+            run_replacements += 1
+        return original_replace(source, destination)
+
+    monkeypatch.setattr(recorder_module.os, "replace", count_run_replace)
+    forced = RunContext.create(
+        tmp_path,
+        "feature",
+        RunOptions(run_id="run", force=True, reason="single publication"),
+        {"x": 2},
+        {"x": 2},
+    )
+
+    assert run_replacements == 1
+    assert forced.recorder.manifest.events[-1].reason == "single publication"
+
+
+def test_force_failure_before_archive_is_retry_stable(tmp_path) -> None:
+    initial = RunContext.create(tmp_path, "feature", RunOptions(run_id="run"), {"x": 1}, {"x": 1})
+    previous = (initial.run_dir / "run.json").read_bytes()
+
+    with pytest.raises(TypeError):
+        RunContext.create(
+            tmp_path,
+            "feature",
+            RunOptions(run_id="run", force=True, reason="bad retry"),
+            {"x": {"not-json"}},
+            {"x": 2},
+        )
+
+    run_dir = initial.run_dir
+    assert (run_dir / "run.json").read_bytes() == previous
+    assert not (run_dir / "attempts").exists()
+    forced = RunContext.create(
+        tmp_path,
+        "feature",
+        RunOptions(run_id="run", force=True, reason="good retry"),
+        {"x": 2},
+        {"x": 2},
+    )
+    assert forced.attempt_id == 2
+    assert (run_dir / "attempts" / "attempt-0001.json").exists()
+
+
+def test_force_failure_after_archive_reuses_archive_on_retry(tmp_path, monkeypatch) -> None:
+    initial = RunContext.create(tmp_path, "feature", RunOptions(run_id="run"), {"x": 1}, {"x": 1})
+    previous = (initial.run_dir / "run.json").read_bytes()
+    import dpeva.run.context as context_module
+
+    original_publish = context_module._publish_snapshot
+
+    def fail_second_publish(stage, target):
+        if target.name.startswith("config.resolved"):
+            raise OSError("second publish failed")
+        return original_publish(stage, target)
+
+    monkeypatch.setattr(context_module, "_publish_snapshot", fail_second_publish)
+    with pytest.raises(OSError, match="second publish"):
+        RunContext.create(
+            tmp_path,
+            "feature",
+            RunOptions(run_id="run", force=True, reason="retry"),
+            {"x": 2},
+            {"x": 2},
+        )
+
+    run_dir = initial.run_dir
+    archive = run_dir / "attempts" / "attempt-0001.json"
+    assert archive.read_bytes() == previous
+    assert (run_dir / "run.json").read_bytes() == previous
+    assert not (run_dir / "config.original.attempt-0002.json").exists()
+
+    monkeypatch.undo()
+    forced = RunContext.create(
+        tmp_path,
+        "feature",
+        RunOptions(run_id="run", force=True, reason="retry succeeded"),
+        {"x": 2},
+        {"x": 2},
+    )
+    assert forced.attempt_id == 2
+    assert len(list((run_dir / "attempts").glob("attempt-*.json"))) == 1
+
+
+def test_sequential_force_archives_resolve_all_config_references(tmp_path) -> None:
+    context = RunContext.create(tmp_path, "feature", RunOptions(run_id="run"), {"x": 1}, {"x": 1})
+    for value in (2, 3):
+        context = RunContext.create(
+            tmp_path,
+            "feature",
+            RunOptions(run_id="run", force=True, reason=f"force {value}"),
+            {"x": value},
+            {"x": value},
+        )
+
+    run_dir = context.run_dir
+    manifests = [
+        run_dir / "attempts" / "attempt-0001.json",
+        run_dir / "attempts" / "attempt-0002.json",
+        run_dir / "run.json",
+    ]
+    for manifest_path in manifests:
+        manifest = json.loads(manifest_path.read_text())
+        for reference in manifest["config"].values():
+            assert (run_dir / reference).is_file()
+            assert json.loads((run_dir / reference).read_text())["x"] in {1, 2, 3}
 
 
 def test_non_json_config_fails_closed_without_removing_run(tmp_path) -> None:

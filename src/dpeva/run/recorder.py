@@ -50,6 +50,7 @@ class StatusRecorder:
         environment: dict[str, str] | None = None,
         config: dict[str, str] | None = None,
         inputs: list[dict[str, str]] | None = None,
+        events: list[RunEvent] | None = None,
         attempt_id: int = 1,
     ) -> "StatusRecorder":
         manifest = RunManifest(
@@ -59,6 +60,7 @@ class StatusRecorder:
             environment=copy.deepcopy(environment) if environment is not None else {},
             config=copy.deepcopy(config) if config is not None else {},
             inputs=copy.deepcopy(inputs) if inputs is not None else [],
+            events=copy.deepcopy(events) if events is not None else [],
         )
         recorder = cls(Path(path), manifest, attempt_id=attempt_id)
         recorder._persist(manifest)
