@@ -1,0 +1,94 @@
+schema_version = "1.0"
+
+[gates.lint]
+argv = ["ruff", "check", "src", "tests", "scripts"]
+layer = "static"
+owner = "Project Maintainer"
+basis = "developer-guide §1.6.3"
+
+[gates.unit]
+argv = ["pytest", "tests/unit", "--cov=src/dpeva", "--cov-branch", "--cov-report=term", "--cov-report=json:build/coverage/coverage-unit.json", "--cov-fail-under=80"]
+layer = "unit"
+owner = "Workflow Owner"
+basis = "SPEC R13 and existing python-quality CI"
+
+[gates.audit]
+argv = ["python", "scripts/audit.py", "src/dpeva"]
+layer = "static"
+owner = "Project Maintainer"
+basis = "existing python-quality CI"
+
+[gates.docs]
+argv = ["python", "scripts/doc_check.py"]
+layer = "docs"
+owner = "Docs Owner"
+basis = "developer-guide §1.6.3"
+
+[gates.docs_freshness]
+argv = ["python", "scripts/check_docs_freshness.py", "--days", "90"]
+layer = "docs"
+owner = "Docs Owner"
+basis = "developer-guide §1.6.3"
+
+[gates.docs_build]
+argv = ["make", "-C", "docs", "html", "SPHINXOPTS=-W --keep-going"]
+layer = "docs"
+owner = "Docs Owner"
+basis = "existing docs-check CI"
+
+[gates.docs_artifacts]
+argv = ["python", "-c", "from pathlib import Path; assert Path('docs/build/html/index.html').is_file(); assert Path('docs/build/html/api/config.html').is_file()"]
+layer = "docs"
+owner = "Docs Owner"
+basis = "existing docs-check CI"
+
+[gates.docs_linkcheck]
+argv = ["make", "-C", "docs", "linkcheck", "SPHINXOPTS=-W --keep-going"]
+layer = "docs"
+owner = "Docs Owner"
+basis = "existing docs-check pull-request job"
+
+[gates.integration]
+argv = ["pytest", "tests/integration", "-q"]
+layer = "integration"
+owner = "Workflow Owner"
+basis = "Plan A Phase 0 acceptance"
+
+[gates.deepmd_contract]
+argv = ["pytest", "-m", "deepmd_contract", "tests/contract/deepmd", "-q"]
+layer = "upstream-contract"
+owner = "Compatibility Owner"
+basis = "Plan D CPU contract"
+
+[gates.qualification_collect]
+argv = ["python", "scripts/validation/collect_deepmd_32_qualification.py", "--job-ref", "build/deepmd-qualification/latest.json", "--require-complete"]
+layer = "sai-evidence"
+owner = "Compatibility Owner"
+basis = "Plan D SAI qualification"
+
+[gates.explore_import]
+argv = ["python", "-c", "import dpeva.exploration"]
+layer = "optional-extra"
+owner = "Exploration Owner"
+basis = "existing explore-extra-smoke CI"
+
+[gates.explore_cli]
+argv = ["dpeva", "explore", "--help"]
+layer = "optional-extra"
+owner = "Exploration Owner"
+basis = "existing explore-extra-smoke CI"
+
+[gates.atst_cli]
+argv = ["atst", "--help"]
+layer = "optional-extra"
+owner = "Exploration Owner"
+basis = "existing explore-extra-smoke CI"
+
+[profiles]
+local = ["lint", "unit", "audit"]
+pr = ["lint", "unit", "audit", "explore_import", "explore_cli", "atst_cli"]
+docs = ["docs", "docs_freshness", "docs_build", "docs_artifacts"]
+docs_pr = ["docs", "docs_freshness", "docs_build", "docs_artifacts", "docs_linkcheck"]
+integration = ["integration"]
+deepmd_release = ["deepmd_contract", "qualification_collect"]
+release = ["lint", "unit", "audit", "explore_import", "explore_cli", "atst_cli", "integration", "docs", "docs_freshness", "docs_build", "docs_artifacts", "docs_linkcheck"]
