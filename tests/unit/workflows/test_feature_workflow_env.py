@@ -33,8 +33,8 @@ def test_feature_workflow_cli_env(tmp_path):
             # Mock IO return
             MockIO.return_value.detect_multi_pool_structure.return_value = ["pool1"]
             MockExec.return_value.submit_cli_job.side_effect = lambda **kwargs: (
-                os.makedirs(config_dict["savedir"], exist_ok=True),
-                np.save(os.path.join(config_dict["savedir"], "pool1.npy"), np.ones(1)),
+                os.makedirs(os.path.join(config_dict["savedir"], "pool1"), exist_ok=True),
+                np.save(os.path.join(config_dict["savedir"], "pool1", "features.npy"), np.ones(1)),
             )
             
             workflow.run()

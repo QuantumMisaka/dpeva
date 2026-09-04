@@ -62,6 +62,15 @@ class JobRecord(RunModel):
     job_id: str | None = None
     status: RunState
     failure: str | None = None
+    failure_category: Literal[
+        "CONFIG",
+        "CAPABILITY",
+        "ENVIRONMENT",
+        "EXECUTION",
+        "ARTIFACT",
+        "DATA_INTEGRITY",
+        "UPSTREAM",
+    ] | None = None
 
 
 class RunManifest(RunModel):

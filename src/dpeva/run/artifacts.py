@@ -15,10 +15,25 @@ def _require_nonempty(paths: list[Path], description: str) -> list[Path]:
     return paths
 
 
-def validate_feature_outputs(output_dir: Path, exporter: str) -> list[Path]:
-    """Return all non-empty feature outputs for the selected exporter."""
+def validate_feature_outputs(
+    output_dir: Path,
+    exporter: str,
+    expected_pools: list[str] | None = None,
+) -> list[Path]:
+    """Return feature outputs, requiring at least one artifact per pool."""
 
     pattern = "embedding.hdf5" if exporter == "embed" else "*.npy"
+    if expected_pools:
+        outputs: list[Path] = []
+        for pool in expected_pools:
+            pool_outputs = sorted((output_dir / pool).rglob(pattern))
+            try:
+                outputs.extend(_require_nonempty(pool_outputs, f"feature artifacts for pool {pool!r}"))
+            except ArtifactValidationError as exc:
+                raise ArtifactValidationError(
+                    f"missing or empty feature artifacts for pool {pool!r} under {output_dir}"
+                ) from exc
+        return outputs
     outputs = sorted(output_dir.rglob(pattern))
     return _require_nonempty(outputs, f"feature artifacts under {output_dir}")
 

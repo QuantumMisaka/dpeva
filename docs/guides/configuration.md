@@ -86,6 +86,8 @@ owner: Docs Owner
 `--run-id` 可固定身份；已有身份默认拒绝覆盖，未完成运行可用 `--resume`，
 需要重跑时使用带审计说明 `--reason` 的 `--force`。运行清单中的 `finished`
 只表示本地命令成功且输出文件非空并已校验；Slurm 仅记录 `submitted`。
+多 pool feature 输出会逐 pool 校验：`eval-desc` 要求每个 pool 至少有一个非空
+`.npy`，`embed` 要求每个 pool 有非空 `embedding.hdf5`。
 
 支持 Slurm array 的 workflow 可设置：
 

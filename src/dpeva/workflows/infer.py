@@ -125,22 +125,23 @@ class InferenceWorkflow:
                 )
             if not successful:
                 message = "all inference jobs failed"
-                context.recorder.fail(category="EXECUTION", message=message)
+                category = self._failure_category(failed)
+                context.recorder.fail(category=category, message=message)
                 raise WorkflowError(message)
             if failed:
+                category = self._failure_category(failed)
                 context.recorder.partial(
-                    category="EXECUTION",
+                    category=category,
                     message="one or more inference jobs failed",
                 )
                 raise PartialWorkflowError("one or more inference jobs failed")
-
-            context.recorder.transition(RunState.FINISHED)
 
             if self.config.auto_analysis:
                 self.logger.info("Auto analysis enabled. Starting analysis...")
                 self.analyze_results()
             else:
                 self.logger.info("Auto analysis disabled. Run analysis workflow separately after jobs finish.")
+            context.recorder.transition(RunState.FINISHED)
         except Exception:
             # Terminal states written above must remain the original exception;
             # only unrecorded execution errors need a generic failure event.
@@ -183,6 +184,14 @@ class InferenceWorkflow:
         )
         
         return records
+
+    @staticmethod
+    def _failure_category(records: list[JobRecord]) -> str:
+        """Choose deterministic top-level evidence while retaining child detail."""
+        categories = {record.failure_category for record in records}
+        if len(categories) == 1 and None not in categories:
+            return next(iter(categories))
+        return "EXECUTION"
 
     def analyze_results(self):
         """Analyze results for all models."""

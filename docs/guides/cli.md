@@ -232,8 +232,10 @@ DPEVA_TAG: WORKFLOW_FINISHED
   - **运行期失败**：1（配置内容不合法、业务逻辑失败、外部命令失败等）。
 - **doctor 环境检查**：报告 `status=ok` 时为 0，否则为 1；`doctor --json` 的标准输出仅包含 JSON 报告。
 - **局部完成**：本地 infer 只要有一个模型成功、另一个失败，就写入 `partial`
-  清单并以退出码 `1` 返回；所有模型失败则为 `failed`。Slurm 的 `sbatch` 回执
-  只表示 `submitted`，不会伪造 `finished`。
+  清单并以退出码 `1` 返回；所有模型失败则为 `failed`。输出缺失/为空时清单
+  顶层类别为 `ARTIFACT`，命令异常为 `EXECUTION`；混合失败类别确定性归为
+  `EXECUTION`，但每个 `JobRecord` 保留具体类别。Slurm 的 `sbatch` 回执只表示
+  `submitted`，不会伪造 `finished`。
   - 注意：CLI 对用户输入类错误优先给出可操作提示，避免无意义堆栈噪音；内部异常仍会保留堆栈用于排障。
 
 - 常见异常类型

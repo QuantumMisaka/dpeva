@@ -213,7 +213,7 @@ class FeatureExecutionManager:
         self.job_manager.generate_script(job_config, script_path)
         
         self.logger.info(f"Submitting {feature_exporter} job for {data_path}")
-        self.job_manager.submit(script_path, working_dir=abs_output_dir)
+        return self.job_manager.submit(script_path, working_dir=abs_output_dir)
 
     def submit_python_slurm_job(
         self,
@@ -301,7 +301,7 @@ if __name__ == "__main__":
         )
         
         self.logger.info(f"Submitting python mode job for {data_path}")
-        self.job_manager.submit_python_script(
+        return self.job_manager.submit_python_script(
             worker_script_content, 
             "run_desc_worker.py", 
             job_config, 

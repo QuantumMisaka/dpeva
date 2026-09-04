@@ -11,6 +11,7 @@ from dpeva.utils.logs import setup_workflow_logger
 from dpeva.utils.exceptions import WorkflowError
 from dpeva.run.artifacts import ArtifactValidationError, validate_feature_outputs
 from dpeva.run.context import RunContext, RunOptions
+from dpeva.run.models import JobRecord
 from dpeva.run.status import RunEventKind, RunState
 
 class FeatureWorkflow:
@@ -73,6 +74,7 @@ class FeatureWorkflow:
             dp_backend=self.config.dp_backend,
             omp_threads=self.config.omp_threads
         )
+        self._expected_feature_pools: list[str] = []
         
     def _setup_logger(self):
         self.logger = logging.getLogger(__name__)
@@ -108,11 +110,26 @@ class FeatureWorkflow:
                 )
             elif state is RunState.SUBMITTED and backend == "local":
                 context.recorder.transition(RunState.RUNNING)
-            self._run_body()
+            submission_output = self._run_body()
             if backend == "slurm":
+                job_id = None
+                if isinstance(submission_output, str):
+                    job_id = self.execution_manager.job_manager.parse_sbatch_job_id(
+                        submission_output
+                    )
+                context.recorder.add_job(
+                    JobRecord(
+                        name="feature",
+                        backend="slurm",
+                        job_id=job_id,
+                        status=RunState.SUBMITTED,
+                    )
+                )
                 return
             outputs = validate_feature_outputs(
-                self.output_dir_path, self.feature_exporter
+                self.output_dir_path,
+                self.feature_exporter,
+                self._expected_feature_pools,
             )
             context.register_verified_artifacts("feature", outputs)
             context.recorder.transition(RunState.FINISHED)
@@ -152,8 +169,9 @@ class FeatureWorkflow:
             # CLI Mode: Use dp eval-desc
             # Detect multi-pool structure
             sub_pools = self.io_manager.detect_multi_pool_structure(self.data_path)
+            self._expected_feature_pools = sub_pools
             
-            self.execution_manager.submit_cli_job(
+            return self.execution_manager.submit_cli_job(
                 data_path=self.data_path,
                 output_dir=self.output_dir,
                 model_path=self.model_path,
@@ -165,6 +183,9 @@ class FeatureWorkflow:
             )
             
         elif self.mode == "python":
+            self._expected_feature_pools = self.io_manager.detect_multi_pool_structure(
+                self.data_path
+            )
             # Python Mode: Use DeepPot API
             
             if self.execution_manager.backend == "local":
@@ -177,7 +198,7 @@ class FeatureWorkflow:
                         omp_threads=self.config.omp_threads
                     )
                     
-                    self.execution_manager.run_local_python_recursion(
+                    return_value = self.execution_manager.run_local_python_recursion(
                         generator,
                         data_path=self.data_path,
                         output_dir=self.output_dir,
@@ -185,6 +206,7 @@ class FeatureWorkflow:
                         feature_kind=self.feature_kind,
                     )
                     self.logger.info(WORKFLOW_FINISHED_TAG)
+                    return return_value
                     
                 except ImportError:
                     self.logger.error("DeepMD-kit not available for Python mode.")
@@ -195,7 +217,7 @@ class FeatureWorkflow:
             
             elif self.execution_manager.backend == "slurm":
                 # Slurm: Submit a python script
-                self.execution_manager.submit_python_slurm_job(
+                return self.execution_manager.submit_python_slurm_job(
                     data_path=self.data_path,
                     output_dir=self.output_dir,
                     model_path=self.model_path,

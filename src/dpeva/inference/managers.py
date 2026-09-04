@@ -14,7 +14,7 @@ from dpeva.submission.guards import guarded_command
 from dpeva.io.dataproc import DPTestResultParser
 from dpeva.io.dataset import load_systems
 from dpeva.utils.command import DPCommandBuilder
-from dpeva.run.artifacts import validate_inference_outputs
+from dpeva.run.artifacts import ArtifactValidationError, validate_inference_outputs
 from dpeva.run.models import JobRecord
 from dpeva.run.status import RunState
 
@@ -149,6 +149,7 @@ class InferenceExecutionManager:
                         backend=self.backend,
                         status=RunState.FAILED,
                         failure=f"model file not found: {model_path}",
+                        failure_category="EXECUTION",
                     )
                 )
                 continue
@@ -250,6 +251,17 @@ class InferenceExecutionManager:
                         status=RunState.FINISHED,
                     )
                 )
+            except ArtifactValidationError as exc:
+                self.logger.error(f"Inference job {i} failed: {exc}")
+                records.append(
+                    JobRecord(
+                        name=f"model-{i}",
+                        backend=self.backend,
+                        status=RunState.FAILED,
+                        failure=str(exc),
+                        failure_category="ARTIFACT",
+                    )
+                )
             except Exception as exc:
                 self.logger.error(f"Inference job {i} failed: {exc}")
                 records.append(
@@ -258,6 +270,7 @@ class InferenceExecutionManager:
                         backend=self.backend,
                         status=RunState.FAILED,
                         failure=str(exc),
+                        failure_category="EXECUTION",
                     )
                 )
 
