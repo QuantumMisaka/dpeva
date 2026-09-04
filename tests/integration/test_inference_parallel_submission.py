@@ -1,4 +1,5 @@
 import pytest
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 from dpeva.workflows.infer import InferenceWorkflow
 
@@ -92,6 +93,10 @@ def test_inference_local_submission(slurm_config):
     
     with patch("dpeva.inference.managers.JobManager") as MockJobManager:
         mock_job_instance = MockJobManager.return_value
+        def submit_with_result(script, working_dir="."):
+            Path(working_dir, "results.e.out").write_text("prediction\n")
+            return ""
+        mock_job_instance.submit.side_effect = submit_with_result
         
         workflow = InferenceWorkflow(config_dict)
         

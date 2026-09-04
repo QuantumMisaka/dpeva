@@ -1,13 +1,17 @@
 import os
 import json
 import logging
-from typing import Union, Dict, Optional
+from pathlib import Path
+from typing import Any, Union, Dict, Optional
 
 from dpeva.config import InferenceConfig
 from dpeva.inference.managers import InferenceIOManager, InferenceExecutionManager
 from dpeva.constants import WORKFLOW_FINISHED_TAG, LOG_FILE_INFER, FILENAME_METRICS_JSON
 from dpeva.utils.logs import setup_workflow_logger
-from dpeva.utils.exceptions import WorkflowError
+from dpeva.utils.exceptions import PartialWorkflowError, WorkflowError
+from dpeva.run.context import RunContext, RunOptions
+from dpeva.run.models import JobRecord
+from dpeva.run.status import RunEventKind, RunState
 
 class InferenceWorkflow:
     """
@@ -16,7 +20,14 @@ class InferenceWorkflow:
     Refactored using DDD Managers.
     """
     
-    def __init__(self, config: Union[Dict, InferenceConfig], config_path: Optional[str] = None):
+    def __init__(
+        self,
+        config: Union[Dict, InferenceConfig],
+        config_path: Optional[str] = None,
+        *,
+        original_config: dict[str, Any] | None = None,
+        run_options: RunOptions | None = None,
+    ):
         """
         Initialize the Inference Workflow.
 
@@ -28,6 +39,9 @@ class InferenceWorkflow:
             self.config = InferenceConfig(**config)
         else:
             self.config = config
+
+        self.original_config = original_config or self.config.model_dump(mode="json")
+        self.run_options = run_options or RunOptions()
 
         self.config_path = config_path
         self._setup_logger()
@@ -66,6 +80,80 @@ class InferenceWorkflow:
         3. Submits parallel inference jobs (dp test) via Slurm or Local backend.
         4. Optionally triggers analysis based on explicit config.
         """
+        env_backend = os.environ.get("DPEVA_INTERNAL_BACKEND")
+        if env_backend:
+            self.logger.info(f"Overriding backend to '{env_backend}'")
+            self.execution_manager.backend = env_backend
+
+        context = RunContext.create(
+            work_dir=self.work_dir,
+            workflow="infer",
+            options=self.run_options,
+            original_config=self.original_config,
+            normalized_config=self.config.model_dump(mode="json"),
+        )
+        try:
+            backend = self.execution_manager.backend
+            state = context.recorder.manifest.status
+            if state is RunState.CREATED:
+                context.recorder.transition(RunState.VALIDATED)
+                state = RunState.VALIDATED
+            if state is RunState.PARTIAL:
+                context.recorder.transition(RunState.RUNNING, RunEventKind.RESUME)
+                state = RunState.RUNNING
+            if state is RunState.VALIDATED:
+                context.recorder.transition(
+                    RunState.SUBMITTED if backend == "slurm" else RunState.RUNNING
+                )
+            elif state is RunState.SUBMITTED and backend == "local":
+                context.recorder.transition(RunState.RUNNING)
+            records = self._run_body()
+            for record in records:
+                context.recorder.add_job(record)
+
+            if self.execution_manager.backend == "slurm":
+                if self.config.auto_analysis:
+                    self.logger.warning("auto_analysis=true is ignored when backend is not local.")
+                    self.logger.info("Inference jobs submitted. Run analysis workflow separately after jobs finish.")
+                return
+
+            successful = [record for record in records if record.status is RunState.FINISHED]
+            failed = [record for record in records if record.status is RunState.FAILED]
+            for artifact_paths in self.execution_manager.last_artifacts.values():
+                context.register_verified_artifacts(
+                    "inference", [Path(path) for path in artifact_paths]
+                )
+            if not successful:
+                message = "all inference jobs failed"
+                context.recorder.fail(category="EXECUTION", message=message)
+                raise WorkflowError(message)
+            if failed:
+                context.recorder.partial(
+                    category="EXECUTION",
+                    message="one or more inference jobs failed",
+                )
+                raise PartialWorkflowError("one or more inference jobs failed")
+
+            context.recorder.transition(RunState.FINISHED)
+
+            if self.config.auto_analysis:
+                self.logger.info("Auto analysis enabled. Starting analysis...")
+                self.analyze_results()
+            else:
+                self.logger.info("Auto analysis disabled. Run analysis workflow separately after jobs finish.")
+        except Exception:
+            # Terminal states written above must remain the original exception;
+            # only unrecorded execution errors need a generic failure event.
+            if context.recorder.manifest.status not in {
+                RunState.FAILED,
+                RunState.PARTIAL,
+                RunState.FINISHED,
+            }:
+                context.recorder.fail(category="EXECUTION", message="inference execution failed")
+            raise
+
+    def _run_body(self) -> list[JobRecord]:
+        """Validate inputs and submit all model jobs."""
         # Configure logging: log to inference.log, but DO NOT capture stdout (propagate=True)
         setup_workflow_logger(
             logger_name="dpeva",
@@ -74,12 +162,6 @@ class InferenceWorkflow:
             capture_stdout=False
         )
 
-        # Check backend override
-        env_backend = os.environ.get("DPEVA_INTERNAL_BACKEND")
-        if env_backend:
-            self.logger.info(f"Overriding backend to '{env_backend}'")
-            self.execution_manager.backend = env_backend
-            
         self.logger.info(f"Initializing Inference Workflow (Backend: {self.execution_manager.backend})")
         
         if not self.data_path or not os.path.exists(self.data_path):
@@ -91,7 +173,7 @@ class InferenceWorkflow:
             raise WorkflowError("No models provided for inference.")
 
         # Submit Jobs
-        self.execution_manager.submit_jobs(
+        records = self.execution_manager.submit_jobs(
             models_paths=self.models_paths,
             data_path=self.data_path,
             work_dir=self.work_dir,
@@ -100,14 +182,7 @@ class InferenceWorkflow:
             results_prefix=self.results_prefix
         )
         
-        if self.config.auto_analysis and self.execution_manager.backend == "local":
-            self.logger.info("Auto analysis enabled. Starting analysis...")
-            self.analyze_results()
-        elif self.config.auto_analysis and self.execution_manager.backend != "local":
-            self.logger.warning("auto_analysis=true is ignored when backend is not local.")
-            self.logger.info("Inference jobs submitted. Run analysis workflow separately after jobs finish.")
-        else:
-            self.logger.info("Auto analysis disabled. Run analysis workflow separately after jobs finish.")
+        return records
 
     def analyze_results(self):
         """Analyze results for all models."""

@@ -49,6 +49,11 @@ Evaluates trained models on a test set (candidate pool) and writes raw `dp test`
 Set `auto_analysis=true` only for local backend if you want chained analysis.
 For Slurm, run `dpeva analysis` after jobs finish.
 
+`feature` 与 `infer` 支持可选运行契约参数：`--run-id` 固定清单身份，
+`--resume` 恢复未完成运行，`--force --reason "..."` 创建带审计理由的新尝试。
+本地推理的混合模型结果以退出码 1 和 `partial` 清单报告；Slurm 提交只报告
+`submitted`。
+
 **Usage:**
 ```bash
 dpeva infer examples/recipes/inference/config_infer.json

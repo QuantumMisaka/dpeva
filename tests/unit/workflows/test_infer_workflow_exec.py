@@ -96,6 +96,14 @@ def test_auto_analysis_runs_only_for_local(tmp_path, mock_job_manager):
         "auto_analysis": True,
     }
     workflow = InferenceWorkflow(config)
+
+    def submit_with_result(script, working_dir="."):
+        os.makedirs(working_dir, exist_ok=True)
+        with open(os.path.join(working_dir, "results.e.out"), "w", encoding="utf-8") as handle:
+            handle.write("prediction\n")
+        return ""
+
+    mock_job_manager.submit.side_effect = submit_with_result
     with patch.object(workflow, "analyze_results") as mock_analyze:
         workflow.run()
         mock_analyze.assert_called_once()
@@ -112,6 +120,7 @@ def test_auto_analysis_ignored_for_non_local(tmp_path, mock_job_manager):
         "auto_analysis": True,
     }
     workflow = InferenceWorkflow(config)
+    mock_job_manager.submit.return_value = "Submitted batch job 123"
     with patch.object(workflow, "analyze_results") as mock_analyze, patch.object(workflow.logger, "warning") as mock_warning:
         with patch.dict(os.environ, {"DPEVA_INTERNAL_BACKEND": "slurm"}):
             workflow.run()

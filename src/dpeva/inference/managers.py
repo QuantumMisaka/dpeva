@@ -4,6 +4,7 @@ import logging
 import shlex
 import numpy as np
 import pandas as pd
+from pathlib import Path
 from typing import List, Dict, Optional, Tuple
 from collections import Counter
 
@@ -13,6 +14,9 @@ from dpeva.submission.guards import guarded_command
 from dpeva.io.dataproc import DPTestResultParser
 from dpeva.io.dataset import load_systems
 from dpeva.utils.command import DPCommandBuilder
+from dpeva.run.artifacts import validate_inference_outputs
+from dpeva.run.models import JobRecord
+from dpeva.run.status import RunState
 
 logger = logging.getLogger(__name__)
 
@@ -120,6 +124,7 @@ class InferenceExecutionManager:
         DPCommandBuilder.set_backend(self.dp_backend)
         self.job_manager = JobManager(mode=backend)
         self.logger = logging.getLogger(__name__)
+        self.last_artifacts: dict[str, list[str]] = {}
 
     def _get_default_env_setup(self):
         """Provide default environment variables if user didn't specify any."""
@@ -127,17 +132,25 @@ class InferenceExecutionManager:
 
     def submit_jobs(self, models_paths: List[str], data_path: str, work_dir: str, task_name: str, 
                    head: str, results_prefix: str):
-        """Submit inference jobs for all models."""
+        """Submit every inference job and return an evidence-bearing job record."""
         final_env_setup = self.env_setup if self.env_setup.strip() else self._get_default_env_setup()
         
         self.logger.info(f"Submitting {len(models_paths)} inference jobs...")
         
-        script_paths = []
-        task_dirs = []
+        records: list[JobRecord] = []
+        self.last_artifacts = {}
 
         for i, model_path in enumerate(models_paths):
             if not os.path.exists(model_path):
                 self.logger.warning(f"Model file not found: {model_path}, skipping.")
+                records.append(
+                    JobRecord(
+                        name=f"model-{i}",
+                        backend=self.backend,
+                        status=RunState.FAILED,
+                        failure=f"model file not found: {model_path}",
+                    )
+                )
                 continue
                 
             # Define output directory structure: work_dir/i/task_name
@@ -206,22 +219,47 @@ class InferenceExecutionManager:
             
             self.job_manager.generate_script(job_config, script_path)
             
-            script_paths.append(script_path)
-            task_dirs.append(job_work_dir)
-            
-        # Submit Jobs
-        if self.backend == "slurm":
-            for script, task_dir in zip(script_paths, task_dirs):
-                self.job_manager.submit(script, working_dir=task_dir)
-            self.logger.info("All Slurm jobs submitted.")
-        else:
-            # For local backend, submit sequentially for now (subprocess)
-            # To align with TrainingExecutionManager (multiprocessing), we would need similar logic
-            # But to keep it simple and safe for now, sequential submission is fine for inference
-            # unless there are many models. 
-            # Given user asked for parallel SLURM submission, we focus on Slurm.
-            # Local submission remains sequential as per original implementation (JobManager.submit is blocking)
-            for script, task_dir in zip(script_paths, task_dirs):
-                self.job_manager.submit(script, working_dir=task_dir)
-            
+            try:
+                submission_output = self.job_manager.submit(
+                    script_path, working_dir=job_work_dir
+                )
+                if self.backend == "slurm":
+                    # Test doubles may not provide sbatch output; real Slurm
+                    # submissions must carry a parseable job id.
+                    job_id = None
+                    if isinstance(submission_output, str):
+                        job_id = self.job_manager.parse_sbatch_job_id(submission_output)
+                    records.append(
+                        JobRecord(
+                            name=f"model-{i}",
+                            backend="slurm",
+                            job_id=job_id,
+                            status=RunState.SUBMITTED,
+                        )
+                    )
+                    continue
+
+                outputs = validate_inference_outputs(
+                    Path(job_work_dir).expanduser().resolve(), results_prefix
+                )
+                self.last_artifacts[f"model-{i}"] = [str(path) for path in outputs]
+                records.append(
+                    JobRecord(
+                        name=f"model-{i}",
+                        backend="local",
+                        status=RunState.FINISHED,
+                    )
+                )
+            except Exception as exc:
+                self.logger.error(f"Inference job {i} failed: {exc}")
+                records.append(
+                    JobRecord(
+                        name=f"model-{i}",
+                        backend=self.backend,
+                        status=RunState.FAILED,
+                        failure=str(exc),
+                    )
+                )
+
         self.logger.info("Inference Workflow Submission Completed.")
+        return records

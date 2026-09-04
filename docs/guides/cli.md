@@ -49,6 +49,11 @@ dpeva <workflow> <config_path>
 dpeva --no-banner <workflow> <config_path>
 ```
 
+`feature` 与 `infer` 还支持运行证据选项：`--run-id ID` 固定本次运行身份，
+`--resume` 恢复未完成运行，或使用带必填 `--reason` 的 `--force` 创建显式新
+尝试。`--resume` 与 `--force` 互斥；运行清单写入配置工作目录下的
+`.dpeva/runs/<run-id>/run.json`。
+
 除 `doctor` 外的工作流都要求提供 `<config_path>`；CLI 会在参数解析阶段对它执行统一前置校验（存在性、可读性、JSON 文件后缀）。`doctor` 是不需要配置文件的独立环境检查命令，格式见下节。
 
 实现入口：`src/dpeva/cli.py`（基于 `argparse`）。
@@ -99,6 +104,12 @@ dpeva doctor --json
 
 示例配置：`examples/recipes/inference/config_infer.json`
 
+例如指定可复查的运行身份：
+
+```bash
+dpeva infer config.json --run-id infer-20260904-a1b2c3
+```
+
 ### 4.3 feature（描述符生成）
 
 - 输入
@@ -110,6 +121,8 @@ dpeva doctor --json
   - `savedir/eval_desc.log`（常用监控锚点）
 
 示例配置：`examples/recipes/feature_generation/config_feature.json`
+
+`feature` 同样支持上述 `--run-id`、`--resume`、`--force` 和 `--reason` 选项。
 
 ### 4.4 explore（轨迹探索，可选）
 
@@ -217,7 +230,10 @@ DPEVA_TAG: WORKFLOW_FINISHED
   - **正常执行**：0。
   - **参数解析失败**：2（例如 config 文件不存在、不可读、路径不是文件，或参数形态错误）。
   - **运行期失败**：1（配置内容不合法、业务逻辑失败、外部命令失败等）。
-  - **doctor 环境检查**：报告 `status=ok` 时为 0，否则为 1；`doctor --json` 的标准输出仅包含 JSON 报告。
+- **doctor 环境检查**：报告 `status=ok` 时为 0，否则为 1；`doctor --json` 的标准输出仅包含 JSON 报告。
+- **局部完成**：本地 infer 只要有一个模型成功、另一个失败，就写入 `partial`
+  清单并以退出码 `1` 返回；所有模型失败则为 `failed`。Slurm 的 `sbatch` 回执
+  只表示 `submitted`，不会伪造 `finished`。
   - 注意：CLI 对用户输入类错误优先给出可操作提示，避免无意义堆栈噪音；内部异常仍会保留堆栈用于排障。
 
 - 常见异常类型

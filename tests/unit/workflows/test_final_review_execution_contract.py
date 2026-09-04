@@ -46,7 +46,9 @@ def test_feature_workflow_local_rejects_empty_recursion_output(tmp_path, caplog)
     }
     with patch("dpeva.workflows.feature.DescriptorGenerator"), \
          patch("dpeva.feature.managers.FeatureExecutionManager.run_local_python_recursion"):
-        with pytest.raises(WorkflowError, match="no non-empty"):
+        from dpeva.run.artifacts import ArtifactValidationError
+
+        with pytest.raises(ArtifactValidationError, match="missing or empty"):
             FeatureWorkflow(config).run()
     assert WORKFLOW_FINISHED_TAG not in caplog.text
 

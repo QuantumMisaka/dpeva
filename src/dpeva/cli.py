@@ -16,6 +16,7 @@ import os
 from dpeva.config_migration import MigrationResult, migrate_legacy_config
 from dpeva.utils.config import resolve_config_paths
 from dpeva.utils.banner import show_banner
+from dpeva.run.context import RunOptions
 
 # Lazy imports for workflows to improve CLI startup time
 # Workflows are imported inside handler functions
@@ -84,6 +85,23 @@ def _normalized_config(result):
     return result
 
 
+def add_run_options(parser: argparse.ArgumentParser) -> None:
+    """Add immutable run allocation controls to the pilot workflows."""
+    parser.add_argument("--run-id", help="Stable run identity for manifest evidence")
+    parser.add_argument("--resume", action="store_true", help="Resume an incomplete run")
+    parser.add_argument("--force", action="store_true", help="Start a new attempt for an existing run")
+    parser.add_argument("--reason", help="Required audit reason for --force")
+
+
+def _run_options(args) -> RunOptions:
+    return RunOptions(
+        run_id=getattr(args, "run_id", None),
+        resume=getattr(args, "resume", False),
+        force=getattr(args, "force", False),
+        reason=getattr(args, "reason", None),
+    )
+
+
 def load_and_resolve_config(config_path) -> MigrationResult:
     """
     Loads a JSON configuration file and resolves relative paths.
@@ -123,8 +141,14 @@ def handle_infer(args):
         args (argparse.Namespace): Command-line arguments containing 'config'.
     """
     from dpeva.workflows.infer import InferenceWorkflow
+    original_config = load_json_config(args.config)
     config = _normalized_config(load_and_resolve_config(args.config))
-    workflow = InferenceWorkflow(config, config_path=os.path.abspath(args.config))
+    workflow = InferenceWorkflow(
+        config,
+        config_path=os.path.abspath(args.config),
+        original_config=original_config,
+        run_options=_run_options(args),
+    )
     workflow.run()
 
 def handle_feature(args):
@@ -136,8 +160,13 @@ def handle_feature(args):
         args (argparse.Namespace): Command-line arguments containing 'config'.
     """
     from dpeva.workflows.feature import FeatureWorkflow
+    original_config = load_json_config(args.config)
     config = _normalized_config(load_and_resolve_config(args.config))
-    workflow = FeatureWorkflow(config)
+    workflow = FeatureWorkflow(
+        config,
+        original_config=original_config,
+        run_options=_run_options(args),
+    )
     workflow.run()
 
 def handle_explore(args):
@@ -278,11 +307,13 @@ def main():
     # Inference Sub-command
     p_infer = subparsers.add_parser("infer", help="Run Inference (Parallel Evaluation) Workflow")
     p_infer.add_argument("config", type=validate_config_path, help="Path to configuration JSON")
+    add_run_options(p_infer)
     p_infer.set_defaults(func=handle_infer)
 
     # Feature Sub-command
     p_feature = subparsers.add_parser("feature", help="Run Feature Generation Workflow")
     p_feature.add_argument("config", type=validate_config_path, help="Path to configuration JSON")
+    add_run_options(p_feature)
     p_feature.set_defaults(func=handle_feature)
 
     # Exploration Sub-command

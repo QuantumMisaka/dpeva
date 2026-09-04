@@ -388,15 +388,6 @@ if __name__ == "__main__":
                 f"feature generation failed for {len(failures)} system(s): {failures}"
             )
 
-        artifacts = [
-            os.path.join(root, filename)
-            for root, _, filenames in os.walk(abs_output_dir)
-            for filename in filenames
-            if filename.endswith(".npy")
-        ]
-        if not any(os.path.isfile(path) and os.path.getsize(path) > 0 for path in artifacts):
-            raise WorkflowError("Feature generation produced no non-empty .npy artifacts")
-
     def _compute_feature(self, generator, data_path: str, output_mode: str, feature_kind: str):
         if feature_kind == "descriptor":
             return generator.compute_descriptors(data_path, output_mode)

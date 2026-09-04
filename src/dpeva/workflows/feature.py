@@ -1,6 +1,7 @@
 import os
 import logging
-from typing import Union, Dict
+from pathlib import Path
+from typing import Any, Union, Dict
 
 from dpeva.config import FeatureConfig
 from dpeva.feature.managers import FeatureIOManager, FeatureExecutionManager
@@ -8,6 +9,9 @@ from dpeva.feature.generator import DescriptorGenerator
 from dpeva.constants import WORKFLOW_FINISHED_TAG, LOG_FILE_FEATURE
 from dpeva.utils.logs import setup_workflow_logger
 from dpeva.utils.exceptions import WorkflowError
+from dpeva.run.artifacts import ArtifactValidationError, validate_feature_outputs
+from dpeva.run.context import RunContext, RunOptions
+from dpeva.run.status import RunEventKind, RunState
 
 class FeatureWorkflow:
     """
@@ -15,7 +19,13 @@ class FeatureWorkflow:
     Refactored using DDD Managers.
     """
     
-    def __init__(self, config: Union[Dict, FeatureConfig]):
+    def __init__(
+        self,
+        config: Union[Dict, FeatureConfig],
+        *,
+        original_config: dict[str, Any] | None = None,
+        run_options: RunOptions | None = None,
+    ):
         """
         Initialize the Feature Workflow.
 
@@ -26,6 +36,9 @@ class FeatureWorkflow:
             self.config = FeatureConfig(**config)
         else:
             self.config = config
+
+        self.original_config = original_config or self.config.model_dump(mode="json")
+        self.run_options = run_options or RunOptions()
 
         self._setup_logger()
         
@@ -73,6 +86,49 @@ class FeatureWorkflow:
         3. Generates descriptors via CLI (dp eval-desc) or Python API (DeepPot).
         4. Handles local or Slurm execution.
         """
+        context = RunContext.create(
+            work_dir=self.output_dir,
+            workflow="feature",
+            options=self.run_options,
+            original_config=self.original_config,
+            normalized_config=self.config.model_dump(mode="json"),
+        )
+        try:
+            backend = self.config.submission.backend
+            state = context.recorder.manifest.status
+            if state is RunState.CREATED:
+                context.recorder.transition(RunState.VALIDATED)
+                state = RunState.VALIDATED
+            if state is RunState.PARTIAL:
+                context.recorder.transition(RunState.RUNNING, RunEventKind.RESUME)
+                state = RunState.RUNNING
+            if state is RunState.VALIDATED:
+                context.recorder.transition(
+                    RunState.SUBMITTED if backend == "slurm" else RunState.RUNNING
+                )
+            elif state is RunState.SUBMITTED and backend == "local":
+                context.recorder.transition(RunState.RUNNING)
+            self._run_body()
+            if backend == "slurm":
+                return
+            outputs = validate_feature_outputs(
+                self.output_dir_path, self.feature_exporter
+            )
+            context.register_verified_artifacts("feature", outputs)
+            context.recorder.transition(RunState.FINISHED)
+        except ArtifactValidationError as exc:
+            context.recorder.fail(category="ARTIFACT", message=str(exc))
+            raise
+        except Exception as exc:
+            context.recorder.fail(category="EXECUTION", message=str(exc))
+            raise
+
+    @property
+    def output_dir_path(self) -> Path:
+        return Path(self.output_dir).expanduser().resolve()
+
+    def _run_body(self):
+        """Execute the pre-existing scientific feature generation operations."""
         # Configure logging: log to feature.log, but DO NOT capture stdout (propagate=True)
         setup_workflow_logger(
             logger_name="dpeva",
@@ -128,19 +184,6 @@ class FeatureWorkflow:
                         output_mode=self.output_mode,
                         feature_kind=self.feature_kind,
                     )
-                    artifacts = [
-                        os.path.join(root, filename)
-                        for root, _, filenames in os.walk(self.output_dir)
-                        for filename in filenames
-                        if filename.endswith(".npy")
-                    ]
-                    if not any(
-                        os.path.isfile(path) and os.path.getsize(path) > 0
-                        for path in artifacts
-                    ):
-                        raise WorkflowError(
-                            "Feature generation produced no non-empty .npy artifacts"
-                        )
                     self.logger.info(WORKFLOW_FINISHED_TAG)
                     
                 except ImportError:

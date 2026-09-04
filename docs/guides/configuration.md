@@ -79,6 +79,14 @@ owner: Docs Owner
 
 常用扩展字段：`partition/qos/gpus_per_node/cpus_per_task/account`。
 
+### 4.0 运行身份与证据
+
+`feature` 与 `infer` 的 CLI 运行会在工作目录生成
+`.dpeva/runs/<run-id>/run.json`，并保存原始配置与规范化配置快照。使用
+`--run-id` 可固定身份；已有身份默认拒绝覆盖，未完成运行可用 `--resume`，
+需要重跑时使用带审计说明 `--reason` 的 `--force`。运行清单中的 `finished`
+只表示本地命令成功且输出文件非空并已校验；Slurm 仅记录 `submitted`。
+
 支持 Slurm array 的 workflow 可设置：
 
 - `slurm_array=true`：将同质任务合并为 Slurm array，而不是逐个 `sbatch`。
