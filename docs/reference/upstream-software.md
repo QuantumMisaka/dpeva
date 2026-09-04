@@ -25,6 +25,22 @@ owner: Docs Owner
   - 作为训练、测试与描述符评估的计算后端。
   - 通过 `dp` 命令参与 `train / infer / feature` 等流程。
 
+### 1.1 3.2 compatibility qualification
+
+DeepMD-kit 3.2 的能力状态由
+`src/dpeva/compatibility/deepmd-3.2.json` 的精确 operation/backend/model/
+artifact/data/environment key 管理。当前没有任何 `supported` 记录：本地
+`ft2dp-post` 仅完成 6 个 CPU contract cases，另有 4 个显式 fixture skips；
+SAI V100 qualification JobID `1126627` 在 payload 启动前被 scheduler 记录为
+`CANCELLED by 0`，因此不能作为 GPU/runtime 通过证据。完整边界与未资格化结论见
+[`DeepMD 3.2 compatibility report`](../reports/2026-09-04-deepmd-3.2-compatibility.md)。
+
+发布或研究运行不得仅因版本号落在 `>=3.2,<3.3` 就晋级能力。只有精确验证命令、
+CPU evidence，以及需要时的 SAI evidence 均存在并通过，Compatibility Owner 才能
+在同一变更中更新 manifest 和报告。重试被取消的 SAI 作业需要新的显式授权与运维
+诊断；本报告不把 scheduler cancellation 归因于 harness，也不声称 GPU/runtime
+正确性。
+
 ## 2. dpdata
 
 - 仓库地址：https://github.com/deepmodeling/dpdata

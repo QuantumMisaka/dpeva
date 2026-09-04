@@ -2,6 +2,8 @@
 title: DeepMD-kit 3.2 SAI V100 Qualification
 status: draft
 audience: Compatibility Owner / Scientific Owner
+last-updated: 2026-09-05
+owner: Compatibility Owner
 ---
 
 # DeepMD-kit 3.2 SAI V100 Qualification

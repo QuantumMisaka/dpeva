@@ -148,6 +148,15 @@ descriptor 可通过 `dp --pt-expt eval-desc` 提取，单任务模型无需设�
 backend 提供 descriptor 提取，但尚未提供 `dp embed` 所需的组合
 `eval_embedding` 接口，因此这一路径应使用 `eval_desc`。
 
+当前 DeepMD 3.2 兼容性通道尚未资格化任何 `supported` 能力。`ft2dp-post`
+本地 contract 结果为 6 passed / 4 个显式 fixture skips，不能替代 CI 的
+`DPEVA_DEEPMD_CONTRACT_REQUIRED=1` protected-fixture 模式；一次 SAI V100
+尝试（JobID `1126627`）在 payload 执行前为 `CANCELLED by 0`，没有完整的
+compute-node preflight、环境或命令证据。请以
+[`DeepMD 3.2 compatibility report`](../reports/2026-09-04-deepmd-3.2-compatibility.md)
+和 capability manifest 的状态为准，不要把版本号或该取消事件解释为运行时通过。
+被取消的 qualification 不得自动重试；重试需要新的显式授权和运维诊断。
+
 DeepMD PyTorch 模型可使用 `dp embed` 导出 HDF5 embedding。该路线会在 `savedir/embedding.hdf5` 中保留 `descriptor`、`atomic_feature`、`structural_feature` 和 `atom_types`；HDF5 dataset 由 DeepMD 使用 gzip + shuffle 压缩。`feature_kind="descriptor"` 读取 `descriptor`，`feature_kind="fitting_last_layer"` 对应 `atomic_feature`。
 
 ```json

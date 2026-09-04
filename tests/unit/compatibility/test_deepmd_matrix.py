@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from collections import Counter
 from pathlib import Path
 
 import pytest
@@ -176,3 +177,71 @@ def test_unknown_status_is_rejected(tmp_path: Path) -> None:
     path.write_text(json.dumps(payload), encoding="utf-8")
     with pytest.raises(ValidationError):
         CapabilityMatrix.load(path)
+
+
+def _evidence_path(reference: str) -> Path | None:
+    """Resolve a repository-local evidence reference, ignoring its anchor."""
+
+    target = reference.split("#", 1)[0]
+    if "://" in target:
+        return None
+    return Path(target)
+
+
+def test_supported_capabilities_have_complete_evidence() -> None:
+    """Promotion is impossible without materialized, exact evidence refs."""
+
+    matrix = CapabilityMatrix.load_default()
+    for record in matrix.records:
+        if record.status != "supported":
+            continue
+        assert record.evidence_ref is not None
+        cpu_path = _evidence_path(record.evidence_ref.cpu_contract)
+        assert cpu_path is not None and cpu_path.is_file()
+        if record.key.environment.startswith("sai-"):
+            assert record.evidence_ref.sai_qualification
+            sai_path = _evidence_path(record.evidence_ref.sai_qualification)
+            assert sai_path is not None and sai_path.is_file()
+
+
+def test_current_matrix_has_explicit_unqualified_status_distribution() -> None:
+    """Do not let an empty supported loop make the qualification gate vacuous."""
+
+    counts = Counter(record.status for record in CapabilityMatrix.load_default().records)
+    assert counts == Counter(
+        {
+            "supported": 0,
+            "experimental": 9,
+            "unsupported": 4,
+            "blocked-upstream": 2,
+        }
+    )
+
+
+def test_non_pbc_capabilities_remain_blocked_by_issue_6002() -> None:
+    records = [
+        record
+        for record in CapabilityMatrix.load_default().records
+        if record.key.environment == "cpu-non-pbc"
+    ]
+    assert {record.key.operation for record in records} == {"eval-desc", "inference"}
+    assert {record.status for record in records} == {"blocked-upstream"}
+    assert {
+        record.upstream_issue
+        for record in records
+    } == {"https://github.com/deepmodeling/deepmd-kit/issues/6002"}
+
+
+def test_qualification_report_states_current_manifest_distribution() -> None:
+    report = Path("docs/reports/2026-09-04-deepmd-3.2-compatibility.md").read_text(
+        encoding="utf-8"
+    )
+    for status, count in (
+        ("supported", 0),
+        ("experimental", 9),
+        ("unsupported", 4),
+        ("blocked-upstream", 2),
+    ):
+        assert f"| `{status}` | {count} |" in report
+    assert "#6002" in report
+    assert "1126627" in report
