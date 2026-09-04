@@ -232,6 +232,32 @@ def test_legacy_recovery_without_transition_adds_unambiguous_terminal_event(tmp_
     assert events[1].failure == FailureRecord(category="EXECUTION", message="legacy failure")
 
 
+def test_legacy_recovery_fallback_uses_historical_attempt(tmp_path) -> None:
+    path = tmp_path / "legacy-attempt-2.json"
+    path.write_text(
+        json.dumps(
+            {
+                "schema_version": "1.0",
+                "run_id": "legacy-attempt-2",
+                "workflow": "infer",
+                "status": "failed",
+                "events": [{"state": "failed", "kind": "force", "attempt_id": 1}],
+                "failure": {"category": "EXECUTION", "message": "legacy failure"},
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    recorder = StatusRecorder.load(path, attempt_id=2)
+    recorder.transition(RunState.RUNNING, event=RunEventKind.RECOVERY)
+
+    synthetic = recorder.manifest.events[1]
+    assert synthetic.kind == "transition"
+    assert synthetic.attempt_id == 1
+    assert synthetic.failure == FailureRecord(category="EXECUTION", message="legacy failure")
+
+
 @pytest.mark.parametrize("status", [RunState.FAILED, RunState.PARTIAL])
 def test_record_event_on_current_failure_attaches_failure_evidence(tmp_path, status) -> None:
     recorder = StatusRecorder.create(tmp_path / f"{status.value}.json", "run-1", "infer")
@@ -246,6 +272,20 @@ def test_record_event_on_current_failure_attaches_failure_evidence(tmp_path, sta
 
     assert recorder.manifest.events[-1].state is status
     assert recorder.manifest.events[-1].failure == recorder.manifest.failure
+
+
+@pytest.mark.parametrize("override", [RunState.FAILED, RunState.PARTIAL])
+def test_record_event_rejects_state_override_without_persisting(tmp_path, override) -> None:
+    path = tmp_path / "run.json"
+    recorder = StatusRecorder.create(path, "run-1", "infer")
+    original = path.read_text(encoding="utf-8")
+
+    with pytest.raises(ValueError, match="audit event state"):
+        recorder.record_event(kind="force", state=override)
+
+    assert recorder.manifest.status is RunState.CREATED
+    assert recorder.manifest.events == []
+    assert path.read_text(encoding="utf-8") == original
 
 
 def test_explicit_event_is_persisted_without_changing_state(tmp_path) -> None:

@@ -161,6 +161,11 @@ class StatusRecorder:
     ) -> None:
         """Persist an explicit non-transition event, such as a force action."""
 
+        if state is not None and state is not self._manifest.status:
+            raise ValueError(
+                "audit event state must match current manifest state: "
+                f"{state.value} != {self._manifest.status.value}"
+            )
         candidate = self._manifest.model_copy(deep=True)
         event_state = state or candidate.status
         event_failure = (
@@ -215,8 +220,16 @@ class StatusRecorder:
                 return candidate
         # A malformed-but-schema-valid legacy manifest may omit event history;
         # retain its manifest-level evidence in a synthetic terminal event.
+        historical_attempt = next(
+            (
+                event.attempt_id
+                for event in reversed(candidate.events)
+                if event.state is state
+            ),
+            max(1, attempt_id - 1),
+        )
         candidate.events.append(
-            RunEvent(state=state, attempt_id=attempt_id, failure=failure)
+            RunEvent(state=state, attempt_id=historical_attempt, failure=failure)
         )
         return candidate
 
