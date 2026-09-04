@@ -111,6 +111,11 @@ SHA-256、精确 DeepMD 3.2.0、V100 GPU 和 Torch CUDA，再生成 `commands/*.
 artifact checks。默认作业约束是 `4V100`、单节点单任务单 GPU、`improper-gpu`、最长
 30 分钟，禁止额外 `mem`/`cpus` 资源声明。
 
+qualification 作业使用独立的 `dpeva-dpa4-320` 环境（SAI 实测 DeepMD-kit 精确
+`3.2.0`）；普通 DP-EVA 开发与测试仍默认使用 `dpeva-dpa4`（当前为
+`3.2.0b1.dev67`）。脚本在 source 环境脚本前显式设置环境名，preflight 同时核对
+`CONDA_DEFAULT_ENV` 与 `CONDA_PREFIX` basename，避免 `--export=NONE` 下继承或误用环境。
+
 提交前应在干净登录 shell 中完成 rehash；提交脚本只执行一次 `sbatch`，并把结果写入
 唯一外部 job directory 和原子更新的 `latest.json`。`launch.json` 在 `sbatch` 前原子
 落盘，以避免 scheduler 等待期间的 race；`submission.json` 在获得 JobID 后再写入。

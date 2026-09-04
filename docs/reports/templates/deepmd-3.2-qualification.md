@@ -13,6 +13,8 @@ promote capabilities automatically and does not claim scientific superiority.
 
 ## Environment and job identity
 
+- Qualification environment: `dpeva-dpa4-320` (exact DeepMD-kit 3.2.0); this
+  is distinct from the ordinary development environment `dpeva-dpa4`.
 - DeepMD version: `qualification.json` → `environment/deepmd-version.json`
 - GPU: `qualification.json` → `environment/gpu.json`
 - Torch/CUDA: `qualification.json` → `environment/torch-cuda.json`

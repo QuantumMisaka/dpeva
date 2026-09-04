@@ -126,6 +126,7 @@ def submit(input_path: Path, slurm_script: Path, write_ref: Path, *, job_root: P
         "input_path": str(input_path), "input_sha256": _sha256(input_path),
         "slurm_script_path": str(slurm_script), "slurm_script_sha256": _sha256(slurm_script),
         "expected_deepmd_version": "DeePMD-kit v3.2.0", "expected_gpu": "V100",
+        "qualification_env_name": "dpeva-dpa4-320",
         "dpa4c_model_sha256": data.get("dpa4c_model_sha256"),
         "job_dir": str(job_dir), "status": "launched",
     }
@@ -139,7 +140,7 @@ def submit(input_path: Path, slurm_script: Path, write_ref: Path, *, job_root: P
         if result.returncode != 0:
             raise RuntimeError(f"sbatch failed ({result.returncode}): {output.strip()}")
         job_id = parse_job_id(output)
-    _exclusive_json(job_dir / "submission.json", {"schema_version": "1.0", "job_id": job_id, "input": str(input_path), "slurm_script": str(slurm_script), "input_sha256": launch["input_sha256"], "script_sha256": launch["slurm_script_sha256"], "nonce": nonce, "job_dir": str(job_dir), "command": command, "dry_run": dry_run})
+    _exclusive_json(job_dir / "submission.json", {"schema_version": "1.0", "job_id": job_id, "input": str(input_path), "slurm_script": str(slurm_script), "input_sha256": launch["input_sha256"], "script_sha256": launch["slurm_script_sha256"], "nonce": nonce, "job_dir": str(job_dir), "qualification_env_name": launch["qualification_env_name"], "command": command, "dry_run": dry_run})
     ref = {"schema_version": "1.0", "job_id": job_id, "job_dir": str(job_dir), "external_job_dir": str(job_dir), "nonce": nonce, "status": "submitted" if not dry_run else "dry-run"}
     _atomic_json(write_ref.expanduser().resolve(), ref)
     print(json.dumps(ref, sort_keys=True))

@@ -88,6 +88,11 @@ def _preflight(config_path: Path, job_dir: Path) -> dict[str, Any]:
     checks: list[dict[str, Any]] = []
     try:
         launch = _load(job_dir / "launch.json")
+        expected_env = str(launch["qualification_env_name"])
+        actual_env = os.environ.get("CONDA_DEFAULT_ENV", "")
+        actual_prefix = Path(os.environ.get("CONDA_PREFIX", "")).name
+        if actual_env != expected_env or actual_prefix != expected_env:
+            errors.append(f"qualification environment mismatch: expected {expected_env}, default={actual_env!r}, prefix={actual_prefix!r}")
         input_path = Path(str(launch["input_path"])).expanduser().resolve()
         script_path = Path(str(launch["slurm_script_path"])).expanduser().resolve()
         if Path(str(launch["job_dir"])).expanduser().resolve() != job_dir.resolve():

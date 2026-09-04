@@ -54,6 +54,9 @@ on_exit() {
 }
 trap on_exit EXIT
 
+# Qualification is intentionally isolated from the ordinary dpeva-dpa4
+# development environment.  --export=NONE does not carry this setting in.
+export DPEVA_DPA4_ENV_NAME="dpeva-dpa4-320"
 source "$REPO_ROOT/scripts/env/dpeva-dpa4.env"
 
 run_case preflight

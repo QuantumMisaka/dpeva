@@ -137,6 +137,50 @@ def test_submit_dry_run_writes_immutable_reference(tmp_path: Path) -> None:
     assert result["status"] == "dry-run"
     assert json.loads(ref.read_text(encoding="utf-8"))["job_dir"] != str(tmp_path / "external" / "latest")
     assert (Path(result["job_dir"]) / "submission.json").is_file()
+    launch = json.loads((Path(result["job_dir"]) / "launch.json").read_text(encoding="utf-8"))
+    submission = json.loads((Path(result["job_dir"]) / "submission.json").read_text(encoding="utf-8"))
+    assert launch["qualification_env_name"] == "dpeva-dpa4-320"
+    assert submission["qualification_env_name"] == launch["qualification_env_name"]
+
+
+def test_slurm_script_selects_qualified_environment_before_source() -> None:
+    script = Path("scripts/validation/run_deepmd_32_qualification.slurm").read_text(encoding="utf-8")
+    assert 'export DPEVA_DPA4_ENV_NAME="dpeva-dpa4-320"' in script
+    assert script.index("DPEVA_DPA4_ENV_NAME") < script.index("source \"$REPO_ROOT/scripts/env/dpeva-dpa4.env\"")
+
+
+def test_preflight_rejects_wrong_qualification_environment(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    from subprocess import CompletedProcess
+    from scripts.validation.run_recorded_command import _sha256, run_recorded_command
+
+    model_root = tmp_path / "models"
+    model_root.mkdir()
+    for name in ("model.ckpt.pt", "model_ema.ckpt.pt"):
+        (model_root / name).write_bytes(name.encode())
+    fixture = tmp_path / "input"
+    (fixture / "set.000").mkdir(parents=True)
+    (fixture / "type.raw").write_text("0\n", encoding="utf-8")
+    (fixture / "type_map.raw").write_text("Fe\n", encoding="utf-8")
+    config = tmp_path / "input.json"
+    config.write_text(json.dumps({"schema_version": "1.0", "fixture": {"path": str(fixture)}, "models": {"regular": {"path": str(model_root / "model.ckpt.pt"), "sha256": _sha256(model_root / "model.ckpt.pt")}, "ema": {"path": str(model_root / "model_ema.ckpt.pt"), "sha256": _sha256(model_root / "model_ema.ckpt.pt")}}}), encoding="utf-8")
+    script = Path("scripts/validation/run_deepmd_32_qualification.slurm").resolve()
+    launch = tmp_path / "job" / "launch.json"
+    launch.parent.mkdir()
+    launch.write_text(json.dumps({"schema_version": "1.0", "qualification_env_name": "dpeva-dpa4-320", "input_path": str(config), "input_sha256": _sha256(config), "slurm_script_path": str(script), "slurm_script_sha256": _sha256(script), "expected_deepmd_version": "DeePMD-kit v3.2.0", "expected_gpu": "V100", "job_dir": str(launch.parent)}), encoding="utf-8")
+    monkeypatch.setenv("CONDA_DEFAULT_ENV", "dpeva-dpa4")
+    monkeypatch.setenv("CONDA_PREFIX", "/opt/conda/envs/dpeva-dpa4")
+
+    def fake_run(argv: list[str], **_kwargs: object) -> CompletedProcess[str]:
+        if argv[:2] == ["dp", "--version"]:
+            return CompletedProcess(argv, 0, "DeePMD-kit v3.2.0\n", "")
+        if argv[:2] == ["nvidia-smi", "-L"]:
+            return CompletedProcess(argv, 0, "GPU 0: Tesla V100\n", "")
+        return CompletedProcess(argv, 0, '{"torch":"2.0","cuda":"12.6","available":true}\n', "")
+
+    monkeypatch.setattr("scripts.validation.run_recorded_command.subprocess.run", fake_run)
+    result = run_recorded_command(config, launch.parent, "preflight")
+    assert result["status"] == "failed"
+    assert "environment mismatch" in result["error"]
 
 
 @pytest.mark.parametrize("cpu_directive", ["#SBATCH --cpus=1", "#SBATCH --cpus-per-task=1", "#SBATCH --cpus-per-task 1"])
