@@ -82,14 +82,20 @@ owner: Docs Owner
 ### 4.0 运行身份与证据
 
 `feature` 与 `infer` 的 CLI 运行会在工作目录生成
-`.dpeva/runs/<run-id>/run.json`，并保存原始配置与规范化配置快照。使用
-`--run-id` 可固定身份；已有身份默认拒绝覆盖，未完成运行可用 `--resume`，
-需要重跑时使用带审计说明 `--reason` 的 `--force`。运行清单中的 `finished`
+`.dpeva/runs/<run-id>/run.json`，并保存单次读取的原始配置与规范化配置快照。
+若发生迁移，还会写入 `config.metadata.json`，记录输入 schema `1.0` 与迁移 warning，
+并由清单的 `config.metadata` 相对引用指向它。使用 `--run-id` 可固定身份；已有
+身份默认拒绝覆盖，未完成的本地运行可用 `--resume`，已提交的 Slurm 运行会在提交
+前拒绝 resume，需要重跑时使用带审计说明 `--reason` 的 `--force`。运行清单中的 `finished`
 只表示本地命令成功且输出文件非空并已校验；Slurm 仅记录 `submitted`。
 多 pool feature 输出会逐 pool 校验：`eval-desc` 要求每个 pool 至少有一个非空
 `.npy`，`embed` 要求每个 pool 有非空 `embedding.hdf5`。
 Slurm 多模型 infer 若仅部分 JobID 提交成功，父清单保持 `submitted` 并保留失败子记录，
 但命令以退出码 `1` 返回；全部提交失败才记为 `failed`。
+清单 `source` 记录 DP-EVA 包版本，并在 git 信息可观察时记录 commit 与 dirty 状态；
+模型输入使用流式 SHA-256，数据集目录使用明确标注的有界 structural identity，路径只
+使用相对/逻辑引用。实际生成的日志文件存在且非空时才会登记为 `log` artifact，不会
+凭空创建日志记录。
 
 支持 Slurm array 的 workflow 可设置：
 

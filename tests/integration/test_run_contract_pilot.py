@@ -137,11 +137,12 @@ def test_feature_success_manifest_contains_verified_output(tmp_path, monkeypatch
         (config.savedir / ".dpeva/runs/feature-success/run.json").read_text()
     )
     assert payload["status"] == "finished"
-    assert payload["source"] == {"dpeva_version": "0.8.1"}
-    assert payload["inputs"] == [
-        {"kind": "dataset", "ref": str(config.data_path.resolve())},
-        {"kind": "model", "ref": str(config.model_path.resolve())},
-    ]
+    assert payload["source"]["dpeva_version"] == "0.8.1"
+    assert payload["source"]["package_version"] == "0.8.1"
+    assert len(payload["source"]["git_commit"]) == 40
+    assert all(not value.startswith("/") for item in payload["inputs"] for value in item.values())
+    assert payload["inputs"][0]["identity_scope"] == "bounded-structural"
+    assert payload["inputs"][1]["identity_scope"] == "full-content"
     assert payload["artifacts"][0]["status"] == "verified"
 
 
@@ -199,11 +200,11 @@ def test_infer_success_manifest_and_artifact(tmp_path, monkeypatch) -> None:
         (config.work_dir / ".dpeva/runs/infer-success/run.json").read_text()
     )
     assert payload["status"] == "finished"
-    assert payload["source"] == {"dpeva_version": "0.8.1"}
-    assert payload["inputs"] == [
-        {"kind": "dataset", "ref": str(config.data_path.resolve())},
-        {"kind": "model", "ref": str((config.work_dir / "0" / "model.ckpt.pt").resolve())},
-    ]
+    assert payload["source"]["dpeva_version"] == "0.8.1"
+    assert payload["source"]["package_version"] == "0.8.1"
+    assert all(not value.startswith("/") for item in payload["inputs"] for value in item.values())
+    assert payload["inputs"][0]["identity_scope"] == "bounded-structural"
+    assert payload["inputs"][1]["identity_scope"] == "full-content"
     assert payload["jobs"][0]["status"] == "finished"
     assert payload["artifacts"][0]["status"] == "verified"
 
@@ -284,6 +285,11 @@ def test_cli_partial_exit_and_snapshots(tmp_path, monkeypatch) -> None:
     resolved = json.loads((run_dir / "config.resolved.json").read_text())
     assert original["work_dir"] == "work"
     assert resolved["work_dir"] == str(work)
+    assert payload["config"]["metadata"] == "config.metadata.json"
+    metadata = json.loads((run_dir / "config.metadata.json").read_text())
+    assert metadata["schema_version"] == "1.0"
+    assert metadata["input_schema_version"] == "1.0"
+    assert metadata["migration_warnings"] == []
 
     # Existing evidence is immutable by default; an incomplete partial run is
     # explicitly resumable, and force creates a new audited attempt.
@@ -356,23 +362,29 @@ def test_infer_slurm_mixed_submission_stays_submitted(tmp_path, monkeypatch) -> 
     assert all(event["state"] not in {"running", "partial"} for event in payload["events"])
 
 
-def test_feature_resume_of_submitted_slurm_is_legal(tmp_path, monkeypatch) -> None:
+def test_feature_resume_of_submitted_slurm_rejects_without_new_job(tmp_path, monkeypatch) -> None:
     config = _feature_config(tmp_path, backend="slurm")
     monkeypatch.setattr(
         "dpeva.submission.manager.JobManager.submit",
         lambda *a, **k: "Submitted batch job 8125",
     )
     FeatureWorkflow(config, run_options=RunOptions(run_id="feature-slurm-resume")).run()
-    FeatureWorkflow(
-        config,
-        run_options=RunOptions(run_id="feature-slurm-resume", resume=True),
-    ).run()
+    calls = {"submit": 0}
+    monkeypatch.setattr(
+        "dpeva.submission.manager.JobManager.submit",
+        lambda *a, **k: calls.__setitem__("submit", calls["submit"] + 1),
+    )
+    with pytest.raises(ValueError, match="submitted.*scheduler"):
+        FeatureWorkflow(
+            config,
+            run_options=RunOptions(run_id="feature-slurm-resume", resume=True),
+        ).run()
     payload = json.loads(
         (config.savedir / ".dpeva/runs/feature-slurm-resume/run.json").read_text()
     )
     assert payload["status"] == "submitted"
-    assert [job["job_id"] for job in payload["jobs"]] == ["8125", "8125"]
-    assert any(event["kind"] == "resume" for event in payload["events"])
+    assert [job["job_id"] for job in payload["jobs"]] == ["8125"]
+    assert calls["submit"] == 0
 
 
 def test_infer_slurm_all_fail_is_execution_failure(tmp_path, monkeypatch) -> None:
@@ -414,22 +426,29 @@ def test_infer_malformed_slurm_response_is_execution_failure(
     assert payload["jobs"][0]["failure_category"] == "EXECUTION"
 
 
-def test_infer_resume_of_submitted_slurm_is_legal(tmp_path, monkeypatch) -> None:
+def test_infer_resume_of_submitted_slurm_rejects_without_new_job(tmp_path, monkeypatch) -> None:
     config = _infer_config(tmp_path, backend="slurm")
     monkeypatch.setattr(
         "dpeva.submission.manager.JobManager.submit",
         lambda *a, **k: "Submitted batch job 8124",
     )
     InferenceWorkflow(config, run_options=RunOptions(run_id="infer-slurm-resume")).run()
-    InferenceWorkflow(
-        config,
-        run_options=RunOptions(run_id="infer-slurm-resume", resume=True),
-    ).run()
+    calls = {"submit": 0}
+    monkeypatch.setattr(
+        "dpeva.submission.manager.JobManager.submit",
+        lambda *a, **k: calls.__setitem__("submit", calls["submit"] + 1),
+    )
+    with pytest.raises(ValueError, match="submitted.*scheduler"):
+        InferenceWorkflow(
+            config,
+            run_options=RunOptions(run_id="infer-slurm-resume", resume=True),
+        ).run()
     payload = json.loads(
         (config.work_dir / ".dpeva/runs/infer-slurm-resume/run.json").read_text()
     )
     assert payload["status"] == "submitted"
-    assert any(event["kind"] == "resume" for event in payload["events"])
+    assert [job["job_id"] for job in payload["jobs"]] == ["8124"]
+    assert calls["submit"] == 0
 
 
 def test_infer_analysis_failure_preserves_artifacts_and_failed_state(tmp_path, monkeypatch) -> None:
@@ -453,6 +472,7 @@ def test_infer_analysis_failure_preserves_artifacts_and_failed_state(tmp_path, m
     )
     assert payload["status"] == "failed"
     assert payload["failure"]["category"] == "EXECUTION"
+    assert payload["failure"]["message"] == "analysis failed"
     assert payload["artifacts"][0]["status"] == "verified"
 
 

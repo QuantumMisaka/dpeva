@@ -7,6 +7,7 @@ import json
 import os
 import re
 import secrets
+import subprocess
 from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -23,6 +24,8 @@ from dpeva.run.status import RunState
 _SAFE_COMPONENT = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
 _TERMINAL_STATES = frozenset({RunState.FAILED, RunState.FINISHED})
 _CHECKSUM_CHUNK_SIZE = 1024 * 1024
+_STRUCTURAL_ENTRY_LIMIT = 256
+_STRUCTURAL_NODE_LIMIT = 4096
 
 
 @dataclass(frozen=True)
@@ -66,6 +69,7 @@ class RunContext:
         normalized_config: dict[str, Any],
         source: dict[str, Any] | None = None,
         inputs: list[dict[str, str]] | None = None,
+        config_metadata: dict[str, Any] | None = None,
     ) -> "RunContext":
         root = Path(work_dir).expanduser().resolve()
         _validate_component(workflow, "workflow")
@@ -86,6 +90,7 @@ class RunContext:
                 normalized_config,
                 source,
                 inputs,
+                config_metadata,
             )
 
         run_dir = runs_root / options.run_id
@@ -101,6 +106,7 @@ class RunContext:
                 normalized_config,
                 source,
                 inputs,
+                config_metadata,
             )
 
         try:
@@ -116,6 +122,7 @@ class RunContext:
             normalized_config,
             source,
             inputs,
+            config_metadata,
         )
 
     @classmethod
@@ -128,6 +135,7 @@ class RunContext:
         normalized_config: dict[str, Any],
         source: dict[str, Any] | None,
         inputs: list[dict[str, str]] | None,
+        config_metadata: dict[str, Any] | None,
     ) -> "RunContext":
         timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
         for _ in range(100):
@@ -146,6 +154,7 @@ class RunContext:
                 normalized_config,
                 source,
                 inputs,
+                config_metadata,
             )
         raise FileExistsError("could not allocate a unique generated run id")
 
@@ -160,6 +169,7 @@ class RunContext:
         normalized_config: dict[str, Any],
         source: dict[str, Any] | None,
         inputs: list[dict[str, str]] | None,
+        config_metadata: dict[str, Any] | None,
     ) -> "RunContext":
         published_snapshots: list[Path] = []
         try:
@@ -167,14 +177,19 @@ class RunContext:
             published_snapshots.append(run_dir / "config.original.json")
             _atomic_json_write(run_dir / "config.resolved.json", normalized_config)
             published_snapshots.append(run_dir / "config.resolved.json")
+            config_references = {
+                "original": "config.original.json",
+                "resolved": "config.resolved.json",
+            }
+            if config_metadata is not None:
+                _atomic_json_write(run_dir / "config.metadata.json", config_metadata)
+                published_snapshots.append(run_dir / "config.metadata.json")
+                config_references["metadata"] = "config.metadata.json"
             recorder = StatusRecorder.create(
                 run_dir / "run.json",
                 run_id,
                 workflow,
-                config={
-                    "original": "config.original.json",
-                    "resolved": "config.resolved.json",
-                },
+                config=config_references,
                 source=source,
                 inputs=inputs,
             )
@@ -201,6 +216,10 @@ class RunContext:
                     f"cannot resume terminal run {recorder.manifest.run_id!r} "
                     f"in state {current.value}"
                 )
+            if current is RunState.SUBMITTED:
+                raise ValueError(
+                    "cannot resume submitted run: scheduler recovery/polling is out of scope"
+                )
             attempt_id = _next_attempt_id(recorder)
             recorder.attempt_id = attempt_id
             recorder.record_event(kind="resume", attempt_id=attempt_id)
@@ -217,6 +236,7 @@ class RunContext:
         normalized_config: dict[str, Any],
         source: dict[str, Any] | None,
         inputs: list[dict[str, str]] | None,
+        config_metadata: dict[str, Any] | None,
     ) -> "RunContext":
         with _run_lock(run_dir):
             recorder = _load_existing(run_dir, workflow)
@@ -228,6 +248,8 @@ class RunContext:
             resolved_path = run_dir / f"config.resolved.attempt-{version:04d}.json"
             original_stage = run_dir / f".config.original.attempt-{version:04d}.json.stage"
             resolved_stage = run_dir / f".config.resolved.attempt-{version:04d}.json.stage"
+            metadata_path = run_dir / f"config.metadata.attempt-{version:04d}.json"
+            metadata_stage = run_dir / f".config.metadata.attempt-{version:04d}.json.stage"
             staged_snapshots: list[Path] = []
             published_snapshots: list[Path] = []
             try:
@@ -235,6 +257,9 @@ class RunContext:
                 staged_snapshots.append(original_stage)
                 _atomic_json_write(resolved_stage, normalized_config, overwrite=False)
                 staged_snapshots.append(resolved_stage)
+                if config_metadata is not None:
+                    _atomic_json_write(metadata_stage, config_metadata, overwrite=False)
+                    staged_snapshots.append(metadata_stage)
                 _archive_manifest(run_dir, previous_manifest, previous_attempt - 1)
                 _publish_snapshot(original_stage, original_path)
                 published_snapshots.append(original_path)
@@ -242,14 +267,20 @@ class RunContext:
                 _publish_snapshot(resolved_stage, resolved_path)
                 published_snapshots.append(resolved_path)
                 staged_snapshots.remove(resolved_stage)
+                config_references = {
+                    "original": original_path.name,
+                    "resolved": resolved_path.name,
+                }
+                if config_metadata is not None:
+                    _publish_snapshot(metadata_stage, metadata_path)
+                    published_snapshots.append(metadata_path)
+                    staged_snapshots.remove(metadata_stage)
+                    config_references["metadata"] = metadata_path.name
                 fresh = StatusRecorder.create(
                     run_dir / "run.json",
                     recorder.manifest.run_id,
                     workflow,
-                    config={
-                        "original": original_path.name,
-                        "resolved": resolved_path.name,
-                    },
+                    config=config_references,
                     source=source,
                     inputs=inputs,
                     attempt_id=previous_attempt,
@@ -420,6 +451,13 @@ def _preserve_initialization_failure(
                     if path.name == "config.resolved.json"
                 }
             )
+            config.update(
+                {
+                    "metadata": path.name
+                    for path in published_snapshots
+                    if path.name == "config.metadata.json"
+                }
+            )
             recorder = StatusRecorder.create(
                 manifest_path,
                 run_id,
@@ -474,3 +512,89 @@ def _sha256(path: Path) -> str:
         while chunk := handle.read(_CHECKSUM_CHUNK_SIZE):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def source_identity() -> dict[str, Any]:
+    """Return publishable package/source identity without machine paths."""
+
+    import dpeva
+
+    identity: dict[str, Any] = {
+        "dpeva_version": dpeva.__version__,
+        "package_version": dpeva.__version__,
+    }
+    repository = Path(__file__).resolve().parents[2]
+    try:
+        commit = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            cwd=repository,
+            check=True,
+            text=True,
+            capture_output=True,
+        ).stdout.strip()
+        if commit:
+            identity["git_commit"] = commit
+        dirty = subprocess.run(
+            ["git", "status", "--porcelain", "--untracked-files=no"],
+            cwd=repository,
+            check=True,
+            text=True,
+            capture_output=True,
+        ).stdout
+        identity["dirty"] = bool(dirty.strip())
+    except (OSError, subprocess.SubprocessError):
+        pass
+    return identity
+
+
+def input_identity(path: str | Path, kind: str, work_dir: str | Path) -> dict[str, str]:
+    """Describe an input with a relative reference and truthful identity scope."""
+
+    candidate = Path(path).expanduser().resolve(strict=False)
+    root = Path(work_dir).expanduser().resolve()
+    try:
+        reference = candidate.relative_to(root).as_posix()
+    except ValueError:
+        reference = f"external/{candidate.name}"
+    result = {"kind": kind, "ref": reference}
+    if candidate.is_file():
+        result.update(identity=f"sha256:{_sha256(candidate)}", identity_scope="full-content")
+    elif candidate.is_dir():
+        digest, count = _structural_identity(candidate)
+        result.update(
+            identity=f"structural-sha256:{digest}",
+            identity_scope="bounded-structural",
+            identity_entries=str(count),
+            identity_bound=f"first-{_STRUCTURAL_ENTRY_LIMIT}-files/{_STRUCTURAL_NODE_LIMIT}-nodes",
+        )
+    else:
+        result.update(identity="unavailable", identity_scope="unverified")
+    return result
+
+
+def _structural_identity(directory: Path) -> tuple[str, int]:
+    entries: list[str] = []
+    pending = [directory]
+    visited = 0
+    while pending and len(entries) < _STRUCTURAL_ENTRY_LIMIT and visited < _STRUCTURAL_NODE_LIMIT:
+        current = pending.pop(0)
+        try:
+            children = sorted(os.scandir(current), key=lambda item: item.name)
+        except OSError:
+            continue
+        for child in children:
+            visited += 1
+            if visited > _STRUCTURAL_NODE_LIMIT:
+                break
+            try:
+                if child.is_dir(follow_symlinks=False):
+                    pending.append(Path(child.path))
+                elif child.is_file(follow_symlinks=False):
+                    relative = Path(child.path).relative_to(directory).as_posix()
+                    entries.append(f"{relative}\0{child.stat(follow_symlinks=False).st_size}\n")
+            except OSError:
+                continue
+            if len(entries) >= _STRUCTURAL_ENTRY_LIMIT:
+                break
+    payload = "".join(entries).encode("utf-8")
+    return hashlib.sha256(payload).hexdigest(), len(entries)

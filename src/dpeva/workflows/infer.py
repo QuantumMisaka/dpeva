@@ -4,13 +4,12 @@ import logging
 from pathlib import Path
 from typing import Any, Union, Dict, Optional
 
-import dpeva
 from dpeva.config import InferenceConfig
 from dpeva.inference.managers import InferenceIOManager, InferenceExecutionManager
 from dpeva.constants import WORKFLOW_FINISHED_TAG, LOG_FILE_INFER, FILENAME_METRICS_JSON
 from dpeva.utils.logs import setup_workflow_logger
 from dpeva.utils.exceptions import PartialWorkflowError, WorkflowError
-from dpeva.run.context import RunContext, RunOptions
+from dpeva.run.context import RunContext, RunOptions, input_identity, source_identity
 from dpeva.run.models import JobRecord
 from dpeva.run.status import RunEventKind, RunState
 
@@ -27,6 +26,7 @@ class InferenceWorkflow:
         config_path: Optional[str] = None,
         *,
         original_config: dict[str, Any] | None = None,
+        config_metadata: dict[str, Any] | None = None,
         run_options: RunOptions | None = None,
     ):
         """
@@ -41,7 +41,10 @@ class InferenceWorkflow:
         else:
             self.config = config
 
-        self.original_config = original_config or self.config.model_dump(mode="json")
+        self.original_config = (
+            original_config if original_config is not None else self.config.model_dump(mode="json")
+        )
+        self.config_metadata = config_metadata
         self.run_options = run_options or RunOptions()
 
         self.config_path = config_path
@@ -92,14 +95,15 @@ class InferenceWorkflow:
             options=self.run_options,
             original_config=self.original_config,
             normalized_config=self.config.model_dump(mode="json"),
-            source={"dpeva_version": dpeva.__version__},
+            source=source_identity(),
             inputs=[
-                {"kind": "dataset", "ref": str(Path(self.data_path).expanduser().resolve())},
+                input_identity(self.data_path, "dataset", self.work_dir),
                 *[
-                    {"kind": "model", "ref": str(Path(model).expanduser().resolve())}
+                    input_identity(model, "model", self.work_dir)
                     for model in self.models_paths
                 ],
             ],
+            config_metadata=self.config_metadata,
         )
         try:
             backend = self.execution_manager.backend
@@ -141,6 +145,7 @@ class InferenceWorkflow:
                 if self.config.auto_analysis:
                     self.logger.warning("auto_analysis=true is ignored when backend is not local.")
                     self.logger.info("Inference jobs submitted. Run analysis workflow separately after jobs finish.")
+                self._register_existing_logs(context)
                 return
 
             successful = [record for record in records if record.status is RunState.FINISHED]
@@ -149,6 +154,7 @@ class InferenceWorkflow:
                 context.register_verified_artifacts(
                     "inference", [Path(path) for path in artifact_paths]
                 )
+            self._register_existing_logs(context)
             if not successful:
                 message = "all inference jobs failed"
                 category = self._failure_category(failed)
@@ -180,8 +186,20 @@ class InferenceWorkflow:
                 and context.recorder.manifest.status
                 not in {RunState.FAILED, RunState.PARTIAL, RunState.FINISHED}
             ):
-                context.recorder.fail(category="EXECUTION", message="inference execution failed")
+                self._register_existing_logs(context)
+                context.recorder.fail(category="EXECUTION", message=str(exc))
             raise
+
+    def _register_existing_logs(self, context: RunContext) -> None:
+        candidates = [Path(self.work_dir) / LOG_FILE_INFER]
+        for index in range(len(self.models_paths)):
+            job_dir = Path(self.work_dir) / str(index)
+            if self.task_name:
+                job_dir /= self.task_name
+            candidates.append(job_dir / "test.log")
+        paths = [path for path in candidates if path.is_file() and path.stat().st_size > 0]
+        if paths:
+            context.register_verified_artifacts("log", paths)
 
     def _run_body(self) -> list[JobRecord]:
         """Validate inputs and submit all model jobs."""

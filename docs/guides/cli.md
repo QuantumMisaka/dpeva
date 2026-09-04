@@ -50,8 +50,9 @@ dpeva --no-banner <workflow> <config_path>
 ```
 
 `feature` 与 `infer` 还支持运行证据选项：`--run-id ID` 固定本次运行身份，
-`--resume` 恢复未完成运行，或使用带必填 `--reason` 的 `--force` 创建显式新
-尝试。`--resume` 与 `--force` 互斥；运行清单写入配置工作目录下的
+`--resume` 恢复未完成的本地运行；已进入 `submitted` 的 Slurm 运行会在提交前拒绝
+resume（调度器轮询/恢复不在本试点范围），不会创建新作业。使用带必填 `--reason`
+的 `--force` 创建显式新尝试。`--resume` 与 `--force` 互斥；运行清单写入配置工作目录下的
 `.dpeva/runs/<run-id>/run.json`。
 
 除 `doctor` 外的工作流都要求提供 `<config_path>`；CLI 会在参数解析阶段对它执行统一前置校验（存在性、可读性、JSON 文件后缀）。`doctor` 是不需要配置文件的独立环境检查命令，格式见下节。
@@ -67,7 +68,12 @@ dpeva doctor --json
 
 `doctor` 显式检查当前运行环境的 DeepMD 能力。默认输出每项检查的人类可读结果；`--json` 输出 schema 版本为 `1.0` 的机器可读报告。JSON 模式不会输出欢迎 banner，因此标准输出始终只有 JSON。
 
-报告顶层 `status` 为 `ok` 时命令退出码为 `0`；任一检查不是 `ok` 时退出码为 `1`。检查状态可能包括 `ok`、`missing`、`error`、`unknown` 和 `incompatible`。
+报告顶层 `status` 为 `ok` 时命令退出码为 `0`；任一必需检查不是 `ok` 时退出码为 `1`。
+检查状态可能包括 `ok`、`missing`、`error`、`unknown`、`incompatible` 和
+`unavailable`。每项可带 `required=false` 表示信息性能力（例如 CUDA/GPU 和可选
+后端），其不可用不会阻止 CPU-safe 工作流。默认检查 DeepMD 版本以及 `test`、
+`eval-desc`、`embed` CLI surface，并显式报告 dpdata、Torch/CUDA、GPU 可见性和
+可选后端。
 
 ## 4. 子命令职责、输入输出与配置
 

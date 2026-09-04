@@ -27,6 +27,11 @@ class MigrationResult:
 
     normalized: dict[str, Any]
     warnings: tuple[MigrationWarning, ...]
+    # The exact source mapping loaded from disk.  Keeping this in the same
+    # result prevents CLI handlers from performing a second, potentially
+    # divergent read of a mutable configuration file.
+    original: dict[str, Any] | None = None
+    input_schema_version: str = "1.0"
 
 
 _FLAT_SUBMISSION_KEYS = (
@@ -54,7 +59,12 @@ def migrate_legacy_config(raw: dict[str, Any]) -> MigrationResult:
     if not isinstance(submission, dict):
         if any(key in normalized for key in _FLAT_SUBMISSION_KEYS):
             raise ValueError("submission must be an object when legacy fields are present")
-        return MigrationResult(normalized=normalized, warnings=())
+        return MigrationResult(
+            normalized=normalized,
+            warnings=(),
+            original=deepcopy(raw),
+            input_schema_version=str(raw.get("schema_version", "1.0")),
+        )
 
     submission = deepcopy(submission)
     for key in _FLAT_SUBMISSION_KEYS:
@@ -75,4 +85,9 @@ def migrate_legacy_config(raw: dict[str, Any]) -> MigrationResult:
 
     if has_nested_submission or submission:
         normalized["submission"] = submission
-    return MigrationResult(normalized=normalized, warnings=tuple(warnings))
+    return MigrationResult(
+        normalized=normalized,
+        warnings=tuple(warnings),
+        original=deepcopy(raw),
+        input_schema_version=str(raw.get("schema_version", "1.0")),
+    )

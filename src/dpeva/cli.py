@@ -85,6 +85,29 @@ def _normalized_config(result):
     return result
 
 
+def _original_config(result):
+    if isinstance(result, MigrationResult) and result.original is not None:
+        return result.original
+    return _normalized_config(result)
+
+
+def _config_metadata(result):
+    if not isinstance(result, MigrationResult):
+        return None
+    return {
+        "schema_version": "1.0",
+        "input_schema_version": result.input_schema_version,
+        "migration_warnings": [
+            {
+                "field": warning.field,
+                "replacement": warning.replacement,
+                "removal_version": warning.removal_version,
+            }
+            for warning in result.warnings
+        ],
+    }
+
+
 def add_run_options(parser: argparse.ArgumentParser) -> None:
     """Add immutable run allocation controls to the pilot workflows."""
     parser.add_argument("--run-id", help="Stable run identity for manifest evidence")
@@ -113,9 +136,15 @@ def load_and_resolve_config(config_path) -> MigrationResult:
         MigrationResult: The migrated configuration with resolved paths and
             compatibility warnings.
     """
-    migrated = migrate_legacy_config(load_json_config(config_path))
+    raw = load_json_config(config_path)
+    migrated = migrate_legacy_config(raw)
     resolved = resolve_config_paths(migrated.normalized, config_path)
-    result = MigrationResult(normalized=resolved, warnings=migrated.warnings)
+    result = MigrationResult(
+        normalized=resolved,
+        warnings=migrated.warnings,
+        original=raw,
+        input_schema_version=migrated.input_schema_version,
+    )
     _log_migration_warnings(result)
     return result
 
@@ -141,12 +170,14 @@ def handle_infer(args):
         args (argparse.Namespace): Command-line arguments containing 'config'.
     """
     from dpeva.workflows.infer import InferenceWorkflow
-    original_config = load_json_config(args.config)
-    config = _normalized_config(load_and_resolve_config(args.config))
+    loaded = load_and_resolve_config(args.config)
+    original_config = _original_config(loaded)
+    config = _normalized_config(loaded)
     workflow = InferenceWorkflow(
         config,
         config_path=os.path.abspath(args.config),
         original_config=original_config,
+        config_metadata=_config_metadata(loaded),
         run_options=_run_options(args),
     )
     workflow.run()
@@ -160,11 +191,13 @@ def handle_feature(args):
         args (argparse.Namespace): Command-line arguments containing 'config'.
     """
     from dpeva.workflows.feature import FeatureWorkflow
-    original_config = load_json_config(args.config)
-    config = _normalized_config(load_and_resolve_config(args.config))
+    loaded = load_and_resolve_config(args.config)
+    original_config = _original_config(loaded)
+    config = _normalized_config(loaded)
     workflow = FeatureWorkflow(
         config,
         original_config=original_config,
+        config_metadata=_config_metadata(loaded),
         run_options=_run_options(args),
     )
     workflow.run()

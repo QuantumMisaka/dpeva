@@ -3,7 +3,6 @@ import logging
 from pathlib import Path
 from typing import Any, Union, Dict
 
-import dpeva
 from dpeva.config import FeatureConfig
 from dpeva.feature.managers import FeatureIOManager, FeatureExecutionManager
 from dpeva.feature.generator import DescriptorGenerator
@@ -11,7 +10,7 @@ from dpeva.constants import WORKFLOW_FINISHED_TAG, LOG_FILE_FEATURE
 from dpeva.utils.logs import setup_workflow_logger
 from dpeva.utils.exceptions import WorkflowError
 from dpeva.run.artifacts import ArtifactValidationError, validate_feature_outputs
-from dpeva.run.context import RunContext, RunOptions
+from dpeva.run.context import RunContext, RunOptions, input_identity, source_identity
 from dpeva.run.models import JobRecord
 from dpeva.run.status import RunEventKind, RunState
 
@@ -26,6 +25,7 @@ class FeatureWorkflow:
         config: Union[Dict, FeatureConfig],
         *,
         original_config: dict[str, Any] | None = None,
+        config_metadata: dict[str, Any] | None = None,
         run_options: RunOptions | None = None,
     ):
         """
@@ -39,7 +39,10 @@ class FeatureWorkflow:
         else:
             self.config = config
 
-        self.original_config = original_config or self.config.model_dump(mode="json")
+        self.original_config = (
+            original_config if original_config is not None else self.config.model_dump(mode="json")
+        )
+        self.config_metadata = config_metadata
         self.run_options = run_options or RunOptions()
 
         self._setup_logger()
@@ -95,11 +98,12 @@ class FeatureWorkflow:
             options=self.run_options,
             original_config=self.original_config,
             normalized_config=self.config.model_dump(mode="json"),
-            source={"dpeva_version": dpeva.__version__},
+            source=source_identity(),
             inputs=[
-                {"kind": "dataset", "ref": str(Path(self.data_path).expanduser().resolve())},
-                {"kind": "model", "ref": str(Path(self.model_path).expanduser().resolve())},
+                input_identity(self.data_path, "dataset", self.output_dir),
+                input_identity(self.model_path, "model", self.output_dir),
             ],
+            config_metadata=self.config_metadata,
         )
         try:
             backend = self.config.submission.backend
@@ -134,6 +138,7 @@ class FeatureWorkflow:
                 )
                 if context.recorder.manifest.status is RunState.VALIDATED:
                     context.recorder.transition(RunState.SUBMITTED)
+                self._register_existing_logs(context)
                 return
             outputs = validate_feature_outputs(
                 self.output_dir_path,
@@ -141,13 +146,22 @@ class FeatureWorkflow:
                 self._expected_feature_pools,
             )
             context.register_verified_artifacts("feature", outputs)
+            self._register_existing_logs(context)
             context.recorder.transition(RunState.FINISHED)
         except ArtifactValidationError as exc:
+            self._register_existing_logs(context)
             context.recorder.fail(category="ARTIFACT", message=str(exc))
             raise
         except Exception as exc:
+            self._register_existing_logs(context)
             context.recorder.fail(category="EXECUTION", message=str(exc))
             raise
+
+    def _register_existing_logs(self, context: RunContext) -> None:
+        paths = [self.output_dir_path / LOG_FILE_FEATURE]
+        paths = [path for path in paths if path.is_file() and path.stat().st_size > 0]
+        if paths:
+            context.register_verified_artifacts("log", paths)
 
     @property
     def output_dir_path(self) -> Path:

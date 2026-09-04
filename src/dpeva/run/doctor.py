@@ -2,24 +2,33 @@ from __future__ import annotations
 
 import re
 import subprocess
+import importlib
 from collections.abc import Callable, Sequence
+from typing import Literal
 
 from packaging.version import InvalidVersion, Version
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from dpeva.constants import MAX_DEEPMD_VERSION, MIN_DEEPMD_VERSION
 
 
 class DoctorCheck(BaseModel):
+    model_config = {"extra": "forbid"}
     name: str
-    status: str
+    status: Literal[
+        "ok", "missing", "incompatible", "error", "unknown", "unavailable", "skipped"
+    ]
     version: str | None = None
     detail: str
+    # ``None`` means required for backward-compatible DeepMD checks; optional
+    # probes set this explicitly to false so the JSON remains self-describing.
+    required: bool | None = Field(default=None, exclude_if=lambda value: value is None)
 
 
 class DoctorReport(BaseModel):
+    model_config = {"extra": "forbid"}
     schema_version: str = "1.0"
-    status: str
+    status: Literal["ok", "failed"]
     checks: list[DoctorCheck]
 
 
@@ -72,8 +81,107 @@ def probe_deepmd(
     )
 
 
-def build_doctor_report(checks: Sequence[DoctorCheck] | None = None) -> DoctorReport:
-    """Build a stable report from supplied checks or the default DeepMD probe."""
-    observed = list(checks) if checks is not None else [probe_deepmd()]
-    status = "ok" if all(item.status == "ok" for item in observed) else "failed"
+def build_doctor_report(
+    checks: Sequence[DoctorCheck] | None = None,
+    *,
+    run: Callable[..., subprocess.CompletedProcess[str]] = subprocess.run,
+    include_optional: bool = True,
+) -> DoctorReport:
+    """Build a stable capability report.
+
+    ``checks`` is an injection seam for tests and callers that already have a
+    controlled observation.  The default path performs all inexpensive,
+    explicit probes.  Hardware and optional integrations are informational;
+    the required DeepMD CLI and Python data/runtime packages determine the
+    report's top-level status.
+    """
+    observed = list(checks) if checks is not None else _default_checks(
+        run=run, include_optional=include_optional
+    )
+    status = "ok" if all(item.status == "ok" or item.required is False for item in observed) else "failed"
     return DoctorReport(status=status, checks=observed)
+
+
+def _probe_command(
+    name: str,
+    command: list[str],
+    *,
+    run: Callable[..., subprocess.CompletedProcess[str]],
+    required: bool = True,
+) -> DoctorCheck:
+    try:
+        result = run(command, check=False, text=True, capture_output=True)
+    except FileNotFoundError:
+        return DoctorCheck(name=name, status="missing", detail=f"executable not found: {command[0]}", required=required)
+    except OSError as exc:
+        return DoctorCheck(name=name, status="error", detail=str(exc), required=required)
+    output = "\n".join(part for part in (result.stdout, result.stderr) if part).strip()
+    if result.returncode != 0:
+        return DoctorCheck(name=name, status="error", detail=output or f"exited {result.returncode}", required=required)
+    return DoctorCheck(name=name, status="ok", detail=output.splitlines()[0] if output else "command completed", required=required)
+
+
+def probe_deepmd_operations(
+    *,
+    run: Callable[..., subprocess.CompletedProcess[str]] = subprocess.run,
+) -> list[DoctorCheck]:
+    """Check the CLI surfaces consumed by the feature/infer pilot."""
+    return [
+        _probe_command(f"deepmd.cli.{operation}", ["dp", operation, "-h"], run=run)
+        for operation in ("test", "eval-desc", "embed")
+    ]
+
+
+def _probe_python_package(name: str, *, required: bool) -> DoctorCheck:
+    try:
+        module = importlib.import_module(name)
+    except (ImportError, ModuleNotFoundError) as exc:
+        return DoctorCheck(name=name, status="missing", detail=f"package unavailable: {exc}", required=required)
+    except Exception as exc:
+        return DoctorCheck(name=name, status="error", detail=f"package probe failed: {exc}", required=required)
+    version = getattr(module, "__version__", None)
+    return DoctorCheck(
+        name=name,
+        status="ok",
+        version=str(version) if version is not None else None,
+        detail="import succeeded",
+        required=required,
+    )
+
+
+def _probe_torch_cuda() -> DoctorCheck:
+    try:
+        torch = importlib.import_module("torch")
+    except (ImportError, ModuleNotFoundError) as exc:
+        return DoctorCheck(name="torch.cuda", status="missing", detail=f"torch unavailable: {exc}", required=False)
+    except Exception as exc:
+        return DoctorCheck(name="torch.cuda", status="error", detail=f"torch CUDA probe failed: {exc}", required=False)
+    available = bool(torch.cuda.is_available())
+    return DoctorCheck(
+        name="torch.cuda",
+        status="ok" if available else "unavailable",
+        version=getattr(torch.version, "cuda", None),
+        detail="CUDA runtime available" if available else "CUDA runtime unavailable; CPU usage remains supported",
+        required=False,
+    )
+
+
+def _default_checks(
+    *,
+    run: Callable[..., subprocess.CompletedProcess[str]] = subprocess.run,
+    include_optional: bool = True,
+) -> list[DoctorCheck]:
+    checks = [probe_deepmd(run=run)]
+    checks.extend(probe_deepmd_operations(run=run))
+    checks.append(_probe_python_package("dpdata", required=True))
+    checks.append(_probe_python_package("torch", required=True))
+    checks.append(_probe_torch_cuda())
+    gpu = _probe_command("gpu.visibility", ["nvidia-smi", "-L"], run=run, required=False)
+    if gpu.status == "missing":
+        gpu.status = "unavailable"
+        gpu.detail = "nvidia-smi unavailable; CPU usage remains supported"
+    checks.append(gpu)
+    if include_optional:
+        for package in ("jax", "tensorflow", "mpi4py"):
+            checks.append(_probe_python_package(package, required=False))
+    return checks
