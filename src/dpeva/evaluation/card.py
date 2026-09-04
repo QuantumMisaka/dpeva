@@ -106,13 +106,22 @@ def _metric_from_file(path: Path) -> EvaluationMetric:
     try:
         if not evidence_path.is_file():
             raise ValueError(f"metric evidence does not exist or is not a file: {evidence_path}")
-        payload = json.loads(evidence_path.read_text(encoding="utf-8"))
+        payload = json.loads(
+            evidence_path.read_text(encoding="utf-8"),
+            parse_constant=_reject_non_finite_constant,
+        )
         if not isinstance(payload, dict):
             raise ValueError("metric evidence must be a JSON object")
         metric = EvaluationMetric.model_validate(payload)
     except (OSError, TypeError, ValueError, ValidationError) as exc:
         return EvaluationMetric(status="failed", evidence_ref=str(evidence_path), detail=str(exc))
     return metric.model_copy(update={"evidence_ref": str(evidence_path)})
+
+
+def _reject_non_finite_constant(value: str) -> Any:
+    """Reject JSON extensions that would otherwise admit non-finite values."""
+
+    raise ValueError(f"non-finite JSON constant is not allowed: {value}")
 
 
 def build_evaluation_card(config: EvaluationCardConfig) -> EvaluationCard:

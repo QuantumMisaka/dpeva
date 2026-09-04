@@ -100,6 +100,27 @@ def test_missing_configured_metric_is_failed_with_path(tmp_path: Path) -> None:
     assert "does not exist" in (metric.detail or "")
 
 
+@pytest.mark.parametrize("constant", ["NaN", "Infinity", "-Infinity"])
+def test_non_finite_metric_constant_is_failed_without_serializing_null(
+    tmp_path: Path, constant: str
+) -> None:
+    metric_path = tmp_path / f"non-finite-{constant.replace('-', 'negative-')}.json"
+    metric_path.write_text(
+        f'{{"status":"passed","value":{{"mae":{constant}}}}}',
+        encoding="utf-8",
+    )
+
+    card = build_evaluation_card(_config(tmp_path, training_cost_path=metric_path))
+
+    metric = card.metrics["training_cost"]
+    assert metric.status == "failed"
+    assert metric.value is None
+    assert metric.evidence_ref == str(metric_path.resolve())
+    assert "non-finite JSON constant" in (metric.detail or "")
+    serialized_payload = json.loads(card.model_dump_json())
+    assert serialized_payload["metrics"]["training_cost"]["value"] is None
+
+
 def test_card_rejects_invalid_model_reference(tmp_path: Path) -> None:
     model_ref = tmp_path / "invalid-model-ref.json"
     model_ref.write_text(

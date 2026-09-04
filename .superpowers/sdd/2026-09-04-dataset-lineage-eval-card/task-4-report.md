@@ -52,3 +52,19 @@ Task 5 must add config-path resolution for the new singular metric paths and
 dataset manifest list, then expose the assembler through the CLI. The output
 file is intentionally written by that CLI boundary rather than by this pure
 assembler.
+
+## Reviewer fix round 1
+
+Configured metric JSON now rejects Python/JavaScript-style non-finite
+constants (`NaN`, `Infinity`, and `-Infinity`) through `parse_constant`.
+Each such input remains a `failed` metric with `value=None`, the source path,
+and an explicit detail; card assembly continues for other dimensions. A
+parameterized regression also confirms card serialization contains no
+non-finite numeric value (the diagnostic path/detail may intentionally retain
+the rejected token) and does not silently convert it to `null` as a metric
+value.
+
+Verification:
+
+- `pytest tests/unit/evaluation/test_card.py -q` — `13 passed`.
+- `pytest tests/unit/test_config_migration.py tests/unit/run/test_dataset_lineage.py tests/unit/run/test_model_ref.py -q` — passed before this focused fix; rerun after fix is parent-agent responsibility.
