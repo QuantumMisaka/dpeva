@@ -193,7 +193,7 @@ DP-EVA 在多数核心工作流及其实际执行日志中会输出统一标记�
 DPEVA_TAG: WORKFLOW_FINISHED
 ```
 
-建议外部编排器通过监控日志出现该标记推进下一步（尤其是 Slurm 场景）。
+`WORKFLOW_FINISHED` is written only after the guarded command returns zero and all declared artifacts pass validation. Consumers MUST require both a successful process/job state and the marker; the marker alone is not proof of success. `sbatch` returning a JobID establishes only `submitted`, not `finished`.
 
 说明：
 

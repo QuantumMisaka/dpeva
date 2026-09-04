@@ -33,6 +33,8 @@ owner: Docs Owner
 | Collect | `dpeva collect <cfg>` | `root_savedir/dataframe/df_uq_desc_sampled-final.csv` | `collect_slurm.out`（slurm）或本地日志包含完成标记 | `tests/unit/workflows/test_collect_logging_fix.py`（校验/约束） +（补齐：完成标记日志） | `tests/integration/test_slurm_multidatapool_e2e.py`（Collect） |
 | Analysis | `dpeva analysis <cfg>` | `output_dir/analysis.log` + 统计/图表文件（如 `metrics.json`） | 无统一标记约定（以 `analysis.log` 成功结束为准） | 建议补齐（解析/输出目录行为） | 未纳入 |
 
+`WORKFLOW_FINISHED` is written only after the guarded command returns zero and all declared artifacts pass validation. Consumers MUST require both a successful process/job state and the marker; the marker alone is not proof of success. `sbatch` returning a JobID establishes only `submitted`, not `finished`.
+
 ## 3. 分层测试建议（落地原则）
 
 | 层级 | 目的 | 推荐断言粒度 |

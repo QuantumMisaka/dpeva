@@ -1,11 +1,13 @@
 import json
 import os
+import shlex
 import shutil
-import pandas as pd
+import subprocess
+import sys
 from pathlib import Path
 
+import pandas as pd
 import pytest
-
 from tests.integration.slurm_multidatapool.data_minimizer import (
     MinimalDatasetSpec,
     prepare_minimal_dataset,
@@ -38,6 +40,38 @@ def _require_slurm():
         pytest.skip("sbatch not found in PATH")
     if shutil.which("squeue") is None:
         pytest.skip("squeue not found in PATH")
+
+
+def _require_local_deepmd_runtime() -> None:
+    """Skip before job creation when the local DeepMD fixture cannot run."""
+    env_file = Path("/opt/envs/deepmd3.1.2.env")
+    if not env_file.is_file():
+        pytest.skip(
+            f"local DeepMD integration capability unavailable: required environment "
+            f"file is missing ({env_file})"
+        )
+
+    probe = subprocess.run(
+        [
+            "bash",
+            "-lc",
+            "source {env_file} && {python} -c "
+            "\"import ctypes; import deepmd; ctypes.CDLL('libcuda.so')\"".format(
+                env_file=shlex.quote(str(env_file)),
+                python=shlex.quote(sys.executable),
+            ),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if probe.returncode != 0:
+        detail = (probe.stderr or probe.stdout).strip().splitlines()
+        reason = detail[-1] if detail else f"probe exited {probe.returncode}"
+        pytest.skip(
+            "local DeepMD integration capability unavailable after environment "
+            f"setup: {reason}"
+        )
 
 
 def _env_setup_lines(backend: str) -> list[str]:
@@ -80,6 +114,8 @@ def _write_config(path: Path, cfg: dict) -> None:
 def test_multidatapool_e2e(tmp_path: Path, backend: str):
     if backend == "slurm":
         _require_slurm()
+    else:
+        _require_local_deepmd_runtime()
     
     # For local execution, we might want to skip if dependencies (like deepmd) are not installed in current env
     # But we assume the dev env has them.
@@ -404,5 +440,3 @@ def _verify_collection_outputs(work_dir: Path):
     # PCA plot depends on sampling execution
     if has_selection:
          assert (view_dir / "Final_sampled_PCAview.png").exists() or (view_dir / "explained_variance.png").exists(), "PCA plots missing"
-
-
