@@ -117,13 +117,14 @@ class InferenceWorkflow:
                     context.recorder.fail(category="EXECUTION", message="all inference jobs failed")
                     raise WorkflowError("all inference jobs failed")
                 if failed:
-                    if context.recorder.manifest.status in {
-                        RunState.VALIDATED,
-                        RunState.SUBMITTED,
-                    }:
-                        context.recorder.transition(RunState.RUNNING)
-                    context.recorder.partial(
-                        category="EXECUTION", message="one or more inference jobs failed"
+                    # A Slurm submission is an asynchronous boundary: once any
+                    # child has a valid JobID, the parent remains submitted even
+                    # when another sbatch call failed. Keep the failed child
+                    # evidence and return a non-zero signal for the caller.
+                    if context.recorder.manifest.status is RunState.VALIDATED:
+                        context.recorder.transition(RunState.SUBMITTED)
+                    self.logger.error(
+                        "Some inference jobs failed to submit; successful jobs remain submitted."
                     )
                     raise PartialWorkflowError("one or more inference jobs failed")
                 if context.recorder.manifest.status is RunState.VALIDATED:
@@ -158,14 +159,18 @@ class InferenceWorkflow:
             else:
                 self.logger.info("Auto analysis disabled. Run analysis workflow separately after jobs finish.")
             context.recorder.transition(RunState.FINISHED)
-        except Exception:
+        except Exception as exc:
             # Terminal states written above must remain the original exception;
             # only unrecorded execution errors need a generic failure event.
-            if context.recorder.manifest.status not in {
-                RunState.FAILED,
-                RunState.PARTIAL,
-                RunState.FINISHED,
-            }:
+            mixed_slurm_submission = (
+                isinstance(exc, PartialWorkflowError)
+                and context.recorder.manifest.status is RunState.SUBMITTED
+            )
+            if (
+                not mixed_slurm_submission
+                and context.recorder.manifest.status
+                not in {RunState.FAILED, RunState.PARTIAL, RunState.FINISHED}
+            ):
                 context.recorder.fail(category="EXECUTION", message="inference execution failed")
             raise
 

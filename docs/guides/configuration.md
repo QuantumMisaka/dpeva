@@ -88,6 +88,8 @@ owner: Docs Owner
 只表示本地命令成功且输出文件非空并已校验；Slurm 仅记录 `submitted`。
 多 pool feature 输出会逐 pool 校验：`eval-desc` 要求每个 pool 至少有一个非空
 `.npy`，`embed` 要求每个 pool 有非空 `embedding.hdf5`。
+Slurm 多模型 infer 若仅部分 JobID 提交成功，父清单保持 `submitted` 并保留失败子记录，
+但命令以退出码 `1` 返回；全部提交失败才记为 `failed`。
 
 支持 Slurm array 的 workflow 可设置：
 

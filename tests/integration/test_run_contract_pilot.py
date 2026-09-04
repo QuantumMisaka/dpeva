@@ -319,7 +319,7 @@ def test_feature_malformed_slurm_response_is_failed(tmp_path, monkeypatch, respo
     assert payload["failure"]["category"] == "EXECUTION"
 
 
-def test_infer_slurm_partial_and_resume_submitted(tmp_path, monkeypatch) -> None:
+def test_infer_slurm_mixed_submission_stays_submitted(tmp_path, monkeypatch) -> None:
     config = _infer_config(tmp_path, backend="slurm")
     model = config.work_dir / "1" / "model.ckpt.pt"
     model.parent.mkdir(parents=True)
@@ -337,9 +337,32 @@ def test_infer_slurm_partial_and_resume_submitted(tmp_path, monkeypatch) -> None
         InferenceWorkflow(config, run_options=RunOptions(run_id="infer-slurm-partial")).run()
     run_path = config.work_dir / ".dpeva/runs/infer-slurm-partial/run.json"
     payload = json.loads(run_path.read_text())
-    assert payload["status"] == "partial"
-    assert payload["failure"]["category"] == "EXECUTION"
+    assert payload["status"] == "submitted"
+    assert payload["failure"] is None
     assert payload["jobs"][0]["job_id"] == "8123"
+    assert payload["jobs"][0]["status"] == "submitted"
+    assert payload["jobs"][1]["status"] == "failed"
+    assert payload["jobs"][1]["failure_category"] == "EXECUTION"
+    assert all(event["state"] not in {"running", "partial"} for event in payload["events"])
+
+
+def test_feature_resume_of_submitted_slurm_is_legal(tmp_path, monkeypatch) -> None:
+    config = _feature_config(tmp_path, backend="slurm")
+    monkeypatch.setattr(
+        "dpeva.submission.manager.JobManager.submit",
+        lambda *a, **k: "Submitted batch job 8125",
+    )
+    FeatureWorkflow(config, run_options=RunOptions(run_id="feature-slurm-resume")).run()
+    FeatureWorkflow(
+        config,
+        run_options=RunOptions(run_id="feature-slurm-resume", resume=True),
+    ).run()
+    payload = json.loads(
+        (config.savedir / ".dpeva/runs/feature-slurm-resume/run.json").read_text()
+    )
+    assert payload["status"] == "submitted"
+    assert [job["job_id"] for job in payload["jobs"]] == ["8125", "8125"]
+    assert any(event["kind"] == "resume" for event in payload["events"])
 
 
 def test_infer_slurm_all_fail_is_execution_failure(tmp_path, monkeypatch) -> None:

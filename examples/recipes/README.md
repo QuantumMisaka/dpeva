@@ -52,8 +52,9 @@ For Slurm, run `dpeva analysis` after jobs finish.
 `feature` 与 `infer` 支持可选运行契约参数：`--run-id` 固定清单身份，
 `--resume` 恢复未完成运行，`--force --reason "..."` 创建带审计理由的新尝试。
 本地推理的混合模型结果以退出码 1 和 `partial` 清单报告；Slurm 提交只报告
-`submitted`。清单会区分 `ARTIFACT` 与 `EXECUTION` 失败，并在每个模型记录中
-保留具体失败类别。
+`submitted`。Slurm 多模型若部分 JobID 成功、部分失败，仍保持 `submitted` 并保留
+两类子记录，但命令以退出码 1 返回；全部提交失败才是 `failed`。清单会区分
+`ARTIFACT` 与 `EXECUTION` 失败，并在每个模型记录中保留具体失败类别。
 
 **Usage:**
 ```bash

@@ -235,7 +235,9 @@ DPEVA_TAG: WORKFLOW_FINISHED
   清单并以退出码 `1` 返回；所有模型失败则为 `failed`。输出缺失/为空时清单
   顶层类别为 `ARTIFACT`，命令异常为 `EXECUTION`；混合失败类别确定性归为
   `EXECUTION`，但每个 `JobRecord` 保留具体类别。Slurm 的 `sbatch` 回执只表示
-  `submitted`，不会伪造 `finished`。
+  `submitted`，不会伪造 `finished`。Slurm 多模型提交若部分 JobID 成功、部分提交失败，
+  父清单仍保持 `submitted`（保留成功 JobID 与失败子记录），但工作流立即以退出码 `1`
+  报告提交不完整；只有全部提交失败才将父清单记为 `failed`。
   - 注意：CLI 对用户输入类错误优先给出可操作提示，避免无意义堆栈噪音；内部异常仍会保留堆栈用于排障。
 
 - 常见异常类型
