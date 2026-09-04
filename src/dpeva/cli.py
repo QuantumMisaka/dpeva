@@ -218,6 +218,20 @@ def handle_clean(args):
     workflow = DataCleaningWorkflow(config)
     workflow.run()
 
+
+def handle_doctor(args):
+    """Report runtime capability checks in human or JSON form."""
+    from dpeva.run.doctor import build_doctor_report
+
+    report = build_doctor_report()
+    if args.json:
+        print(report.model_dump_json(indent=2))
+    else:
+        for check in report.checks:
+            print(f"{check.name}: {check.status} - {check.detail}")
+    if report.status != "ok":
+        raise SystemExit(1)
+
 def main():
     """
     Main entry point for the CLI.
@@ -287,9 +301,15 @@ def main():
     p_clean.add_argument("config", type=validate_config_path, help="Path to configuration JSON")
     p_clean.set_defaults(func=handle_clean)
 
+    p_doctor = subparsers.add_parser("doctor", help="Report runtime capabilities")
+    p_doctor.add_argument("--json", action="store_true", help="Emit a stable JSON report")
+    p_doctor.set_defaults(func=handle_doctor)
+
     args = parser.parse_args()
     
-    if not args.no_banner:
+    # A JSON report is a machine-readable stdout contract, so it must not be
+    # preceded by the human-facing banner even when --no-banner is omitted.
+    if not args.no_banner and not (args.command == "doctor" and args.json):
         show_banner()
         
     try:

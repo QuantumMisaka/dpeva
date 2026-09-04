@@ -2,7 +2,7 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-06-10
+last-updated: 2026-09-04
 owner: Docs Owner
 ---
 
@@ -11,7 +11,7 @@ owner: Docs Owner
 - Status: active
 - Audience: Users / Developers
 - Applies-To: CLI 模式（推荐）
-- Last-Updated: 2026-06-10
+- Last-Updated: 2026-09-04
 
 ## 1. 目的与范围
 
@@ -19,7 +19,7 @@ owner: Docs Owner
 
 范围：
 
-- `dpeva train / infer / feature / explore / collect / label / analysis / clean`
+- `dpeva train / infer / feature / explore / collect / label / analysis / clean / doctor`
 - `--no-banner`
 
 ## 2. 相关方
@@ -52,6 +52,17 @@ dpeva --no-banner <subcommand> <config_path>
 CLI 会在参数解析阶段对 `<config_path>` 执行统一前置校验（存在性、可读性、JSON 文件后缀）。
 
 实现入口：`src/dpeva/cli.py`（基于 `argparse`）。
+
+### 3.3 doctor（环境能力检查）
+
+```bash
+dpeva doctor
+dpeva doctor --json
+```
+
+`doctor` 显式检查当前运行环境的 DeepMD 能力。默认输出每项检查的人类可读结果；`--json` 输出 schema 版本为 `1.0` 的机器可读报告。JSON 模式不会输出欢迎 banner，因此标准输出始终只有 JSON。
+
+报告顶层 `status` 为 `ok` 时命令退出码为 `0`；任一检查不是 `ok` 时退出码为 `1`。检查状态可能包括 `ok`、`missing`、`error`、`unknown` 和 `incompatible`。
 
 ## 4. 子命令职责、输入输出与配置
 
@@ -206,6 +217,7 @@ DPEVA_TAG: WORKFLOW_FINISHED
   - **正常执行**：0。
   - **参数解析失败**：2（例如 config 文件不存在、不可读、路径不是文件，或参数形态错误）。
   - **运行期失败**：1（配置内容不合法、业务逻辑失败、外部命令失败等）。
+  - **doctor 环境检查**：报告 `status=ok` 时为 0，否则为 1；`doctor --json` 的标准输出仅包含 JSON 报告。
   - 注意：CLI 对用户输入类错误优先给出可操作提示，避免无意义堆栈噪音；内部异常仍会保留堆栈用于排障。
 
 - 常见异常类型
@@ -230,6 +242,7 @@ dpeva label config.json --stage prepare
 
 ## 7. 变更记录
 
+- 2026-09-04：新增 `doctor` 环境能力检查及 `--json` 稳定 JSON 输出契约。
 - 2026-06-11：补充 `dpeva explore` manifest、输入结构快照和结果结构回收契约。
 - 2026-06-10：新增 `dpeva explore` 可选轨迹探索入口，记录 `atst-tools` backend 的 md/relax 边界。
 - 2026-03-03：更新退出码契约说明，明确 `WorkflowError` 会导致退出码 1。

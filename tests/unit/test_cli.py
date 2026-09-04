@@ -1,3 +1,4 @@
+import json
 import sys
 import pytest
 from types import SimpleNamespace
@@ -5,6 +6,7 @@ from unittest.mock import patch
 from pathlib import Path
 
 import dpeva.cli as cli
+from dpeva.run.doctor import DoctorCheck, DoctorReport
 
 
 def _write_config(tmp_path, content='{}'):
@@ -67,6 +69,87 @@ def test_cli_rejects_label_stage_token_as_config(monkeypatch, capsys):
     captured = capsys.readouterr()
     assert exc.value.code == 2
     assert "--stage prepare" in captured.err
+
+
+def test_doctor_json_exit_zero(monkeypatch, capsys):
+    report = DoctorReport(status="ok", checks=[])
+    monkeypatch.setattr("dpeva.run.doctor.build_doctor_report", lambda: report)
+    monkeypatch.setattr(sys, "argv", ["dpeva", "--no-banner", "doctor", "--json"])
+
+    cli.main()
+
+    captured = capsys.readouterr()
+    assert captured.err == ""
+    assert json.loads(captured.out) == {
+        "schema_version": "1.0",
+        "status": "ok",
+        "checks": [],
+    }
+
+
+def test_doctor_json_exit_one(monkeypatch, capsys):
+    report = DoctorReport(
+        status="failed",
+        checks=[
+            DoctorCheck(
+                name="deepmd",
+                status="missing",
+                detail="dp executable not found",
+            )
+        ],
+    )
+    monkeypatch.setattr("dpeva.run.doctor.build_doctor_report", lambda: report)
+    monkeypatch.setattr(sys, "argv", ["dpeva", "--no-banner", "doctor", "--json"])
+
+    with pytest.raises(SystemExit) as exc:
+        cli.main()
+
+    assert exc.value.code == 1
+    captured = capsys.readouterr()
+    assert captured.err == ""
+    assert json.loads(captured.out)["status"] == "failed"
+
+
+def test_doctor_json_suppresses_banner(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "dpeva.run.doctor.build_doctor_report",
+        lambda: DoctorReport(status="ok", checks=[]),
+    )
+    monkeypatch.setattr(
+        cli,
+        "show_banner",
+        lambda: (_ for _ in ()).throw(AssertionError("JSON doctor must not show banner")),
+    )
+    monkeypatch.setattr(sys, "argv", ["dpeva", "doctor", "--json"])
+
+    cli.main()
+
+    assert json.loads(capsys.readouterr().out)["status"] == "ok"
+
+
+def test_doctor_human_output_is_default(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "dpeva.run.doctor.build_doctor_report",
+        lambda: DoctorReport(
+            status="ok",
+            checks=[
+                DoctorCheck(
+                    name="deepmd",
+                    status="ok",
+                    version="3.2.0",
+                    detail="required >= 3.2.0, < 3.3",
+                )
+            ],
+        ),
+    )
+    monkeypatch.setattr(cli, "show_banner", lambda: None)
+    monkeypatch.setattr(sys, "argv", ["dpeva", "doctor"])
+
+    cli.main()
+
+    assert capsys.readouterr().out == (
+        "deepmd: ok - required >= 3.2.0, < 3.3\n"
+    )
 
 
 def test_load_and_resolve_config_reports_invalid_json(tmp_path):
