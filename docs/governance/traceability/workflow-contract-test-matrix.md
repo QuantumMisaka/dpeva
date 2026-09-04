@@ -1,43 +1,42 @@
 ---
-title: Document
+title: Workflow contract-to-test traceability matrix
 status: active
 audience: Developers
-last-updated: 2026-06-10
+last-updated: 2026-09-05
 owner: Docs Owner
 ---
 
 # 工作流-契约测试矩阵（Workflow Contract ↔ Tests）
 
-- Status: active
-- Audience: Maintainers / Developers
-- Last-Updated: 2026-06-10
+本矩阵是供人审阅的索引，与
+[`feature-doc-matrix.md`](feature-doc-matrix.md) 使用相同的 capability ID
+集合。机器校验由 [`capability-evidence.json`](capability-evidence.json) 和
+`scripts/check_traceability.py` 完成；本表不复制或推断源码中的能力状态。
 
-本矩阵把“对外可观测契约”（产物路径、日志完成标记、失败定位入口）映射到“可执行测试”（unit / integration），用于：
+## 契约与测试入口
 
-- 发布前核对：文档契约是否仍被代码满足
-- 测试建设：缺口优先级排序与用例补齐
+| Capability ID | 对外契约/入口 | 最小测试证据 | 最新证据 |
+|---|---|---|---|
+| `workflow.train` | `dpeva train <config>`；训练目录与完成状态 | `tests/unit/workflows/test_train_workflow_init.py`; `tests/unit/workflows/test_workflow_completion_marker.py` | `docs/reports/2026-09-04-integration-failure-classification.md` |
+| `workflow.infer` | `dpeva infer <config>`；推理结果与完成状态 | `tests/unit/workflows/test_infer_workflow_exec.py`; `tests/unit/workflows/test_workflow_completion_marker.py` | `docs/reports/2026-09-04-run-contract-pilot-report.md` |
+| `workflow.feature` | `dpeva feature <config>`；特征文件与完成状态 | `tests/unit/workflows/test_feature_workflow_submission.py`; `tests/unit/workflows/test_feature_workflow_env.py` | `docs/reports/2026-09-04-run-contract-pilot-report.md` |
+| `workflow.collect` | `dpeva collect <config>`；采集数据与完成状态 | `tests/unit/workflows/test_collection_workflow_submission.py`; `tests/unit/workflows/test_collect_workflow_routing.py` | `docs/reports/2026-09-04-integration-failure-classification.md` |
+| `workflow.analysis` | `dpeva analysis <config>`；分析日志和统计产物 | `tests/unit/workflows/test_analysis_workflow.py` | `docs/reports/2026-09-04-integration-failure-classification.md` |
+| `workflow.label` | `dpeva label <config>`；标注阶段和作业日志 | `tests/unit/workflows/test_labeling_workflow.py`; `tests/unit/workflows/test_slurm_logging.py` | `docs/reports/2026-09-04-integration-failure-classification.md` |
+| `workflow.clean` | `dpeva clean <config>`；清洗后的数据集 | `tests/unit/workflows/test_data_cleaning_workflow.py` | `docs/reports/2026-09-04-integration-failure-classification.md` |
+| `run.contract` | run manifest 的 identity、状态、事件、产物和失败语义 | `tests/unit/run/test_context.py`; `tests/unit/run/test_recorder.py`; `tests/integration/test_run_contract_pilot.py` | `docs/reports/2026-09-04-run-contract-pilot-report.md` |
+| `lineage.evaluation-card` | 数据谱系、模型引用和六维 evaluation card | `tests/unit/run/test_dataset_lineage.py`; `tests/unit/run/test_model_ref.py`; `tests/unit/evaluation/test_card.py`; `tests/integration/test_evaluation_card_cli.py` | `docs/reports/2026-09-04-dataset-lineage-eval-card-acceptance.md` |
+| `compatibility.deepmd-3.2` | DeepMD 3.2 CLI contract 与 capability evidence | `tests/unit/compatibility/test_deepmd_matrix.py`; `tests/unit/compatibility/test_deepmd_adapter.py`; `tests/contract/deepmd/test_cli_contract.py` | `docs/reports/2026-09-04-deepmd-3.2-compatibility.md` |
 
-## 1. 契约锚点（统一完成标记）
+## 统一完成语义
 
-| 契约项 | 约定 | 代码实现 |
-|---|---|---|
-| 工作流完成锚点 | `DPEVA_TAG: WORKFLOW_FINISHED` | `/src/dpeva/constants.py` |
+工作流只有在进程/作业成功、声明产物通过验证且 run manifest 到达
+`finished` 时才算完成。`DPEVA_TAG: WORKFLOW_FINISHED` 只是日志锚点，不能
+单独证明成功；`sbatch` 返回 JobID 只建立 `submitted`，必须继续验证最终作业
+状态和最小产物。
 
-## 2. CLI 工作流契约（产物 + 标记 + 覆盖测试）
+## 维护规则
 
-| 工作流 | 入口命令 | 最小产物（存在性断言） | 完成标记（日志） | Unit 覆盖 | Integration 覆盖 |
-|---|---|---|---|---|---|
-| Feature | `dpeva feature <cfg>` | `savedir/` 下 `.npy`（单池）或 `savedir/<pool>/` 下 `.npy`（多池） | `eval_desc.log`（或 slurm 输出日志）包含完成标记 | `tests/unit`（补齐：命令尾部 marker） | `tests/integration/test_slurm_multidatapool_e2e.py`（Feature-候选/训练集） |
-| Train | `dpeva train <cfg>` | `work_dir/0..N-1/` + `model.ckpt.pt`（或等价模型产物） | `work_dir/<i>/train.out` 包含完成标记 | `tests/unit/workflows/test_train_workflow_init.py`（初始化/编排） +（补齐：脚本尾部 marker） | `tests/integration/test_slurm_multidatapool_e2e.py`（Train） |
-| Infer | `dpeva infer <cfg>` | `work_dir/<i>/<task_name>/results.e.out`（或前缀等价输出） | `work_dir/<i>/<task_name>/test_job.out` 包含完成标记 | `tests/unit/workflows/test_infer_workflow_exec.py`（提交契约） +（补齐：命令尾部 marker） | `tests/integration/test_slurm_multidatapool_e2e.py`（Infer） |
-| Collect | `dpeva collect <cfg>` | `root_savedir/dataframe/df_uq_desc_sampled-final.csv` | `collect_slurm.out`（slurm）或本地日志包含完成标记 | `tests/unit/workflows/test_collect_logging_fix.py`（校验/约束） +（补齐：完成标记日志） | `tests/integration/test_slurm_multidatapool_e2e.py`（Collect） |
-| Analysis | `dpeva analysis <cfg>` | `output_dir/analysis.log` + 统计/图表文件（如 `metrics.json`） | 无统一标记约定（以 `analysis.log` 成功结束为准） | 建议补齐（解析/输出目录行为） | 未纳入 |
-
-`WORKFLOW_FINISHED` is written only after the guarded command returns zero and all declared artifacts pass validation. Consumers MUST require both a successful process/job state and the marker; the marker alone is not proof of success. `sbatch` returning a JobID establishes only `submitted`, not `finished`.
-
-## 3. 分层测试建议（落地原则）
-
-| 层级 | 目的 | 推荐断言粒度 |
-|---|---|---|
-| Unit（纯 Python） | 稳定覆盖“不可依赖外部环境”的核心逻辑 | 配置校验、路径解析、命令构造、完成标记拼接、关键异常分支 |
-| Integration（依赖 Slurm/DeepMD） | 验证真实生产链路可跑通 | 进程/作业成功状态 + 最小产物存在 + 日志完成标记出现；Slurm 提交 JobID 仅为 `submitted`，需验证最终作业状态 |
+- 契约测试必须对应注册表中的 `test_paths`，并保持与功能-文档矩阵的 ID 一致。
+- 新 capability 先补可执行测试和现存证据，再登记路径；注册表门禁只验证 schema、路径和归属，不把路径存在误读为功能通过。
+- integration、DeepMD 或 SAI 证据的成功与否由各自报告记录，不能由 unit gate 或本矩阵代替。

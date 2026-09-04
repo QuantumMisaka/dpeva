@@ -180,6 +180,16 @@ def test_python_quality_jobs_use_gate_names() -> None:
         assert f"python scripts/run_gate.py {name}" in text
 
 
+def test_traceability_is_a_docs_and_release_gate_only() -> None:
+    manifest = load_manifest(MANIFEST)
+
+    assert "traceability" in manifest.profiles["docs"]
+    assert "traceability" in manifest.profiles["docs_pr"]
+    assert "traceability" in manifest.profiles["release"]
+    for profile in ("local", "pr", "integration", "deepmd_release"):
+        assert "traceability" not in manifest.profiles[profile]
+
+
 def test_docs_jobs_use_gate_names() -> None:
     build = Path(".github/workflows/docs-check.yml").read_text(encoding="utf-8")
     lint = Path(".github/workflows/doc-lint.yml").read_text(encoding="utf-8")

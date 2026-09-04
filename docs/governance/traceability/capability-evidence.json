@@ -1,0 +1,82 @@
+[
+  {
+    "capability_id": "workflow.train",
+    "code_paths": ["src/dpeva/cli.py", "src/dpeva/workflows/train.py"],
+    "test_paths": ["tests/unit/workflows/test_train_workflow_init.py", "tests/unit/workflows/test_workflow_completion_marker.py"],
+    "documentation_paths": ["docs/guides/cli.md", "examples/recipes/training/config_train.json"],
+    "owner": "Workflow Owner",
+    "evidence_path": "docs/reports/2026-09-04-integration-failure-classification.md"
+  },
+  {
+    "capability_id": "workflow.infer",
+    "code_paths": ["src/dpeva/cli.py", "src/dpeva/workflows/infer.py"],
+    "test_paths": ["tests/unit/workflows/test_infer_workflow_exec.py", "tests/unit/workflows/test_workflow_completion_marker.py"],
+    "documentation_paths": ["docs/guides/cli.md", "examples/recipes/inference/config_infer.json"],
+    "owner": "Workflow Owner",
+    "evidence_path": "docs/reports/2026-09-04-run-contract-pilot-report.md"
+  },
+  {
+    "capability_id": "workflow.feature",
+    "code_paths": ["src/dpeva/cli.py", "src/dpeva/workflows/feature.py"],
+    "test_paths": ["tests/unit/workflows/test_feature_workflow_submission.py", "tests/unit/workflows/test_feature_workflow_env.py"],
+    "documentation_paths": ["docs/guides/cli.md", "examples/recipes/feature_generation/config_feature.json"],
+    "owner": "Workflow Owner",
+    "evidence_path": "docs/reports/2026-09-04-run-contract-pilot-report.md"
+  },
+  {
+    "capability_id": "workflow.collect",
+    "code_paths": ["src/dpeva/cli.py", "src/dpeva/workflows/collect.py"],
+    "test_paths": ["tests/unit/workflows/test_collection_workflow_submission.py", "tests/unit/workflows/test_collect_workflow_routing.py"],
+    "documentation_paths": ["docs/guides/cli.md", "examples/recipes/collection/config_collect_normal.json"],
+    "owner": "Workflow Owner",
+    "evidence_path": "docs/reports/2026-09-04-integration-failure-classification.md"
+  },
+  {
+    "capability_id": "workflow.analysis",
+    "code_paths": ["src/dpeva/cli.py", "src/dpeva/workflows/analysis.py"],
+    "test_paths": ["tests/unit/workflows/test_analysis_workflow.py"],
+    "documentation_paths": ["docs/guides/cli.md", "examples/recipes/analysis/config_analysis.json"],
+    "owner": "Workflow Owner",
+    "evidence_path": "docs/reports/2026-09-04-integration-failure-classification.md"
+  },
+  {
+    "capability_id": "workflow.label",
+    "code_paths": ["src/dpeva/cli.py", "src/dpeva/workflows/labeling.py"],
+    "test_paths": ["tests/unit/workflows/test_labeling_workflow.py", "tests/unit/workflows/test_slurm_logging.py"],
+    "documentation_paths": ["docs/guides/cli.md", "examples/recipes/labeling/config_cpu.json"],
+    "owner": "Workflow Owner",
+    "evidence_path": "docs/reports/2026-09-04-integration-failure-classification.md"
+  },
+  {
+    "capability_id": "workflow.clean",
+    "code_paths": ["src/dpeva/cli.py", "src/dpeva/workflows/data_cleaning.py"],
+    "test_paths": ["tests/unit/workflows/test_data_cleaning_workflow.py"],
+    "documentation_paths": ["docs/guides/cli.md", "examples/recipes/data_cleaning/config_clean_all_thresholds.json"],
+    "owner": "Workflow Owner",
+    "evidence_path": "docs/reports/2026-09-04-integration-failure-classification.md"
+  },
+  {
+    "capability_id": "run.contract",
+    "code_paths": ["src/dpeva/run/context.py", "src/dpeva/run/recorder.py", "src/dpeva/run/status.py"],
+    "test_paths": ["tests/unit/run/test_context.py", "tests/unit/run/test_recorder.py", "tests/integration/test_run_contract_pilot.py"],
+    "documentation_paths": ["docs/guides/developer-guide.md", "examples/recipes/README.md"],
+    "owner": "Project Maintainer",
+    "evidence_path": "docs/reports/2026-09-04-run-contract-pilot-report.md"
+  },
+  {
+    "capability_id": "lineage.evaluation-card",
+    "code_paths": ["src/dpeva/run/dataset.py", "src/dpeva/run/model.py", "src/dpeva/evaluation/card.py"],
+    "test_paths": ["tests/unit/run/test_dataset_lineage.py", "tests/unit/run/test_model_ref.py", "tests/unit/evaluation/test_card.py", "tests/integration/test_evaluation_card_cli.py"],
+    "documentation_paths": ["docs/guides/cli.md", "examples/recipes/evaluation/config_eval_card.json"],
+    "owner": "Scientific Owner",
+    "evidence_path": "docs/reports/2026-09-04-dataset-lineage-eval-card-acceptance.md"
+  },
+  {
+    "capability_id": "compatibility.deepmd-3.2",
+    "code_paths": ["src/dpeva/compatibility/deepmd-3.2.json", "src/dpeva/compatibility/adapter.py", "src/dpeva/compatibility/attestation.py"],
+    "test_paths": ["tests/unit/compatibility/test_deepmd_matrix.py", "tests/unit/compatibility/test_deepmd_adapter.py", "tests/contract/deepmd/test_cli_contract.py"],
+    "documentation_paths": ["docs/guides/developer/deepmd-kit-sai-build.md", "docs/reports/templates/deepmd-3.2-qualification.md"],
+    "owner": "Compatibility Owner",
+    "evidence_path": "docs/reports/2026-09-04-deepmd-3.2-compatibility.md"
+  }
+]

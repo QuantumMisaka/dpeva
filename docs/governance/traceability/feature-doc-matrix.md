@@ -1,68 +1,34 @@
 ---
-title: Document
+title: Feature-to-document traceability matrix
 status: active
 audience: Developers
-last-updated: 2026-06-14
+last-updated: 2026-09-05
 owner: Docs Owner
 ---
 
 # 功能-文档双向追踪矩阵（Feature ↔ Docs）
 
-- Status: active
-- Audience: Maintainers / Developers
-- Last-Updated: 2026-06-14
+本矩阵是供人审阅的索引；机器校验的唯一数据源是
+[`capability-evidence.json`](capability-evidence.json)。每个 capability ID
+必须在 JSON 注册表中恰好出现一次，并具备代码、测试、文档、负责人和现存证据路径。
+本表不从源码文本推断功能状态，也不替代 capability manifest 的
+`supported`/`experimental`/`unsupported`/`blocked-upstream` 声明。
 
-本矩阵用于把“对外功能点”（CLI/配置/工作流输出约定）映射到文档章节，作为发布前的强制核对清单。
+| Capability ID | 代码实现 | 文档/recipe 入口 | 最新证据 |
+|---|---|---|---|
+| `workflow.train` | `src/dpeva/cli.py`; `src/dpeva/workflows/train.py` | `docs/guides/cli.md`; `examples/recipes/training/config_train.json` | `docs/reports/2026-09-04-integration-failure-classification.md` |
+| `workflow.infer` | `src/dpeva/cli.py`; `src/dpeva/workflows/infer.py` | `docs/guides/cli.md`; `examples/recipes/inference/config_infer.json` | `docs/reports/2026-09-04-run-contract-pilot-report.md` |
+| `workflow.feature` | `src/dpeva/cli.py`; `src/dpeva/workflows/feature.py` | `docs/guides/cli.md`; `examples/recipes/feature_generation/config_feature.json` | `docs/reports/2026-09-04-run-contract-pilot-report.md` |
+| `workflow.collect` | `src/dpeva/cli.py`; `src/dpeva/workflows/collect.py` | `docs/guides/cli.md`; `examples/recipes/collection/config_collect_normal.json` | `docs/reports/2026-09-04-integration-failure-classification.md` |
+| `workflow.analysis` | `src/dpeva/cli.py`; `src/dpeva/workflows/analysis.py` | `docs/guides/cli.md`; `examples/recipes/analysis/config_analysis.json` | `docs/reports/2026-09-04-integration-failure-classification.md` |
+| `workflow.label` | `src/dpeva/cli.py`; `src/dpeva/workflows/labeling.py` | `docs/guides/cli.md`; `examples/recipes/labeling/config_cpu.json` | `docs/reports/2026-09-04-integration-failure-classification.md` |
+| `workflow.clean` | `src/dpeva/cli.py`; `src/dpeva/workflows/data_cleaning.py` | `docs/guides/cli.md`; `examples/recipes/data_cleaning/config_clean_all_thresholds.json` | `docs/reports/2026-09-04-integration-failure-classification.md` |
+| `run.contract` | `src/dpeva/run/context.py`; `src/dpeva/run/recorder.py`; `src/dpeva/run/status.py` | `docs/guides/developer-guide.md`; `examples/recipes/README.md` | `docs/reports/2026-09-04-run-contract-pilot-report.md` |
+| `lineage.evaluation-card` | `src/dpeva/run/dataset.py`; `src/dpeva/run/model.py`; `src/dpeva/evaluation/card.py` | `docs/guides/cli.md`; `examples/recipes/evaluation/config_eval_card.json` | `docs/reports/2026-09-04-dataset-lineage-eval-card-acceptance.md` |
+| `compatibility.deepmd-3.2` | `src/dpeva/compatibility/deepmd-3.2.json`; `src/dpeva/compatibility/adapter.py`; `src/dpeva/compatibility/attestation.py` | `docs/guides/developer/deepmd-kit-sai-build.md`; `docs/reports/templates/deepmd-3.2-qualification.md` | `docs/reports/2026-09-04-deepmd-3.2-compatibility.md` |
 
-## 1. CLI 命令（对外接口）
+## 维护规则
 
-| 功能点 | 代码实现 | 文档入口 |
-|---|---|---|
-| `dpeva train` | `/src/dpeva/cli.py` | `/docs/guides/cli.md`、`/docs/guides/quickstart.md` |
-| `dpeva infer` | `/src/dpeva/cli.py` | `/docs/guides/cli.md`、`/docs/guides/quickstart.md` |
-| `dpeva label` | `/src/dpeva/cli.py` | `/docs/guides/cli.md`、`/docs/guides/quickstart.md` |
-| `dpeva feature` | `/src/dpeva/cli.py` | `/docs/guides/cli.md`、`/docs/guides/quickstart.md` |
-| `dpeva collect` | `/src/dpeva/cli.py` | `/docs/guides/cli.md`、`/docs/guides/quickstart.md` |
-| `dpeva analysis` | `/src/dpeva/cli.py` | `/docs/guides/cli.md`、`/docs/guides/quickstart.md` |
-
-## 1.1 v0.8.0 归档功能与实验交付
-
-| 功能点 | 代码/实验入口 | 文档入口 |
-|---|---|---|
-| ATST integration 与可选 `atst-tools` exploration backend | `/src/dpeva/exploration`、`/examples/recipes/` | `/docs/archive/v0.8.0/plans/2026-06-10-v0.8.0-atst-integration-plan.md`、`/docs/archive/v0.8.0/reports/2026-06-11-v0.8.0-atst-integration-progress-audit.md` |
-| DeepMD fitting last-layer LLPR/DPOSE energy UQ | `/src/dpeva/uncertain/llpr.py`、`/src/dpeva/uncertain/dpose.py`、`/src/dpeva/uncertain/manager.py` | `/docs/archive/v0.8.0/plans/2026-06-11-dpeva-native-dpose-llpr-plan.md`、`/docs/archive/v0.8.0/plans/2026-06-11-DP-EVA-DPOSE-full.md`、`/docs/archive/v0.8.0/reports/2026-06-12-dpose-llpr-dashboard.html` |
-| DPA4 Mini UQ-error correlation practice | `/practices/uq_correlation/` | `/docs/archive/v0.8.0/plans/2026-06-13-dpa4-mini-uq-correlation.md`、`/docs/archive/v0.8.0/reports/2026-06-12-dpose-llpr-dashboard.html` |
-
-## 2. 配置模型（Pydantic）
-
-| 功能点 | 代码实现 | 文档入口 |
-|---|---|---|
-| 路径解析与提交后端 | `/src/dpeva/utils/config.py`、`/src/dpeva/config.py` | `/docs/guides/configuration.md` |
-| `SubmissionConfig` | `/src/dpeva/config.py` | `API Reference`（构建入口：`/docs/source/api/config.rst`）、`/docs/reference/validation.md` |
-| `TrainingConfig` | `/src/dpeva/config.py` | `API Reference`（构建入口：`/docs/source/api/config.rst`）、`/docs/reference/validation.md` |
-| `InferenceConfig` | `/src/dpeva/config.py` | `API Reference`（构建入口：`/docs/source/api/config.rst`）、`/docs/reference/validation.md` |
-| `LabelingConfig` | `/src/dpeva/config.py` | `API Reference`（构建入口：`/docs/source/api/config.rst`）、`/docs/reference/validation.md` |
-| `FeatureConfig` | `/src/dpeva/config.py` | `API Reference`（构建入口：`/docs/source/api/config.rst`）、`/docs/reference/validation.md` |
-| `CollectionConfig` | `/src/dpeva/config.py` | `API Reference`（构建入口：`/docs/source/api/config.rst`）、`/docs/reference/validation.md` |
-| `AnalysisConfig` | `/src/dpeva/config.py` | `API Reference`（构建入口：`/docs/source/api/config.rst`）、`/docs/reference/validation.md` |
-
-## 3. 工作流完成标记与可观测性（对外约定）
-
-| 功能点 | 代码实现 | 文档入口 |
-|---|---|---|
-| 完成锚点 `DPEVA_TAG: WORKFLOW_FINISHED` | `/src/dpeva/constants.py` | `/docs/guides/slurm.md`、`/docs/guides/troubleshooting.md`、`/docs/guides/testing/integration-slurm.md` |
-| Collect 在 Slurm 下可监控完成 | `/src/dpeva/workflows/collect.py` | `/docs/guides/testing/integration-slurm.md` |
-
-## 4. Slurm 集成测试（对外交付）
-
-| 功能点 | 代码实现 | 文档入口 |
-|---|---|---|
-| Slurm E2E Smoke（Multi DataPool） | `/tests/integration/test_slurm_multidatapool_e2e.py` | `/docs/guides/testing/integration-slurm.md` |
-| 编排器与日志监控 | `/tests/integration/slurm_multidatapool/orchestrator.py` | `/docs/guides/testing/integration-slurm.md` |
-| 输入裁剪（降本） | `/tests/integration/slurm_multidatapool/data_minimizer.py` | `/docs/guides/testing/integration-slurm.md`、`/docs/plans/integration-slurm-plan.md` |
-
-## 5. 工作流契约测试矩阵（维护用）
-
-| 功能点 | 代码实现 | 文档入口 |
-|---|---|---|
-| 工作流“产物 + 完成标记”契约 ↔ 可执行测试映射 | `/tests/unit`、`/tests/integration` | `/docs/governance/traceability/workflow-contract-test-matrix.md` |
+- 新增或变更对外能力时，先更新 JSON 注册表，再同步本索引和契约测试矩阵。
+- `evidence_path` 必须指向已提交的具体文件；路径存在不等于能力已经通过科学或兼容性晋级。
+- 旧版归档能力仍可保留在归档文档中，但不应在本表新增没有当前代码、测试和文档入口的条目。
