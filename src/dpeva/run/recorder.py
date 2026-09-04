@@ -125,8 +125,13 @@ class StatusRecorder:
         self._persist(candidate)
 
     def add_artifact(self, artifact: ArtifactRecord) -> None:
+        self.add_artifacts([artifact])
+
+    def add_artifacts(self, artifacts: list[ArtifactRecord]) -> None:
+        """Publish a batch of artifacts in one manifest transaction."""
+
         candidate = self._manifest.model_copy(deep=True)
-        candidate.artifacts.append(artifact)
+        candidate.artifacts.extend(artifacts)
         candidate = self._validate(candidate)
         self._persist(candidate)
 
@@ -158,6 +163,7 @@ class StatusRecorder:
         kind: Literal["transition", "resume", "recovery", "force"],
         state: RunState | None = None,
         attempt_id: int | None = None,
+        reason: str | None = None,
     ) -> None:
         """Persist an explicit non-transition event, such as a force action."""
 
@@ -178,6 +184,7 @@ class StatusRecorder:
                 state=event_state,
                 kind=kind,
                 attempt_id=attempt_id if attempt_id is not None else self.attempt_id,
+                reason=reason,
                 failure=event_failure,
             )
         )

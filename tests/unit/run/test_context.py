@@ -1,6 +1,8 @@
 import hashlib
 import json
 import re
+import subprocess
+import sys
 
 import pytest
 from pydantic import ValidationError
@@ -101,7 +103,10 @@ def test_force_archives_previous_manifest_and_records_attempt(tmp_path) -> None:
     event = forced.recorder.manifest.events[-1]
     assert event.kind == "force"
     assert event.attempt_id == 2
-    assert json.loads((forced.run_dir / "config.resolved.json").read_text()) == {"x": 2}
+    assert event.reason == "rerun after corrected input"
+    assert json.loads((forced.run_dir / "config.resolved.json").read_text()) == {"x": 1}
+    assert json.loads((forced.run_dir / "config.original.attempt-0002.json").read_text()) == {"x": 2}
+    assert json.loads((forced.run_dir / "config.original.json").read_text()) == {"x": 1}
 
 
 def test_force_rejects_malformed_existing_manifest_without_overwrite(tmp_path) -> None:
@@ -156,3 +161,97 @@ def test_register_verified_artifacts_rejects_unverifiable_paths(tmp_path, path_k
         context.register_verified_artifacts("feature", [path])
 
     assert context.recorder.manifest.artifacts == []
+
+
+def test_contained_symlink_is_verified_against_its_resolved_target(tmp_path) -> None:
+    target = tmp_path / "target.bin"
+    target.write_bytes(b"inside")
+    link = tmp_path / "link.bin"
+    link.symlink_to(target)
+    context = RunContext.create(tmp_path, "feature", RunOptions(run_id="run"), {}, {})
+
+    context.register_verified_artifacts("feature", [link])
+
+    record = context.recorder.manifest.artifacts[-1]
+    assert record.path == "target.bin"
+    assert record.checksum == hashlib.sha256(b"inside").hexdigest()
+
+
+def test_escape_symlink_is_rejected(tmp_path) -> None:
+    outside = tmp_path.parent / "outside-target.bin"
+    outside.write_bytes(b"outside")
+    link = tmp_path / "escape.bin"
+    link.symlink_to(outside)
+    context = RunContext.create(tmp_path, "feature", RunOptions(run_id="run"), {}, {})
+
+    with pytest.raises(ValueError, match="outside"):
+        context.register_verified_artifacts("feature", [link])
+
+
+def test_batch_artifact_persistence_failure_registers_nothing(tmp_path, monkeypatch) -> None:
+    first = tmp_path / "first.bin"
+    second = tmp_path / "second.bin"
+    first.write_bytes(b"first")
+    second.write_bytes(b"second")
+    context = RunContext.create(tmp_path, "feature", RunOptions(run_id="run"), {}, {})
+
+    def fail_replace(source, destination):
+        if str(destination).endswith("run.json"):
+            raise OSError("injected publication failure")
+        return original_replace(source, destination)
+
+    import dpeva.run.recorder as recorder_module
+
+    original_replace = recorder_module.os.replace
+    monkeypatch.setattr(recorder_module.os, "replace", fail_replace)
+    with pytest.raises(OSError, match="publication"):
+        context.register_verified_artifacts("feature", [first, second])
+
+    assert context.recorder.manifest.artifacts == []
+    assert json.loads((context.run_dir / "run.json").read_text())["artifacts"] == []
+
+
+def test_concurrent_force_allocates_unique_attempts(tmp_path) -> None:
+    RunContext.create(tmp_path, "feature", RunOptions(run_id="run"), {}, {})
+    worker = (
+        "from dpeva.run.context import RunContext, RunOptions; "
+        "print(RunContext.create(__import__('sys').argv[1], 'feature', "
+        "RunOptions(run_id='run', force=True, reason='concurrent retry'), "
+        "{'worker': True}, {'worker': True}).attempt_id)"
+    )
+    processes = [
+        subprocess.Popen(
+            [sys.executable, "-c", worker, str(tmp_path)],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+        for _ in range(2)
+    ]
+    results = [process.communicate(timeout=30) for process in processes]
+    assert all(process.returncode == 0 for process in processes), results
+    attempts = [int(stdout.strip()) for stdout, _ in results]
+
+    assert sorted(attempts) == [2, 3]
+    payload = json.loads((tmp_path / ".dpeva/runs/run/run.json").read_text())
+    assert [event["attempt_id"] for event in payload["events"]] == [3]
+    assert payload["events"][0]["reason"] == "concurrent retry"
+    assert (tmp_path / ".dpeva/runs/run/attempts/attempt-0001.json").exists()
+    assert (tmp_path / ".dpeva/runs/run/attempts/attempt-0002.json").exists()
+
+
+def test_non_json_config_fails_closed_without_removing_run(tmp_path) -> None:
+    with pytest.raises(TypeError):
+        RunContext.create(
+            tmp_path,
+            "feature",
+            RunOptions(run_id="bad-config"),
+            {"unsupported": {"set"}},
+            {},
+        )
+
+    run_dir = tmp_path / ".dpeva" / "runs" / "bad-config"
+    payload = json.loads((run_dir / "run.json").read_text())
+    assert payload["status"] == "failed"
+    assert payload["failure"]["category"] == "CONFIG"
+    assert "set" in payload["failure"]["message"]

@@ -34,6 +34,7 @@ class RunEvent(RunModel):
     at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     kind: Literal["transition", "resume", "recovery", "force"] = "transition"
     attempt_id: int = Field(default=1, ge=1)
+    reason: str | None = None
     failure: FailureRecord | None = None
 
     @model_validator(mode="after")
