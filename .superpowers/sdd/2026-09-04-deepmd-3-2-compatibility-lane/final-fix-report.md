@@ -27,10 +27,13 @@ submitting another SAI job or promoting any capability.
 
 ## Verification
 
-- Focused compatibility/qualification tests: `60 passed, 1 skipped` (the
-  existing `dpdata`-absent skip).
-- Full unit suite: `818 passed, 5 warnings` (intentional deprecated facade
+- Focused compatibility/qualification tests: `62 passed` (compatibility and
+  qualification unit scopes; no skips).
+- `tests/unit/scripts/test_deepmd_32_qualification.py`: `22 passed`.
+- Full unit suite: `820 passed, 5 warnings` (intentional deprecated facade
   warnings).
+- `ft2dp-post` local DeepMD contracts: `6 passed, 4 skipped`; skips are the
+  missing PT and DPA4C model fixtures.
 - Full integration suite: `41 passed, 7 skipped`; skips are the named
   rotation-bug fixture, GPU-only LLPR/DPOSE cases, and disabled Slurm suite.
 - `ft2dp-post` local DeepMD contracts: `6 passed, 4 skipped`; skips are the
