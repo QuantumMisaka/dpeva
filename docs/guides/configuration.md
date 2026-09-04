@@ -245,7 +245,25 @@ LLPR / energy DPOSE 可作为 Collect UQ backend 使用。最小 energy LLPR 只
 - `llpr_ensemble_output_path`：自定义 `energy_ensemble.npy` 输出路径；未设置时写到 Collect 输出根目录下。
 - `llpr_collect_score`：支持 `energy_uncertainty_per_atom`（默认）、`energy_ensemble_std_per_atom`、`force_uncertainty_max`。当前 detached feature workflow 只支持 energy；force DPOSE 仍需要可微 DeepMD PyTorch graph adapter。
 
-### 5.5 Analysis
+### 5.5 Label integration
+
+标注工作流启用数据整合时，可使用以下字段控制合并输出：
+
+```json
+{
+  "integration_enabled": true,
+  "integration_deduplicate": true,
+  "integration_output_format": "deepmd/npy/mixed"
+}
+```
+
+整合成功后，在 `merged_training_data_path` 下同时生成
+`integration_summary.json` 和 `dataset-manifest.json`；summary 的
+`dataset_manifest_path` 是清单引用。清单只记录 `existing-training`、`new-labeled`
+等逻辑来源，不固化机器绝对路径，并记录父集合帧数、去重移除帧数、最终帧/体系数和
+canonical type map。帧数或 type map 冲突会在导出和下游交接前失败。
+
+### 5.6 Analysis
 
 ```json
 {

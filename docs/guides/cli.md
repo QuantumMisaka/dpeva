@@ -177,6 +177,9 @@ dpeva infer config.json --run-id infer-20260904-a1b2c3
   - `work_dir/outputs/anomalies`（异常或被筛出结果）
   - 当 `integration_enabled=true` 时，额外输出 `merged_training_data_path`（未指定时默认 `work_dir/outputs/merged_training_data`）
   - 整合统计文件：`<merged_training_data_path>/integration_summary.json`
+  - 数据谱系清单：`<merged_training_data_path>/dataset-manifest.json`；统计文件中的
+    `dataset_manifest_path` 指向该清单。清单记录父数据集、合并后的帧/体系数、去重移除数、
+    type map 和逻辑来源引用；帧数或 type map 冲突会在下游交接前失败。
 
 ### 4.7 analysis（双模式分析）
 

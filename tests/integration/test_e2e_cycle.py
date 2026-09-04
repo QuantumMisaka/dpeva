@@ -41,7 +41,28 @@ def test_e2e_cycle_label_integration_analysis(
     def _integrate(**kwargs):
         merged = tmp_path / "outputs" / "merged_training_data"
         merged.mkdir(parents=True, exist_ok=True)
-        summary = {"output_path": str(merged), "merged_system_count_after_dedup": 1}
+        manifest_path = merged / "dataset-manifest.json"
+        manifest = {
+            "schema_version": "1.0",
+            "dataset_id": "integration-e2e",
+            "parents": [{"dataset_id": "new-labeled", "frame_count": 1}],
+            "transformation": "merge",
+            "frame_count": 1,
+            "removed_frame_count": 0,
+            "system_count": 1,
+            "type_map": ["Fe", "C"],
+            "format": "deepmd/npy/mixed",
+            "source_entries": ["new-labeled"],
+            "intersection_summary": {},
+            "content_identity": None,
+        }
+        with open(manifest_path, "w") as f:
+            json.dump(manifest, f, indent=4)
+        summary = {
+            "output_path": str(merged),
+            "merged_system_count_after_dedup": 1,
+            "dataset_manifest_path": str(manifest_path),
+        }
         with open(merged / "integration_summary.json", "w") as f:
             json.dump(summary, f, indent=4)
         return summary
@@ -62,6 +83,9 @@ def test_e2e_cycle_label_integration_analysis(
 
     merged_path = tmp_path / "outputs" / "merged_training_data"
     assert (merged_path / "integration_summary.json").exists()
+    assert (merged_path / "dataset-manifest.json").exists()
+    summary = json.loads((merged_path / "integration_summary.json").read_text())
+    assert summary["dataset_manifest_path"] == str(merged_path / "dataset-manifest.json")
     MockIntegrationManager.return_value.integrate.assert_called_once()
 
     analysis_config = {

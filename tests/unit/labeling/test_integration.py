@@ -1,5 +1,8 @@
+import json
 from pathlib import Path
 from unittest.mock import patch
+
+import pytest
 
 from dpeva.labeling.integration import DataIntegrationManager
 
@@ -52,6 +55,16 @@ def test_integration_manager_export(mock_load_systems, tmp_path):
     assert (out_dir / "export.ok").exists()
     assert (out_dir / "integration_summary.json").exists()
 
+    manifest = json.loads((out_dir / "dataset-manifest.json").read_text())
+    assert manifest["frame_count"] == result["merged_frame_count_after_dedup"]
+    assert [parent["frame_count"] for parent in manifest["parents"]] == [
+        result["existing_frame_count"],
+        result["new_frame_count"],
+    ]
+    assert result["dataset_manifest_path"] == str(out_dir / "dataset-manifest.json")
+    assert manifest["source_entries"] == ["existing-training", "new-labeled"]
+    assert all(not Path(entry).is_absolute() for entry in manifest["source_entries"])
+
 
 @patch("dpeva.labeling.integration.dpdata.MultiSystems", _FakeMultiSystems)
 @patch("dpeva.labeling.integration.load_systems")
@@ -76,6 +89,10 @@ def test_integration_manager_deduplicate(mock_load_systems, tmp_path):
     assert result["output_format"] == "deepmd/npy/mixed"
     assert (out_dir / "export.ok").exists()
     assert (out_dir / "integration_summary.json").exists()
+    manifest = json.loads((out_dir / "dataset-manifest.json").read_text())
+    assert manifest["frame_count"] == 1
+    assert manifest["removed_frame_count"] == 1
+    assert result["dataset_manifest_path"] == str(out_dir / "dataset-manifest.json")
 
 
 @patch("dpeva.labeling.integration.dpdata.MultiSystems", _FakeMultiSystems)
@@ -131,7 +148,6 @@ def test_integration_manager_incompatible_atom_names(mock_load_systems, tmp_path
     ]
 
     manager = DataIntegrationManager(deduplicate=False)
-    import pytest
     with pytest.raises(ValueError, match="Incompatible atom_names"):
         manager.integrate(
             new_labeled_data_path=new_dir,
@@ -174,3 +190,47 @@ def test_integration_manager_reorders_compatible_atom_names(mock_load_systems, t
     assert new.data["atom_names"] == ["H", "C", "O", "Fe"]
     assert new.data["type_map"] == ["H", "C", "O", "Fe"]
     assert new.data["atom_types"] == [0, 1, 2, 3]
+
+
+@patch("dpeva.labeling.integration.dpdata.MultiSystems", _FakeMultiSystems)
+@patch("dpeva.labeling.integration.load_systems")
+def test_integration_manager_rejects_type_map_conflict_before_export(mock_load_systems, tmp_path):
+    new_dir = tmp_path / "new_cleaned"
+    old_dir = tmp_path / "old_train"
+    out_dir = tmp_path / "merged"
+    new_dir.mkdir()
+    old_dir.mkdir()
+
+    existing = _FakeSystem([[[0.0, 0.0, 0.0]]])
+    conflicting = _FakeSystem([[[1.0, 0.0, 0.0]]])
+    conflicting.data["type_map"] = ["Fe", "O"]
+    mock_load_systems.side_effect = [[existing], [conflicting]]
+
+    with pytest.raises(ValueError, match="Incompatible type_map"):
+        DataIntegrationManager().integrate(
+            new_labeled_data_path=new_dir,
+            merged_output_path=out_dir,
+            existing_training_data_path=old_dir,
+        )
+
+    assert not (out_dir / "export.ok").exists()
+    assert not (out_dir / "integration_summary.json").exists()
+    assert not (out_dir / "dataset-manifest.json").exists()
+
+
+@patch("dpeva.labeling.integration.dpdata.MultiSystems", _FakeMultiSystems)
+@patch("dpeva.labeling.integration.load_systems")
+def test_integration_manager_rejects_count_conflict_before_export(mock_load_systems, tmp_path):
+    new_dir = tmp_path / "new_cleaned"
+    out_dir = tmp_path / "merged"
+    new_dir.mkdir()
+    mock_load_systems.return_value = [_FakeSystem([[[0.0, 0.0, 0.0]]])]
+
+    manager = DataIntegrationManager()
+    with patch.object(manager, "_count_total_frames", side_effect=[1, 2]):
+        with pytest.raises(ValueError, match="frame count conflict"):
+            manager.integrate(new_labeled_data_path=new_dir, merged_output_path=out_dir)
+
+    assert not (out_dir / "export.ok").exists()
+    assert not (out_dir / "integration_summary.json").exists()
+    assert not (out_dir / "dataset-manifest.json").exists()
