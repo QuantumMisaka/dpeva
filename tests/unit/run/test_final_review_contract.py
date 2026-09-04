@@ -124,6 +124,87 @@ def test_resume_submitted_run_rejects_before_new_context(tmp_path: Path) -> None
         )
 
 
+def test_submitted_resume_short_circuits_before_evidence_factories(tmp_path: Path) -> None:
+    context = RunContext.create(tmp_path, "feature", RunOptions(run_id="submitted-factory"), {}, {})
+    context.recorder.transition(RunState.VALIDATED)
+    context.recorder.transition(RunState.SUBMITTED)
+    before = (context.run_dir / "run.json").read_bytes()
+    calls = {"source": 0, "input": 0}
+
+    def source_factory():
+        calls["source"] += 1
+        raise AssertionError("submitted resume must not probe source")
+
+    def input_factory():
+        calls["input"] += 1
+        raise AssertionError("submitted resume must not probe inputs")
+
+    with pytest.raises(ValueError, match="submitted.*scheduler"):
+        RunContext.create(
+            tmp_path, "feature", RunOptions(run_id="submitted-factory", resume=True), {}, {},
+            source_factory=source_factory, input_factories=[input_factory],
+        )
+    assert calls == {"source": 0, "input": 0}
+    assert (context.run_dir / "run.json").read_bytes() == before
+
+
+def test_legacy_resume_uses_implicit_default_metadata_without_publishing_it(tmp_path: Path) -> None:
+    context = RunContext.create(tmp_path, "feature", RunOptions(run_id="legacy-meta"), {"x": 1}, {"x": 1})
+    manifest_path = context.run_dir / "run.json"
+    payload = json.loads(manifest_path.read_text(encoding="utf-8"))
+    payload["config"].pop("metadata")
+    manifest_path.write_text(json.dumps(payload) + "\n", encoding="utf-8")
+    resumed = RunContext.create(
+        tmp_path, "feature", RunOptions(run_id="legacy-meta", resume=True), {"x": 1}, {"x": 1}
+    )
+    assert "metadata" not in resumed.recorder.manifest.config
+    before = manifest_path.read_bytes()
+    with pytest.raises(ValueError, match="configuration metadata"):
+        RunContext.create(
+            tmp_path, "feature", RunOptions(run_id="legacy-meta", resume=True), {"x": 1}, {"x": 1},
+            config_metadata={"schema_version": "1.0", "migration_warnings": ["not-default"]},
+        )
+    assert manifest_path.read_bytes() == before
+
+
+def test_failed_late_input_collection_preserves_source_and_prior_inputs(tmp_path: Path) -> None:
+    first = tmp_path / "first.pt"
+    first.write_bytes(b"first")
+
+    def fail_late():
+        raise FileNotFoundError("model input does not exist: external/missing.pt")
+
+    with pytest.raises(FileNotFoundError):
+        RunContext.create(
+            tmp_path, "feature", RunOptions(run_id="partial-evidence"), {}, {},
+            source_factory=lambda: {"package_version": "0.8.1"},
+            input_factories=[
+                lambda: input_identity(first, "model", tmp_path),
+                fail_late,
+            ],
+        )
+    payload = json.loads(
+        (tmp_path / ".dpeva/runs/partial-evidence/run.json").read_text(encoding="utf-8")
+    )
+    assert payload["status"] == "failed"
+    assert payload["source"] == {"package_version": "0.8.1"}
+    assert payload["inputs"][0]["ref"] == "first.pt"
+    assert str(tmp_path) not in payload["failure"]["message"]
+
+
+def test_source_factory_does_not_drop_explicit_inputs(tmp_path: Path) -> None:
+    model = tmp_path / "model.pt"
+    model.write_bytes(b"model")
+    explicit_inputs = [input_identity(model, "model", tmp_path)]
+    context = RunContext.create(
+        tmp_path, "feature", RunOptions(run_id="mixed-evidence"), {}, {},
+        inputs=explicit_inputs,
+        source_factory=lambda: {"package_version": "0.8.1"},
+    )
+    assert context.recorder.manifest.inputs == explicit_inputs
+    assert context.recorder.manifest.source == {"package_version": "0.8.1"}
+
+
 def test_resume_rejects_changed_config_and_identity_without_mutating_manifest(tmp_path: Path) -> None:
     model = tmp_path / "model.pt"
     model.write_bytes(b"model-v1")
@@ -275,6 +356,67 @@ def test_source_identity_does_not_claim_enclosing_consumer_repo(tmp_path: Path) 
     identity = source_identity(source, run=run)
     assert "git_commit" not in identity
     assert "dirty" not in identity
+
+
+def test_source_identity_ignores_run_evidence_and_fingerprints_other_dirty_paths(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    source = repo / "src/dpeva/__init__.py"
+    source.parent.mkdir(parents=True)
+    source.write_text("# source")
+    (repo / ".git").mkdir()
+    statuses = {
+        "clean": "",
+        "evidence-only": "?? .dpeva/runs/current/run.json\n",
+        "untracked": "?? src/new.py\n",
+        "modified": " M src/dpeva/__init__.py\n",
+    }
+    identities = {}
+    for label, status in statuses.items():
+        def run(command, **kwargs):
+            if command[1:3] == ["rev-parse", "--show-toplevel"]:
+                return subprocess.CompletedProcess(command, 0, str(repo), "")
+            if command[1:3] == ["ls-files", "--error-unmatch"]:
+                return subprocess.CompletedProcess(command, 0, "src/dpeva/__init__.py\n", "")
+            if command[1:3] == ["rev-parse", "HEAD"]:
+                return subprocess.CompletedProcess(command, 0, "e" * 40 + "\n", "")
+            return subprocess.CompletedProcess(command, 0, status, "")
+
+        identities[label] = source_identity(source, run=run)
+    assert identities["evidence-only"]["dirty"] is False
+    assert identities["evidence-only"]["dirty_fingerprint"] == identities["clean"]["dirty_fingerprint"]
+    assert identities["untracked"]["dirty"] is True
+    assert identities["modified"]["dirty"] is True
+    assert identities["untracked"]["dirty_fingerprint"] != identities["modified"]["dirty_fingerprint"]
+
+
+def test_resume_rejects_changed_dirty_source_fingerprint(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    source = repo / "src/dpeva/__init__.py"
+    source.parent.mkdir(parents=True)
+    source.write_text("# source")
+    (repo / ".git").mkdir()
+    current_status = {"value": ""}
+
+    def run(command, **kwargs):
+        if command[1:3] == ["rev-parse", "--show-toplevel"]:
+            return subprocess.CompletedProcess(command, 0, str(repo), "")
+        if command[1:3] == ["ls-files", "--error-unmatch"]:
+            return subprocess.CompletedProcess(command, 0, "src/dpeva/__init__.py\n", "")
+        if command[1:3] == ["rev-parse", "HEAD"]:
+            return subprocess.CompletedProcess(command, 0, "f" * 40 + "\n", "")
+        return subprocess.CompletedProcess(command, 0, current_status["value"], "")
+
+    def factory():
+        return source_identity(source, run=run)
+    context = RunContext.create(tmp_path, "feature", RunOptions(run_id="dirty-resume"), {}, {}, source_factory=factory)
+    context.recorder.transition(RunState.VALIDATED)
+    before = (context.run_dir / "run.json").read_bytes()
+    current_status["value"] = "?? src/new.py\n"
+    with pytest.raises(ValueError, match="source identity"):
+        RunContext.create(
+            tmp_path, "feature", RunOptions(run_id="dirty-resume", resume=True), {}, {}, source_factory=factory
+        )
+    assert (context.run_dir / "run.json").read_bytes() == before
 
 
 def test_doctor_keeps_optional_hardware_failure_out_of_required_status() -> None:

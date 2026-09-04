@@ -21,7 +21,7 @@ every schema field has a consumer.
 | Check | Measurement/evidence | Pass condition | Result |
 |---|---|---|---|
 | diagnostic value | Injected CONFIG, CAPABILITY, EXECUTION, ARTIFACT, and local partial cases are mapped below. Doctor JSON gives a stable capability status/version/detail and a non-zero exit for unusable capability; feature/infer manifests add typed run and child evidence. | all injected failures improve diagnosis | PASS |
-| median overhead | 41 paired repetitions of a local fake command; baseline measured fake command only, treatment measured the same command plus `StatusRecorder.create()` and atomic manifest publication. Median baseline 13.357ms, treatment 22.868ms, additional manifest overhead 9.334ms; p95 additional overhead 10.705ms. | < 100 ms | PASS |
+| median overhead | 41 paired repetitions of a local fake command; baseline measured fake command only, treatment measured the same command plus `StatusRecorder.create()` and atomic manifest publication. Median baseline 13.451ms, treatment 22.625ms, additional manifest overhead 9.113ms; p95 additional overhead 12.262ms. | < 100 ms | PASS |
 | unused fields | Closed schema audit below. `source` and `inputs` are populated and asserted for both pilot workflows; `RunEvent.at` is tested as UTC, monotonic serialized evidence; legacy `environment` is preserved when present while new writes omit it. | zero | PASS |
 | migration burden | `git diff 72620ad..HEAD -- examples/recipes` contains only the seven-line `examples/recipes/README.md` documentation addition. The 21 versioned JSON recipes were validated in Task 3; no recipe JSON was semantically rewritten. | zero semantic rewrites | PASS |
 
@@ -37,32 +37,31 @@ Command:
 conda run -n dpeva-dpa4 pytest tests/unit/run tests/integration/test_run_contract_pilot.py --durations=20 -q
 ```
 
-Result: `132 passed in 9.80s`.
+Result: `147 passed in 8.90s`.
 
 Slowest 20 tests:
 
 ```text
-1.22s call tests/unit/run/test_final_review_contract.py::test_doctor_default_probes_required_operation_surfaces
-0.39s call tests/unit/run/test_context.py::test_concurrent_force_allocates_unique_attempts
-0.38s call tests/integration/test_run_contract_pilot.py::test_cli_partial_exit_and_snapshots
-0.10s call tests/integration/test_run_contract_pilot.py::test_slurm_feature_and_infer_record_parsed_ids
-0.09s call tests/integration/test_run_contract_pilot.py::test_infer_mixed_artifact_and_execution_failures_are_deterministic
-0.08s call tests/unit/run/test_context.py::test_sequential_force_archives_resolve_all_config_references
-0.08s call tests/integration/test_run_contract_pilot.py::test_infer_mixed_children_write_partial_manifest
-0.10s call tests/integration/test_run_contract_pilot.py::test_infer_resume_of_submitted_slurm_rejects_without_new_job
-0.07s call tests/integration/test_run_contract_pilot.py::test_infer_analysis_failure_preserves_artifacts_and_failed_state
-0.07s call tests/integration/test_run_contract_pilot.py::test_infer_success_manifest_and_artifact
-0.07s call tests/integration/test_run_contract_pilot.py::test_infer_all_children_failure_writes_failed_manifest
-0.08s call tests/integration/test_run_contract_pilot.py::test_feature_resume_of_submitted_slurm_rejects_without_new_job
-0.07s call tests/integration/test_run_contract_pilot.py::test_infer_empty_output_is_artifact_failure
-0.07s call tests/unit/run/test_context.py::test_force_archives_previous_manifest_and_records_attempt
-0.07s call tests/unit/run/test_context.py::test_force_failure_after_archive_reuses_archive_on_retry
-0.06s call tests/integration/test_run_contract_pilot.py::test_infer_slurm_mixed_submission_stays_submitted
-0.06s call tests/unit/run/test_context.py::test_force_publishes_manifest_with_event_in_one_replace
-0.06s call tests/integration/test_run_contract_pilot.py::test_feature_success_manifest_contains_verified_output
-0.06s call tests/unit/run/test_context.py::test_force_failure_before_archive_is_retry_stable
-0.05s call tests/integration/test_run_contract_pilot.py::test_feature_multi_pool_requires_each_pool
-0.05s call tests/integration/test_run_contract_pilot.py::test_infer_malformed_slurm_response_is_execution_failure[None]
+0.45s call tests/integration/test_run_contract_pilot.py::test_cli_partial_exit_and_snapshots
+0.31s call tests/unit/run/test_context.py::test_concurrent_force_allocates_unique_attempts
+0.27s call tests/integration/test_run_contract_pilot.py::test_slurm_feature_and_infer_record_parsed_ids
+0.18s call tests/integration/test_run_contract_pilot.py::test_infer_mixed_artifact_and_execution_failures_are_deterministic
+0.16s call tests/integration/test_run_contract_pilot.py::test_infer_mixed_children_write_partial_manifest
+0.15s call tests/integration/test_run_contract_pilot.py::test_infer_all_children_failure_writes_failed_manifest
+0.15s call tests/integration/test_run_contract_pilot.py::test_infer_analysis_failure_preserves_artifacts_and_failed_state
+0.14s call tests/integration/test_run_contract_pilot.py::test_infer_success_manifest_and_artifact
+0.13s call tests/integration/test_run_contract_pilot.py::test_feature_malformed_slurm_response_is_failed[None]
+0.12s call tests/integration/test_run_contract_pilot.py::test_infer_slurm_mixed_submission_stays_submitted
+0.12s call tests/integration/test_run_contract_pilot.py::test_feature_success_manifest_contains_verified_output
+0.15s call tests/integration/test_run_contract_pilot.py::test_infer_empty_output_is_artifact_failure
+0.11s call tests/integration/test_run_contract_pilot.py::test_feature_multi_pool_requires_each_pool
+0.11s call tests/integration/test_run_contract_pilot.py::test_feature_failure_writes_failed_manifest
+0.12s call tests/integration/test_run_contract_pilot.py::test_infer_resume_of_submitted_slurm_rejects_without_new_job
+0.12s call tests/integration/test_run_contract_pilot.py::test_feature_resume_of_submitted_slurm_rejects_without_new_job
+0.11s call tests/integration/test_run_contract_pilot.py::test_feature_missing_output_is_artifact_failure
+0.10s call tests/integration/test_run_contract_pilot.py::test_infer_malformed_slurm_response_is_execution_failure[sbatch output without a job id]
+0.10s call tests/integration/test_run_contract_pilot.py::test_feature_malformed_slurm_response[not an sbatch response]
+0.10s call tests/integration/test_run_contract_pilot.py::test_infer_malformed_slurm_response_is_execution_failure[None]
 ```
 
 ## 2. Diagnostic value and evidence mapping
@@ -108,23 +107,23 @@ raw arrays, summary values, and the percentile method.
 Raw baseline milliseconds:
 
 ```text
-[13.089, 13.722, 13.298, 12.712, 14.476, 13.189, 14.209, 13.703, 13.915, 12.885, 13.024, 12.809, 14.075, 13.041, 13.134, 13.648, 12.941, 12.541, 13.621, 14.22, 13.17, 13.751, 13.136, 13.319, 13.313, 14.028, 12.68, 12.598, 13.525, 13.428, 12.875, 13.318, 12.91, 13.463, 13.814, 13.345, 12.841, 12.776, 13.61, 13.15, 13.093]
+[14.272, 12.886, 13.48, 12.452, 13.469, 13.877, 13.177, 14.045, 13.562, 12.718, 13.404, 13.529, 13.385, 12.956, 13.76, 13.841, 13.352, 14.441, 13.613, 14.078, 13.355, 13.128, 13.068, 13.099, 12.934, 13.263, 13.129, 13.467, 13.311, 13.431, 13.714, 13.011, 13.451, 13.562, 13.418, 13.584, 12.836, 14.4, 13.627, 18.162, 18.365]
 ```
 
 Raw treatment milliseconds:
 
 ```text
-[22.467, 23.435, 21.868, 23.542, 21.81, 22.974, 21.657, 21.486, 21.372, 21.593, 22.38, 21.483, 22.964, 22.426, 22.158, 22.67, 22.213, 21.844, 23.544, 22.89, 24.905, 25.13, 22.269, 21.98, 21.068, 25.097, 21.582, 21.881, 23.617, 22.794, 22.392, 23.723, 22.389, 23.747, 21.509, 22.924, 22.489, 22.58, 22.443, 22.268, 23.201]
+[23.342, 22.944, 21.729, 22.525, 22.625, 23.038, 21.894, 21.951, 22.484, 25.12, 23.55, 22.509, 21.548, 23.024, 21.228, 23.03, 22.565, 24.316, 23.224, 22.919, 22.427, 25.693, 22.025, 22.035, 22.208, 22.862, 22.864, 22.399, 23.617, 21.576, 21.41, 22.999, 22.65, 22.224, 21.774, 20.477, 22.287, 23.31, 25.888, 26.762, 27.479]
 ```
 
 Raw paired overhead milliseconds (`treatment - baseline`):
 
 ```text
-[9.378, 9.713, 8.57, 10.83, 7.334, 9.784, 7.448, 7.783, 7.456, 8.707, 9.356, 8.674, 8.89, 9.385, 9.023, 9.023, 9.272, 9.303, 9.922, 8.67, 11.735, 11.379, 9.133, 8.661, 7.755, 11.069, 8.902, 9.283, 10.092, 9.366, 9.517, 10.405, 9.48, 10.284, 7.694, 9.579, 9.648, 9.804, 8.834, 9.118, 10.107]
+[9.07, 10.058, 8.248, 10.073, 9.156, 9.161, 8.718, 7.906, 8.923, 12.402, 10.146, 8.98, 8.163, 10.068, 7.467, 9.189, 9.213, 9.875, 9.611, 8.841, 9.072, 12.565, 8.957, 8.937, 9.273, 9.599, 9.735, 8.933, 10.306, 8.145, 7.696, 9.988, 9.199, 8.662, 8.356, 6.893, 9.451, 8.911, 12.262, 8.6, 9.113]
 ```
 
-Summary: median baseline `13.298ms`, median with manifest `22.426ms`,
-median manifest overhead `9.303ms`, and p95 overhead `11.069ms`. This
+Summary: median baseline `13.451ms`, median with manifest `22.625ms`,
+median manifest overhead `9.113ms`, and p95 overhead `12.262ms`. This
 passes the `<100ms` threshold for this local fake-command workload; it does
 not claim anything about scheduler or real DeepMD runtime overhead.
 
@@ -257,8 +256,8 @@ Observed results:
 
 - `conda run -n dpeva-dpa4 ruff check src tests scripts` — exit `0`,
   `All checks passed!`.
-- `conda run -n dpeva-dpa4 pytest tests/unit -q` — exit `0`, `657 passed in
-  24.47s`.
+- `conda run -n dpeva-dpa4 pytest tests/unit -q` — exit `0`, `663 passed in
+  25.50s`.
 - `python3 scripts/doc_check.py` — exit `0`; structure, metadata, links,
   forbidden-path, and owner checks all pass, including the repaired Plan A
   integration classification report.

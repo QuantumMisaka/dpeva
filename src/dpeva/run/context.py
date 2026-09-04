@@ -8,6 +8,7 @@ import os
 import re
 import secrets
 import subprocess
+from copy import deepcopy
 from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -214,7 +215,7 @@ class RunContext:
                 workflow,
                 config=config_references,
                 source=source if source_factory is None else {},
-                inputs=inputs if input_factories is None else [],
+                inputs=inputs if not input_factories else [],
             )
         except BaseException as error:
             _preserve_initialization_failure(
@@ -230,7 +231,7 @@ class RunContext:
         context = cls(root, run_dir, run_id, workflow, 1, recorder)
         if source_factory is not None or input_factories is not None:
             try:
-                context._populate_evidence(source_factory, input_factories)
+                context._populate_evidence(source, inputs, source_factory, input_factories)
             except BaseException as error:
                 context.recorder.fail(category="ARTIFACT", message=str(error))
                 raise
@@ -247,6 +248,18 @@ class RunContext:
     ) -> "RunContext":
         with _run_lock(run_dir):
             recorder = _load_existing(run_dir, workflow)
+            current = recorder.manifest.status
+            # Submitted runs never evaluate user-provided evidence factories:
+            # scheduler recovery is deliberately outside this pilot.
+            if current is RunState.SUBMITTED:
+                raise ValueError(
+                    "cannot resume submitted run: scheduler recovery/polling is out of scope"
+                )
+            if current in _TERMINAL_STATES:
+                raise ValueError(
+                    f"cannot resume terminal run {recorder.manifest.run_id!r} "
+                    f"in state {current.value}"
+                )
             supplied_source, supplied_inputs = _materialize_evidence(
                 source, inputs, source_factory, input_factories
             )
@@ -254,16 +267,6 @@ class RunContext:
                 recorder, run_dir, original_config, normalized_config,
                 _metadata_or_default(config_metadata), supplied_source, supplied_inputs,
             )
-            current = recorder.manifest.status
-            if current in _TERMINAL_STATES:
-                raise ValueError(
-                    f"cannot resume terminal run {recorder.manifest.run_id!r} "
-                    f"in state {current.value}"
-                )
-            if current is RunState.SUBMITTED:
-                raise ValueError(
-                    "cannot resume submitted run: scheduler recovery/polling is out of scope"
-                )
             attempt_id = _next_attempt_id(recorder)
             recorder.attempt_id = attempt_id
             recorder.record_event(kind="resume", attempt_id=attempt_id)
@@ -328,7 +331,7 @@ class RunContext:
                     workflow,
                     config=config_references,
                     source=source if source_factory is None else {},
-                    inputs=inputs if input_factories is None else [],
+                    inputs=inputs if not input_factories else [],
                     attempt_id=previous_attempt,
                     events=[
                         RunEvent(
@@ -349,7 +352,7 @@ class RunContext:
             context = cls(root, run_dir, recorder.manifest.run_id, workflow, previous_attempt, fresh)
             if source_factory is not None or input_factories is not None:
                 try:
-                    context._populate_evidence(source_factory, input_factories)
+                    context._populate_evidence(source, inputs, source_factory, input_factories)
                 except BaseException as error:
                     context.recorder.fail(category="ARTIFACT", message=str(error))
                     raise
@@ -357,12 +360,27 @@ class RunContext:
 
     def _populate_evidence(
         self,
+        explicit_source: dict[str, Any] | None,
+        explicit_inputs: list[dict[str, str]] | None,
         source_factory: Callable[[], dict[str, Any]] | None,
         input_factories: Sequence[Callable[[], dict[str, str]]] | None,
     ) -> None:
-        source = source_factory() if source_factory is not None else None
-        inputs = [factory() for factory in (input_factories or ())]
-        self.recorder.update_metadata(source=source, inputs=inputs)
+        if source_factory is not None:
+            observed_source = source_factory()
+            if explicit_source is not None and explicit_source != observed_source:
+                raise ValueError("source identity conflict between explicit and factory evidence")
+            self.recorder.update_metadata(source=observed_source)
+        elif explicit_source is not None:
+            self.recorder.update_metadata(source=explicit_source)
+
+        observed_inputs = list(explicit_inputs or ())
+        for factory in input_factories or ():
+            observed_inputs.append(factory())
+            # Persist each successful input independently, so a later
+            # failure leaves all earlier evidence in the failed manifest.
+            self.recorder.update_metadata(inputs=observed_inputs)
+        if not input_factories and explicit_inputs is not None:
+            self.recorder.update_metadata(inputs=observed_inputs)
 
     def register_verified_artifacts(self, kind: str, paths: Sequence[Path]) -> None:
         """Register existing, non-empty files with streaming SHA-256 identity."""
@@ -403,7 +421,7 @@ def _validate_component(value: str, label: str) -> None:
 
 
 def _metadata_or_default(metadata: dict[str, Any] | None) -> dict[str, Any]:
-    return dict(_DEFAULT_CONFIG_METADATA if metadata is None else metadata)
+    return deepcopy(_DEFAULT_CONFIG_METADATA if metadata is None else metadata)
 
 
 def _materialize_evidence(
@@ -413,11 +431,10 @@ def _materialize_evidence(
     input_factories: Sequence[Callable[[], dict[str, str]]] | None,
 ) -> tuple[dict[str, Any], list[dict[str, str]]]:
     observed_source = source_factory() if source_factory is not None else (source or {})
-    observed_inputs = (
-        [factory() for factory in input_factories]
-        if input_factories is not None
-        else (inputs or [])
-    )
+    if source_factory is not None and source is not None and source != observed_source:
+        raise ValueError("source identity conflict between explicit and factory evidence")
+    observed_inputs = list(inputs or ())
+    observed_inputs.extend(factory() for factory in input_factories or ())
     return observed_source, observed_inputs
 
 
@@ -453,8 +470,11 @@ def _compare_resume_evidence(
             raise ValueError("configuration evidence mismatch: original configuration")
         if _read_config_snapshot(recorder, run_dir, "resolved") != normalized_config:
             raise ValueError("configuration evidence mismatch: resolved configuration")
-        if _read_config_snapshot(recorder, run_dir, "metadata") != config_metadata:
-            raise ValueError("configuration metadata mismatch")
+        if "metadata" in recorder.manifest.config:
+            if _read_config_snapshot(recorder, run_dir, "metadata") != config_metadata:
+                raise ValueError("configuration metadata mismatch")
+        elif config_metadata != _metadata_or_default(None):
+            raise ValueError("configuration metadata mismatch: legacy implicit default")
     if recorder.manifest.source != source:
         raise ValueError("source identity mismatch")
     if recorder.manifest.inputs != inputs:
@@ -666,8 +686,27 @@ def source_identity(
     if commit_result.returncode == 0 and commit_result.stdout.strip():
         identity["git_commit"] = commit_result.stdout.strip()
     if status_result.returncode == 0:
-        identity["dirty"] = bool(status_result.stdout.strip())
+        entries = _publishable_git_status(status_result.stdout)
+        identity["dirty"] = bool(entries)
+        identity["dirty_fingerprint"] = hashlib.sha256(
+            "\n".join(entries).encode("utf-8")
+        ).hexdigest()
     return identity
+
+
+def _publishable_git_status(output: str) -> list[str]:
+    """Normalize porcelain status and omit DP-EVA's own run evidence."""
+    entries: list[str] = []
+    for line in output.splitlines():
+        if len(line) < 4:
+            continue
+        status, path = line[:2], line[3:]
+        # Porcelain v1 rename entries contain ``old -> new``; both names are
+        # part of identity, while the evidence directory is never provenance.
+        paths = path.split(" -> ")
+        if all(item == ".dpeva" or not item.startswith(".dpeva/") for item in paths):
+            entries.append(f"{status} {path}")
+    return sorted(entries)
 
 
 def _discover_tracked_repository(
@@ -716,7 +755,11 @@ def input_identity(
         reference = f"external/{candidate.name}"
     result = {"kind": kind, "ref": reference}
     if candidate.is_file():
-        result.update(identity=f"sha256:{_sha256(candidate)}", identity_scope="full-content")
+        try:
+            digest = _sha256(candidate)
+        except OSError as error:
+            raise OSError(f"{kind} input unreadable: {reference}") from error
+        result.update(identity=f"sha256:{digest}", identity_scope="full-content")
     elif candidate.is_dir():
         digest, count = _structural_identity(candidate)
         result.update(
@@ -727,7 +770,7 @@ def input_identity(
         )
     else:
         if require_exists:
-            raise FileNotFoundError(f"input does not exist: {candidate}")
+            raise FileNotFoundError(f"{kind} input does not exist: {reference}")
         result.update(identity="unavailable", identity_scope="unverified")
     return result
 
