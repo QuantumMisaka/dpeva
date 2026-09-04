@@ -159,7 +159,9 @@ git commit -m "feat: add dataset lineage invariants"
 **Test strategy:**
 - Behavior boundary: successful integration writes `dataset-manifest.json`; count/type-map conflicts,
   undeclared sources, and unexplained overlap fail before downstream handoff. Explicit deduplication
-  persists overlap/removal evidence and a versioned validation result.
+  persists overlap/removal evidence and a versioned validation result. The overlap check must use
+  real `dpdata.System.sub_system()` frame identity before `MultiSystems` coalescing; identity includes
+  canonical structure/PBC/type-map fields and compares all labels actually present before removing a frame.
 - Existing suite to extend: labeling integration unit and E2E tests.
 - New test file justification: none.
 - Temporary probes: none.

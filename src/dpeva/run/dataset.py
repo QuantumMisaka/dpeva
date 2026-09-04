@@ -24,7 +24,7 @@ class DatasetParent(DatasetModel):
 class DatasetIntersectionSummary(DatasetModel):
     """Machine-readable evidence for overlap handling during integration."""
 
-    method: Literal["not-run", "coordinate-sha1"] = "not-run"
+    method: Literal["not-run", "frame-identity-v1"] = "not-run"
     overlap_frame_count: StrictInt = Field(default=0, ge=0)
     removed_frame_count: StrictInt = Field(default=0, ge=0)
     evidence_ref: str | None = None
@@ -101,22 +101,21 @@ def validate_lineage_counts(manifest: DatasetManifest) -> None:
     source_ids = {parent.dataset_id for parent in manifest.parents}
     sources_declared = source_ids.issubset(sources) and bool(sources)
     counts_reconciled = expected == manifest.frame_count
-    intersections_explained = (
-        summary.removed_frame_count == manifest.removed_frame_count
-        and (
-            summary.overlap_frame_count == 0
-            and manifest.removed_frame_count == 0
-            or (
-                summary.method != "not-run"
-                and bool(summary.evidence_ref)
-                and summary.removed_frame_count == manifest.removed_frame_count
-                and (
-                    summary.overlap_frame_count == summary.removed_frame_count
-                    or summary.removed_frame_count == 0
-                )
+    if summary.overlap_frame_count > 0:
+        intersections_explained = (
+            summary.method != "not-run"
+            and bool(summary.evidence_ref)
+            and summary.overlap_frame_count == summary.removed_frame_count
+            and summary.removed_frame_count == manifest.removed_frame_count
+        )
+    else:
+        intersections_explained = (
+            summary.removed_frame_count == manifest.removed_frame_count
+            and (
+                manifest.removed_frame_count == 0
+                or (summary.method != "not-run" and bool(summary.evidence_ref))
             )
         )
-    )
     if not counts_reconciled:
         raise LineageValidationError(
             f"lineage frame count mismatch: expected {expected}, observed {manifest.frame_count}"

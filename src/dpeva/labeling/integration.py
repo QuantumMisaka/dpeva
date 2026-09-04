@@ -47,6 +47,7 @@ class DataIntegrationManager:
             )
 
         merged = dpdata.MultiSystems()
+        input_frames = []
         existing_count = 0
         new_count = 0
         compatibility_issues = 0
@@ -74,7 +75,7 @@ class DataIntegrationManager:
                     reference_type_map=reference_type_map,
                     source=f"existing[{idx}]",
                 )
-                merged.append(system)
+                input_frames.extend(self._iter_frames(system))
 
         if not new_labeled_data_path.exists():
             raise FileNotFoundError(f"New labeled data path not found: {new_labeled_data_path}")
@@ -97,18 +98,20 @@ class DataIntegrationManager:
             except ValueError:
                 compatibility_issues += 1
                 raise
-            merged.append(system)
+            input_frames.extend(self._iter_frames(system))
 
-        before_dedup = len(merged)
-        overlap_frame_count = self._find_overlap_frames(merged)
+        before_dedup = len(input_frames)
+        kept_frames, overlap_frame_count = self._analyze_frames(input_frames)
         if overlap_frame_count and not self.deduplicate:
             raise ValueError(
                 "unexplained duplicate/intersection detected; enable integration_deduplicate "
                 "to persist removal evidence"
             )
         if self.deduplicate:
-            merged = self._deduplicate(merged)
-        after_dedup = len(merged)
+            input_frames = kept_frames
+        for frame in input_frames:
+            merged.append(frame)
+        after_dedup = len(input_frames)
         filtered_count = before_dedup - after_dedup
         merged_frames_before_dedup = existing_frames + new_frames
         merged_frames_after_dedup = self._count_total_frames(merged)
@@ -139,14 +142,14 @@ class DataIntegrationManager:
             source_entries=source_entries,
             intersection_summary=DatasetIntersectionSummary(
                 method=(
-                    "coordinate-sha1"
+                    "frame-identity-v1"
                     if self.deduplicate and (overlap_frame_count or filtered_frames)
                     else "not-run"
                 ),
                 overlap_frame_count=overlap_frame_count,
                 removed_frame_count=filtered_frames,
                 evidence_ref=(
-                    "in-memory:coordinate-sha1"
+                    "in-memory:frame-identity-v1"
                     if self.deduplicate and (overlap_frame_count or filtered_frames)
                     else None
                 ),
@@ -393,35 +396,95 @@ class DataIntegrationManager:
             else:
                 data["atom_types"] = remapped.tolist()
 
-    def _deduplicate(self, systems: dpdata.MultiSystems) -> dpdata.MultiSystems:
-        deduped = dpdata.MultiSystems()
-        seen = set()
-        for system in systems:
-            coords = np.array(system.data.get("coords", []), dtype=float)
-            if coords.size == 0:
-                continue
-            signature = hashlib.sha1(coords.tobytes()).hexdigest()
-            if signature in seen:
-                continue
-            seen.add(signature)
-            deduped.append(system)
-        return deduped
+    @classmethod
+    def _iter_frames(cls, system):
+        """Yield one-frame dpdata systems before MultiSystems can coalesce them."""
+        nframes = cls._count_frames(system)
+        if nframes <= 1:
+            yield system
+            return
+        sub_system = getattr(system, "sub_system", None)
+        if not callable(sub_system):
+            raise ValueError("multi-frame input does not expose dpdata System.sub_system")
+        for frame_index in range(nframes):
+            yield sub_system(frame_index)
 
     @classmethod
-    def _find_overlap_frames(cls, systems: dpdata.MultiSystems) -> int:
-        """Count duplicate coordinate-signature frames as explicit evidence."""
-        seen: set[str] = set()
+    def _analyze_frames(cls, systems):
+        """Return unique frames and reject structural duplicates with label conflicts."""
+        seen: dict[str, str] = {}
+        kept = []
         overlap = 0
-        for system in systems:
-            coords = np.array(system.data.get("coords", []), dtype=float)
-            if coords.size == 0:
+        for frame in systems:
+            if np.asarray(frame.data.get("coords", [])).size == 0:
                 continue
-            signature = hashlib.sha1(coords.tobytes()).hexdigest()
-            if signature in seen:
-                overlap += cls._count_frames(system)
-            else:
-                seen.add(signature)
-        return overlap
+            identity = cls._frame_identity(frame)
+            labels = cls._frame_label_identity(frame)
+            previous_labels = seen.get(identity)
+            if previous_labels is None:
+                seen[identity] = labels
+                kept.append(frame)
+                continue
+            overlap += 1
+            if previous_labels != labels:
+                raise ValueError(
+                    "conflicting labels for duplicate frame identity; refusing to deduplicate"
+                )
+        return kept, overlap
+
+    @classmethod
+    def _frame_identity(cls, frame) -> str:
+        """Hash frame structure, including cell/PBC and atom/type-map identity."""
+        data = frame.data
+        payload = {
+            "atom_names": list(data.get("atom_names", [])),
+            "type_map": list(data.get("type_map", data.get("atom_names", []))),
+            "atom_types": cls._array_identity(data.get("atom_types", []), integer=True),
+            "coords": cls._array_identity(data.get("coords", [])),
+            "cells": cls._array_identity(data.get("cells", [])),
+            "pbc": not bool(getattr(frame, "nopbc", data.get("nopbc", False))),
+            "real_atom_names": list(data.get("real_atom_names", [])),
+            "real_atom_types": cls._array_identity(data.get("real_atom_types", []), integer=True),
+        }
+        return hashlib.sha256(cls._canonical_json(payload)).hexdigest()
+
+    @classmethod
+    def _frame_label_identity(cls, frame) -> str:
+        """Hash every non-structural label actually present on the frame."""
+        structural = {
+            "atom_names", "type_map", "atom_numbs", "atom_types", "orig", "cells", "coords",
+            "nopbc", "real_atom_names", "real_atom_types",
+        }
+        labels = {
+            key: cls._array_identity(value)
+            for key, value in sorted(frame.data.items())
+            if key not in structural
+        }
+        return hashlib.sha256(cls._canonical_json(labels)).hexdigest()
+
+    @staticmethod
+    def _canonical_json(payload) -> bytes:
+        return json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+
+    @staticmethod
+    def _array_identity(value, *, integer: bool = False):
+        if value is None:
+            return None
+        array = np.asarray(value)
+        if integer:
+            array = np.asarray(array, dtype=np.int64)
+        elif np.issubdtype(array.dtype, np.floating):
+            array = np.asarray(array, dtype=np.float64)
+        elif np.issubdtype(array.dtype, np.integer):
+            array = np.asarray(array, dtype=np.int64)
+        if array.dtype.kind in {"O", "U", "S"}:
+            return {"shape": list(array.shape), "values": array.tolist()}
+        contiguous = np.ascontiguousarray(array)
+        return {
+            "shape": list(contiguous.shape),
+            "dtype": str(contiguous.dtype),
+            "sha256": hashlib.sha256(contiguous.tobytes()).hexdigest(),
+        }
 
     @staticmethod
     def _count_frames(system) -> int:

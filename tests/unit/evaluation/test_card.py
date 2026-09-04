@@ -243,6 +243,8 @@ def test_card_references_are_portable_after_package_relocation(tmp_path: Path) -
     model = _write_model_ref(evidence)
     metric = evidence / "metric.json"
     metric.write_text(json.dumps({"status": "passed", "value": {"mae": 0.1}}), encoding="utf-8")
+    feedback = evidence / "feedback.json"
+    feedback.write_text("{}", encoding="utf-8")
     manifest = evidence / "dataset-manifest.json"
     manifest.write_text(
         json.dumps(
@@ -264,10 +266,41 @@ def test_card_references_are_portable_after_package_relocation(tmp_path: Path) -
             candidate_id="portable", model_ref_path=model,
             output_path=card_dir / "evaluation-card.json",
             dataset_manifest_paths=[manifest], surface_slice_path=metric,
-            downstream_feedback_ref=str(evidence / "feedback.json"),
+            downstream_feedback_ref=str(feedback),
         )
     )
+    card_path = card_dir / "evaluation-card.json"
+    card_path.write_text(card.model_dump_json(indent=2), encoding="utf-8")
     assert card.model_ref == "../evidence/model-ref.json"
     assert card.dataset_refs == ["../evidence/dataset-manifest.json"]
     assert card.metrics["surface_slice"].evidence_ref == "../evidence/metric.json"
     assert card.downstream_feedback_ref == "../evidence/feedback.json"
+
+    relocated = tmp_path / "relocated-package"
+    package.rename(relocated)
+    relocated_card_path = relocated / "card" / "evaluation-card.json"
+    relocated_payload = json.loads(relocated_card_path.read_text(encoding="utf-8"))
+    relocated_base = relocated_card_path.parent
+    refs = [
+        relocated_payload["model_ref"],
+        *relocated_payload["dataset_refs"],
+        relocated_payload["metrics"]["surface_slice"]["evidence_ref"],
+        relocated_payload["downstream_feedback_ref"],
+    ]
+    assert all((relocated_base / ref).is_file() for ref in refs)
+    assert json.loads((relocated_base / relocated_payload["model_ref"]).read_text())[
+        "kind"
+    ] == "checkpoint"
+    assert json.loads((relocated_base / relocated_payload["dataset_refs"][0]).read_text())[
+        "dataset_id"
+    ] == "imported"
+    assert json.loads(
+        (relocated_base / relocated_payload["metrics"]["surface_slice"]["evidence_ref"]).read_text()
+    )["status"] == "passed"
+    assert json.loads((relocated_base / relocated_payload["downstream_feedback_ref"]).read_text()) == {}
+
+
+def test_downstream_uri_is_preserved(tmp_path: Path) -> None:
+    uri = "https://review.example/candidates/portable"
+    card = build_evaluation_card(_config(tmp_path, downstream_feedback_ref=uri))
+    assert card.downstream_feedback_ref == uri

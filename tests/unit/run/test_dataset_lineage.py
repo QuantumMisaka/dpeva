@@ -33,9 +33,9 @@ def _manifest(**overrides: object) -> DatasetManifest:
         },
     }
     values.update(overrides)
-    if values.get("removed_frame_count", 0):
+    if values.get("removed_frame_count", 0) and "intersection_summary" not in overrides:
         values["intersection_summary"] = {
-            "method": "coordinate-sha1",
+            "method": "frame-identity-v1",
             "overlap_frame_count": values["removed_frame_count"],
             "removed_frame_count": values["removed_frame_count"],
             "evidence_ref": "fixture:dedup",
@@ -134,6 +134,21 @@ def test_overlap_without_removal_evidence_fails() -> None:
         frame_count=16422,
         intersection_summary=DatasetIntersectionSummary(
             method="not-run", overlap_frame_count=1, removed_frame_count=0
+        ),
+    )
+    with pytest.raises(LineageValidationError, match="intersection/removal evidence"):
+        validate_lineage_counts(manifest)
+
+
+def test_overlap_and_removed_counts_must_match_even_with_evidence() -> None:
+    manifest = _manifest(
+        frame_count=16421,
+        removed_frame_count=1,
+        intersection_summary=DatasetIntersectionSummary(
+            method="frame-identity-v1",
+            overlap_frame_count=2,
+            removed_frame_count=1,
+            evidence_ref="fixture:dedup",
         ),
     )
     with pytest.raises(LineageValidationError, match="intersection/removal evidence"):

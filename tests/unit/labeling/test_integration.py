@@ -4,6 +4,8 @@ import json
 from pathlib import Path
 from unittest.mock import patch
 
+import dpdata
+import numpy as np
 import pytest
 
 from dpeva.labeling.integration import (
@@ -30,6 +32,143 @@ class _FakeSystem:
             "atom_numbs": atom_numbs if atom_numbs is not None else [1 for _ in names],
             "type_map": list(names),
         }
+
+
+def _real_system(
+    coords, *, energies=None, cells=None, nopbc=False, atom_names=("H", "O"), atom_types=(0, 1)
+):
+    coords = np.asarray(coords, dtype=float)
+    nframes = coords.shape[0]
+    data = {
+        "atom_names": list(atom_names),
+        "atom_numbs": [1 for _ in atom_names],
+        "atom_types": np.asarray(atom_types, dtype=int),
+        "orig": np.zeros(3),
+        "cells": np.repeat(
+            np.asarray(cells if cells is not None else np.eye(3), dtype=float)[None, :, :],
+            nframes,
+            axis=0,
+        ),
+        "coords": coords,
+    }
+    if nopbc:
+        data["nopbc"] = True
+    if energies is not None:
+        data["energies"] = np.asarray(energies, dtype=float)
+    return dpdata.System(data=data)
+
+
+def test_real_dpdata_internal_duplicate_frames_are_detected_and_deduplicated():
+    system = _real_system(
+        [
+            [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]],
+            [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]],
+        ],
+        energies=[1.0, 1.0],
+    )
+    frames = list(DataIntegrationManager._iter_frames(system))
+    kept, overlap = DataIntegrationManager._analyze_frames(frames)
+    assert len(frames) == 2
+    assert len(kept) == 1
+    assert overlap == 1
+
+
+def test_real_dpdata_partial_intersection_across_multi_frame_systems():
+    first = _real_system(
+        [
+            [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]],
+            [[2.0, 0.0, 0.0], [3.0, 0.0, 0.0]],
+        ],
+        energies=[1.0, 2.0],
+    )
+    second = _real_system(
+        [
+            [[2.0, 0.0, 0.0], [3.0, 0.0, 0.0]],
+            [[4.0, 0.0, 0.0], [5.0, 0.0, 0.0]],
+        ],
+        energies=[2.0, 3.0],
+    )
+    frames = [
+        frame
+        for system in (first, second)
+        for frame in DataIntegrationManager._iter_frames(system)
+    ]
+    kept, overlap = DataIntegrationManager._analyze_frames(frames)
+    assert len(kept) == 3
+    assert overlap == 1
+
+
+def test_real_dpdata_identity_includes_cell_pbc_and_atom_type_map():
+    base = _real_system([[[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]]])
+    other_cell = _real_system(
+        [[[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]]], cells=np.eye(3) * 2
+    )
+    nonperiodic = _real_system(
+        [[[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]]], nopbc=True
+    )
+    other_types = _real_system(
+        [[[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]]], atom_names=("O", "H"), atom_types=(1, 0)
+    )
+    identities = {
+        DataIntegrationManager._frame_identity(frame)
+        for frame in (base, other_cell, nonperiodic, other_types)
+    }
+    assert len(identities) == 4
+
+
+def test_real_dpdata_duplicate_structure_with_conflicting_labels_fails_closed():
+    first = _real_system([[[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]]], energies=[1.0])
+    second = _real_system([[[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]]], energies=[2.0])
+    with pytest.raises(ValueError, match="conflicting labels"):
+        DataIntegrationManager._analyze_frames([first, second])
+
+
+@patch("dpeva.labeling.integration.load_systems")
+def test_real_dpdata_integration_deduplicates_before_export(mock_load_systems, tmp_path):
+    new_dir = tmp_path / "new_cleaned"
+    out_dir = tmp_path / "merged"
+    new_dir.mkdir()
+    mock_load_systems.return_value = [
+        _real_system(
+            [
+                [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]],
+                [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]],
+            ],
+            energies=[1.0, 1.0],
+        )
+    ]
+
+    result = DataIntegrationManager(deduplicate=True, output_format="deepmd/npy").integrate(
+        new_labeled_data_path=new_dir, merged_output_path=out_dir
+    )
+
+    assert result["merged_frame_count_before_dedup"] == 2
+    assert result["merged_frame_count_after_dedup"] == 1
+    manifest = json.loads((out_dir / "dataset-manifest.json").read_text())
+    assert manifest["intersection_summary"] == {
+        "method": "frame-identity-v1",
+        "overlap_frame_count": 1,
+        "removed_frame_count": 1,
+        "evidence_ref": "in-memory:frame-identity-v1",
+    }
+
+
+@patch("dpeva.labeling.integration.load_systems")
+def test_real_dpdata_label_conflict_fails_before_export(mock_load_systems, tmp_path):
+    new_dir = tmp_path / "new_cleaned"
+    out_dir = tmp_path / "merged"
+    new_dir.mkdir()
+    frame = [[[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]]]
+    mock_load_systems.return_value = [
+        _real_system(frame, energies=[1.0]),
+        _real_system(frame, energies=[2.0]),
+    ]
+
+    with pytest.raises(ValueError, match="conflicting labels"):
+        DataIntegrationManager(deduplicate=True).integrate(
+            new_labeled_data_path=new_dir, merged_output_path=out_dir
+        )
+    assert not out_dir.exists()
 
 
 @patch("dpeva.labeling.integration.dpdata.MultiSystems", _FakeMultiSystems)
@@ -109,7 +248,7 @@ def test_integration_manager_deduplicate(mock_load_systems, tmp_path):
     assert manifest["frame_count"] == 1
     assert manifest["removed_frame_count"] == 1
     assert manifest["intersection_summary"]["removed_frame_count"] == 1
-    assert manifest["intersection_summary"]["evidence_ref"] == "in-memory:coordinate-sha1"
+    assert manifest["intersection_summary"]["evidence_ref"] == "in-memory:frame-identity-v1"
     assert [parent["dataset_id"] for parent in manifest["parents"]] == ["new-labeled"]
     assert manifest["parents"][0]["manifest_ref"] is None
     assert result["dataset_manifest_path"].startswith("dataset-manifest-")
