@@ -13,6 +13,7 @@ import sys
 import json
 import logging
 import os
+from dpeva.config_migration import MigrationResult, migrate_legacy_config
 from dpeva.utils.config import resolve_config_paths
 from dpeva.utils.banner import show_banner
 
@@ -51,19 +52,11 @@ def setup_global_logging():
     """Configures the global logging format and level."""
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - DPEVA - %(levelname)s - %(message)s')
 
-def load_and_resolve_config(config_path):
-    """
-    Loads a JSON configuration file and resolves relative paths.
-
-    Args:
-        config_path (str): Path to the configuration file.
-
-    Returns:
-        dict: The configuration dictionary with resolved paths.
-    """
+def load_json_config(config_path):
+    """Load source JSON without changing the user's file."""
     try:
         with open(config_path, 'r', encoding='utf-8') as f:
-            config = json.load(f)
+            return json.load(f)
     except json.JSONDecodeError as e:
         raise CLIUserInputError(
             f"Invalid JSON in config file: {config_path} (line {e.lineno}, column {e.colno})"
@@ -72,7 +65,41 @@ def load_and_resolve_config(config_path):
         raise CLIUserInputError(f"Config file is not readable: {config_path}") from e
     except OSError as e:
         raise CLIUserInputError(f"Failed to read config file: {config_path} ({e})") from e
-    return resolve_config_paths(config, config_path)
+
+
+def _log_migration_warnings(result: MigrationResult) -> None:
+    for warning in result.warnings:
+        logging.warning(
+            "legacy config field %s; use %s; removal target %s",
+            warning.field,
+            warning.replacement,
+            warning.removal_version,
+        )
+
+
+def _normalized_config(result):
+    """Return the mapping for compatibility with injected CLI test handlers."""
+    if isinstance(result, MigrationResult):
+        return result.normalized
+    return result
+
+
+def load_and_resolve_config(config_path) -> MigrationResult:
+    """
+    Loads a JSON configuration file and resolves relative paths.
+
+    Args:
+        config_path (str): Path to the configuration file.
+
+    Returns:
+        MigrationResult: The migrated configuration with resolved paths and
+            compatibility warnings.
+    """
+    migrated = migrate_legacy_config(load_json_config(config_path))
+    resolved = resolve_config_paths(migrated.normalized, config_path)
+    result = MigrationResult(normalized=resolved, warnings=migrated.warnings)
+    _log_migration_warnings(result)
+    return result
 
 def handle_train(args):
     """
@@ -83,7 +110,7 @@ def handle_train(args):
         args (argparse.Namespace): Command-line arguments containing 'config'.
     """
     from dpeva.workflows.train import TrainingWorkflow
-    config = load_and_resolve_config(args.config)
+    config = _normalized_config(load_and_resolve_config(args.config))
     workflow = TrainingWorkflow(config)
     workflow.run()
 
@@ -96,7 +123,7 @@ def handle_infer(args):
         args (argparse.Namespace): Command-line arguments containing 'config'.
     """
     from dpeva.workflows.infer import InferenceWorkflow
-    config = load_and_resolve_config(args.config)
+    config = _normalized_config(load_and_resolve_config(args.config))
     workflow = InferenceWorkflow(config, config_path=os.path.abspath(args.config))
     workflow.run()
 
@@ -109,7 +136,7 @@ def handle_feature(args):
         args (argparse.Namespace): Command-line arguments containing 'config'.
     """
     from dpeva.workflows.feature import FeatureWorkflow
-    config = load_and_resolve_config(args.config)
+    config = _normalized_config(load_and_resolve_config(args.config))
     workflow = FeatureWorkflow(config)
     workflow.run()
 
@@ -124,7 +151,7 @@ def handle_explore(args):
     from dpeva.exploration.base import ExplorationRequest
     from dpeva.exploration.manager import run_exploration
 
-    config_dict = load_and_resolve_config(args.config)
+    config_dict = _normalized_config(load_and_resolve_config(args.config))
     config = ExplorationConfig(**config_dict)
     input_structures = []
     for path in config.input_structure_paths:
@@ -157,7 +184,7 @@ def handle_collect(args):
         args (argparse.Namespace): Command-line arguments containing 'config'.
     """
     from dpeva.workflows.collect import CollectionWorkflow
-    config = load_and_resolve_config(args.config)
+    config = _normalized_config(load_and_resolve_config(args.config))
     # CollectionWorkflow needs config_path for self-submission
     workflow = CollectionWorkflow(config, config_path=os.path.abspath(args.config))
     workflow.run()
@@ -171,7 +198,7 @@ def handle_analysis(args):
         args (argparse.Namespace): Command-line arguments containing 'config'.
     """
     from dpeva.workflows.analysis import AnalysisWorkflow
-    config = load_and_resolve_config(args.config)
+    config = _normalized_config(load_and_resolve_config(args.config))
     workflow = AnalysisWorkflow(config, config_path=os.path.abspath(args.config))
     workflow.run()
 
@@ -186,7 +213,7 @@ def handle_label(args):
     from dpeva.workflows.labeling import LabelingWorkflow
     from dpeva.config import LabelingConfig
     
-    config_dict = load_and_resolve_config(args.config)
+    config_dict = _normalized_config(load_and_resolve_config(args.config))
     # Validate and parse config using Pydantic model
     config = LabelingConfig(**config_dict)
     workflow = LabelingWorkflow(config)
@@ -214,7 +241,7 @@ def handle_clean(args):
         args (argparse.Namespace): Command-line arguments containing 'config'.
     """
     from dpeva.workflows.data_cleaning import DataCleaningWorkflow
-    config = load_and_resolve_config(args.config)
+    config = _normalized_config(load_and_resolve_config(args.config))
     workflow = DataCleaningWorkflow(config)
     workflow.run()
 

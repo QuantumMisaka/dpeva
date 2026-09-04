@@ -50,7 +50,23 @@ from dpeva.constants import (
     DEFAULT_CLEAN_STRICT_ALIGNMENT,
 )
 
-class SubmissionConfig(BaseModel):
+class StrictConfigModel(BaseModel):
+    """Base for public configuration models.
+
+    Legacy aliases are normalized before model validation by
+    :mod:`dpeva.config_migration`; silently dropping unknown fields here would
+    make misspelled scientific parameters indistinguishable from intentional
+    defaults.
+    """
+
+    model_config = ConfigDict(
+        extra="forbid",
+        populate_by_name=True,
+        protected_namespaces=(),
+    )
+
+
+class SubmissionConfig(StrictConfigModel):
     """Configuration for job submission."""
     backend: Literal["local", "slurm"] = Field(
         default=DEFAULT_BACKEND, 
@@ -82,10 +98,8 @@ class SubmissionConfig(BaseModel):
             return "\n".join(v)
         return v
 
-class BaseWorkflowConfig(BaseModel):
+class BaseWorkflowConfig(StrictConfigModel):
     """Base configuration for all workflows."""
-    model_config = ConfigDict(extra='ignore', populate_by_name=True, protected_namespaces=())
-
     work_dir: Path = Field(
         default_factory=Path.cwd, 
         description="Working directory."
@@ -120,33 +134,6 @@ class BaseWorkflowConfig(BaseModel):
         if isinstance(v, int) and v < 1:
             raise ValueError("omp_threads must be >= 1")
         return v
-
-    @model_validator(mode='before')
-    @classmethod
-    def extract_flat_submission_config(cls, data: Any) -> Any:
-        """
-        Allow flat config to populate nested submission config for backward compatibility.
-        e.g. {'backend': 'slurm'} -> {'submission': {'backend': 'slurm'}}
-        """
-        if isinstance(data, dict):
-            # If submission is not explicitly provided, try to build it from flat keys
-            if "submission" not in data:
-                backend = data.get("backend", DEFAULT_BACKEND)
-                slurm_config = data.get("slurm_config", {})
-                env_setup = data.get("env_setup", "")
-                submission_config = {
-                    "backend": backend,
-                    "slurm_config": slurm_config,
-                    "env_setup": env_setup
-                }
-                for key in ("slurm_array", "slurm_array_task_limit"):
-                    if key in data:
-                        submission_config[key] = data[key]
-
-                # Only create if there's something non-default or if backend is present
-                # But to be safe, we always populate it
-                data["submission"] = submission_config
-        return data
 
 class FeatureConfig(BaseWorkflowConfig):
     """Configuration for Feature Generation Workflow."""
@@ -204,10 +191,8 @@ class FeatureConfig(BaseWorkflowConfig):
         return self
 
 
-class ExplorationConfig(BaseModel):
+class ExplorationConfig(StrictConfigModel):
     """Configuration for optional trajectory exploration backends."""
-
-    model_config = ConfigDict(extra='ignore', populate_by_name=True, protected_namespaces=())
 
     work_dir: Path = Field(
         default_factory=Path.cwd,
@@ -238,10 +223,8 @@ class ExplorationConfig(BaseModel):
         description="Backend-specific metadata carried through the request.",
     )
 
-class AnalysisConfig(BaseModel):
+class AnalysisConfig(StrictConfigModel):
     """Configuration for Analysis Workflow (Post-processing)."""
-    model_config = ConfigDict(extra='ignore', populate_by_name=True, protected_namespaces=())
-
     mode: Literal["model_test", "dataset"] = Field("model_test", description="Analysis mode.")
     result_dir: Optional[Path] = Field(None, description="Path to DP test results directory.")
     dataset_dir: Optional[Path] = Field(None, description="Path to dataset directory for dataset analysis mode.")
@@ -292,21 +275,6 @@ class AnalysisConfig(BaseModel):
         description="Path to configuration file for Slurm self-submission."
     )
 
-    @model_validator(mode='before')
-    @classmethod
-    def extract_flat_submission_config(cls, data: Any) -> Any:
-        if isinstance(data, dict) and "submission" not in data:
-            submission_config = {
-                "backend": data.get("backend", DEFAULT_BACKEND),
-                "slurm_config": data.get("slurm_config", {}),
-                "env_setup": data.get("env_setup", "")
-            }
-            for key in ("slurm_array", "slurm_array_task_limit"):
-                if key in data:
-                    submission_config[key] = data[key]
-            data["submission"] = submission_config
-        return data
-
     @model_validator(mode='after')
     def validate_mode_paths(self):
         if self.mode == "model_test" and self.result_dir is None:
@@ -349,7 +317,7 @@ class DataCleaningConfig(BaseWorkflowConfig):
         description="Whether to require strict system/frame alignment between dataset and inference results."
     )
 
-class LabelingTaskSelectorConfig(BaseModel):
+class LabelingTaskSelectorConfig(StrictConfigModel):
     """Selector used to assign generated labeling tasks to resource classes."""
 
     min_atoms: Optional[int] = Field(None, ge=1, description="Inclusive minimum atom count.")
@@ -360,7 +328,7 @@ class LabelingTaskSelectorConfig(BaseModel):
     stru_types: List[str] = Field(default_factory=list, description="Structure types to include.")
 
 
-class LabelingTaskClassConfig(BaseModel):
+class LabelingTaskClassConfig(StrictConfigModel):
     """Resource and launcher mode for a group of labeling tasks."""
 
     name: str = Field(..., description="Stable task class name used under inputs/<name>/N_*.")

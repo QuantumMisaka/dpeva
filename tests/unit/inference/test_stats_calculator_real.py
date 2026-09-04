@@ -80,7 +80,7 @@ def test_inference_workflow_analyze(mock_dptest_output_dir, tmp_path):
         "work_dir": str(tmp_path),
         "data_path": str(tmp_path / "dummy_data"),
         "task_name": "test_val",
-        "head": "results" # Matches filename prefix results.*.out
+        "results_prefix": "results" # Matches filename prefix results.*.out
     }
     
     workflow = InferenceWorkflow(config)

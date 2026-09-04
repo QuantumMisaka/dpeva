@@ -13,7 +13,7 @@ class TestCollectionWorkflowDirectModes:
             "project": str(tmp_path / "project"),
             "testdata_dir": str(tmp_path / "testdata"),
             "desc_dir": str(tmp_path / "desc_dir"),
-            "backend": "local",
+            "submission": {"backend": "local"},
             "uq_trust_mode": "no_filter",
             "direct_k": 1,
             # We will set n_clusters/num_selection in specific tests

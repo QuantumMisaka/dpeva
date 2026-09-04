@@ -41,7 +41,7 @@ def test_slurm_submission_logging(base_config, reset_dpeva_logger, caplog):
     2. Logs are generated during submission.
     """
     config = base_config.copy()
-    config["backend"] = "slurm"
+    config["submission"] = {"backend": "slurm"}
     
     # Initialize Workflow
     # Should NOT call configure_logging
@@ -76,7 +76,7 @@ def test_slurm_submission_logging(base_config, reset_dpeva_logger, caplog):
 def test_local_backend_logging(base_config, reset_dpeva_logger):
     """Test that local backend DOES configure logging."""
     config = base_config.copy()
-    config["backend"] = "local"
+    config["submission"] = {"backend": "local"}
     
     CollectionWorkflow(config)
     

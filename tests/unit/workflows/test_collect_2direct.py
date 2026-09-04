@@ -12,13 +12,12 @@ class TestCollectionWorkflow2Direct:
             "project": str(tmp_path / "project"),
             "testdata_dir": str(tmp_path / "testdata"),
             "desc_dir": str(tmp_path / "desc_dir"),
-            "backend": "local",
+            "submission": {"backend": "local"},
             "uq_trust_mode": "no_filter",
             "sampler_type": "2-direct",
             "step1_n_clusters": 2,
             "step2_n_clusters": 2,
             "step2_k": 1,
-            "num_selection": 5
         }
 
     @patch("dpeva.workflows.collect.CollectionWorkflow._log_initial_stats")

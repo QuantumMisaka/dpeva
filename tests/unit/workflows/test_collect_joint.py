@@ -14,14 +14,13 @@ class TestCollectionWorkflowJoint:
             "testdata_dir": str(tmp_path / "testdata"),
             "desc_dir": str(tmp_path / "desc_dir"), # Required key
             "training_desc_dir": str(tmp_path / "training_desc"), # Triggers joint sampling
-            "backend": "local",
+            "submission": {"backend": "local"},
             "uq_qbc_trust_lo": 0.1,
             "uq_qbc_trust_hi": 0.3,
             "uq_rnd_rescaled_trust_lo": 0.1,
             "uq_rnd_rescaled_trust_hi": 0.3,
             "uq_trust_width": 0.2,
             "uq_trust_mode": "manual",
-            "select_n": 10
         }
 
     # _load_candidate_descriptors seems to be internal. 
@@ -230,7 +229,6 @@ class TestCollectionWorkflowJoint:
             "training_desc_dir": str(training_desc_dir),
             "testdata_dir": str(testdata_dir),
             "uq_trust_mode": "no_filter",
-            "select_n": 1,
         }
 
         mock_execute_sampling.return_value = {

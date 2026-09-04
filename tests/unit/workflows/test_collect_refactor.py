@@ -15,7 +15,7 @@ def _base_config(tmp_path):
         "testdata_dir": str(tmp_path / "testdata"),
         "root_savedir": str(tmp_path / "savedir"),
         "uq_trust_mode": "no_filter",
-        "backend": "local",
+        "submission": {"backend": "local"},
     }
 
 
@@ -108,7 +108,6 @@ def _filtered_config(tmp_path):
             "uq_rnd_rescaled_trust_lo": 0.2,
             "uq_rnd_rescaled_trust_hi": 0.4,
             "enable_diagnostic_plots": False,
-            "select_n": 1,
         }
     )
     return config

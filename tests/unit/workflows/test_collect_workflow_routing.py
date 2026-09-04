@@ -26,7 +26,7 @@ def test_collect_single_pool_routing(tmp_path):
         "uq_select_scheme": "tangent_lo",
         "uq_trust_mode": "auto",
         "uq_trust_ratio": 0.5,
-        "backend": "local"
+        "submission": {"backend": "local"}
     }
     
     # Init workflow
@@ -57,7 +57,7 @@ def test_collect_multi_pool_routing(tmp_path):
         "training_desc_dir": str(tmp_path / "desc_train"),
         "root_savedir": str(tmp_path / "savedir"),
         "uq_select_scheme": "tangent_lo",
-        "backend": "local"
+        "submission": {"backend": "local"}
     }
     
     with patch("dpeva.workflows.collect.UQManager"):
@@ -80,7 +80,7 @@ def test_no_filter_uq_phase_with_multi_pool_names(tmp_path):
         "root_savedir": str(tmp_path / "savedir"),
         "uq_trust_mode": "no_filter",
         "sampler_type": "direct",
-        "backend": "local",
+        "submission": {"backend": "local"},
     }
 
     with patch("dpeva.workflows.collect.UQManager"):
@@ -107,7 +107,7 @@ def test_no_filter_uq_phase_with_single_pool_names(tmp_path):
         "root_savedir": str(tmp_path / "savedir"),
         "uq_trust_mode": "no_filter",
         "sampler_type": "direct",
-        "backend": "local",
+        "submission": {"backend": "local"},
     }
 
     with patch("dpeva.workflows.collect.UQManager"):
@@ -135,7 +135,7 @@ def test_no_filter_uq_phase_passes_last_layer_hdf5_dataset(tmp_path):
         "uq_trust_mode": "no_filter",
         "sampler_type": "direct",
         "desc_feature_kind": "fitting_last_layer",
-        "backend": "local",
+        "submission": {"backend": "local"},
     }
 
     with patch("dpeva.workflows.collect.UQManager"):
@@ -164,7 +164,7 @@ def test_sampling_phase_passes_last_layer_hdf5_dataset_to_training_and_2direct(t
         "uq_trust_mode": "no_filter",
         "sampler_type": "2-direct",
         "desc_feature_kind": "fitting_last_layer",
-        "backend": "local",
+        "submission": {"backend": "local"},
     }
 
     with patch("dpeva.workflows.collect.UQManager"):
@@ -226,7 +226,7 @@ def test_llpr_uq_phase_routes_last_layer_features(tmp_path):
         "llpr_train_feature_dir": str(train_feature_dir),
         "llpr_candidate_feature_dir": str(candidate_feature_dir),
         "sampler_type": "direct",
-        "backend": "local",
+        "submission": {"backend": "local"},
     }
 
     workflow = CollectionWorkflow(config)
@@ -276,7 +276,7 @@ def test_llpr_uq_phase_writes_energy_ensemble_outputs_and_scores_by_std(tmp_path
         "llpr_random_seed": 13,
         "llpr_collect_score": "energy_ensemble_std_per_atom",
         "sampler_type": "direct",
-        "backend": "local",
+        "submission": {"backend": "local"},
     }
 
     workflow = CollectionWorkflow(config)

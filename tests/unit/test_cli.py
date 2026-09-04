@@ -7,6 +7,7 @@ from pathlib import Path
 
 import dpeva.cli as cli
 from dpeva.run.doctor import DoctorCheck, DoctorReport
+from dpeva.config_migration import MigrationResult
 
 
 def _write_config(tmp_path, content='{}'):
@@ -182,6 +183,27 @@ def test_load_and_resolve_config_reports_invalid_json(tmp_path):
     config_path = _write_config(tmp_path, "{invalid_json")
     with pytest.raises(cli.CLIUserInputError, match="Invalid JSON in config file"):
         cli.load_and_resolve_config(config_path)
+
+
+def test_load_and_resolve_config_migrates_and_warns_without_overwriting_source(
+    tmp_path, caplog
+):
+    config_path = _write_config(
+        tmp_path,
+        json.dumps({"backend": "slurm", "data_path": "data"}),
+    )
+
+    with caplog.at_level("WARNING"):
+        result = cli.load_and_resolve_config(config_path)
+
+    assert isinstance(result, MigrationResult)
+    assert result.normalized["submission"]["backend"] == "slurm"
+    assert "backend" not in result.normalized
+    assert json.loads(Path(config_path).read_text(encoding="utf-8")) == {
+        "backend": "slurm",
+        "data_path": "data",
+    }
+    assert "legacy config field backend; use submission.backend; removal target 1.0" in caplog.text
 
 
 def _label_config_dict(tmp_path):

@@ -44,6 +44,10 @@ owner: Docs Owner
 
 ## 4. Submission 配置（Local / Slurm）
 
+从文件读取配置时，CLI 先执行一次显式兼容迁移，再进行严格配置校验。新配置应始终使用嵌套的 `submission` 对象；旧版顶层 `backend`、`env_setup`、`slurm_config`、`slurm_array` 和 `slurm_array_task_limit` 会被移动到该对象，并输出包含替代字段和退役目标版本的 warning。若新旧写法同时出现且值不同，迁移会直接失败。
+
+迁移在内存副本上进行，用户提供的源 JSON 不会被覆盖。规范化配置会在后续 run manifest 中单独记录。所有公开配置模型均拒绝未知字段，因此拼写错误必须在提交前修正；迁移只接受有明确映射的旧字段，不会吞掉任意扩展字段。
+
 ### 4.1 Local 最小配置
 
 ```json
