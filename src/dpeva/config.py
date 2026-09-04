@@ -383,6 +383,28 @@ class InferenceConfig(BaseWorkflowConfig):
     )
     ref_energies: Dict[str, float] = Field(default_factory=dict, description="Reference energies per element for cohesive energy calculation.")
 
+
+class EvaluationCardConfig(StrictConfigModel):
+    """Configuration for assembling one candidate evaluation card.
+
+    The card is an evidence index. Metric files are optional and are
+    represented explicitly when absent or invalid; model and dataset
+    references are required strict schema-1.0 evidence anchors.
+    """
+
+    candidate_id: str = Field(..., min_length=1)
+    model_ref_path: Path = Field(..., description="Strict JSON ModelArtifactRef evidence file.")
+    output_path: Path = Field(..., description="Destination for the assembled card.")
+    in_domain_cumulative_path: Path | None = None
+    iter11_last_wave_path: Path | None = None
+    historical_domain_path: Path | None = None
+    matpes_retention_path: Path | None = None
+    training_cost_path: Path | None = None
+    surface_slice_path: Path | None = None
+    dataset_manifest_paths: list[Path] = Field(default_factory=list)
+    downstream_feedback_ref: str | None = None
+
+
 class LabelingConfig(BaseWorkflowConfig):
     """Configuration for Labeling Workflow (FP Calculation)."""
     input_data_path: Path = Field(..., description="Path to input dataset (dpdata compatible).")
