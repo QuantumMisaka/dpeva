@@ -191,3 +191,77 @@ First actionable failure:
 ```text
 RuntimeError: failed to compute neighbors: Failed to load libcuda.so. Try appending the directory containing this library to your $LD_LIBRARY_PATH environment variable.
 ```
+
+## Review fix round 2: current-runtime CUDA driver setup
+
+The fix-round 1 STOP was resolved using new environment evidence. The local
+harness now derives an optional driver directory from
+`Path(shutil.which("nvidia-smi")).resolve().parent` and appends a quoted
+`LD_LIBRARY_PATH` export only when that same directory contains
+`libcuda.so`. No driver path is hard-coded, no library-name load probe is used,
+and the setup is never a skip or success criterion. The local configs continue
+to use the current `sys.executable` bin directory for `dp`.
+
+The directed tests first exposed the missing setup (RED):
+
+```text
+conda run -n dpeva-dpa4 pytest tests/integration/test_slurm_multidatapool_e2e.py -k 'runtime_setup and driver' -q
+F.                                                                       [100%]
+1 failed, 1 passed, 3 deselected in 0.42s
+```
+
+After the implementation both driver-presence branches passed (GREEN):
+
+```text
+conda run -n dpeva-dpa4 pytest tests/integration/test_slurm_multidatapool_e2e.py -k 'runtime_setup and driver' -q
+..                                                                       [100%]
+2 passed, 3 deselected in 0.41s
+```
+
+Without any `DPEVA_TEST_ENV_SETUP` override, the exact local E2E passed:
+
+```text
+env -u DPEVA_TEST_ENV_SETUP conda run -n dpeva-dpa4 pytest tests/integration/test_slurm_multidatapool_e2e.py::test_multidatapool_e2e[local] -q
+.                                                                        [100%]
+1 passed in 197.48s (0:03:17)
+```
+
+The complete integration suite also passed with no external setup override:
+
+```text
+env -u DPEVA_TEST_ENV_SETUP conda run -n dpeva-dpa4 pytest tests/integration -q
+.....ssssss....s...                                                      [100%]
+12 passed, 7 skipped in 190.25s (0:03:10)
+```
+
+All 19 collected tests are accounted for. The seven skips are the existing
+five GPU-only DeepMD cases, the opt-in labeling reproduction without data, and
+the Slurm case without `DPEVA_RUN_SLURM_ITEST=1`; the local multidatapool E2E
+is an executed pass.
+
+R1/R2 focused suite:
+
+```text
+conda run -n dpeva-dpa4 pytest tests/unit/run/test_status.py tests/unit/submission/test_guards.py tests/unit/workflows/test_workflow_completion_marker.py tests/unit/training/test_training_managers.py tests/unit/feature/test_execution_manager.py tests/unit/inference/test_inference_execution_manager.py -q
+................................................                         [100%]
+48 passed in 1.74s
+```
+
+Repository checks:
+
+```text
+conda run -n dpeva-dpa4 ruff check src tests scripts
+All checks passed!
+
+conda run -n dpeva-dpa4 pytest tests/unit -q
+536 passed in 20.71s
+
+git diff --check
+(no output; exit 0)
+```
+
+The prior STOP is superseded: the same-runtime local chain now executes and
+passes, all integration artifacts and completion markers are checked by the
+test, and all negative/repository checks are green.
+
+Phase 0 checkpoint: GO — R1/R2 negative tests and the classified integration suite pass.

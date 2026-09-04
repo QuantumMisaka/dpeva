@@ -47,7 +47,16 @@ def _env_setup_lines(backend: str) -> list[str]:
     if not raw:
         if backend == "local":
             runtime_bin = Path(sys.executable).resolve().parent
-            return [f"export PATH={shlex.quote(str(runtime_bin))}:$PATH"]
+            setup = [f"export PATH={shlex.quote(str(runtime_bin))}:$PATH"]
+            nvidia_smi = shutil.which("nvidia-smi")
+            if nvidia_smi:
+                driver_dir = Path(nvidia_smi).resolve().parent
+                if (driver_dir / "libcuda.so").is_file():
+                    setup.append(
+                        "export LD_LIBRARY_PATH="
+                        f"{shlex.quote(str(driver_dir))}:${{LD_LIBRARY_PATH:-}}"
+                    )
+            return setup
         return [
             "source /opt/envs/deepmd3.1.2.env",
             "export DP_INTERFACE_PREC=high",
@@ -61,6 +70,33 @@ def test_local_runtime_setup_is_derived_from_current_interpreter() -> None:
     assert setup
     assert str(Path(sys.executable).resolve().parent) in setup[0]
     assert "/opt/envs/deepmd3.1.2.env" not in "\n".join(setup)
+
+
+def test_local_runtime_setup_adds_discovered_cuda_driver(monkeypatch, tmp_path: Path) -> None:
+    driver_dir = tmp_path / "driver"
+    driver_dir.mkdir()
+    nvidia_smi = driver_dir / "nvidia-smi"
+    nvidia_smi.touch()
+    (driver_dir / "libcuda.so").touch()
+    monkeypatch.delenv("DPEVA_TEST_ENV_SETUP", raising=False)
+    monkeypatch.setattr(shutil, "which", lambda name: str(nvidia_smi) if name == "nvidia-smi" else None)
+
+    setup = _env_setup_lines("local")
+
+    assert f"export LD_LIBRARY_PATH={shlex.quote(str(driver_dir))}:${{LD_LIBRARY_PATH:-}}" in setup
+
+
+def test_local_runtime_setup_ignores_driver_without_cuda_library(monkeypatch, tmp_path: Path) -> None:
+    driver_dir = tmp_path / "driver"
+    driver_dir.mkdir()
+    nvidia_smi = driver_dir / "nvidia-smi"
+    nvidia_smi.touch()
+    monkeypatch.delenv("DPEVA_TEST_ENV_SETUP", raising=False)
+    monkeypatch.setattr(shutil, "which", lambda name: str(nvidia_smi) if name == "nvidia-smi" else None)
+
+    setup = _env_setup_lines("local")
+
+    assert not any("LD_LIBRARY_PATH" in line for line in setup)
 
 
 def _maybe_set_partition(slurm_cfg: dict, key: str) -> None:
