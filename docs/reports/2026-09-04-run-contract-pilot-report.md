@@ -37,31 +37,31 @@ Command:
 conda run -n dpeva-dpa4 pytest tests/unit/run tests/integration/test_run_contract_pilot.py --durations=20 -q
 ```
 
-Result: `147 passed in 8.90s`.
+Result: `150 passed in 9.43s`.
 
 Slowest 20 tests:
 
 ```text
-0.45s call tests/integration/test_run_contract_pilot.py::test_cli_partial_exit_and_snapshots
-0.31s call tests/unit/run/test_context.py::test_concurrent_force_allocates_unique_attempts
-0.27s call tests/integration/test_run_contract_pilot.py::test_slurm_feature_and_infer_record_parsed_ids
+0.49s call tests/integration/test_run_contract_pilot.py::test_cli_partial_exit_and_snapshots
+0.32s call tests/unit/run/test_context.py::test_concurrent_force_allocates_unique_attempts
+0.23s call tests/integration/test_run_contract_pilot.py::test_slurm_feature_and_infer_record_parsed_ids
 0.18s call tests/integration/test_run_contract_pilot.py::test_infer_mixed_artifact_and_execution_failures_are_deterministic
 0.16s call tests/integration/test_run_contract_pilot.py::test_infer_mixed_children_write_partial_manifest
-0.15s call tests/integration/test_run_contract_pilot.py::test_infer_all_children_failure_writes_failed_manifest
 0.15s call tests/integration/test_run_contract_pilot.py::test_infer_analysis_failure_preserves_artifacts_and_failed_state
+0.15s call tests/integration/test_run_contract_pilot.py::test_infer_all_children_failure_writes_failed_manifest
 0.14s call tests/integration/test_run_contract_pilot.py::test_infer_success_manifest_and_artifact
-0.13s call tests/integration/test_run_contract_pilot.py::test_feature_malformed_slurm_response_is_failed[None]
-0.12s call tests/integration/test_run_contract_pilot.py::test_infer_slurm_mixed_submission_stays_submitted
-0.12s call tests/integration/test_run_contract_pilot.py::test_feature_success_manifest_contains_verified_output
-0.15s call tests/integration/test_run_contract_pilot.py::test_infer_empty_output_is_artifact_failure
-0.11s call tests/integration/test_run_contract_pilot.py::test_feature_multi_pool_requires_each_pool
-0.11s call tests/integration/test_run_contract_pilot.py::test_feature_failure_writes_failed_manifest
+0.13s call tests/integration/test_run_contract_pilot.py::test_infer_slurm_mixed_submission_stays_submitted
+0.13s call tests/integration/test_run_contract_pilot.py::test_feature_success_manifest_contains_verified_output
+0.13s call tests/integration/test_run_contract_pilot.py::test_infer_empty_output_is_artifact_failure
+0.13s call tests/integration/test_run_contract_pilot.py::test_feature_multi_pool_requires_each_pool
+0.12s call tests/integration/test_run_contract_pilot.py::test_feature_malformed_slurm_response_is_failed[None]
 0.12s call tests/integration/test_run_contract_pilot.py::test_infer_resume_of_submitted_slurm_rejects_without_new_job
-0.12s call tests/integration/test_run_contract_pilot.py::test_feature_resume_of_submitted_slurm_rejects_without_new_job
-0.11s call tests/integration/test_run_contract_pilot.py::test_feature_missing_output_is_artifact_failure
-0.10s call tests/integration/test_run_contract_pilot.py::test_infer_malformed_slurm_response_is_execution_failure[sbatch output without a job id]
-0.10s call tests/integration/test_run_contract_pilot.py::test_feature_malformed_slurm_response[not an sbatch response]
-0.10s call tests/integration/test_run_contract_pilot.py::test_infer_malformed_slurm_response_is_execution_failure[None]
+0.12s call tests/integration/test_run_contract_pilot.py::test_feature_missing_output_is_artifact_failure
+0.12s call tests/integration/test_run_contract_pilot.py::test_feature_malformed_slurm_response_is_failed[not an sbatch response]
+0.12s call tests/integration/test_run_contract_pilot.py::test_feature_failure_writes_failed_manifest
+0.11s call tests/integration/test_run_contract_pilot.py::test_infer_malformed_slurm_response_is_execution_failure[sbatch output without a job id]
+0.11s call tests/integration/test_run_contract_pilot.py::test_infer_slurm_all_fail_is_execution_failure
+0.10s call tests/integration/test_run_contract_pilot.py::test_feature_malformed_slurm_response_is_failed[None]
 ```
 
 ## 2. Diagnostic value and evidence mapping
@@ -256,8 +256,8 @@ Observed results:
 
 - `conda run -n dpeva-dpa4 ruff check src tests scripts` — exit `0`,
   `All checks passed!`.
-- `conda run -n dpeva-dpa4 pytest tests/unit -q` — exit `0`, `663 passed in
-  25.50s`.
+- `conda run -n dpeva-dpa4 pytest tests/unit -q` — exit `0`, `666 passed in
+  25.34s`.
 - `python3 scripts/doc_check.py` — exit `0`; structure, metadata, links,
   forbidden-path, and owner checks all pass, including the repaired Plan A
   integration classification report.

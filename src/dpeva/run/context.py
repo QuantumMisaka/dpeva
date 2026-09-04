@@ -209,13 +209,14 @@ class RunContext:
             _atomic_json_write(run_dir / "config.metadata.json", metadata)
             published_snapshots.append(run_dir / "config.metadata.json")
             config_references["metadata"] = "config.metadata.json"
+            initial_inputs = _merge_inputs([], inputs or [])
             recorder = StatusRecorder.create(
                 run_dir / "run.json",
                 run_id,
                 workflow,
                 config=config_references,
                 source=source if source_factory is None else {},
-                inputs=inputs if not input_factories else [],
+                inputs=initial_inputs,
             )
         except BaseException as error:
             _preserve_initialization_failure(
@@ -331,7 +332,7 @@ class RunContext:
                     workflow,
                     config=config_references,
                     source=source if source_factory is None else {},
-                    inputs=inputs if not input_factories else [],
+                    inputs=_merge_inputs([], inputs or []),
                     attempt_id=previous_attempt,
                     events=[
                         RunEvent(
@@ -373,13 +374,11 @@ class RunContext:
         elif explicit_source is not None:
             self.recorder.update_metadata(source=explicit_source)
 
-        observed_inputs = list(explicit_inputs or ())
+        observed_inputs = _merge_inputs([], self.recorder.manifest.inputs)
         for factory in input_factories or ():
-            observed_inputs.append(factory())
+            observed_inputs = _merge_inputs(observed_inputs, [factory()])
             # Persist each successful input independently, so a later
             # failure leaves all earlier evidence in the failed manifest.
-            self.recorder.update_metadata(inputs=observed_inputs)
-        if not input_factories and explicit_inputs is not None:
             self.recorder.update_metadata(inputs=observed_inputs)
 
     def register_verified_artifacts(self, kind: str, paths: Sequence[Path]) -> None:
@@ -433,9 +432,46 @@ def _materialize_evidence(
     observed_source = source_factory() if source_factory is not None else (source or {})
     if source_factory is not None and source is not None and source != observed_source:
         raise ValueError("source identity conflict between explicit and factory evidence")
-    observed_inputs = list(inputs or ())
-    observed_inputs.extend(factory() for factory in input_factories or ())
+    observed_inputs = _merge_inputs([], inputs or [])
+    for factory in input_factories or ():
+        observed_inputs = _merge_inputs(observed_inputs, [factory()])
     return observed_source, observed_inputs
+
+
+def _merge_inputs(
+    existing: Sequence[dict[str, str]], additions: Sequence[dict[str, str]]
+) -> list[dict[str, str]]:
+    """Merge input evidence by logical identity without hiding conflicts."""
+    merged = [dict(item) for item in existing]
+    positions = {(item.get("kind"), item.get("ref")): index for index, item in enumerate(merged)}
+    for item in additions:
+        key = (item.get("kind"), item.get("ref"))
+        if key in positions:
+            if merged[positions[key]] != item:
+                raise ValueError(f"conflicting input identity for {key[0]}:{key[1]}")
+            continue
+        positions[key] = len(merged)
+        merged.append(dict(item))
+    return merged
+
+
+def _compare_source_identity(existing: dict[str, Any], current: dict[str, Any]) -> None:
+    """Compare provenance, with a narrowly-scoped legacy clean exception."""
+    if "dirty_fingerprint" not in existing and existing.get("git_commit"):
+        if (
+            existing.get("git_commit") != current.get("git_commit")
+            or existing.get("dirty") is not False
+            or current.get("dirty") is not False
+        ):
+            raise ValueError(
+                "source identity mismatch: legacy dirty provenance cannot be proven equal"
+            )
+        for key, value in existing.items():
+            if current.get(key) != value:
+                raise ValueError("source identity mismatch")
+        return
+    if existing != current:
+        raise ValueError("source identity mismatch")
 
 
 def _read_config_snapshot(recorder: StatusRecorder, run_dir: Path, key: str) -> Any:
@@ -475,8 +511,7 @@ def _compare_resume_evidence(
                 raise ValueError("configuration metadata mismatch")
         elif config_metadata != _metadata_or_default(None):
             raise ValueError("configuration metadata mismatch: legacy implicit default")
-    if recorder.manifest.source != source:
-        raise ValueError("source identity mismatch")
+    _compare_source_identity(recorder.manifest.source, source)
     if recorder.manifest.inputs != inputs:
         raise ValueError("input identity mismatch")
 
@@ -686,7 +721,7 @@ def source_identity(
     if commit_result.returncode == 0 and commit_result.stdout.strip():
         identity["git_commit"] = commit_result.stdout.strip()
     if status_result.returncode == 0:
-        entries = _publishable_git_status(status_result.stdout)
+        entries = _publishable_git_status(status_result.stdout, repository)
         identity["dirty"] = bool(entries)
         identity["dirty_fingerprint"] = hashlib.sha256(
             "\n".join(entries).encode("utf-8")
@@ -694,8 +729,8 @@ def source_identity(
     return identity
 
 
-def _publishable_git_status(output: str) -> list[str]:
-    """Normalize porcelain status and omit DP-EVA's own run evidence."""
+def _publishable_git_status(output: str, repository: Path) -> list[str]:
+    """Hash porcelain entries while omitting DP-EVA's own run evidence."""
     entries: list[str] = []
     for line in output.splitlines():
         if len(line) < 4:
@@ -704,8 +739,25 @@ def _publishable_git_status(output: str) -> list[str]:
         # Porcelain v1 rename entries contain ``old -> new``; both names are
         # part of identity, while the evidence directory is never provenance.
         paths = path.split(" -> ")
-        if all(item == ".dpeva" or not item.startswith(".dpeva/") for item in paths):
-            entries.append(f"{status} {path}")
+        if not all(item == ".dpeva" or not item.startswith(".dpeva/") for item in paths):
+            continue
+        for item in paths:
+            candidate = repository / item
+            if candidate.is_symlink():
+                try:
+                    content = f"symlink:{os.readlink(candidate)}"
+                except OSError:
+                    content = "unreadable"
+            elif candidate.is_file():
+                try:
+                    content = f"sha256:{_sha256(candidate)}"
+                except OSError:
+                    content = "unreadable"
+            elif not candidate.exists():
+                content = "deleted"
+            else:
+                content = "non-file"
+            entries.append(f"{status}\0{item}\0{content}")
     return sorted(entries)
 
 

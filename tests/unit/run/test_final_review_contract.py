@@ -167,6 +167,35 @@ def test_legacy_resume_uses_implicit_default_metadata_without_publishing_it(tmp_
     assert manifest_path.read_bytes() == before
 
 
+def test_legacy_source_without_fingerprint_requires_both_sides_clean(tmp_path: Path) -> None:
+    source = {"package_version": "0.8.1", "git_commit": "a" * 40, "dirty": False}
+    context = RunContext.create(
+        tmp_path, "feature", RunOptions(run_id="legacy-source"), {}, {}, source=source
+    )
+    context.recorder.transition(RunState.VALIDATED)
+    resumed = RunContext.create(
+        tmp_path, "feature", RunOptions(run_id="legacy-source", resume=True), {}, {}, source=source
+    )
+    assert resumed.attempt_id == 2
+    before = (context.run_dir / "run.json").read_bytes()
+    with pytest.raises(ValueError, match="legacy dirty provenance"):
+        RunContext.create(
+            tmp_path, "feature", RunOptions(run_id="legacy-source", resume=True), {}, {},
+            source={**source, "dirty": True},
+        )
+    assert (context.run_dir / "run.json").read_bytes() == before
+
+    dirty_manifest = RunContext.create(
+        tmp_path, "feature", RunOptions(run_id="legacy-dirty"), {}, {},
+        source={**source, "dirty": True},
+    )
+    dirty_manifest.recorder.transition(RunState.VALIDATED)
+    with pytest.raises(ValueError, match="legacy dirty provenance"):
+        RunContext.create(
+            tmp_path, "feature", RunOptions(run_id="legacy-dirty", resume=True), {}, {}, source=source
+        )
+
+
 def test_failed_late_input_collection_preserves_source_and_prior_inputs(tmp_path: Path) -> None:
     first = tmp_path / "first.pt"
     first.write_bytes(b"first")
@@ -203,6 +232,32 @@ def test_source_factory_does_not_drop_explicit_inputs(tmp_path: Path) -> None:
     )
     assert context.recorder.manifest.inputs == explicit_inputs
     assert context.recorder.manifest.source == {"package_version": "0.8.1"}
+
+
+def test_explicit_inputs_are_persisted_before_first_factory_and_conflicts_fail(tmp_path: Path) -> None:
+    explicit = [{"kind": "dataset", "ref": "data", "identity": "sha256:a"}]
+    with pytest.raises(RuntimeError, match="later input failure"):
+        RunContext.create(
+            tmp_path, "feature", RunOptions(run_id="explicit-before-factory"), {}, {},
+            inputs=explicit,
+            input_factories=[lambda: (_ for _ in ()).throw(RuntimeError("later input failure"))],
+        )
+    payload = json.loads(
+        (tmp_path / ".dpeva/runs/explicit-before-factory/run.json").read_text(encoding="utf-8")
+    )
+    assert payload["inputs"] == explicit
+
+    duplicate = RunContext.create(
+        tmp_path, "feature", RunOptions(run_id="input-merge"), {}, {}, inputs=explicit,
+        input_factories=[lambda: dict(explicit[0])],
+    )
+    assert duplicate.recorder.manifest.inputs == explicit
+    with pytest.raises(ValueError, match="conflicting input identity"):
+        RunContext.create(
+            tmp_path, "feature", RunOptions(run_id="input-conflict"), {}, {},
+            inputs=explicit,
+            input_factories=[lambda: {**explicit[0], "identity": "sha256:b"}],
+        )
 
 
 def test_resume_rejects_changed_config_and_identity_without_mutating_manifest(tmp_path: Path) -> None:
@@ -319,6 +374,7 @@ def test_source_identity_requires_tracked_package_file_and_counts_untracked(tmp_
     source = repo / "src/dpeva/__init__.py"
     source.parent.mkdir(parents=True)
     source.write_text("# source")
+    (repo / "src/new.py").write_text("new-v1")
     (repo / ".git").mkdir()
     statuses = {"clean": "", "dirty": "?? src/new.py\n"}
     for label, status in statuses.items():
@@ -387,6 +443,33 @@ def test_source_identity_ignores_run_evidence_and_fingerprints_other_dirty_paths
     assert identities["untracked"]["dirty"] is True
     assert identities["modified"]["dirty"] is True
     assert identities["untracked"]["dirty_fingerprint"] != identities["modified"]["dirty_fingerprint"]
+
+
+def test_source_identity_changes_when_same_status_path_content_changes(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    source = repo / "src/dpeva/__init__.py"
+    source.parent.mkdir(parents=True)
+    source.write_text("# tracked-v1")
+    (repo / ".git").mkdir()
+    untracked = repo / "src/new.py"
+    untracked.write_text("untracked-v1")
+
+    def run(command, **kwargs):
+        if command[1:3] == ["rev-parse", "--show-toplevel"]:
+            return subprocess.CompletedProcess(command, 0, str(repo), "")
+        if command[1:3] == ["ls-files", "--error-unmatch"]:
+            return subprocess.CompletedProcess(command, 0, "src/dpeva/__init__.py\n", "")
+        if command[1:3] == ["rev-parse", "HEAD"]:
+            return subprocess.CompletedProcess(command, 0, "1" * 40 + "\n", "")
+        return subprocess.CompletedProcess(command, 0, " M src/dpeva/__init__.py\n?? src/new.py\n", "")
+
+    first = source_identity(source, run=run)
+    source.write_text("# tracked-v2")
+    second = source_identity(source, run=run)
+    assert first["dirty_fingerprint"] != second["dirty_fingerprint"]
+    untracked.write_text("untracked-v2")
+    third = source_identity(source, run=run)
+    assert second["dirty_fingerprint"] != third["dirty_fingerprint"]
 
 
 def test_resume_rejects_changed_dirty_source_fingerprint(tmp_path: Path) -> None:
