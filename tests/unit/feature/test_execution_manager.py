@@ -1,8 +1,10 @@
 import pytest
 import numpy as np
+import subprocess
 from unittest.mock import MagicMock, patch
 from dpeva.feature.managers import FeatureExecutionManager, FeatureIOManager
 from dpeva.utils.command import DPCommandBuilder
+from dpeva.utils.exceptions import WorkflowError
 
 @pytest.fixture
 def mock_job_manager():
@@ -66,6 +68,38 @@ class TestFeatureExecutionManager:
         assert "Processing pool: pool1" in job_config.command
         assert "Processing pool: pool2" in job_config.command
         assert "mkdir -p" in job_config.command
+
+    def test_empty_descriptor_artifact_does_not_emit_finished(self, mock_job_manager, tmp_path):
+        output_dir = tmp_path / "output"
+        output_dir.mkdir()
+        manager = FeatureExecutionManager(
+            backend="local",
+            slurm_config={},
+            env_setup="",
+            dp_backend="pt",
+            omp_threads=1,
+        )
+
+        manager.submit_cli_job(
+            data_path=str(tmp_path / "data"),
+            output_dir=str(output_dir),
+            model_path="model.pt",
+            head="head",
+            sub_pools=[],
+        )
+
+        (output_dir / "empty.npy").touch()
+        generated = mock_job_manager.return_value.generate_script.call_args[0][0].command
+        command = generated.replace(generated.splitlines()[0], "true", 1)
+        result = subprocess.run(
+            ["bash", "-c", "set -Eeuo pipefail\n" + command],
+            cwd=output_dir,
+            text=True,
+            capture_output=True,
+        )
+
+        assert result.returncode != 0
+        assert "DPEVA_TAG: WORKFLOW_FINISHED" not in result.stdout
 
     def test_submit_cli_job_embed_keeps_hdf5_for_last_layer(self, mock_job_manager, tmp_path):
         """Embed CLI should support fitting-last-layer features through HDF5 atomic_feature."""
@@ -220,6 +254,22 @@ class TestFeatureExecutionManager:
                 str(output_root / "group" / "sys2.npy")
             ]
             assert sorted(save_paths) == sorted(expected)
+
+    @patch("dpeva.feature.managers.FeatureIOManager")
+    def test_run_local_python_recursion_raises_on_leaf_failure(self, MockIO, tmp_path):
+        data_root = tmp_path / "data"
+        (data_root / "sys1").mkdir(parents=True)
+        output_root = tmp_path / "output"
+
+        io_instance = MockIO.return_value
+        io_instance.is_leaf_system.side_effect = lambda path: str(path).endswith("sys1")
+        mock_generator = MagicMock()
+        mock_generator.compute_descriptors.side_effect = RuntimeError("compute failed")
+
+        manager = FeatureExecutionManager("local", {}, "", "pt", 1)
+
+        with pytest.raises(WorkflowError, match="sys1.*compute failed"):
+            manager.run_local_python_recursion(mock_generator, str(data_root), str(output_root))
 
 class TestFeatureIOManager:
     def test_detect_multi_pool_structure(self, tmp_path):

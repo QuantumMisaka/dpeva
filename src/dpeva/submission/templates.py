@@ -21,13 +21,13 @@ from dpeva.constants import (
 # ==========================================
 
 DEFAULT_SLURM_TEMPLATE = """#!/bin/bash
-set -Eeuo pipefail
 #SBATCH -J ${job_name}
 #SBATCH -N ${nodes}
 #SBATCH -n ${ntasks}
 #SBATCH -t ${walltime}
 ${optional_slurm_params}
 ${custom_headers}
+set -Eeuo pipefail
 
 # Environment Setup
 ${env_setup}

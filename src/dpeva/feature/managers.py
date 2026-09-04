@@ -9,6 +9,7 @@ from dpeva.constants import WORKFLOW_FINISHED_TAG
 from dpeva.submission import JobManager, JobConfig
 from dpeva.submission.guards import guarded_command
 from dpeva.utils.command import DPCommandBuilder
+from dpeva.utils.exceptions import WorkflowError
 
 logger = logging.getLogger(__name__)
 
@@ -180,7 +181,7 @@ class FeatureExecutionManager:
             if feature_exporter == "embed"
             else [
                 f"find {shlex.quote(abs_output_dir)} -type f -name '*.npy' "
-                "-print -quit | grep -q ."
+                "-size +0c -print -quit | grep -q ."
             ]
         )
         cmd = guarded_command(command=cmd, artifact_checks=checks)
@@ -233,6 +234,7 @@ sys.path.append("{os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspat
 
 from dpeva.feature.generator import DescriptorGenerator
 from dpeva.feature.managers import FeatureIOManager, FeatureExecutionManager
+from dpeva.utils.exceptions import WorkflowError
 
 def main():
     # Initialize components
@@ -259,6 +261,15 @@ def main():
         output_mode="{output_mode}",
         feature_kind="{feature_kind}"
     )
+
+    artifacts = [
+        os.path.join(root, filename)
+        for root, _, filenames in os.walk("{abs_output_dir}")
+        for filename in filenames
+        if filename.endswith(".npy")
+    ]
+    if not any(os.path.isfile(path) and os.path.getsize(path) > 0 for path in artifacts):
+        raise WorkflowError("Feature generation produced no non-empty .npy artifacts")
     
     print("{WORKFLOW_FINISHED_TAG}")
 
@@ -303,6 +314,7 @@ if __name__ == "__main__":
         abs_data_path = os.path.abspath(data_path)
         abs_output_dir = os.path.abspath(output_dir)
         os.makedirs(abs_output_dir, exist_ok=True)
+        failures = []
         
         self.logger.info(f"Scanning {abs_data_path} for systems...")
         
@@ -330,12 +342,14 @@ if __name__ == "__main__":
                     return
                 except Exception as e:
                     self.logger.error(f"Failed to process {sys_name}: {e}")
+                    failures.append(f"{sys_name}: {e}")
                     return
 
             # If not leaf, iterate subdirs
             try:
                 subdirs = [d for d in os.listdir(current_path) if os.path.isdir(os.path.join(current_path, d))]
             except OSError:
+                failures.append(f"{current_path}: unable to list directory")
                 return
 
             for d in subdirs:
@@ -344,15 +358,25 @@ if __name__ == "__main__":
         # Initial call
         if io_manager.is_leaf_system(abs_data_path):
             # Single system
-            desc = self._compute_feature(generator, abs_data_path, output_mode, feature_kind)
-            out_file = os.path.join(abs_output_dir, os.path.basename(abs_data_path) + ".npy")
-            np.save(out_file, desc)
-            self.logger.info(f"Saved descriptors to {out_file}")
+            try:
+                desc = self._compute_feature(generator, abs_data_path, output_mode, feature_kind)
+                out_file = os.path.join(abs_output_dir, os.path.basename(abs_data_path) + ".npy")
+                np.save(out_file, desc)
+                self.logger.info(f"Saved descriptors to {out_file}")
+            except Exception as e:
+                failures.append(f"{os.path.basename(abs_data_path)}: {e}")
         else:
             # Recursive scan
-            subdirs = [d for d in os.listdir(abs_data_path) if os.path.isdir(os.path.join(abs_data_path, d))]
-            for d in subdirs:
-                process_recursive(os.path.join(abs_data_path, d), os.path.join(abs_output_dir, d))
+            try:
+                subdirs = [d for d in os.listdir(abs_data_path) if os.path.isdir(os.path.join(abs_data_path, d))]
+            except OSError as e:
+                failures.append(f"{abs_data_path}: {e}")
+            else:
+                for d in subdirs:
+                    process_recursive(os.path.join(abs_data_path, d), os.path.join(abs_output_dir, d))
+
+        if failures:
+            raise WorkflowError("Feature generation failed: " + "; ".join(failures))
 
     def _compute_feature(self, generator, data_path: str, output_mode: str, feature_kind: str):
         if feature_kind == "descriptor":

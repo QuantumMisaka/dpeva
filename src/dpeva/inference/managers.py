@@ -165,7 +165,15 @@ class InferenceExecutionManager:
             cmd = guarded_command(
                 command=cmd,
                 artifact_checks=[
-                    f"compgen -G {shlex.quote(results_prefix + '.*.out')} >/dev/null",
+                    "\n".join(
+                        [
+                            f"compgen -G {shlex.quote(results_prefix + '.*.out')} "
+                            "| while IFS= read -r artifact; do",
+                            '    if test -s "$artifact"; then exit 0; fi',
+                            "done",
+                            "exit 1",
+                        ]
+                    ),
                 ],
             )
             

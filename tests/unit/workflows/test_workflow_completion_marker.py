@@ -127,4 +127,6 @@ def test_feature_python_worker_script_contains_completion_marker(tmp_path):
 
         worker_script_content = mock_job_manager.submit_python_script.call_args[0][0]
         assert WORKFLOW_FINISHED_TAG in worker_script_content
+        assert "raise WorkflowError" in worker_script_content
+        assert worker_script_content.index("raise WorkflowError") < worker_script_content.index(WORKFLOW_FINISHED_TAG)
         assert worker_script_content.index("run_local_python_recursion") < worker_script_content.index(WORKFLOW_FINISHED_TAG)
