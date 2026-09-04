@@ -74,6 +74,7 @@ def test_resolve_config_paths_resolves_evaluation_card_local_refs_and_preserves_
     cfg = {
         "output_path": "artifacts/card.json",
         "model_ref_path": "refs/model.json",
+        "model_ref_paths": ["run:1/model.json"],
         "dataset_manifest_paths": ["datasets/manifest.json"],
         "downstream_feedback_ref": "feedback/review.json",
     }
@@ -81,12 +82,17 @@ def test_resolve_config_paths_resolves_evaluation_card_local_refs_and_preserves_
 
     assert out["output_path"] == str(config_path.parent / "artifacts/card.json")
     assert out["model_ref_path"] == str(config_path.parent / "refs/model.json")
+    assert out["model_ref_paths"] == [str(config_path.parent / "run:1/model.json")]
     assert out["dataset_manifest_paths"] == [str(config_path.parent / "datasets/manifest.json")]
     assert out["downstream_feedback_ref"] == str(config_path.parent / "feedback/review.json")
 
     cfg["downstream_feedback_ref"] = "https://example.test/review/1"
     resolve_config_paths(cfg, str(config_path))
     assert cfg["downstream_feedback_ref"] == "https://example.test/review/1"
+
+    cfg["output_path"] = "foo:bar/card.json"
+    resolve_config_paths(cfg, str(config_path))
+    assert cfg["output_path"] == str(config_path.parent / "foo:bar/card.json")
 
 
 def test_resolve_config_paths_without_config_file_path_returns_input_unchanged():

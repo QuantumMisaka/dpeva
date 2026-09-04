@@ -6,10 +6,10 @@ from typing import Dict, List, Any
 _URI_SCHEME = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*:")
 
 
-def _resolve_local_path(value: str, config_dir: str) -> str:
-    """Resolve a config-local path while preserving explicit URI references."""
+def _resolve_local_path(value: str, config_dir: str, *, preserve_uri: bool = False) -> str:
+    """Resolve a config-local path, optionally preserving an opaque URI."""
     expanded = os.path.expanduser(os.path.expandvars(value))
-    if _URI_SCHEME.match(expanded):
+    if preserve_uri and _URI_SCHEME.match(expanded):
         return expanded
     return expanded if os.path.isabs(expanded) else os.path.abspath(os.path.join(config_dir, expanded))
 
@@ -57,7 +57,11 @@ def resolve_config_paths(config: Dict[str, Any], config_file_path: str, path_key
             val = config[key]
             if isinstance(val, str) and val:
                 # Expand user (~) and environment variables ($HOME, etc.)
-                config[key] = _resolve_local_path(val, config_dir)
+                config[key] = _resolve_local_path(
+                    val,
+                    config_dir,
+                    preserve_uri=key == "downstream_feedback_ref",
+                )
             elif isinstance(val, list) and key in {"model_ref_paths", "dataset_manifest_paths"}:
                 resolved_paths = []
                 for item in val:

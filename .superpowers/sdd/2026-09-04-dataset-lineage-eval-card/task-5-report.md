@@ -8,10 +8,12 @@ Task 4 card, and publishes it as immutable JSON evidence.
 
 ## Contract decisions
 
-- `output_path`, `model_ref_path`, all six metric paths, dataset-manifest lists,
-  and local `downstream_feedback_ref` values resolve relative to the config
-  file. Explicit URI references (`https://`, `s3://`, `doi:`, etc.) remain
-  unchanged and are treated as opaque evidence identifiers.
+- `output_path`, `model_ref_path`, all six metric paths, and dataset-manifest
+  lists resolve relative to the config file under the ordinary local-path
+  rule, including relative names containing a colon such as `run:1/model.json`.
+  Only `downstream_feedback_ref` may be an opaque URI: explicit URI references
+  (`https://`, `s3://`, `doi:`, etc.) remain unchanged, while its local values
+  resolve relative to the config file.
 - Publication is POSIX fail-closed: the parent directory is fsync-preflighted,
   the temporary JSON file is fsynced, and a hard-link no-replace publication
   closes the concurrent-writer race. A post-link fsync failure raises
