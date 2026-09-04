@@ -29,6 +29,15 @@ class CLIUserInputError(ValueError):
     pass
 
 
+class EvaluationCardPublicationError(RuntimeError):
+    """A card publication failed, with explicit publication state."""
+
+    def __init__(self, message: str, path: str, *, published: bool) -> None:
+        super().__init__(message)
+        self.path = path
+        self.published = published
+
+
 def validate_config_path(config_path: str) -> str:
     normalized = os.path.abspath(os.path.expanduser(config_path))
     token = config_path.strip().lower()
@@ -323,6 +332,30 @@ def handle_doctor(args):
         raise SystemExit(1)
 
 
+def _open_fsyncable_directory(path: str, output_path: str) -> int:
+    """Open and preflight a POSIX directory before creating evidence."""
+    if os.name != "posix" or not hasattr(os, "link"):
+        raise EvaluationCardPublicationError(
+            "evaluation-card publication requires POSIX directory fsync and hard links; "
+            "card not published",
+            output_path,
+            published=False,
+        )
+    directory_fd = None
+    try:
+        directory_fd = os.open(path, os.O_RDONLY)
+        os.fsync(directory_fd)
+    except OSError as exc:
+        if directory_fd is not None:
+            os.close(directory_fd)
+        raise EvaluationCardPublicationError(
+            f"parent directory durability preflight failed; card not published: {exc}",
+            output_path,
+            published=False,
+        ) from exc
+    return directory_fd
+
+
 def _publish_evaluation_card(path, card) -> None:
     """Publish one valid card atomically without replacing existing evidence."""
     output_path = os.path.abspath(os.path.expanduser(os.fspath(path)))
@@ -330,6 +363,7 @@ def _publish_evaluation_card(path, card) -> None:
     os.makedirs(output_parent, exist_ok=True)
     payload = card.model_dump_json(indent=2) + "\n"
     temporary_path = None
+    directory_fd = _open_fsyncable_directory(output_parent, output_path)
     try:
         with tempfile.NamedTemporaryFile(
             mode="w",
@@ -351,17 +385,21 @@ def _publish_evaluation_card(path, card) -> None:
         os.link(temporary_path, output_path)
         os.unlink(temporary_path)
         temporary_path = None
-        directory_fd = os.open(output_parent, os.O_RDONLY)
         try:
             os.fsync(directory_fd)
-        finally:
-            os.close(directory_fd)
+        except OSError as exc:
+            raise EvaluationCardPublicationError(
+                f"evaluation card published but parent-directory durability is not confirmed: {exc}",
+                output_path,
+                published=True,
+            ) from exc
     finally:
         if temporary_path is not None:
             try:
                 os.unlink(temporary_path)
             except FileNotFoundError:
                 pass
+        os.close(directory_fd)
 
 
 def handle_eval_card(args) -> None:

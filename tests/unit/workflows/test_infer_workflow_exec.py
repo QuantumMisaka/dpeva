@@ -197,17 +197,34 @@ def test_explicit_backend_mismatch_fails_before_execution(tmp_path):
 def test_legacy_bridge_emits_one_migration_warning(tmp_path, caplog):
     import logging
 
-    caplog.set_level(logging.WARNING)
-    InferenceWorkflow(
-        {
-            "work_dir": str(tmp_path),
-            "data_path": str(tmp_path / "data"),
-        }
-    )
-
-    messages = [
-        record.message
-        for record in caplog.records
-        if "using legacy numeric-directory model discovery" in record.message
+    loggers = [logging.getLogger(name) for name in ("dpeva", "dpeva.workflows.infer")]
+    original_state = [
+        (logger, logger.propagate, logger.handlers[:], logger.level)
+        for logger in loggers
     ]
-    assert len(messages) == 1
+    try:
+        # Other workflow tests configure this module logger for file capture;
+        # this constructor-only assertion must be independent of test order.
+        for logger in loggers:
+            logger.handlers.clear()
+            logger.propagate = True
+            logger.setLevel(logging.WARNING)
+        caplog.set_level(logging.WARNING)
+        InferenceWorkflow(
+            {
+                "work_dir": str(tmp_path),
+                "data_path": str(tmp_path / "data"),
+            }
+        )
+
+        messages = [
+            record.message
+            for record in caplog.records
+            if "using legacy numeric-directory model discovery" in record.message
+        ]
+        assert len(messages) == 1
+    finally:
+        for logger, propagate, handlers, level in original_state:
+            logger.handlers[:] = handlers
+            logger.propagate = propagate
+            logger.setLevel(level)

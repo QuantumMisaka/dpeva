@@ -1,5 +1,17 @@
 import os
+import re
 from typing import Dict, List, Any
+
+
+_URI_SCHEME = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*:")
+
+
+def _resolve_local_path(value: str, config_dir: str) -> str:
+    """Resolve a config-local path while preserving explicit URI references."""
+    expanded = os.path.expanduser(os.path.expandvars(value))
+    if _URI_SCHEME.match(expanded):
+        return expanded
+    return expanded if os.path.isabs(expanded) else os.path.abspath(os.path.join(config_dir, expanded))
 
 def resolve_config_paths(config: Dict[str, Any], config_file_path: str, path_keys: List[str] = None) -> Dict[str, Any]:
     """
@@ -37,7 +49,7 @@ def resolve_config_paths(config: Dict[str, Any], config_file_path: str, path_key
             # file, so a portable recipe can be copied as a package.
             "output_path", "model_ref_path", "in_domain_cumulative_path", "iter11_last_wave_path",
             "historical_domain_path", "matpes_retention_path", "training_cost_path",
-            "surface_slice_path", "dataset_manifest_paths",
+            "surface_slice_path", "dataset_manifest_paths", "downstream_feedback_ref",
         ]
         
     for key in path_keys:
@@ -45,25 +57,14 @@ def resolve_config_paths(config: Dict[str, Any], config_file_path: str, path_key
             val = config[key]
             if isinstance(val, str) and val:
                 # Expand user (~) and environment variables ($HOME, etc.)
-                val = os.path.expanduser(os.path.expandvars(val))
-                
-                # If path is not absolute, make it absolute relative to config file
-                if not os.path.isabs(val):
-                    config[key] = os.path.abspath(os.path.join(config_dir, val))
-                else:
-                    config[key] = val
+                config[key] = _resolve_local_path(val, config_dir)
             elif isinstance(val, list) and key in {"model_ref_paths", "dataset_manifest_paths"}:
                 resolved_paths = []
                 for item in val:
                     if not isinstance(item, str):
                         resolved_paths.append(item)
                         continue
-                    expanded = os.path.expanduser(os.path.expandvars(item))
-                    resolved_paths.append(
-                        expanded
-                        if os.path.isabs(expanded)
-                        else os.path.abspath(os.path.join(config_dir, expanded))
-                    )
+                    resolved_paths.append(_resolve_local_path(item, config_dir))
                 config[key] = resolved_paths
                 
     return config

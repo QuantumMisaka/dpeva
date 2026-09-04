@@ -66,6 +66,29 @@ def test_resolve_config_paths_resolves_model_reference_list(tmp_path):
     assert out["model_ref_paths"][1] == os.path.abspath(os.path.expandvars("$PWD/ema.json"))
 
 
+def test_resolve_config_paths_resolves_evaluation_card_local_refs_and_preserves_uris(tmp_path):
+    config_path = tmp_path / "configs" / "evaluation.json"
+    config_path.parent.mkdir(parents=True)
+    config_path.write_text("{}", encoding="utf-8")
+
+    cfg = {
+        "output_path": "artifacts/card.json",
+        "model_ref_path": "refs/model.json",
+        "dataset_manifest_paths": ["datasets/manifest.json"],
+        "downstream_feedback_ref": "feedback/review.json",
+    }
+    out = resolve_config_paths(cfg, str(config_path))
+
+    assert out["output_path"] == str(config_path.parent / "artifacts/card.json")
+    assert out["model_ref_path"] == str(config_path.parent / "refs/model.json")
+    assert out["dataset_manifest_paths"] == [str(config_path.parent / "datasets/manifest.json")]
+    assert out["downstream_feedback_ref"] == str(config_path.parent / "feedback/review.json")
+
+    cfg["downstream_feedback_ref"] = "https://example.test/review/1"
+    resolve_config_paths(cfg, str(config_path))
+    assert cfg["downstream_feedback_ref"] == "https://example.test/review/1"
+
+
 def test_resolve_config_paths_without_config_file_path_returns_input_unchanged():
     cfg = {"data_path": "data"}
     out = resolve_config_paths(cfg, "")
