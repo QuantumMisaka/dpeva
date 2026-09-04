@@ -258,6 +258,17 @@ def test_explicit_inputs_are_persisted_before_first_factory_and_conflicts_fail(t
             inputs=explicit,
             input_factories=[lambda: {**explicit[0], "identity": "sha256:b"}],
         )
+    failed = json.loads(
+        (tmp_path / ".dpeva/runs/input-conflict/run.json").read_text(encoding="utf-8")
+    )
+    assert failed["inputs"] == explicit
+    contradictory = [explicit[0], {**explicit[0], "identity": "sha256:c"}]
+    with pytest.raises(ValueError, match="conflicting input identity"):
+        RunContext.create(
+            tmp_path, "feature", RunOptions(run_id="explicit-conflict"), {}, {},
+            inputs=contradictory,
+        )
+    assert not (tmp_path / ".dpeva/runs/explicit-conflict").exists()
 
 
 def test_resume_rejects_changed_config_and_identity_without_mutating_manifest(tmp_path: Path) -> None:
@@ -388,13 +399,13 @@ def test_source_identity_requires_tracked_package_file_and_counts_untracked(tmp_
                 return subprocess.CompletedProcess(command, 0, "src/dpeva/__init__.py\n", "")
             if command[1:3] == ["rev-parse", "HEAD"]:
                 return subprocess.CompletedProcess(command, 0, "d" * 40 + "\n", "")
-            return subprocess.CompletedProcess(command, 0, status, "")
+            return subprocess.CompletedProcess(command, 0, status.replace("\n", "\0") + "\0", "")
 
         identity = source_identity(source, run=run)
         assert identity["git_commit"] == "d" * 40
         assert identity["dirty"] is (label == "dirty")
         assert all(str(repo) not in value for value in identity.values() if isinstance(value, str))
-        assert ["git", "status", "--porcelain", "--untracked-files=all"] in calls
+        assert ["git", "status", "--porcelain=v1", "-z", "--untracked-files=all"] in calls
 
 
 def test_source_identity_does_not_claim_enclosing_consumer_repo(tmp_path: Path) -> None:
@@ -435,7 +446,7 @@ def test_source_identity_ignores_run_evidence_and_fingerprints_other_dirty_paths
                 return subprocess.CompletedProcess(command, 0, "src/dpeva/__init__.py\n", "")
             if command[1:3] == ["rev-parse", "HEAD"]:
                 return subprocess.CompletedProcess(command, 0, "e" * 40 + "\n", "")
-            return subprocess.CompletedProcess(command, 0, status, "")
+            return subprocess.CompletedProcess(command, 0, status.replace("\n", "\0") + "\0", "")
 
         identities[label] = source_identity(source, run=run)
     assert identities["evidence-only"]["dirty"] is False
@@ -461,7 +472,7 @@ def test_source_identity_changes_when_same_status_path_content_changes(tmp_path:
             return subprocess.CompletedProcess(command, 0, "src/dpeva/__init__.py\n", "")
         if command[1:3] == ["rev-parse", "HEAD"]:
             return subprocess.CompletedProcess(command, 0, "1" * 40 + "\n", "")
-        return subprocess.CompletedProcess(command, 0, " M src/dpeva/__init__.py\n?? src/new.py\n", "")
+        return subprocess.CompletedProcess(command, 0, " M src/dpeva/__init__.py\0?? src/new.py\0", "")
 
     first = source_identity(source, run=run)
     source.write_text("# tracked-v2")
@@ -470,6 +481,59 @@ def test_source_identity_changes_when_same_status_path_content_changes(tmp_path:
     untracked.write_text("untracked-v2")
     third = source_identity(source, run=run)
     assert second["dirty_fingerprint"] != third["dirty_fingerprint"]
+
+
+def test_source_identity_real_git_raw_paths_are_content_sensitive(tmp_path: Path) -> None:
+    repo = tmp_path / "real repo"
+    source = repo / "src/dpeva/package name-来源.py"
+    source.parent.mkdir(parents=True)
+    source.write_text("tracked-v1", encoding="utf-8")
+
+    def git(*args: str) -> None:
+        result = subprocess.run(["git", *args], cwd=repo, check=False, capture_output=True, text=True)
+        assert result.returncode == 0, result.stderr
+
+    git("init", "-q")
+    git("config", "user.email", "test@example.invalid")
+    git("config", "user.name", "test")
+    git("config", "core.quotePath", "true")
+    git("add", "src/dpeva/package name-来源.py")
+    git("commit", "-qm", "initial")
+    clean = source_identity(source)
+    source.write_text("tracked-v2", encoding="utf-8")
+    modified = source_identity(source)
+    assert clean["dirty"] is False
+    assert modified["dirty"] is True
+    assert clean["dirty_fingerprint"] != modified["dirty_fingerprint"]
+
+    untracked = repo / "未追踪 file name.py"
+    untracked.write_text("untracked-v1", encoding="utf-8")
+    untracked_v1 = source_identity(source)
+    untracked.write_text("untracked-v2", encoding="utf-8")
+    untracked_v2 = source_identity(source)
+    assert untracked_v1["dirty_fingerprint"] != untracked_v2["dirty_fingerprint"]
+
+
+def test_source_identity_real_git_rename_record_is_consumed(tmp_path: Path) -> None:
+    repo = tmp_path / "rename repo"
+    old = repo / "src/dpeva/old name.py"
+    old.parent.mkdir(parents=True)
+    old.write_text("same", encoding="utf-8")
+
+    def git(*args: str) -> None:
+        result = subprocess.run(["git", *args], cwd=repo, check=False, capture_output=True, text=True)
+        assert result.returncode == 0, result.stderr
+
+    git("init", "-q")
+    git("config", "user.email", "test@example.invalid")
+    git("config", "user.name", "test")
+    git("add", "src/dpeva/old name.py")
+    git("commit", "-qm", "initial")
+    new = repo / "src/dpeva/new name-来源.py"
+    git("mv", "src/dpeva/old name.py", "src/dpeva/new name-来源.py")
+    identity = source_identity(new)
+    assert identity["dirty"] is True
+    assert identity["dirty_fingerprint"]
 
 
 def test_resume_rejects_changed_dirty_source_fingerprint(tmp_path: Path) -> None:
@@ -487,7 +551,7 @@ def test_resume_rejects_changed_dirty_source_fingerprint(tmp_path: Path) -> None
             return subprocess.CompletedProcess(command, 0, "src/dpeva/__init__.py\n", "")
         if command[1:3] == ["rev-parse", "HEAD"]:
             return subprocess.CompletedProcess(command, 0, "f" * 40 + "\n", "")
-        return subprocess.CompletedProcess(command, 0, current_status["value"], "")
+        return subprocess.CompletedProcess(command, 0, current_status["value"].replace("\n", "\0") + "\0", "")
 
     def factory():
         return source_identity(source, run=run)

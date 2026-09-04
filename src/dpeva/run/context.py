@@ -84,6 +84,10 @@ class RunContext:
         _validate_component(workflow, "workflow")
         if not isinstance(options, RunOptions):
             raise TypeError("options must be a RunOptions instance")
+        # Reject contradictory explicit evidence before allocating a run
+        # directory.  Factory failures happen after allocation and are
+        # governed; malformed explicit evidence is a caller error with no run.
+        _merge_inputs([], inputs or [])
 
         runs_root = root / ".dpeva" / "runs"
         runs_root.mkdir(parents=True, exist_ok=True)
@@ -713,8 +717,8 @@ def source_identity(
             text=True, capture_output=True,
         )
         status_result = run(
-            ["git", "status", "--porcelain", "--untracked-files=all"],
-            cwd=repository, check=False, text=True, capture_output=True,
+            ["git", "status", "--porcelain=v1", "-z", "--untracked-files=all"],
+            cwd=repository, check=False, text=False, capture_output=True,
         )
     except (OSError, subprocess.SubprocessError):
         return identity
@@ -724,40 +728,50 @@ def source_identity(
         entries = _publishable_git_status(status_result.stdout, repository)
         identity["dirty"] = bool(entries)
         identity["dirty_fingerprint"] = hashlib.sha256(
-            "\n".join(entries).encode("utf-8")
+            b"\0".join(entries)
         ).hexdigest()
     return identity
 
 
-def _publishable_git_status(output: str, repository: Path) -> list[str]:
-    """Hash porcelain entries while omitting DP-EVA's own run evidence."""
-    entries: list[str] = []
-    for line in output.splitlines():
-        if len(line) < 4:
+def _publishable_git_status(output: bytes | str, repository: Path) -> list[bytes]:
+    """Hash raw NUL-delimited porcelain entries without machine paths."""
+    raw = output if isinstance(output, bytes) else output.encode("utf-8")
+    fields = raw.split(b"\0")
+    entries: list[bytes] = []
+    index = 0
+    while index < len(fields) - 1:
+        record = fields[index]
+        index += 1
+        if len(record) < 4:
             continue
-        status, path = line[:2], line[3:]
-        # Porcelain v1 rename entries contain ``old -> new``; both names are
-        # part of identity, while the evidence directory is never provenance.
-        paths = path.split(" -> ")
-        if not all(item == ".dpeva" or not item.startswith(".dpeva/") for item in paths):
+        status, path = record[:2], record[3:]
+        paths = [path]
+        if status[:1] in {b"R", b"C"} or status[1:2] in {b"R", b"C"}:
+            if index >= len(fields) - 1:
+                continue
+            paths.append(fields[index])
+            index += 1
+        if not all(item == b".dpeva" or not item.startswith(b".dpeva/") for item in paths):
             continue
+        parts = [status]
         for item in paths:
-            candidate = repository / item
+            candidate = repository / os.fsdecode(item)
             if candidate.is_symlink():
                 try:
-                    content = f"symlink:{os.readlink(candidate)}"
+                    content = b"symlink:" + os.fsencode(os.readlink(candidate))
                 except OSError:
-                    content = "unreadable"
+                    content = b"unreadable"
             elif candidate.is_file():
                 try:
-                    content = f"sha256:{_sha256(candidate)}"
+                    content = b"sha256:" + _sha256(candidate).encode("ascii")
                 except OSError:
-                    content = "unreadable"
+                    content = b"unreadable"
             elif not candidate.exists():
-                content = "deleted"
+                content = b"deleted"
             else:
-                content = "non-file"
-            entries.append(f"{status}\0{item}\0{content}")
+                content = b"non-file"
+            parts.extend((item, content))
+        entries.append(b"\0".join(parts))
     return sorted(entries)
 
 

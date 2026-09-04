@@ -37,7 +37,7 @@ Command:
 conda run -n dpeva-dpa4 pytest tests/unit/run tests/integration/test_run_contract_pilot.py --durations=20 -q
 ```
 
-Result: `150 passed in 9.43s`.
+Result: `152 passed in 10.57s`.
 
 Slowest 20 tests:
 
@@ -256,8 +256,8 @@ Observed results:
 
 - `conda run -n dpeva-dpa4 ruff check src tests scripts` — exit `0`,
   `All checks passed!`.
-- `conda run -n dpeva-dpa4 pytest tests/unit -q` — exit `0`, `666 passed in
-  25.34s`.
+- `conda run -n dpeva-dpa4 pytest tests/unit -q` — exit `0`, `668 passed in
+  25.39s`.
 - `python3 scripts/doc_check.py` — exit `0`; structure, metadata, links,
   forbidden-path, and owner checks all pass, including the repaired Plan A
   integration classification report.
