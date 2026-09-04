@@ -153,6 +153,20 @@ def test_submit_rejects_cpu_directives(tmp_path: Path, cpu_directive: str) -> No
         submit(input_path, slurm, tmp_path / "latest.json", job_root=tmp_path / "external", dry_run=True)
 
 
+@pytest.mark.parametrize("memory_directive", ["#SBATCH --mem=1G", "#SBATCH --mem-per-cpu=1G", "#SBATCH --mem-per-gpu=1G", "#SBATCH --mem-per-cpu 1G"])
+def test_submit_rejects_all_memory_directives(tmp_path: Path, memory_directive: str) -> None:
+    model_root = tmp_path / "models"
+    model_root.mkdir()
+    for name in ("model.ckpt.pt", "model_ema.ckpt.pt"):
+        (model_root / name).write_bytes(name.encode())
+    input_path = tmp_path / "input.json"
+    prepare(model_root, input_path)
+    slurm = tmp_path / "job.slurm"
+    slurm.write_text("\n".join(("#!/bin/bash", "#SBATCH --partition=4V100", "#SBATCH --nodes=1", "#SBATCH --ntasks=1", "#SBATCH --gpus-per-node=1", "#SBATCH --qos=improper-gpu", "#SBATCH --time=00:30:00", memory_directive)) + "\n", encoding="utf-8")
+    with pytest.raises(ValueError, match="bounded SAI"):
+        submit(input_path, slurm, tmp_path / "latest.json", job_root=tmp_path / "external", dry_run=True)
+
+
 def test_recorded_runner_argv_and_missing_artifact(tmp_path: Path) -> None:
     config = tmp_path / "input.json"
     config.write_text(json.dumps({"schema_version": "1.0", "fixture": {"path": str(tmp_path)}, "models": {"regular": {"path": str(tmp_path / "r"), "sha256": ""}, "ema": {"path": str(tmp_path / "e"), "sha256": ""}}}), encoding="utf-8")

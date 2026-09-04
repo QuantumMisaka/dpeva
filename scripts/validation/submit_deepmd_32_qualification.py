@@ -108,7 +108,8 @@ def submit(input_path: Path, slurm_script: Path, write_ref: Path, *, job_root: P
         directives[key] = value
     required_directives = {"--partition": "4V100", "--nodes": "1", "--ntasks": "1", "--gpus-per-node": "1", "--qos": "improper-gpu", "--time": "00:30:00"}
     forbidden_cpu = any(key == "--cpus" or key.startswith("--cpus-") for key in directives)
-    if any(directives.get(key) != value for key, value in required_directives.items()) or "--mem" in directives or forbidden_cpu:
+    forbidden_memory = any(key == "--mem" or key.startswith("--mem-") for key in directives)
+    if any(directives.get(key) != value for key, value in required_directives.items()) or forbidden_memory or forbidden_cpu:
         raise ValueError("Slurm script does not satisfy the bounded SAI qualification contract")
     if not dry_run and os.environ.get("CONDA_PREFIX"):
         raise RuntimeError("qualification submission requires a clean login environment; unset CONDA_PREFIX")
