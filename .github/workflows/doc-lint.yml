@@ -49,10 +49,8 @@ jobs:
           python -m pip install --upgrade pip
           pip install pyyaml tomli
 
-      - name: Run governance check
-        run: |
-          python3 scripts/doc_check.py
+      - name: Run declared governance gate
+        run: python scripts/run_gate.py docs
 
-      - name: Run freshness check
-        run: |
-          python3 scripts/check_docs_freshness.py --days 90
+      - name: Run declared freshness gate
+        run: python scripts/run_gate.py docs_freshness

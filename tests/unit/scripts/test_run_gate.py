@@ -163,3 +163,29 @@ def test_python310_tomli_fallback_is_executable(monkeypatch: pytest.MonkeyPatch,
     source = tmp_path / "manifest.toml"
     source.write_text("ignored by fake parser", encoding="utf-8")
     assert fallback_module.resolve_profile(fallback_module.load_manifest(source), "local") == ["example"]
+
+
+def test_local_gate_delegates_to_manifest() -> None:
+    text = Path("scripts/gate.sh").read_text(encoding="utf-8")
+
+    assert 'python scripts/run_gate.py local "$@"' in text
+    assert "ruff check" not in text
+    assert "pytest tests/unit" not in text
+
+
+def test_python_quality_jobs_use_gate_names() -> None:
+    text = Path(".github/workflows/python-quality.yml").read_text(encoding="utf-8")
+
+    for name in ("lint", "unit", "audit", "explore_import", "explore_cli", "atst_cli"):
+        assert f"python scripts/run_gate.py {name}" in text
+
+
+def test_docs_jobs_use_gate_names() -> None:
+    build = Path(".github/workflows/docs-check.yml").read_text(encoding="utf-8")
+    lint = Path(".github/workflows/doc-lint.yml").read_text(encoding="utf-8")
+
+    assert "pip install -e .[docs] tomli" in build
+    for name in ("docs_build", "docs_artifacts", "docs_linkcheck"):
+        assert f"python scripts/run_gate.py {name}" in build
+    for name in ("docs", "docs_freshness"):
+        assert f"python scripts/run_gate.py {name}" in lint
