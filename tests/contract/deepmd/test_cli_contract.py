@@ -9,10 +9,16 @@ import h5py
 import numpy as np
 import pytest
 
-from dpeva.compatibility import CapabilityKey, CapabilityMatrix, CapabilityUnavailable
+from dpeva.compatibility import (
+    CapabilityEvidence,
+    CapabilityKey,
+    CapabilityMatrix,
+    CapabilityUnavailable,
+    validate_promotion_evidence,
+)
 from dpeva.compatibility.adapter import DeepMDAdapter
 
-from conftest import classify_contract_result, frame_count, run_contract
+from conftest import classify_contract_result, frame_count, run_contract, write_cpu_attestation
 
 
 def _numeric_table(path: Path) -> np.ndarray:
@@ -54,6 +60,18 @@ def test_pt_test_requires_numeric_output(
     assert result.returncode == 0
     table = _numeric_table(energy_output)
     assert table.shape[0] == frame_count(periodic_data)
+    attestation_path = write_cpu_attestation("test", dp_executable, result, case="pt-test")
+    manifest_record = next(
+        record for record in CapabilityMatrix.load_default().records
+        if record.key.operation == "test" and record.key.backend == "pt"
+    )
+    promoted_shape = manifest_record.model_copy(update={
+        "status": "supported",
+        "required_evidence": ("cpu-contract",),
+        "sai_verification_cases": None,
+        "evidence_ref": CapabilityEvidence(cpu_contract=str(attestation_path)),
+    })
+    assert validate_promotion_evidence(promoted_shape, Path.cwd())
 
 
 @pytest.mark.deepmd_contract
@@ -61,7 +79,7 @@ def test_pt_eval_desc_has_one_descriptor_per_frame(
     dp_executable: str, pt_model: Path, periodic_data: Path, tmp_path: Path
 ) -> None:
     output_dir = tmp_path / "descriptors"
-    run_contract(
+    result = run_contract(
         [
             dp_executable,
             "--pt",
@@ -81,6 +99,7 @@ def test_pt_eval_desc_has_one_descriptor_per_frame(
     assert all(array.ndim == 3 for array in arrays)
     assert all(np.isfinite(array).all() for array in arrays)
     assert sum(array.shape[0] for array in arrays) == frame_count(periodic_data)
+    write_cpu_attestation("eval-desc", dp_executable, result, case="pt-eval-desc")
 
 
 @pytest.mark.deepmd_contract
@@ -88,7 +107,7 @@ def test_pt_embed_has_required_hdf5_datasets(
     dp_executable: str, pt_model: Path, periodic_data: Path, tmp_path: Path
 ) -> None:
     output = tmp_path / "embedding.hdf5"
-    run_contract(
+    result = run_contract(
         [
             dp_executable,
             "--pt",
@@ -132,6 +151,7 @@ def test_pt_embed_has_required_hdf5_datasets(
             assert np.isfinite(descriptor).all()
             assert np.isfinite(atomic).all()
             assert np.isfinite(structural).all()
+    write_cpu_attestation("embed", dp_executable, result, case="pt-embed")
 
 
 @pytest.mark.deepmd_contract

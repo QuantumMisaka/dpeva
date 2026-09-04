@@ -15,6 +15,8 @@ import uuid
 from pathlib import Path
 from typing import Any
 
+from dpeva.compatibility import CapabilityMatrix
+
 REQUIRED_CASES = (
     "pip-freeze", "deepmd-version", "torch-cuda", "gpu",
     "pt-test", "pt-test-ema", "pt-eval-desc", "pt-eval-desc-ema",
@@ -60,6 +62,19 @@ def _load_input(path: Path) -> dict[str, Any]:
             raise ValueError(f"DPA4C model is absent: {dpa4c_path}")
     if tuple(data.get("required_cases", ())) != REQUIRED_CASES:
         raise ValueError("qualification input required_cases do not match the harness")
+    expected_specs = [
+        {
+            "case": case,
+            "capability_key": record.key.model_dump(),
+            "verification_command": record.verification_command,
+            "source": "sai-v100-qualification",
+        }
+        for record in CapabilityMatrix.load_default().records
+        if record.sai_verification_cases
+        for case in record.sai_verification_cases
+    ]
+    if data.get("capability_attestation_specs") != expected_specs:
+        raise ValueError("capability attestation specs are stale or do not match manifest")
     return data
 
 

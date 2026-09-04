@@ -13,6 +13,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from dpeva.compatibility import CapabilityAttestation, CapabilityMatrix
+
 REQUIRED_CASES = (
     "preflight",
     "pip-freeze", "deepmd-version", "torch-cuda", "gpu",
@@ -163,11 +165,22 @@ def collect_qualification(job_dir: Path, *, job_id: str | None = None, gpu: str 
             except (TypeError, ValueError, json.JSONDecodeError):
                 environment[key] = {"error": "malformed environment evidence"}
                 environment_invalid.append(name)
-    status = "finished" if not missing and not unknown and not malformed and not failed and not environment_missing and not environment_invalid else "failed"
     gpu_value = gpu
     if gpu_value is None:
         gpu_record = environment.get("gpu", {})
         gpu_value = gpu_record.get("value") if isinstance(gpu_record, dict) else None
+    version_record = environment.get("deepmd_version", {})
+    version_value = version_record.get("value") if isinstance(version_record, dict) else None
+    if version_value != "DeePMD-kit v3.2.0" and "deepmd-version.json" not in environment_invalid:
+        environment_invalid.append("deepmd-version.json")
+    gpu_record = environment.get("gpu", {})
+    gpu_value_from_record = gpu_record.get("value") if isinstance(gpu_record, dict) else None
+    if gpu_value is not None:
+        gpu_value_from_record = gpu_value
+    if not isinstance(gpu_value_from_record, str) or "v100" not in gpu_value_from_record.lower():
+        if "gpu.json" not in environment_invalid:
+            environment_invalid.append("gpu.json")
+    status = "finished" if not missing and not unknown and not malformed and not failed and not environment_missing and not environment_invalid else "failed"
     report: dict[str, Any] = {
         "schema_version": "1.0", "qualification": "deepmd-3.2-sai-v100", "status": status,
         "job_id": selected_job_id,
@@ -182,6 +195,37 @@ def collect_qualification(job_dir: Path, *, job_id: str | None = None, gpu: str 
         "commands": records,
         "collected_at": datetime.now(timezone.utc).isoformat(),
     }
+    attestations: list[dict[str, Any]] = []
+    if status == "finished" and selected_job_id and str(selected_job_id).isdigit():
+        version_record = environment.get("deepmd_version", {})
+        version = version_record.get("value") if isinstance(version_record, dict) else None
+        gpu_record = environment.get("gpu", {})
+        gpu_identity = gpu_record.get("value") if isinstance(gpu_record, dict) else gpu_value
+        specs = [
+            (case, record)
+            for record in CapabilityMatrix.load_default().records
+            if record.sai_verification_cases
+            for case in record.sai_verification_cases
+        ]
+        for case, record in specs:
+            command_record = records.get(case, {})
+            try:
+                attestation = CapabilityAttestation(
+                    status="finished",
+                    returncode=command_record["returncode"],
+                    capability_key=record.key,
+                    verification_command=record.verification_command,
+                    deepmd_version=version,
+                    source="sai-v100-qualification",
+                    case=case,
+                    job_id=selected_job_id,
+                    gpu=gpu_identity,
+                )
+            except Exception:
+                attestations = []
+                break
+            attestations.append(attestation.model_dump(mode="json"))
+    report["attestations"] = attestations
     # Inspection never freezes the final aggregate. Only the EXIT trap or an
     # explicitly complete external collection may finalize it.
     target = job_dir / "qualification.json"

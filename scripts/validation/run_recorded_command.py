@@ -13,6 +13,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from dpeva.compatibility import CapabilityMatrix
+
 REQUIRED_CASES = (
     "pip-freeze", "deepmd-version", "torch-cuda", "gpu",
     "pt-test", "pt-test-ema", "pt-eval-desc", "pt-eval-desc-ema",
@@ -110,6 +112,21 @@ def _preflight(config_path: Path, job_dir: Path) -> dict[str, Any]:
         config = _load(input_path)
         if tuple(config.get("required_cases", ())) != REQUIRED_CASES:
             errors.append("qualification required_cases do not match harness")
+        if launch.get("fixture_sha256") != config.get("fixture", {}).get("sha256"):
+            errors.append("qualification fixture hash does not match launch contract")
+        expected_specs = [
+            {
+                "case": case,
+                "capability_key": record.key.model_dump(),
+                "verification_command": record.verification_command,
+                "source": "sai-v100-qualification",
+            }
+            for record in CapabilityMatrix.load_default().records
+            if record.sai_verification_cases
+            for case in record.sai_verification_cases
+        ]
+        if config.get("capability_attestation_specs") != expected_specs:
+            errors.append("capability attestation specs do not match manifest")
         for role in ("regular", "ema"):
             item = config["models"][role]
             model = Path(item["path"]).expanduser().resolve()

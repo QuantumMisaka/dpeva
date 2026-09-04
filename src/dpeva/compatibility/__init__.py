@@ -8,6 +8,7 @@ from .deepmd import (
     CapabilityUnavailable,
     validate_promotion_evidence,
 )
+from .attestation import CapabilityAttestation
 from .adapter import DeepMDAdapter
 
 __all__ = [
@@ -18,4 +19,5 @@ __all__ = [
     "CapabilityUnavailable",
     "validate_promotion_evidence",
     "DeepMDAdapter",
+    "CapabilityAttestation",
 ]

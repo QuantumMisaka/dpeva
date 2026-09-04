@@ -13,6 +13,8 @@ from typing import Any
 import numpy as np
 import pytest
 
+from dpeva.compatibility import CapabilityAttestation, CapabilityMatrix
+
 
 _FIXTURE_ENV = {
     "pt_model": "DPEVA_DEEPMD_PT_MODEL",
@@ -176,6 +178,44 @@ def run_contract(argv: list[str], required_paths: list[Path]) -> subprocess.Comp
     missing = [str(path) for path in required_paths if not path.exists()]
     assert missing == [], f"missing contract artifacts: {missing}"
     return result
+
+
+def write_cpu_attestation(
+    operation: str,
+    dp_executable: str,
+    result: subprocess.CompletedProcess[str],
+    *,
+    case: str,
+) -> Path:
+    """Persist an attestation only after a caller's full contract assertions."""
+
+    if result.returncode != 0:
+        raise AssertionError("failed contract cannot issue a finished attestation")
+    backend = "pt-expt" if case.startswith("dpa4c") else "pt"
+    records = [
+        record
+        for record in CapabilityMatrix.load_default().records
+        if record.key.operation == operation
+        and record.key.backend == backend
+        and record.verification_status == "implemented"
+    ]
+    if len(records) != 1 or records[0].verification_command is None:
+        raise AssertionError(f"no unique implemented manifest record for {operation}/{case}")
+    version = subprocess.run([dp_executable, "--version"], check=False, capture_output=True, text=True)
+    attestation = CapabilityAttestation(
+        status="finished",
+        returncode=result.returncode,
+        capability_key=records[0].key,
+        verification_command=records[0].verification_command,
+        deepmd_version=version.stdout.strip(),
+        source="cpu-contract",
+        case=case,
+    )
+    target_root = _CONTRACT_LOG_DIR or Path("build/deepmd-cpu-contract")
+    target = target_root / "attestations" / f"{case}.json"
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(attestation.model_dump_json(indent=2) + "\n", encoding="utf-8")
+    return target
 
 
 def classify_contract_result(

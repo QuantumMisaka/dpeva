@@ -70,7 +70,7 @@ class CapabilityRecord(BaseModel):
     evidence_ref: CapabilityEvidence | None = None
     upstream_issue: StrictStr | None = None
     covered_roles: tuple[Literal["regular", "ema"], ...] | None = None
-    sai_verification_case: StrictStr | None = None
+    sai_verification_cases: tuple[StrictStr, ...] | None = None
 
     @model_validator(mode="after")
     def validate_status_metadata(self) -> "CapabilityRecord":
@@ -80,10 +80,13 @@ class CapabilityRecord(BaseModel):
             raise ValueError("implemented capability requires verification_command")
         if len(self.required_evidence) != len(set(self.required_evidence)):
             raise ValueError("required_evidence must not contain duplicates")
-        if self.sai_verification_case is not None and not self.sai_verification_case:
-            raise ValueError("sai_verification_case must not be empty")
-        if self.sai_verification_case not in (None, *SAI_VERIFICATION_CASES):
-            raise ValueError("sai_verification_case is not a required qualification case")
+        if self.sai_verification_cases is not None:
+            if not self.sai_verification_cases:
+                raise ValueError("sai_verification_cases must not be empty")
+            if any(case not in SAI_VERIFICATION_CASES for case in self.sai_verification_cases):
+                raise ValueError("sai_verification_cases contains an unknown qualification case")
+            if len(set(self.sai_verification_cases)) != len(self.sai_verification_cases):
+                raise ValueError("sai_verification_cases must not contain duplicates")
         if self.status == "blocked-upstream" and not self.upstream_issue:
             raise ValueError("blocked-upstream capability requires upstream_issue")
         if self.status != "blocked-upstream" and self.upstream_issue is not None:
@@ -98,9 +101,19 @@ class CapabilityRecord(BaseModel):
         if self.status == "supported" and self.verification_status != "implemented":
             raise ValueError("supported capability requires implemented verification")
         if self.status == "supported":
+            if not self.required_evidence:
+                raise ValueError("supported capability requires required_evidence")
+            if "sai-v100-qualification" in self.required_evidence and not self.sai_verification_cases:
+                raise ValueError("supported SAI capability requires sai_verification_cases")
             missing = [kind for kind in self.required_evidence if not self.evidence_ref]
             if missing:
                 raise ValueError("supported capability requires evidence_ref")
+            if self.evidence_ref:
+                for kind in self.required_evidence:
+                    if kind == "cpu-contract" and not self.evidence_ref.cpu_contract:
+                        raise ValueError("supported capability requires CPU evidence reference")
+                    if kind == "sai-v100-qualification" and not self.evidence_ref.sai_qualification:
+                        raise ValueError("supported capability requires SAI evidence reference")
         return self
 
 
@@ -237,36 +250,28 @@ def _read_json_evidence(reference: str | None, repo_root: Path) -> dict[str, obj
 
 
 def _evidence_matches(record: CapabilityRecord, payload: dict[str, object], *, sai: bool) -> bool:
-    if payload.get("schema_version") != "1.0" or payload.get("status") != "finished":
-        return False
-    if payload.get("returncode") != 0:
-        return False
-    key = payload.get("capability_key") or payload.get("key")
-    if not isinstance(key, dict) or key != record.key.model_dump():
-        return False
-    command = payload.get("verification_command") or payload.get("command")
-    if command != record.verification_command:
-        return False
-    if payload.get("passed") is False:
-        return False
-    version = payload.get("deepmd_version")
-    if version is None and isinstance(payload.get("environment"), dict):
-        environment = payload["environment"]
-        version = environment.get("deepmd_version")
-        if isinstance(version, dict):
-            version = version.get("value")
-    if version != "DeePMD-kit v3.2.0":
-        return False
-    if sai:
-        job_id = payload.get("job_id")
-        gpu = payload.get("gpu")
-        if not isinstance(job_id, (int, str)) or isinstance(job_id, bool) or not str(job_id).isdigit():
-            return False
-        if not isinstance(gpu, str) or "v100" not in gpu.lower():
-            return False
-        if payload.get("qualification_status", payload.get("status")) != "finished":
-            return False
-    return True
+    # Parse through the one producer schema.  A qualification aggregate is
+    # accepted only when it contains validated per-capability attestations;
+    # command records and prose reports are deliberately insufficient.
+    from .attestation import CapabilityAttestation
+
+    raw = payload.get("attestations")
+    candidates = raw if isinstance(raw, list) else [payload]
+    expected_source = "sai-v100-qualification" if sai else "cpu-contract"
+    for candidate in candidates:
+        if not isinstance(candidate, dict):
+            continue
+        try:
+            attestation = CapabilityAttestation.model_validate(candidate)
+        except Exception:
+            continue
+        if (
+            attestation.source == expected_source
+            and attestation.capability_key == record.key
+            and attestation.verification_command == record.verification_command
+        ):
+            return True
+    return False
 
 
 def validate_promotion_evidence(record: CapabilityRecord, repo_root: str | Path) -> bool:

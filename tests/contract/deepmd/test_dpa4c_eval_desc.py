@@ -11,7 +11,7 @@ from dpeva.compatibility import CapabilityKey, CapabilityMatrix
 from dpeva.compatibility.adapter import DeepMDAdapter
 from dpeva.io.collection import CollectionIOManager
 
-from conftest import frame_count, run_contract
+from conftest import frame_count, run_contract, write_cpu_attestation
 
 
 @pytest.mark.deepmd_contract
@@ -31,7 +31,7 @@ def test_periodic_pt_expt_eval_desc_is_consumable_by_collection(
         "pt-expt", CapabilityMatrix.load_default(), allow_experimental=True
     )
     adapter.preflight(key)
-    run_contract(
+    result = run_contract(
         [
             dp_executable,
             "--pt-expt",
@@ -52,3 +52,4 @@ def test_periodic_pt_expt_eval_desc_is_consumable_by_collection(
     assert descriptors.ndim == 2
     assert descriptors.shape[0] == frame_count(periodic_data)
     assert np.isfinite(descriptors).all()
+    write_cpu_attestation("eval-desc", dp_executable, result, case="dpa4c-periodic-eval-desc")

@@ -17,6 +17,7 @@ from dpeva.compatibility.deepmd import (
     CapabilityRecord,
     validate_promotion_evidence,
 )
+from dpeva.compatibility.attestation import CapabilityAttestation
 
 
 def _key(**updates: str) -> CapabilityKey:
@@ -110,6 +111,35 @@ def test_candidate_evaluation_declares_both_model_roles() -> None:
     assert record.covered_roles == ("regular", "ema")
     with pytest.raises(TypeError):
         record.covered_roles[0] = "ema"  # type: ignore[index]
+
+
+def test_manifest_evidence_and_sai_case_mapping_is_explicit() -> None:
+    from scripts.validation.collect_deepmd_32_qualification import REQUIRED_CASES
+
+    records = CapabilityMatrix.load_default().records
+    for record in records:
+        if record.status == "supported":
+            assert record.required_evidence
+        if "sai-v100-qualification" in record.required_evidence:
+            if record.verification_status == "implemented":
+                assert record.sai_verification_cases
+            else:
+                assert record.sai_verification_cases is None
+            if record.sai_verification_cases:
+                assert set(record.sai_verification_cases) <= set(REQUIRED_CASES)
+    candidate = next(r for r in records if r.key.operation == "candidate-evaluation")
+    assert candidate.verification_status == "planned"
+    assert candidate.verification_command is None
+
+
+def test_attestation_schema_is_strict_and_only_success_can_be_finished() -> None:
+    key = _key(operation="test", backend="pt", model_family="DPA4", artifact="checkpoint", environment="cpu")
+    with pytest.raises(ValidationError):
+        CapabilityAttestation(
+            status="finished", returncode=1, capability_key=key,
+            verification_command="pytest x::y -q", deepmd_version="DeePMD-kit v3.2.0",
+            source="cpu-contract",
+        )
 
 
 def test_malformed_manifest_is_rejected(tmp_path: Path) -> None:
@@ -269,11 +299,11 @@ def test_promotion_gate_accepts_exact_cpu_machine_evidence(tmp_path: Path) -> No
     command = "pytest tests/contract/deepmd/test.py::test_case -q"
     key = _key(operation="test", backend="pt", model_family="DPA4", artifact="checkpoint", environment="cpu")
     evidence = tmp_path / "cpu.json"
-    evidence.write_text(json.dumps({
-        "schema_version": "1.0", "status": "finished", "returncode": 0,
-        "capability_key": key.model_dump(), "verification_command": command,
-        "deepmd_version": "DeePMD-kit v3.2.0", "passed": True,
-    }), encoding="utf-8")
+    evidence.write_text(CapabilityAttestation(
+        status="finished", returncode=0, capability_key=key,
+        verification_command=command, deepmd_version="DeePMD-kit v3.2.0",
+        source="cpu-contract", case="test",
+    ).model_dump_json(), encoding="utf-8")
     record = CapabilityRecord(
         key=key, status="supported", version_range=">=3.2,<3.3",
         verification_command=command, required_evidence=("cpu-contract",),
@@ -291,11 +321,11 @@ def test_promotion_gate_accepts_exact_cpu_machine_evidence(tmp_path: Path) -> No
 def test_promotion_gate_rejects_non_exact_cpu_evidence(tmp_path: Path, mutation: dict[str, object]) -> None:
     command = "pytest tests/contract/deepmd/test.py::test_case -q"
     key = _key(operation="test", backend="pt", model_family="DPA4", artifact="checkpoint", environment="cpu")
-    payload: dict[str, object] = {
-        "schema_version": "1.0", "status": "finished", "returncode": 0,
-        "capability_key": key.model_dump(), "verification_command": command,
-        "deepmd_version": "DeePMD-kit v3.2.0", "passed": True,
-    }
+    payload: dict[str, object] = CapabilityAttestation(
+        status="finished", returncode=0, capability_key=key,
+        verification_command=command, deepmd_version="DeePMD-kit v3.2.0",
+        source="cpu-contract", case="test",
+    ).model_dump(mode="json")
     payload.update(mutation)
     (tmp_path / "cpu.json").write_text(json.dumps(payload), encoding="utf-8")
     record = CapabilityRecord(
@@ -310,23 +340,26 @@ def test_promotion_gate_rejects_non_exact_cpu_evidence(tmp_path: Path, mutation:
 def test_promotion_gate_requires_sai_job_and_gpu_evidence(tmp_path: Path) -> None:
     command = "pytest tests/contract/deepmd/test.py::test_case -q"
     key = _key(operation="eval-desc", backend="pt-expt", model_family="DPA4C", artifact="exportable", environment="sai-v100")
-    (tmp_path / "cpu.json").write_text(json.dumps({
-        "schema_version": "1.0", "status": "finished", "returncode": 0,
-        "capability_key": key.model_dump(), "verification_command": command,
-        "deepmd_version": "DeePMD-kit v3.2.0",
-    }), encoding="utf-8")
-    (tmp_path / "sai.json").write_text(json.dumps({
-        "schema_version": "1.0", "status": "finished", "returncode": 0,
-        "capability_key": key.model_dump(), "verification_command": command,
-        "deepmd_version": "DeePMD-kit v3.2.0", "job_id": 123,
-        "gpu": "Tesla V100", "qualification_status": "finished",
-    }), encoding="utf-8")
+    cpu = CapabilityAttestation(
+        status="finished", returncode=0, capability_key=key,
+        verification_command=command, deepmd_version="DeePMD-kit v3.2.0",
+        source="cpu-contract", case="test",
+    )
+    sai = CapabilityAttestation(
+        status="finished", returncode=0, capability_key=key,
+        verification_command=command, deepmd_version="DeePMD-kit v3.2.0",
+        source="sai-v100-qualification", case="pt-test", job_id=123,
+        gpu="Tesla V100",
+    )
+    (tmp_path / "cpu.json").write_text(cpu.model_dump_json(), encoding="utf-8")
+    (tmp_path / "sai.json").write_text(sai.model_dump_json(), encoding="utf-8")
     record = CapabilityRecord(
         key=key, status="supported", version_range=">=3.2,<3.3",
         verification_command=command,
         required_evidence=("cpu-contract", "sai-v100-qualification"),
         verification_status="implemented",
         evidence_ref=CapabilityEvidence(cpu_contract="cpu.json", sai_qualification="sai.json"),
+        sai_verification_cases=("pt-test",),
     )
     assert validate_promotion_evidence(record, tmp_path)
     (tmp_path / "sai.json").unlink()

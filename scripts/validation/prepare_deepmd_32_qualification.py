@@ -17,6 +17,8 @@ from typing import Any
 
 import numpy as np
 
+from dpeva.compatibility import CapabilityMatrix
+
 
 def sha256(path: Path) -> str:
     digest = hashlib.sha256()
@@ -83,6 +85,18 @@ def prepare(model_root: Path, output: Path) -> dict[str, Any]:
     if output.exists():
         raise FileExistsError(f"refusing to overwrite prepared input: {output}")
     fixture = _write_fixture(root)
+    matrix = CapabilityMatrix.load_default()
+    attestation_specs = [
+        {
+            "case": case,
+            "capability_key": record.key.model_dump(),
+            "verification_command": record.verification_command,
+            "source": "sai-v100-qualification",
+        }
+        for record in matrix.records
+        if record.sai_verification_cases
+        for case in record.sai_verification_cases
+    ]
     payload: dict[str, Any] = {
         "schema_version": "1.0",
         "qualification": "deepmd-3.2-sai-v100",
@@ -99,6 +113,7 @@ def prepare(model_root: Path, output: Path) -> dict[str, Any]:
             "pt-test", "pt-test-ema", "pt-eval-desc", "pt-eval-desc-ema",
             "pt-embed", "pt-embed-ema", "dpa4c-periodic-eval-desc",
         ],
+        "capability_attestation_specs": attestation_specs,
     }
     payload["fixture"]["sha256"] = sha256(Path(payload["fixture"]["path"]))
     # Atomic only within the caller-owned build directory; never replace an

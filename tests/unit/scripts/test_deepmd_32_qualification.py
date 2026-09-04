@@ -12,6 +12,7 @@ import pytest
 from scripts.validation.collect_deepmd_32_qualification import collect_qualification
 from scripts.validation.prepare_deepmd_32_qualification import prepare
 from scripts.validation.submit_deepmd_32_qualification import parse_job_id, submit
+from dpeva.compatibility import CapabilityEvidence, CapabilityKey, CapabilityRecord, validate_promotion_evidence
 
 
 def _sha256(path: Path) -> str:
@@ -50,8 +51,14 @@ def _write_command_result(root: Path, case: str, *, returncode: int = 0, artifac
 def _complete_environment(root: Path) -> None:
     environment = root / "environment"
     environment.mkdir(parents=True, exist_ok=True)
-    for name, content in {"pip-freeze.json": "{}\n", "deepmd-version.json": "{}\n", "torch-cuda.json": "{}\n", "gpu.json": "{}\n"}.items():
-        (environment / name).write_text(content, encoding="utf-8")
+    values = {
+        "pip-freeze.json": {"schema_version": "1.0", "case": "pip-freeze", "returncode": 0, "value": ""},
+        "deepmd-version.json": {"schema_version": "1.0", "case": "deepmd-version", "returncode": 0, "value": "DeePMD-kit v3.2.0"},
+        "torch-cuda.json": {"schema_version": "1.0", "case": "torch-cuda", "returncode": 0, "value": {"available": True, "cuda": "12.6", "torch": "2.0"}},
+        "gpu.json": {"schema_version": "1.0", "case": "gpu", "returncode": 0, "value": "GPU 0: Tesla V100"},
+    }
+    for name, content in values.items():
+        (environment / name).write_text(json.dumps(content) + "\n", encoding="utf-8")
 
 
 def test_collector_refuses_partial_success(tmp_path: Path) -> None:
@@ -105,6 +112,16 @@ def test_collector_accepts_directory_artifact_only_after_complete_records(tmp_pa
     report = collect_qualification(tmp_path, job_id="123", finalize=True)
     assert report["status"] == "finished"
     assert (tmp_path / "qualification.json").is_file()
+    assert len(report["attestations"]) == 7
+    key = CapabilityKey(operation="test", backend="pt", model_family="DPA4", artifact="checkpoint", data_format="deepmd/npy", environment="cpu")
+    record = CapabilityRecord(
+        key=key, status="supported", version_range=">=3.2,<3.3",
+        verification_command="pytest tests/contract/deepmd/test_cli_contract.py::test_pt_test_requires_numeric_output -q",
+        required_evidence=("sai-v100-qualification",), verification_status="implemented",
+        evidence_ref=CapabilityEvidence(sai_qualification="qualification.json"),
+        sai_verification_cases=("pt-test",),
+    )
+    assert validate_promotion_evidence(record, tmp_path)
 
 
 def test_prepare_records_models_without_copying(tmp_path: Path) -> None:

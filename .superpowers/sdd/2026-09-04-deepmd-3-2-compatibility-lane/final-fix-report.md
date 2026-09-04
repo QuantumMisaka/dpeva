@@ -42,3 +42,21 @@ submitting another SAI job or promoting any capability.
 The only authorized SAI attempt remains JobID `1126627`, which was cancelled
 before payload execution. This pass does not resubmit it and does not claim
 GPU/runtime qualification.
+
+## Final-fix round 2
+
+- Added the strict `CapabilityAttestation` schema and changed promotion to
+  consume only producer-issued attestations, either as one JSON file or inside
+  a validated qualification aggregate. Documentation anchors and raw command
+  records cannot satisfy the gate.
+- CPU contract tests now issue attestations only after their real command,
+  artifact, and shape assertions complete; CI uploads the resulting
+  `attestations/` directory.
+- SAI preparation derives immutable attestation specs from the manifest;
+  submit and compute preflight reject stale mappings. The collector emits
+  finished attestations only from a complete validated qualification and
+  includes numeric JobID, V100, and exact-version evidence.
+- PT train/fine-tune/test and periodic DPA4C eval-desc require both CPU and SAI
+  evidence. Test/eval/embed SAI case mappings cover regular and EMA cases;
+  planned routes have null cases and cannot be promoted. Candidate evaluation
+  is explicitly planned policy-only and has no CLI verification command.
