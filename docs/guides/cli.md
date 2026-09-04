@@ -181,6 +181,7 @@ dpeva infer config.json --run-id infer-20260904-a1b2c3
     并保留不可变的 `dataset-manifest-<generation>.json`；统计文件中的
     `dataset_manifest_path` 是相对于输出目录的不可变清单引用，同时记录 generation 和
     SHA-256。清单记录父数据集、合并后的帧/体系数、去重移除数、type map 和逻辑来源引用；
+    当前整合不会伪造不可解析的 parent manifest ref，仅保留逻辑来源标签；
     帧数或 type map 冲突会在下游交接前失败。
 
 ### 4.7 analysis（双模式分析）

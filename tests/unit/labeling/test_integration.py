@@ -1,3 +1,4 @@
+import hashlib
 import json
 from pathlib import Path
 from unittest.mock import patch
@@ -65,6 +66,9 @@ def test_integration_manager_export(mock_load_systems, tmp_path):
     ]
     assert result["dataset_manifest_path"].startswith("dataset-manifest-")
     assert (out_dir / result["dataset_manifest_path"]).exists()
+    generation_bytes = (out_dir / result["dataset_manifest_path"]).read_bytes()
+    assert generation_bytes == (out_dir / "dataset-manifest.json").read_bytes()
+    assert result["dataset_manifest_sha256"] == hashlib.sha256(generation_bytes).hexdigest()
     assert manifest["source_entries"] == ["existing-training", "new-labeled"]
     assert all(not Path(entry).is_absolute() for entry in manifest["source_entries"])
     relocated = tmp_path / "relocated"
@@ -98,6 +102,8 @@ def test_integration_manager_deduplicate(mock_load_systems, tmp_path):
     manifest = json.loads((out_dir / "dataset-manifest.json").read_text())
     assert manifest["frame_count"] == 1
     assert manifest["removed_frame_count"] == 1
+    assert [parent["dataset_id"] for parent in manifest["parents"]] == ["new-labeled"]
+    assert manifest["parents"][0]["manifest_ref"] is None
     assert result["dataset_manifest_path"].startswith("dataset-manifest-")
     assert (out_dir / result["dataset_manifest_path"]).exists()
 
@@ -266,7 +272,8 @@ def test_integration_manager_missing_existing_path_fails_before_export(mock_load
 @patch("dpeva.labeling.integration.load_systems")
 def test_summary_replace_failure_keeps_previous_generation_reference(mock_load_systems, tmp_path):
     new_dir = tmp_path / "new_cleaned"
-    out_dir = tmp_path / "merged"
+    out_dir = tmp_path / "merged-v1"
+    retry_dir = tmp_path / "merged-v2"
     new_dir.mkdir()
     first = _FakeSystem([[[0.0, 0.0, 0.0]]])
     second = _FakeSystem([[[2.0, 0.0, 0.0]]])
@@ -287,12 +294,70 @@ def test_summary_replace_failure_keeps_previous_generation_reference(mock_load_s
 
     with patch.object(manager, "_write_json_atomic", side_effect=fail_summary):
         with pytest.raises(OSError, match="summary publication failure"):
-            manager.integrate(new_labeled_data_path=new_dir, merged_output_path=out_dir)
+            manager.integrate(new_labeled_data_path=new_dir, merged_output_path=retry_dir)
 
     assert (out_dir / "integration_summary.json").read_bytes() == old_summary_bytes
     assert (out_dir / "dataset-manifest.json").read_bytes() == old_root_manifest_bytes
     assert (out_dir / old_manifest_name).exists()
+    assert not retry_dir.exists()
 
-    retried_summary = manager.integrate(new_labeled_data_path=new_dir, merged_output_path=out_dir)
+    retried_summary = manager.integrate(new_labeled_data_path=new_dir, merged_output_path=retry_dir)
     assert retried_summary["dataset_manifest_path"] != old_manifest_name
-    assert (out_dir / retried_summary["dataset_manifest_path"]).exists()
+    assert (retry_dir / retried_summary["dataset_manifest_path"]).exists()
+
+
+@patch("dpeva.labeling.integration.dpdata.MultiSystems", _FakeMultiSystems)
+@patch("dpeva.labeling.integration.load_systems")
+def test_integration_manager_refuses_existing_output(mock_load_systems, tmp_path):
+    new_dir = tmp_path / "new_cleaned"
+    out_dir = tmp_path / "merged"
+    new_dir.mkdir()
+    out_dir.mkdir()
+    marker = out_dir / "keep.txt"
+    marker.write_text("old evidence")
+
+    with pytest.raises(FileExistsError, match="refusing overwrite"):
+        DataIntegrationManager().integrate(new_labeled_data_path=new_dir, merged_output_path=out_dir)
+
+    mock_load_systems.assert_not_called()
+    assert marker.read_text() == "old evidence"
+
+
+@pytest.mark.parametrize("failure_point", ["export", "manifest", "pointer", "summary"])
+@patch("dpeva.labeling.integration.dpdata.MultiSystems", _FakeMultiSystems)
+@patch("dpeva.labeling.integration.load_systems")
+def test_integration_manager_publication_failures_leave_no_final_bundle(
+    mock_load_systems, failure_point, tmp_path
+):
+    new_dir = tmp_path / "new_cleaned"
+    out_dir = tmp_path / "merged"
+    new_dir.mkdir()
+    mock_load_systems.return_value = [_FakeSystem([[[0.0, 0.0, 0.0]]])]
+    manager = DataIntegrationManager()
+
+    if failure_point == "export":
+        patcher = patch.object(_FakeMultiSystems, "to", side_effect=OSError("export failure"))
+    elif failure_point == "manifest":
+        patcher = patch.object(
+            manager, "_write_immutable_json", side_effect=OSError("manifest failure")
+        )
+    elif failure_point == "pointer":
+        original = manager._write_bytes_atomic
+
+        def fail_pointer(path, payload):
+            if path.name == "dataset-manifest.json":
+                raise OSError("pointer failure")
+            return original(path, payload)
+
+        patcher = patch.object(manager, "_write_bytes_atomic", side_effect=fail_pointer)
+    else:
+        patcher = patch.object(
+            manager, "_write_json_atomic", side_effect=OSError("summary failure")
+        )
+
+    with patcher:
+        with pytest.raises(OSError, match=f"{failure_point} failure"):
+            manager.integrate(new_labeled_data_path=new_dir, merged_output_path=out_dir)
+
+    assert not out_dir.exists()
+    assert not list(tmp_path.glob(".merged.staging-*"))

@@ -2,6 +2,7 @@ import hashlib
 import json
 import logging
 import os
+import shutil
 import tempfile
 from pathlib import Path
 from typing import Dict, Optional, List
@@ -28,6 +29,11 @@ class DataIntegrationManager:
         merged_output_path: Path,
         existing_training_data_path: Optional[Path] = None,
     ) -> Dict[str, object]:
+        if merged_output_path.exists():
+            raise FileExistsError(
+                f"Merged output path already exists; refusing overwrite: {merged_output_path}"
+            )
+
         merged = dpdata.MultiSystems()
         existing_count = 0
         new_count = 0
@@ -94,88 +100,82 @@ class DataIntegrationManager:
                 "integration frame count conflict: merged output exceeds source frame count"
             )
 
-        parent_refs = {
-            "existing-training": self._source_manifest_ref(
-                existing_training_data_path, "existing-training"
-            ),
-            "new-labeled": self._source_manifest_ref(new_labeled_data_path, "new-labeled"),
-        }
+        parent_specs = []
+        source_entries = []
+        if existing_training_data_path is not None:
+            parent_specs.append(
+                DatasetParent(dataset_id="existing-training", frame_count=existing_frames)
+            )
+            source_entries.append("existing-training")
+        parent_specs.append(DatasetParent(dataset_id="new-labeled", frame_count=new_frames))
+        source_entries.append("new-labeled")
         manifest = DatasetManifest(
             dataset_id=f"integration-{hashlib.sha256(str(merged_output_path).encode()).hexdigest()[:12]}",
-            parents=[
-                DatasetParent(
-                    dataset_id="existing-training",
-                    frame_count=existing_frames,
-                    manifest_ref=parent_refs["existing-training"],
-                ),
-                DatasetParent(
-                    dataset_id="new-labeled",
-                    frame_count=new_frames,
-                    manifest_ref=parent_refs["new-labeled"],
-                ),
-            ],
+            parents=parent_specs,
             transformation="merge",
             frame_count=merged_frames_after_dedup,
             removed_frame_count=filtered_frames,
             system_count=after_dedup,
             type_map=list(reference_type_map or reference_atom_names or []),
             format=self.output_format,
-            source_entries=[
-                source
-                for source, path in (
-                    ("existing-training", existing_training_data_path),
-                    ("new-labeled", new_labeled_data_path),
-                )
-                if path is not None
-            ],
+            source_entries=source_entries,
         )
         validate_lineage_counts(manifest)
 
-        merged_output_path.mkdir(parents=True, exist_ok=True)
-        merged.to(self.output_format, str(merged_output_path))
-        content_identity = self._hash_exported_dataset(merged_output_path)
-        manifest = manifest.model_copy(
-            update={
-                "content_identity": f"sha256:{content_identity}",
-                "content_identity_strength": "exported-files-sha256",
+        merged_output_path.parent.mkdir(parents=True, exist_ok=True)
+        staging_path = Path(
+            tempfile.mkdtemp(
+                prefix=f".{merged_output_path.name}.staging-",
+                dir=merged_output_path.parent,
+            )
+        )
+        try:
+            merged.to(self.output_format, str(staging_path))
+            content_identity = self._hash_exported_dataset(staging_path)
+            manifest = manifest.model_copy(
+                update={
+                    "content_identity": f"sha256:{content_identity}",
+                    "content_identity_strength": "exported-files-sha256",
+                }
+            )
+            validate_lineage_counts(manifest)
+
+            manifest_payload = manifest.model_dump(mode="json")
+            manifest_bytes = self._json_bytes(manifest_payload)
+            generation = hashlib.sha256(manifest_bytes).hexdigest()[:16]
+            immutable_manifest_name = f"dataset-manifest-{generation}.json"
+            self._write_immutable_json(staging_path / immutable_manifest_name, manifest_bytes)
+            self._write_bytes_atomic(staging_path / "dataset-manifest.json", manifest_bytes)
+
+            summary = {
+                "existing_system_count": existing_count,
+                "new_system_count": new_count,
+                "merged_system_count_before_dedup": before_dedup,
+                "merged_system_count_after_dedup": after_dedup,
+                "filtered_system_count": filtered_count,
+                "existing_frame_count": existing_frames,
+                "new_frame_count": new_frames,
+                "merged_frame_count_before_dedup": merged_frames_before_dedup,
+                "merged_frame_count_after_dedup": merged_frames_after_dedup,
+                "filtered_frame_count": filtered_frames,
+                "deduplicate_enabled": self.deduplicate,
+                "output_format": self.output_format,
+                "reference_atom_names": reference_atom_names,
+                "reference_type_map": reference_type_map,
+                "compatibility_issues": compatibility_issues,
+                "output_path": str(merged_output_path),
+                "dataset_manifest_path": immutable_manifest_name,
+                "dataset_manifest_generation": generation,
+                "dataset_manifest_sha256": hashlib.sha256(manifest_bytes).hexdigest(),
             }
-        )
-        validate_lineage_counts(manifest)
-        summary = {
-            "existing_system_count": existing_count,
-            "new_system_count": new_count,
-            "merged_system_count_before_dedup": before_dedup,
-            "merged_system_count_after_dedup": after_dedup,
-            "filtered_system_count": filtered_count,
-            "existing_frame_count": existing_frames,
-            "new_frame_count": new_frames,
-            "merged_frame_count_before_dedup": merged_frames_before_dedup,
-            "merged_frame_count_after_dedup": merged_frames_after_dedup,
-            "filtered_frame_count": filtered_frames,
-            "deduplicate_enabled": self.deduplicate,
-            "output_format": self.output_format,
-            "reference_atom_names": reference_atom_names,
-            "reference_type_map": reference_type_map,
-            "compatibility_issues": compatibility_issues,
-            "output_path": str(merged_output_path),
-        }
-        generation = content_identity[:16]
-        immutable_manifest_name = f"dataset-manifest-{generation}.json"
-        immutable_manifest_path = merged_output_path / immutable_manifest_name
-        manifest_payload = manifest.model_dump(mode="json")
-        manifest_bytes = self._json_bytes(manifest_payload)
-        self._write_immutable_json(immutable_manifest_path, manifest_bytes)
-        summary["dataset_manifest_path"] = immutable_manifest_name
-        summary["dataset_manifest_generation"] = generation
-        summary["dataset_manifest_sha256"] = hashlib.sha256(manifest_bytes).hexdigest()
-        self._write_json_atomic(
-            merged_output_path / "integration_summary.json", summary
-        )
-        # Keep the historical root name as a current-generation compatibility
-        # pointer. Summaries always reference the immutable generation file.
-        self._write_json_atomic(
-            merged_output_path / "dataset-manifest.json", manifest_payload
-        )
+            self._write_json_atomic(staging_path / "integration_summary.json", summary)
+            self._fsync_directory(staging_path)
+            os.rename(staging_path, merged_output_path)
+            self._fsync_directory(merged_output_path.parent)
+        except Exception:
+            if staging_path.exists():
+                shutil.rmtree(staging_path)
+            raise
         logger.info(
             "Integration summary: existing=%s, new=%s, merged_before_de-dup=%s, merged_after_de-dup=%s",
             existing_count,
@@ -240,16 +240,6 @@ class DataIntegrationManager:
         return reference_type_map
 
     @staticmethod
-    def _source_manifest_ref(path: Optional[Path], logical_name: str) -> str | None:
-        """Return a logical parent manifest reference when one is available."""
-        if path is None:
-            return None
-        candidate = path / "dataset-manifest.json"
-        if candidate.is_file():
-            return f"{logical_name}/dataset-manifest.json"
-        return None
-
-    @staticmethod
     def _json_bytes(payload: dict[str, object]) -> bytes:
         return (json.dumps(payload, indent=4, sort_keys=True) + "\n").encode("utf-8")
 
@@ -296,6 +286,18 @@ class DataIntegrationManager:
                 while chunk := stream.read(1024 * 1024):
                     digest.update(chunk)
         return digest.hexdigest()
+
+    @staticmethod
+    def _fsync_directory(path: Path) -> None:
+        """Best-effort directory durability for the bundle rename."""
+        try:
+            fd = os.open(path, os.O_RDONLY)
+        except OSError:
+            return
+        try:
+            os.fsync(fd)
+        finally:
+            os.close(fd)
 
     @staticmethod
     def _write_json_atomic(path: Path, payload: dict[str, object]) -> None:

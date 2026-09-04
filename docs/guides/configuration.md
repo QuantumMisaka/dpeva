@@ -263,6 +263,8 @@ LLPR / energy DPOSE 可作为 Collect UQ backend 使用。最小 energy LLPR 只
 输出目录的不可变清单引用，并同时记录 generation 与 SHA-256。清单只记录
 `existing-training`、`new-labeled` 等逻辑来源，不固化机器绝对路径，并记录父集合帧数、
 去重移除帧数、最终帧/体系数、canonical type map 以及导出文件 SHA-256 的证据强度。
+当前整合仅保留 `existing-training` / `new-labeled` 逻辑来源标签，不生成无法解析的
+parent manifest ref；待父清单随 bundle 一并固化后再扩展该引用。
 帧数或 type map 冲突会在导出和下游交接前失败。
 
 ### 5.6 Analysis
