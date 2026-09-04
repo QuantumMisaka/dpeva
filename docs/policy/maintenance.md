@@ -121,7 +121,9 @@ Owner 可以是角色而非具体姓名；但每篇 `active` 文档必须有 Own
 
 ## 8. 轻量治理规则审计
 
-- `docs/governance/rules.json` 只登记有明确 Owner、依据和可执行 enforcement path 的活动治理机制，最多八条；它不复制 SPEC 的需求清单。
+- `docs/governance/rules.json` 只登记有明确 Owner、依据、enforcement path 和
+  `trigger_paths` 的活动治理机制，最多八条；它不复制 SPEC 的需求清单。
+- `trigger_paths` 只证明仓库内存在可复核的触发入口或配置路径，不证明 CI 历史运行、远程服务状态或科学结果。
 - 季度 `governance-audit` workflow 仅生成并上传报告，不自动改写、删除文件或创建 Issue；默认报告模式即使发现问题也返回成功。
 - 发布评审如需阻断语义，维护者显式运行
   `python scripts/audit_governance_rules.py --strict`；修复或退役规则后更新

@@ -13,6 +13,7 @@ def write_rule_registry(root: Path, **overrides: object) -> Path:
         "owner": "Test Owner",
         "basis": "test evidence",
         "enforcement_paths": ["scripts/gate.sh"],
+        "trigger_paths": ["scripts/gate.sh"],
         "last_reviewed": "2026-09-04",
         "review_interval_days": 90,
     }
@@ -74,10 +75,11 @@ def test_schema_rejects_bad_dates_intervals_and_paths(tmp_path: Path) -> None:
         last_reviewed="20260904",
         review_interval_days=True,
         enforcement_paths=["../outside", "/tmp/outside"],
+        trigger_paths=["../outside", "/tmp/outside"],
     )
     findings = audit_rules(registry, Path.cwd(), date(2026, 9, 4))
     reasons = {finding["reason"] for finding in findings}
-    assert {"invalid-date", "invalid-interval", "invalid-enforcement"} <= reasons
+    assert {"invalid-date", "invalid-interval", "invalid-enforcement", "missing-trigger"} <= reasons
 
 
 def test_schema_rejects_symlink_escape(tmp_path: Path) -> None:
@@ -87,6 +89,30 @@ def test_schema_rejects_symlink_escape(tmp_path: Path) -> None:
     outside.write_text("outside", encoding="utf-8")
     link = tmp_path / "linked.py"
     link.symlink_to(outside)
-    registry = write_rule_registry(tmp_path, enforcement_paths=["linked.py"])
+    registry = write_rule_registry(
+        tmp_path,
+        enforcement_paths=["linked.py"],
+        trigger_paths=["inside.py"],
+    )
     findings = audit_rules(registry, repo_root=tmp_path, today=date(2026, 9, 4))
     assert any(finding["reason"] == "invalid-enforcement" for finding in findings)
+
+
+def test_missing_trigger_evidence_is_reported(tmp_path: Path) -> None:
+    registry = write_rule_registry(tmp_path, trigger_paths=[])
+    findings = audit_rules(registry, repo_root=Path.cwd(), today=date(2026, 9, 4))
+    assert any(finding["reason"] == "missing-trigger" for finding in findings)
+
+
+def test_rule_cap_is_one_registry_finding_and_strict_only(tmp_path: Path) -> None:
+    registry = tmp_path / "rules.json"
+    entry = json.loads(write_rule_registry(tmp_path).read_text(encoding="utf-8"))[0]
+    registry.write_text(
+        json.dumps([dict(entry, rule_id=f"GATE-{index}") for index in range(9)]),
+        encoding="utf-8",
+    )
+    findings = audit_rules(registry, repo_root=Path.cwd(), today=date(2026, 9, 4))
+    cap_findings = [finding for finding in findings if finding["reason"] == "too-many-active-rules"]
+    assert len(cap_findings) == 1
+    assert main([str(registry), "--format", "json"]) == 0
+    assert main([str(registry), "--format", "json", "--strict"]) == 1

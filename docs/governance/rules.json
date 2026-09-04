@@ -7,6 +7,13 @@
       "scripts/gates.toml",
       "scripts/run_gate.py"
     ],
+    "trigger_paths": [
+      "scripts/gate.sh",
+      ".github/workflows/python-quality.yml",
+      ".github/workflows/doc-lint.yml",
+      ".github/workflows/docs-check.yml",
+      ".github/workflows/docs-deploy.yml"
+    ],
     "last_reviewed": "2026-09-04",
     "review_interval_days": 90
   },
@@ -18,6 +25,11 @@
       "scripts/check_traceability.py",
       "docs/governance/traceability/capability-evidence.json"
     ],
+    "trigger_paths": [
+      "scripts/gates.toml",
+      ".github/workflows/doc-lint.yml",
+      ".github/workflows/docs-check.yml"
+    ],
     "last_reviewed": "2026-09-04",
     "review_interval_days": 90
   },
@@ -27,6 +39,9 @@
     "basis": "SPEC R14",
     "enforcement_paths": [
       "scripts/audit_governance_rules.py",
+      ".github/workflows/governance-audit.yml"
+    ],
+    "trigger_paths": [
       ".github/workflows/governance-audit.yml"
     ],
     "last_reviewed": "2026-09-04",

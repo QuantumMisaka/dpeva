@@ -23,6 +23,7 @@ _FIELDS = frozenset(
         "owner",
         "basis",
         "enforcement_paths",
+        "trigger_paths",
         "last_reviewed",
         "review_interval_days",
     }
@@ -98,6 +99,11 @@ def _audit_record(
 
     unknown = sorted(set(record) - _FIELDS)
     missing = sorted(_FIELDS - set(record))
+    trigger_paths = record.get("trigger_paths")
+    if "trigger_paths" not in record or not isinstance(trigger_paths, list) or not trigger_paths:
+        findings.append(
+            _finding(label, "missing-trigger", "trigger_paths must be a non-empty array")
+        )
     if unknown or missing:
         details: list[str] = []
         if unknown:
@@ -129,6 +135,17 @@ def _audit_record(
                     )
                 )
 
+    if isinstance(trigger_paths, list) and trigger_paths:
+        for path in trigger_paths:
+            if not _valid_repo_file(path, repo_root):
+                findings.append(
+                    _finding(
+                        label,
+                        "missing-trigger",
+                        f"path is not a contained file: {path!r}",
+                    )
+                )
+
     reviewed = _parse_date(record["last_reviewed"])
     if reviewed is None:
         findings.append(
@@ -151,6 +168,14 @@ def _audit_record(
 
 def _audit(registry: Path, repo_root: Path, today: date) -> tuple[int, list[dict[str, str]]]:
     records, findings = _read_registry(registry)
+    if len(records) > 8:
+        findings.append(
+            _finding(
+                "<registry>",
+                "too-many-active-rules",
+                f"active rule count {len(records)} exceeds maximum 8",
+            )
+        )
     seen: set[str] = set()
     for index, record in enumerate(records):
         findings.extend(_audit_record(record, index, seen, repo_root, today))
