@@ -8,6 +8,7 @@ from .model import (
     ModelArtifactRef,
     ModelRole,
     load_model_ref,
+    require_backend,
     require_operation,
     resolve_model_refs,
 )
@@ -33,6 +34,7 @@ __all__ = [
     "ModelArtifactRef",
     "ModelRole",
     "load_model_ref",
+    "require_backend",
     "require_operation",
     "resolve_model_refs",
 ]

@@ -9,6 +9,7 @@ submitted to either local or Slurm execution.
 from __future__ import annotations
 
 import hashlib
+import json
 from enum import Enum
 from pathlib import Path
 from typing import Literal
@@ -58,8 +59,13 @@ class ModelArtifactRef(BaseModel):
         if self.kind is ModelArtifactKind.PRETRAINED_ALIAS:
             if not self.alias:
                 raise ValueError("pretrained-alias requires alias")
-        elif not self.path and not self.resolved_path:
-            raise ValueError(f"{self.kind.value} requires path or resolved_path")
+            if self.path:
+                raise ValueError("pretrained-alias must not declare path; use resolved_path")
+        else:
+            if self.alias:
+                raise ValueError(f"{self.kind.value} must not declare alias")
+            if not self.path and not self.resolved_path:
+                raise ValueError(f"{self.kind.value} requires path or resolved_path")
 
         if self.checksum is not None:
             if len(self.checksum) != 64 or any(
@@ -84,8 +90,15 @@ def _sha256(path: Path) -> str:
 
 def load_model_ref(path: Path) -> ModelArtifactRef:
     """Load and strictly validate a JSON model reference."""
-
-    return ModelArtifactRef.model_validate_json(path.read_text(encoding="utf-8"))
+    reference_path = Path(path).expanduser().resolve()
+    payload = json.loads(reference_path.read_text(encoding="utf-8"))
+    ref = ModelArtifactRef.model_validate(payload)
+    updates: dict[str, str] = {}
+    for field in ("path", "resolved_path"):
+        value = getattr(ref, field)
+        if value and not Path(value).expanduser().is_absolute():
+            updates[field] = str((reference_path.parent / value).resolve())
+    return ref.model_copy(update=updates) if updates else ref
 
 
 def resolve_model_refs(
@@ -138,3 +151,25 @@ def require_operation(ref: ModelArtifactRef, operation: str) -> None:
         raise ValueError("resolve pretrained alias before execution")
     if operation not in ref.supported_operations:
         raise ValueError(f"model artifact does not declare operation: {operation}")
+    artifact_path = ref.resolved_path or ref.path
+    if not artifact_path:
+        raise ValueError("model artifact has no executable path")
+    path = Path(artifact_path)
+    if not path.is_file():
+        raise ValueError(f"model artifact path does not exist: {path}")
+    if ref.checksum is not None:
+        observed = _sha256(path)
+        if observed != ref.checksum:
+            raise ValueError(
+                f"model artifact checksum mismatch: expected {ref.checksum}, observed {observed}"
+            )
+
+
+def require_backend(ref: ModelArtifactRef, backend: str) -> None:
+    """Reject an artifact produced for a different DeepMD backend."""
+
+    if ref.backend != backend:
+        raise ValueError(
+            f"model artifact backend mismatch: reference declares {ref.backend!r}, "
+            f"inference config requires {backend!r}"
+        )

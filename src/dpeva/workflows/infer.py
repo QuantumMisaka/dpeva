@@ -10,7 +10,7 @@ from dpeva.constants import WORKFLOW_FINISHED_TAG, LOG_FILE_INFER, FILENAME_METR
 from dpeva.utils.logs import setup_workflow_logger
 from dpeva.utils.exceptions import PartialWorkflowError, WorkflowError
 from dpeva.run.context import RunContext, RunOptions, input_identity, source_identity
-from dpeva.run.model import ModelArtifactRef, require_operation
+from dpeva.run.model import ModelArtifactRef, require_backend, require_operation
 from dpeva.run.models import JobRecord
 from dpeva.run.status import RunEventKind, RunState
 
@@ -50,6 +50,15 @@ class InferenceWorkflow:
 
         self.config_path = config_path
         self._setup_logger()
+
+        if self.config.model_ref_paths and self.config_path:
+            config_dir = Path(self.config_path).expanduser().resolve().parent
+            self.config.model_ref_paths = [
+                path
+                if path.expanduser().is_absolute()
+                else (config_dir / path).resolve()
+                for path in self.config.model_ref_paths
+            ]
         
         # Core Configurations
         self.work_dir = str(self.config.work_dir)
@@ -84,6 +93,7 @@ class InferenceWorkflow:
                 family="legacy-unknown", backend=self.config.dp_backend
             )
         for ref in self.model_refs:
+            require_backend(ref, self.config.dp_backend)
             require_operation(ref, "test")
         self.models_paths = self.io_manager.paths_from_refs(self.model_refs)
         self.logger.info(f"Discovered {len(self.models_paths)} models in {self.work_dir}")

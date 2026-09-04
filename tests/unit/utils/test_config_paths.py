@@ -53,6 +53,19 @@ def test_resolve_config_paths_resolves_llpr_paths(tmp_path):
         assert out[key] == value
 
 
+def test_resolve_config_paths_resolves_model_reference_list(tmp_path):
+    config_path = tmp_path / "configs" / "infer.json"
+    config_path.parent.mkdir(parents=True)
+    config_path.write_text("{}", encoding="utf-8")
+
+    cfg = {"model_ref_paths": ["refs/regular.json", "$PWD/ema.json"]}
+
+    out = resolve_config_paths(cfg, str(config_path))
+
+    assert out["model_ref_paths"][0] == str(config_path.parent / "refs/regular.json")
+    assert out["model_ref_paths"][1] == os.path.abspath(os.path.expandvars("$PWD/ema.json"))
+
+
 def test_resolve_config_paths_without_config_file_path_returns_input_unchanged():
     cfg = {"data_path": "data"}
     out = resolve_config_paths(cfg, "")

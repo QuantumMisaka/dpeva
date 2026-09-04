@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 from pathlib import Path
 
 import pytest
@@ -46,6 +47,27 @@ def test_pretrained_alias_must_be_resolved_before_execution() -> None:
         require_operation(ref, "test")
 
 
+def test_pretrained_alias_rejects_local_path() -> None:
+    with pytest.raises(ValueError, match="must not declare path"):
+        ModelArtifactRef(
+            kind="pretrained-alias",
+            family="DPA4",
+            backend="pt",
+            alias="DPA4-Air-OMat24-v20260805",
+            path="model.pt",
+        )
+
+
+def test_local_artifact_rejects_alias() -> None:
+    with pytest.raises(ValueError, match="must not declare alias"):
+        ModelArtifactRef(
+            kind="checkpoint",
+            family="DPA4",
+            backend="pt",
+            alias="not-a-local-file",
+        )
+
+
 def test_unsupported_operation_fails_before_execution() -> None:
     ref = ModelArtifactRef(
         kind="frozen",
@@ -88,4 +110,59 @@ def test_load_model_ref_reads_json(tmp_path: Path) -> None:
     ref = load_model_ref(path)
 
     assert ref.kind is ModelArtifactKind.EXPORTABLE
-    assert ref.path == "model.pt2"
+    assert ref.path == str((tmp_path / "model.pt2").resolve())
+
+
+def test_load_model_ref_resolves_artifact_path_relative_to_reference(tmp_path: Path) -> None:
+    artifact = tmp_path / "models" / "model.pt"
+    artifact.parent.mkdir()
+    artifact.write_bytes(b"model")
+    ref_path = tmp_path / "refs" / "model-ref.json"
+    ref_path.parent.mkdir()
+    ref_path.write_text(
+        json.dumps(
+            {
+                "kind": "checkpoint",
+                "family": "DPA4",
+                "backend": "pt",
+                "path": "../models/model.pt",
+                "checksum": hashlib.sha256(b"model").hexdigest(),
+                "supported_operations": ["test"],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    ref = load_model_ref(ref_path)
+
+    assert ref.path == str(artifact.resolve())
+    require_operation(ref, "test")
+
+
+def test_checksum_mismatch_fails_before_execution(tmp_path: Path) -> None:
+    artifact = tmp_path / "model.pt"
+    artifact.write_bytes(b"changed")
+    ref = ModelArtifactRef(
+        kind="checkpoint",
+        family="DPA4",
+        backend="pt",
+        path=str(artifact),
+        checksum="0" * 64,
+        supported_operations=["test"],
+    )
+
+    with pytest.raises(ValueError, match="checksum mismatch"):
+        require_operation(ref, "test")
+
+
+def test_explicit_artifact_path_must_exist_before_execution(tmp_path: Path) -> None:
+    ref = ModelArtifactRef(
+        kind="frozen",
+        family="DPA4",
+        backend="pt",
+        path=str(tmp_path / "missing.pt"),
+        supported_operations=["test"],
+    )
+
+    with pytest.raises(ValueError, match="path does not exist"):
+        require_operation(ref, "test")

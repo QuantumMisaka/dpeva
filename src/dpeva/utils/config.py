@@ -32,7 +32,7 @@ def resolve_config_paths(config: Dict[str, Any], config_file_path: str, path_key
             "llpr_train_feature_dir", "llpr_candidate_feature_dir",
             "llpr_model_path", "llpr_last_layer_weights_path",
             "llpr_candidate_energy_path", "llpr_state_path",
-            "llpr_save_state_path", "llpr_ensemble_output_path",
+            "llpr_save_state_path", "llpr_ensemble_output_path", "model_ref_paths",
         ]
         
     for key in path_keys:
@@ -47,10 +47,18 @@ def resolve_config_paths(config: Dict[str, Any], config_file_path: str, path_key
                     config[key] = os.path.abspath(os.path.join(config_dir, val))
                 else:
                     config[key] = val
-            elif isinstance(val, list):
-                # Handle list of paths if necessary? Currently DPEVA mostly uses single paths.
-                # But let's be safe for future or specific fields like template_path which might be list?
-                # For now, strict string check.
-                pass
+            elif isinstance(val, list) and key == "model_ref_paths":
+                resolved_paths = []
+                for item in val:
+                    if not isinstance(item, str):
+                        resolved_paths.append(item)
+                        continue
+                    expanded = os.path.expanduser(os.path.expandvars(item))
+                    resolved_paths.append(
+                        expanded
+                        if os.path.isabs(expanded)
+                        else os.path.abspath(os.path.join(config_dir, expanded))
+                    )
+                config[key] = resolved_paths
                 
     return config
