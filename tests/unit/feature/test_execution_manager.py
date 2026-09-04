@@ -35,6 +35,8 @@ class TestFeatureExecutionManager:
         
         job_config = jm.generate_script.call_args[0][0]
         assert "dp --pt eval-desc" in job_config.command
+        assert "find " in job_config.command
+        assert job_config.command.index("find ") < job_config.command.index("DPEVA_TAG: WORKFLOW_FINISHED")
         assert "-m " in job_config.command
         assert "module load deepmd" in job_config.env_setup
         assert job_config.partition == "gpu"
@@ -94,6 +96,8 @@ class TestFeatureExecutionManager:
         assert "eval-desc" not in job_config.command
         assert "--dtype native" in job_config.command
         assert "embedding.hdf5" in job_config.command
+        assert "test -s " in job_config.command
+        assert job_config.command.index("test -s ") < job_config.command.index("DPEVA_TAG: WORKFLOW_FINISHED")
         assert script_path.endswith("run_embed.slurm")
 
     def test_submit_cli_job_embed_multi_pool_writes_one_hdf5_per_pool(self, mock_job_manager, tmp_path):

@@ -166,7 +166,8 @@ class TestInferenceExecutionManager:
         assert "-s" in job_config.command
         assert "res" in job_config.command
         assert "head" in job_config.command
-        assert "DPEVA_TAG: WORKFLOW_FINISHED" in job_config.command
+        assert "compgen -G" in job_config.command
+        assert job_config.command.index("compgen -G") < job_config.command.index("DPEVA_TAG: WORKFLOW_FINISHED")
 
     def test_submit_jobs_local_sequential(self, manager_local, tmp_path):
         """

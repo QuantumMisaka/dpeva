@@ -4,8 +4,9 @@ import multiprocessing
 from copy import deepcopy
 from typing import List, Dict, Any, Optional
 
-from dpeva.constants import WORKFLOW_FINISHED_TAG, DEFAULT_TRAINING_SEEDS
+from dpeva.constants import DEFAULT_TRAINING_SEEDS
 from dpeva.submission import JobManager, JobConfig
+from dpeva.submission.guards import guarded_command
 from dpeva.utils.command import DPCommandBuilder
 
 class TrainingConfigManager:
@@ -166,15 +167,16 @@ class TrainingExecutionManager:
                 log_file="train.log"
             )
             
-            cmd = f"""
-export OMP_NUM_THREADS={omp_threads}
-# torchrun command adapted from gpu_DPAtrain-multigpu.sbatch
-torchrun --nproc_per_node=$((SLURM_NTASKS*SLURM_GPUS_ON_NODE)) \\
-    --no-python --rdzv_backend=c10d --rdzv_endpoint=localhost:0 \\
-    {dp_train_cmd}
-{dp_freeze_cmd}
-echo "{WORKFLOW_FINISHED_TAG}"
-"""
+            command_lines = [
+                f"export OMP_NUM_THREADS={omp_threads}",
+                f"export DP_INTER_OP_PARALLELISM_THREADS={max(1, omp_threads // 2)}",
+                f"export DP_INTRA_OP_PARALLELISM_THREADS={omp_threads}",
+                "# torchrun command adapted from gpu_DPAtrain-multigpu.sbatch",
+                "torchrun --nproc_per_node=$((SLURM_NTASKS*SLURM_GPUS_ON_NODE)) \\",
+                "    --no-python --rdzv_backend=c10d --rdzv_endpoint=localhost:0 \\",
+                f"    {dp_train_cmd}",
+                dp_freeze_cmd,
+            ]
         else:
             # Single GPU/CPU
             dp_train_cmd = DPCommandBuilder.train(
@@ -183,14 +185,18 @@ echo "{WORKFLOW_FINISHED_TAG}"
                 log_file="train.log"
             )
             
-            cmd = f"""
-export OMP_NUM_THREADS={omp_threads}
-export DP_INTER_OP_PARALLELISM_THREADS={omp_threads // 2}
-export DP_INTRA_OP_PARALLELISM_THREADS={omp_threads}
-{dp_train_cmd}
-{dp_freeze_cmd}
-echo "{WORKFLOW_FINISHED_TAG}"
-"""
+            command_lines = [
+                f"export OMP_NUM_THREADS={omp_threads}",
+                f"export DP_INTER_OP_PARALLELISM_THREADS={max(1, omp_threads // 2)}",
+                f"export DP_INTRA_OP_PARALLELISM_THREADS={omp_threads}",
+                dp_train_cmd,
+                dp_freeze_cmd,
+            ]
+
+        cmd = guarded_command(
+            command="\n".join(command_lines),
+            artifact_checks=["test -s model.ckpt.pt", "test -s lcurve.out"],
+        )
         # Create JobConfig
         task_slurm_config = self.slurm_config.copy()
         task_slurm_config.pop("job_name", None)

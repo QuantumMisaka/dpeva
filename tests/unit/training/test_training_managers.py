@@ -136,6 +136,9 @@ class TestTrainingExecutionManager:
         assert "export OMP_NUM_THREADS=4" in job_config.command
         assert "dp --pt train" in job_config.command
         assert "base.ckpt" in job_config.command
+        assert "test -s model.ckpt.pt" in job_config.command
+        assert "test -s lcurve.out" in job_config.command
+        assert job_config.command.index("test -s lcurve.out") < job_config.command.index("DPEVA_TAG: WORKFLOW_FINISHED")
 
     @patch("dpeva.submission.manager.JobManager.generate_script")
     def test_generate_script_multi_gpu(self, mock_gen, manager, tmp_path):

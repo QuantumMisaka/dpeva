@@ -21,8 +21,9 @@ def test_training_script_contains_completion_marker(tmp_path):
         mgr.generate_script(task_idx=0, task_dir=str(tmp_path), base_model_name=None, omp_threads=4)
 
         job_config = mock_job_manager.generate_script.call_args[0][0]
-        assert WORKFLOW_FINISHED_TAG in job_config.command
-        assert "echo" in job_config.command
+        assert "dp --pt train" in job_config.command
+        assert job_config.command.index("dp --pt train") < job_config.command.index("test -s model.ckpt.pt")
+        assert job_config.command.index("test -s lcurve.out") < job_config.command.index(WORKFLOW_FINISHED_TAG)
 
 
 def test_inference_command_appends_completion_marker(tmp_path):
@@ -56,8 +57,9 @@ def test_inference_command_appends_completion_marker(tmp_path):
         )
 
         job_config = mock_job_manager.generate_script.call_args[0][0]
-        assert WORKFLOW_FINISHED_TAG in job_config.command
-        assert "\necho " in job_config.command
+        assert "dp --pt test" in job_config.command
+        assert job_config.command.index("dp --pt test") < job_config.command.index("compgen -G")
+        assert job_config.command.index("compgen -G") < job_config.command.index(WORKFLOW_FINISHED_TAG)
 
 
 def test_feature_eval_desc_command_appends_completion_marker(tmp_path):
@@ -90,8 +92,9 @@ def test_feature_eval_desc_command_appends_completion_marker(tmp_path):
         )
 
         job_config = mock_job_manager.generate_script.call_args[0][0]
-        assert WORKFLOW_FINISHED_TAG in job_config.command
-        assert "\necho " in job_config.command
+        assert "dp --pt eval-desc" in job_config.command
+        assert job_config.command.index("dp --pt eval-desc") < job_config.command.index("find ")
+        assert job_config.command.index("find ") < job_config.command.index(WORKFLOW_FINISHED_TAG)
 
 
 def test_feature_python_worker_script_contains_completion_marker(tmp_path):
@@ -124,4 +127,4 @@ def test_feature_python_worker_script_contains_completion_marker(tmp_path):
 
         worker_script_content = mock_job_manager.submit_python_script.call_args[0][0]
         assert WORKFLOW_FINISHED_TAG in worker_script_content
-
+        assert worker_script_content.index("run_local_python_recursion") < worker_script_content.index(WORKFLOW_FINISHED_TAG)

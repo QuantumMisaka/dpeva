@@ -16,9 +16,12 @@ from dpeva.constants import (
 
 # ==========================================
 # 默认模板 (Default Templates)
+# Custom templates are intentionally left untouched; callers providing one
+# must supply equivalent fail-closed shell semantics themselves.
 # ==========================================
 
 DEFAULT_SLURM_TEMPLATE = """#!/bin/bash
+set -Eeuo pipefail
 #SBATCH -J ${job_name}
 #SBATCH -N ${nodes}
 #SBATCH -n ${ntasks}
@@ -34,6 +37,7 @@ ${command}
 """
 
 DEFAULT_LOCAL_TEMPLATE = """#!/bin/bash
+set -Eeuo pipefail
 # Job Name: ${job_name}
 # Created by DPEVA
 

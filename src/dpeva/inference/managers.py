@@ -1,13 +1,15 @@
 import os
 import json
 import logging
+import shlex
 import numpy as np
 import pandas as pd
 from typing import List, Dict, Optional, Tuple
 from collections import Counter
 
-from dpeva.constants import WORKFLOW_FINISHED_TAG, FILENAME_STATS_JSON
+from dpeva.constants import FILENAME_STATS_JSON
 from dpeva.submission import JobManager, JobConfig
+from dpeva.submission.guards import guarded_command
 from dpeva.io.dataproc import DPTestResultParser
 from dpeva.io.dataset import load_systems
 from dpeva.utils.command import DPCommandBuilder
@@ -160,8 +162,12 @@ class InferenceExecutionManager:
                 log_file=log_file
             )
             
-            # Append completion marker
-            cmd += f"\necho \"{WORKFLOW_FINISHED_TAG}\""
+            cmd = guarded_command(
+                command=cmd,
+                artifact_checks=[
+                    f"compgen -G {shlex.quote(results_prefix + '.*.out')} >/dev/null",
+                ],
+            )
             
             # Create JobConfig
             job_name = f"dp_test_{i}"

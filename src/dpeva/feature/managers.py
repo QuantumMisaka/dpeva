@@ -1,11 +1,13 @@
 import os
 import glob
 import logging
+import shlex
 import numpy as np
 from typing import List, Dict
 
 from dpeva.constants import WORKFLOW_FINISHED_TAG
 from dpeva.submission import JobManager, JobConfig
+from dpeva.submission.guards import guarded_command
 from dpeva.utils.command import DPCommandBuilder
 
 logger = logging.getLogger(__name__)
@@ -173,7 +175,15 @@ class FeatureExecutionManager:
         else:
             raise ValueError(f"Unsupported feature exporter: {feature_exporter}")
             
-        cmd += f"\necho \"{WORKFLOW_FINISHED_TAG}\""
+        checks = (
+            [f"test -s {shlex.quote(output_hdf5)}"]
+            if feature_exporter == "embed"
+            else [
+                f"find {shlex.quote(abs_output_dir)} -type f -name '*.npy' "
+                "-print -quit | grep -q ."
+            ]
+        )
+        cmd = guarded_command(command=cmd, artifact_checks=checks)
 
         # Filter Slurm config
         task_slurm_config = self.slurm_config.copy()
