@@ -11,6 +11,7 @@ from conftest import (
     CONTRACT_REQUIRED_ENV,
     FixtureConfigurationError,
     _resolve_required_path,
+    _resolve_optional_head,
 )
 
 
@@ -45,6 +46,16 @@ def test_required_invalid_fixture_errors_before_subprocess(
 
 
 @pytest.mark.deepmd_contract
+def test_optional_model_head_does_not_default(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("DPEVA_DEEPMD_PT_HEAD", raising=False)
+    assert _resolve_optional_head("DPEVA_DEEPMD_PT_HEAD") is None
+    monkeypatch.setenv("DPEVA_DEEPMD_PT_HEAD", "   ")
+    assert _resolve_optional_head("DPEVA_DEEPMD_PT_HEAD") is None
+    monkeypatch.setenv("DPEVA_DEEPMD_PT_HEAD", " downstream ")
+    assert _resolve_optional_head("DPEVA_DEEPMD_PT_HEAD") == "downstream"
+
+
+@pytest.mark.deepmd_contract
 def test_ci_requires_protected_bundle_and_rejects_skips() -> None:
     root = Path(__file__).resolve().parents[3]
     workflow = (root / ".github/workflows/deepmd-contract.yml").read_text(
@@ -63,6 +74,8 @@ def test_ci_requires_protected_bundle_and_rejects_skips() -> None:
     assert "vars.DPEVA_DEEPMD_CONTRACT_FIXTURE_URL" in workflow
     assert "secrets.DPEVA_DEEPMD_CONTRACT_FIXTURE_SHA256" in workflow
     assert "vars.DPEVA_DEEPMD_CONTRACT_FIXTURE_SHA256" in workflow
+    assert "DPEVA_DEEPMD_PT_HEAD" in workflow
+    assert "DPEVA_DEEPMD_DPA4C_HEAD" in workflow
     assert "curl --fail --silent --location" in workflow
     assert "sha256sum --check --status" in workflow
     assert "pytest -m deepmd_contract tests/contract/deepmd -q" in workflow

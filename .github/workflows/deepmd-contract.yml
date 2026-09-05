@@ -56,6 +56,8 @@ jobs:
         env:
           DPEVA_DEEPMD_CONTRACT_FIXTURE_URL: ${{ secrets.DPEVA_DEEPMD_CONTRACT_FIXTURE_URL || vars.DPEVA_DEEPMD_CONTRACT_FIXTURE_URL }}
           DPEVA_DEEPMD_CONTRACT_FIXTURE_SHA256: ${{ secrets.DPEVA_DEEPMD_CONTRACT_FIXTURE_SHA256 || vars.DPEVA_DEEPMD_CONTRACT_FIXTURE_SHA256 }}
+          DPEVA_DEEPMD_PT_HEAD: ${{ vars.DPEVA_DEEPMD_PT_HEAD }}
+          DPEVA_DEEPMD_DPA4C_HEAD: ${{ vars.DPEVA_DEEPMD_DPA4C_HEAD }}
         run: |
           set -euo pipefail
           : "${DPEVA_DEEPMD_CONTRACT_FIXTURE_URL:?DPEVA_DEEPMD_CONTRACT_FIXTURE_URL is required}"
@@ -84,6 +86,8 @@ jobs:
             echo "DPEVA_DEEPMD_PT_MODEL=$bundle_root/pt-model/model.pt"
             echo "DPEVA_DEEPMD_DPA4C_MODEL=$bundle_root/dpa4c-model/model.pt2"
             echo "DPEVA_DEEPMD_PERIODIC_DATA=$bundle_root/periodic-data"
+            echo "DPEVA_DEEPMD_PT_HEAD=$DPEVA_DEEPMD_PT_HEAD"
+            echo "DPEVA_DEEPMD_DPA4C_HEAD=$DPEVA_DEEPMD_DPA4C_HEAD"
             echo "DPEVA_DEEPMD_CONTRACT_REQUIRED=1"
           } >> "$GITHUB_ENV"
 

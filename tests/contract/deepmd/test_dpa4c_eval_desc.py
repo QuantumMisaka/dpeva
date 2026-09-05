@@ -11,12 +11,12 @@ from dpeva.compatibility import CapabilityKey, CapabilityMatrix
 from dpeva.compatibility.adapter import DeepMDAdapter
 from dpeva.io.collection import CollectionIOManager
 
-from conftest import frame_count, run_contract, write_cpu_attestation
+from conftest import frame_count, head_args, run_contract, write_cpu_attestation
 
 
 @pytest.mark.deepmd_contract
 def test_periodic_pt_expt_eval_desc_is_consumable_by_collection(
-    dp_executable: str, dpa4c_model: Path, periodic_data: Path, tmp_path: Path
+    dp_executable: str, dpa4c_model: Path, dpa4c_head: str | None, periodic_data: Path, tmp_path: Path
 ) -> None:
     output_dir = tmp_path / "dpa4c-descriptors"
     key = CapabilityKey(
@@ -40,6 +40,7 @@ def test_periodic_pt_expt_eval_desc_is_consumable_by_collection(
             str(periodic_data),
             "-m",
             str(dpa4c_model),
+            *head_args(dpa4c_head),
             "-o",
             str(output_dir),
         ],

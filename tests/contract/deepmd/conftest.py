@@ -89,6 +89,17 @@ def _resolve_required_path(env_name: str, *, required: bool | None = None) -> Pa
     return path
 
 
+def _resolve_optional_head(env_name: str) -> str | None:
+    """Resolve a non-sensitive multitask head without ever choosing a default."""
+
+    value = os.environ.get(env_name, "").strip()
+    return value or None
+
+
+def head_args(head: str | None) -> list[str]:
+    return ["--head", head] if head else []
+
+
 @pytest.fixture(scope="session", autouse=True)
 def validate_required_contract_fixtures() -> None:
     """Validate protected bundle paths before any contract test command."""
@@ -116,6 +127,16 @@ def pt_model() -> Path:
 @pytest.fixture(scope="session")
 def dpa4c_model() -> Path:
     return _resolve_required_path(_FIXTURE_ENV["dpa4c_model"])
+
+
+@pytest.fixture(scope="session")
+def pt_head() -> str | None:
+    return _resolve_optional_head("DPEVA_DEEPMD_PT_HEAD")
+
+
+@pytest.fixture(scope="session")
+def dpa4c_head() -> str | None:
+    return _resolve_optional_head("DPEVA_DEEPMD_DPA4C_HEAD")
 
 
 @pytest.fixture(scope="session")

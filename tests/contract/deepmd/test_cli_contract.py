@@ -18,7 +18,7 @@ from dpeva.compatibility import (
 )
 from dpeva.compatibility.adapter import DeepMDAdapter
 
-from conftest import classify_contract_result, frame_count, run_contract, write_cpu_attestation
+from conftest import classify_contract_result, frame_count, head_args, run_contract, write_cpu_attestation
 
 
 def _numeric_table(path: Path) -> np.ndarray:
@@ -39,7 +39,7 @@ def test_deepmd_version_is_exact_stable_release(dp_executable: str) -> None:
 
 @pytest.mark.deepmd_contract
 def test_pt_test_requires_numeric_output(
-    dp_executable: str, pt_model: Path, periodic_data: Path, tmp_path: Path
+    dp_executable: str, pt_model: Path, pt_head: str | None, periodic_data: Path, tmp_path: Path
 ) -> None:
     prefix = tmp_path / "results"
     energy_output = prefix.with_suffix(".e.out")
@@ -52,6 +52,7 @@ def test_pt_test_requires_numeric_output(
             str(periodic_data),
             "-m",
             str(pt_model),
+            *head_args(pt_head),
             "-d",
             str(prefix),
         ],
@@ -76,7 +77,7 @@ def test_pt_test_requires_numeric_output(
 
 @pytest.mark.deepmd_contract
 def test_pt_eval_desc_has_one_descriptor_per_frame(
-    dp_executable: str, pt_model: Path, periodic_data: Path, tmp_path: Path
+    dp_executable: str, pt_model: Path, pt_head: str | None, periodic_data: Path, tmp_path: Path
 ) -> None:
     output_dir = tmp_path / "descriptors"
     result = run_contract(
@@ -88,6 +89,7 @@ def test_pt_eval_desc_has_one_descriptor_per_frame(
             str(periodic_data),
             "-m",
             str(pt_model),
+            *head_args(pt_head),
             "-o",
             str(output_dir),
         ],
@@ -104,7 +106,7 @@ def test_pt_eval_desc_has_one_descriptor_per_frame(
 
 @pytest.mark.deepmd_contract
 def test_pt_embed_has_required_hdf5_datasets(
-    dp_executable: str, pt_model: Path, periodic_data: Path, tmp_path: Path
+    dp_executable: str, pt_model: Path, pt_head: str | None, periodic_data: Path, tmp_path: Path
 ) -> None:
     output = tmp_path / "embedding.hdf5"
     result = run_contract(
@@ -116,6 +118,7 @@ def test_pt_embed_has_required_hdf5_datasets(
             str(periodic_data),
             "-m",
             str(pt_model),
+            *head_args(pt_head),
             "-o",
             str(output),
         ],
