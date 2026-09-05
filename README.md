@@ -36,16 +36,28 @@ cd dpeva
 pip install -e .
 ```
 
-核心安装不包含 DeepMD-kit；不使用 DeepMD 工作流时可保持该最小安装。需要
-训练、推理或特征工作流时，安装用户运行时 extra：
+默认安装包含有界的 DeepMD-kit 运行时依赖 `deepmd-kit>=3.1.2,<3.3`，以保留
+现有 3.1.2 运行环境的兼容边界。它不等同于新的科学能力验证；需要明确使用
+3.2 能力 lane 时，安装用户运行时 extra：
 
 ```bash
 pip install -e '.[deepmd]'
 ```
 
-研究生产环境请在独立环境文件或锁文件中固定 `deepmd-kit==3.2.0`，并保留
-`dp --version` 证据；`dpeva[deepmd]` 的 `>=3.2,<3.3` 只是用户依赖解析范围，
-不代表该范围内所有版本行为等价。
+该 extra 的依赖范围为 `deepmd-kit>=3.2,<3.3`；能力矩阵仍严格只记录已验证的
+3.2 证据，不会把 3.1 运行时重新标记为已验证能力。研究生产环境请在独立环境
+文件或锁文件中固定 `deepmd-kit==3.2.0`，并保留 `dp --version` 证据；范围不代表
+其中所有版本行为等价。
+
+如果平台已经预置并验证了完整运行环境，可跳过依赖解析，但调用方必须自行提供
+`pyproject.toml` 中的全部依赖（包括 DeepMD）：
+
+```bash
+python -m pip install --no-deps -e .
+```
+
+`--no-deps` 只表示安装器不补齐依赖，不是 DP-EVA 的无依赖默认安装；安装后请用
+`dpeva doctor` 检查当前环境。
 
 Optional trajectory exploration through `atst-tools` is installed separately:
 

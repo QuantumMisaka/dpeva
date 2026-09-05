@@ -73,6 +73,12 @@ dpeva doctor --json
 
 `doctor` 显式检查当前运行环境的 DeepMD 能力。默认输出每项检查的人类可读结果；`--json` 输出 schema 版本为 `1.0` 的机器可读报告。JSON 模式不会输出欢迎 banner，因此标准输出始终只有 JSON。
 
+DeepMD 版本检查保留两个诊断 lane：稳定的 `>=3.1.2,<3.3` 是默认运行时包络，
+`deepmd.qualified` 单独报告 `>=3.2,<3.3` 的 3.2 qualification。3.1 环境可以
+保持 `deepmd: ok`，但不会因此获得 3.2 科学验证；旧版本、未来版本和 prerelease
+不会绕过边界。仅 3.2 lane 需要的 CLI surface 在 legacy 环境中作为
+`required=false` 信息性检查，不会把仍可用的旧环境整体判为失败。
+
 报告顶层 `status` 为 `ok` 时命令退出码为 `0`；任一必需检查不是 `ok` 时退出码为 `1`。
 检查状态可能包括 `ok`、`missing`、`error`、`unknown`、`incompatible` 和
 `unavailable`。每项可带 `required=false` 表示信息性能力（例如 CUDA/GPU 和可选
@@ -306,6 +312,7 @@ dpeva label config.json --stage prepare
 
 ## 7. 变更记录
 
+- 2026-09-05：补充 DeepMD 默认 3.1.2 运行包络与独立 3.2 qualification 诊断 lane。
 - 2026-09-04：新增 `doctor` 环境能力检查及 `--json` 稳定 JSON 输出契约。
 - 2026-06-11：补充 `dpeva explore` manifest、输入结构快照和结果结构回收契约。
 - 2026-06-10：新增 `dpeva explore` 可选轨迹探索入口，记录 `atst-tools` backend 的 md/relax 边界。

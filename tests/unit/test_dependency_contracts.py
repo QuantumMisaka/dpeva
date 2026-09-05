@@ -22,13 +22,13 @@ def test_atst_tools_remains_optional_explore_dependency() -> None:
     )
 
 
-def test_deepmd_is_bounded_optional_dependency() -> None:
+def test_deepmd_is_bounded_core_and_optional_dependency() -> None:
     data = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))
 
     core = data["project"]["dependencies"]
     extras = data["project"]["optional-dependencies"]
 
-    assert all(not item.startswith("deepmd-kit") for item in core)
+    assert "deepmd-kit>=3.1.2,<3.3" in core
     assert extras["deepmd"] == ["deepmd-kit>=3.2,<3.3"]
 
 
@@ -47,7 +47,9 @@ def test_installation_guide_describes_explicit_deepmd_modes() -> None:
     assert "python -m pip install -e ." in guide
     assert "python -m pip install -e '.[dev]'" in guide
     assert "python -m pip install -e '.[deepmd]'" in guide
+    assert "deepmd-kit>=3.1.2,<3.3" in guide
     assert "deepmd-kit>=3.2,<3.3" in guide
     assert "deepmd-kit==3.2.0" in guide
+    assert "--no-deps" in guide
     assert "dpeva doctor" in guide
     assert "导入 `dpeva` 时会给出警告" not in guide

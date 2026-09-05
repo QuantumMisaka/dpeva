@@ -9,7 +9,19 @@ from typing import Any, Literal
 from packaging.version import InvalidVersion, Version
 from pydantic import BaseModel, Field
 
-from dpeva.constants import MAX_DEEPMD_VERSION, MIN_DEEPMD_VERSION
+from dpeva.constants import (
+    LEGACY_MIN_DEEPMD_VERSION,
+    MAX_DEEPMD_VERSION,
+    MIN_DEEPMD_VERSION,
+)
+
+
+DEEPMD_RUNTIME_DETAIL = (
+    f"runtime envelope >= {LEGACY_MIN_DEEPMD_VERSION}, < {MAX_DEEPMD_VERSION}"
+)
+DEEPMD_QUALIFIED_DETAIL = (
+    f"qualified 3.2 lane >= {MIN_DEEPMD_VERSION}, < {MAX_DEEPMD_VERSION}"
+)
 
 
 class DoctorCheck(BaseModel):
@@ -70,14 +82,62 @@ def probe_deepmd(
             detail=f"unparsed version: {output}",
         )
 
-    compatible = parsed.is_devrelease or (
-        Version(MIN_DEEPMD_VERSION) <= parsed < Version(MAX_DEEPMD_VERSION)
-    )
+    compatible = _version_in_lane(parsed, LEGACY_MIN_DEEPMD_VERSION)
     return DoctorCheck(
         name="deepmd",
         status="ok" if compatible else "incompatible",
         version=raw,
-        detail=f"required >= {MIN_DEEPMD_VERSION}, < {MAX_DEEPMD_VERSION}",
+        detail=DEEPMD_RUNTIME_DETAIL,
+    )
+
+
+def _version_in_lane(version: Version, minimum: str) -> bool:
+    """Return whether a stable version is inside one bounded DeepMD lane."""
+    return (
+        not version.is_prerelease
+        and Version(minimum) <= version < Version(MAX_DEEPMD_VERSION)
+    )
+
+
+def probe_deepmd_qualification(deepmd: DoctorCheck) -> DoctorCheck:
+    """Report the qualified 3.2 lane independently of legacy runtime status."""
+    if deepmd.version is None or deepmd.status in {"missing", "error", "unknown"}:
+        return DoctorCheck(
+            name="deepmd.qualified",
+            status="skipped",
+            version=deepmd.version,
+            detail=f"3.2 qualification unavailable: {deepmd.detail}",
+            required=False,
+        )
+
+    try:
+        parsed = Version(deepmd.version)
+    except InvalidVersion:
+        return DoctorCheck(
+            name="deepmd.qualified",
+            status="skipped",
+            version=deepmd.version,
+            detail=f"3.2 qualification unavailable: {deepmd.detail}",
+            required=False,
+        )
+
+    if _version_in_lane(parsed, MIN_DEEPMD_VERSION):
+        status = "ok"
+        detail = DEEPMD_QUALIFIED_DETAIL
+    elif _version_in_lane(parsed, LEGACY_MIN_DEEPMD_VERSION):
+        status = "skipped"
+        detail = (
+            f"3.2 qualification not claimed for legacy DeepMD {deepmd.version}"
+        )
+    else:
+        status = "incompatible"
+        detail = DEEPMD_QUALIFIED_DETAIL
+    return DoctorCheck(
+        name="deepmd.qualified",
+        status=status,
+        version=deepmd.version,
+        detail=detail,
+        required=False,
     )
 
 
@@ -127,10 +187,14 @@ def _probe_command(
 def probe_deepmd_operations(
     *,
     run: Callable[..., subprocess.CompletedProcess[str]] = subprocess.run,
+    required: bool = True,
 ) -> list[DoctorCheck]:
     """Check the CLI surfaces consumed by the feature/infer pilot."""
     return [
-        _probe_command(f"deepmd.cli.{operation}", ["dp", operation, "-h"], run=run)
+        _probe_command(
+            f"deepmd.cli.{operation}", ["dp", operation, "-h"], run=run,
+            required=required,
+        )
         for operation in ("test", "eval-desc", "embed")
     ]
 
@@ -179,8 +243,17 @@ def _default_checks(
     torch_module: Any | None = None,
     cuda_probe: Callable[[Any], bool] | None = None,
 ) -> list[DoctorCheck]:
-    checks = [probe_deepmd(run=run)]
-    checks.extend(probe_deepmd_operations(run=run))
+    deepmd = probe_deepmd(run=run)
+    checks = [deepmd, probe_deepmd_qualification(deepmd)]
+    operations_required = True
+    if deepmd.status == "ok" and deepmd.version is not None:
+        try:
+            operations_required = _version_in_lane(
+                Version(deepmd.version), MIN_DEEPMD_VERSION
+            )
+        except InvalidVersion:
+            pass
+    checks.extend(probe_deepmd_operations(run=run, required=operations_required))
     checks.append(_probe_python_package("dpdata", required=True))
     checks.append(_probe_python_package("torch", required=True))
     checks.append(_probe_torch_cuda(torch_module=torch_module, cuda_probe=cuda_probe))

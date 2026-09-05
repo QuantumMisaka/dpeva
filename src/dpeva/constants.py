@@ -20,6 +20,10 @@ DEFAULT_SLURM_CUSTOM_HEADERS: Final[str] = ""
 DEFAULT_NUM_MODELS: Final[int] = 4
 DEFAULT_DP_BACKEND: Final[str] = "pt"
 VALID_DP_BACKENDS: Final[list] = ["pt", "pt-expt", "tf", "jax", "pd"]
+# The default install retains the previously usable 3.1 runtime envelope.
+LEGACY_MIN_DEEPMD_VERSION: Final[str] = "3.1.2"
+# The explicit ``deepmd`` extra and capability matrix target the separately
+# qualified 3.2 lane; this remains the historical constant name.
 MIN_DEEPMD_VERSION: Final[str] = "3.2.0"
 MAX_DEEPMD_VERSION: Final[str] = "3.3"
 

@@ -154,7 +154,7 @@ def test_doctor_human_output_is_default(monkeypatch, capsys):
                     name="deepmd",
                     status="ok",
                     version="3.2.0",
-                    detail="required >= 3.2.0, < 3.3",
+                    detail="runtime envelope >= 3.1.2, < 3.3",
                 )
             ],
         ),
@@ -165,7 +165,7 @@ def test_doctor_human_output_is_default(monkeypatch, capsys):
     cli.main()
 
     assert capsys.readouterr().out == (
-        "deepmd: ok - required >= 3.2.0, < 3.3\n"
+        "deepmd: ok - runtime envelope >= 3.1.2, < 3.3\n"
     )
 
 

@@ -1,10 +1,16 @@
 import importlib
 import json
 import subprocess
+from types import SimpleNamespace
 
 import dpeva
 from packaging.version import Version
-from dpeva.run.doctor import DoctorCheck, DoctorReport, build_doctor_report, probe_deepmd
+from dpeva.run.doctor import (
+    DoctorCheck,
+    DoctorReport,
+    build_doctor_report,
+    probe_deepmd,
+)
 
 
 def test_import_dpeva_does_not_probe_external_commands(monkeypatch) -> None:
@@ -27,7 +33,7 @@ def test_probe_deepmd_available_is_structured() -> None:
         "name": "deepmd",
         "status": "ok",
         "version": "3.2.0",
-        "detail": "required >= 3.2.0, < 3.3",
+        "detail": "runtime envelope >= 3.1.2, < 3.3",
     }
 
 
@@ -69,7 +75,7 @@ def test_probe_deepmd_incompatible_is_structured() -> None:
         "name": "deepmd",
         "status": "incompatible",
         "version": "3.3.0",
-        "detail": "required >= 3.2.0, < 3.3",
+        "detail": "runtime envelope >= 3.1.2, < 3.3",
     }
 
 
@@ -87,21 +93,31 @@ def test_probe_deepmd_nonzero_exit_is_structured_error() -> None:
     }
 
 
-def test_probe_deepmd_below_minimum_is_structured_incompatible() -> None:
+def test_probe_deepmd_accepts_retained_legacy_runtime_envelope() -> None:
     def below_minimum(*args, **kwargs):
-        return subprocess.CompletedProcess(args[0], 0, "DeePMD-kit v3.1.9", "")
+        return subprocess.CompletedProcess(args[0], 0, "DeePMD-kit v3.1.2", "")
 
     check = probe_deepmd(run=below_minimum)
 
     assert check.model_dump() == {
         "name": "deepmd",
-        "status": "incompatible",
-        "version": "3.1.9",
-        "detail": "required >= 3.2.0, < 3.3",
+        "status": "ok",
+        "version": "3.1.2",
+        "detail": "runtime envelope >= 3.1.2, < 3.3",
     }
 
 
-def test_probe_deepmd_accepts_dev_source_release() -> None:
+def test_probe_deepmd_rejects_legacy_runtime_below_lower_bound() -> None:
+    def old_release(*args, **kwargs):
+        return subprocess.CompletedProcess(args[0], 0, "DeePMD-kit v3.1.1", "")
+
+    check = probe_deepmd(run=old_release)
+
+    assert check.status == "incompatible"
+    assert check.version == "3.1.1"
+
+
+def test_probe_deepmd_does_not_bypass_bounds_for_prerelease() -> None:
     source_version = "0.1.dev1+g27a18b604"
     assert Version(source_version).is_devrelease
 
@@ -114,10 +130,77 @@ def test_probe_deepmd_accepts_dev_source_release() -> None:
 
     assert check.model_dump() == {
         "name": "deepmd",
-        "status": "ok",
+        "status": "incompatible",
         "version": source_version,
-        "detail": "required >= 3.2.0, < 3.3",
+        "detail": "runtime envelope >= 3.1.2, < 3.3",
     }
+
+
+def test_probe_deepmd_rejects_future_prerelease_even_below_upper_bound() -> None:
+    def future_prerelease(*args, **kwargs):
+        return subprocess.CompletedProcess(args[0], 0, "DeePMD-kit v3.3.0.dev1", "")
+
+    check = probe_deepmd(run=future_prerelease)
+
+    assert check.status == "incompatible"
+    assert check.version == "3.3.0.dev1"
+
+
+def test_doctor_separates_legacy_runtime_from_qualified_lane(monkeypatch) -> None:
+    def run(command, **kwargs):
+        if command == ["dp", "--version"]:
+            return subprocess.CompletedProcess(command, 0, "DeePMD-kit v3.1.2", "")
+        return subprocess.CompletedProcess(command, 1, "", "unsupported operation")
+
+    monkeypatch.setattr(
+        "dpeva.run.doctor._probe_python_package",
+        lambda name, *, required: DoctorCheck(name=name, status="ok", detail="ok", required=required),
+    )
+    report = build_doctor_report(
+        run=run,
+        include_optional=False,
+        torch_module=SimpleNamespace(
+            cuda=SimpleNamespace(),
+            version=SimpleNamespace(cuda=None),
+        ),
+        cuda_probe=lambda _: False,
+    )
+
+    assert report.status == "ok"
+    assert next(check for check in report.checks if check.name == "deepmd").status == "ok"
+    qualified = next(check for check in report.checks if check.name == "deepmd.qualified")
+    assert qualified.status == "skipped"
+    assert qualified.required is False
+    assert "3.2 qualification" in qualified.detail
+    assert all(
+        check.required is False
+        for check in report.checks
+        if check.name.startswith("deepmd.cli.")
+    )
+
+
+def test_doctor_reports_qualified_32_lane_separately(monkeypatch) -> None:
+    def run(command, **kwargs):
+        return subprocess.CompletedProcess(command, 0, "DeePMD-kit v3.2.0", "")
+
+    monkeypatch.setattr(
+        "dpeva.run.doctor._probe_python_package",
+        lambda name, *, required: DoctorCheck(name=name, status="ok", detail="ok", required=required),
+    )
+    report = build_doctor_report(
+        run=run,
+        include_optional=False,
+        torch_module=SimpleNamespace(
+            cuda=SimpleNamespace(),
+            version=SimpleNamespace(cuda=None),
+        ),
+        cuda_probe=lambda _: False,
+    )
+
+    qualified = next(check for check in report.checks if check.name == "deepmd.qualified")
+    assert qualified.status == "ok"
+    assert qualified.required is False
+    assert "3.2" in qualified.detail
 
 
 def test_doctor_report_is_json_serializable() -> None:
