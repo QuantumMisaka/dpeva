@@ -1,6 +1,6 @@
 ---
 title: Project Governance and DeepMD 3.2 Final Review
-status: complete
+status: pending-third-cross-family-review
 audience: Project Maintainers / Compatibility Owner / Scientific Owner
 last-updated: 2026-09-05
 owner: Project Maintainer
@@ -11,10 +11,11 @@ owner: Project Maintainer
 ## Disposition
 
 This report records the implementation evidence for Plans A–E and the completed
-independent governance review. Parent decision is **ACCEPT** and the governance
-check is **PASS**. The terminal report-only commit now being created records an
-already completed review and does not alter the reviewed governance mechanisms;
-the frozen review package necessarily does not include this finalization commit.
+second independent governance review of the frozen substantive head. That review
+was **APPROVE / ACCEPT / PASS**. A subsequent governance-trigger change
+(`33a5fe8`) requires a third frozen cross-family package before the final
+disposition can remain closed. This report update is report-only and does not
+invoke review or claim that a package includes this update.
 
 The implementation remains deliberately thin: one executable gate manifest,
 one runner, one path/schema traceability registry, and one report-only
@@ -31,6 +32,13 @@ not as final approval:
 - Reviewer launcher result: exit `0`; reviewer verdict: `REQUEST_CHANGES`
 - Reviewer identity: `opencode-qwen-scnet` / family `qwen` / model
   `Qwen3.8-Max`
+
+Credential-free normalized launcher command (with `$PACKAGE` set to this
+package and `$REPO` set to the worktree):
+
+```text
+codex-sync/bin/governance-review run opencode-qwen-scnet "$PACKAGE" --repo "$REPO"
+```
 
 The accepted findings were the gate/profile name collision and the stale
 `docs/reference/upstream-software.md` date. The gate/profile collision was
@@ -58,11 +66,18 @@ The frozen substantive head passed the second cross-family review:
 - Parent decision: `ACCEPT`
 - Governance check: `PASS`
 
-Findings summary: the reviewer confirmed goal alignment, proportionality of the
-thin governance machinery, closure of the first-round gate/profile collision
-and stale-date findings, and no need to change the recorded cosmetic
-observations. The review explicitly preserved the zero-`supported` DeepMD
-boundary.
+Credential-free normalized launcher command (with `$PACKAGE` set to this
+package and `$REPO` set to the worktree):
+
+```text
+codex-sync/bin/governance-review run opencode-qwen-scnet "$PACKAGE" --repo "$REPO"
+```
+
+Final-review findings summary: the reviewer confirmed goal alignment,
+proportionality of the thin governance machinery, closure of the first-round
+gate/profile collision and stale-date findings, and no blocking change to the
+recorded cosmetic observations. The review explicitly preserved the
+zero-`supported` DeepMD boundary.
 
 Recorded gaps are package-boundary gaps, not unreported approvals: untouched
 external documentation paths were not independently inspected; acceptance
@@ -188,8 +203,8 @@ conda run -n dpeva-dpa4 python scripts/run_gate.py release
 Result at `82d24a3`: **exit 0**. Ruff, 863 unit tests (83.64% total coverage;
 five expected deprecation warnings), audit, 41 integration tests with 7 skips,
 documentation audit/freshness, Sphinx build, linkcheck, and traceability all
-passed. This confirms the post-fix ordinary release profile; it does not close
-the mandatory new cross-family governance review, which remains the next gate.
+passed. This confirms the post-fix ordinary release profile for the reviewed
+substantive head; the review disposition is recorded below.
 
 The documentation preparation also ran:
 
@@ -205,13 +220,20 @@ records and the SAI qualification is failed before payload. If probed, its
 non-zero result is expected negative evidence, not a release defect and not a
 support claim.
 
-## Final disposition
+## Disposition after governance-trigger change
 
-The independent cross-family governance gate is **PASS** for the frozen
-substantive head, with parent decision **ACCEPT**. This report-only
-finalization records that disposition after the review package was produced;
-it does not retroactively claim that the package reviewed this finalization
-commit.
+The second frozen package remains **APPROVE / ACCEPT / PASS** for
+`b637ca0..2e9d9ce`. After that review, the accepted traceability CI fix in
+commit `33a5fe8` changed the governance trigger surface by invoking the
+`traceability` gate from `doc-lint.yml`,
+updating the governance rule trigger path, and extending its alignment tests.
+Because this is a governance-trigger change, the current final disposition is
+temporarily **PENDING a third frozen cross-family package**.
+
+The SPEC and report/index completion markers must be synchronized only after
+that third package returns `APPROVE`/`PASS`; leaving them unchanged now avoids
+false completion claims. This report-only update does not alter the reviewed
+mechanisms and does not fabricate a third review result.
 
 DeepMD production support remains unclaimed: the capability matrix is still
 `supported=0`, and the cancelled SAI qualification requires a new explicit
