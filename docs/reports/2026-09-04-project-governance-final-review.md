@@ -152,12 +152,18 @@ Sphinx build because two existing report links were interpreted as source
 documents; those links were changed to repository-path references and the
 complete profile was rerun successfully.
 
-This is historical pre-review evidence. Commit `9353752` subsequently changed
-gate names and profile resolution to address the accepted review finding, and
-this report is now changing again; therefore no fresh full release result is
-claimed for the current post-fix documentation head. The scoped same-family
-task review approved the fix, while the new cross-family review remains the
-required next gate.
+The post-fix release profile was rerun at HEAD `82d24a3` after the accepted
+gate/profile correction:
+
+```text
+conda run -n dpeva-dpa4 python scripts/run_gate.py release
+```
+
+Result at `82d24a3`: **exit 0**. Ruff, 863 unit tests (83.64% total coverage;
+five expected deprecation warnings), audit, 41 integration tests with 7 skips,
+documentation audit/freshness, Sphinx build, linkcheck, and traceability all
+passed. This confirms the post-fix ordinary release profile; it does not close
+the mandatory new cross-family governance review, which remains the next gate.
 
 The documentation preparation also ran:
 
