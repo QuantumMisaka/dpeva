@@ -56,5 +56,8 @@ jobs:
       - name: Run declared governance gate
         run: python scripts/run_gate.py docs_audit
 
+      - name: Run declared traceability gate
+        run: python scripts/run_gate.py traceability
+
       - name: Run declared freshness gate
         run: python scripts/run_gate.py docs_freshness

@@ -27,8 +27,7 @@
     ],
     "trigger_paths": [
       "scripts/gates.toml",
-      ".github/workflows/doc-lint.yml",
-      ".github/workflows/docs-check.yml"
+      ".github/workflows/doc-lint.yml"
     ],
     "last_reviewed": "2026-09-04",
     "review_interval_days": 90

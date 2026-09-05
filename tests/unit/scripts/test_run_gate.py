@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import builtins
 import importlib.util
+import json
 import subprocess
 import sys
 import types
@@ -219,7 +220,7 @@ def test_docs_jobs_use_gate_names() -> None:
         for line in lint.splitlines()
         if "python scripts/run_gate.py " in line
     ]
-    assert lint_runs == ["docs_audit", "docs_freshness"]
+    assert lint_runs == ["docs_audit", "traceability", "docs_freshness"]
     verify_runs = [
         line.split("python scripts/run_gate.py ", 1)[1]
         .split(";", 1)[0]
@@ -241,6 +242,20 @@ def test_docs_workflows_watch_gate_manifest() -> None:
         text = Path(workflow).read_text(encoding="utf-8")
         assert '"scripts/run_gate.py"' in text
         assert '"scripts/gates.toml"' in text
+
+
+def test_traceability_has_one_hosted_invocation_and_truthful_triggers() -> None:
+    lint = Path(".github/workflows/doc-lint.yml").read_text(encoding="utf-8")
+    docs_check = Path(".github/workflows/docs-check.yml").read_text(encoding="utf-8")
+    rules = json.loads(Path("docs/governance/rules.json").read_text(encoding="utf-8"))
+
+    assert lint.count("python scripts/run_gate.py traceability") == 1
+    assert "python scripts/run_gate.py traceability" not in docs_check
+    traceability = next(rule for rule in rules if rule["rule_id"] == "CAPABILITY-TRACEABILITY")
+    assert traceability["trigger_paths"] == [
+        "scripts/gates.toml",
+        ".github/workflows/doc-lint.yml",
+    ]
 
 
 def test_docs_entry_points_do_not_duplicate_manifest_commands() -> None:
