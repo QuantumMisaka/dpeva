@@ -163,9 +163,9 @@ class FeatureWorkflow:
             context.register_verified_artifacts(
                 "feature", outputs, baseline=output_baseline
             )
-            self._register_existing_logs(context, log_baseline)
             context.recorder.transition(RunState.FINISHED)
             self.logger.info(WORKFLOW_FINISHED_TAG)
+            self._register_existing_logs(context, log_baseline)
         except ArtifactValidationError as exc:
             self._register_existing_logs(context, log_baseline)
             context.recorder.fail(category="ARTIFACT", message=str(exc))

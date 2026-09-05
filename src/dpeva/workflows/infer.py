@@ -184,13 +184,14 @@ class InferenceWorkflow:
                     [Path(path) for path in artifact_paths],
                     baseline=self.execution_manager.last_artifact_baselines[model_name],
                 )
-            self._register_existing_logs(context, log_baseline)
             if not successful:
+                self._register_existing_logs(context, log_baseline)
                 message = "all inference jobs failed"
                 category = self._failure_category(failed)
                 context.recorder.fail(category=category, message=message)
                 raise WorkflowError(message)
             if failed:
+                self._register_existing_logs(context, log_baseline)
                 category = self._failure_category(failed)
                 context.recorder.partial(
                     category=category,
@@ -205,6 +206,7 @@ class InferenceWorkflow:
                 self.logger.info("Auto analysis disabled. Run analysis workflow separately after jobs finish.")
             context.recorder.transition(RunState.FINISHED)
             self.logger.info(WORKFLOW_FINISHED_TAG)
+            self._register_existing_logs(context, log_baseline)
         except Exception as exc:
             # Terminal states written above must remain the original exception;
             # only unrecorded execution errors need a generic failure event.

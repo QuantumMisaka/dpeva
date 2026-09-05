@@ -122,7 +122,8 @@ basename 加内容 SHA-256 组成逻辑 ref，不把绝对路径写入 run ident
 （默认 `model.ckpt.pt`，避免猜测依模型而变的 `.pth`/`.pt2` freeze 后缀），`tf` 使用
 `frozen_model.pb`，`pt-expt` 使用 `frozen_model.pte`，`jax` 使用 `frozen_model.hlo`，`pd`
 同时要求 `frozen_model.json` 与 `frozen_model.pdiparams`。`training.save_ckpt` 和
-`training.disp_file` 的自定义路径会进入对应 guard，保留原有输出布局。
+`training.disp_file` 的自定义路径会进入对应 guard；当 `disp_training=false` 时上游不会保证
+曲线文件非空，因此完成 guard 只要求 backend 产物。原有输出布局保持不变。
 
 支持 Slurm array 的 workflow 可设置：
 

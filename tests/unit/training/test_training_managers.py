@@ -1,5 +1,7 @@
 
 import os
+import json
+import subprocess
 import pytest
 from unittest.mock import MagicMock, patch
 from dpeva.training.managers import TrainingConfigManager, TrainingExecutionManager
@@ -254,6 +256,74 @@ class TestTrainingExecutionManager:
         assert "test -s lcurve.out" not in command
         if backend != "pt":
             assert "test -s model.ckpt.pt" not in command
+
+    @pytest.mark.parametrize("curve_state", ["absent", "empty"])
+    def test_generated_script_ignores_curve_when_display_is_disabled(
+        self, curve_state, tmp_path, monkeypatch
+    ):
+        (tmp_path / "input.json").write_text(
+            json.dumps(
+                {
+                    "model": {},
+                    "training": {
+                        "disp_training": False,
+                        "disp_file": "curve.log",
+                    },
+                }
+            ),
+            encoding="utf-8",
+        )
+        if curve_state == "empty":
+            (tmp_path / "curve.log").touch()
+        manager = TrainingExecutionManager("local", {}, "", "pt")
+        monkeypatch.setattr(DeepMDAdapter, "train", lambda *args, **kwargs: "true")
+        monkeypatch.setattr(
+            DeepMDAdapter,
+            "freeze",
+            lambda *args, **kwargs: "printf checkpoint > model.ckpt.pt",
+        )
+
+        script = manager.generate_script(0, str(tmp_path), None, omp_threads=1)
+        result = subprocess.run(
+            ["bash", script], cwd=tmp_path, text=True, capture_output=True
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert "DPEVA_TAG: WORKFLOW_FINISHED" in result.stdout
+
+    @pytest.mark.parametrize("curve_state", ["missing", "stale"])
+    def test_generated_script_requires_fresh_curve_when_display_is_enabled(
+        self, curve_state, tmp_path, monkeypatch
+    ):
+        (tmp_path / "input.json").write_text(
+            json.dumps(
+                {
+                    "model": {},
+                    "training": {
+                        "disp_training": True,
+                        "disp_file": "curve.log",
+                    },
+                }
+            ),
+            encoding="utf-8",
+        )
+        if curve_state == "stale":
+            (tmp_path / "curve.log").write_text("old curve\n", encoding="utf-8")
+        manager = TrainingExecutionManager("local", {}, "", "pt")
+        monkeypatch.setattr(DeepMDAdapter, "train", lambda *args, **kwargs: "true")
+        monkeypatch.setattr(
+            DeepMDAdapter,
+            "freeze",
+            lambda *args, **kwargs: "printf checkpoint > model.ckpt.pt",
+        )
+
+        script = manager.generate_script(0, str(tmp_path), None, omp_threads=1)
+        result = subprocess.run(
+            ["bash", script], cwd=tmp_path, text=True, capture_output=True
+        )
+
+        assert result.returncode != 0
+        assert "DPEVA_TAG: WORKFLOW_FINISHED" not in result.stdout
 
     @patch("dpeva.training.managers.multiprocessing.Process")
     def test_submit_jobs_local_parallel_multiprocessing(self, mock_proc, manager, tmp_path):

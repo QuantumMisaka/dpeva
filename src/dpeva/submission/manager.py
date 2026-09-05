@@ -4,6 +4,8 @@ import subprocess
 import logging
 from typing import Iterable, List, Literal, Optional
 
+from dpeva.constants import WORKFLOW_FINISHED_TAG
+
 from .array import ArrayTaskSpec, build_array_command, write_array_manifest
 from .templates import TemplateEngine, JobConfig
 
@@ -95,7 +97,14 @@ class JobManager:
                 stderr=subprocess.PIPE,
                 text=True
             )
-            logger.info(f"Submission result: {result.stdout.strip()}")
+            logged_output = result.stdout.strip()
+            if self.mode == "local":
+                logged_output = "\n".join(
+                    line
+                    for line in logged_output.splitlines()
+                    if line.strip() != WORKFLOW_FINISHED_TAG
+                )
+            logger.info(f"Submission result: {logged_output}")
             return result.stdout.strip()
             
         except subprocess.CalledProcessError as e:

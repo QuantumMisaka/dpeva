@@ -1,14 +1,18 @@
 import hashlib
 import json
+import shlex
 import subprocess
 import sys
 from pathlib import Path
 
 import pytest
 
+from dpeva.compatibility import DeepMDAdapter
 from dpeva.config import FeatureConfig, InferenceConfig
+from dpeva.constants import LOG_FILE_FEATURE, LOG_FILE_INFER, WORKFLOW_FINISHED_TAG
 from dpeva.run.context import RunOptions
 from dpeva.run.artifacts import ArtifactValidationError, validate_feature_outputs
+from dpeva.utils.logs import close_workflow_logger
 from dpeva.utils.exceptions import PartialWorkflowError, WorkflowError
 from dpeva.workflows.feature import FeatureWorkflow
 from dpeva.workflows.infer import InferenceWorkflow
@@ -150,12 +154,15 @@ def test_infer_all_children_failure_writes_failed_manifest(tmp_path, monkeypatch
 def test_feature_success_manifest_contains_verified_output(tmp_path, monkeypatch) -> None:
     config = _feature_config(tmp_path)
 
-    def submit(self, script_path, working_dir="."):
-        Path(working_dir, "features.npy").write_bytes(b"feature")
-        return ""
+    def fake_eval_desc(self, *, output, **kwargs):
+        target = shlex.quote(str(Path(output) / "features.npy"))
+        return f"printf feature > {target}"
 
-    monkeypatch.setattr("dpeva.submission.manager.JobManager.submit", submit)
-    FeatureWorkflow(config, run_options=RunOptions(run_id="feature-success")).run()
+    monkeypatch.setattr(DeepMDAdapter, "eval_desc", fake_eval_desc)
+    try:
+        FeatureWorkflow(config, run_options=RunOptions(run_id="feature-success")).run()
+    finally:
+        close_workflow_logger("dpeva", str(config.savedir / LOG_FILE_FEATURE))
     payload = json.loads(
         (config.savedir / ".dpeva/runs/feature-success/run.json").read_text()
     )
@@ -167,6 +174,76 @@ def test_feature_success_manifest_contains_verified_output(tmp_path, monkeypatch
     assert payload["inputs"][0]["identity_scope"] == "bounded-structural"
     assert payload["inputs"][1]["identity_scope"] == "full-content"
     assert payload["artifacts"][0]["status"] == "verified"
+    feature_log = config.savedir / LOG_FILE_FEATURE
+    assert feature_log.read_text(encoding="utf-8").count(WORKFLOW_FINISHED_TAG) == 1
+    log_artifacts = [item for item in payload["artifacts"] if item["kind"] == "log"]
+    assert log_artifacts
+    for artifact in log_artifacts:
+        final_bytes = (config.savedir / artifact["path"]).read_bytes()
+        assert artifact["checksum"] == hashlib.sha256(final_bytes).hexdigest()
+
+
+def test_infer_real_local_children_do_not_leak_marker_on_partial(
+    tmp_path, monkeypatch
+) -> None:
+    config = _infer_config(tmp_path)
+    second = config.work_dir / "1" / "model.ckpt.pt"
+    second.parent.mkdir(parents=True)
+    second.write_bytes(b"model")
+
+    def mixed_test(self, *, model, **kwargs):
+        if Path(model).parent.name == "0":
+            return "printf 'prediction\\n' > results.e.out"
+        return "false"
+
+    monkeypatch.setattr(DeepMDAdapter, "test", mixed_test)
+    try:
+        with pytest.raises(PartialWorkflowError):
+            InferenceWorkflow(
+                config, run_options=RunOptions(run_id="infer-real-partial")
+            ).run()
+    finally:
+        close_workflow_logger("dpeva", str(config.work_dir / LOG_FILE_INFER))
+
+    payload = json.loads(
+        (config.work_dir / ".dpeva/runs/infer-real-partial/run.json").read_text()
+    )
+    assert payload["status"] == "partial"
+    assert [job["status"] for job in payload["jobs"]] == ["finished", "failed"]
+    assert WORKFLOW_FINISHED_TAG not in (
+        config.work_dir / LOG_FILE_INFER
+    ).read_text(encoding="utf-8")
+
+
+def test_infer_real_local_child_does_not_leak_marker_on_analysis_failure(
+    tmp_path, monkeypatch
+) -> None:
+    config = _infer_config(tmp_path)
+    config.auto_analysis = True
+
+    def successful_test(self, **kwargs):
+        return "printf 'prediction\\n' > results.e.out"
+
+    def fail_analysis(self):
+        raise WorkflowError("analysis failed")
+
+    monkeypatch.setattr(DeepMDAdapter, "test", successful_test)
+    monkeypatch.setattr(InferenceWorkflow, "analyze_results", fail_analysis)
+    try:
+        with pytest.raises(WorkflowError, match="analysis failed"):
+            InferenceWorkflow(
+                config, run_options=RunOptions(run_id="infer-analysis-failed")
+            ).run()
+    finally:
+        close_workflow_logger("dpeva", str(config.work_dir / LOG_FILE_INFER))
+
+    payload = json.loads(
+        (config.work_dir / ".dpeva/runs/infer-analysis-failed/run.json").read_text()
+    )
+    assert payload["status"] == "failed"
+    assert WORKFLOW_FINISHED_TAG not in (
+        config.work_dir / LOG_FILE_INFER
+    ).read_text(encoding="utf-8")
 
 
 def test_feature_missing_output_is_artifact_failure(tmp_path, monkeypatch) -> None:

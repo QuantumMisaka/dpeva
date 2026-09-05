@@ -216,12 +216,14 @@ class TrainingExecutionManager:
             training_config = payload.get("training", {})
         checkpoint_prefix = training_config.get("save_ckpt", "model.ckpt")
         disp_file = training_config.get("disp_file", "lcurve.out")
-        if not isinstance(disp_file, str) or not disp_file.strip():
-            raise ValueError("training disp_file must be a non-empty string")
-        declared_outputs = [
-            *self.adapter.training_outputs(checkpoint_prefix),
-            disp_file,
-        ]
+        disp_training = training_config.get("disp_training", True)
+        if not isinstance(disp_training, bool):
+            raise ValueError("training disp_training must be a boolean")
+        declared_outputs = list(self.adapter.training_outputs(checkpoint_prefix))
+        if disp_training:
+            if not isinstance(disp_file, str) or not disp_file.strip():
+                raise ValueError("training disp_file must be a non-empty string")
+            declared_outputs.append(disp_file)
         quoted_outputs = [shlex.quote(path) for path in declared_outputs]
         cmd = guarded_command(
             command="\n".join(command_lines),
