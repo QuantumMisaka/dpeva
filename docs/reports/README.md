@@ -40,7 +40,7 @@ owner: Docs Owner
 
 ## 4. Active Summary Reports
 
-- [2026-09-04-project-governance-final-review.md](2026-09-04-project-governance-final-review.md) — Plans A–E implementation evidence and pending independent governance review boundary.
+- [2026-09-04-project-governance-final-review.md](2026-09-04-project-governance-final-review.md) — Plans A–E implementation evidence and completed independent governance review; DeepMD remains unqualified.
 
 ## 5. Active Focused Reports
 

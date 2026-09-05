@@ -115,7 +115,7 @@
   <header>
     <h1>DP-EVA 项目治理与 DeepMD-kit 3.2 兼容性设计规格</h1>
     <div class="meta">
-      <p><strong>状态：</strong>Implementation evidence recorded; independent governance review pending</p>
+      <p><strong>状态：</strong>Implemented, independently reviewed, and complete</p>
       <p><strong>Owner：</strong>Project Maintainers</p>
       <p><strong>更新：</strong>2026-09-05</p>
       <p><strong>设计级别：</strong>L3α / Architecture &amp; Governance</p>
@@ -154,7 +154,7 @@
         <p><strong>核心裁决：</strong>DP-EVA 的下一阶段主线不是新增更多算法，而是把“失败语义 + run manifest + dataset lineage + model artifact identity + eval-card + DeepMD capability matrix”固化为可靠科研运行内核。</p>
         <p><strong>产品边界：</strong>DP-EVA 负责主动数据与候选证据；FT2DP 工作区负责模型训练和系统评估实验矩阵；下游费托模拟工作区以吸附能、NEB、MD 等应用任务裁决最终模型。</p>
       </div>
-      <p class="small">本 SPEC 是本地唯一规范源。Plans A–E 已按批准计划落地到隔离工作树；最终合入仍须完成独立治理终审。DeepMD 当前没有任何 <code>supported</code> 能力，不能据此宣称 3.2.0 生产兼容。</p>
+      <p class="small">本 SPEC 是本地唯一规范源。Plans A–E 已按批准计划落地，并完成独立跨家族治理终审与状态同步；终端状态只记录已审查机制，不改变需求。DeepMD 当前没有任何 <code>supported</code> 能力，不能据此宣称 3.2.0 生产兼容。</p>
     </section>
 
     <section id="context">
@@ -690,7 +690,7 @@ failed -- explicit resume/recovery event --> running --> finished | failed</code
   </main>
 
   <footer>
-    DP-EVA local normative design · implementation evidence recorded 2026-09-05 · Final independent governance review pending · Evidence sources: repository audit, Plans A–D acceptance reports, DeepMD-kit v3.2.0 official release/documentation, and user-confirmed engineering taste.
+    DP-EVA local normative design · implementation evidence recorded 2026-09-05 · Final independent cross-family governance review PASS · DeepMD remains unqualified · Evidence sources: repository audit, Plans A–D acceptance reports, DeepMD-kit v3.2.0 official release/documentation, and user-confirmed engineering taste.
   </footer>
 </body>
 </html>
