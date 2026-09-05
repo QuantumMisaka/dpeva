@@ -33,7 +33,7 @@ artifact/data/environment key 管理。当前没有任何 `supported` 记录：�
 `ft2dp-post` 仅完成 6 个 CPU contract cases，另有 4 个显式 fixture skips；
 SAI V100 qualification JobID `1126627` 在 payload 启动前被 scheduler 记录为
 `CANCELLED by 0`，因此不能作为 GPU/runtime 通过证据。完整边界与未资格化结论见
-[`DeepMD 3.2 compatibility report`](../reports/2026-09-04-deepmd-3.2-compatibility.md)。
+仓库报告 `docs/reports/2026-09-04-deepmd-3.2-compatibility.md`。
 
 发布或研究运行不得仅因版本号落在 `>=3.2,<3.3` 就晋级能力。只有精确验证命令、
 CPU evidence，以及需要时的 SAI evidence 均存在并通过，Compatibility Owner 才能

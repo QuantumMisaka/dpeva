@@ -115,9 +115,9 @@
   <header>
     <h1>DP-EVA 项目治理与 DeepMD-kit 3.2 兼容性设计规格</h1>
     <div class="meta">
-      <p><strong>状态：</strong>Approved for implementation planning</p>
+      <p><strong>状态：</strong>Implementation evidence recorded; independent governance review pending</p>
       <p><strong>Owner：</strong>Project Maintainers</p>
-      <p><strong>更新：</strong>2026-09-04</p>
+      <p><strong>更新：</strong>2026-09-05</p>
       <p><strong>设计级别：</strong>L3α / Architecture &amp; Governance</p>
     </div>
   </header>
@@ -154,7 +154,7 @@
         <p><strong>核心裁决：</strong>DP-EVA 的下一阶段主线不是新增更多算法，而是把“失败语义 + run manifest + dataset lineage + model artifact identity + eval-card + DeepMD capability matrix”固化为可靠科研运行内核。</p>
         <p><strong>产品边界：</strong>DP-EVA 负责主动数据与候选证据；FT2DP 工作区负责模型训练和系统评估实验矩阵；下游费托模拟工作区以吸附能、NEB、MD 等应用任务裁决最终模型。</p>
       </div>
-      <p class="small">本 SPEC 是本地唯一规范源。当前批准仅授权生成 writing-plans；在实施计划获得显式批准前，不授权代码实施、环境升级、SAI 作业提交、发布或远程镜像。</p>
+      <p class="small">本 SPEC 是本地唯一规范源。Plans A–E 已按批准计划落地到隔离工作树；最终合入仍须完成独立治理终审。DeepMD 当前没有任何 <code>supported</code> 能力，不能据此宣称 3.2.0 生产兼容。</p>
     </section>
 
     <section id="context">
@@ -404,6 +404,10 @@ Local / Slurm / external campaign workspaces</code></pre>
           </tbody>
         </table>
       </div>
+      <div class="decision open">
+        <p><strong>当前实现证据（2026-09-05）：</strong>Compatibility Manifest 已落地并包含 17 条记录：<code>supported=0</code>、<code>experimental=11</code>、<code>unsupported=4</code>、<code>blocked-upstream=2</code>。本地精确 DeepMD-kit 3.2.0 contract lane 为 6 passed / 4 个具名 fixture skip；这些 skip 不能替代受保护正向 fixture。</p>
+        <p>唯一获授权的 SAI V100 qualification job 为 JobID <code>1126627</code>，调度结果为 <code>CANCELLED by 0</code>，在 payload 执行前结束，未产生环境、命令或产物证据。其 collector 记录为 failed，因而不晋级任何 capability；重新尝试需新的明确授权。</p>
+      </div>
       <h3>10.3 Upstream Watch</h3>
       <p>定时任务每周读取 GitHub release、PyPI 和已登记上游 issue，生成差异报告。它可以创建维护 issue，但不得自动修改生产 lock、自动发布或宣称兼容。补丁晋级必须经过 compatibility PR 和对应资格门禁。</p>
       <h3>10.4 官方 Agent Skills</h3>
@@ -537,7 +541,7 @@ failed -- explicit resume/recovery event --> running --> finished | failed</code
         <li>skip 必须带原因和 owner；release blocker 不得通过 skip 变绿。</li>
       </ul>
       <h3>13.4 Gate Manifest</h3>
-      <p>使用单一 gate manifest 描述 lint、unit、coverage、CPU contract、integration、docs、audit 和 qualification 的命令与适用触发条件。本地 <code>gate.sh</code> 与 GitHub Actions 从同一清单派生或由一致性测试约束，防止“本地全绿”和“CI 全绿”语义分叉。</p>
+      <p>实现后的唯一可执行目录是 <code>scripts/gates.toml</code>，由 <code>scripts/run_gate.py</code> 分发；<code>scripts/gate.sh</code> 与 GitHub Actions 只传递 manifest 中的 gate/profile 名称。<code>local</code>、<code>pr</code>、<code>docs</code>/<code>docs_pr</code>、<code>integration</code> 和 <code>release</code> 复用日常检查；<code>deepmd_release</code> 保持独立，仅在发布声称 DeepMD 能力时调用。它不因版本号或 help 输出而自动产生支持结论。</p>
     </section>
 
     <section id="docs">
@@ -555,7 +559,7 @@ failed -- explicit resume/recovery event --> running --> finished | failed</code
       <h3>14.3 Ruling 纪律</h3>
       <p>执行计划中的必要裁决记录“决定—理由—错了的代价”，并回写对应 plan/report。Ruling 不是绕过验收的豁免；改变公共契约时必须回到 spec/plan。</p>
       <h3>14.4 Use-it-or-lose-it</h3>
-      <p>治理规则、检查和文档每季度检查触发痕迹。长期无命中、无事故依据或与其他门禁重复的规则应合并、降级或移除，避免治理管线成为只增不减的负担。</p>
+      <p>已实现的 <code>docs/governance/rules.json</code> 只登记具备 Owner、依据、enforcement path 与 <code>trigger_paths</code> 的活动机制，当前登记三条且上限为八条。<code>trigger_paths</code> 只证明仓库内存在可复核的触发入口或配置路径，不证明 CI 历史运行、远程服务状态或科学结果。季度审计默认 report-only（发现问题仍返回 0，并上传 JSON）；只有显式发布评审才使用 <code>--strict</code> 阻断。</p>
     </section>
 
     <section id="rollout">
@@ -590,10 +594,10 @@ failed -- explicit resume/recovery event --> running --> finished | failed</code
       <h3>15.4 Phase 2B：DeepMD 3.2 Compatibility Lane</h3>
       <ul>
         <li>依赖分层、stable lock、capability manifest 和 CPU contract CI。</li>
-        <li>完成 SAI V100 DPA4/DPA4C 资格验证，更新旧 dev67/旧路径文档。</li>
-        <li>按证据把能力从 experimental 晋级 supported。</li>
+        <li>已建立 SAI V100 qualification harness 和 producer-issued attestation 规则；唯一执行的 JobID <code>1126627</code> 在 payload 前被取消，尚未形成 SAI 资格证据。</li>
+        <li>当前不得把任何能力从 experimental 晋级 supported；后续资格重试需新的明确授权并完成 <code>--require-complete</code>。</li>
       </ul>
-      <p><strong>出口：</strong>DeepMD 3.2 兼容报告、env lock、JobID、日志和能力矩阵一致。Phase 2A 与 2B 在 Phase 1 的 schema 和状态契约冻结后可并行实施，分别由 Scientific Owner 与 Compatibility Owner 负责。</p>
+      <p><strong>当前出口：</strong>兼容报告、精确 3.2.0 environment lock、capability matrix 和失败的 SAI qualification 记录一致；它证明治理与证据管线已落地，不证明 DeepMD 生产支持。Phase 2A 与 2B 在 Phase 1 的 schema 和状态契约冻结后完成，分别由 Scientific Owner 与 Compatibility Owner 负责。</p>
       <h3>15.5 Phase 3：受控科学扩展</h3>
       <ul>
         <li>DPA4 五档基座 alias、LMDB、.pt2、DPA4C 采样引擎。</li>
@@ -663,7 +667,9 @@ failed -- explicit resume/recovery event --> running --> finished | failed</code
         <li><a href="../../../src/dpeva/config.py">config.py</a>：extra ignore、backend 和 pt_expt/embed 边界。</li>
         <li><a href="../../../src/dpeva/inference/managers.py">inference manager</a>：连续目录与 <code>model.ckpt.pt</code> 发现假设。</li>
         <li><a href="../../../src/dpeva/constants.py">constants.py</a> 与 <a href="../../../pyproject.toml">pyproject.toml</a>：3.1.2 最低版本和无界 DeepMD 依赖。</li>
-        <li><a href="../../../.github/workflows/python-quality.yml">Python Quality CI</a> 与 <a href="../../../scripts/gate.sh">local gate</a>：现有验证层次和语义差异。</li>
+        <li><a href="../../../scripts/gates.toml">gate manifest</a>、<a href="../../../scripts/run_gate.py">gate runner</a> 与 <a href="../../../scripts/gate.sh">local compatibility wrapper</a>：本地与托管验证的唯一命令来源。</li>
+        <li><a href="../../reports/2026-09-04-run-contract-pilot-report.md">Plan B report</a>、<a href="../../reports/2026-09-04-dataset-lineage-eval-card-acceptance.md">Plan C report</a> 与 <a href="../../reports/2026-09-04-deepmd-3.2-compatibility.md">Plan D report</a>：已执行的运行契约、谱系/eval-card 与 DeepMD 资格边界。</li>
+        <li><a href="../../governance/rules.json">governance rules registry</a> 与 <a href="../../governance/traceability/capability-evidence.json">capability traceability registry</a>：轻量治理元数据及其路径校验入口。</li>
       </ul>
       <h3>17.2 上游一手依据</h3>
       <ul>
@@ -674,8 +680,9 @@ failed -- explicit resume/recovery event --> running --> finished | failed</code
       </ul>
       <h3>17.3 本轮实测边界</h3>
       <ul>
-        <li>本机 <code>ft2dp-post</code> 环境报告 DeepMD-kit 3.2.0；<code>dp --pt-expt eval-desc -h</code>、<code>train -h</code> 与 pretrained model list 可读。</li>
-        <li>上述 help/版本结果只证明接口暴露，不证明 DPA4/DPA4C 在目标 GPU、数据和模型上的数值正确；因此初始状态均为 experimental，等待行为资格验证。</li>
+        <li>本机精确 3.2.0 contract lane 为 6 passed / 4 个具名 fixture skip；这些 skip 不能替代受保护正向 fixture。</li>
+        <li>唯一 SAI V100 尝试为 JobID <code>1126627</code>，结果 <code>CANCELLED by 0</code>，在 payload 前结束，未产生环境、命令或产物证据；collector 为 failed，因而当前 <code>supported=0</code>。</li>
+        <li>上述版本/help 结果只证明接口暴露，不证明 DPA4/DPA4C 在目标 GPU、数据和模型上的数值正确；能力矩阵当前为 11 experimental、4 unsupported、2 blocked-upstream、0 supported。</li>
         <li>FT2DP 数据谱系事故依据外层活任务与检查点记录；本仓库不复制其活状态，只把由事故推出的治理需求固化为 R4。</li>
         <li>用户个人科研材料和已确认品味是设计取舍输入，不成为软件运行事实或自动验收结果。</li>
       </ul>
@@ -683,7 +690,7 @@ failed -- explicit resume/recovery event --> running --> finished | failed</code
   </main>
 
   <footer>
-    DP-EVA local normative design · approved for implementation planning 2026-09-04 · Evidence sources: repository audit, FT2DP campaign records, DeepMD-kit v3.2.0 official release/documentation, and user-confirmed engineering taste.
+    DP-EVA local normative design · implementation evidence recorded 2026-09-05 · Final independent governance review pending · Evidence sources: repository audit, Plans A–D acceptance reports, DeepMD-kit v3.2.0 official release/documentation, and user-confirmed engineering taste.
   </footer>
 </body>
 </html>

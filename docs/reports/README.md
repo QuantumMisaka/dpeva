@@ -2,7 +2,7 @@
 title: Technical Reports
 status: active
 audience: Developers
-last-updated: 2026-07-07
+last-updated: 2026-09-05
 owner: Docs Owner
 ---
 
@@ -40,7 +40,7 @@ owner: Docs Owner
 
 ## 4. Active Summary Reports
 
-- 当前无 active summary report。最新 v0.8.1 release notes 已归档至 [docs/archive/v0.8.1/reports/2026-07-07-DP-EVA-v0.8.1-Release.md](../archive/v0.8.1/reports/2026-07-07-DP-EVA-v0.8.1-Release.md)。
+- [2026-09-04-project-governance-final-review.md](2026-09-04-project-governance-final-review.md) — Plans A–E implementation evidence and pending independent governance review boundary.
 
 ## 5. Active Focused Reports
 
@@ -114,7 +114,5 @@ owner: Docs Owner
   - 当前目录 `README.md` 活跃报告列表
   - 目标归档版本 `docs/archive/vX.Y.Z/README.md`
   - 若导航策略发生变化，更新 `docs/source/index.rst` 或对应子索引说明
-- 提交前必须通过：
-  - `python3 scripts/doc_check.py`
-  - `python3 scripts/check_docs_freshness.py --days 90`
-  - `make -C docs html SPHINXOPTS="-W --keep-going"`
+- 提交前必须通过 `python scripts/run_gate.py docs_pr`；完整发布执行
+  `python scripts/run_gate.py release`。命令唯一来源是 `scripts/gates.toml`。

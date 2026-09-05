@@ -60,10 +60,9 @@ Owner 可以是角色而非具体姓名；但每篇 `active` 文档必须有 Own
 
 ## 6. 稳态化运行基线（必须满足）
 
-- 基线门禁：
-  - `python3 scripts/doc_check.py` 必须通过
-  - `python3 scripts/check_docs_freshness.py --days 90` 必须通过
-  - `make html SPHINXOPTS="-W --keep-going"` 必须通过
+- 基线门禁：文档变更必须通过 `python scripts/run_gate.py docs_pr`；完整发布必须通过
+  `python scripts/run_gate.py release`。命令与 argv 只维护在
+  [`scripts/gates.toml`](../../scripts/gates.toml)。
 - 责任归属：
   - 所有 `active` 文档必须声明 `owner` 或 `owners`
   - Owner 角色映射与覆盖追踪统一维护在 `docs/governance/inventory/owners-matrix.md`
@@ -117,7 +116,7 @@ Owner 可以是角色而非具体姓名；但每篇 `active` 文档必须有 Own
   - 子目录索引（如 `docs/source/reference/index.rst`）负责该板块的文件列表。
 - **强制检查**:
   - 任何 Markdown 文件的增删改，必须检查 `docs/source/**/*.rst` 是否有对应的 `toctree` 引用需要更新。
-  - 运行 `make html` 确保无 `WARNING: toctree contains reference to nonexisting document` 报错。
+  - 运行 `python scripts/run_gate.py docs_pr`，由 manifest 声明的 warning-as-error 构建确认无失效 toctree。
 
 ## 8. 轻量治理规则审计
 

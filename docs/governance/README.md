@@ -2,7 +2,7 @@
 title: Governance（文档治理总览）
 status: active
 audience: Maintainers / Developers
-last-updated: 2026-06-10
+last-updated: 2026-09-05
 owner: Docs Owner
 ---
 
@@ -29,10 +29,12 @@ owner: Docs Owner
 
 ## 3. 稳态治理基线
 
-- 提交前必须可执行：
-  - `python3 scripts/doc_check.py`
-  - `python3 scripts/check_docs_freshness.py --days 90`
-  - `make -C docs html SPHINXOPTS="-W --keep-going"`
+- 文档变更执行 `python scripts/run_gate.py docs_pr`；完整发布执行
+  `python scripts/run_gate.py release`。
+- 门禁命令的唯一来源是 [`scripts/gates.toml`](../../scripts/gates.toml)，由
+  [`scripts/run_gate.py`](../../scripts/run_gate.py) 分发；本页不复制命令参数。
+- 季度治理审计默认为 report-only：`python scripts/audit_governance_rules.py
+  --format json`。仅在显式发布评审时使用 `--strict`。
 - PR 必须使用 `.github/PULL_REQUEST_TEMPLATE.md`
 - 治理关键路径评审由 `.github/CODEOWNERS` 执行
 

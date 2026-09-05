@@ -17,7 +17,7 @@ owner: Docs Owner
   - 上游软件与职责：`docs/reference/upstream-software.md`
 
 * **版本**: 0.8.1
-* **生成日期**: 2026-07-07
+* **生成日期**: 2026-09-05
 * **作者**: Quantum Misaka with Trae SOLO
 
 ---
@@ -85,7 +85,7 @@ DP-EVA (Deep Potential EVolution Accelerator, 深度势能演化加速器) 是�
     *   **技术细节**: 将详细的实现细节、配置参数字典、算法推导等内容沉淀至 `docs/reference/` 或 `docs/guides/` 下的专项文档中。
     *   **废弃清理**: 及时标记并清理过时的文档与代码。
     *   **治理入口**: 首次参与贡献请先阅读 `docs/guides/docs-governance-quickstart.md`。
-    *   **提交前检查**: 执行 `python3 scripts/doc_check.py`、`python3 scripts/check_docs_freshness.py --days 90`、`make -C docs html SPHINXOPTS="-W --keep-going"`。
+    *   **提交前检查**: 使用 [gate manifest](../../scripts/gates.toml) 中声明的 `docs_pr` profile：`python scripts/run_gate.py docs_pr`。
 
 ### 1.5 核心工程契约 (Core Engineering Contracts)
 
@@ -135,13 +135,18 @@ DP-EVA (Deep Potential EVolution Accelerator, 深度势能演化加速器) 是�
 *   首次参与贡献时，建议先阅读 `docs/guides/docs-governance-quickstart.md`
 
 #### 1.6.3 提交前质量门禁
-*   代码质量：`ruff check src tests scripts`
-*   单元测试优先：`pytest tests/unit`
-*   文档治理：`python3 scripts/doc_check.py`
-*   文档新鲜度：`python3 scripts/check_docs_freshness.py --days 90`
-*   Sphinx 构建：`make -C docs html SPHINXOPTS="-W --keep-going"`
+*   可执行门禁目录是 [`scripts/gates.toml`](../../scripts/gates.toml)；[`scripts/run_gate.py`](../../scripts/run_gate.py) 是本地与托管入口唯一的命令分发器。
+*   日常代码检查：`python scripts/run_gate.py local`。
+*   文档检查：`python scripts/run_gate.py docs_pr`；发布检查：`python scripts/run_gate.py release`。
+*   每个 profile 只证明其声明的层级；DeepMD 资格 profile 只在发布明确声称 DeepMD 能力时调用，当前能力矩阵没有 `supported` 记录。
+*   需要查看单个门禁或 profile 时运行 `python scripts/run_gate.py --list`；不要在本页复制 gate argv。
 
-#### 1.6.4 AGENTS 与开发文档的治理边界
+#### 1.6.4 运行完成语义
+
+工作流只有在进程/作业成功、声明产物已验证且 run manifest 进入 `finished` 时才算完成。
+单独写入 completion marker 不足以证明成功；失败、partial 和 submitted 必须保留其状态与证据。
+
+#### 1.6.5 AGENTS 与开发文档的治理边界
 *   `AGENTS.md` 只承担项目开发最小入口职责，用于帮助 AI 与人类开发者快速建立项目心智模型。
 *   若某项内容可以在本页完整说明，就不应继续保留在 `AGENTS.md` 中；`AGENTS.md` 不再充当第二份开发手册。
 *   `.trae/rules/project_rules.md` 负责 AI 行为规则，不应在 `AGENTS.md` 中重复。
@@ -165,7 +170,9 @@ dpeva/
 │   └── ...
 ├── examples/scripts/       # [脚本示例] Python / Shell 调用示例
 ├── scripts/                # [项目维护] 自动化与 CI/CD 脚本 (CI/CD, Release, Audit)
-│   ├── gate.sh             # 质量门禁入口
+│   ├── gate.sh             # 质量门禁兼容入口（委托 gate manifest）
+│   ├── gates.toml          # 可执行门禁目录
+│   ├── run_gate.py         # 门禁分发器
 │   ├── audit.py            # 代码静态分析工具
 │   ├── check_docs.py       # 文档一致性检查
 │   └── release_helper.py   # 版本发布助手
@@ -518,15 +525,7 @@ Auto-UQ 用于根据数据分布自动确定筛选边界；具体的字段与约
 
 用户自行开展单元测试时，需要自行配置好 Python 环境，确保 `dpeva` 命令在环境内并处于最新状态，且 `pytest` 已安装。
 
-*   **运行单元测试 (Unit Tests)**:
-    ```bash
-    # 基础运行
-    pytest tests/unit
-    
-    # 带覆盖率报告的运行 (推荐)
-    mkdir -p build/coverage
-    pytest tests/unit --cov=src/dpeva --cov-branch --cov-report=term --cov-report=json:build/coverage/coverage-unit.json --cov-fail-under=80
-    ```
+*   **运行单元测试 (Unit Tests)**：执行 `python scripts/run_gate.py unit`；该门禁负责覆盖率参数和 `build/coverage/` 输出。
     *   **规范**:
         *   **Mock 外部依赖**: 所有对 `dp`, `dpdata`, `slurm` 的调用必须被 Mock，严禁在单元测试中产生实际的文件 I/O 或进程提交。
         *   **日志验证**: 涉及日志输出的逻辑，需验证 `setup_workflow_logger` 是否被正确调用。

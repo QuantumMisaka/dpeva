@@ -2,7 +2,7 @@
 title: 文档治理快速上手（开发者与 AI）
 status: active
 audience: Developers / Maintainers
-last-updated: 2026-09-02
+last-updated: 2026-09-05
 owner: Docs Owner
 ---
 
@@ -29,11 +29,15 @@ owner: Docs Owner
 
 ## 3. 提交前最低检查
 
+可执行门禁目录是 [`scripts/gates.toml`](../../scripts/gates.toml)，分发器是
+[`scripts/run_gate.py`](../../scripts/run_gate.py)。文档变更执行：
+
 ```bash
-python3 scripts/doc_check.py
-python3 scripts/check_docs_freshness.py --days 90
-make -C docs html SPHINXOPTS="-W --keep-going"
+python scripts/run_gate.py docs_pr
 ```
+
+需要完整发布检查时执行 `python scripts/run_gate.py release`。不要在其他指南中复制
+门禁命令；profile 只证明其声明的层级。
 
 ## 4. PR 必填治理信息
 
@@ -51,7 +55,7 @@ make -C docs html SPHINXOPTS="-W --keep-going"
 
 - 先检索 `docs/guides`、`docs/policy`、`docs/governance` 的现有规则再改动
 - 避免复制字段定义，始终链接到 `docs/reference/*`
-- 修改文档后必须复跑治理检查并回写验证结果
+- 修改文档后必须复跑 `docs_pr` profile 并回写验证结果
 - 优先补充导航入口与操作步骤，避免新增孤立文档
 
 ## 6. AI 草案与项目文档边界
