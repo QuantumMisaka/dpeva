@@ -4,7 +4,6 @@ import importlib.util
 from pathlib import Path
 from types import SimpleNamespace
 
-from dpeva.config_migration import MigrationResult
 
 
 MODULE_PATH = (
@@ -32,7 +31,7 @@ def test_recover_passes_normalized_config_to_labeling_model(monkeypatch, tmp_pat
     monkeypatch.setattr(
         module,
         "load_and_resolve_config",
-        lambda _path: MigrationResult(normalized=normalized, warnings=()),
+        lambda _path: normalized,
     )
 
     def make_config(**values):

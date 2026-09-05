@@ -10,4 +10,11 @@ def check_deepmd_version() -> DoctorCheck:
         DeprecationWarning,
         stacklevel=2,
     )
-    return probe_deepmd()
+    result = probe_deepmd()
+    if result.status != "ok":
+        warnings.warn(
+            f"DeepMD compatibility check is {result.status}: {result.detail}",
+            UserWarning,
+            stacklevel=2,
+        )
+    return result

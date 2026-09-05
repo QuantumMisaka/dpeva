@@ -210,7 +210,7 @@ def test_load_and_resolve_config_migrates_and_warns_without_overwriting_source(
     )
 
     with caplog.at_level("WARNING"):
-        result = cli.load_and_resolve_config(config_path)
+        result = cli.load_config_with_metadata(config_path)
 
     assert isinstance(result, MigrationResult)
     assert result.normalized["submission"]["backend"] == "slurm"
@@ -220,6 +220,19 @@ def test_load_and_resolve_config_migrates_and_warns_without_overwriting_source(
         "data_path": "data",
     }
     assert "legacy config field backend; use submission.backend; removal target 1.0" in caplog.text
+
+
+def test_load_and_resolve_config_preserves_legacy_dict_contract(tmp_path):
+    config_path = _write_config(
+        tmp_path,
+        json.dumps({"backend": "slurm", "data_path": "data"}),
+    )
+
+    result = cli.load_and_resolve_config(config_path)
+
+    assert isinstance(result, dict)
+    assert result["submission"]["backend"] == "slurm"
+    assert "backend" not in result
 
 
 def _label_config_dict(tmp_path):

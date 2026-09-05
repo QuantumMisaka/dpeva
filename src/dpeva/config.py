@@ -4,6 +4,7 @@ Centralized Configuration Management using Pydantic V2.
 from __future__ import annotations
 
 import os
+import warnings
 from pathlib import Path
 from typing import Any, Dict, List, Literal, Optional, Union
 
@@ -49,6 +50,22 @@ from dpeva.constants import (
     DEFAULT_CLEAN_RESULTS_PREFIX,
     DEFAULT_CLEAN_STRICT_ALIGNMENT,
 )
+from dpeva.config_migration import migrate_legacy_config
+
+
+def _migrate_workflow_input(value: Any) -> Any:
+    """Normalize documented legacy submission aliases at model boundaries."""
+    if not isinstance(value, dict):
+        return value
+    result = migrate_legacy_config(value)
+    for item in result.warnings:
+        warnings.warn(
+            f"legacy config field {item.field}; use {item.replacement}; "
+            f"removal target {item.removal_version}",
+            DeprecationWarning,
+            stacklevel=4,
+        )
+    return result.normalized
 
 class StrictConfigModel(BaseModel):
     """Base for public configuration models.
@@ -116,6 +133,11 @@ class BaseWorkflowConfig(StrictConfigModel):
         default_factory=SubmissionConfig, 
         description="Submission configuration."
     )
+
+    @model_validator(mode="before")
+    @classmethod
+    def migrate_legacy_submission(cls, value: Any) -> Any:
+        return _migrate_workflow_input(value)
     
     @field_validator("dp_backend")
     @classmethod
@@ -274,6 +296,11 @@ class AnalysisConfig(StrictConfigModel):
         None,
         description="Path to configuration file for Slurm self-submission."
     )
+
+    @model_validator(mode="before")
+    @classmethod
+    def migrate_legacy_submission(cls, value: Any) -> Any:
+        return _migrate_workflow_input(value)
 
     @model_validator(mode='after')
     def validate_mode_paths(self):

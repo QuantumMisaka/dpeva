@@ -3,6 +3,16 @@
 This directory contains configuration templates for the core workflows in DP-EVA.
 Executable example scripts are maintained in `examples/scripts/`.
 
+## Compatibility notes
+
+Recipes should use the nested `submission` object. Existing Python callers may continue using
+`load_and_resolve_config(path)` and the deprecated `DPCommandBuilder` facade for one release:
+the loader returns a normalized `dict`, while `load_config_with_metadata(path)` is reserved for
+evidence-aware consumers. The facade retains `set_backend()` and historical positional command
+signatures; new code should inject independent `DeepMDAdapter` instances or pass a keyword-only
+`backend` override. Legacy top-level submission aliases are migrated with warnings, and unknown
+or conflicting fields remain errors.
+
 ## 1. Active Learning Collection (`collection/`)
 
 The `collect` workflow is the heart of DP-EVA, handling Uncertainty Quantification (UQ), Filtering, and Sampling.

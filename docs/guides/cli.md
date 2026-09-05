@@ -59,6 +59,11 @@ resume（调度器轮询/恢复不在本试点范围），不会创建新作业�
 
 实现入口：`src/dpeva/cli.py`（基于 `argparse`）。
 
+配置加载的 Python 兼容接口为 `load_and_resolve_config(path) -> dict`，返回已完成迁移和相对
+路径解析的配置 mapping。需要运行证据、原始输入和迁移 warning 的内部消费者使用
+`load_config_with_metadata(path) -> MigrationResult`；两者都不会改写源 JSON。旧版顶层 submission
+字段会记录迁移 warning，并继续拒绝未知字段和冲突值。
+
 ### 3.3 doctor（环境能力检查）
 
 ```bash

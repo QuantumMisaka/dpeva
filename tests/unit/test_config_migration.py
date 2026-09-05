@@ -3,7 +3,7 @@ from __future__ import annotations
 import pytest
 from pydantic import ValidationError
 
-from dpeva.config import InferenceConfig, SubmissionConfig
+from dpeva.config import AnalysisConfig, ExplorationConfig, InferenceConfig, SubmissionConfig
 from dpeva.config_migration import migrate_legacy_config
 
 
@@ -35,6 +35,45 @@ def test_flat_and_nested_submission_conflict_is_rejected() -> None:
         migrate_legacy_config(
             {"backend": "local", "submission": {"backend": "slurm"}}
         )
+
+
+def test_flat_and_nested_equal_submission_values_are_accepted_with_warning() -> None:
+    result = migrate_legacy_config(
+        {"backend": "local", "submission": {"backend": "local"}}
+    )
+
+    assert result.normalized["submission"] == {"backend": "local"}
+    assert [item.field for item in result.warnings] == ["backend"]
+
+
+def test_workflow_model_boundary_migrates_flat_submission_without_mutation() -> None:
+    raw = {"data_path": "data", "backend": "slurm"}
+
+    config = InferenceConfig.model_validate(raw)
+
+    assert config.submission.backend == "slurm"
+    assert raw == {"data_path": "data", "backend": "slurm"}
+
+
+def test_analysis_model_boundary_migrates_flat_submission() -> None:
+    config = AnalysisConfig.model_validate(
+        {"result_dir": "results", "type_map": ["H"], "backend": "slurm"}
+    )
+
+    assert config.submission.backend == "slurm"
+
+
+def test_exploration_backend_remains_native() -> None:
+    config = ExplorationConfig.model_validate(
+        {
+            "backend": "atst-tools",
+            "workflow_type": "md",
+            "backend_config_path": "atst.yaml",
+        }
+    )
+
+    assert config.backend == "atst-tools"
+    assert not hasattr(config, "submission")
 
 
 def test_unknown_public_config_field_is_rejected() -> None:

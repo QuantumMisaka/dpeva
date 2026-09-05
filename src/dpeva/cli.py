@@ -135,7 +135,7 @@ def _run_options(args) -> RunOptions:
     )
 
 
-def load_and_resolve_config(config_path) -> MigrationResult:
+def load_config_with_metadata(config_path) -> MigrationResult:
     """
     Loads a JSON configuration file and resolves relative paths.
 
@@ -143,8 +143,8 @@ def load_and_resolve_config(config_path) -> MigrationResult:
         config_path (str): Path to the configuration file.
 
     Returns:
-        MigrationResult: The migrated configuration with resolved paths and
-            compatibility warnings.
+        MigrationResult: The migrated configuration with resolved paths,
+            source metadata, and compatibility warnings.
     """
     raw = load_json_config(config_path)
     migrated = migrate_legacy_config(raw)
@@ -157,6 +157,11 @@ def load_and_resolve_config(config_path) -> MigrationResult:
     )
     _log_migration_warnings(result)
     return result
+
+
+def load_and_resolve_config(config_path) -> dict:
+    """Load a config using the legacy dict-returning helper contract."""
+    return load_config_with_metadata(config_path).normalized
 
 def handle_train(args):
     """
@@ -180,7 +185,7 @@ def handle_infer(args):
         args (argparse.Namespace): Command-line arguments containing 'config'.
     """
     from dpeva.workflows.infer import InferenceWorkflow
-    loaded = load_and_resolve_config(args.config)
+    loaded = load_config_with_metadata(args.config)
     original_config = _original_config(loaded)
     config = _normalized_config(loaded)
     workflow = InferenceWorkflow(
@@ -201,7 +206,7 @@ def handle_feature(args):
         args (argparse.Namespace): Command-line arguments containing 'config'.
     """
     from dpeva.workflows.feature import FeatureWorkflow
-    loaded = load_and_resolve_config(args.config)
+    loaded = load_config_with_metadata(args.config)
     original_config = _original_config(loaded)
     config = _normalized_config(loaded)
     workflow = FeatureWorkflow(

@@ -74,8 +74,8 @@ def recover(config_path: Path, wait_job_ids: List[str], next_attempt: int, inter
     if wait_job_ids:
         wait_for_slurm_jobs(wait_job_ids, interval)
 
-    migrated = load_and_resolve_config(str(config_path))
-    config = LabelingConfig(**migrated.normalized)
+    normalized = load_and_resolve_config(str(config_path))
+    config = LabelingConfig(**normalized)
     workflow = LabelingWorkflow(config)
     packed_job_dirs = workflow._resolve_packed_job_dirs()
     if not packed_job_dirs:

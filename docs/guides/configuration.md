@@ -48,6 +48,12 @@ owner: Docs Owner
 
 迁移在内存副本上进行，用户提供的源 JSON 不会被覆盖。规范化配置会在后续 run manifest 中单独记录。所有公开配置模型均拒绝未知字段，因此拼写错误必须在提交前修正；迁移只接受有明确映射的旧字段，不会吞掉任意扩展字段。
 
+Python API 同样在 `BaseWorkflowConfig` 的公开模型边界执行这次迁移，因此直接调用
+`InferenceConfig.model_validate(...)`、`FeatureConfig.model_validate(...)` 或其他工作流模型时，
+仍可读取上述旧字段；输入 mapping 不会被修改。`AnalysisConfig` 也支持该兼容边界。
+`ExplorationConfig.backend` 是探索后端自己的原生字段（例如 `atst-tools`），不会被解释为
+submission backend。未知字段与新旧字段冲突仍然严格失败。
+
 ### 4.1 Local 最小配置
 
 ```json
