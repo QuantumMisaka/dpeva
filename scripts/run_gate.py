@@ -123,6 +123,12 @@ def load_manifest(path: Path) -> Manifest:
             refs.append(ref)
         profiles[name] = tuple(refs)
 
+    collisions = set(gates).intersection(profiles)
+    if collisions:
+        raise ValueError(
+            "gate/profile name collision(s): " + ", ".join(sorted(collisions))
+        )
+
     return Manifest(gates=gates, profiles=profiles, repo_root=_manifest_repo_root(manifest_path))
 
 

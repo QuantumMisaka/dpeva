@@ -54,7 +54,7 @@ jobs:
           pip install pyyaml tomli
 
       - name: Run declared governance gate
-        run: python scripts/run_gate.py docs
+        run: python scripts/run_gate.py docs_audit
 
       - name: Run declared freshness gate
         run: python scripts/run_gate.py docs_freshness

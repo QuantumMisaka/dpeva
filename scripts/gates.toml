@@ -18,7 +18,7 @@ layer = "static"
 owner = "Project Maintainer"
 basis = "existing python-quality CI"
 
-[gates.docs]
+[gates.docs_audit]
 argv = ["python", "scripts/doc_check.py"]
 layer = "docs"
 owner = "Docs Owner"
@@ -54,7 +54,7 @@ layer = "docs"
 owner = "Docs Owner"
 basis = "SPEC R13"
 
-[gates.integration]
+[gates.integration_tests]
 argv = ["pytest", "tests/integration", "-q"]
 layer = "integration"
 owner = "Workflow Owner"
@@ -93,8 +93,8 @@ basis = "existing explore-extra-smoke CI"
 [profiles]
 local = ["lint", "unit", "audit"]
 pr = ["lint", "unit", "audit", "explore_import", "explore_cli", "atst_cli"]
-docs = ["docs", "docs_freshness", "docs_build", "docs_artifacts", "traceability"]
-docs_pr = ["docs", "docs_freshness", "docs_build", "docs_artifacts", "docs_linkcheck", "traceability"]
-integration = ["integration"]
+docs = ["docs_audit", "docs_freshness", "docs_build", "docs_artifacts", "traceability"]
+docs_pr = ["docs_audit", "docs_freshness", "docs_build", "docs_artifacts", "docs_linkcheck", "traceability"]
+integration = ["integration_tests"]
 deepmd_release = ["deepmd_contract", "qualification_collect"]
-release = ["lint", "unit", "audit", "explore_import", "explore_cli", "atst_cli", "integration", "docs", "docs_freshness", "docs_build", "docs_artifacts", "docs_linkcheck", "traceability"]
+release = ["lint", "unit", "audit", "explore_import", "explore_cli", "atst_cli", "integration_tests", "docs_audit", "docs_freshness", "docs_build", "docs_artifacts", "docs_linkcheck", "traceability"]

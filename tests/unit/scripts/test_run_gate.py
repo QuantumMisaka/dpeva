@@ -102,6 +102,19 @@ def test_manifest_rejects_duplicate_profile_refs(tmp_path: Path) -> None:
         load_manifest(path)
 
 
+def test_manifest_rejects_gate_profile_name_collision(tmp_path: Path) -> None:
+    path = tmp_path / "gate-profile-collision.toml"
+    path.write_text(
+        'schema_version = "1.0"\n\n[gates.same]\nargv = ["true"]\n'
+        'layer = "test"\nowner = "owner"\nbasis = "basis"\n\n'
+        '[profiles]\nsame = ["same"]\n',
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="collision"):
+        load_manifest(path)
+
+
 def test_profile_and_gate_can_be_resolved_and_missing_names_fail() -> None:
     manifest = Manifest(
         gates={"one": Gate("one", ("true",), "test", "owner", "basis")},
@@ -199,11 +212,25 @@ def test_docs_jobs_use_gate_names() -> None:
     assert "pip install -e .[docs] tomli" in build
     for name in ("docs_build", "docs_artifacts", "docs_linkcheck"):
         assert f"python scripts/run_gate.py {name}" in build
-    for name in ("docs", "docs_freshness"):
-        assert f"python scripts/run_gate.py {name}" in lint
-    for name in ("docs", "docs_freshness", "docs_build"):
-        assert f"python scripts/run_gate.py {name}" in verify
+    lint_runs = [
+        line.split("python scripts/run_gate.py ", 1)[1]
+        .split(";", 1)[0]
+        .strip()
+        for line in lint.splitlines()
+        if "python scripts/run_gate.py " in line
+    ]
+    assert lint_runs == ["docs_audit", "docs_freshness"]
+    verify_runs = [
+        line.split("python scripts/run_gate.py ", 1)[1]
+        .split(";", 1)[0]
+        .strip()
+        for line in verify.splitlines()
+        if "python scripts/run_gate.py " in line
+    ]
+    assert verify_runs[:2] == ["docs_audit", "docs_freshness"]
+    assert verify_runs.count("docs_build") == 1
     assert "make clean" in verify
+    assert verify.count("make clean") == 1
     assert "build/html/guides/quickstart.html" in verify
     assert "pip install -e .[docs] tomli" in deploy
     assert "python scripts/run_gate.py docs_build" in deploy

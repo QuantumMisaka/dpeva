@@ -15,7 +15,7 @@ fi
 cd "$PROJECT_ROOT"
 
 echo "Running documentation governance checks..."
-python scripts/run_gate.py docs
+python scripts/run_gate.py docs_audit
 python scripts/run_gate.py docs_freshness
 
 echo "Building HTML documentation..."
