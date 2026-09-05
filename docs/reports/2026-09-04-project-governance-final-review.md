@@ -160,7 +160,7 @@ upstream, GPU, and scheduler conclusions remain bounded by their cited reports.
 
 ### DeepMD-kit 3.2 compatibility lane
 
-The capability manifest currently contains 17 records:
+At the reviewed frozen head, the capability manifest contained 17 records:
 
 | State | Count |
 |---|---:|
@@ -173,13 +173,40 @@ The local exact-3.2.0 contract lane recorded 6 passed and 4 explicitly named
 fixture skips. The skips are not positive fixture qualification and do not
 promote a capability.
 
-The single authorized SAI qualification attempt was JobID `1126627` in the
-recorded immutable external directory. The scheduler result was
-`CANCELLED by 0` after one second on `4v100n03`, before the payload produced
-stdout/stderr, preflight, environment, command, or artifact records. The
-collector therefore recorded `status=failed`; `--require-complete` failed as
-designed. No capability is promoted, and no second job is submitted under this
-plan. A retry requires new authorization and an operations diagnosis.
+The early review recorded SAI JobID `1126627` in the immutable external
+directory. The scheduler result was `CANCELLED by 0` after one second on
+`4v100n03`, before the payload produced stdout/stderr, preflight, environment,
+command, or artifact records. The collector therefore recorded
+`status=failed`; `--require-complete` failed as designed. This remains
+historical evidence for the reviewed frozen head.
+
+### Post-qualification addendum (2026-09-05)
+
+This addendum records a subsequent bounded status/evidence update. It does
+not reopen or retroactively extend the cross-family review of the frozen
+governance mechanisms. The mechanisms are unchanged; this evidence and
+capability-status update requires a fresh independent code/governance review
+before merge.
+
+The follow-up exact-environment qualification completed with the following
+evidence:
+
+- CPU contract JobID `1128442` in `dpeva-dpa4-320`: **11 passed / 0 skipped**.
+- SAI V100 JobID `1128260` in exact DeepMD-kit 3.2.0: completed with exit code
+  `0:0`, and its collector completed with `--require-complete`.
+- The SAI aggregate is retained at
+  `docs/reports/evidence/deepmd-3.2/sai-qualification-job-1128260-public.json`;
+  the CPU session is retained at
+  `docs/reports/evidence/deepmd-3.2/cpu-job-1128442-pytest-session.json`.
+
+The promotion gate is satisfied for exactly three records: DPA4 `pt test`,
+`pt eval-desc`, and `pt embed`. The DPA4C-labelled periodic command completed,
+but its artifact has the same hash as the regular checkpoint and
+`dp show descriptor` reports downstream type `dpa4`; it therefore remains
+`experimental` and is not a DPA4C support claim. The current distribution is
+now `3 supported / 8 experimental / 4 unsupported / 2 blocked-upstream`.
+The earlier cancelled JobID `1126627` remains historical and is superseded by
+this completed qualification; it is not deleted or reinterpreted.
 
 ### Thin governance alignment
 
@@ -250,11 +277,11 @@ git diff --check
 
 Result: **exit 0; no output**.
 
-The `deepmd_release` profile is intentionally not a passing requirement for
-this ordinary software/documentation release: the matrix has zero supported
-records and the SAI qualification is failed before payload. If probed, its
-non-zero result is expected negative evidence, not a release defect and not a
-support claim.
+The `deepmd_release` profile was intentionally not a passing requirement for
+the ordinary software/documentation release reviewed above. Its earlier
+non-zero result is expected historical negative evidence, not a release
+defect. The post-qualification addendum is a separate status/evidence update;
+it does not retroactively change that release profile result.
 
 ## Final disposition
 
@@ -263,7 +290,8 @@ The terminal third package is **APPROVE / ACCEPT / PASS** for
 reviewed frozen head. This status-only synchronization does not alter the
 governance mechanisms or claim that the third package reviewed this commit.
 
-DeepMD production support remains unclaimed: the capability matrix is still
-`supported=0`, and the cancelled SAI qualification requires a new explicit
-authorization before retry. Phase 3 scientific expansion and automatic
-campaign orchestration remain outside this closure.
+For the reviewed frozen head, DeepMD production support was unclaimed and the
+SAI qualification was cancelled before payload. The subsequent addendum
+records bounded support for exactly three DPA4 operations; it does not imply
+general DeepMD, DPA4C, non-PBC, or universal-GPU support. Phase 3 scientific
+expansion and automatic campaign orchestration remain outside this closure.

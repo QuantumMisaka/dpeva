@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0",
+  "status": "finished",
+  "returncode": 0,
+  "capability_key": {
+    "operation": "embed",
+    "backend": "pt",
+    "model_family": "DPA4",
+    "artifact": "checkpoint",
+    "data_format": "deepmd/npy",
+    "environment": "cpu"
+  },
+  "verification_command": "pytest tests/contract/deepmd/test_cli_contract.py::test_pt_embed_has_required_hdf5_datasets -q",
+  "deepmd_version": "DeePMD-kit v3.2.0",
+  "source": "cpu-contract",
+  "case": "pt-embed",
+  "job_id": null,
+  "gpu": null
+}

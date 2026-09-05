@@ -148,14 +148,15 @@ descriptor 可通过 `dp --pt-expt eval-desc` 提取，单任务模型无需设�
 backend 提供 descriptor 提取，但尚未提供 `dp embed` 所需的组合
 `eval_embedding` 接口，因此这一路径应使用 `eval_desc`。
 
-当前 DeepMD 3.2 兼容性通道尚未资格化任何 `supported` 能力。`ft2dp-post`
-本地 contract 结果为 6 passed / 4 个显式 fixture skips，不能替代 CI 的
-`DPEVA_DEEPMD_CONTRACT_REQUIRED=1` protected-fixture 模式；一次 SAI V100
-尝试（JobID `1126627`）在 payload 执行前为 `CANCELLED by 0`，没有完整的
-compute-node preflight、环境或命令证据。请以 capability manifest 和仓库报告
-`docs/reports/2026-09-04-deepmd-3.2-compatibility.md` 的状态为准，不要把版本号或该取消事件解释为运行时通过。
-被取消的 qualification 不得自动重试；重试需要新的显式授权和运维诊断。完整边界见
-仓库报告 `docs/reports/2026-09-04-deepmd-3.2-compatibility.md`。
+当前 DeepMD 3.2 兼容性通道已有 3 条 `supported` 能力：DPA4
+pt test/eval-desc/embed。这些声明同时
+绑定 CPU contract JobID `1128442` 和完成的 SAI V100 qualification JobID
+`1128260`；脱敏 SAI promotion aggregate 与三个 CPU attestation 位于
+`docs/reports/evidence/deepmd-3.2/`。证据只证明选定 regular 模型、regular+EMA
+V100 命令链完成，不构成科学精度或所有下游 head 的支持声明。一次
+`pt-expt eval-desc` 虽然执行成功，但事后 descriptor inspection 证明所用 artifact
+实际为 DPA4 而非 DPA4C；因此周期性 DPA4C 路线仍为 experimental，不能因命令
+成功而晋级。其余能力状态以 capability manifest 和报告为准。
 
 DeepMD PyTorch 模型可使用 `dp embed` 导出 HDF5 embedding。该路线会在 `savedir/embedding.hdf5` 中保留 `descriptor`、`atomic_feature`、`structural_feature` 和 `atom_types`；HDF5 dataset 由 DeepMD 使用 gzip + shuffle 压缩。`feature_kind="descriptor"` 读取 `descriptor`，`feature_kind="fitting_last_layer"` 对应 `atomic_feature`。
 

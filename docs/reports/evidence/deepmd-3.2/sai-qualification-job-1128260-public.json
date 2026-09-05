@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.0",
+  "qualification": "deepmd-3.2-sai-v100",
+  "status": "finished",
+  "job_id": "1128260",
+  "gpu": "Tesla V100-SXM2-32GB",
+  "raw_evidence_sha256": "b3a729a37f72ee9f8de21e34ef0450b93bf0b30a03fcc4d79686f4a6f3ff7f83",
+  "attestations": [
+    {"schema_version": "1.0", "status": "finished", "returncode": 0, "capability_key": {"operation": "test", "backend": "pt", "model_family": "DPA4", "artifact": "checkpoint", "data_format": "deepmd/npy", "environment": "cpu"}, "verification_command": "pytest tests/contract/deepmd/test_cli_contract.py::test_pt_test_requires_numeric_output -q", "deepmd_version": "DeePMD-kit v3.2.0", "source": "sai-v100-qualification", "case": "pt-test", "job_id": "1128260", "gpu": "Tesla V100-SXM2-32GB"},
+    {"schema_version": "1.0", "status": "finished", "returncode": 0, "capability_key": {"operation": "test", "backend": "pt", "model_family": "DPA4", "artifact": "checkpoint", "data_format": "deepmd/npy", "environment": "cpu"}, "verification_command": "pytest tests/contract/deepmd/test_cli_contract.py::test_pt_test_requires_numeric_output -q", "deepmd_version": "DeePMD-kit v3.2.0", "source": "sai-v100-qualification", "case": "pt-test-ema", "job_id": "1128260", "gpu": "Tesla V100-SXM2-32GB"},
+    {"schema_version": "1.0", "status": "finished", "returncode": 0, "capability_key": {"operation": "eval-desc", "backend": "pt", "model_family": "DPA4", "artifact": "checkpoint", "data_format": "deepmd/npy", "environment": "cpu"}, "verification_command": "pytest tests/contract/deepmd/test_cli_contract.py::test_pt_eval_desc_has_one_descriptor_per_frame -q", "deepmd_version": "DeePMD-kit v3.2.0", "source": "sai-v100-qualification", "case": "pt-eval-desc", "job_id": "1128260", "gpu": "Tesla V100-SXM2-32GB"},
+    {"schema_version": "1.0", "status": "finished", "returncode": 0, "capability_key": {"operation": "eval-desc", "backend": "pt", "model_family": "DPA4", "artifact": "checkpoint", "data_format": "deepmd/npy", "environment": "cpu"}, "verification_command": "pytest tests/contract/deepmd/test_cli_contract.py::test_pt_eval_desc_has_one_descriptor_per_frame -q", "deepmd_version": "DeePMD-kit v3.2.0", "source": "sai-v100-qualification", "case": "pt-eval-desc-ema", "job_id": "1128260", "gpu": "Tesla V100-SXM2-32GB"},
+    {"schema_version": "1.0", "status": "finished", "returncode": 0, "capability_key": {"operation": "embed", "backend": "pt", "model_family": "DPA4", "artifact": "checkpoint", "data_format": "deepmd/npy", "environment": "cpu"}, "verification_command": "pytest tests/contract/deepmd/test_cli_contract.py::test_pt_embed_has_required_hdf5_datasets -q", "deepmd_version": "DeePMD-kit v3.2.0", "source": "sai-v100-qualification", "case": "pt-embed", "job_id": "1128260", "gpu": "Tesla V100-SXM2-32GB"},
+    {"schema_version": "1.0", "status": "finished", "returncode": 0, "capability_key": {"operation": "embed", "backend": "pt", "model_family": "DPA4", "artifact": "checkpoint", "data_format": "deepmd/npy", "environment": "cpu"}, "verification_command": "pytest tests/contract/deepmd/test_cli_contract.py::test_pt_embed_has_required_hdf5_datasets -q", "deepmd_version": "DeePMD-kit v3.2.0", "source": "sai-v100-qualification", "case": "pt-embed-ema", "job_id": "1128260", "gpu": "Tesla V100-SXM2-32GB"}
+  ]
+}

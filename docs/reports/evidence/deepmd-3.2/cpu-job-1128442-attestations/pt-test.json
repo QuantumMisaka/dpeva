@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0",
+  "status": "finished",
+  "returncode": 0,
+  "capability_key": {
+    "operation": "test",
+    "backend": "pt",
+    "model_family": "DPA4",
+    "artifact": "checkpoint",
+    "data_format": "deepmd/npy",
+    "environment": "cpu"
+  },
+  "verification_command": "pytest tests/contract/deepmd/test_cli_contract.py::test_pt_test_requires_numeric_output -q",
+  "deepmd_version": "DeePMD-kit v3.2.0",
+  "source": "cpu-contract",
+  "case": "pt-test",
+  "job_id": null,
+  "gpu": null
+}

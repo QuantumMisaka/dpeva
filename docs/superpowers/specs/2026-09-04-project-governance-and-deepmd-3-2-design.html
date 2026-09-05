@@ -154,7 +154,7 @@
         <p><strong>核心裁决：</strong>DP-EVA 的下一阶段主线不是新增更多算法，而是把“失败语义 + run manifest + dataset lineage + model artifact identity + eval-card + DeepMD capability matrix”固化为可靠科研运行内核。</p>
         <p><strong>产品边界：</strong>DP-EVA 负责主动数据与候选证据；FT2DP 工作区负责模型训练和系统评估实验矩阵；下游费托模拟工作区以吸附能、NEB、MD 等应用任务裁决最终模型。</p>
       </div>
-      <p class="small">本 SPEC 是本地唯一规范源。Plans A–E 已按批准计划落地，并完成独立跨家族治理终审与状态同步；终端状态只记录已审查机制，不改变需求。DeepMD 当前没有任何 <code>supported</code> 能力，不能据此宣称 3.2.0 生产兼容。</p>
+      <p class="small">本 SPEC 是本地唯一规范源。Plans A–E 已按批准计划落地，并完成独立跨家族治理终审与状态同步；终端状态只记录已审查机制，不改变需求。原治理冻结时 DeepMD 没有任何 <code>supported</code> 能力；后续资格附记仅将三条明确的 DPA4 操作晋级为有边界的支持，不得据此宣称通用的 3.2.0 生产兼容。</p>
     </section>
 
     <section id="context">
@@ -405,8 +405,9 @@ Local / Slurm / external campaign workspaces</code></pre>
         </table>
       </div>
       <div class="decision open">
-        <p><strong>当前实现证据（2026-09-05）：</strong>Compatibility Manifest 已落地并包含 17 条记录：<code>supported=0</code>、<code>experimental=11</code>、<code>unsupported=4</code>、<code>blocked-upstream=2</code>。本地精确 DeepMD-kit 3.2.0 contract lane 为 6 passed / 4 个具名 fixture skip；这些 skip 不能替代受保护正向 fixture。</p>
-        <p>唯一获授权的 SAI V100 qualification job 为 JobID <code>1126627</code>，调度结果为 <code>CANCELLED by 0</code>，在 payload 执行前结束，未产生环境、命令或产物证据。其 collector 记录为 failed，因而不晋级任何 capability；重新尝试需新的明确授权。</p>
+        <p><strong>原治理冻结证据（2026-09-05）：</strong>Compatibility Manifest 包含 17 条记录：<code>supported=0</code>、<code>experimental=11</code>、<code>unsupported=4</code>、<code>blocked-upstream=2</code>。本地精确 DeepMD-kit 3.2.0 contract lane 为 6 passed / 4 个具名 fixture skip；这些 skip 不能替代受保护正向 fixture。</p>
+        <p><strong>后续资格附记（2026-09-05）：</strong>CPU JobID <code>1128442</code> 在精确 <code>dpeva-dpa4-320</code> 环境中为 11 passed / 0 skipped；SAI V100 JobID <code>1128260</code> 在精确 DeepMD-kit 3.2.0 环境中完成，collector 通过 <code>--require-complete</code>。资格门仅晋级 DPA4 <code>pt test</code>、<code>pt eval-desc</code>、<code>pt embed</code> 三条记录。DPA4C-labelled periodic 命令虽成功，但 artifact 与 regular 同 hash，且 <code>dp show descriptor</code> 显示 downstream type=<code>dpa4</code>，因此仍为 <code>experimental</code>。当前分布为 <code>3 supported</code>、<code>8 experimental</code>、<code>4 unsupported</code>、<code>2 blocked-upstream</code>。</p>
+        <p>此前 JobID <code>1126627</code> 的 <code>CANCELLED by 0</code> 结果保留为历史证据，不与后续完成的资格结果混写。本附记是状态/证据更新，未改变治理机制；原跨家族终审不覆盖本次新证据，合入前仍需独立代码/治理审查。</p>
       </div>
       <h3>10.3 Upstream Watch</h3>
       <p>定时任务每周读取 GitHub release、PyPI 和已登记上游 issue，生成差异报告。它可以创建维护 issue，但不得自动修改生产 lock、自动发布或宣称兼容。补丁晋级必须经过 compatibility PR 和对应资格门禁。</p>
@@ -594,10 +595,10 @@ failed -- explicit resume/recovery event --> running --> finished | failed</code
       <h3>15.4 Phase 2B：DeepMD 3.2 Compatibility Lane</h3>
       <ul>
         <li>依赖分层、stable lock、capability manifest 和 CPU contract CI。</li>
-        <li>已建立 SAI V100 qualification harness 和 producer-issued attestation 规则；唯一执行的 JobID <code>1126627</code> 在 payload 前被取消，尚未形成 SAI 资格证据。</li>
-        <li>当前不得把任何能力从 experimental 晋级 supported；后续资格重试需新的明确授权并完成 <code>--require-complete</code>。</li>
+        <li>已建立 SAI V100 qualification harness 和 producer-issued attestation 规则；早期 JobID <code>1126627</code> 在 payload 前被取消，作为历史失败记录保留。</li>
+        <li>后续授权的 CPU JobID <code>1128442</code>（11 passed / 0 skipped）与 SAI V100 JobID <code>1128260</code>（DeepMD-kit 3.2.0，<code>--require-complete</code>）完成资格链；仅 DPA4 <code>pt test</code>、<code>pt eval-desc</code>、<code>pt embed</code> 晋级 supported。DPA4C-labelled periodic 分支因 artifact 身份不符仍为 experimental。</li>
       </ul>
-      <p><strong>当前出口：</strong>兼容报告、精确 3.2.0 environment lock、capability matrix 和失败的 SAI qualification 记录一致；它证明治理与证据管线已落地，不证明 DeepMD 生产支持。Phase 2A 与 2B 在 Phase 1 的 schema 和状态契约冻结后完成，分别由 Scientific Owner 与 Compatibility Owner 负责。</p>
+      <p><strong>当前出口：</strong>兼容报告、精确 3.2.0 environment lock、capability matrix、CPU contract 与完成的 SAI qualification 记录一致；它证明三条明确 DPA4 操作具备有边界的资格证据，不证明 DPA4C、non-PBC 或通用 GPU 的生产支持。Phase 2A 与 2B 在 Phase 1 的 schema 和状态契约冻结后完成，分别由 Scientific Owner 与 Compatibility Owner 负责。</p>
       <h3>15.5 Phase 3：受控科学扩展</h3>
       <ul>
         <li>DPA4 五档基座 alias、LMDB、.pt2、DPA4C 采样引擎。</li>
@@ -681,8 +682,9 @@ failed -- explicit resume/recovery event --> running --> finished | failed</code
       <h3>17.3 本轮实测边界</h3>
       <ul>
         <li>本机精确 3.2.0 contract lane 为 6 passed / 4 个具名 fixture skip；这些 skip 不能替代受保护正向 fixture。</li>
-        <li>唯一 SAI V100 尝试为 JobID <code>1126627</code>，结果 <code>CANCELLED by 0</code>，在 payload 前结束，未产生环境、命令或产物证据；collector 为 failed，因而当前 <code>supported=0</code>。</li>
-        <li>上述版本/help 结果只证明接口暴露，不证明 DPA4/DPA4C 在目标 GPU、数据和模型上的数值正确；能力矩阵当前为 11 experimental、4 unsupported、2 blocked-upstream、0 supported。</li>
+        <li>早期 SAI JobID <code>1126627</code> 结果为 <code>CANCELLED by 0</code>，在 payload 前结束，未产生环境、命令或产物证据；collector 为 failed，该记录仅作为历史边界。</li>
+        <li>后续 CPU JobID <code>1128442</code> 为 11 passed / 0 skipped；SAI V100 JobID <code>1128260</code> 完成并通过 <code>--require-complete</code>。仅 DPA4 <code>pt test</code>、<code>pt eval-desc</code>、<code>pt embed</code> 晋级，当前能力矩阵为 3 supported、8 experimental、4 unsupported、2 blocked-upstream。</li>
+        <li>DPA4C-labelled periodic 命令虽成功，但 artifact 与 regular 同 hash，且 <code>dp show descriptor</code> 确认为 downstream type=<code>dpa4</code>；该分支保持 experimental。版本/help 结果和该命令成功均不证明 DPA4C、non-PBC 或通用 GPU 的数值正确。</li>
         <li>FT2DP 数据谱系事故依据外层活任务与检查点记录；本仓库不复制其活状态，只把由事故推出的治理需求固化为 R4。</li>
         <li>用户个人科研材料和已确认品味是设计取舍输入，不成为软件运行事实或自动验收结果。</li>
       </ul>
@@ -690,7 +692,7 @@ failed -- explicit resume/recovery event --> running --> finished | failed</code
   </main>
 
   <footer>
-    DP-EVA local normative design · implementation evidence recorded 2026-09-05 · Final independent cross-family governance review PASS · DeepMD remains unqualified · Evidence sources: repository audit, Plans A–D acceptance reports, DeepMD-kit v3.2.0 official release/documentation, and user-confirmed engineering taste.
+    DP-EVA local normative design · implementation evidence recorded 2026-09-05 · Final independent cross-family governance review PASS for the reviewed frozen mechanisms · DeepMD post-qualification status update pending independent review · Evidence sources: repository audit, Plans A–D acceptance reports, DeepMD-kit v3.2.0 official release/documentation, bounded CPU/SAI qualification records, and user-confirmed engineering taste.
   </footer>
 </body>
 </html>

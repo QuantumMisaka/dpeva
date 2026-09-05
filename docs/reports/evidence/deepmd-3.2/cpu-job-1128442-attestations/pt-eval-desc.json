@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0",
+  "status": "finished",
+  "returncode": 0,
+  "capability_key": {
+    "operation": "eval-desc",
+    "backend": "pt",
+    "model_family": "DPA4",
+    "artifact": "checkpoint",
+    "data_format": "deepmd/npy",
+    "environment": "cpu"
+  },
+  "verification_command": "pytest tests/contract/deepmd/test_cli_contract.py::test_pt_eval_desc_has_one_descriptor_per_frame -q",
+  "deepmd_version": "DeePMD-kit v3.2.0",
+  "source": "cpu-contract",
+  "case": "pt-eval-desc",
+  "job_id": null,
+  "gpu": null
+}

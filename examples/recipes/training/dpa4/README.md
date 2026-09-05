@@ -17,18 +17,21 @@ This directory provides `input.json` templates for DPA4 training in the DP-EVA e
 
 ## DeepMD 3.2 compatibility boundary
 
-These templates are configuration examples, not a DeepMD 3.2 qualification.
+These templates are configuration examples; three bounded DeepMD 3.2 DPA4 PT
+capabilities are qualified, but this does not constitute a general scientific
+or all-downstream-head compatibility claim.
 Install the optional runtime extra, but lock `deepmd-kit==3.2.0` for research
 production and retain `dp --version` in the run evidence. The compatibility
-manifest currently declares zero `supported` capabilities (17 records: 11
-experimental, 4 unsupported, 2 blocked-upstream): local CPU contract
-evidence is 6 passed / 4 explicit fixture skips, and the single SAI V100
-attempt (JobID `1126627`) was cancelled by the scheduler before its payload
-ran. Do not infer GPU/runtime correctness or promote a capability from the
-version number alone.
+manifest currently declares three `supported` capabilities (17 records: 3
+supported, 8 experimental, 4 unsupported, 2 blocked-upstream), backed by CPU
+contract JobID `1128442` and completed SAI V100 qualification JobID `1128260`.
+Do not infer scientific precision, all-head support, or broader GPU/runtime
+correctness from these bounded contract results or from the version number
+alone. The periodic DPA4C `pt-expt eval-desc` route remains experimental until
+a genuine DPA4C artifact passes model-family preflight.
 
 Before using a route in a research run, consult
 [`DeepMD 3.2 compatibility report`](../../../reports/2026-09-04-deepmd-3.2-compatibility.md)
 and `src/dpeva/compatibility/deepmd-3.2.json`. The two DPA4C non-PBC routes
-remain blocked by upstream issue #6002. A cancelled qualification may only be
-retried after new explicit authorization and an operations diagnosis.
+remain blocked by upstream issue #6002. Future promotions require a new bounded
+qualification and complete producer-issued evidence.

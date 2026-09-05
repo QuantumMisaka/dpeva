@@ -50,6 +50,9 @@ def test_periodic_pt_expt_is_experimental_and_non_pbc_is_blocked() -> None:
     periodic = matrix.get(_key())
     assert periodic.status == "experimental"
     assert periodic.version_range == ">=3.2,<3.3"
+    with pytest.raises(CapabilityUnavailable, match="experimental"):
+        matrix.require(_key())
+    assert matrix.require(_key(), allow_experimental=True).status == "experimental"
     with pytest.raises(CapabilityUnavailable, match="blocked-upstream"):
         matrix.require(_key(environment="cpu-non-pbc"))
     with pytest.raises(CapabilityUnavailable, match="blocked-upstream"):
@@ -58,9 +61,13 @@ def test_periodic_pt_expt_is_experimental_and_non_pbc_is_blocked() -> None:
 
 def test_experimental_requires_explicit_opt_in() -> None:
     matrix = CapabilityMatrix.load_default()
+    key = _key(
+        operation="train", backend="pt", model_family="DPA4", artifact="checkpoint",
+        environment="cpu",
+    )
     with pytest.raises(CapabilityUnavailable, match="experimental"):
-        matrix.require(_key())
-    assert matrix.require(_key(), allow_experimental=True).status == "experimental"
+        matrix.require(key)
+    assert matrix.require(key, allow_experimental=True).status == "experimental"
 
 
 def test_pt_expt_embed_is_unsupported() -> None:
@@ -198,7 +205,6 @@ def test_new_routes_are_explicit_policy_unsupported_records() -> None:
     }
     assert set(observed) == policy
     assert set(observed.values()) == {"unsupported"}
-    assert "supported" not in {item.status for item in records}
 
 
 def test_unknown_status_is_rejected(tmp_path: Path) -> None:
@@ -242,18 +248,59 @@ def test_supported_mutation_cannot_promote_arbitrary_existing_json(tmp_path: Pat
     assert not validate_promotion_evidence(record, tmp_path)
 
 
-def test_current_matrix_has_explicit_unqualified_status_distribution() -> None:
-    """Do not let an empty supported loop make the qualification gate vacuous."""
+def test_current_matrix_has_explicit_qualified_status_distribution() -> None:
+    """Keep the bounded post-qualification status distribution explicit."""
 
     counts = Counter(record.status for record in CapabilityMatrix.load_default().records)
     assert counts == Counter(
         {
-            "supported": 0,
-            "experimental": 11,
+            "supported": 3,
+            "experimental": 8,
             "unsupported": 4,
             "blocked-upstream": 2,
         }
     )
+
+
+def test_three_deepmd_32_capabilities_are_promoted_by_machine_evidence() -> None:
+    matrix = CapabilityMatrix.load_default()
+    promoted = {
+        (record.key.operation, record.key.backend, record.key.model_family)
+        for record in matrix.records
+        if record.status == "supported"
+    }
+    assert promoted == {
+        ("test", "pt", "DPA4"),
+        ("eval-desc", "pt", "DPA4"),
+        ("embed", "pt", "DPA4"),
+    }
+    for record in matrix.records:
+        if record.status == "supported":
+            assert validate_promotion_evidence(record, Path.cwd())
+
+
+def test_repository_sai_promotion_evidence_is_minimal_and_sanitized() -> None:
+    evidence_root = Path("docs/reports/evidence/deepmd-3.2")
+    evidence_path = evidence_root / "sai-qualification-job-1128260-public.json"
+    payload = json.loads(evidence_path.read_text(encoding="utf-8"))
+    assert payload["raw_evidence_sha256"] == (
+        "b3a729a37f72ee9f8de21e34ef0450b93bf0b30a03fcc4d79686f4a6f3ff7f83"
+    )
+    assert len(payload["attestations"]) == 6
+    assert {
+        item["capability_key"]["model_family"]
+        for item in payload["attestations"]
+    } == {"DPA4"}
+    serialized = evidence_path.read_text(encoding="utf-8")
+    for forbidden in ("/home/", "/org/", "UUID:", "liuzhaoqing"):
+        assert forbidden not in serialized
+    for tracked_path in evidence_root.glob("**/*.json"):
+        tracked = json.loads(tracked_path.read_text(encoding="utf-8"))
+        candidates = tracked.get("attestations", [tracked])
+        for candidate in candidates:
+            capability = candidate.get("capability_key")
+            if capability is not None:
+                assert capability["model_family"] != "DPA4C"
 
 
 def test_non_pbc_capabilities_remain_blocked_by_issue_6002() -> None:
@@ -275,14 +322,14 @@ def test_qualification_report_states_current_manifest_distribution() -> None:
         encoding="utf-8"
     )
     for status, count in (
-        ("supported", 0),
-        ("experimental", 11),
+        ("supported", 3),
+        ("experimental", 8),
         ("unsupported", 4),
         ("blocked-upstream", 2),
     ):
         assert f"| `{status}` | {count} |" in report
     assert "#6002" in report
-    assert "1126627" in report
+    assert "1128260" in report
 
 
 def test_manifest_implemented_commands_map_to_collected_pytest_nodes() -> None:

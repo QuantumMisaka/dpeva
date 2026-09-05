@@ -29,20 +29,21 @@ owner: Docs Owner
 
 DeepMD-kit 3.2 的能力状态由
 `src/dpeva/compatibility/deepmd-3.2.json` 的精确 operation/backend/model/
-artifact/data/environment key 管理。当前没有任何 `supported` 记录：本地
-`ft2dp-post` 仅完成 6 个 CPU contract cases，另有 4 个显式 fixture skips；
-SAI V100 qualification JobID `1126627` 在 payload 启动前被 scheduler 记录为
-`CANCELLED by 0`，因此不能作为 GPU/runtime 通过证据。完整边界与未资格化结论见
-仓库报告 `docs/reports/2026-09-04-deepmd-3.2-compatibility.md`。
+artifact/data/environment key 管理。当前有 3 条 `supported` 记录（DPA4
+pt test/eval-desc/embed），其余能力仍保持明确的
+experimental/unsupported/blocked 边界。SAI V100 qualification
+JobID `1128260` 与 CPU contract JobID `1128442` 的 producer-issued JSON
+证据已落库；完整边界见仓库报告
+`docs/reports/2026-09-04-deepmd-3.2-compatibility.md`。
 
 发布或研究运行不得仅因版本号落在 `>=3.2,<3.3` 就晋级能力。只有精确验证命令、
 CPU evidence，以及需要时的 SAI evidence 均存在并通过，Compatibility Owner 才能
-在同一变更中更新 manifest 和报告。重试被取消的 SAI 作业需要新的显式授权与运维
-诊断；本报告不把 scheduler cancellation 归因于 harness，也不声称 GPU/runtime
+在同一变更中更新 manifest 和报告。后续 SAI qualification 仍需新的显式授权、
+不可变证据目录和完整 collector gate；当前结果不外推为科学精度或普遍 GPU/runtime
 正确性。
 
-当前 manifest 共 17 条（11 experimental、4 unsupported、2
-blocked-upstream、0 supported）。每条记录还声明 `verification_status` 与
+当前 manifest 共 17 条（3 supported、8 experimental、4 unsupported、2
+blocked-upstream）。每条记录还声明 `verification_status` 与
 `required_evidence`；`implemented` 必须绑定可收集的 pytest node，尚未具备测试的
 train/fine-tune/freeze、LMDB、pretrained alias 和 deploy 路线保持 planned，不能把
 占位命令当作已执行证据。`candidate-evaluation` 是供上层 generic preflight 使用的
