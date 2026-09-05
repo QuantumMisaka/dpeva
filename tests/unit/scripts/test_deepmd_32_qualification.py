@@ -11,7 +11,7 @@ import pytest
 
 from scripts.validation.collect_deepmd_32_qualification import collect_qualification
 from scripts.validation.prepare_deepmd_32_qualification import prepare
-from scripts.validation.run_recorded_command import _spec
+from scripts.validation.run_recorded_command import _descriptor_type_for_head, _spec
 from scripts.validation.submit_deepmd_32_qualification import parse_job_id, submit
 from dpeva.compatibility import CapabilityEvidence, CapabilityKey, CapabilityRecord, validate_promotion_evidence
 
@@ -446,3 +446,83 @@ def test_preflight_writes_record_from_fresh_job_dir(tmp_path: Path) -> None:
     result = run_recorded_command(config, job_dir, "preflight")
     assert result["status"] == "failed"
     assert (job_dir / "commands" / "preflight.json").is_file()
+
+
+@pytest.mark.parametrize(
+    ("output", "head", "expected"),
+    [
+        (
+            "{'heads': {'downstream': {'descriptor': {'type': 'dpa4'}}, 'dpa4c': {'descriptor': {'type': 'dpa4c'}}}}",
+            "dpa4c",
+            "dpa4c",
+        ),
+        (
+            "{'heads': {'downstream': {'descriptor': {'type': 'dpa4c'}}, 'dpa4c': {'descriptor': {'type': 'dpa4'}}}}",
+            "dpa4c",
+            "dpa4",
+        ),
+    ],
+)
+def test_descriptor_probe_resolves_type_for_declared_head(output: str, head: str, expected: str) -> None:
+    assert _descriptor_type_for_head(output, head) == expected
+
+
+def test_descriptor_probe_rejects_unparseable_or_unbound_output() -> None:
+    with pytest.raises(ValueError, match="descriptor type"):
+        _descriptor_type_for_head("descriptor type: dpa4c", "dpa4c")
+
+
+def test_descriptor_probe_parses_exact_deepmd_branch_lines() -> None:
+    output = "\n".join(
+        (
+            "[2026-09-05 12:00:00] DEEPMD INFO    The descriptor parameter of branch downstream is {'type': 'dpa4', 'exclude_types': []}",
+            "[2026-09-05 12:00:00] DEEPMD INFO    The descriptor parameter of branch dpa4c is {'type': 'dpa4c', 'exclude_types': []}",
+        )
+    )
+    assert _descriptor_type_for_head(output, "dpa4c") == "dpa4c"
+    assert _descriptor_type_for_head(output, "downstream") == "dpa4"
+
+
+def test_descriptor_probe_rejects_duplicate_exact_branch_lines() -> None:
+    output = "\n".join(
+        (
+            "The descriptor parameter of branch dpa4c is {'type': 'dpa4c'}",
+            "The descriptor parameter of branch dpa4c is {'type': 'dpa4c'}",
+        )
+    )
+    with pytest.raises(ValueError, match="descriptor type"):
+        _descriptor_type_for_head(output, "dpa4c")
+
+
+def test_descriptor_probe_command_failure_is_not_evidence(monkeypatch: pytest.MonkeyPatch) -> None:
+    from subprocess import CompletedProcess
+    from scripts.validation.run_recorded_command import _probe_dpa4c_model_family
+
+    monkeypatch.setattr(
+        "scripts.validation.run_recorded_command.subprocess.run",
+        lambda *args, **kwargs: CompletedProcess(args[0], 1, "", "show failed"),
+    )
+    result = _probe_dpa4c_model_family(Path("model.pt"), "dpa4c")
+    assert result["returncode"] == 1
+    assert result["descriptor_type"] is None
+    assert result["ok"] is False
+
+
+def test_descriptor_probe_rejects_successful_dpa4_artifact(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from subprocess import CompletedProcess
+    from scripts.validation.run_recorded_command import _probe_dpa4c_model_family
+
+    output = (
+        "[2026-09-05 12:00:00] DEEPMD INFO    "
+        "The descriptor parameter of branch downstream is {'type': 'dpa4'}\n"
+    )
+    monkeypatch.setattr(
+        "scripts.validation.run_recorded_command.subprocess.run",
+        lambda *args, **kwargs: CompletedProcess(args[0], 0, "", output),
+    )
+    result = _probe_dpa4c_model_family(Path("model.pt"), "downstream")
+    assert result["returncode"] == 0
+    assert result["descriptor_type"] == "dpa4"
+    assert result["ok"] is False

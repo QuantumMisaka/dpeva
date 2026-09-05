@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import ast
 import hashlib
 import json
 import os
@@ -58,6 +59,130 @@ def _head(value: Any, name: str) -> str:
     if not isinstance(value, str) or not value.strip():
         raise ValueError(f"{name} is required and must be non-empty")
     return value.strip()
+
+
+def _literal_mappings(text: str) -> list[dict[str, Any]]:
+    """Extract Python-dict literals from ``dp show`` diagnostics.
+
+    ``dp`` prints a Python representation surrounded by human diagnostics.
+    We deliberately accept only balanced, independently parseable literals;
+    a global ``"dpa4c" in output`` check would be unsafe for multi-head models.
+    """
+    mappings: list[dict[str, Any]] = []
+    for start, char in enumerate(text):
+        if char != "{":
+            continue
+        depth = 0
+        quote: str | None = None
+        escaped = False
+        for end in range(start, len(text)):
+            current = text[end]
+            if quote is not None:
+                if escaped:
+                    escaped = False
+                elif current == "\\":
+                    escaped = True
+                elif current == quote:
+                    quote = None
+                continue
+            if current in {"'", '"'}:
+                quote = current
+            elif current == "{":
+                depth += 1
+            elif current == "}":
+                depth -= 1
+                if depth == 0:
+                    try:
+                        value = ast.literal_eval(text[start : end + 1])
+                    except (SyntaxError, ValueError):
+                        break
+                    if isinstance(value, dict):
+                        mappings.append(value)
+                    break
+    return mappings
+
+
+def _descriptor_types_for_head(value: Any, head: str, path: tuple[str, ...] = ()) -> list[str]:
+    found: list[str] = []
+    if isinstance(value, dict):
+        descriptor_type = value.get("type")
+        bound = head in path or value.get("head") == head or value.get("name") == head
+        if bound and isinstance(descriptor_type, str) and descriptor_type.strip():
+            found.append(descriptor_type.strip())
+        for key, child in value.items():
+            child_path = path + (key,) if isinstance(key, str) else path
+            found.extend(_descriptor_types_for_head(child, head, child_path))
+    elif isinstance(value, (list, tuple)):
+        for child in value:
+            found.extend(_descriptor_types_for_head(child, head, path))
+    return found
+
+
+def _descriptor_type_for_head(output: str, head: str) -> str:
+    """Return the descriptor ``type`` bound to one named model head.
+
+    Missing, ambiguous, or conflicting bindings fail closed.  In particular,
+    a valid ``dpa4c`` string belonging to another head cannot satisfy this
+    check.
+    """
+    if not head.strip():
+        raise ValueError("descriptor head must be non-empty")
+    # DeepMD-kit 3.2 emits one bounded line per branch, for example:
+    # ``The descriptor parameter of branch downstream is {'type': 'dpa4'}``.
+    # Bind the literal to the exact requested branch before parsing it; never
+    # search the whole output for a model-family token.
+    marker = f"The descriptor parameter of branch {head.strip()} is "
+    branch_literals: list[str] = []
+    for line in output.splitlines():
+        normalized = line.strip()
+        if marker not in normalized:
+            continue
+        if normalized.count(marker) != 1:
+            raise ValueError(f"descriptor type for head {head!r} is missing or ambiguous")
+        branch_literals.append(normalized.split(marker, 1)[1].strip())
+    if branch_literals:
+        if len(branch_literals) != 1:
+            raise ValueError(f"descriptor type for head {head!r} is missing or ambiguous")
+        try:
+            descriptor = ast.literal_eval(branch_literals[0])
+        except (SyntaxError, ValueError) as exc:
+            raise ValueError(f"descriptor type for head {head!r} is missing or ambiguous") from exc
+        if not isinstance(descriptor, dict) or not isinstance(descriptor.get("type"), str) or not descriptor["type"].strip():
+            raise ValueError(f"descriptor type for head {head!r} is missing or ambiguous")
+        return descriptor["type"].strip()
+    found: list[str] = []
+    for mapping in _literal_mappings(output):
+        found.extend(_descriptor_types_for_head(mapping, head.strip()))
+    unique = sorted(set(found))
+    if len(unique) != 1:
+        raise ValueError(f"descriptor type for head {head!r} is missing or ambiguous")
+    return unique[0]
+
+
+def _probe_dpa4c_model_family(model: Path, head: str) -> dict[str, Any]:
+    argv = ["dp", "--pt", "show", str(model), "descriptor"]
+    probe = subprocess.run(argv, capture_output=True, text=True, check=False)
+    output = probe.stdout + ("\n" if probe.stdout and probe.stderr else "") + probe.stderr
+    descriptor_type: str | None = None
+    error: str | None = None
+    if probe.returncode == 0:
+        try:
+            descriptor_type = _descriptor_type_for_head(output, head)
+        except ValueError as exc:
+            error = str(exc)
+    else:
+        error = "DeepMD descriptor inspection command failed"
+    return {
+        "name": "dpa4c_model_family",
+        "argv": argv,
+        "returncode": probe.returncode,
+        "head": head,
+        "descriptor_type": descriptor_type,
+        "stdout": probe.stdout,
+        "stderr": probe.stderr,
+        "ok": probe.returncode == 0 and descriptor_type == "dpa4c",
+        "error": error if error else (None if descriptor_type == "dpa4c" else "descriptor type is not dpa4c"),
+    }
 
 
 def _spec(config: dict[str, Any], case: str, job_dir: Path) -> tuple[list[str], list[Path]]:
@@ -160,6 +285,11 @@ def _preflight(config_path: Path, job_dir: Path) -> dict[str, Any]:
             dpa4c_path = Path(dpa4c).expanduser()
             if not dpa4c_path.is_file() or not config.get("dpa4c_model_sha256") or _sha256(dpa4c_path) != config["dpa4c_model_sha256"]:
                 errors.append("DPA4C model hash changed or path is absent")
+            else:
+                dpa4c_probe = _probe_dpa4c_model_family(dpa4c_path, _head(config.get("dpa4c_model_head"), "DPA4C model head"))
+                checks.append(dpa4c_probe)
+                if not dpa4c_probe["ok"]:
+                    errors.append("DPA4C model descriptor is not the declared dpa4c family")
         fixture = Path(config["fixture"]["path"]).expanduser().resolve()
         if (
             not fixture.is_dir()
