@@ -1,20 +1,20 @@
 ---
-title: Project Governance and DeepMD 3.2 Final Review Preparation
-status: ready-for-independent-review
+title: Project Governance and DeepMD 3.2 Final Review
+status: complete
 audience: Project Maintainers / Compatibility Owner / Scientific Owner
 last-updated: 2026-09-05
 owner: Project Maintainer
 ---
 
-# Project Governance and DeepMD 3.2 Final Review Preparation
+# Project Governance and DeepMD 3.2 Final Review
 
 ## Disposition
 
-This report records the implementation evidence for Plans A–E and prepares the
-mandatory independent governance review. It is not the independent review and
-does not grant final governance approval. The review launcher, reviewer family,
-reviewed diff, findings, and final disposition must be appended by the primary
-maintainer immediately before merge consideration.
+This report records the implementation evidence for Plans A–E and the completed
+independent governance review. Parent decision is **ACCEPT** and the governance
+check is **PASS**. The terminal report-only commit now being created records an
+already completed review and does not alter the reviewed governance mechanisms;
+the frozen review package necessarily does not include this finalization commit.
 
 The implementation remains deliberately thin: one executable gate manifest,
 one runner, one path/schema traceability registry, and one report-only
@@ -44,6 +44,32 @@ evidence.
 This round does not close the mandatory governance gate. Final disposition
 remains **PENDING a new cross-family review package**; neither the launcher exit
 code nor the `REQUEST_CHANGES` package may be relabeled as a passed gate.
+
+## Final independent cross-family review
+
+The frozen substantive head passed the second cross-family review:
+
+- Package ID: `20260905T002955Z-governance-4a3c4469`
+- Frozen package range: `b637ca0..2e9d9ce`
+- Backend / reviewer identity: `opencode-qwen-scnet` / family `qwen` /
+  `Qwen3.8-Max`
+- Launcher exit: `0`
+- Reviewer verdict: `APPROVE`
+- Parent decision: `ACCEPT`
+- Governance check: `PASS`
+
+Findings summary: the reviewer confirmed goal alignment, proportionality of the
+thin governance machinery, closure of the first-round gate/profile collision
+and stale-date findings, and no need to change the recorded cosmetic
+observations. The review explicitly preserved the zero-`supported` DeepMD
+boundary.
+
+Recorded gaps are package-boundary gaps, not unreported approvals: untouched
+external documentation paths were not independently inspected; acceptance
+commands and test counts remain caller-attested; and the protected DeepMD CI
+fixture bundle must exist before that workflow can pass. The latter remains a
+fail-closed operational prerequisite and does not create a DeepMD support
+claim.
 
 ## Scope and evidence boundary
 
@@ -179,29 +205,15 @@ records and the SAI qualification is failed before payload. If probed, its
 non-zero result is expected negative evidence, not a release defect and not a
 support claim.
 
-## Mandatory independent review — pending
+## Final disposition
 
-This section must be completed by the primary maintainer immediately before
-merge consideration. It must use the current repository governance launcher
-and must not be replaced by author self-review.
+The independent cross-family governance gate is **PASS** for the frozen
+substantive head, with parent decision **ACCEPT**. This report-only
+finalization records that disposition after the review package was produced;
+it does not retroactively claim that the package reviewed this finalization
+commit.
 
-- Governance instructions read: **PENDING**
-- Launcher command: **PENDING**
-- Reviewed commit/diff: **PENDING**
-- Reviewer family: **PENDING**
-- Exit status: **PENDING**
-- Findings and accepted fixes: **PENDING**
-- Cross-family attempt: **PENDING**
-- Final disposition: **PENDING — do not label this report approved**
-
-If the cross-family backend is unavailable, the final disposition must state
-`cross-family review incomplete; follow-up required`. A successful local gate or
-same-family review cannot be relabeled as cross-family approval.
-
-## Remaining uncertainty and next action
-
-The next authorized action is the independent governance review, followed by
-affected-gate reruns for any accepted documentation or mechanism findings.
-DeepMD production support remains unclaimed until a newly authorized complete
-SAI qualification and matching producer attestations exist. Phase 3 scientific
-expansion and automatic campaign orchestration remain outside this closure.
+DeepMD production support remains unclaimed: the capability matrix is still
+`supported=0`, and the cancelled SAI qualification requires a new explicit
+authorization before retry. Phase 3 scientific expansion and automatic
+campaign orchestration remain outside this closure.
