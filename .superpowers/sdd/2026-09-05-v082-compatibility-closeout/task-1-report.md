@@ -4,6 +4,8 @@
 
 - Implementation commit: `925ade24f65c7233182fc06b75ee9072529547ee`
   (`fix: preserve v0.8 Python configuration and helper APIs`)
+- Follow-up test commit: `dba0ed6adfd30614851affbfb9acaa8c8a8abf19`
+  (`test: use compatibility facade backend override`)
 - Worktree: `.worktrees/compat-082`, branch `fix/compat-082`
 
 ## Diagnosis and integration decisions
@@ -30,6 +32,7 @@
 | Baseline before test additions | `task-1-baseline.log`, exit code 0: original acceptance suite 37 passed. |
 | Focused GREEN | `task-1-green-focused.log`, exit code 0: 43 passed, 6 warnings. |
 | Exact acceptance command | `task-1-green.log`, exit code 0: 43 passed, 6 warnings. |
+| Adapter-manager integration suite | `task-1-manager.log`, exit code 0: 47 passed, 1 warning. |
 | Syntax check | `python -m compileall -q src/dpeva/config.py src/dpeva/config_migration.py src/dpeva/cli.py src/dpeva/utils/command.py src/dpeva/utils/env_check.py scripts/fp11_1344_recover_after_false_finish.py`, exit code 0. |
 | Diff hygiene | `git diff --check`, exit code 0 before commit. |
 
@@ -41,9 +44,7 @@ python -m pytest tests/unit/test_config_migration.py tests/unit/test_cli.py test
 
 ## Remaining concern
 
-The broader manager check had 46 passed and one failure in the pre-existing
-`tests/unit/feature/test_execution_manager.py` case that calls the facade with
-the removed explicit-backend positional form (`DPCommandBuilder.embed("pt", model=...)`).
-This is outside the brief's owned files and exact acceptance command; the scoped
-facade now intentionally follows the historical API and manager production code
-uses `DeepMDAdapter` directly.
+No unresolved implementation concern remains within the expanded task boundary.
+The one stale manager test invocation was updated to pass `backend="pt"` as the
+documented keyword-only bridge; production managers continue using independent
+`DeepMDAdapter` instances.
