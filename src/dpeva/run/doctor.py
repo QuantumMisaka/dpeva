@@ -188,12 +188,13 @@ def probe_deepmd_operations(
     *,
     run: Callable[..., subprocess.CompletedProcess[str]] = subprocess.run,
     required: bool = True,
+    legacy_runtime: bool = False,
 ) -> list[DoctorCheck]:
     """Check the CLI surfaces consumed by the feature/infer pilot."""
     return [
         _probe_command(
             f"deepmd.cli.{operation}", ["dp", operation, "-h"], run=run,
-            required=required,
+            required=(operation == "test" if legacy_runtime else required),
         )
         for operation in ("test", "eval-desc", "embed")
     ]
@@ -246,14 +247,24 @@ def _default_checks(
     deepmd = probe_deepmd(run=run)
     checks = [deepmd, probe_deepmd_qualification(deepmd)]
     operations_required = True
+    legacy_runtime = False
     if deepmd.status == "ok" and deepmd.version is not None:
         try:
-            operations_required = _version_in_lane(
-                Version(deepmd.version), MIN_DEEPMD_VERSION
+            parsed = Version(deepmd.version)
+            operations_required = _version_in_lane(parsed, MIN_DEEPMD_VERSION)
+            legacy_runtime = (
+                _version_in_lane(parsed, LEGACY_MIN_DEEPMD_VERSION)
+                and not operations_required
             )
         except InvalidVersion:
             pass
-    checks.extend(probe_deepmd_operations(run=run, required=operations_required))
+    checks.extend(
+        probe_deepmd_operations(
+            run=run,
+            required=operations_required,
+            legacy_runtime=legacy_runtime,
+        )
+    )
     checks.append(_probe_python_package("dpdata", required=True))
     checks.append(_probe_python_package("torch", required=True))
     checks.append(_probe_torch_cuda(torch_module=torch_module, cuda_probe=cuda_probe))

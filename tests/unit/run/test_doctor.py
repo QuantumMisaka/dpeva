@@ -150,6 +150,8 @@ def test_doctor_separates_legacy_runtime_from_qualified_lane(monkeypatch) -> Non
     def run(command, **kwargs):
         if command == ["dp", "--version"]:
             return subprocess.CompletedProcess(command, 0, "DeePMD-kit v3.1.2", "")
+        if command == ["dp", "test", "-h"]:
+            return subprocess.CompletedProcess(command, 0, "ok", "")
         return subprocess.CompletedProcess(command, 1, "", "unsupported operation")
 
     monkeypatch.setattr(
@@ -172,11 +174,37 @@ def test_doctor_separates_legacy_runtime_from_qualified_lane(monkeypatch) -> Non
     assert qualified.status == "skipped"
     assert qualified.required is False
     assert "3.2 qualification" in qualified.detail
-    assert all(
-        check.required is False
-        for check in report.checks
-        if check.name.startswith("deepmd.cli.")
+    assert next(check for check in report.checks if check.name == "deepmd.cli.test").required is True
+    assert next(check for check in report.checks if check.name == "deepmd.cli.eval-desc").required is False
+    assert next(check for check in report.checks if check.name == "deepmd.cli.embed").required is False
+
+
+def test_legacy_required_test_surface_failure_fails_doctor(monkeypatch) -> None:
+    def run(command, **kwargs):
+        if command == ["dp", "--version"]:
+            return subprocess.CompletedProcess(command, 0, "DeePMD-kit v3.1.2", "")
+        if command == ["dp", "test", "-h"]:
+            return subprocess.CompletedProcess(command, 1, "", "test help failed")
+        return subprocess.CompletedProcess(command, 0, "ok", "")
+
+    monkeypatch.setattr(
+        "dpeva.run.doctor._probe_python_package",
+        lambda name, *, required: DoctorCheck(name=name, status="ok", detail="ok", required=required),
     )
+    report = build_doctor_report(
+        run=run,
+        include_optional=False,
+        torch_module=SimpleNamespace(
+            cuda=SimpleNamespace(),
+            version=SimpleNamespace(cuda=None),
+        ),
+        cuda_probe=lambda _: False,
+    )
+
+    assert report.status == "failed"
+    test_check = next(check for check in report.checks if check.name == "deepmd.cli.test")
+    assert test_check.required is True
+    assert test_check.status == "error"
 
 
 def test_doctor_reports_qualified_32_lane_separately(monkeypatch) -> None:
