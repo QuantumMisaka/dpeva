@@ -7,6 +7,7 @@ from pathlib import Path
 
 import pytest
 
+from dpeva import __version__
 from dpeva.compatibility import DeepMDAdapter
 from dpeva.config import FeatureConfig, InferenceConfig
 from dpeva.constants import LOG_FILE_FEATURE, LOG_FILE_INFER, WORKFLOW_FINISHED_TAG
@@ -167,8 +168,8 @@ def test_feature_success_manifest_contains_verified_output(tmp_path, monkeypatch
         (config.savedir / ".dpeva/runs/feature-success/run.json").read_text()
     )
     assert payload["status"] == "finished"
-    assert payload["source"]["dpeva_version"] == "0.8.1"
-    assert payload["source"]["package_version"] == "0.8.1"
+    assert payload["source"]["dpeva_version"] == __version__
+    assert payload["source"]["package_version"] == __version__
     assert len(payload["source"]["git_commit"]) == 40
     assert all(not value.startswith("/") for item in payload["inputs"] for value in item.values())
     assert payload["inputs"][0]["identity_scope"] == "bounded-structural"
@@ -353,8 +354,8 @@ def test_infer_success_manifest_and_artifact(tmp_path, monkeypatch) -> None:
         (config.work_dir / ".dpeva/runs/infer-success/run.json").read_text()
     )
     assert payload["status"] == "finished"
-    assert payload["source"]["dpeva_version"] == "0.8.1"
-    assert payload["source"]["package_version"] == "0.8.1"
+    assert payload["source"]["dpeva_version"] == __version__
+    assert payload["source"]["package_version"] == __version__
     assert all(not value.startswith("/") for item in payload["inputs"] for value in item.values())
     assert payload["inputs"][0]["identity_scope"] == "bounded-structural"
     assert payload["inputs"][1]["identity_scope"] == "full-content"

@@ -2,7 +2,7 @@
 title: Upstream Software
 status: active
 audience: Users / Developers
-last-updated: 2026-09-05
+last-updated: 2026-09-06
 owner: Docs Owner
 ---
 
@@ -10,7 +10,7 @@ owner: Docs Owner
 
 - Status: active
 - Audience: Users / Developers
-- Last-Updated: 2026-09-05
+- Last-Updated: 2026-09-06
 
 本文档汇总 DP-EVA 的上游软件，说明其仓库位置、安装层级与在本项目中的职责边界。
 
@@ -38,6 +38,9 @@ experimental/unsupported/blocked 边界。SAI V100 qualification
 JobID `1128260` 与 CPU contract JobID `1128442` 的 producer-issued JSON
 证据已落库；完整边界见仓库报告
 `docs/reports/2026-09-04-deepmd-3.2-compatibility.md`。
+其中 SAI aggregate 保留 DPA4 regular/EMA × `test`/`eval-desc`/`embed`
+共六条历史 attestation；DPA4C periodic 路线仍为 experimental，未纳入这六条
+promotion evidence。
 
 发布或研究运行不得仅因版本号落在 `>=3.2,<3.3` 就晋级能力。只有精确验证命令、
 CPU evidence，以及需要时的 SAI evidence 均存在并通过，Compatibility Owner 才能

@@ -2,7 +2,7 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-07-04
+last-updated: 2026-09-06
 owner: Docs Owner
 ---
 
@@ -10,7 +10,7 @@ owner: Docs Owner
 
 - Status: active
 - Audience: Users / Developers
-- Last-Updated: 2026-07-04
+- Last-Updated: 2026-09-06
 
 ## 1. 目的与范围
 
@@ -183,6 +183,10 @@ V100 命令链完成，不构成科学精度或所有下游 head 的支持声明
 `pt-expt eval-desc` 虽然执行成功，但事后 descriptor inspection 证明所用 artifact
 实际为 DPA4 而非 DPA4C；因此周期性 DPA4C 路线仍为 experimental，不能因命令
 成功而晋级。其余能力状态以 capability manifest 和报告为准。
+
+V100 aggregate 中六条 retained attestation 分别覆盖 DPA4 regular/EMA 的
+`pt test`、`pt eval-desc` 和 `pt embed`；它们是历史资格证据，不会因 v0.8.2
+打包而重新执行或扩大声明。
 
 DeepMD PyTorch 模型可使用 `dp embed` 导出 HDF5 embedding。该路线会在 `savedir/embedding.hdf5` 中保留 `descriptor`、`atomic_feature`、`structural_feature` 和 `atom_types`；HDF5 dataset 由 DeepMD 使用 gzip + shuffle 压缩。`feature_kind="descriptor"` 读取 `descriptor`，`feature_kind="fitting_last_layer"` 对应 `atomic_feature`。
 

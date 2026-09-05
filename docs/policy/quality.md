@@ -2,7 +2,7 @@
 title: 文档质量标准 (Documentation Quality Standard)
 status: active
 audience: Maintainers
-last-updated: 2026-09-05
+last-updated: 2026-09-06
 owner: Docs Owner
 ---
 
@@ -69,5 +69,10 @@ owner: Docs Owner
   重大架构、迁移或发布时按文档生命周期维护计划/报告。
 
 门禁目录与命令只维护在 [`scripts/gates.toml`](../../scripts/gates.toml)；本页解释
-验收含义，不复制 argv。DeepMD 资格门禁不属于普通文档/软件发布的默认证明，只有
+验收含义，不复制 argv。`release` profile 包含无写入的版本面一致性检查；Sphinx
+release identity 从包版本导入。DeepMD 资格门禁不属于普通文档/软件发布的默认证明，只有
 发布声明 DeepMD 能力时才单独调用，并且必须引用真实资格证据。
+
+eval-card 只索引已存在的模型、谱系与指标证据，不是模型重验证、排名或新增科学门禁。
+数据 bundle 的不覆盖发布契约限定为 Linux `renameat2(RENAME_NOREPLACE)` 的进程可见
+原子性；不支持该原语的平台 fail closed，本版本不提供跨平台 fallback。

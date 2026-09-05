@@ -2,7 +2,7 @@
 title: Technical Reports
 status: active
 audience: Developers
-last-updated: 2026-09-05
+last-updated: 2026-09-06
 owner: Docs Owner
 ---
 
@@ -10,7 +10,7 @@ owner: Docs Owner
 
 - Status: active
 - Audience: All
-- Last-Updated: 2026-07-07
+- Last-Updated: 2026-09-06
 
 本文档目录用于存放“项目级、可共享、可追溯”的技术结论，不承载执行过程草稿。
 
@@ -40,7 +40,8 @@ owner: Docs Owner
 
 ## 4. Active Summary Reports
 
-- [2026-09-04-project-governance-final-review.md](2026-09-04-project-governance-final-review.md) — Plans A–E implementation evidence and completed independent governance review; DeepMD remains unqualified.
+- [2026-09-05-v082-compatibility-closeout.md](2026-09-05-v082-compatibility-closeout.md) — v0.8.2 release identity, bounded DeepMD compatibility, reliable-run/package evidence, and remaining external review boundary.
+- [2026-09-04-project-governance-final-review.md](2026-09-04-project-governance-final-review.md) — Historical Plans A–E implementation evidence and independent governance review at its frozen pre-qualification scope.
 
 ## 5. Active Focused Reports
 

@@ -1,5 +1,11 @@
 schema_version = "1.0"
 
+[gates.release_version]
+argv = ["python", "scripts/release_helper.py", "--check"]
+layer = "release-metadata"
+owner = "Project Maintainer"
+basis = "v0.8.2 maintained version surfaces"
+
 [gates.lint]
 argv = ["ruff", "check", "src", "tests", "scripts"]
 layer = "static"
@@ -103,4 +109,4 @@ docs = ["docs_audit", "docs_freshness", "docs_build", "docs_artifacts", "traceab
 docs_pr = ["docs_audit", "docs_freshness", "docs_build", "docs_artifacts", "docs_linkcheck", "traceability"]
 integration = ["integration_tests"]
 deepmd_release = ["deepmd_contract", "qualification_collect"]
-release = ["lint", "unit", "audit", "explore_import", "explore_cli", "atst_cli", "integration_tests", "docs_audit", "docs_freshness", "docs_build", "docs_artifacts", "docs_linkcheck", "traceability"]
+release = ["release_version", "lint", "unit", "audit", "explore_import", "explore_cli", "atst_cli", "integration_tests", "docs_audit", "docs_freshness", "docs_build", "docs_artifacts", "docs_linkcheck", "traceability"]

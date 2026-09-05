@@ -2,17 +2,19 @@
 import sys
 from pathlib import Path
 
+# Add src to sys.path before importing the package version for release metadata.
+sys.path.insert(0, str(Path(__file__).parents[2] / 'src'))
+
+from dpeva import __version__  # noqa: E402
+
 # -- Project information -----------------------------------------------------
 project = 'DP-EVA'
 copyright = '2026, DP-EVA Developers'
 author = 'DP-EVA Developers'
-version = '0.8.1'
-release = '0.8.1'
+version = __version__
+release = __version__
 
 # -- Path setup --------------------------------------------------------------
-# Add src to sys.path to allow autodoc to find modules
-sys.path.insert(0, str(Path(__file__).parents[2] / 'src'))
-
 # -- General configuration ---------------------------------------------------
 extensions = [
     'sphinx.ext.autodoc',

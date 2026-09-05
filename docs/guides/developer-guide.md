@@ -16,8 +16,8 @@ owner: Docs Owner
   - 校验规则补充：`docs/reference/validation.md`
   - 上游软件与职责：`docs/reference/upstream-software.md`
 
-* **版本**: 0.8.1
-* **生成日期**: 2026-09-05
+* **版本**: 0.8.2
+* **生成日期**: 2026-09-06
 * **作者**: Quantum Misaka with Trae SOLO
 
 ---
@@ -138,7 +138,7 @@ DP-EVA (Deep Potential EVolution Accelerator, 深度势能演化加速器) 是�
 *   可执行门禁目录是 [`scripts/gates.toml`](../../scripts/gates.toml)；[`scripts/run_gate.py`](../../scripts/run_gate.py) 是本地与托管入口唯一的命令分发器。
 *   日常代码检查：`python scripts/run_gate.py local`。
 *   文档检查：`python scripts/run_gate.py docs_pr`；发布检查：`python scripts/run_gate.py release`。
-*   每个 profile 只证明其声明的层级；DeepMD 资格 profile 只在发布明确声称 DeepMD 能力时调用，当前能力矩阵没有 `supported` 记录。
+*   每个 profile 只证明其声明的层级；DeepMD 资格 profile 只在发布改变 DeepMD 能力声明时调用。当前能力矩阵仅有 3 条 DPA4 `supported` 记录，DPA4C 仍为 experimental。
 *   需要查看单个门禁或 profile 时运行 `python scripts/run_gate.py --list`；不要在本页复制 gate argv。
 
 #### 1.6.4 运行完成语义
@@ -343,7 +343,7 @@ DP-EVA 专为高性能计算 (HPC) 环境设计，其 Slurm 后端支持以下�
     *   **Training**: 训练阶段，每个模型（如 4 个 Ensemble 模型）会被分配独立的 Slurm 作业 (`train.slurm`)，从而在集群中并行训练，极大缩短总耗时。
     *   **Inference**: 推理阶段 (v0.4.5+)，每个模型的测试任务 (`dp test`) 同样被封装为独立的 Slurm 作业 (`run_test.slurm`)，实现多模型并行推理。
 *   **一任务一作业 (One-Task-One-Job)**: 摒弃了将所有任务打包进单一作业的串行模式，确保每个子任务都能独占申请到的计算资源（如 GPU），避免资源争抢和效率瓶颈。
-*   **状态监控**: 所有 Slurm 作业在完成后会输出 `DPEVA_TAG: WORKFLOW_FINISHED` 标记，便于自动化工具监控任务状态。
+*   **状态监控**: 仅当命令成功、声明产物通过当前 attempt 的 freshness/内容校验且 manifest 进入 `finished` 后，顶层工作流才写出 `DPEVA_TAG: WORKFLOW_FINISHED`；Slurm 提交本身只证明 `submitted`。
 
 ---
 
@@ -584,8 +584,8 @@ DPEVA_TAG: WORKFLOW_FINISHED
 ```
 
 **监控建议**:
-*   外部调度系统应通过 `grep` 或正则表达式持续监控任务的 Log 文件（如 `train.log`, `collection.log`, `eval_desc.log` 或 Slurm `.out` 文件）。
-*   一旦检测到该 Tag，即可判定当前步骤已从应用层逻辑上成功结束，可以安全触发后续任务。
+*   外部调度系统可以通过日志中的 Tag 定位候选完成事件，但必须同时读取对应 run manifest 的终态并检查进程/作业退出状态与已验证产物。
+*   `partial`、`failed` 或仅 `submitted` 的运行不能因子任务日志出现旧 marker 而被提升为完成。
 
 ---
 
@@ -603,13 +603,21 @@ DPEVA_TAG: WORKFLOW_FINISHED
 
 ### 6.1.1 Release Helper 使用约定
 
-- `scripts/release_helper.py` 只负责同步 `src/dpeva/__init__.py` 与 `README.md` 中的版本号。
+- `scripts/release_helper.py` 同步 `src/dpeva/__init__.py`、README 版本徽章与本页当前版本字段；Sphinx 从包版本导入 release identity，不维护第四份字面量。
+- `python scripts/release_helper.py --check` 是无写入的版本一致性检查，并已进入 `release` profile；显式版本只接受无前缀的 `X.Y.Z`。
 - 发布说明的权威写入位置始终是本文件的 `### 6.2 版本历史`，脚本不会自动追加版本条目。
-- 使用脚本完成版本号更新后，必须手动在 `#### Current Era (v0.8.x)` 顶部追加新版本记录，再执行提交与打 tag。
+- 使用脚本完成版本号更新后，必须手动在 `#### Current Era (v0.8.x)` 顶部追加新版本记录并执行发布门禁。提交、打 tag 与发布仍是分离的授权动作。
 
 ### 6.2 版本历史
 
 #### **Current Era (v0.8.x)**
+
+*   **v0.8.2** (2026-09-06):
+    *   **[兼容性]** 默认安装继续保留 `deepmd-kit>=3.1.2,<3.3` 的 legacy 运行包络；`dpeva[deepmd]` 提供 `>=3.2,<3.3` lane，研究生产仍精确锁定 `3.2.0`，版本范围本身不是科学资格结论。
+    *   **[DeepMD 3.2]** 能力矩阵仅将 DPA4 PT `test`、`eval-desc`、`embed` 三条记录标为 `supported`，并保留 CPU contract 与 V100 上 regular/EMA 共六条历史 SAI attestation；DPA4C periodic `pt-expt eval-desc` 仍为 `experimental`，不新增科学资格声明。
+    *   **[可靠运行]** 严格配置迁移、scoped runtime provenance、regular-only legacy 模型发现、current-attempt 输出 freshness、顶层 completion marker 与 fail-closed 部分失败语义共同收口；旧配置兼容读取不吞掉冲突或未知字段。
+    *   **[评估与发布]** eval-card 只索引既有模型、谱系与指标证据，不重跑模型、不生成科学排名；数据 bundle 继续使用 Linux `renameat2(RENAME_NOREPLACE)` 进程可见原子不覆盖发布，不承诺跨平台 fallback 或 crash durability。
+    *   **[发布工程]** 版本统一为 `0.8.2`，Sphinx 直接导入包版本，release helper 增加安全显式版本解析、当前版本面同步与 `--check` 门禁；本地 release/build/wheel smoke 证据见兼容性收口报告，远端 CI 和独立终审仍是合入前外部检查。
 
 *   **v0.8.1** (2026-07-07):
     *   **[发布]** 版本升级至 `0.8.1`，同步 `__init__`、README 版本徽章、Sphinx `conf.py` 与开发文档中的版本标识，并以 `v0.8.1` tag 固化发布点。

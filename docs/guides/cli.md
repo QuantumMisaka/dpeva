@@ -2,7 +2,7 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-09-04
+last-updated: 2026-09-06
 owner: Docs Owner
 ---
 
@@ -11,7 +11,7 @@ owner: Docs Owner
 - Status: active
 - Audience: Users / Developers
 - Applies-To: CLI 模式（推荐）
-- Last-Updated: 2026-09-04
+- Last-Updated: 2026-09-06
 
 ## 1. 目的与范围
 
@@ -95,8 +95,8 @@ DeepMD 版本检查保留两个诊断 lane：稳定的 `>=3.1.2,<3.3` 是默认�
 
 ### 4.9 eval-card（候选评估卡片）
 
-`eval-card` 将已存在的模型引用、数据谱系和评测证据组装为一个机器可读的候选交接卡片；
-它不会启动评测、复制活动中的 FT2DP 任务清单或推断科学排名。六个固定维度始终存在，
+`eval-card` 是既有证据的机器可读索引：它将模型引用、数据谱系和评测证据组装为候选交接卡片，
+不是模型重验证或科学排名门禁。它不会启动评测、复制活动中的 FT2DP 任务清单或推断科学排名。六个固定维度始终存在，
 未提供证据标记为 `not-run`，配置了但无法读取或校验的证据标记为 `failed`，并保留证据路径。
 
 `examples/recipes/evaluation/config_eval_card.json` 是配置模板，不是可直接执行的

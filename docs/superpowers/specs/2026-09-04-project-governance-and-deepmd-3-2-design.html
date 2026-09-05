@@ -115,9 +115,9 @@
   <header>
     <h1>DP-EVA 项目治理与 DeepMD-kit 3.2 兼容性设计规格</h1>
     <div class="meta">
-      <p><strong>状态：</strong>Implemented, independently reviewed, and complete</p>
+      <p><strong>状态：</strong>Base mechanisms complete; v0.8.2 implementation complete, current reviews pending</p>
       <p><strong>Owner：</strong>Project Maintainers</p>
-      <p><strong>更新：</strong>2026-09-05</p>
+      <p><strong>更新：</strong>2026-09-06</p>
       <p><strong>设计级别：</strong>L3α / Architecture &amp; Governance</p>
     </div>
   </header>
@@ -154,7 +154,7 @@
         <p><strong>核心裁决：</strong>DP-EVA 的下一阶段主线不是新增更多算法，而是把“失败语义 + run manifest + dataset lineage + model artifact identity + eval-card + DeepMD capability matrix”固化为可靠科研运行内核。</p>
         <p><strong>产品边界：</strong>DP-EVA 负责主动数据与候选证据；FT2DP 工作区负责模型训练和系统评估实验矩阵；下游费托模拟工作区以吸附能、NEB、MD 等应用任务裁决最终模型。</p>
       </div>
-      <p class="small">本 SPEC 是本地唯一规范源。Plans A–E 已按批准计划落地，并完成独立跨家族治理终审与状态同步；终端状态只记录已审查机制，不改变需求。原治理冻结时 DeepMD 没有任何 <code>supported</code> 能力；后续资格附记仅将三条明确的 DPA4 操作晋级为有边界的支持，不得据此宣称通用的 3.2.0 生产兼容。</p>
+      <p class="small">本 SPEC 是本地唯一规范源。Plans A–E 已按批准计划落地，并完成当时冻结机制的独立跨家族治理终审与状态同步；该历史审查记录保留，不改变需求。后续用户批准以 v0.8.2 patch release 完成兼容性与可靠运行收口：原治理冻结时 DeepMD 没有任何 <code>supported</code> 能力，资格附记仅将三条明确的 DPA4 操作晋级为有边界的支持，不得据此宣称 DPA4C 或通用的 3.2.0 生产兼容。v0.8.2 实现完成后仍需当前 task review 与 broad whole-branch review，不能复用历史终审冒充本轮批准。</p>
     </section>
 
     <section id="context">
@@ -614,7 +614,7 @@ failed -- explicit resume/recovery event --> running --> finished | failed</code
         <li>任何批量迁移先生成 dry-run 报告和备份引用，不删除科研资产。</li>
       </ul>
       <h3>15.7 发布语义</h3>
-      <p>Phase 0 可作为 0.8.x 可靠性修复；schema、strict config、依赖分层和新模型引用属于显著公共契约变化，建议进入 0.9.0。不得在未完成资格验证前将 experimental 能力写入 release notes 为“正式支持”。</p>
+      <p>后续用户批准将本轮定位为 v0.8.2 patch compatibility closeout：公共 Python facade/loader 兼容别名、旧配置显式迁移、regular-only 默认发现与稳定默认 DeepMD 包络共同控制迁移风险，不提前开启 0.9.0。严格配置冲突、输出 freshness、顶层完成标记和 Linux 不覆盖发布继续 fail closed。不得在未完成资格验证前将 experimental 能力写入 release notes 为“正式支持”；本次只保留既有三条 DPA4 supported 与六条历史 SAI attestation，DPA4C 仍为 experimental。</p>
       <h3>15.8 实施计划分解</h3>
       <p>本 SPEC 固化共同架构，但范围不应塞入一个实施计划。批准后至少拆成以下可独立验收、按顺序或并行执行的 plans：</p>
       <ol>
@@ -654,7 +654,7 @@ failed -- explicit resume/recovery event --> running --> finished | failed</code
         <p><strong>附加裁决：</strong>治理范围过重与 schema 兼容负担是前两项优先风险；实施必须遵守 §15.9 的停止点和按证据扩展原则。Phase 3 不随本次批准自动进入执行。</p>
       </div>
       <div class="decision risk">
-        <p><strong>终审要求：</strong>本 SPEC 涉及治理机制、公共 schema 和运行安全姿态。草案批准后进入 writing-plans；最终合入前必须执行项目规定的独立治理终审。若跨家族 reviewer 不可用，只能标记“跨家族未完成、建议补审”，不得伪造 gate 通过。</p>
+        <p><strong>终审要求：</strong>本 SPEC 涉及治理机制、公共 schema 和运行安全姿态。草案批准后进入 writing-plans；最终合入前必须执行项目规定的独立 task review 与 broad whole-branch review。独立家族/跨模型审查可按实际风险选用，但不是 must-attempt 或合入硬门；未启动、不可用或 harness 不兼容不单独阻断交付。任何已执行的历史或当前审查仍须绑定冻结 diff 并如实保留，不得伪造覆盖范围。</p>
       </div>
     </section>
 
@@ -692,7 +692,7 @@ failed -- explicit resume/recovery event --> running --> finished | failed</code
   </main>
 
   <footer>
-    DP-EVA local normative design · implementation evidence recorded 2026-09-05 · Final independent cross-family governance review PASS for the reviewed frozen mechanisms · DeepMD post-qualification implementation at frozen head eaae90b independently reviewed PASS and cross-family governance check PASS · this footer is status-only synchronization · Evidence sources: repository audit, Plans A–D acceptance reports, DeepMD-kit v3.2.0 official release/documentation, bounded CPU/SAI qualification records, and user-confirmed engineering taste.
+    DP-EVA local normative design · implementation evidence recorded through 2026-09-06 · Historical final independent cross-family governance review PASS retained for its reviewed frozen mechanisms · DeepMD post-qualification implementation at frozen head eaae90b independently reviewed PASS and cross-family governance check PASS · v0.8.2 task and broad whole-branch reviews remain separate current completion checks · independent-family review is optional under the later user-approved policy · Evidence sources: repository audit, Plans A–D acceptance reports, DeepMD-kit v3.2.0 official release/documentation, bounded CPU/SAI qualification records, and user-confirmed engineering taste.
   </footer>
 </body>
 </html>
