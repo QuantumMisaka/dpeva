@@ -183,10 +183,13 @@ historical evidence for the reviewed frozen head.
 ### Post-qualification addendum (2026-09-05)
 
 This addendum records a subsequent bounded status/evidence update. It does
-not reopen or retroactively extend the cross-family review of the frozen
-governance mechanisms. The mechanisms are unchanged; this evidence and
-capability-status update requires a fresh independent code/governance review
-before merge.
+not reopen or retroactively extend the earlier cross-family review of the
+frozen governance mechanisms. The mechanisms are unchanged. The subsequent
+evidence and capability-status implementation at frozen head `eaae90b`
+received both independent current-family review and controlled DeepSeek
+cross-family governance review; both returned PASS/APPROVE, and the governance
+package parent decision/check returned ACCEPT/PASS. This paragraph is only the
+terminal status synchronization after those reviews.
 
 The follow-up exact-environment qualification completed with the following
 evidence:
