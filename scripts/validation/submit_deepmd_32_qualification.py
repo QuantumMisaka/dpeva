@@ -128,6 +128,9 @@ def submit(input_path: Path, slurm_script: Path, write_ref: Path, *, job_root: P
     if not slurm_script.is_file():
         raise FileNotFoundError(slurm_script)
     script_text = slurm_script.read_text(encoding="utf-8")
+    repo_root = slurm_script.parents[2]
+    if not repo_root.is_dir():
+        raise ValueError(f"could not resolve repository root from Slurm script: {slurm_script}")
     directives: dict[str, str] = {}
     for line in script_text.splitlines():
         stripped = line.strip()
@@ -177,6 +180,7 @@ def submit(input_path: Path, slurm_script: Path, write_ref: Path, *, job_root: P
         str(slurm_script),
         str(input_path),
         str(job_dir),
+        str(repo_root),
     ]
     if dry_run:
         job_id, output = "DRY-RUN", "Submitted batch job 0"

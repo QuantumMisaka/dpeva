@@ -13,17 +13,20 @@
 
 set -Eeuo pipefail
 
-if [[ "$#" -ne 2 ]]; then
-    echo "usage: $0 QUALIFICATION_INPUT IMMUTABLE_JOB_DIR" >&2
+if [[ "$#" -ne 3 ]]; then
+    echo "usage: $0 QUALIFICATION_INPUT IMMUTABLE_JOB_DIR REPO_ROOT" >&2
     exit 2
 fi
 readonly DPEVA_QUALIFICATION_INPUT="$1"
 readonly DPEVA_QUALIFICATION_DIR="$2"
+readonly REPO_ROOT="$3"
 export DPEVA_QUALIFICATION_INPUT DPEVA_QUALIFICATION_DIR
 mkdir -p "$DPEVA_QUALIFICATION_DIR"
 
-readonly SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
-readonly REPO_ROOT="$(cd -- "$SCRIPT_DIR/../.." && pwd -P)"
+if [[ ! -d "$REPO_ROOT" ]]; then
+    echo "repository root is not a directory: $REPO_ROOT" >&2
+    exit 2
+fi
 cd "$REPO_ROOT"
 export PYTHONPATH="$REPO_ROOT/src${PYTHONPATH:+:$PYTHONPATH}"
 

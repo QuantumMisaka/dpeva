@@ -278,6 +278,8 @@ def test_submit_uses_nil_export_without_slurm_login_environment(
     job_dir = Path(json.loads(submission_path.read_text(encoding="utf-8"))["job_dir"])
     assert f"--output={job_dir}/slurm-%j.out" in calls[0]
     assert f"--error={job_dir}/slurm-%j.err" in calls[0]
+    assert calls[0][-4] == str(slurm)
+    assert calls[0][-1] == str(slurm.parent.parent.parent.resolve())
 
 
 def test_submit_rehashes_fixture_before_submission(tmp_path: Path) -> None:
@@ -297,6 +299,9 @@ def test_submit_rehashes_fixture_before_submission(tmp_path: Path) -> None:
 def test_slurm_script_selects_qualified_environment_before_source() -> None:
     script = Path("scripts/validation/run_deepmd_32_qualification.slurm").read_text(encoding="utf-8")
     assert script.startswith("#!/bin/bash\n")
+    assert '[[ "$#" -ne 3 ]]' in script
+    assert 'readonly REPO_ROOT="$3"' in script
+    assert "BASH_SOURCE" not in script
     assert 'export PYTHONPATH="$REPO_ROOT/src${PYTHONPATH:+:$PYTHONPATH}"' in script
     assert script.index("PYTHONPATH") < script.index("source \"$REPO_ROOT/scripts/env/dpeva-dpa4.env\"")
     assert 'export DPEVA_DPA4_ENV_NAME="dpeva-dpa4-320"' in script
