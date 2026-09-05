@@ -34,10 +34,11 @@ class InferenceIOManager:
         self.logger = logging.getLogger(__name__)
 
     def discover_models(self) -> List[str]:
-        """Return legacy-discovered model paths, including regular and EMA files.
+        """Return legacy-discovered regular model paths.
 
         New callers should retain the references from :meth:`discover_model_refs`;
         this path-only method remains for the public manager compatibility API.
+        EMA artifacts are opt-in through explicit model-reference JSON files.
         """
         return self.paths_from_refs(
             self.discover_model_refs(family="legacy-unknown", backend="pt-expt")

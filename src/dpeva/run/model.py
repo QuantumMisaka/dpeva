@@ -108,8 +108,9 @@ def resolve_model_refs(
 
     This is a compatibility bridge for existing work directories only.  It
     does not infer a concrete model family and assigns the sole operation that
-    this bridge is used for (``test``).  Both regular and EMA checkpoints are
-    represented independently.
+    this bridge is used for (``test``).  Legacy numeric directories select
+    regular checkpoints only; an explicit model-reference JSON is required to
+    opt an EMA checkpoint into an ensemble.
     """
 
     work_dir = Path(work_dir)
@@ -122,23 +123,19 @@ def resolve_model_refs(
         key=lambda path: int(path.name),
     )
     for model_dir in model_dirs:
-        for filename, role in (
-            ("model.ckpt.pt", ModelRole.REGULAR),
-            ("model_ema.ckpt.pt", ModelRole.EMA),
-        ):
-            path = model_dir / filename
-            if path.is_file():
-                refs.append(
-                    ModelArtifactRef(
-                        kind=ModelArtifactKind.CHECKPOINT,
-                        family=family,
-                        backend=backend,
-                        path=str(path),
-                        checksum=_sha256(path),
-                        role=role,
-                        supported_operations=["test"],
-                    )
+        path = model_dir / "model.ckpt.pt"
+        if path.is_file():
+            refs.append(
+                ModelArtifactRef(
+                    kind=ModelArtifactKind.CHECKPOINT,
+                    family=family,
+                    backend=backend,
+                    path=str(path),
+                    checksum=_sha256(path),
+                    role=ModelRole.REGULAR,
+                    supported_operations=["test"],
                 )
+            )
     return refs
 
 

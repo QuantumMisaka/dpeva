@@ -133,7 +133,7 @@ def test_auto_analysis_ignored_for_non_local(tmp_path, mock_job_manager):
         mock_warning.assert_called_with("auto_analysis=true is ignored when backend is not local.")
 
 
-def _write_model_ref(ref_path, model_path, *, backend="pt-expt", operations=None):
+def _write_model_ref(ref_path, model_path, *, backend="pt-expt", operations=None, role=None):
     ref_path.parent.mkdir(parents=True, exist_ok=True)
     ref_path.write_text(
         json.dumps(
@@ -144,6 +144,7 @@ def _write_model_ref(ref_path, model_path, *, backend="pt-expt", operations=None
                 "path": os.path.relpath(model_path, ref_path.parent),
                 "checksum": hashlib.sha256(model_path.read_bytes()).hexdigest(),
                 "supported_operations": operations or ["test"],
+                **({"role": role} if role is not None else {}),
             }
         ),
         encoding="utf-8",
@@ -192,6 +193,29 @@ def test_explicit_backend_mismatch_fails_before_execution(tmp_path):
                 "model_ref_paths": [ref],
             }
         )
+
+
+def test_explicit_model_refs_can_execute_regular_and_ema_roles(tmp_path):
+    regular = tmp_path / "regular.pt"
+    ema = tmp_path / "ema.pt"
+    regular.write_bytes(b"regular")
+    ema.write_bytes(b"ema")
+    regular_ref = tmp_path / "regular.json"
+    ema_ref = tmp_path / "ema.json"
+    _write_model_ref(regular_ref, regular, role="regular")
+    _write_model_ref(ema_ref, ema, role="ema")
+
+    workflow = InferenceWorkflow(
+        {
+            "work_dir": str(tmp_path),
+            "data_path": str(tmp_path / "data"),
+            "dp_backend": "pt-expt",
+            "model_ref_paths": [regular_ref, ema_ref],
+        }
+    )
+
+    assert [ref.role.value for ref in workflow.model_refs] == ["regular", "ema"]
+    assert workflow.models_paths == [str(regular), str(ema)]
 
 
 def test_legacy_bridge_emits_one_migration_warning(tmp_path, caplog):

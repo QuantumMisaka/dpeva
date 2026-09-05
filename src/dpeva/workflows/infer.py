@@ -87,7 +87,7 @@ class InferenceWorkflow:
         else:
             self.logger.warning(
                 "model_ref_paths is empty; using legacy numeric-directory model discovery "
-                "for this release (family=legacy-unknown)"
+                "(regular-only) for this release (family=legacy-unknown)"
             )
             self.model_refs = self.io_manager.discover_model_refs(
                 family="legacy-unknown", backend=self.config.dp_backend

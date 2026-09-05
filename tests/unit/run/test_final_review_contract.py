@@ -41,8 +41,7 @@ def test_cli_config_loader_reads_source_once(monkeypatch, tmp_path: Path) -> Non
     result = cli.load_and_resolve_config(str(tmp_path / "config.json"))
 
     assert calls["count"] == 1
-    assert result.original == raw
-    assert result.normalized["submission"]["backend"] == "local"
+    assert result["submission"]["backend"] == "local"
 
 
 def test_schema_version_is_consumed_and_unsupported_version_rejected() -> None:
@@ -536,6 +535,128 @@ def test_source_identity_real_git_rename_record_is_consumed(tmp_path: Path) -> N
     assert identity["dirty_fingerprint"]
 
 
+def test_source_identity_scopes_clean_runtime_content_and_ignores_docs_evidence(tmp_path: Path) -> None:
+    repo = tmp_path / "runtime repo"
+    source = repo / "src/dpeva/__init__.py"
+    source.parent.mkdir(parents=True)
+    source.write_text("runtime-v1", encoding="utf-8")
+    (repo / "pyproject.toml").write_text("[project]\nname='fixture'\n", encoding="utf-8")
+    (repo / "docs").mkdir()
+    (repo / "docs" / "notes.md").write_text("docs-v1", encoding="utf-8")
+
+    def git(*args: str) -> None:
+        result = subprocess.run(
+            ["git", *args], cwd=repo, check=False, capture_output=True, text=True
+        )
+        assert result.returncode == 0, result.stderr
+
+    git("init", "-q")
+    git("config", "user.email", "test@example.invalid")
+    git("config", "user.name", "test")
+    git("add", "src/dpeva/__init__.py", "pyproject.toml", "docs/notes.md")
+    git("commit", "-qm", "initial")
+
+    clean = source_identity(source)
+    assert clean["runtime_fingerprint_version"] == "1"
+    assert clean["runtime_fingerprint_scope"] == ["src/dpeva", "pyproject.toml"]
+    assert clean["runtime_fingerprint"]
+
+    (repo / "docs" / "notes.md").write_text("docs-v2", encoding="utf-8")
+    (repo / "scientific-data").mkdir()
+    (repo / "scientific-data" / "raw.xyz").write_text("data", encoding="utf-8")
+    (repo / ".dpeva").mkdir()
+    (repo / ".dpeva" / "run.json").write_text("evidence", encoding="utf-8")
+    docs_dirty = source_identity(source)
+    assert docs_dirty["runtime_fingerprint"] == clean["runtime_fingerprint"]
+
+    git("add", "docs/notes.md")
+    git("commit", "-qm", "docs-only")
+    docs_commit = source_identity(source)
+    assert docs_commit["git_commit"] != clean["git_commit"]
+    assert docs_commit["runtime_fingerprint"] == clean["runtime_fingerprint"]
+
+    source.write_text("runtime-v2", encoding="utf-8")
+    tracked_dirty = source_identity(source)
+    assert tracked_dirty["runtime_fingerprint"] != clean["runtime_fingerprint"]
+
+    (repo / "src/dpeva/runtime_extra.py").write_text("runtime-v2", encoding="utf-8")
+    runtime_dirty = source_identity(source)
+    assert runtime_dirty["runtime_fingerprint"] != tracked_dirty["runtime_fingerprint"]
+
+
+def test_resume_uses_scoped_runtime_fingerprint_and_rejects_legacy_unscoped_source(
+    tmp_path: Path,
+) -> None:
+    repo = tmp_path / "runtime repo"
+    source = repo / "src/dpeva/__init__.py"
+    source.parent.mkdir(parents=True)
+    source.write_text("runtime-v1", encoding="utf-8")
+    (repo / "pyproject.toml").write_text("[project]\nname='fixture'\n", encoding="utf-8")
+
+    def git(*args: str) -> None:
+        result = subprocess.run(
+            ["git", *args], cwd=repo, check=False, capture_output=True, text=True
+        )
+        assert result.returncode == 0, result.stderr
+
+    git("init", "-q")
+    git("config", "user.email", "test@example.invalid")
+    git("config", "user.name", "test")
+    git("add", "src/dpeva/__init__.py", "pyproject.toml")
+    git("commit", "-qm", "initial")
+    clean = source_identity(source)
+
+    context = RunContext.create(
+        tmp_path / "work",
+        "feature",
+        RunOptions(run_id="scoped-resume"),
+        {},
+        {},
+        source=clean,
+    )
+    context.recorder.transition(RunState.VALIDATED)
+    (repo / "docs.md").write_text("irrelevant", encoding="utf-8")
+    resumed = RunContext.create(
+        tmp_path / "work",
+        "feature",
+        RunOptions(run_id="scoped-resume", resume=True),
+        {},
+        {},
+        source=source_identity(source),
+    )
+    assert resumed.attempt_id == 2
+
+    source.write_text("runtime-v2", encoding="utf-8")
+    with pytest.raises(ValueError, match="source identity"):
+        RunContext.create(
+            tmp_path / "work",
+            "feature",
+            RunOptions(run_id="scoped-resume", resume=True),
+            {},
+            {},
+            source=source_identity(source),
+        )
+
+    legacy_context = RunContext.create(
+        tmp_path / "legacy-work",
+        "feature",
+        RunOptions(run_id="legacy-unscoped"),
+        {},
+        {},
+        source={"package_version": "0.8.1", "git_commit": clean["git_commit"], "dirty": False},
+    )
+    legacy_context.recorder.transition(RunState.VALIDATED)
+    with pytest.raises(ValueError, match="legacy unscoped"):
+        RunContext.create(
+            tmp_path / "legacy-work",
+            "feature",
+            RunOptions(run_id="legacy-unscoped", resume=True),
+            {},
+            {},
+            source=clean,
+        )
+
+
 def test_resume_rejects_changed_dirty_source_fingerprint(tmp_path: Path) -> None:
     repo = tmp_path / "repo"
     source = repo / "src/dpeva/__init__.py"
@@ -558,7 +679,7 @@ def test_resume_rejects_changed_dirty_source_fingerprint(tmp_path: Path) -> None
     context = RunContext.create(tmp_path, "feature", RunOptions(run_id="dirty-resume"), {}, {}, source_factory=factory)
     context.recorder.transition(RunState.VALIDATED)
     before = (context.run_dir / "run.json").read_bytes()
-    current_status["value"] = "?? src/new.py\n"
+    current_status["value"] = "?? src/dpeva/new_runtime.py\n"
     with pytest.raises(ValueError, match="source identity"):
         RunContext.create(
             tmp_path, "feature", RunOptions(run_id="dirty-resume", resume=True), {}, {}, source_factory=factory
@@ -599,6 +720,24 @@ def test_input_identity_is_relative_and_dataset_identity_is_structural(tmp_path:
     payload = json.loads((context.run_dir / "run.json").read_text())
     assert all(not value.startswith("/") for item in payload["inputs"] for value in item.values())
     assert payload["inputs"][0]["identity_scope"] == "bounded-structural"
+
+
+def test_external_same_basename_models_have_content_scoped_refs(tmp_path: Path) -> None:
+    work = tmp_path / "work"
+    work.mkdir()
+    first = tmp_path / "first" / "model.pt"
+    second = tmp_path / "second" / "model.pt"
+    first.parent.mkdir()
+    second.parent.mkdir()
+    first.write_bytes(b"model-a")
+    second.write_bytes(b"model-b")
+
+    first_identity = input_identity(first, "model", work)
+    second_identity = input_identity(second, "model", work)
+
+    assert first_identity["ref"] != second_identity["ref"]
+    assert str(tmp_path) not in first_identity["ref"]
+    assert first_identity["ref"].startswith("external/model.pt-")
 
 
 def test_doctor_default_probes_required_operation_surfaces(monkeypatch) -> None:

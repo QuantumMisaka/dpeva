@@ -16,7 +16,7 @@ from dpeva.run.model import (
 )
 
 
-def test_discovery_handles_gaps_and_regular_ema(tmp_path: Path) -> None:
+def test_legacy_discovery_handles_gaps_with_regular_models_only(tmp_path: Path) -> None:
     for relative in ("0/model.ckpt.pt", "0/model_ema.ckpt.pt", "2/model.ckpt.pt"):
         path = tmp_path / relative
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -26,7 +26,6 @@ def test_discovery_handles_gaps_and_regular_ema(tmp_path: Path) -> None:
 
     assert [(ref.path, ref.role) for ref in refs] == [
         (str(tmp_path / "0/model.ckpt.pt"), ModelRole.REGULAR),
-        (str(tmp_path / "0/model_ema.ckpt.pt"), ModelRole.EMA),
         (str(tmp_path / "2/model.ckpt.pt"), ModelRole.REGULAR),
     ]
     assert all(ref.kind is ModelArtifactKind.CHECKPOINT for ref in refs)

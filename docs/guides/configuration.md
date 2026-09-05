@@ -100,10 +100,20 @@ submission backend。未知字段与新旧字段冲突仍然严格失败。
 Slurm 多模型 infer 若仅部分 JobID 提交成功，父清单保持 `submitted` 并保留失败子记录，
 但命令以退出码 `1` 返回；全部提交失败才记为 `failed`。
 清单 `source` 记录 DP-EVA 包版本，并在 git 信息可观察时记录 commit、dirty 状态与稳定
-dirty fingerprint（运行自身的 `.dpeva` 证据路径不计入）；
-模型输入使用流式 SHA-256，数据集目录使用明确标注的有界 structural identity，路径只
+dirty fingerprint（运行自身的 `.dpeva` 证据路径不计入）。新清单还记录版本化的
+`runtime_fingerprint` 及其 scope：`src/dpeva` 与 `pyproject.toml` 的 tracked 内容、删除和
+symlink，以及 `src/dpeva` 下未追踪的 Python runtime 文件；文档、数据集、日志和任意
+`.dpeva` 内容不在 scope 内。resume 使用该 scoped fingerprint：只改文档的 commit 不会
+改变 runtime identity，已提交或未提交的 runtime 修改会拒绝 resume；没有 scoped fingerprint
+的 legacy 清单不会被重新解释为匹配。模型输入使用流式 SHA-256，数据集目录使用明确标注的有界 structural identity，路径只
 使用相对/逻辑引用。实际生成的日志文件存在且非空时才会登记为 `log` artifact，不会
 凭空创建日志记录。
+
+Inference 在没有 `model_ref_paths` 时兼容旧的数字目录布局，但默认每个目录只选择
+`model.ckpt.pt` regular checkpoint，不会隐式把 `model_ema.ckpt.pt` 加入 ensemble。需要
+执行 EMA 时，为该文件提供显式 model-reference JSON，并设置 `"role": "ema"`；显式
+references 可以在同一个 ensemble 中同时列出 regular 与 EMA。工作目录外的模型引用使用
+basename 加内容 SHA-256 组成逻辑 ref，不把绝对路径写入 run identity。
 
 支持 Slurm array 的 workflow 可设置：
 

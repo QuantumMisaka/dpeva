@@ -28,6 +28,8 @@ _TERMINAL_STATES = frozenset({RunState.FAILED, RunState.FINISHED})
 _CHECKSUM_CHUNK_SIZE = 1024 * 1024
 _STRUCTURAL_ENTRY_LIMIT = 256
 _STRUCTURAL_NODE_LIMIT = 4096
+_RUNTIME_FINGERPRINT_VERSION = "1"
+_RUNTIME_FINGERPRINT_SCOPE = ["src/dpeva", "pyproject.toml"]
 _DEFAULT_CONFIG_METADATA: dict[str, Any] = {
     "schema_version": "1.0",
     "input_schema_version": "1.0",
@@ -460,7 +462,22 @@ def _merge_inputs(
 
 
 def _compare_source_identity(existing: dict[str, Any], current: dict[str, Any]) -> None:
-    """Compare provenance, with a narrowly-scoped legacy clean exception."""
+    """Compare provenance, preferring the scoped runtime fingerprint."""
+    if "runtime_fingerprint" in existing:
+        if "runtime_fingerprint" not in current:
+            raise ValueError("source identity mismatch: scoped runtime fingerprint missing")
+        for key in (
+            "dpeva_version",
+            "package_version",
+            "runtime_fingerprint_version",
+            "runtime_fingerprint_scope",
+            "runtime_fingerprint",
+        ):
+            if existing.get(key) != current.get(key):
+                raise ValueError("source identity mismatch")
+        return
+    if "runtime_fingerprint" in current:
+        raise ValueError("source identity mismatch: legacy unscoped provenance cannot be compared")
     if "dirty_fingerprint" not in existing and existing.get("git_commit"):
         if (
             existing.get("git_commit") != current.get("git_commit")
@@ -730,7 +747,114 @@ def source_identity(
         identity["dirty_fingerprint"] = hashlib.sha256(
             b"\0".join(entries)
         ).hexdigest()
+    identity["runtime_fingerprint_version"] = _RUNTIME_FINGERPRINT_VERSION
+    identity["runtime_fingerprint_scope"] = list(_RUNTIME_FINGERPRINT_SCOPE)
+    identity["runtime_fingerprint"] = _runtime_fingerprint(
+        repository,
+        source,
+        status_result.stdout if status_result.returncode == 0 else b"",
+        run=run,
+    )
     return identity
+
+
+def _is_runtime_path(relative: str) -> bool:
+    return relative == "pyproject.toml" or relative == "src/dpeva" or relative.startswith(
+        "src/dpeva/"
+    )
+
+
+def _runtime_fingerprint(
+    repository: Path,
+    source: Path,
+    status_output: bytes | str,
+    *,
+    run: Callable[..., subprocess.CompletedProcess[str]],
+) -> str:
+    """Hash tracked runtime files and untracked Python package additions.
+
+    The digest contains relative names and content identities only.  This
+    keeps it stable when the same source tree is checked out at another path,
+    while still recording deleted tracked files and symlink targets.
+    """
+    tracked_result = run(
+        ["git", "ls-files", "--cached", "-z", "--", "src/dpeva", "pyproject.toml"],
+        cwd=repository,
+        check=False,
+        text=False,
+        capture_output=True,
+    )
+    runtime_paths: set[str] = set()
+    if tracked_result.returncode == 0:
+        raw = tracked_result.stdout
+        if isinstance(raw, str):
+            raw = raw.encode("utf-8")
+        for field in raw.split(b"\0"):
+            if not field:
+                continue
+            relative = os.fsdecode(field)
+            if _is_runtime_path(relative):
+                runtime_paths.add(relative)
+
+    source_relative = _relative_runtime_path(source, repository)
+    if source_relative is not None:
+        runtime_paths.add(source_relative)
+
+    for paths in _status_paths(status_output):
+        for path in paths:
+            relative = os.fsdecode(path)
+            if relative.startswith("src/dpeva/") and relative.endswith(".py"):
+                runtime_paths.add(relative)
+
+    records: list[bytes] = []
+    for relative in sorted(runtime_paths):
+        candidate = repository / relative
+        if candidate.is_symlink():
+            try:
+                content = b"symlink:" + os.fsencode(os.readlink(candidate))
+            except OSError:
+                content = b"unreadable"
+        elif candidate.is_file():
+            try:
+                content = b"sha256:" + _sha256(candidate).encode("ascii")
+            except OSError:
+                content = b"unreadable"
+        elif not candidate.exists():
+            content = b"deleted"
+        else:
+            content = b"non-file"
+        records.append(os.fsencode(relative) + b"\0" + content)
+    return hashlib.sha256(b"\0".join(records)).hexdigest()
+
+
+def _relative_runtime_path(path: Path, repository: Path) -> str | None:
+    try:
+        relative = path.relative_to(repository).as_posix()
+    except ValueError:
+        return None
+    return relative if _is_runtime_path(relative) else None
+
+
+def _status_paths(output: bytes | str) -> list[list[bytes]]:
+    """Decode porcelain-v1 NUL records into one or two path fields."""
+    raw = output if isinstance(output, bytes) else output.encode("utf-8")
+    fields = raw.split(b"\0")
+    paths: list[list[bytes]] = []
+    index = 0
+    while index < len(fields) - 1:
+        record = fields[index]
+        index += 1
+        if len(record) < 4:
+            continue
+        status, path = record[:2], record[3:]
+        current = [path]
+        if status[:1] in {b"R", b"C"} or status[1:2] in {b"R", b"C"}:
+            if index >= len(fields) - 1:
+                continue
+            current.append(fields[index])
+            index += 1
+        paths.append(current)
+    return paths
 
 
 def _publishable_git_status(output: bytes | str, repository: Path) -> list[bytes]:
@@ -818,16 +942,19 @@ def input_identity(
     try:
         reference = candidate.relative_to(root).as_posix()
     except ValueError:
-        reference = f"external/{candidate.name}"
-    result = {"kind": kind, "ref": reference}
+        reference = None
+    result: dict[str, str] = {"kind": kind, "ref": ""}
     if candidate.is_file():
         try:
             digest = _sha256(candidate)
         except OSError as error:
-            raise OSError(f"{kind} input unreadable: {reference}") from error
+            label = reference or f"external/{candidate.name}"
+            raise OSError(f"{kind} input unreadable: {label}") from error
+        result["ref"] = reference or f"external/{candidate.name}-{digest}"
         result.update(identity=f"sha256:{digest}", identity_scope="full-content")
     elif candidate.is_dir():
         digest, count = _structural_identity(candidate)
+        result["ref"] = reference or f"external/{candidate.name}-{digest}"
         result.update(
             identity=f"structural-sha256:{digest}",
             identity_scope="bounded-structural",
@@ -835,8 +962,9 @@ def input_identity(
             identity_bound=f"first-{_STRUCTURAL_ENTRY_LIMIT}-files/{_STRUCTURAL_NODE_LIMIT}-nodes",
         )
     else:
+        result["ref"] = reference or f"external/{candidate.name}"
         if require_exists:
-            raise FileNotFoundError(f"{kind} input does not exist: {reference}")
+            raise FileNotFoundError(f"{kind} input does not exist: {result['ref']}")
         result.update(identity="unavailable", identity_scope="unverified")
     return result
 

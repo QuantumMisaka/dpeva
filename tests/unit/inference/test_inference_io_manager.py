@@ -8,7 +8,7 @@ from dpeva.constants import FILENAME_STATS_JSON
 from dpeva.inference.managers import InferenceIOManager
 
 
-def test_discover_models_handles_gaps_and_ema(tmp_path):
+def test_discover_models_handles_gaps_with_regular_models_only(tmp_path):
     work_dir = tmp_path / "work"
     (work_dir / "0").mkdir(parents=True)
     (work_dir / "0" / "model.ckpt.pt").touch()
@@ -22,7 +22,6 @@ def test_discover_models_handles_gaps_and_ema(tmp_path):
 
     assert models == [
         str(work_dir / "0" / "model.ckpt.pt"),
-        str(work_dir / "0" / "model_ema.ckpt.pt"),
         str(work_dir / "2" / "model.ckpt.pt"),
     ]
 

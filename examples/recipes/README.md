@@ -61,6 +61,13 @@ For Slurm, run `dpeva analysis` after jobs finish.
 
 `feature` 与 `infer` 支持可选运行契约参数：`--run-id` 固定清单身份，
 `--resume` 恢复未完成运行，`--force --reason "..."` 创建带审计理由的新尝试。
+Inference 未设置 `model_ref_paths` 时沿用数字目录兼容发现，但默认只执行每个目录的
+`model.ckpt.pt` regular checkpoint；`model_ema.ckpt.pt` 必须通过显式 model-reference JSON
+（`"role": "ema"`）加入。显式 references 可同时声明 regular 与 EMA。工作目录外模型的
+run identity 使用 basename 加内容 SHA-256，避免同名模型碰撞且不记录绝对路径。run manifest
+的 source identity 使用版本化 scoped runtime fingerprint（`src/dpeva` 与 `pyproject.toml`），
+不受 docs、数据集、日志或 `.dpeva` 证据变化影响；legacy 无 scoped fingerprint 的清单不会
+被静默视为匹配。
 本地推理的混合模型结果以退出码 1 和 `partial` 清单报告；Slurm 提交只报告
 `submitted`。Slurm 多模型若部分 JobID 成功、部分失败，仍保持 `submitted` 并保留
 两类子记录，但命令以退出码 1 返回；全部提交失败才是 `failed`。清单会区分
