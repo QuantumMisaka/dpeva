@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import json
 import hashlib
+import subprocess
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -559,6 +561,62 @@ def test_slurm_script_selects_qualified_environment_before_source() -> None:
     assert script.index("PYTHONPATH") < script.index("source \"$REPO_ROOT/scripts/env/dpeva-dpa4.env\"")
     assert 'export DPEVA_DPA4_ENV_NAME="dpeva-dpa4-320"' in script
     assert script.index("DPEVA_DPA4_ENV_NAME") < script.index("source \"$REPO_ROOT/scripts/env/dpeva-dpa4.env\"")
+
+
+def test_slurm_startup_resolves_scope_after_activation_with_clean_path(
+    tmp_path: Path,
+) -> None:
+    repo = tmp_path / "repo"
+    env_dir = repo / "scripts" / "env"
+    validation_dir = repo / "scripts" / "validation"
+    env_dir.mkdir(parents=True)
+    validation_dir.mkdir(parents=True)
+    python_dir = Path(sys.executable).resolve().parent
+    (env_dir / "dpeva-dpa4.env").write_text(
+        f'export PATH="{python_dir}:$PATH"\n', encoding="utf-8"
+    )
+    recorder = """\
+import pathlib
+import sys
+
+job_dir = pathlib.Path(sys.argv[sys.argv.index("--job-dir") + 1])
+scope = sys.argv[sys.argv.index("--scope") + 1]
+kind = "collector" if "collect_deepmd" in sys.argv[0] else "runner"
+with (job_dir / "startup-observed.txt").open("a", encoding="utf-8") as stream:
+    stream.write(f"{kind}:{scope}\\n")
+"""
+    (validation_dir / "run_recorded_command.py").write_text(recorder, encoding="utf-8")
+    (validation_dir / "collect_deepmd_32_qualification.py").write_text(
+        recorder, encoding="utf-8"
+    )
+    input_path = tmp_path / "input.json"
+    input_path.write_text(
+        json.dumps({"scope": "dpa4", "required_cases": ["pt-test"]}),
+        encoding="utf-8",
+    )
+    job_dir = tmp_path / "job"
+
+    result = subprocess.run(
+        [
+            "/bin/bash",
+            str(Path("scripts/validation/run_deepmd_32_qualification.slurm").resolve()),
+            str(input_path),
+            str(job_dir),
+            str(repo),
+        ],
+        env={"PATH": "/usr/bin:/bin", "SLURM_JOB_ID": "123"},
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert "command not found" not in result.stderr
+    assert (job_dir / "startup-observed.txt").read_text(encoding="utf-8").splitlines() == [
+        "runner:dpa4",
+        "runner:dpa4",
+        "collector:dpa4",
+    ]
 
 
 def test_preflight_rejects_wrong_qualification_environment(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

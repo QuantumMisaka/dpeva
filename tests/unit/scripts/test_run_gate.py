@@ -197,6 +197,7 @@ def test_python_quality_jobs_use_gate_names() -> None:
 def test_ci_profiles_keep_routine_integration_and_split_deepmd_contracts() -> None:
     manifest = load_manifest(MANIFEST)
 
+    assert "tests/contract/deepmd/test_fixture_gate.py" in manifest.gates["unit"].argv
     assert manifest.gates["deepmd_contract"].argv == (
         "pytest",
         "-m",

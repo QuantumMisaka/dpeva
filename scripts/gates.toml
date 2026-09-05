@@ -7,7 +7,7 @@ owner = "Project Maintainer"
 basis = "developer-guide §1.6.3"
 
 [gates.unit]
-argv = ["pytest", "tests/unit", "--cov=src/dpeva", "--cov-branch", "--cov-report=term", "--cov-report=json:build/coverage/coverage-unit.json", "--cov-fail-under=80"]
+argv = ["pytest", "tests/unit", "tests/contract/deepmd/test_fixture_gate.py", "--cov=src/dpeva", "--cov-branch", "--cov-report=term", "--cov-report=json:build/coverage/coverage-unit.json", "--cov-fail-under=80"]
 layer = "unit"
 owner = "Workflow Owner"
 basis = "SPEC R13 and existing python-quality CI"

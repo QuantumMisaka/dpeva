@@ -22,11 +22,7 @@ readonly DPEVA_QUALIFICATION_DIR="$2"
 readonly REPO_ROOT="$3"
 export DPEVA_QUALIFICATION_INPUT DPEVA_QUALIFICATION_DIR
 mkdir -p "$DPEVA_QUALIFICATION_DIR"
-
-readonly DPEVA_QUALIFICATION_SCOPE="$(
-    python -c 'import json, sys; value=json.load(open(sys.argv[1], encoding="utf-8")).get("scope", "all"); assert value in {"dpa4", "all"}; print(value)' \
-        "$DPEVA_QUALIFICATION_INPUT"
-)"
+DPEVA_QUALIFICATION_SCOPE="all"
 export DPEVA_QUALIFICATION_SCOPE
 
 if [[ ! -d "$REPO_ROOT" ]]; then
@@ -70,6 +66,12 @@ trap on_exit EXIT
 # development environment.  --export=NIL does not carry this setting in.
 export DPEVA_DPA4_ENV_NAME="dpeva-dpa4-320"
 source "$REPO_ROOT/scripts/env/dpeva-dpa4.env"
+
+DPEVA_QUALIFICATION_SCOPE="$(
+    python -c 'import json, sys; value=json.load(open(sys.argv[1], encoding="utf-8")).get("scope", "all"); assert value in {"dpa4", "all"}; print(value)' \
+        "$DPEVA_QUALIFICATION_INPUT"
+)"
+readonly DPEVA_QUALIFICATION_SCOPE
 
 run_case preflight
 if (( job_rc == 0 )); then
