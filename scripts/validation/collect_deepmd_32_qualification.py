@@ -237,7 +237,8 @@ def collect_qualification(job_dir: Path, *, job_id: str | None = None, gpu: str 
         identity_errors.append("collector GPU expectation does not match environment/gpu.json")
     version_record = environment.get("deepmd_version", {})
     version_value = version_record.get("value") if isinstance(version_record, dict) else None
-    if version_value != "DeePMD-kit v3.2.0" and "deepmd-version.json" not in environment_invalid:
+    normalized_version = version_value.strip() if isinstance(version_value, str) else None
+    if normalized_version != "DeePMD-kit v3.2.0" and "deepmd-version.json" not in environment_invalid:
         environment_invalid.append("deepmd-version.json")
     if not isinstance(measured_gpu, str) or "v100" not in measured_gpu.lower():
         if "gpu.json" not in environment_invalid:
@@ -264,7 +265,7 @@ def collect_qualification(job_dir: Path, *, job_id: str | None = None, gpu: str 
                     returncode=command_record["returncode"],
                     capability_key=CapabilityKey.model_validate(spec["capability_key"]),
                     verification_command=spec["verification_command"],
-                    deepmd_version=version_value,
+                    deepmd_version=normalized_version,
                     source="sai-v100-qualification",
                     case=case,
                     job_id=selected_job_id,

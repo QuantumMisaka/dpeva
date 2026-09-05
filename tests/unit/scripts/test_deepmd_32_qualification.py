@@ -56,7 +56,7 @@ def _complete_environment(root: Path) -> None:
     environment.mkdir(parents=True, exist_ok=True)
     values = {
         "pip-freeze.json": {"schema_version": "1.0", "case": "pip-freeze", "returncode": 0, "value": ""},
-        "deepmd-version.json": {"schema_version": "1.0", "case": "deepmd-version", "returncode": 0, "value": "DeePMD-kit v3.2.0"},
+        "deepmd-version.json": {"schema_version": "1.0", "case": "deepmd-version", "returncode": 0, "value": "DeePMD-kit v3.2.0\n"},
         "torch-cuda.json": {"schema_version": "1.0", "case": "torch-cuda", "returncode": 0, "value": {"available": True, "cuda": "12.6", "torch": "2.0"}},
         "gpu.json": {"schema_version": "1.0", "case": "gpu", "returncode": 0, "value": "GPU 0: Tesla V100"},
     }
@@ -139,6 +139,8 @@ def test_collector_accepts_directory_artifact_only_after_complete_records(tmp_pa
     assert report["status"] == "finished"
     assert (tmp_path / "qualification.json").is_file()
     assert len(report["attestations"]) == 7
+    assert report["environment"]["deepmd_version"]["value"] == "DeePMD-kit v3.2.0\n"
+    assert {item["deepmd_version"] for item in report["attestations"]} == {"DeePMD-kit v3.2.0"}
     key = CapabilityKey(operation="test", backend="pt", model_family="DPA4", artifact="checkpoint", data_format="deepmd/npy", environment="cpu")
     record = CapabilityRecord(
         key=key, status="supported", version_range=">=3.2,<3.3",
