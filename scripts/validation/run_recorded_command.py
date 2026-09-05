@@ -54,10 +54,19 @@ def _load(path: Path) -> dict[str, Any]:
     return value
 
 
+def _head(value: Any, name: str) -> str:
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"{name} is required and must be non-empty")
+    return value.strip()
+
+
 def _spec(config: dict[str, Any], case: str, job_dir: Path) -> tuple[list[str], list[Path]]:
     fixture = Path(config["fixture"]["path"])
     regular = Path(config["models"]["regular"]["path"])
     ema = Path(config["models"]["ema"]["path"])
+    regular_head = _head(config["models"]["regular"].get("head"), "regular model head")
+    ema_head = _head(config["models"]["ema"].get("head"), "EMA model head")
+    dpa4c_head = _head(config.get("dpa4c_model_head"), "DPA4C model head")
     output = job_dir / "artifacts" / case
     if case in {"pip-freeze", "deepmd-version", "torch-cuda", "gpu"}:
         specs = {
@@ -69,18 +78,21 @@ def _spec(config: dict[str, Any], case: str, job_dir: Path) -> tuple[list[str], 
         return specs[case][0], [specs[case][1]]
     if case.startswith("pt-test"):
         model = ema if case.endswith("-ema") else regular
-        return ["dp", "--pt", "test", "-s", str(fixture), "-m", str(model), "-d", str(output)], [output.with_suffix(".e.out")]
+        head = ema_head if case.endswith("-ema") else regular_head
+        return ["dp", "--pt", "test", "-s", str(fixture), "-m", str(model), "--head", head, "-d", str(output)], [output.with_suffix(".e.out")]
     if case.startswith("pt-eval-desc"):
         model = ema if case.endswith("-ema") else regular
-        return ["dp", "--pt", "eval-desc", "-s", str(fixture), "-m", str(model), "-o", str(output)], [output]
+        head = ema_head if case.endswith("-ema") else regular_head
+        return ["dp", "--pt", "eval-desc", "-s", str(fixture), "-m", str(model), "--head", head, "-o", str(output)], [output]
     if case.startswith("pt-embed"):
         model = ema if case.endswith("-ema") else regular
-        return ["dp", "--pt", "embed", "-s", str(fixture), "-m", str(model), "-o", str(output.with_suffix(".hdf5"))], [output.with_suffix(".hdf5")]
+        head = ema_head if case.endswith("-ema") else regular_head
+        return ["dp", "--pt", "embed", "-s", str(fixture), "-m", str(model), "--head", head, "-o", str(output.with_suffix(".hdf5"))], [output.with_suffix(".hdf5")]
     if case == "dpa4c-periodic-eval-desc":
         model_value = config.get("dpa4c_model_path")
         if not model_value:
             raise ValueError("DPEVA_DEEPMD_DPA4C_MODEL is required for dpa4c qualification")
-        return ["dp", "--pt-expt", "eval-desc", "-s", str(fixture), "-m", str(Path(model_value)), "-o", str(output)], [output]
+        return ["dp", "--pt-expt", "eval-desc", "-s", str(fixture), "-m", str(Path(model_value)), "--head", dpa4c_head, "-o", str(output)], [output]
     raise ValueError(f"unknown qualification case: {case}")
 
 
@@ -110,6 +122,15 @@ def _preflight(config_path: Path, job_dir: Path) -> dict[str, Any]:
         if _sha256(script_path) != launch["slurm_script_sha256"]:
             errors.append("Slurm script was mutated after submission")
         config = _load(input_path)
+        for role in ("regular", "ema"):
+            try:
+                _head(config["models"][role].get("head"), f"{role} model head")
+            except (KeyError, TypeError, ValueError) as exc:
+                errors.append(str(exc))
+        try:
+            _head(config.get("dpa4c_model_head"), "DPA4C model head")
+        except (TypeError, ValueError) as exc:
+            errors.append(str(exc))
         if tuple(config.get("required_cases", ())) != REQUIRED_CASES:
             errors.append("qualification required_cases do not match harness")
         if launch.get("fixture_sha256") != config.get("fixture", {}).get("sha256"):

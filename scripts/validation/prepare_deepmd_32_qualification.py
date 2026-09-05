@@ -73,12 +73,18 @@ def prepare(model_root: Path, output: Path) -> dict[str, Any]:
     missing = [str(path) for path in (regular, ema) if not path.is_file()]
     if missing:
         raise FileNotFoundError("required research model artifact is missing: " + ", ".join(missing))
+    model_head = os.environ.get("DPEVA_DEEPMD_MODEL_HEAD", "").strip()
+    if not model_head:
+        raise FileNotFoundError("DPEVA_DEEPMD_MODEL_HEAD is required and must be non-empty")
     dpa4c_value = os.environ.get("DPEVA_DEEPMD_DPA4C_MODEL")
     if not dpa4c_value:
         raise FileNotFoundError("DPEVA_DEEPMD_DPA4C_MODEL is required for qualification")
     dpa4c_path = Path(dpa4c_value).expanduser().resolve()
     if not dpa4c_path.is_file():
         raise FileNotFoundError(f"DPEVA_DEEPMD_DPA4C_MODEL is not a file: {dpa4c_path}")
+    dpa4c_head = os.environ.get("DPEVA_DEEPMD_DPA4C_HEAD", "").strip()
+    if not dpa4c_head:
+        raise FileNotFoundError("DPEVA_DEEPMD_DPA4C_HEAD is required and must be non-empty")
 
     root = output.parent
     root.mkdir(parents=True, exist_ok=True)
@@ -102,12 +108,13 @@ def prepare(model_root: Path, output: Path) -> dict[str, Any]:
         "qualification": "deepmd-3.2-sai-v100",
         "model_root": str(model_root),
         "models": {
-            "regular": {"path": str(regular), "sha256": sha256(regular)},
-            "ema": {"path": str(ema), "sha256": sha256(ema)},
+            "regular": {"path": str(regular), "sha256": sha256(regular), "head": model_head},
+            "ema": {"path": str(ema), "sha256": sha256(ema), "head": model_head},
         },
         "fixture": fixture,
         "dpa4c_model_path": str(dpa4c_path),
         "dpa4c_model_sha256": sha256(dpa4c_path),
+        "dpa4c_model_head": dpa4c_head,
         "required_cases": [
             "pip-freeze", "deepmd-version", "torch-cuda", "gpu",
             "pt-test", "pt-test-ema", "pt-eval-desc", "pt-eval-desc-ema",

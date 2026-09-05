@@ -11,6 +11,7 @@ import pytest
 
 from scripts.validation.collect_deepmd_32_qualification import collect_qualification
 from scripts.validation.prepare_deepmd_32_qualification import prepare
+from scripts.validation.run_recorded_command import _spec
 from scripts.validation.submit_deepmd_32_qualification import parse_job_id, submit
 from dpeva.compatibility import CapabilityEvidence, CapabilityKey, CapabilityRecord, validate_promotion_evidence
 
@@ -33,6 +34,8 @@ def _dpa4c_model_env(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     model = tmp_path / "dpa4c-model.pt"
     model.write_bytes(b"dpa4c fixture")
     monkeypatch.setenv("DPEVA_DEEPMD_DPA4C_MODEL", str(model))
+    monkeypatch.setenv("DPEVA_DEEPMD_MODEL_HEAD", "downstream")
+    monkeypatch.setenv("DPEVA_DEEPMD_DPA4C_HEAD", "downstream")
 
 
 def _write_command_result(root: Path, case: str, *, returncode: int = 0, artifacts: list[str] | None = None) -> None:
@@ -164,6 +167,9 @@ def test_prepare_records_models_without_copying(tmp_path: Path) -> None:
     (model_root / "model_ema.ckpt.pt").write_bytes(b"ema")
     output = tmp_path / "build" / "input.json"
     payload = prepare(model_root, output)
+    assert payload["models"]["regular"]["head"] == "downstream"
+    assert payload["models"]["ema"]["head"] == "downstream"
+    assert payload["dpa4c_model_head"] == "downstream"
     assert payload["fixture"]["type_map"] == ["Fe", "C", "H", "O"]
     assert payload["fixture"]["periodic"] is True
     assert payload["fixture"]["sha256"] == _sha256(Path(payload["fixture"]["path"]))
@@ -182,6 +188,25 @@ def test_prepare_requires_dpa4c_model_reference(tmp_path: Path, monkeypatch: pyt
     monkeypatch.delenv("DPEVA_DEEPMD_DPA4C_MODEL")
     with pytest.raises(FileNotFoundError, match="DPEVA_DEEPMD_DPA4C_MODEL"):
         prepare(model_root, tmp_path / "input.json")
+
+
+@pytest.mark.parametrize(
+    "variable",
+    ["DPEVA_DEEPMD_MODEL_HEAD", "DPEVA_DEEPMD_DPA4C_HEAD"],
+)
+def test_prepare_requires_explicit_nonempty_model_head(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, variable: str
+) -> None:
+    model_root = tmp_path / "models"
+    model_root.mkdir()
+    (model_root / "model.ckpt.pt").write_bytes(b"regular")
+    (model_root / "model_ema.ckpt.pt").write_bytes(b"ema")
+    monkeypatch.delenv(variable)
+    with pytest.raises(FileNotFoundError, match=variable):
+        prepare(model_root, tmp_path / "input.json")
+    monkeypatch.setenv(variable, "   ")
+    with pytest.raises(FileNotFoundError, match=variable):
+        prepare(model_root, tmp_path / "input-empty.json")
 
 
 def test_prepared_fixture_is_real_periodic_deepmd_npy(tmp_path: Path) -> None:
@@ -296,6 +321,35 @@ def test_submit_rehashes_fixture_before_submission(tmp_path: Path) -> None:
         submit(input_path, slurm, tmp_path / "latest.json", job_root=tmp_path / "external", dry_run=True)
 
 
+def test_submit_rejects_missing_model_head(tmp_path: Path) -> None:
+    model_root = tmp_path / "models"
+    model_root.mkdir()
+    for name in ("model.ckpt.pt", "model_ema.ckpt.pt"):
+        (model_root / name).write_bytes(name.encode())
+    input_path = tmp_path / "input.json"
+    payload = prepare(model_root, input_path)
+    payload["models"]["regular"].pop("head")
+    input_path.write_text(json.dumps(payload) + "\n", encoding="utf-8")
+    with pytest.raises(ValueError, match="model regular head"):
+        submit(input_path, Path("scripts/validation/run_deepmd_32_qualification.slurm"), tmp_path / "latest.json", dry_run=True)
+
+
+@pytest.mark.parametrize("case", [
+    "pt-test", "pt-test-ema", "pt-eval-desc", "pt-eval-desc-ema",
+    "pt-embed", "pt-embed-ema", "dpa4c-periodic-eval-desc",
+])
+def test_model_cases_bind_explicit_head(tmp_path: Path, case: str) -> None:
+    model_root = tmp_path / "models"
+    model_root.mkdir()
+    for name in ("model.ckpt.pt", "model_ema.ckpt.pt"):
+        (model_root / name).write_bytes(name.encode())
+    config = prepare(model_root, tmp_path / "input.json")
+    config["dpa4c_model_head"] = "dpa4c-downstream"
+    argv, _ = _spec(config, case, tmp_path / "job")
+    expected = "dpa4c-downstream" if case == "dpa4c-periodic-eval-desc" else "downstream"
+    assert argv[argv.index("--head") + 1] == expected
+
+
 def test_slurm_script_selects_qualified_environment_before_source() -> None:
     script = Path("scripts/validation/run_deepmd_32_qualification.slurm").read_text(encoding="utf-8")
     assert script.startswith("#!/bin/bash\n")
@@ -321,7 +375,7 @@ def test_preflight_rejects_wrong_qualification_environment(tmp_path: Path, monke
     (fixture / "type.raw").write_text("0\n", encoding="utf-8")
     (fixture / "type_map.raw").write_text("Fe\n", encoding="utf-8")
     config = tmp_path / "input.json"
-    config.write_text(json.dumps({"schema_version": "1.0", "fixture": {"path": str(fixture)}, "models": {"regular": {"path": str(model_root / "model.ckpt.pt"), "sha256": _sha256(model_root / "model.ckpt.pt")}, "ema": {"path": str(model_root / "model_ema.ckpt.pt"), "sha256": _sha256(model_root / "model_ema.ckpt.pt")}}}), encoding="utf-8")
+    config.write_text(json.dumps({"schema_version": "1.0", "fixture": {"path": str(fixture)}, "models": {"regular": {"path": str(model_root / "model.ckpt.pt"), "sha256": _sha256(model_root / "model.ckpt.pt"), "head": "downstream"}, "ema": {"path": str(model_root / "model_ema.ckpt.pt"), "sha256": _sha256(model_root / "model_ema.ckpt.pt"), "head": "downstream"}}, "dpa4c_model_head": "downstream"}), encoding="utf-8")
     script = Path("scripts/validation/run_deepmd_32_qualification.slurm").resolve()
     launch = tmp_path / "job" / "launch.json"
     launch.parent.mkdir()

@@ -46,6 +46,8 @@ def _load_input(path: Path) -> dict[str, Any]:
         raise ValueError("qualification input must be schema 1.0")
     for role in ("regular", "ema"):
         item = data.get("models", {}).get(role, {})
+        if not isinstance(item.get("head"), str) or not item["head"].strip():
+            raise ValueError(f"model {role} head is required and must be non-empty")
         artifact = Path(item.get("path", "")).expanduser()
         if not artifact.is_file() or _sha256(artifact) != item.get("sha256"):
             raise ValueError(f"model {role} is absent or SHA-256 changed: {artifact}")
@@ -60,6 +62,8 @@ def _load_input(path: Path) -> dict[str, Any]:
         dpa4c_path = Path(dpa4c).expanduser()
         if not dpa4c_path.is_file() or not data.get("dpa4c_model_sha256") or _sha256(dpa4c_path) != data["dpa4c_model_sha256"]:
             raise ValueError(f"DPA4C model is absent: {dpa4c_path}")
+    if not isinstance(data.get("dpa4c_model_head"), str) or not data["dpa4c_model_head"].strip():
+        raise ValueError("dpa4c_model_head is required and must be non-empty")
     if tuple(data.get("required_cases", ())) != REQUIRED_CASES:
         raise ValueError("qualification input required_cases do not match the harness")
     expected_specs = [
