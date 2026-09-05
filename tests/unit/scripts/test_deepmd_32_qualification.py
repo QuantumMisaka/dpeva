@@ -225,6 +225,57 @@ def test_submit_dry_run_writes_immutable_reference(tmp_path: Path) -> None:
     assert submission["qualification_env_name"] == launch["qualification_env_name"]
 
 
+def test_submit_uses_nil_export_without_slurm_login_environment(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """SAI cancels ``--export=NONE`` jobs before their batch step starts."""
+
+    model_root = tmp_path / "models"
+    model_root.mkdir()
+    for name in ("model.ckpt.pt", "model_ema.ckpt.pt"):
+        (model_root / name).write_bytes(name.encode())
+    input_path = tmp_path / "input.json"
+    prepare(model_root, input_path)
+    slurm = tmp_path / "job.slurm"
+    slurm.write_text(
+        "\n".join(
+            (
+                "#!/bin/bash",
+                "#SBATCH --partition=4V100",
+                "#SBATCH --nodes=1",
+                "#SBATCH --ntasks=1",
+                "#SBATCH --gpus-per-node=1",
+                "#SBATCH --qos=improper-gpu",
+                "#SBATCH --time=00:30:00",
+            )
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    calls: list[list[str]] = []
+
+    def fake_run(command: list[str], **_kwargs: object) -> object:
+        from subprocess import CompletedProcess
+
+        calls.append(command)
+        return CompletedProcess(command, 0, "Submitted batch job 123\n", "")
+
+    monkeypatch.delenv("CONDA_PREFIX", raising=False)
+    monkeypatch.setattr(
+        "scripts.validation.submit_deepmd_32_qualification.subprocess.run", fake_run
+    )
+
+    submit(
+        input_path,
+        slurm,
+        tmp_path / "latest.json",
+        job_root=tmp_path / "external",
+    )
+
+    assert calls[0][0:2] == ["sbatch", "--export=NIL"]
+    assert "--export=NONE" not in calls[0]
+
+
 def test_submit_rehashes_fixture_before_submission(tmp_path: Path) -> None:
     model_root = tmp_path / "models"
     model_root.mkdir()

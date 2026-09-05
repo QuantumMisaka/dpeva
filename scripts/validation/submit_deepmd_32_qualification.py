@@ -166,7 +166,10 @@ def submit(input_path: Path, slurm_script: Path, write_ref: Path, *, job_root: P
         "job_dir": str(job_dir), "status": "launched",
     }
     _exclusive_json(job_dir / "launch.json", launch)
-    command = ["sbatch", "--export=NONE", str(slurm_script), str(input_path), str(job_dir)]
+    # SAI's Slurm control plane cancels ``--export=NONE`` jobs before the
+    # batch step starts.  ``NIL`` preserves the intended clean environment
+    # without triggering Slurm's implicit login-environment reconstruction.
+    command = ["sbatch", "--export=NIL", str(slurm_script), str(input_path), str(job_dir)]
     if dry_run:
         job_id, output = "DRY-RUN", "Submitted batch job 0"
     else:
