@@ -193,10 +193,15 @@ class FeatureExecutionManager:
                 for pool in sub_pools
             ] if sub_pools else [output_hdf5]
             checks = [f"test -s {shlex.quote(path)}" for path in output_paths]
+            freshness_globs = [shlex.quote(path) for path in output_paths]
         elif sub_pools:
             checks = [
                 f"find {shlex.quote(os.path.join(abs_output_dir, pool))} "
                 "-type f -name '*.npy' -size +0c -print -quit | grep -q ."
+                for pool in sub_pools
+            ]
+            freshness_globs = [
+                f"{shlex.quote(os.path.join(abs_output_dir, pool))}/**/*.npy"
                 for pool in sub_pools
             ]
         else:
@@ -204,7 +209,12 @@ class FeatureExecutionManager:
                 f"find {shlex.quote(abs_output_dir)} -type f -name '*.npy' "
                 "-size +0c -print -quit | grep -q ."
             ]
-        cmd = guarded_command(command=cmd, artifact_checks=checks)
+            freshness_globs = [f"{shlex.quote(abs_output_dir)}/**/*.npy"]
+        cmd = guarded_command(
+            command=cmd,
+            artifact_checks=checks,
+            freshness_globs=freshness_globs,
+        )
 
         # Filter Slurm config
         task_slurm_config = self.slurm_config.copy()
@@ -248,12 +258,18 @@ class FeatureExecutionManager:
 import os
 import sys
 import numpy as np
+from pathlib import Path
 
 # Ensure dpeva is in path
 sys.path.append("{os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))}")
 
 from dpeva.feature.generator import DescriptorGenerator
 from dpeva.feature.managers import FeatureIOManager, FeatureExecutionManager
+from dpeva.run.artifacts import (
+    ArtifactValidationError,
+    snapshot_feature_outputs,
+    validate_feature_outputs,
+)
 from dpeva.utils.exceptions import WorkflowError
 
 def main():
@@ -273,6 +289,12 @@ def main():
         omp_threads={self.omp_threads}
     )
     
+    io_manager = FeatureIOManager()
+    expected_pools = io_manager.detect_multi_pool_structure("{abs_data_path}")
+    baseline = snapshot_feature_outputs(
+        Path("{abs_output_dir}"), "eval_desc", expected_pools
+    )
+
     print("Starting recursive descriptor generation...")
     exec_manager.run_local_python_recursion(
         generator, 
@@ -282,14 +304,12 @@ def main():
         feature_kind="{feature_kind}"
     )
 
-    artifacts = [
-        os.path.join(root, filename)
-        for root, _, filenames in os.walk("{abs_output_dir}")
-        for filename in filenames
-        if filename.endswith(".npy")
-    ]
-    if not any(os.path.isfile(path) and os.path.getsize(path) > 0 for path in artifacts):
-        raise WorkflowError("Feature generation produced no non-empty .npy artifacts")
+    try:
+        validate_feature_outputs(
+            Path("{abs_output_dir}"), "eval_desc", expected_pools, baseline
+        )
+    except ArtifactValidationError as exc:
+        raise WorkflowError(str(exc)) from exc
     
     print("{WORKFLOW_FINISHED_TAG}")
 

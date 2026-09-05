@@ -220,6 +220,41 @@ class TestTrainingExecutionManager:
             manager.generate_script(0, str(tmp_path), "base.ckpt", omp_threads=1)
         assert "dp --tf train" in mock_gen.call_args[0][0].command
 
+    @pytest.mark.parametrize(
+        ("backend", "required_outputs"),
+        [
+            ("pt", ["model.ckpt.pt"]),
+            ("tf", ["frozen_model.pb"]),
+            ("pt-expt", ["frozen_model.pte"]),
+            ("jax", ["frozen_model.hlo"]),
+            ("pd", ["frozen_model.json", "frozen_model.pdiparams"]),
+        ],
+    )
+    def test_generate_script_guards_backend_training_outputs(
+        self, backend, required_outputs, tmp_path
+    ):
+        (tmp_path / "input.json").write_text(
+            '{"model": {}, "training": {"disp_file": "curve.log"}}',
+            encoding="utf-8",
+        )
+        manager = TrainingExecutionManager(
+            backend="local",
+            slurm_config={},
+            env_setup="",
+            dp_backend=backend,
+        )
+
+        with patch("dpeva.submission.manager.JobManager.generate_script") as mock_gen:
+            manager.generate_script(0, str(tmp_path), "base.ckpt", omp_threads=1)
+
+        command = mock_gen.call_args[0][0].command
+        for output in required_outputs:
+            assert output in command
+        assert "curve.log" in command
+        assert "test -s lcurve.out" not in command
+        if backend != "pt":
+            assert "test -s model.ckpt.pt" not in command
+
     @patch("dpeva.training.managers.multiprocessing.Process")
     def test_submit_jobs_local_parallel_multiprocessing(self, mock_proc, manager, tmp_path):
         """

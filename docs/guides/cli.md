@@ -261,12 +261,12 @@ DP-EVA 在多数核心工作流及其实际执行日志中会输出统一标记�
 DPEVA_TAG: WORKFLOW_FINISHED
 ```
 
-`WORKFLOW_FINISHED` is written only after the guarded command returns zero and all declared artifacts pass validation. Consumers MUST require both a successful process/job state and the marker; the marker alone is not proof of success. `sbatch` returning a JobID establishes only `submitted`, not `finished`.
+`WORKFLOW_FINISHED` is written only after the guarded command returns zero and all declared artifacts pass validation as outputs created or observably rewritten by the current attempt. A pre-existing non-empty file is not sufficient. Local workflow markers are emitted after verified artifacts are registered and the run manifest reaches `finished`; generated Bash jobs apply the same freshness rule before their marker. Consumers MUST require both a successful process/job state and the marker; the marker alone is not proof of success. `sbatch` returning a JobID establishes only `submitted`, not `finished`.
 
 说明：
 
 - `train`、`collect`、`label` 等主流程会在成功结束时输出该标记。
-- `infer` 在 `auto_analysis=true` 且本地链式分析完成时会由分析阶段输出该标记；Slurm 场景更稳妥的推进锚点仍是各模型 `test_job.out` 完成后再显式执行 `dpeva analysis`。
+- 本地 `feature` / `infer` 仅在当次运行的产物验证、登记和 manifest `finished` 转换完成后输出工作流标记；Slurm 场景更稳妥的推进锚点仍是各作业输出与状态共同验证完成后再进入下游。
 
 ## 6. 异常处理与退出码
 

@@ -138,3 +138,18 @@ def test_freeze_requires_explicit_capability(matrix: CapabilityMatrix) -> None:
         artifact="frozen", data_format="deepmd/npy", environment="cpu",
     )
     assert adapter.freeze("frozen.pb", capability_key=key).startswith("dp --pt freeze")
+
+
+@pytest.mark.parametrize(
+    ("backend", "outputs"),
+    [
+        ("pt", ("model.ckpt.pt",)),
+        ("tf", ("frozen_model.pb",)),
+        ("pt-expt", ("frozen_model.pte",)),
+        ("jax", ("frozen_model.hlo",)),
+        ("pd", ("frozen_model.json", "frozen_model.pdiparams")),
+    ],
+)
+def test_adapter_exposes_installed_training_output_contract(backend, outputs) -> None:
+    adapter = DeepMDAdapter.for_legacy_unchecked(backend)
+    assert adapter.training_outputs() == outputs

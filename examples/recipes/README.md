@@ -61,6 +61,9 @@ For Slurm, run `dpeva analysis` after jobs finish.
 
 `feature` 与 `infer` 支持可选运行契约参数：`--run-id` 固定清单身份，
 `--resume` 恢复未完成运行，`--force --reason "..."` 创建带审计理由的新尝试。
+本地成功只登记当前 attempt 新建或通过纳秒级文件元数据证明已重写的输出；历史非空文件
+不能替代本次产出，相同内容的正常重写仍可通过。生成的 local/Slurm Bash 作业也在输出
+freshness 校验后才打印 `WORKFLOW_FINISHED`，不会删除或迁移既有用户输出。
 Inference 未设置 `model_ref_paths` 时沿用数字目录兼容发现，但默认只执行每个目录的
 `model.ckpt.pt` regular checkpoint；`model_ema.ckpt.pt` 必须通过显式 model-reference JSON
 （`"role": "ema"`）加入。显式 references 可同时声明 regular 与 EMA。工作目录外模型的

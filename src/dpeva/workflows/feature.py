@@ -9,7 +9,12 @@ from dpeva.feature.generator import DescriptorGenerator
 from dpeva.constants import WORKFLOW_FINISHED_TAG, LOG_FILE_FEATURE
 from dpeva.utils.logs import setup_workflow_logger
 from dpeva.utils.exceptions import WorkflowError
-from dpeva.run.artifacts import ArtifactValidationError, validate_feature_outputs
+from dpeva.run.artifacts import (
+    AttemptOutputBaseline,
+    ArtifactValidationError,
+    snapshot_feature_outputs,
+    validate_feature_outputs,
+)
 from dpeva.run.context import RunContext, RunOptions, input_identity, source_identity
 from dpeva.run.models import JobRecord
 from dpeva.run.status import RunEventKind, RunState
@@ -105,6 +110,7 @@ class FeatureWorkflow:
                 lambda: input_identity(self.model_path, "model", self.output_dir, require_exists=True),
             ],
         )
+        log_baseline = AttemptOutputBaseline.capture(self._discover_log_files())
         try:
             backend = self.config.submission.backend
             state = context.recorder.manifest.status
@@ -119,6 +125,14 @@ class FeatureWorkflow:
                     context.recorder.transition(RunState.RUNNING)
             elif state is RunState.SUBMITTED and backend == "local":
                 context.recorder.transition(RunState.RUNNING)
+            self._expected_feature_pools = self.io_manager.detect_multi_pool_structure(
+                self.data_path
+            )
+            output_baseline = snapshot_feature_outputs(
+                self.output_dir_path,
+                self.feature_exporter,
+                self._expected_feature_pools,
+            )
             submission_output = self._run_body()
             if backend == "slurm":
                 if not isinstance(submission_output, str):
@@ -138,29 +152,39 @@ class FeatureWorkflow:
                 )
                 if context.recorder.manifest.status is RunState.VALIDATED:
                     context.recorder.transition(RunState.SUBMITTED)
-                self._register_existing_logs(context)
+                self._register_existing_logs(context, log_baseline)
                 return
             outputs = validate_feature_outputs(
                 self.output_dir_path,
                 self.feature_exporter,
                 self._expected_feature_pools,
+                output_baseline,
             )
-            context.register_verified_artifacts("feature", outputs)
-            self._register_existing_logs(context)
+            context.register_verified_artifacts(
+                "feature", outputs, baseline=output_baseline
+            )
+            self._register_existing_logs(context, log_baseline)
             context.recorder.transition(RunState.FINISHED)
+            self.logger.info(WORKFLOW_FINISHED_TAG)
         except ArtifactValidationError as exc:
-            self._register_existing_logs(context)
+            self._register_existing_logs(context, log_baseline)
             context.recorder.fail(category="ARTIFACT", message=str(exc))
             raise
         except Exception as exc:
-            self._register_existing_logs(context)
+            self._register_existing_logs(context, log_baseline)
             context.recorder.fail(category="EXECUTION", message=str(exc))
             raise
 
-    def _register_existing_logs(self, context: RunContext) -> None:
+    def _register_existing_logs(
+        self,
+        context: RunContext,
+        baseline: AttemptOutputBaseline | None = None,
+    ) -> None:
         paths = self._discover_log_files()
+        if baseline is not None:
+            paths = baseline.fresh(paths)
         if paths:
-            context.register_verified_artifacts("log", paths)
+            context.register_verified_artifacts("log", paths, baseline=baseline)
 
     def _discover_log_files(self) -> list[Path]:
         """Discover concrete feature and DeepMD eval-desc logs in pool layouts."""
@@ -201,8 +225,7 @@ class FeatureWorkflow:
                 )
             # CLI Mode: Use dp eval-desc
             # Detect multi-pool structure
-            sub_pools = self.io_manager.detect_multi_pool_structure(self.data_path)
-            self._expected_feature_pools = sub_pools
+            sub_pools = self._expected_feature_pools
             
             return self.execution_manager.submit_cli_job(
                 data_path=self.data_path,
@@ -216,9 +239,6 @@ class FeatureWorkflow:
             )
             
         elif self.mode == "python":
-            self._expected_feature_pools = self.io_manager.detect_multi_pool_structure(
-                self.data_path
-            )
             # Python Mode: Use DeepPot API
             
             if self.execution_manager.backend == "local":
@@ -238,7 +258,6 @@ class FeatureWorkflow:
                         output_mode=self.output_mode,
                         feature_kind=self.feature_kind,
                     )
-                    self.logger.info(WORKFLOW_FINISHED_TAG)
                     return return_value
                     
                 except ImportError:

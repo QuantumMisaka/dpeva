@@ -1,7 +1,10 @@
 import os
+import json
 import logging
 import multiprocessing
+import shlex
 from copy import deepcopy
+from pathlib import Path
 from typing import List, Dict, Any, Optional
 
 from dpeva.constants import DEFAULT_TRAINING_SEEDS
@@ -204,9 +207,26 @@ class TrainingExecutionManager:
                 dp_freeze_cmd,
             ]
 
+        task_config_path = Path(task_dir) / "input.json"
+        training_config: dict[str, Any] = {}
+        if task_config_path.is_file():
+            payload = json.loads(task_config_path.read_text(encoding="utf-8"))
+            if not isinstance(payload, dict) or not isinstance(payload.get("training", {}), dict):
+                raise ValueError("input.json training configuration must be an object")
+            training_config = payload.get("training", {})
+        checkpoint_prefix = training_config.get("save_ckpt", "model.ckpt")
+        disp_file = training_config.get("disp_file", "lcurve.out")
+        if not isinstance(disp_file, str) or not disp_file.strip():
+            raise ValueError("training disp_file must be a non-empty string")
+        declared_outputs = [
+            *self.adapter.training_outputs(checkpoint_prefix),
+            disp_file,
+        ]
+        quoted_outputs = [shlex.quote(path) for path in declared_outputs]
         cmd = guarded_command(
             command="\n".join(command_lines),
-            artifact_checks=["test -s model.ckpt.pt", "test -s lcurve.out"],
+            artifact_checks=[f"test -s {path}" for path in quoted_outputs],
+            freshness_globs=quoted_outputs,
         )
         # Create JobConfig
         task_slurm_config = self.slurm_config.copy()

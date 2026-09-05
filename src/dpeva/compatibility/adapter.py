@@ -154,6 +154,30 @@ class DeepMDAdapter:
             argv.extend(["-o", output])
         return shlex.join(argv)
 
+    def training_outputs(self, checkpoint_prefix: str = "model.ckpt") -> tuple[str, ...]:
+        """Return outputs provable for the installed backend command contract.
+
+        PyTorch freeze output is model-dependent (``.pth`` or ``.pt2``), so its
+        stable regular checkpoint is the certifying output. Other backends have
+        deterministic default freeze output names in the installed entrypoints.
+        """
+
+        if not isinstance(checkpoint_prefix, str) or not checkpoint_prefix.strip():
+            raise CapabilityUnavailable("training save_ckpt must be a non-empty string")
+        contracts = {
+            "pt": (f"{checkpoint_prefix}.pt",),
+            "tf": ("frozen_model.pb",),
+            "pt-expt": ("frozen_model.pte",),
+            "jax": ("frozen_model.hlo",),
+            "pd": ("frozen_model.json", "frozen_model.pdiparams"),
+        }
+        try:
+            return contracts[self.backend]
+        except KeyError:
+            raise CapabilityUnavailable(
+                f"no proven training output contract for backend {self.backend!r}"
+            ) from None
+
     def test(
         self,
         model: str,

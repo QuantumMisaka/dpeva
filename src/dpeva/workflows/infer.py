@@ -10,6 +10,7 @@ from dpeva.constants import WORKFLOW_FINISHED_TAG, LOG_FILE_INFER, FILENAME_METR
 from dpeva.utils.logs import setup_workflow_logger
 from dpeva.utils.exceptions import PartialWorkflowError, WorkflowError
 from dpeva.run.context import RunContext, RunOptions, input_identity, source_identity
+from dpeva.run.artifacts import AttemptOutputBaseline
 from dpeva.run.model import ModelArtifactRef, require_backend, require_operation
 from dpeva.run.models import JobRecord
 from dpeva.run.status import RunEventKind, RunState
@@ -131,6 +132,7 @@ class InferenceWorkflow:
                 ],
             ],
         )
+        log_baseline = AttemptOutputBaseline.capture(self._discover_log_files())
         try:
             backend = self.execution_manager.backend
             state = context.recorder.manifest.status
@@ -171,16 +173,18 @@ class InferenceWorkflow:
                 if self.config.auto_analysis:
                     self.logger.warning("auto_analysis=true is ignored when backend is not local.")
                     self.logger.info("Inference jobs submitted. Run analysis workflow separately after jobs finish.")
-                self._register_existing_logs(context)
+                self._register_existing_logs(context, log_baseline)
                 return
 
             successful = [record for record in records if record.status is RunState.FINISHED]
             failed = [record for record in records if record.status is RunState.FAILED]
-            for artifact_paths in self.execution_manager.last_artifacts.values():
+            for model_name, artifact_paths in self.execution_manager.last_artifacts.items():
                 context.register_verified_artifacts(
-                    "inference", [Path(path) for path in artifact_paths]
+                    "inference",
+                    [Path(path) for path in artifact_paths],
+                    baseline=self.execution_manager.last_artifact_baselines[model_name],
                 )
-            self._register_existing_logs(context)
+            self._register_existing_logs(context, log_baseline)
             if not successful:
                 message = "all inference jobs failed"
                 category = self._failure_category(failed)
@@ -200,6 +204,7 @@ class InferenceWorkflow:
             else:
                 self.logger.info("Auto analysis disabled. Run analysis workflow separately after jobs finish.")
             context.recorder.transition(RunState.FINISHED)
+            self.logger.info(WORKFLOW_FINISHED_TAG)
         except Exception as exc:
             # Terminal states written above must remain the original exception;
             # only unrecorded execution errors need a generic failure event.
@@ -212,11 +217,22 @@ class InferenceWorkflow:
                 and context.recorder.manifest.status
                 not in {RunState.FAILED, RunState.PARTIAL, RunState.FINISHED}
             ):
-                self._register_existing_logs(context)
+                self._register_existing_logs(context, log_baseline)
                 context.recorder.fail(category="EXECUTION", message=str(exc))
             raise
 
-    def _register_existing_logs(self, context: RunContext) -> None:
+    def _register_existing_logs(
+        self,
+        context: RunContext,
+        baseline: AttemptOutputBaseline | None = None,
+    ) -> None:
+        paths = self._discover_log_files()
+        if baseline is not None:
+            paths = baseline.fresh(paths)
+        if paths:
+            context.register_verified_artifacts("log", paths, baseline=baseline)
+
+    def _discover_log_files(self) -> list[Path]:
         names = {LOG_FILE_INFER, "test.log", "eval_desc.log", "eval_desc.err", "eval-desc.log", "eval-desc.err"}
         found: dict[Path, None] = {}
         root = Path(self.work_dir).expanduser().resolve()
@@ -224,9 +240,7 @@ class InferenceWorkflow:
             for path in root.rglob("*"):
                 if path.is_file() and path.name in names and path.stat().st_size > 0:
                     found[path.resolve()] = None
-        paths = list(found)
-        if paths:
-            context.register_verified_artifacts("log", paths)
+        return list(found)
 
     def _run_body(self) -> list[JobRecord]:
         """Validate inputs and submit all model jobs."""
@@ -326,5 +340,3 @@ class InferenceWorkflow:
             self.logger.error(msg)
             # Raise exception to signal workflow failure (non-zero exit code)
             raise WorkflowError(msg)
-        else:
-            self.logger.info(WORKFLOW_FINISHED_TAG)

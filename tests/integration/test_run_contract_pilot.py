@@ -97,6 +97,28 @@ def test_infer_mixed_children_write_partial_manifest(tmp_path, monkeypatch) -> N
     assert payload["status"] == "partial"
     assert [job["status"] for job in payload["jobs"]] == ["finished", "failed"]
     assert payload["artifacts"][0]["status"] == "verified"
+    retained = payload["artifacts"][0].copy()
+
+    def resume_submit(self, script_path, working_dir="."):
+        directory = Path(working_dir)
+        if directory.parts[-2] == "1":
+            (directory / "results.e.out").write_text("1 1\n")
+        return ""
+
+    monkeypatch.setattr("dpeva.submission.manager.JobManager.submit", resume_submit)
+    with pytest.raises(PartialWorkflowError):
+        InferenceWorkflow(
+            config,
+            original_config=config.model_dump(mode="json"),
+            run_options=RunOptions(run_id="infer-partial", resume=True),
+        ).run()
+    resumed = json.loads((work / ".dpeva/runs/infer-partial/run.json").read_text())
+    assert resumed["status"] == "partial"
+    assert resumed["artifacts"][0] == retained
+    assert [item["path"] for item in resumed["artifacts"] if item["kind"] == "inference"] == [
+        "0/test_val/results.e.out",
+        "1/test_val/results.e.out",
+    ]
 
 
 def test_infer_all_children_failure_writes_failed_manifest(tmp_path, monkeypatch) -> None:
@@ -157,6 +179,59 @@ def test_feature_missing_output_is_artifact_failure(tmp_path, monkeypatch) -> No
     )
     assert payload["status"] == "failed"
     assert payload["failure"]["category"] == "ARTIFACT"
+
+
+def test_feature_preexisting_output_is_not_attributed_to_noop_attempt(
+    tmp_path, monkeypatch
+) -> None:
+    config = _feature_config(tmp_path)
+    config.savedir.mkdir(parents=True)
+    stale = config.savedir / "features.npy"
+    stale.write_bytes(b"feature")
+    before = stale.stat()
+    monkeypatch.setattr("dpeva.submission.manager.JobManager.submit", lambda *a, **k: "")
+
+    with pytest.raises(ArtifactValidationError, match="current attempt"):
+        FeatureWorkflow(config, run_options=RunOptions(run_id="feature-stale")).run()
+
+    after = stale.stat()
+    assert (after.st_dev, after.st_ino, after.st_size, after.st_mtime_ns, after.st_ctime_ns) == (
+        before.st_dev,
+        before.st_ino,
+        before.st_size,
+        before.st_mtime_ns,
+        before.st_ctime_ns,
+    )
+    payload = json.loads(
+        (config.savedir / ".dpeva/runs/feature-stale/run.json").read_text()
+    )
+    assert payload["status"] == "failed"
+    assert not [item for item in payload["artifacts"] if item["kind"] == "feature"]
+
+
+def test_feature_identical_bytes_rewritten_in_attempt_are_fresh(tmp_path, monkeypatch) -> None:
+    config = _feature_config(tmp_path)
+    config.savedir.mkdir(parents=True)
+    output = config.savedir / "features.npy"
+    output.write_bytes(b"same bytes")
+    (config.savedir / "untouched.npy").write_bytes(b"stale neighbor")
+    (config.savedir / "eval_desc.err").write_text("old log\n", encoding="utf-8")
+
+    def rewrite(self, script_path, working_dir="."):
+        Path(working_dir, "features.npy").write_bytes(b"same bytes")
+        return ""
+
+    monkeypatch.setattr("dpeva.submission.manager.JobManager.submit", rewrite)
+    FeatureWorkflow(config, run_options=RunOptions(run_id="feature-rewrite")).run()
+
+    payload = json.loads(
+        (config.savedir / ".dpeva/runs/feature-rewrite/run.json").read_text()
+    )
+    assert payload["status"] == "finished"
+    assert [item["path"] for item in payload["artifacts"] if item["kind"] == "feature"] == [
+        "features.npy"
+    ]
+    assert "eval_desc.err" not in [item["path"] for item in payload["artifacts"]]
 
 
 def test_feature_multi_pool_requires_each_pool(tmp_path, monkeypatch) -> None:
@@ -284,6 +359,26 @@ def test_infer_empty_output_is_artifact_failure(tmp_path, monkeypatch) -> None:
     )
     assert payload["failure"]["category"] == "ARTIFACT"
     assert payload["jobs"][0]["failure_category"] == "ARTIFACT"
+
+
+def test_infer_preexisting_output_is_not_attributed_to_noop_attempt(
+    tmp_path, monkeypatch
+) -> None:
+    config = _infer_config(tmp_path)
+    output = config.work_dir / "0" / config.task_name / "results.e.out"
+    output.parent.mkdir(parents=True)
+    output.write_text("stale prediction\n", encoding="utf-8")
+    monkeypatch.setattr("dpeva.submission.manager.JobManager.submit", lambda *a, **k: "")
+
+    with pytest.raises(WorkflowError, match="all inference jobs failed"):
+        InferenceWorkflow(config, run_options=RunOptions(run_id="infer-stale")).run()
+
+    payload = json.loads(
+        (config.work_dir / ".dpeva/runs/infer-stale/run.json").read_text()
+    )
+    assert payload["failure"]["category"] == "ARTIFACT"
+    assert payload["jobs"][0]["failure_category"] == "ARTIFACT"
+    assert not [item for item in payload["artifacts"] if item["kind"] == "inference"]
 
 
 def test_slurm_feature_and_infer_record_parsed_ids(tmp_path, monkeypatch) -> None:

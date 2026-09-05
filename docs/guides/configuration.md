@@ -94,7 +94,10 @@ submission backend。未知字段与新旧字段冲突仍然严格失败。
 迁移前的 legacy 清单可能没有该引用，resume 时仅接受隐含的默认 metadata。使用 `--run-id` 可固定身份；已有
 身份默认拒绝覆盖，未完成的本地运行可用 `--resume`，已提交的 Slurm 运行会在提交
 前拒绝 resume，需要重跑时使用带审计说明 `--reason` 的 `--force`。运行清单中的 `finished`
-只表示本地命令成功且输出文件非空并已校验；Slurm 仅记录 `submitted`。
+只表示本地命令成功，且输出文件非空、属于当前 attempt 的新建或可观察重写并已校验；
+目录中未被本次执行改写的历史文件不能让 no-op 命令成功，也不会作为本 attempt 的新产物登记。
+该 freshness 判定使用 device/inode/size/mtime_ns/ctime_ns 元数据，不会在执行前读取或散列全部历史大型数组；
+相同字节只要在本 attempt 中被正常重写仍是有效产物。Slurm 仅记录 `submitted`。
 多 pool feature 输出会逐 pool 校验：`eval-desc` 要求每个 pool 至少有一个非空
 `.npy`，`embed` 要求每个 pool 有非空 `embedding.hdf5`。
 Slurm 多模型 infer 若仅部分 JobID 提交成功，父清单保持 `submitted` 并保留失败子记录，
@@ -114,6 +117,12 @@ Inference 在没有 `model_ref_paths` 时兼容旧的数字目录布局，但默
 执行 EMA 时，为该文件提供显式 model-reference JSON，并设置 `"role": "ema"`；显式
 references 可以在同一个 ensemble 中同时列出 regular 与 EMA。工作目录外的模型引用使用
 basename 加内容 SHA-256 组成逻辑 ref，不把绝对路径写入 run identity。
+
+训练脚本的完成 guard 按 backend 校验可证明的实际产物：`pt` 使用稳定 regular checkpoint
+（默认 `model.ckpt.pt`，避免猜测依模型而变的 `.pth`/`.pt2` freeze 后缀），`tf` 使用
+`frozen_model.pb`，`pt-expt` 使用 `frozen_model.pte`，`jax` 使用 `frozen_model.hlo`，`pd`
+同时要求 `frozen_model.json` 与 `frozen_model.pdiparams`。`training.save_ckpt` 和
+`training.disp_file` 的自定义路径会进入对应 guard，保留原有输出布局。
 
 支持 Slurm array 的 workflow 可设置：
 

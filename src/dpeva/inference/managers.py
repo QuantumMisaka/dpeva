@@ -14,7 +14,12 @@ from dpeva.submission import JobManager, JobConfig
 from dpeva.submission.guards import guarded_command
 from dpeva.io.dataproc import DPTestResultParser
 from dpeva.io.dataset import load_systems
-from dpeva.run.artifacts import ArtifactValidationError, validate_inference_outputs
+from dpeva.run.artifacts import (
+    AttemptOutputBaseline,
+    ArtifactValidationError,
+    snapshot_inference_outputs,
+    validate_inference_outputs,
+)
 from dpeva.run.models import JobRecord
 from dpeva.run.model import ModelArtifactRef, load_model_ref, resolve_model_refs
 from dpeva.run.status import RunState
@@ -153,6 +158,7 @@ class InferenceExecutionManager:
         self.job_manager = JobManager(mode=backend)
         self.logger = logging.getLogger(__name__)
         self.last_artifacts: dict[str, list[str]] = {}
+        self.last_artifact_baselines: dict[str, AttemptOutputBaseline] = {}
 
     def _get_default_env_setup(self):
         """Provide default environment variables if user didn't specify any."""
@@ -167,6 +173,7 @@ class InferenceExecutionManager:
         
         records: list[JobRecord] = []
         self.last_artifacts = {}
+        self.last_artifact_baselines = {}
 
         for i, model_path in enumerate(models_paths):
             if not os.path.exists(model_path):
@@ -189,6 +196,8 @@ class InferenceExecutionManager:
                 job_work_dir = os.path.join(work_dir, str(i))
                 
             os.makedirs(job_work_dir, exist_ok=True)
+            output_root = Path(job_work_dir).expanduser().resolve()
+            output_baseline = snapshot_inference_outputs(output_root, results_prefix)
             
             # Construct Command
             abs_data_path = os.path.abspath(data_path)
@@ -219,6 +228,9 @@ class InferenceExecutionManager:
                             "check_nonempty_artifact",
                         ]
                     ),
+                ],
+                freshness_globs=[
+                    f"{shlex.quote(str(output_root / results_prefix))}.*.out"
                 ],
             )
             
@@ -269,9 +281,10 @@ class InferenceExecutionManager:
                     continue
 
                 outputs = validate_inference_outputs(
-                    Path(job_work_dir).expanduser().resolve(), results_prefix
+                    output_root, results_prefix, output_baseline
                 )
                 self.last_artifacts[f"model-{i}"] = [str(path) for path in outputs]
+                self.last_artifact_baselines[f"model-{i}"] = output_baseline
                 records.append(
                     JobRecord(
                         name=f"model-{i}",

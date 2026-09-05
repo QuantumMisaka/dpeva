@@ -8,6 +8,11 @@ from dpeva.compatibility import DeepMDAdapter
 from dpeva.utils.command import DPCommandBuilder
 from dpeva.utils.exceptions import WorkflowError
 
+
+def _replace_dp_command(generated: str, replacement: str) -> str:
+    command = next(line for line in generated.splitlines() if line.startswith("dp "))
+    return generated.replace(command, replacement, 1)
+
 @pytest.fixture
 def mock_job_manager():
     with patch("dpeva.feature.managers.JobManager") as mock_cls:
@@ -92,7 +97,7 @@ class TestFeatureExecutionManager:
 
         (output_dir / "empty.npy").touch()
         generated = mock_job_manager.return_value.generate_script.call_args[0][0].command
-        command = generated.replace(generated.splitlines()[0], "true", 1)
+        command = _replace_dp_command(generated, "true")
         result = subprocess.run(
             ["bash", "-c", "set -Eeuo pipefail\n" + command],
             cwd=output_dir,
@@ -102,6 +107,59 @@ class TestFeatureExecutionManager:
 
         assert result.returncode != 0
         assert "DPEVA_TAG: WORKFLOW_FINISHED" not in result.stdout
+
+    def test_stale_descriptor_artifact_does_not_emit_finished(self, mock_job_manager, tmp_path):
+        output_dir = tmp_path / "output"
+        output_dir.mkdir()
+        (output_dir / "stale.npy").write_bytes(b"descriptor")
+        manager = FeatureExecutionManager("local", {}, "", "pt", 1)
+
+        manager.submit_cli_job(
+            data_path=str(tmp_path / "data"),
+            output_dir=str(output_dir),
+            model_path="model.pt",
+            head="head",
+            sub_pools=[],
+        )
+
+        generated = mock_job_manager.return_value.generate_script.call_args[0][0].command
+        command = _replace_dp_command(generated, "true")
+        result = subprocess.run(
+            ["bash", "-c", "set -Eeuo pipefail\n" + command],
+            cwd=output_dir,
+            text=True,
+            capture_output=True,
+        )
+
+        assert result.returncode != 0
+        assert WORKFLOW_FINISHED_TAG not in result.stdout
+
+    def test_identical_descriptor_rewrite_emits_finished(self, mock_job_manager, tmp_path):
+        output_dir = tmp_path / "output"
+        output_dir.mkdir()
+        output = output_dir / "stale.npy"
+        output.write_bytes(b"descriptor")
+        manager = FeatureExecutionManager("local", {}, "", "pt", 1)
+
+        manager.submit_cli_job(
+            data_path=str(tmp_path / "data"),
+            output_dir=str(output_dir),
+            model_path="model.pt",
+            head="head",
+            sub_pools=[],
+        )
+
+        generated = mock_job_manager.return_value.generate_script.call_args[0][0].command
+        command = _replace_dp_command(generated, "printf descriptor > stale.npy")
+        result = subprocess.run(
+            ["bash", "-c", "set -Eeuo pipefail\n" + command],
+            cwd=output_dir,
+            text=True,
+            capture_output=True,
+        )
+
+        assert result.returncode == 0
+        assert WORKFLOW_FINISHED_TAG in result.stdout
 
     def test_submit_cli_job_embed_keeps_hdf5_for_last_layer(self, mock_job_manager, tmp_path):
         """Embed CLI should support fitting-last-layer features through HDF5 atomic_feature."""

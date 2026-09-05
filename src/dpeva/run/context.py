@@ -21,6 +21,7 @@ import fcntl
 from dpeva.run.models import ArtifactRecord, RunEvent
 from dpeva.run.recorder import StatusRecorder
 from dpeva.run.status import RunState
+from dpeva.run.artifacts import AttemptOutputBaseline
 
 
 _SAFE_COMPONENT = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
@@ -387,14 +388,26 @@ class RunContext:
             # failure leaves all earlier evidence in the failed manifest.
             self.recorder.update_metadata(inputs=observed_inputs)
 
-    def register_verified_artifacts(self, kind: str, paths: Sequence[Path]) -> None:
-        """Register existing, non-empty files with streaming SHA-256 identity."""
+    def register_verified_artifacts(
+        self,
+        kind: str,
+        paths: Sequence[Path],
+        *,
+        baseline: AttemptOutputBaseline | None = None,
+    ) -> None:
+        """Register current-attempt files with streaming SHA-256 identity."""
 
         if not isinstance(kind, str) or not kind.strip():
             raise ValueError("artifact kind must be a non-empty string")
 
+        verified_paths = list(paths)
+        if baseline is not None:
+            verified_paths = baseline.fresh(verified_paths)
+            if not verified_paths:
+                raise ValueError("no artifact was created or rewritten by the current attempt")
+
         records: list[ArtifactRecord] = []
-        for supplied in paths:
+        for supplied in verified_paths:
             candidate = Path(supplied)
             if not candidate.is_absolute():
                 candidate = self.work_dir / candidate

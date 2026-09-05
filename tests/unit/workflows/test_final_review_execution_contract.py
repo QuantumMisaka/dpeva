@@ -1,10 +1,33 @@
 import json
+import logging
 from unittest.mock import patch
 
 import pytest
 
 from dpeva.constants import WORKFLOW_FINISHED_TAG
 from dpeva.utils.exceptions import WorkflowError
+
+
+@pytest.fixture
+def isolated_feature_loggers():
+    loggers = [logging.getLogger(name) for name in ("dpeva", "dpeva.workflows.feature")]
+    original = [
+        (logger, logger.propagate, logger.handlers[:], logger.level)
+        for logger in loggers
+    ]
+    try:
+        for logger in loggers:
+            logger.handlers.clear()
+            logger.propagate = True
+            logger.setLevel(logging.INFO)
+        yield
+    finally:
+        for logger, propagate, handlers, level in original:
+            for added in set(logger.handlers) - set(handlers):
+                added.close()
+            logger.handlers[:] = handlers
+            logger.propagate = propagate
+            logger.setLevel(level)
 
 
 def test_slurm_training_submission_does_not_emit_completion_marker(tmp_path, caplog):
@@ -32,7 +55,9 @@ def test_slurm_training_submission_does_not_emit_completion_marker(tmp_path, cap
     assert WORKFLOW_FINISHED_TAG not in caplog.text
 
 
-def test_feature_workflow_local_rejects_empty_recursion_output(tmp_path, caplog):
+def test_feature_workflow_local_rejects_empty_recursion_output(
+    tmp_path, caplog, isolated_feature_loggers
+):
     from dpeva.workflows.feature import FeatureWorkflow
 
     data = tmp_path / "data"
@@ -54,7 +79,9 @@ def test_feature_workflow_local_rejects_empty_recursion_output(tmp_path, caplog)
     assert WORKFLOW_FINISHED_TAG not in caplog.text
 
 
-def test_feature_workflow_propagates_recursion_failure_without_marker(tmp_path, caplog):
+def test_feature_workflow_propagates_recursion_failure_without_marker(
+    tmp_path, caplog, isolated_feature_loggers
+):
     from dpeva.workflows.feature import FeatureWorkflow
 
     data = tmp_path / "data"
@@ -74,6 +101,47 @@ def test_feature_workflow_propagates_recursion_failure_without_marker(tmp_path, 
         with pytest.raises(WorkflowError, match="leaf system failed"):
             FeatureWorkflow(config).run()
     assert WORKFLOW_FINISHED_TAG not in caplog.text
+
+
+def test_feature_workflow_emits_one_marker_only_after_verified_finished(
+    tmp_path, caplog, isolated_feature_loggers
+):
+    from dpeva.workflows.feature import FeatureWorkflow
+
+    data = tmp_path / "data"
+    data.mkdir()
+    model = tmp_path / "model.pt"
+    model.write_bytes(b"model")
+    output = tmp_path / "out"
+    config = {
+        "data_path": str(data),
+        "model_path": str(model),
+        "savedir": str(output),
+        "mode": "python",
+        "submission": {"backend": "local"},
+    }
+
+    def produce(*args, **kwargs):
+        output.mkdir(parents=True, exist_ok=True)
+        (output / "features.npy").write_bytes(b"feature")
+
+    caplog.set_level(logging.INFO)
+    with patch("dpeva.workflows.feature.setup_workflow_logger"), patch(
+        "dpeva.workflows.feature.DescriptorGenerator"
+    ), patch(
+        "dpeva.feature.managers.FeatureExecutionManager.run_local_python_recursion",
+        side_effect=produce,
+    ):
+        FeatureWorkflow(config).run()
+
+    markers = [record for record in caplog.records if record.message == WORKFLOW_FINISHED_TAG]
+    assert len(markers) == 1
+    manifests = list((output / ".dpeva" / "runs").glob("*/run.json"))
+    payload = json.loads(manifests[0].read_text(encoding="utf-8"))
+    assert payload["status"] == "finished"
+    assert [item["path"] for item in payload["artifacts"] if item["kind"] == "feature"] == [
+        "features.npy"
+    ]
 
 
 @pytest.mark.parametrize("feature_exporter", ["eval_desc", "embed"])
