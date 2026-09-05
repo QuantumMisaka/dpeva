@@ -1,3 +1,4 @@
+import hashlib
 import json
 import subprocess
 import sys
@@ -207,6 +208,70 @@ def test_infer_success_manifest_and_artifact(tmp_path, monkeypatch) -> None:
     assert payload["inputs"][1]["identity_scope"] == "full-content"
     assert payload["jobs"][0]["status"] == "finished"
     assert payload["artifacts"][0]["status"] == "verified"
+
+
+def test_infer_explicit_same_basename_regular_and_ema_refs_execute_with_distinct_evidence(
+    tmp_path, monkeypatch
+) -> None:
+    data = tmp_path / "data"
+    data.mkdir()
+    (data / "type.raw").write_text("0\n")
+    work = tmp_path / "work"
+    first = tmp_path / "regular" / "model.pt"
+    second = tmp_path / "ema" / "model.pt"
+    first.parent.mkdir()
+    second.parent.mkdir()
+    first.write_bytes(b"regular")
+    second.write_bytes(b"ema")
+    refs = []
+    for path, role in ((first, "regular"), (second, "ema")):
+        ref_path = tmp_path / f"{role}.json"
+        ref_path.write_text(
+            json.dumps(
+                {
+                    "kind": "checkpoint",
+                    "family": "DPA4C",
+                    "backend": "pt-expt",
+                    "path": path.relative_to(tmp_path).as_posix(),
+                    "checksum": hashlib.sha256(path.read_bytes()).hexdigest(),
+                    "role": role,
+                    "supported_operations": ["test"],
+                }
+            ),
+            encoding="utf-8",
+        )
+        refs.append(ref_path)
+
+    commands: list[str] = []
+
+    def submit(self, script_path, working_dir="."):
+        commands.append(Path(script_path).read_text(encoding="utf-8"))
+        Path(working_dir, "results.e.out").write_text("prediction\n")
+        return ""
+
+    monkeypatch.setattr("dpeva.submission.manager.JobManager.submit", submit)
+    config = InferenceConfig(
+        work_dir=work,
+        data_path=data,
+        task_name="test_val",
+        dp_backend="pt-expt",
+        model_ref_paths=refs,
+        submission={"backend": "local"},
+    )
+    workflow = InferenceWorkflow(config, run_options=RunOptions(run_id="infer-explicit-ensemble"))
+    assert [ref.role.value for ref in workflow.model_refs] == ["regular", "ema"]
+    workflow.run()
+
+    payload = json.loads(
+        (work / ".dpeva/runs/infer-explicit-ensemble/run.json").read_text()
+    )
+    assert payload["status"] == "finished"
+    assert [job["status"] for job in payload["jobs"]] == ["finished", "finished"]
+    model_inputs = [item for item in payload["inputs"] if item["kind"] == "model"]
+    assert len(model_inputs) == 2
+    assert model_inputs[0]["ref"] != model_inputs[1]["ref"]
+    assert str(first) in commands[0]
+    assert str(second) in commands[1]
 
 
 def test_infer_empty_output_is_artifact_failure(tmp_path, monkeypatch) -> None:

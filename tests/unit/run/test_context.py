@@ -10,7 +10,7 @@ import pytest
 from pydantic import ValidationError
 
 from dpeva.run import RunState
-from dpeva.run.context import RunContext, RunOptions
+from dpeva.run.context import RunContext, RunOptions, input_identity, source_identity
 
 
 def test_existing_run_id_is_not_overwritten(tmp_path) -> None:
@@ -66,6 +66,73 @@ def test_resume_increments_attempt_and_records_event(tmp_path) -> None:
     assert event.kind == "resume"
     assert event.attempt_id == 2
     assert json.loads((resumed.run_dir / "config.original.json").read_text()) == {"x": 1}
+
+
+def test_external_same_basename_inputs_merge_into_context_by_content(tmp_path) -> None:
+    work = tmp_path / "work"
+    first = tmp_path / "first" / "model.pt"
+    second = tmp_path / "second" / "model.pt"
+    first.parent.mkdir(parents=True)
+    second.parent.mkdir(parents=True)
+    first.write_bytes(b"regular")
+    second.write_bytes(b"ema")
+    inputs = [
+        input_identity(first, "model", work, require_exists=True),
+        input_identity(second, "model", work, require_exists=True),
+    ]
+
+    context = RunContext.create(
+        work,
+        "infer",
+        RunOptions(run_id="same-basename-models"),
+        {},
+        {},
+        inputs=inputs,
+    )
+
+    assert [item["ref"] for item in context.recorder.manifest.inputs] == [
+        inputs[0]["ref"],
+        inputs[1]["ref"],
+    ]
+    assert inputs[0]["ref"] != inputs[1]["ref"]
+
+
+def test_runtime_fingerprint_tracks_deleted_files_and_symlink_targets(tmp_path) -> None:
+    repo = tmp_path / "runtime-repo"
+    package = repo / "src" / "dpeva"
+    package.mkdir(parents=True)
+    source = package / "__init__.py"
+    runtime = package / "runtime.py"
+    target = package / "target.py"
+    link = package / "link.py"
+    source.write_text("source", encoding="utf-8")
+    runtime.write_text("runtime", encoding="utf-8")
+    target.write_text("target-v1", encoding="utf-8")
+    link.symlink_to("target.py")
+    (repo / "pyproject.toml").write_text("[project]\nname='fixture'\n", encoding="utf-8")
+
+    def git(*args: str) -> None:
+        result = subprocess.run(
+            ["git", *args], cwd=repo, check=False, capture_output=True, text=True
+        )
+        assert result.returncode == 0, result.stderr
+
+    git("init", "-q")
+    git("config", "user.email", "test@example.invalid")
+    git("config", "user.name", "test")
+    git("add", "src/dpeva", "pyproject.toml")
+    git("commit", "-qm", "initial")
+
+    clean = source_identity(source)
+    runtime.unlink()
+    deleted = source_identity(source)
+    assert deleted["runtime_fingerprint"] != clean["runtime_fingerprint"]
+
+    runtime.write_text("runtime", encoding="utf-8")
+    link.unlink()
+    link.symlink_to("runtime.py")
+    changed_link = source_identity(source)
+    assert changed_link["runtime_fingerprint"] != clean["runtime_fingerprint"]
 
 
 def test_resume_rejects_terminal_run(tmp_path) -> None:
