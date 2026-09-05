@@ -168,12 +168,12 @@ class TestFeatureExecutionManager:
 
     def test_command_builder_embed_quotes_dtype_and_head(self):
         cmd = DPCommandBuilder.embed(
-            "pt",
             model="model path.pt",
             system="data path",
             output="out/embedding.hdf5",
             head="OC20M",
             dtype="fp64",
+            backend="pt",
         )
 
         assert cmd == (
