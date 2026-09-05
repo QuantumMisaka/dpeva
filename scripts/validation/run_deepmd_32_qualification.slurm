@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 # One bounded, evidence-producing SAI qualification job.  This script does
 # not promote a capability; Plan D consumes its recorded evidence separately.
 #SBATCH --job-name=dpeva-deepmd32
@@ -25,6 +25,7 @@ mkdir -p "$DPEVA_QUALIFICATION_DIR"
 readonly SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 readonly REPO_ROOT="$(cd -- "$SCRIPT_DIR/../.." && pwd -P)"
 cd "$REPO_ROOT"
+export PYTHONPATH="$REPO_ROOT/src${PYTHONPATH:+:$PYTHONPATH}"
 
 job_rc=0
 run_case() {

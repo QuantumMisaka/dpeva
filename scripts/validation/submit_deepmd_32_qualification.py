@@ -169,7 +169,15 @@ def submit(input_path: Path, slurm_script: Path, write_ref: Path, *, job_root: P
     # SAI's Slurm control plane cancels ``--export=NONE`` jobs before the
     # batch step starts.  ``NIL`` preserves the intended clean environment
     # without triggering Slurm's implicit login-environment reconstruction.
-    command = ["sbatch", "--export=NIL", str(slurm_script), str(input_path), str(job_dir)]
+    command = [
+        "sbatch",
+        "--export=NIL",
+        f"--output={job_dir}/slurm-%j.out",
+        f"--error={job_dir}/slurm-%j.err",
+        str(slurm_script),
+        str(input_path),
+        str(job_dir),
+    ]
     if dry_run:
         job_id, output = "DRY-RUN", "Submitted batch job 0"
     else:
