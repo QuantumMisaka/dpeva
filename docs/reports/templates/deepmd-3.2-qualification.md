@@ -2,7 +2,7 @@
 title: DeepMD-kit 3.2 SAI V100 Qualification
 status: draft
 audience: Compatibility Owner / Scientific Owner
-last-updated: 2026-09-05
+last-updated: 2026-09-06
 owner: Compatibility Owner
 ---
 
@@ -12,6 +12,11 @@ owner: Compatibility Owner
 
 This report records execution evidence for the bounded SAI job. It does not
 promote capabilities automatically and does not claim scientific superiority.
+Record the launch-bound scope as either `dpa4` or `all`. A scope-less historical
+input means `all`; it must not be reinterpreted during submission, execution, or
+collection. `dpa4` requires the six regular/EMA DPA4 cases plus their preflight
+and environment evidence. `all` additionally requires a genuine DPA4C artifact
+and family inspection. DPA4C remains experimental even when that case succeeds.
 
 ## Environment and job identity
 
@@ -35,7 +40,9 @@ artifact is `failed`; `submitted` is not `finished`.
 
 The fixture is a four-atom Fe/C/H/O periodic execution fixture. It is not a
 scientific benchmark. Regular and EMA checkpoints are referenced by path and
-SHA-256 in `input.json`; they are consumed in place and are not copied.
+SHA-256 in `input.json`; they are consumed in place and are not copied. A
+`dpa4` run does not require a DPA4C model. An `all` run records the DPA4C model,
+head, SHA-256, and successful family probe before its experimental command.
 
 ## Conclusion
 

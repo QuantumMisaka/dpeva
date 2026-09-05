@@ -16,11 +16,20 @@ from typing import Any
 
 from dpeva.compatibility import CapabilityMatrix
 
-REQUIRED_CASES = (
-    "pip-freeze", "deepmd-version", "torch-cuda", "gpu",
-    "pt-test", "pt-test-ema", "pt-eval-desc", "pt-eval-desc-ema",
-    "pt-embed", "pt-embed-ema", "dpa4c-periodic-eval-desc",
-)
+try:
+    from scripts.validation.deepmd_32_qualification_scope import (
+        attestation_specs,
+        bind_scope,
+        command_cases,
+        normalize_scope,
+    )
+except ModuleNotFoundError:  # direct script execution
+    from deepmd_32_qualification_scope import (  # type: ignore[no-redef]
+        attestation_specs,
+        bind_scope,
+        command_cases,
+        normalize_scope,
+    )
 
 
 def _now() -> str:
@@ -185,13 +194,23 @@ def _probe_dpa4c_model_family(model: Path, head: str) -> dict[str, Any]:
     }
 
 
-def _spec(config: dict[str, Any], case: str, job_dir: Path) -> tuple[list[str], list[Path]]:
+def _spec(
+    config: dict[str, Any],
+    case: str,
+    job_dir: Path,
+    *,
+    scope: str | None = None,
+) -> tuple[list[str], list[Path]]:
+    effective_scope = bind_scope(config, scope)
+    if case not in command_cases(effective_scope):
+        raise ValueError(
+            f"qualification case {case!r} is outside scope {effective_scope!r}"
+        )
     fixture = Path(config["fixture"]["path"])
     regular = Path(config["models"]["regular"]["path"])
     ema = Path(config["models"]["ema"]["path"])
     regular_head = _head(config["models"]["regular"].get("head"), "regular model head")
     ema_head = _head(config["models"]["ema"].get("head"), "EMA model head")
-    dpa4c_head = _head(config.get("dpa4c_model_head"), "DPA4C model head")
     output = job_dir / "artifacts" / case
     if case in {"pip-freeze", "deepmd-version", "torch-cuda", "gpu"}:
         specs = {
@@ -214,6 +233,7 @@ def _spec(config: dict[str, Any], case: str, job_dir: Path) -> tuple[list[str], 
         head = ema_head if case.endswith("-ema") else regular_head
         return ["dp", "--pt", "embed", "-s", str(fixture), "-m", str(model), "--head", head, "-o", str(output.with_suffix(".hdf5"))], [output.with_suffix(".hdf5")]
     if case == "dpa4c-periodic-eval-desc":
+        dpa4c_head = _head(config.get("dpa4c_model_head"), "DPA4C model head")
         model_value = config.get("dpa4c_model_path")
         if not model_value:
             raise ValueError("DPEVA_DEEPMD_DPA4C_MODEL is required for dpa4c qualification")
@@ -221,7 +241,9 @@ def _spec(config: dict[str, Any], case: str, job_dir: Path) -> tuple[list[str], 
     raise ValueError(f"unknown qualification case: {case}")
 
 
-def _preflight(config_path: Path, job_dir: Path) -> dict[str, Any]:
+def _preflight(
+    config_path: Path, job_dir: Path, *, scope: str | None = None
+) -> dict[str, Any]:
     """Revalidate the launch contract on the compute node before any case."""
     job_dir.mkdir(parents=True, exist_ok=True)
     (job_dir / "commands").mkdir(parents=True, exist_ok=True)
@@ -247,30 +269,22 @@ def _preflight(config_path: Path, job_dir: Path) -> dict[str, Any]:
         if _sha256(script_path) != launch["slurm_script_sha256"]:
             errors.append("Slurm script was mutated after submission")
         config = _load(input_path)
+        effective_scope = bind_scope(config, scope)
+        launch_scope = normalize_scope(launch.get("scope"))
+        if launch_scope != effective_scope:
+            errors.append("launch scope does not match qualification input scope")
         for role in ("regular", "ema"):
             try:
                 _head(config["models"][role].get("head"), f"{role} model head")
             except (KeyError, TypeError, ValueError) as exc:
                 errors.append(str(exc))
-        try:
-            _head(config.get("dpa4c_model_head"), "DPA4C model head")
-        except (TypeError, ValueError) as exc:
-            errors.append(str(exc))
-        if tuple(config.get("required_cases", ())) != REQUIRED_CASES:
+        if tuple(config.get("required_cases", ())) != command_cases(effective_scope):
             errors.append("qualification required_cases do not match harness")
         if launch.get("fixture_sha256") != config.get("fixture", {}).get("sha256"):
             errors.append("qualification fixture hash does not match launch contract")
-        expected_specs = [
-            {
-                "case": case,
-                "capability_key": record.key.model_dump(),
-                "verification_command": record.verification_command,
-                "source": "sai-v100-qualification",
-            }
-            for record in CapabilityMatrix.load_default().records
-            if record.sai_verification_cases
-            for case in record.sai_verification_cases
-        ]
+        expected_specs = attestation_specs(
+            CapabilityMatrix.load_default().records, effective_scope
+        )
         if config.get("capability_attestation_specs") != expected_specs:
             errors.append("capability attestation specs do not match manifest")
         for role in ("regular", "ema"):
@@ -278,18 +292,24 @@ def _preflight(config_path: Path, job_dir: Path) -> dict[str, Any]:
             model = Path(item["path"]).expanduser().resolve()
             if not model.is_file() or _sha256(model) != item["sha256"]:
                 errors.append(f"{role} model hash changed")
-        dpa4c = config.get("dpa4c_model_path")
-        if not dpa4c:
-            errors.append("DPEVA_DEEPMD_DPA4C_MODEL is missing from qualification input")
-        else:
-            dpa4c_path = Path(dpa4c).expanduser()
-            if not dpa4c_path.is_file() or not config.get("dpa4c_model_sha256") or _sha256(dpa4c_path) != config["dpa4c_model_sha256"]:
-                errors.append("DPA4C model hash changed or path is absent")
+        if effective_scope == "all":
+            try:
+                dpa4c_head = _head(config.get("dpa4c_model_head"), "DPA4C model head")
+            except (TypeError, ValueError) as exc:
+                errors.append(str(exc))
+                dpa4c_head = ""
+            dpa4c = config.get("dpa4c_model_path")
+            if not dpa4c:
+                errors.append("DPEVA_DEEPMD_DPA4C_MODEL is missing from qualification input")
             else:
-                dpa4c_probe = _probe_dpa4c_model_family(dpa4c_path, _head(config.get("dpa4c_model_head"), "DPA4C model head"))
-                checks.append(dpa4c_probe)
-                if not dpa4c_probe["ok"]:
-                    errors.append("DPA4C model descriptor is not the declared dpa4c family")
+                dpa4c_path = Path(dpa4c).expanduser()
+                if not dpa4c_path.is_file() or not config.get("dpa4c_model_sha256") or _sha256(dpa4c_path) != config["dpa4c_model_sha256"]:
+                    errors.append("DPA4C model hash changed or path is absent")
+                elif dpa4c_head:
+                    dpa4c_probe = _probe_dpa4c_model_family(dpa4c_path, dpa4c_head)
+                    checks.append(dpa4c_probe)
+                    if not dpa4c_probe["ok"]:
+                        errors.append("DPA4C model descriptor is not the declared dpa4c family")
         fixture = Path(config["fixture"]["path"]).expanduser().resolve()
         if (
             not fixture.is_dir()
@@ -312,15 +332,25 @@ def _preflight(config_path: Path, job_dir: Path) -> dict[str, Any]:
         checks.append({"name": "torch_cuda", "argv": [sys.executable, "-c", "torch cuda probe"], "returncode": torch_probe.returncode, "value": torch_value})
         if torch_probe.returncode != 0 or not isinstance(torch_value, dict) or not torch_value.get("available") or not torch_value.get("cuda"):
             errors.append("Torch CUDA is unavailable")
-        record = {"schema_version": "1.0", "case": "preflight", "argv": argv, "job_id": os.environ.get("SLURM_JOB_ID"), "started_at": started, "ended_at": _now(), "returncode": 0 if not errors else 1, "status": "finished" if not errors else "failed", "declared_artifacts": [str(job_dir / "launch.json")], "artifact_checks": [{"path": str(job_dir / "launch.json"), "exists": True, "sha256": _sha256(job_dir / "launch.json")}], "checks": checks, "error": "; ".join(errors) if errors else None}
+        record = {"schema_version": "1.0", "scope": effective_scope, "case": "preflight", "argv": argv, "job_id": os.environ.get("SLURM_JOB_ID"), "started_at": started, "ended_at": _now(), "returncode": 0 if not errors else 1, "status": "finished" if not errors else "failed", "declared_artifacts": [str(job_dir / "launch.json")], "artifact_checks": [{"path": str(job_dir / "launch.json"), "exists": True, "sha256": _sha256(job_dir / "launch.json")}], "checks": checks, "error": "; ".join(errors) if errors else None}
     except Exception as exc:
         record = {"schema_version": "1.0", "case": "preflight", "argv": argv, "job_id": os.environ.get("SLURM_JOB_ID"), "started_at": started, "ended_at": _now(), "returncode": 2, "status": "failed", "declared_artifacts": [], "artifact_checks": [], "checks": checks, "error": str(exc)}
     return _write_result(result_path, record)
 
 
-def run_recorded_command(config_path: Path, job_dir: Path, case: str) -> dict[str, Any]:
+def run_recorded_command(
+    config_path: Path,
+    job_dir: Path,
+    case: str,
+    *,
+    scope: str | None = None,
+) -> dict[str, Any]:
     if case == "preflight":
-        return _preflight(config_path.expanduser().resolve(), job_dir.expanduser().resolve())
+        return _preflight(
+            config_path.expanduser().resolve(),
+            job_dir.expanduser().resolve(),
+            scope=scope,
+        )
     config = _load(config_path)
     command_dir, log_dir = job_dir / "commands", job_dir / "logs"
     command_dir.mkdir(parents=True, exist_ok=True)
@@ -328,7 +358,7 @@ def run_recorded_command(config_path: Path, job_dir: Path, case: str) -> dict[st
     result_path = command_dir / f"{case}.json"
     start = _now()
     try:
-        argv, declared = _spec(config, case, job_dir)
+        argv, declared = _spec(config, case, job_dir, scope=scope)
         for path in declared:
             path.parent.mkdir(parents=True, exist_ok=True)
         proc = subprocess.run(argv, cwd=str(job_dir), capture_output=True, text=True, check=False)
@@ -359,9 +389,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--config", type=Path, required=True)
     parser.add_argument("--job-dir", type=Path, default=None)
     parser.add_argument("--case", required=True)
+    parser.add_argument("--scope", choices=("dpa4", "all"))
     args = parser.parse_args(argv)
     job_dir = (args.job_dir or Path(os.environ["DPEVA_QUALIFICATION_DIR"])).expanduser().resolve()
-    result = run_recorded_command(args.config.expanduser().resolve(), job_dir, args.case)
+    result = run_recorded_command(
+        args.config.expanduser().resolve(), job_dir, args.case, scope=args.scope
+    )
     print(json.dumps(result, sort_keys=True))
     return 0 if result["status"] == "finished" else 1
 

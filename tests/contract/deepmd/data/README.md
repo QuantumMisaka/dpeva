@@ -9,19 +9,23 @@ data.  The qualified environment supplies three explicit paths:
 | `DPEVA_DEEPMD_DPA4C_MODEL` | A periodic DPA4C exportable model usable by `dp --pt-expt eval-desc` | Compatibility Owner |
 | `DPEVA_DEEPMD_PERIODIC_DATA` | A tiny labelled periodic DeepMD `npy` system (`coord.npy`, `box.npy`, labels and `type.raw`) | Compatibility Owner |
 | `DPEVA_DEEPMD_PT_HEAD` | Optional non-sensitive PT model head; required by multitask checkpoints and never defaulted | Compatibility Owner |
-| `DPEVA_DEEPMD_DPA4C_HEAD` | Optional non-sensitive DPA4C model head; required by multitask checkpoints and never defaulted | Compatibility Owner |
+| `DPEVA_DEEPMD_DPA4C_HEAD` | Non-sensitive DPA4C head required by the explicitly selected experimental CI lane for family verification | Compatibility Owner |
 
-Paths are resolved before any DeepMD command starts.  If one explicitly named
-fixture is not supplied, only tests requiring that fixture are skipped and the
-skip message names the variable and owner.  Missing paths after a variable is
-set are failures.  The DPA4C fixture is optional for local exploration but its
-absence cannot promote the periodic capability.
+Paths are resolved before any DeepMD command starts. The required CI scope is
+declared with `DPEVA_DEEPMD_CONTRACT_SCOPE`: `dpa4` requires the PT model and
+periodic data, `dpa4c` requires the DPA4C model and periodic data, and a
+scope-less historical invocation means `all`. If one explicitly named fixture
+is not supplied, only tests requiring that fixture are skipped and the skip
+message names the variable and owner; required CI scopes turn any skip into a
+failing session. Missing paths after a variable is set are failures. The DPA4C
+fixture is not required by the supported DPA4 lane, and its absence cannot
+promote the periodic capability.
 
-The two head variables are optional so that single-task checkpoints remain
-compatible.  When a checkpoint is multitask, the caller must set the matching
-head explicitly; whitespace-only values are treated as unset and no head is
-ever guessed.  The PT and DPA4C commands append `--head` only when their
-corresponding variable is non-empty.
+The PT head remains optional so that single-task checkpoints remain compatible.
+The explicit experimental DPA4C CI lane requires its head to bind the family
+inspection to the intended branch. Whitespace-only values are treated as unset
+and no head is ever guessed. The PT and DPA4C commands append `--head` only when
+their corresponding variable is non-empty.
 
 The public pretrained PT model may be prepared outside pytest with the
 qualified environment's documented DeepMD download command.  The ordinary
@@ -32,12 +36,14 @@ contract test run never downloads weights or accesses the network.
 The protected CI environment provides `DPEVA_DEEPMD_CONTRACT_FIXTURE_URL` and
 `DPEVA_DEEPMD_CONTRACT_FIXTURE_SHA256` as secrets or environment variables.
 The first is a URL to a gzip-compressed tar archive; the second is its exact
-SHA-256 digest.  CI downloads into the runner's temporary directory, verifies
-the digest before extraction, and exports the three fixture variables with
-`DPEVA_DEEPMD_CONTRACT_REQUIRED=1`.
+SHA-256 digest. CI downloads into the runner's temporary directory, verifies
+the digest before extraction, and exports only the fixture variables required
+by the selected lane with `DPEVA_DEEPMD_CONTRACT_REQUIRED=1`.
 
-The archive must have this layout (with no model or data files outside this
-root):
+For the automatic supported lane the archive only needs the PT model and
+periodic-data entries below. If the experimental lane is explicitly selected,
+the DPA4C entry is additionally mandatory (with no model or data files outside
+this root):
 
 ```text
 dpeva-deepmd-contract/

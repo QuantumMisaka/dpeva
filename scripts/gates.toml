@@ -61,10 +61,16 @@ owner = "Workflow Owner"
 basis = "Plan A Phase 0 acceptance"
 
 [gates.deepmd_contract]
-argv = ["pytest", "-m", "deepmd_contract", "tests/contract/deepmd", "-q"]
+argv = ["pytest", "-m", "deepmd_contract", "tests/contract/deepmd/test_cli_contract.py", "-q"]
 layer = "upstream-contract"
 owner = "Compatibility Owner"
-basis = "Plan D CPU contract"
+basis = "v0.8.2 supported DPA4 CPU contract"
+
+[gates.deepmd_dpa4c_contract]
+argv = ["pytest", "-m", "deepmd_contract", "tests/contract/deepmd/test_dpa4c_eval_desc.py", "-q"]
+layer = "upstream-contract-experimental"
+owner = "Compatibility Owner"
+basis = "v0.8.2 explicit experimental DPA4C CPU contract"
 
 [gates.qualification_collect]
 argv = ["python", "scripts/validation/collect_deepmd_32_qualification.py", "--job-ref", "build/deepmd-qualification/latest.json", "--require-complete"]

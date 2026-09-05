@@ -24,6 +24,11 @@ _FIXTURE_ENV = {
 CONTRACT_REQUIRED_ENV = "DPEVA_DEEPMD_CONTRACT_REQUIRED"
 _CONTRACT_LOG_DIR: Path | None = None
 _COMMAND_INDEX = 0
+_CONTRACT_SCOPES = {
+    "dpa4": ("pt_model", "periodic_data"),
+    "dpa4c": ("dpa4c_model", "periodic_data"),
+    "all": tuple(_FIXTURE_ENV),
+}
 
 
 class FixtureConfigurationError(RuntimeError):
@@ -32,6 +37,19 @@ class FixtureConfigurationError(RuntimeError):
 
 def _required_mode() -> bool:
     return os.environ.get(CONTRACT_REQUIRED_ENV) == "1"
+
+
+def _contract_scope() -> str:
+    scope = os.environ.get("DPEVA_DEEPMD_CONTRACT_SCOPE", "all")
+    if scope not in _CONTRACT_SCOPES:
+        raise FixtureConfigurationError(
+            f"DPEVA_DEEPMD_CONTRACT_SCOPE must be one of {tuple(_CONTRACT_SCOPES)}"
+        )
+    return scope
+
+
+def _fixture_required(name: str) -> bool:
+    return _required_mode() and name in _CONTRACT_SCOPES[_contract_scope()]
 
 
 def pytest_configure(config: pytest.Config) -> None:
@@ -54,10 +72,13 @@ def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
         return
     terminal_reporter = session.config.pluginmanager.get_plugin("terminalreporter")
     skipped = len(terminal_reporter.stats.get("skipped", [])) if terminal_reporter else 0
+    if _required_mode() and skipped:
+        session.exitstatus = pytest.ExitCode.TESTS_FAILED
+    effective_exitstatus = int(session.exitstatus)
     (_CONTRACT_LOG_DIR / "pytest-session.json").write_text(
         json.dumps(
             {
-                "exitstatus": exitstatus,
+                "exitstatus": effective_exitstatus,
                 "testsfailed": session.testsfailed,
                 "testscollected": session.testscollected,
                 "skipped": skipped,
@@ -105,8 +126,8 @@ def validate_required_contract_fixtures() -> None:
     """Validate protected bundle paths before any contract test command."""
 
     if _required_mode():
-        for env_name in _FIXTURE_ENV.values():
-            _resolve_required_path(env_name, required=True)
+        for name in _CONTRACT_SCOPES[_contract_scope()]:
+            _resolve_required_path(_FIXTURE_ENV[name], required=True)
 
 
 @pytest.fixture(scope="session")
@@ -121,12 +142,16 @@ def dp_executable() -> str:
 
 @pytest.fixture(scope="session")
 def pt_model() -> Path:
-    return _resolve_required_path(_FIXTURE_ENV["pt_model"])
+    return _resolve_required_path(
+        _FIXTURE_ENV["pt_model"], required=_fixture_required("pt_model")
+    )
 
 
 @pytest.fixture(scope="session")
 def dpa4c_model() -> Path:
-    return _resolve_required_path(_FIXTURE_ENV["dpa4c_model"])
+    return _resolve_required_path(
+        _FIXTURE_ENV["dpa4c_model"], required=_fixture_required("dpa4c_model")
+    )
 
 
 @pytest.fixture(scope="session")
@@ -141,7 +166,9 @@ def dpa4c_head() -> str | None:
 
 @pytest.fixture(scope="session")
 def periodic_data() -> Path:
-    return _resolve_required_path(_FIXTURE_ENV["periodic_data"])
+    return _resolve_required_path(
+        _FIXTURE_ENV["periodic_data"], required=_fixture_required("periodic_data")
+    )
 
 
 def _iter_data_files(path: Path) -> list[Path]:

@@ -152,6 +152,73 @@ def test_collector_accepts_directory_artifact_only_after_complete_records(tmp_pa
     assert validate_promotion_evidence(record, tmp_path)
 
 
+def test_collector_dpa4_scope_requires_all_six_supported_cases_without_dpa4c(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from scripts.validation.collect_deepmd_32_qualification import _artifact_sha256
+
+    model_root = tmp_path / "models"
+    model_root.mkdir()
+    for name in ("model.ckpt.pt", "model_ema.ckpt.pt"):
+        (model_root / name).write_bytes(name.encode())
+    monkeypatch.delenv("DPEVA_DEEPMD_DPA4C_MODEL")
+    monkeypatch.delenv("DPEVA_DEEPMD_DPA4C_HEAD")
+    input_path = tmp_path / "input.json"
+    payload = prepare(model_root, input_path, scope="dpa4")
+    (tmp_path / "launch.json").write_text(
+        json.dumps(
+            {
+                "schema_version": "1.0",
+                "scope": "dpa4",
+                "input_path": str(input_path),
+                "input_sha256": _sha256(input_path),
+            }
+        ),
+        encoding="utf-8",
+    )
+    for case in ("preflight", *payload["required_cases"]):
+        artifact_dir = tmp_path / "artifacts" / case
+        artifact_dir.mkdir(parents=True, exist_ok=True)
+        (artifact_dir / "result").write_text(case, encoding="utf-8")
+        now = datetime.now(timezone.utc).isoformat()
+        record = {
+            "schema_version": "1.0",
+            "case": case,
+            "argv": [case],
+            "job_id": "123",
+            "started_at": now,
+            "ended_at": now,
+            "returncode": 0,
+            "status": "finished",
+            "declared_artifacts": [str(artifact_dir)],
+            "artifact_checks": [
+                {
+                    "path": str(artifact_dir),
+                    "exists": True,
+                    "sha256": _artifact_sha256(artifact_dir),
+                }
+            ],
+        }
+        path = tmp_path / "commands" / f"{case}.json"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(record), encoding="utf-8")
+    _complete_environment(tmp_path)
+    (tmp_path / "submission.json").write_text(
+        json.dumps({"job_id": "123", "scope": "dpa4"}), encoding="utf-8"
+    )
+
+    report = collect_qualification(
+        tmp_path, job_id="123", scope="dpa4", require_complete=True
+    )
+
+    assert report["status"] == "finished"
+    assert report["scope"] == "dpa4"
+    assert len(report["attestations"]) == 6
+    assert "dpa4c-periodic-eval-desc" not in report["commands"]
+    with pytest.raises(ValueError, match="scope"):
+        collect_qualification(tmp_path, job_id="123", scope="all")
+
+
 def test_collector_rejects_missing_and_nonnumeric_job_identity(tmp_path: Path) -> None:
     """A complete-looking command set cannot promote without bound numeric IDs."""
 
@@ -190,6 +257,136 @@ def test_prepare_requires_dpa4c_model_reference(tmp_path: Path, monkeypatch: pyt
     monkeypatch.delenv("DPEVA_DEEPMD_DPA4C_MODEL")
     with pytest.raises(FileNotFoundError, match="DPEVA_DEEPMD_DPA4C_MODEL"):
         prepare(model_root, tmp_path / "input.json")
+
+
+def test_prepare_dpa4_scope_excludes_dpa4c_without_weakening_supported_cases(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    model_root = tmp_path / "models"
+    model_root.mkdir()
+    for name in ("model.ckpt.pt", "model_ema.ckpt.pt"):
+        (model_root / name).write_bytes(name.encode())
+    monkeypatch.delenv("DPEVA_DEEPMD_DPA4C_MODEL")
+    monkeypatch.delenv("DPEVA_DEEPMD_DPA4C_HEAD")
+
+    payload = prepare(model_root, tmp_path / "input.json", scope="dpa4")
+
+    assert payload["scope"] == "dpa4"
+    assert payload["required_cases"] == [
+        "pip-freeze",
+        "deepmd-version",
+        "torch-cuda",
+        "gpu",
+        "pt-test",
+        "pt-test-ema",
+        "pt-eval-desc",
+        "pt-eval-desc-ema",
+        "pt-embed",
+        "pt-embed-ema",
+    ]
+    assert len(payload["capability_attestation_specs"]) == 6
+    assert {spec["case"] for spec in payload["capability_attestation_specs"]} == {
+        "pt-test",
+        "pt-test-ema",
+        "pt-eval-desc",
+        "pt-eval-desc-ema",
+        "pt-embed",
+        "pt-embed-ema",
+    }
+    assert "dpa4c_model_path" not in payload
+
+
+def test_submit_dpa4_scope_accepts_input_without_dpa4c(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    model_root = tmp_path / "models"
+    model_root.mkdir()
+    for name in ("model.ckpt.pt", "model_ema.ckpt.pt"):
+        (model_root / name).write_bytes(name.encode())
+    monkeypatch.delenv("DPEVA_DEEPMD_DPA4C_MODEL")
+    monkeypatch.delenv("DPEVA_DEEPMD_DPA4C_HEAD")
+    input_path = tmp_path / "input.json"
+    prepare(model_root, input_path, scope="dpa4")
+
+    result = submit(
+        input_path,
+        Path("scripts/validation/run_deepmd_32_qualification.slurm"),
+        tmp_path / "latest.json",
+        scope="dpa4",
+        job_root=tmp_path / "external",
+        dry_run=True,
+    )
+
+    launch = json.loads((Path(result["job_dir"]) / "launch.json").read_text(encoding="utf-8"))
+    assert launch["scope"] == "dpa4"
+    assert "dpa4c_model_sha256" not in launch
+
+
+def test_dpa4_runner_and_preflight_reject_experimental_case_without_probing_dpa4c(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from subprocess import CompletedProcess
+    from scripts.validation.run_recorded_command import run_recorded_command
+
+    model_root = tmp_path / "models"
+    model_root.mkdir()
+    for name in ("model.ckpt.pt", "model_ema.ckpt.pt"):
+        (model_root / name).write_bytes(name.encode())
+    monkeypatch.delenv("DPEVA_DEEPMD_DPA4C_MODEL")
+    monkeypatch.delenv("DPEVA_DEEPMD_DPA4C_HEAD")
+    input_path = tmp_path / "input.json"
+    payload = prepare(model_root, input_path, scope="dpa4")
+    with pytest.raises(ValueError, match="outside scope"):
+        _spec(payload, "dpa4c-periodic-eval-desc", tmp_path / "job", scope="dpa4")
+
+    submitted = submit(
+        input_path,
+        Path("scripts/validation/run_deepmd_32_qualification.slurm"),
+        tmp_path / "latest.json",
+        scope="dpa4",
+        job_root=tmp_path / "external",
+        dry_run=True,
+    )
+    job_dir = Path(submitted["job_dir"])
+    monkeypatch.setenv("CONDA_DEFAULT_ENV", "dpeva-dpa4-320")
+    monkeypatch.setenv("CONDA_PREFIX", "/opt/conda/envs/dpeva-dpa4-320")
+    monkeypatch.setenv("SLURM_JOB_ID", "123")
+
+    def fake_run(argv: list[str], **_kwargs: object) -> CompletedProcess[str]:
+        if argv[:3] == ["dp", "--pt", "show"]:
+            raise AssertionError("DPA4 scope must not inspect a DPA4C artifact")
+        if argv[:2] == ["dp", "--version"]:
+            return CompletedProcess(argv, 0, "DeePMD-kit v3.2.0\n", "")
+        if argv[:2] == ["nvidia-smi", "-L"]:
+            return CompletedProcess(argv, 0, "GPU 0: Tesla V100\n", "")
+        return CompletedProcess(
+            argv, 0, '{"torch":"2.0","cuda":"12.6","available":true}\n', ""
+        )
+
+    monkeypatch.setattr("scripts.validation.run_recorded_command.subprocess.run", fake_run)
+    result = run_recorded_command(input_path, job_dir, "preflight", scope="dpa4")
+
+    assert result["status"] == "finished"
+    assert result["scope"] == "dpa4"
+
+
+def test_explicit_scope_cannot_reinterpret_scopeless_historical_input(
+    tmp_path: Path,
+) -> None:
+    model_root = tmp_path / "models"
+    model_root.mkdir()
+    for name in ("model.ckpt.pt", "model_ema.ckpt.pt"):
+        (model_root / name).write_bytes(name.encode())
+    input_path = tmp_path / "input.json"
+    prepare(model_root, input_path)
+
+    with pytest.raises(ValueError, match="scope"):
+        submit(
+            input_path,
+            Path("scripts/validation/run_deepmd_32_qualification.slurm"),
+            tmp_path / "latest.json",
+            scope="dpa4",
+            job_root=tmp_path / "external",
+            dry_run=True,
+        )
 
 
 @pytest.mark.parametrize(

@@ -6,22 +6,32 @@ on:
   push:
     branches: ["main", "develop"]
     paths:
-      - "src/dpeva/compatibility/**"
-      - "src/dpeva/io/**"
+      - "src/dpeva/**"
       - "tests/contract/deepmd/**"
+      - "scripts/gates.toml"
+      - "scripts/run_gate.py"
+      - "scripts/validation/**"
       - "pyproject.toml"
       - "pytest.ini"
       - ".github/workflows/deepmd-contract.yml"
   pull_request:
     branches: ["main", "develop"]
     paths:
-      - "src/dpeva/compatibility/**"
-      - "src/dpeva/io/**"
+      - "src/dpeva/**"
       - "tests/contract/deepmd/**"
+      - "scripts/gates.toml"
+      - "scripts/run_gate.py"
+      - "scripts/validation/**"
       - "pyproject.toml"
       - "pytest.ini"
       - ".github/workflows/deepmd-contract.yml"
   workflow_dispatch:
+    inputs:
+      run_dpa4c:
+        description: "Run the experimental DPA4C contract with a genuine protected fixture"
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -31,12 +41,13 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  cpu-contract:
+  dpa4-cpu-contract:
     runs-on: ubuntu-latest
     environment: deepmd-contract
     timeout-minutes: 30
     env:
       DPEVA_DEEPMD_CONTRACT_ARTIFACT_DIR: build/deepmd-cpu-contract
+      DPEVA_DEEPMD_CONTRACT_SCOPE: dpa4
     steps:
       - uses: actions/checkout@v4
 
@@ -79,35 +90,17 @@ jobs:
           tar --extract --gzip --file "$archive" --directory "$fixture_dir"
           bundle_root="$fixture_dir/dpeva-deepmd-contract"
           test -f "$bundle_root/pt-model/model.pt"
-          test -f "$bundle_root/dpa4c-model/model.pt2"
           test -f "$bundle_root/periodic-data/type.raw"
           test -d "$bundle_root/periodic-data/set.000"
           {
             echo "DPEVA_DEEPMD_PT_MODEL=$bundle_root/pt-model/model.pt"
-            echo "DPEVA_DEEPMD_DPA4C_MODEL=$bundle_root/dpa4c-model/model.pt2"
             echo "DPEVA_DEEPMD_PERIODIC_DATA=$bundle_root/periodic-data"
             echo "DPEVA_DEEPMD_PT_HEAD=$DPEVA_DEEPMD_PT_HEAD"
-            echo "DPEVA_DEEPMD_DPA4C_HEAD=$DPEVA_DEEPMD_DPA4C_HEAD"
             echo "DPEVA_DEEPMD_CONTRACT_REQUIRED=1"
           } >> "$GITHUB_ENV"
 
-      - name: Run DeepMD CPU contract
-        run: pytest -m deepmd_contract tests/contract/deepmd -q
-
-      - name: Reject skipped DeepMD contract cases
-        run: |
-          python - <<'PY'
-          import json
-          from pathlib import Path
-
-          summary = json.loads(
-              Path("build/deepmd-cpu-contract/pytest-session.json").read_text()
-          )
-          if summary["skipped"]:
-              raise SystemExit(
-                  f"required DeepMD contract unexpectedly skipped {summary['skipped']} test(s)"
-              )
-          PY
+      - name: Run supported DPA4 CPU contract gate
+        run: python scripts/run_gate.py deepmd_contract
 
       - name: Upload DeepMD contract evidence
         if: always()
@@ -115,4 +108,74 @@ jobs:
         with:
           name: deepmd-cpu-contract
           path: build/deepmd-cpu-contract
+          if-no-files-found: warn
+
+  dpa4c-experimental-contract:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_dpa4c }}
+    runs-on: ubuntu-latest
+    environment: deepmd-contract
+    timeout-minutes: 30
+    env:
+      DPEVA_DEEPMD_CONTRACT_ARTIFACT_DIR: build/deepmd-dpa4c-experimental-contract
+      DPEVA_DEEPMD_CONTRACT_SCOPE: dpa4c
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+          cache: "pip"
+
+      - name: Install exact DeepMD contract environment
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e '.[dev]'
+          python -m pip install 'deepmd-kit==3.2.0'
+
+      - name: Prepare protected experimental DPA4C fixture bundle
+        env:
+          DPEVA_DEEPMD_CONTRACT_FIXTURE_URL: ${{ secrets.DPEVA_DEEPMD_CONTRACT_FIXTURE_URL || vars.DPEVA_DEEPMD_CONTRACT_FIXTURE_URL }}
+          DPEVA_DEEPMD_CONTRACT_FIXTURE_SHA256: ${{ secrets.DPEVA_DEEPMD_CONTRACT_FIXTURE_SHA256 || vars.DPEVA_DEEPMD_CONTRACT_FIXTURE_SHA256 }}
+          DPEVA_DEEPMD_DPA4C_HEAD: ${{ vars.DPEVA_DEEPMD_DPA4C_HEAD }}
+        run: |
+          set -euo pipefail
+          : "${DPEVA_DEEPMD_CONTRACT_FIXTURE_URL:?DPEVA_DEEPMD_CONTRACT_FIXTURE_URL is required}"
+          : "${DPEVA_DEEPMD_CONTRACT_FIXTURE_SHA256:?DPEVA_DEEPMD_CONTRACT_FIXTURE_SHA256 is required}"
+          : "${DPEVA_DEEPMD_DPA4C_HEAD:?DPEVA_DEEPMD_DPA4C_HEAD is required for family verification}"
+          fixture_dir="$RUNNER_TEMP/dpeva-deepmd-dpa4c-contract"
+          archive="$fixture_dir/fixture.tar.gz"
+          mkdir -p "$fixture_dir"
+          if ! curl --fail --silent --location \
+            --output "$archive" "$DPEVA_DEEPMD_CONTRACT_FIXTURE_URL" \
+            2>"$fixture_dir/curl.stderr"; then
+            echo "DeepMD contract fixture download failed" >&2
+            exit 1
+          fi
+          if ! printf '%s  %s\n' "$DPEVA_DEEPMD_CONTRACT_FIXTURE_SHA256" "$archive" \
+            | sha256sum --check --status; then
+            echo "DeepMD contract fixture checksum verification failed" >&2
+            exit 1
+          fi
+          tar --extract --gzip --file "$archive" --directory "$fixture_dir"
+          bundle_root="$fixture_dir/dpeva-deepmd-contract"
+          test -f "$bundle_root/dpa4c-model/model.pt2"
+          test -f "$bundle_root/periodic-data/type.raw"
+          test -d "$bundle_root/periodic-data/set.000"
+          {
+            echo "DPEVA_DEEPMD_DPA4C_MODEL=$bundle_root/dpa4c-model/model.pt2"
+            echo "DPEVA_DEEPMD_PERIODIC_DATA=$bundle_root/periodic-data"
+            echo "DPEVA_DEEPMD_DPA4C_HEAD=$DPEVA_DEEPMD_DPA4C_HEAD"
+            echo "DPEVA_DEEPMD_CONTRACT_REQUIRED=1"
+          } >> "$GITHUB_ENV"
+
+      - name: Run experimental DPA4C CPU contract gate
+        run: python scripts/run_gate.py deepmd_dpa4c_contract
+
+      - name: Upload experimental DPA4C contract evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: deepmd-dpa4c-experimental-contract
+          path: build/deepmd-dpa4c-experimental-contract
           if-no-files-found: warn

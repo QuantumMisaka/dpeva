@@ -194,6 +194,30 @@ def test_python_quality_jobs_use_gate_names() -> None:
         assert f"python scripts/run_gate.py {name}" in text
 
 
+def test_ci_profiles_keep_routine_integration_and_split_deepmd_contracts() -> None:
+    manifest = load_manifest(MANIFEST)
+
+    assert manifest.gates["deepmd_contract"].argv == (
+        "pytest",
+        "-m",
+        "deepmd_contract",
+        "tests/contract/deepmd/test_cli_contract.py",
+        "-q",
+    )
+    assert manifest.gates["deepmd_dpa4c_contract"].argv == (
+        "pytest",
+        "-m",
+        "deepmd_contract",
+        "tests/contract/deepmd/test_dpa4c_eval_desc.py",
+        "-q",
+    )
+    assert resolve_profile(manifest, "integration") == ["integration_tests"]
+    release = resolve_profile(manifest, "release")
+    assert "unit" in release
+    assert "integration_tests" in release
+    assert "qualification_collect" not in release
+
+
 def test_traceability_is_a_docs_and_release_gate_only() -> None:
     manifest = load_manifest(MANIFEST)
 

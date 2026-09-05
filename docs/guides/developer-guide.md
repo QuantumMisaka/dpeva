@@ -2,7 +2,7 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-07-07
+last-updated: 2026-09-06
 owner: Docs Owner
 ---
 
@@ -10,7 +10,7 @@ owner: Docs Owner
 
 - Status: active
 - Audience: Developers
-- Last-Updated: 2026-07-07
+- Last-Updated: 2026-09-06
 - Related:
   - 配置字段字典：`API Reference`（由 `src/dpeva/config.py` 自动生成）
   - 校验规则补充：`docs/reference/validation.md`
@@ -535,6 +535,22 @@ Auto-UQ 用于根据数据分布自动确定筛选边界；具体的字段与约
         *   **Golden Value**: 与 NumPy 手算结果比对，误差容忍度 < 1e-5。
         *   **边界测试**: 覆盖 NaN, Inf, 空数据, 单点数据等极端场景。
         *   **覆盖率要求**: 核心模块行覆盖率需达到 100%。
+
+*   **运行集成测试 (Integration Tests)**：`integration` profile 是日常集成测试的唯一命令入口，
+    `python-quality` 托管工作流会自动运行该 profile。真实 Slurm/GPU 用例继续使用测试内具名的
+    环境能力 skip，不能把没有显式 opt-in 的托管 runner 解释为集群资格证明。
+
+*   **运行 DeepMD 3.2 合同 (DeepMD Contract)**：托管工作流把稳定 DPA4 CPU 合同与
+    experimental DPA4C 合同分开。DPA4 lane 在相关变更和每周计划上自动运行，只要求 PT 模型
+    与 periodic data；DPA4C lane 仅能通过手动输入显式选择，并要求真实 DPA4C fixture 与
+    family inspection。两条 lane 都固定 `deepmd-kit==3.2.0`，且只调用 gate manifest 中已有
+    gate。DPA4C 即使执行成功仍保持 experimental，不产生 promotion。
+    已提交 supported evidence 的完整性仍由 unit suite 验证，因此 `unit` 与包含它的
+    `release` profile 复用同一验证；普通 release 不会触发一次新的完整 SAI qualification。
+
+*   **文档部署门禁**：main、tag 和手动触发统一先在只读 job 中运行共享 `release` profile；
+    只有 prerequisite 成功后的 deploy job 才取得 `contents: write`。发布工作流不维护第二份
+    gate 命令或独立审批层。
 
 *   **运行兼容性测试 (Compatibility Test)**:
     ```bash

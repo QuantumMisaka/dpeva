@@ -17,11 +17,18 @@ from typing import Any
 
 from dpeva.compatibility import CapabilityMatrix
 
-REQUIRED_CASES = (
-    "pip-freeze", "deepmd-version", "torch-cuda", "gpu",
-    "pt-test", "pt-test-ema", "pt-eval-desc", "pt-eval-desc-ema",
-    "pt-embed", "pt-embed-ema", "dpa4c-periodic-eval-desc",
-)
+try:
+    from scripts.validation.deepmd_32_qualification_scope import (
+        attestation_specs,
+        bind_scope,
+        command_cases,
+    )
+except ModuleNotFoundError:  # direct script execution
+    from deepmd_32_qualification_scope import (  # type: ignore[no-redef]
+        attestation_specs,
+        bind_scope,
+        command_cases,
+    )
 
 
 def _sha256(path: Path) -> str:
@@ -40,10 +47,11 @@ def _sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
-def _load_input(path: Path) -> dict[str, Any]:
+def _load_input(path: Path, *, scope: str | None = None) -> dict[str, Any]:
     data = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(data, dict) or data.get("schema_version") != "1.0":
         raise ValueError("qualification input must be schema 1.0")
+    effective_scope = bind_scope(data, scope)
     for role in ("regular", "ema"):
         item = data.get("models", {}).get(role, {})
         if not isinstance(item.get("head"), str) or not item["head"].strip():
@@ -55,28 +63,20 @@ def _load_input(path: Path) -> dict[str, Any]:
     fixture_hash = data.get("fixture", {}).get("sha256")
     if not fixture.is_dir() or not isinstance(fixture_hash, str) or _sha256(fixture) != fixture_hash:
         raise ValueError(f"periodic fixture is absent: {fixture}")
-    dpa4c = data.get("dpa4c_model_path")
-    if not dpa4c:
-        raise ValueError("DPEVA_DEEPMD_DPA4C_MODEL is required for qualification")
-    if dpa4c:
+    if effective_scope == "all":
+        dpa4c = data.get("dpa4c_model_path")
+        if not dpa4c:
+            raise ValueError("DPEVA_DEEPMD_DPA4C_MODEL is required for qualification")
         dpa4c_path = Path(dpa4c).expanduser()
         if not dpa4c_path.is_file() or not data.get("dpa4c_model_sha256") or _sha256(dpa4c_path) != data["dpa4c_model_sha256"]:
             raise ValueError(f"DPA4C model is absent: {dpa4c_path}")
-    if not isinstance(data.get("dpa4c_model_head"), str) or not data["dpa4c_model_head"].strip():
-        raise ValueError("dpa4c_model_head is required and must be non-empty")
-    if tuple(data.get("required_cases", ())) != REQUIRED_CASES:
+        if not isinstance(data.get("dpa4c_model_head"), str) or not data["dpa4c_model_head"].strip():
+            raise ValueError("dpa4c_model_head is required and must be non-empty")
+    if tuple(data.get("required_cases", ())) != command_cases(effective_scope):
         raise ValueError("qualification input required_cases do not match the harness")
-    expected_specs = [
-        {
-            "case": case,
-            "capability_key": record.key.model_dump(),
-            "verification_command": record.verification_command,
-            "source": "sai-v100-qualification",
-        }
-        for record in CapabilityMatrix.load_default().records
-        if record.sai_verification_cases
-        for case in record.sai_verification_cases
-    ]
+    expected_specs = attestation_specs(
+        CapabilityMatrix.load_default().records, effective_scope
+    )
     if data.get("capability_attestation_specs") != expected_specs:
         raise ValueError("capability attestation specs are stale or do not match manifest")
     return data
@@ -126,7 +126,15 @@ def _exclusive_json(path: Path, payload: dict[str, Any]) -> None:
             pass
 
 
-def submit(input_path: Path, slurm_script: Path, write_ref: Path, *, job_root: Path | None = None, dry_run: bool = False) -> dict[str, Any]:
+def submit(
+    input_path: Path,
+    slurm_script: Path,
+    write_ref: Path,
+    *,
+    scope: str | None = None,
+    job_root: Path | None = None,
+    dry_run: bool = False,
+) -> dict[str, Any]:
     input_path = input_path.expanduser().resolve()
     slurm_script = slurm_script.expanduser().resolve()
     if not slurm_script.is_file():
@@ -154,7 +162,8 @@ def submit(input_path: Path, slurm_script: Path, write_ref: Path, *, job_root: P
         raise ValueError("Slurm script does not satisfy the bounded SAI qualification contract")
     if not dry_run and os.environ.get("CONDA_PREFIX"):
         raise RuntimeError("qualification submission requires a clean login environment; unset CONDA_PREFIX")
-    data = _load_input(input_path)
+    data = _load_input(input_path, scope=scope)
+    effective_scope = bind_scope(data, scope)
     root = (job_root or Path(os.environ.get("DPEVA_QUALIFICATION_ROOT", str(Path.home() / "scratch" / "dpeva-deepmd-qualification")))).expanduser().resolve()
     if dry_run:
         root = root / "dry-run"
@@ -168,10 +177,12 @@ def submit(input_path: Path, slurm_script: Path, write_ref: Path, *, job_root: P
         "slurm_script_path": str(slurm_script), "slurm_script_sha256": _sha256(slurm_script),
         "expected_deepmd_version": "DeePMD-kit v3.2.0", "expected_gpu": "V100",
         "qualification_env_name": "dpeva-dpa4-320",
-        "dpa4c_model_sha256": data.get("dpa4c_model_sha256"),
+        "scope": effective_scope,
         "fixture_sha256": data["fixture"]["sha256"],
         "job_dir": str(job_dir), "status": "launched",
     }
+    if effective_scope == "all":
+        launch["dpa4c_model_sha256"] = data["dpa4c_model_sha256"]
     _exclusive_json(job_dir / "launch.json", launch)
     # SAI's Slurm control plane cancels ``--export=NONE`` jobs before the
     # batch step starts.  ``NIL`` preserves the intended clean environment
@@ -194,8 +205,8 @@ def submit(input_path: Path, slurm_script: Path, write_ref: Path, *, job_root: P
         if result.returncode != 0:
             raise RuntimeError(f"sbatch failed ({result.returncode}): {output.strip()}")
         job_id = parse_job_id(output)
-    _exclusive_json(job_dir / "submission.json", {"schema_version": "1.0", "job_id": job_id, "input": str(input_path), "slurm_script": str(slurm_script), "input_sha256": launch["input_sha256"], "script_sha256": launch["slurm_script_sha256"], "nonce": nonce, "job_dir": str(job_dir), "qualification_env_name": launch["qualification_env_name"], "command": command, "dry_run": dry_run})
-    ref = {"schema_version": "1.0", "job_id": job_id, "job_dir": str(job_dir), "external_job_dir": str(job_dir), "nonce": nonce, "status": "submitted" if not dry_run else "dry-run"}
+    _exclusive_json(job_dir / "submission.json", {"schema_version": "1.0", "job_id": job_id, "input": str(input_path), "slurm_script": str(slurm_script), "input_sha256": launch["input_sha256"], "script_sha256": launch["slurm_script_sha256"], "nonce": nonce, "job_dir": str(job_dir), "qualification_env_name": launch["qualification_env_name"], "scope": effective_scope, "command": command, "dry_run": dry_run})
+    ref = {"schema_version": "1.0", "job_id": job_id, "job_dir": str(job_dir), "external_job_dir": str(job_dir), "nonce": nonce, "scope": effective_scope, "status": "submitted" if not dry_run else "dry-run"}
     _atomic_json(write_ref.expanduser().resolve(), ref)
     print(json.dumps(ref, sort_keys=True))
     return ref
@@ -206,10 +217,18 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--input", type=Path, required=True)
     parser.add_argument("--slurm-script", type=Path, required=True)
     parser.add_argument("--write-ref", type=Path, required=True)
+    parser.add_argument("--scope", choices=("dpa4", "all"))
     parser.add_argument("--job-root", type=Path)
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args(argv)
-    submit(args.input, args.slurm_script, args.write_ref, job_root=args.job_root, dry_run=args.dry_run)
+    submit(
+        args.input,
+        args.slurm_script,
+        args.write_ref,
+        scope=args.scope,
+        job_root=args.job_root,
+        dry_run=args.dry_run,
+    )
     return 0
 
 

@@ -2,7 +2,7 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-06-10
+last-updated: 2026-09-06
 owner: Workflow Owner
 ---
 
@@ -10,7 +10,7 @@ owner: Workflow Owner
 
 - Status: active
 - Audience: Developers / Infra
-- Last-Updated: 2026-06-10
+- Last-Updated: 2026-09-06
 
 本报告给出基于真实生产目录 `/test/test-for-multiple-datapool` (File missing) 反推的集成测试设计，并交付可执行的 Slurm 编排用例与输入裁剪方案。
 
@@ -110,6 +110,17 @@ regular/EMA checkpoint 路径和 SHA-256，不复制科研产物。计算节点�
 SHA-256、精确 DeepMD 3.2.0、V100 GPU 和 Torch CUDA，再生成 `commands/*.json`、环境锁、GPU/Torch/CUDA 与
 artifact checks。默认作业约束是 `4V100`、单节点单任务单 GPU、`improper-gpu`、最长
 30 分钟，禁止额外 `mem`/`cpus` 资源声明。
+
+准备、提交、compute-node preflight、命令 runner 与 collector 共享同一个 scope 契约。
+显式 `dpa4` scope 只要求 regular/EMA 的 `pt test`、`pt eval-desc`、`pt embed` 六个 case
+及共同的四项环境记录；collector 还要求对应 preflight，并在任何必需 case 缺失、失败、
+跳过或多出 scope 外记录时 fail closed。`all` scope 额外要求经过 family inspection 的真实
+DPA4C periodic `pt-expt eval-desc`。没有 `scope` 字段的历史 input/job 仍按 `all` 解释，
+调用者不能在提交、runner 或 collection 时把它重新解释为 `dpa4`。
+
+`dpa4` scope 不要求 `DPEVA_DEEPMD_DPA4C_MODEL` 或 DPA4C head；`all` scope 两者仍必需。
+scope 只缩小一次新资格运行的执行集合，不改写既有能力矩阵或证据：当前仍只有三项 supported
+DPA4 能力和六条历史 SAI attestation，DPA4C 仍为 experimental。本节不授权或触发作业提交。
 
 qualification 作业使用独立的 `dpeva-dpa4-320` 环境（SAI 实测 DeepMD-kit 精确
 `3.2.0`）；普通 DP-EVA 开发与测试仍默认使用 `dpeva-dpa4`（当前为

@@ -19,6 +19,19 @@ import numpy as np
 
 from dpeva.compatibility import CapabilityMatrix
 
+try:
+    from scripts.validation.deepmd_32_qualification_scope import (
+        attestation_specs,
+        command_cases,
+        normalize_scope,
+    )
+except ModuleNotFoundError:  # direct script execution
+    from deepmd_32_qualification_scope import (  # type: ignore[no-redef]
+        attestation_specs,
+        command_cases,
+        normalize_scope,
+    )
+
 
 def sha256(path: Path) -> str:
     digest = hashlib.sha256()
@@ -63,7 +76,10 @@ def _write_fixture(root: Path) -> dict[str, Any]:
     }
 
 
-def prepare(model_root: Path, output: Path) -> dict[str, Any]:
+def prepare(
+    model_root: Path, output: Path, *, scope: str | None = None
+) -> dict[str, Any]:
+    effective_scope = normalize_scope(scope)
     model_root = model_root.expanduser().resolve()
     output = output.expanduser().resolve()
     if not model_root.is_dir():
@@ -76,15 +92,18 @@ def prepare(model_root: Path, output: Path) -> dict[str, Any]:
     model_head = os.environ.get("DPEVA_DEEPMD_MODEL_HEAD", "").strip()
     if not model_head:
         raise FileNotFoundError("DPEVA_DEEPMD_MODEL_HEAD is required and must be non-empty")
-    dpa4c_value = os.environ.get("DPEVA_DEEPMD_DPA4C_MODEL")
-    if not dpa4c_value:
-        raise FileNotFoundError("DPEVA_DEEPMD_DPA4C_MODEL is required for qualification")
-    dpa4c_path = Path(dpa4c_value).expanduser().resolve()
-    if not dpa4c_path.is_file():
-        raise FileNotFoundError(f"DPEVA_DEEPMD_DPA4C_MODEL is not a file: {dpa4c_path}")
-    dpa4c_head = os.environ.get("DPEVA_DEEPMD_DPA4C_HEAD", "").strip()
-    if not dpa4c_head:
-        raise FileNotFoundError("DPEVA_DEEPMD_DPA4C_HEAD is required and must be non-empty")
+    dpa4c_path: Path | None = None
+    dpa4c_head: str | None = None
+    if effective_scope == "all":
+        dpa4c_value = os.environ.get("DPEVA_DEEPMD_DPA4C_MODEL")
+        if not dpa4c_value:
+            raise FileNotFoundError("DPEVA_DEEPMD_DPA4C_MODEL is required for qualification")
+        dpa4c_path = Path(dpa4c_value).expanduser().resolve()
+        if not dpa4c_path.is_file():
+            raise FileNotFoundError(f"DPEVA_DEEPMD_DPA4C_MODEL is not a file: {dpa4c_path}")
+        dpa4c_head = os.environ.get("DPEVA_DEEPMD_DPA4C_HEAD", "").strip()
+        if not dpa4c_head:
+            raise FileNotFoundError("DPEVA_DEEPMD_DPA4C_HEAD is required and must be non-empty")
 
     root = output.parent
     root.mkdir(parents=True, exist_ok=True)
@@ -92,17 +111,7 @@ def prepare(model_root: Path, output: Path) -> dict[str, Any]:
         raise FileExistsError(f"refusing to overwrite prepared input: {output}")
     fixture = _write_fixture(root)
     matrix = CapabilityMatrix.load_default()
-    attestation_specs = [
-        {
-            "case": case,
-            "capability_key": record.key.model_dump(),
-            "verification_command": record.verification_command,
-            "source": "sai-v100-qualification",
-        }
-        for record in matrix.records
-        if record.sai_verification_cases
-        for case in record.sai_verification_cases
-    ]
+    specs = attestation_specs(matrix.records, effective_scope)
     payload: dict[str, Any] = {
         "schema_version": "1.0",
         "qualification": "deepmd-3.2-sai-v100",
@@ -112,16 +121,19 @@ def prepare(model_root: Path, output: Path) -> dict[str, Any]:
             "ema": {"path": str(ema), "sha256": sha256(ema), "head": model_head},
         },
         "fixture": fixture,
-        "dpa4c_model_path": str(dpa4c_path),
-        "dpa4c_model_sha256": sha256(dpa4c_path),
-        "dpa4c_model_head": dpa4c_head,
-        "required_cases": [
-            "pip-freeze", "deepmd-version", "torch-cuda", "gpu",
-            "pt-test", "pt-test-ema", "pt-eval-desc", "pt-eval-desc-ema",
-            "pt-embed", "pt-embed-ema", "dpa4c-periodic-eval-desc",
-        ],
-        "capability_attestation_specs": attestation_specs,
+        "required_cases": list(command_cases(effective_scope)),
+        "capability_attestation_specs": specs,
     }
+    if scope is not None:
+        payload["scope"] = effective_scope
+    if dpa4c_path is not None and dpa4c_head is not None:
+        payload.update(
+            {
+                "dpa4c_model_path": str(dpa4c_path),
+                "dpa4c_model_sha256": sha256(dpa4c_path),
+                "dpa4c_model_head": dpa4c_head,
+            }
+        )
     payload["fixture"]["sha256"] = sha256(Path(payload["fixture"]["path"]))
     # Atomic only within the caller-owned build directory; never replace an
     # existing input declaration.
@@ -145,9 +157,18 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--model-root", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--scope", choices=("dpa4", "all"))
     args = parser.parse_args(argv)
-    payload = prepare(args.model_root, args.output)
-    print(json.dumps({"output": str(args.output.resolve()), "model_root": payload["model_root"]}))
+    payload = prepare(args.model_root, args.output, scope=args.scope)
+    print(
+        json.dumps(
+            {
+                "output": str(args.output.resolve()),
+                "model_root": payload["model_root"],
+                "scope": normalize_scope(payload.get("scope")),
+            }
+        )
+    )
     return 0
 
 

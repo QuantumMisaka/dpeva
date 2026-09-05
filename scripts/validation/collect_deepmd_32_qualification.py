@@ -15,12 +15,22 @@ from typing import Any
 
 from dpeva.compatibility import CapabilityAttestation, CapabilityKey, CapabilityMatrix
 
-REQUIRED_CASES = (
-    "preflight",
-    "pip-freeze", "deepmd-version", "torch-cuda", "gpu",
-    "pt-test", "pt-test-ema", "pt-eval-desc", "pt-eval-desc-ema",
-    "pt-embed", "pt-embed-ema", "dpa4c-periodic-eval-desc",
-)
+try:
+    from scripts.validation.deepmd_32_qualification_scope import (
+        attestation_specs,
+        bind_scope,
+        normalize_scope,
+        record_cases,
+    )
+except ModuleNotFoundError:  # direct script execution
+    from deepmd_32_qualification_scope import (  # type: ignore[no-redef]
+        attestation_specs,
+        bind_scope,
+        normalize_scope,
+        record_cases,
+    )
+
+REQUIRED_CASES = record_cases("all")
 REQUIRED_RECORD_FIELDS = {"schema_version", "case", "argv", "job_id", "started_at", "ended_at", "returncode", "status", "declared_artifacts", "artifact_checks"}
 VALID_STATUSES = {"finished", "failed"}
 
@@ -103,7 +113,9 @@ def _validate_record(record: dict[str, Any], case: str, job_dir: Path) -> list[s
     return errors
 
 
-def _load_bound_attestation_specs(job_dir: Path) -> tuple[list[dict[str, Any]], list[str]]:
+def _load_bound_attestation_specs(
+    job_dir: Path, requested_scope: str | None = None
+) -> tuple[list[dict[str, Any]], str, list[str]]:
     """Load specs bound by launch input and report any freshness violation."""
 
     errors: list[str] = []
@@ -113,6 +125,10 @@ def _load_bound_attestation_specs(job_dir: Path) -> tuple[list[dict[str, Any]], 
         if _artifact_sha256(input_path) != launch["input_sha256"]:
             errors.append("qualification input hash changed")
         input_payload = _load(input_path)
+        effective_scope = bind_scope(input_payload, requested_scope)
+        launch_scope = normalize_scope(launch.get("scope"))
+        if launch_scope != effective_scope:
+            errors.append("launch scope does not match qualification input scope")
         raw_specs = input_payload["capability_attestation_specs"]
         if not isinstance(raw_specs, list):
             raise ValueError("capability attestation specs must be a list")
@@ -133,23 +149,16 @@ def _load_bound_attestation_specs(job_dir: Path) -> tuple[list[dict[str, Any]], 
                 "verification_command": raw["verification_command"],
                 "source": raw["source"],
             })
-        expected = [
-            {
-                "case": case,
-                "capability_key": record.key.model_dump(),
-                "verification_command": record.verification_command,
-                "source": "sai-v100-qualification",
-            }
-            for record in CapabilityMatrix.load_default().records
-            if record.sai_verification_cases
-            for case in record.sai_verification_cases
-        ]
+        expected = attestation_specs(
+            CapabilityMatrix.load_default().records, effective_scope
+        )
         if specs != expected:
             errors.append("capability attestation specs are stale relative to manifest")
-        return specs, errors
+        return specs, effective_scope, errors
     except (KeyError, OSError, TypeError, ValueError, json.JSONDecodeError) as exc:
         errors.append(f"invalid launch-bound capability specs: {exc}")
-        return [], errors
+        fallback_scope = normalize_scope(requested_scope)
+        return [], fallback_scope, errors
 
 
 def resolve_job_ref(ref_path: Path) -> tuple[Path, str]:
@@ -168,7 +177,15 @@ def resolve_job_ref(ref_path: Path) -> tuple[Path, str]:
     return job_dir, job_id
 
 
-def collect_qualification(job_dir: Path, *, job_id: str | None = None, gpu: str | None = None, require_complete: bool = False, finalize: bool = False) -> dict[str, Any]:
+def collect_qualification(
+    job_dir: Path,
+    *,
+    job_id: str | None = None,
+    gpu: str | None = None,
+    scope: str | None = None,
+    require_complete: bool = False,
+    finalize: bool = False,
+) -> dict[str, Any]:
     job_dir = job_dir.expanduser().resolve()
     if job_dir.name.lower() in {"latest", "current", "pending"}:
         raise ValueError("mutable latest/current qualification directory is not accepted")
@@ -179,7 +196,11 @@ def collect_qualification(job_dir: Path, *, job_id: str | None = None, gpu: str 
     unknown: list[str] = []
     malformed: list[str] = []
     failed: list[str] = []
-    for case in REQUIRED_CASES:
+    bound_specs, effective_scope, spec_errors = _load_bound_attestation_specs(
+        job_dir, scope
+    )
+    required_cases = record_cases(effective_scope)
+    for case in required_cases:
         path = job_dir / "commands" / f"{case}.json"
         if not path.is_file():
             missing.append(case)
@@ -194,7 +215,7 @@ def collect_qualification(job_dir: Path, *, job_id: str | None = None, gpu: str 
         if record_errors or record.get("status") != "finished" or record.get("returncode") != 0:
             failed.append(case)
     for extra in (job_dir / "commands").glob("*.json"):
-        if extra.stem not in REQUIRED_CASES:
+        if extra.stem not in required_cases:
             unknown.append(extra.stem)
     environment_missing = [name for name in ("pip-freeze.json", "deepmd-version.json", "torch-cuda.json", "gpu.json") if not (job_dir / "environment" / name).is_file()]
     identity_errors: list[str] = []
@@ -211,6 +232,12 @@ def collect_qualification(job_dir: Path, *, job_id: str | None = None, gpu: str 
         identity_errors.append("submission job_id must be numeric")
     elif submission_job_id != selected_job_id:
         identity_errors.append("submission JobID does not match selected JobID")
+    try:
+        submission_scope = normalize_scope(submission.get("scope"))
+        if submission_scope != effective_scope:
+            identity_errors.append("submission scope does not match qualification scope")
+    except ValueError as exc:
+        identity_errors.append(str(exc))
     for case, record in records.items():
         record_job_id = record.get("job_id")
         if not isinstance(record_job_id, str) or not re.fullmatch(r"\d+", record_job_id):
@@ -243,7 +270,6 @@ def collect_qualification(job_dir: Path, *, job_id: str | None = None, gpu: str 
     if not isinstance(measured_gpu, str) or "v100" not in measured_gpu.lower():
         if "gpu.json" not in environment_invalid:
             environment_invalid.append("gpu.json")
-    bound_specs, spec_errors = _load_bound_attestation_specs(job_dir)
     invalid_evidence = [*spec_errors, *identity_errors]
     if not bound_specs:
         invalid_evidence.append("bound capability attestation specs must be non-empty")
@@ -299,6 +325,7 @@ def collect_qualification(job_dir: Path, *, job_id: str | None = None, gpu: str 
         attestations = []
     report: dict[str, Any] = {
         "schema_version": "1.0", "qualification": "deepmd-3.2-sai-v100", "status": status,
+        "scope": effective_scope,
         "job_id": selected_job_id,
         "gpu": gpu_value,
         "environment": environment,
@@ -320,6 +347,8 @@ def collect_qualification(job_dir: Path, *, job_id: str | None = None, gpu: str 
         existing = _load(target)
         if existing.get("job_id") and report["job_id"] and existing["job_id"] != report["job_id"]:
             raise ValueError("qualification JobID does not match recorded JobID")
+        if normalize_scope(existing.get("scope")) != effective_scope:
+            raise ValueError("qualification scope does not match recorded scope")
         if require_complete and existing.get("status") != "finished":
             raise RuntimeError("qualification evidence is incomplete")
         return existing
@@ -352,6 +381,7 @@ def main(argv: list[str] | None = None) -> int:
     group.add_argument("--job-ref", type=Path)
     parser.add_argument("--job-id")
     parser.add_argument("--gpu")
+    parser.add_argument("--scope", choices=("dpa4", "all"))
     parser.add_argument("--require-complete", action="store_true")
     parser.add_argument("--finalize", action="store_true")
     args = parser.parse_args(argv)
@@ -364,7 +394,14 @@ def main(argv: list[str] | None = None) -> int:
             raise ValueError("--job-dir must point to a recorded launch")
         if not args.finalize and not (job_dir / "submission.json").is_file():
             raise ValueError("--job-dir must point to a recorded submission")
-    report = collect_qualification(job_dir, job_id=job_id, gpu=args.gpu, require_complete=args.require_complete, finalize=args.finalize)
+    report = collect_qualification(
+        job_dir,
+        job_id=job_id,
+        gpu=args.gpu,
+        scope=args.scope,
+        require_complete=args.require_complete,
+        finalize=args.finalize,
+    )
     print(json.dumps(report, sort_keys=True))
     return 0
 

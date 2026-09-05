@@ -10,6 +10,7 @@ import pytest
 from dpeva.compatibility import CapabilityKey, CapabilityMatrix
 from dpeva.compatibility.adapter import DeepMDAdapter
 from dpeva.io.collection import CollectionIOManager
+from scripts.validation.run_recorded_command import _probe_dpa4c_model_family
 
 from conftest import frame_count, head_args, run_contract, write_cpu_attestation
 
@@ -18,6 +19,9 @@ from conftest import frame_count, head_args, run_contract, write_cpu_attestation
 def test_periodic_pt_expt_eval_desc_is_consumable_by_collection(
     dp_executable: str, dpa4c_model: Path, dpa4c_head: str | None, periodic_data: Path, tmp_path: Path
 ) -> None:
+    assert dpa4c_head is not None, "DPA4C family verification requires an explicit head"
+    family = _probe_dpa4c_model_family(dpa4c_model, dpa4c_head)
+    assert family["ok"] is True, family["error"]
     output_dir = tmp_path / "dpa4c-descriptors"
     key = CapabilityKey(
         operation="eval-desc",

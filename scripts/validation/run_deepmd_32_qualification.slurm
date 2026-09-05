@@ -23,6 +23,12 @@ readonly REPO_ROOT="$3"
 export DPEVA_QUALIFICATION_INPUT DPEVA_QUALIFICATION_DIR
 mkdir -p "$DPEVA_QUALIFICATION_DIR"
 
+readonly DPEVA_QUALIFICATION_SCOPE="$(
+    python -c 'import json, sys; value=json.load(open(sys.argv[1], encoding="utf-8")).get("scope", "all"); assert value in {"dpa4", "all"}; print(value)' \
+        "$DPEVA_QUALIFICATION_INPUT"
+)"
+export DPEVA_QUALIFICATION_SCOPE
+
 if [[ ! -d "$REPO_ROOT" ]]; then
     echo "repository root is not a directory: $REPO_ROOT" >&2
     exit 2
@@ -35,6 +41,7 @@ run_case() {
     if ! python "$REPO_ROOT/scripts/validation/run_recorded_command.py" \
         --config "$DPEVA_QUALIFICATION_INPUT" \
         --job-dir "$DPEVA_QUALIFICATION_DIR" \
+        --scope "$DPEVA_QUALIFICATION_SCOPE" \
         --case "$1"; then
         job_rc=1
     fi
@@ -46,6 +53,7 @@ on_exit() {
     python "$REPO_ROOT/scripts/validation/collect_deepmd_32_qualification.py" \
         --job-dir "$DPEVA_QUALIFICATION_DIR" \
         --job-id "${SLURM_JOB_ID:-}" \
+        --scope "$DPEVA_QUALIFICATION_SCOPE" \
         --finalize \
         >/dev/null
     collector_rc=$?
@@ -65,12 +73,12 @@ source "$REPO_ROOT/scripts/env/dpeva-dpa4.env"
 
 run_case preflight
 if (( job_rc == 0 )); then
-    for case_name in \
-        pip-freeze deepmd-version torch-cuda gpu \
-        pt-test pt-test-ema pt-eval-desc pt-eval-desc-ema \
-        pt-embed pt-embed-ema dpa4c-periodic-eval-desc; do
+    while IFS= read -r case_name; do
         run_case "$case_name"
-    done
+    done < <(
+        python -c 'import json, sys; print("\n".join(json.load(open(sys.argv[1], encoding="utf-8"))["required_cases"]))' \
+            "$DPEVA_QUALIFICATION_INPUT"
+    )
 fi
 
 exit "$job_rc"

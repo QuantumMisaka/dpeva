@@ -9,16 +9,43 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: docs-deploy-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
+  release-validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+          cache: "pip"
+
+      - name: Install release validation dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e '.[dev,docs,explore]' tomli
+
+      - name: Run shared release profile
+        run: python scripts/run_gate.py release
+
   deploy:
+    needs: release-validation
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
         with:
