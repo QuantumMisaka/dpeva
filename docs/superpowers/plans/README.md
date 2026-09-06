@@ -17,6 +17,10 @@ implementation work. They are not a replacement for project-level plans in
 - Current tracked active execution plans: none.
 - v0.8.1 archived execution plans are listed in [docs/archive/v0.8.1/plans/README.md](../../archive/v0.8.1/plans/README.md).
 
+## Completed, pending integration
+
+- [v0.8.2 compatibility closeout](2026-09-05-v082-compatibility-closeout.md): six tasks and independent final re-review completed; branch retained without merge, push, tag, or publication. [Verified closeout](../../reports/2026-09-05-v082-compatibility-closeout.md).
+
 ## Superseding status pointer
 
 The Plans A–E files remain historical execution records and are not rewritten when

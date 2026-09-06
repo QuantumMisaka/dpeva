@@ -1,8 +1,8 @@
 ---
 title: v0.8.2 compatibility closeout
-status: active
+status: completed
 audience: Developers / Maintainers
-last-updated: 2026-09-05
+last-updated: 2026-09-06
 owner: Quantum Misaka
 ---
 
@@ -58,7 +58,7 @@ Same-base prior review: unit+integration 925 passed / 7 named skips; isolated `t
 
 **Interfaces:** Keep `migrate_legacy_config(raw)` as the single migration implementation. Restore `load_and_resolve_config(path) -> dict`; add `load_config_with_metadata(path) -> MigrationResult` for internal evidence consumers. Managers continue using instance DeepMDAdapter and never consume legacy global state.
 
-- [ ] Add RED cases for direct BaseWorkflowConfig descendants and AnalysisConfig using flat submission fields, equality/conflict semantics, input nonmutation and exploration-native backend. Add old command-builder calls, old loader dict behavior and legacy warning behavior.
+- [x] Add RED cases for direct BaseWorkflowConfig descendants and AnalysisConfig using flat submission fields, equality/conflict semantics, input nonmutation and exploration-native backend. Add old command-builder calls, old loader dict behavior and legacy warning behavior.
 
 ```python
 raw = {"data_path": "data", "backend": "slurm"}
@@ -69,11 +69,11 @@ DPCommandBuilder.set_backend("tf")
 assert DPCommandBuilder.freeze() == "dp --tf freeze"
 ```
 
-- [ ] Run focused tests and retain expected old-API failures.
-- [ ] Normalize known legacy submission keys in the public workflow/analysis model boundary using the existing migration function, emit deprecation/migration warnings, retain `extra=forbid` for unknown keys. Do not inject submission into unrelated models.
-- [ ] Restore original DPCommandBuilder signatures and set_backend behavior in the deprecated facade only; use optional keyword backend overrides for stateless new use. Internal managers stay isolated instance adapters. Update new tests to exercise independent adapters rather than requiring old API removal.
-- [ ] Split detailed loader from old dict helper and update CLI/recovery consumers explicitly. Deprecated environment-check wrapper preserves actionable UserWarning on non-ok probe, with no import-time probing.
-- [ ] Run `python -m pytest tests/unit/test_config_migration.py tests/unit/test_cli.py tests/unit/utils/test_backend_config.py tests/unit/utils/test_env_check.py tests/unit/utils/test_config_paths.py tests/unit/scripts/test_fp11_1344_recover.py -q` → exit 0; synchronize boundary docs; commit `fix: preserve v0.8 Python configuration and helper APIs`.
+- [x] Run focused tests and retain expected old-API failures.
+- [x] Normalize known legacy submission keys in the public workflow/analysis model boundary using the existing migration function, emit deprecation/migration warnings, retain `extra=forbid` for unknown keys. Do not inject submission into unrelated models.
+- [x] Restore original DPCommandBuilder signatures and set_backend behavior in the deprecated facade only; use optional keyword backend overrides for stateless new use. Internal managers stay isolated instance adapters. Update new tests to exercise independent adapters rather than requiring old API removal.
+- [x] Split detailed loader from old dict helper and update CLI/recovery consumers explicitly. Deprecated environment-check wrapper preserves actionable UserWarning on non-ok probe, with no import-time probing.
+- [x] Run `python -m pytest tests/unit/test_config_migration.py tests/unit/test_cli.py tests/unit/utils/test_backend_config.py tests/unit/utils/test_env_check.py tests/unit/utils/test_config_paths.py tests/unit/scripts/test_fp11_1344_recover.py -q` → exit 0; synchronize boundary docs; commit `fix: preserve v0.8 Python configuration and helper APIs`.
 
 ### Task 2: Preserve ensemble defaults and narrow run identity
 
@@ -83,7 +83,7 @@ assert DPCommandBuilder.freeze() == "dp --tf freeze"
 
 **Interfaces:** `resolve_model_refs` default returns regular-only numeric-directory models; explicit JSON refs remain the mechanism for EMA. `input_identity` retains existing result shape with collision-free stable external refs. `source_identity` retains package/git metadata but defines a versioned, scoped runtime fingerprint used for resume.
 
-- [ ] RED: regular+EMA fixtures return only regular in legacy fallback; explicit references still execute both roles. Two external same-basename models get distinct logical refs and proceed past context creation.
+- [x] RED: regular+EMA fixtures return only regular in legacy fallback; explicit references still execute both roles. Two external same-basename models get distinct logical refs and proceed past context creation.
 
 ```python
 refs = resolve_model_refs(work, family="legacy-unknown", backend="pt")
@@ -93,10 +93,10 @@ b = input_identity(second_model, "model", work)
 assert a["ref"] != b["ref"]
 ```
 
-- [ ] RED: nested run evidence, logs and unrelated docs/untracked data do not alter resume source identity; modifying tracked runtime Python source does. Retain tests for clean/dirty source changes and root-independent identity.
-- [ ] Generate external model logical refs from content identity plus basename (not absolute paths). Preserve same-input deduplication and checksum conflict detection.
-- [ ] Scope provenance to package runtime source and packaging/runtime configuration (`src/dpeva`, `pyproject.toml`); exclude arbitrary docs, datasets, logs and any `.dpeva` component. Compute a content fingerprint of the selected tracked runtime files (including clean content, deletions and symlinks), plus untracked Python runtime additions under package source without scanning arbitrary untracked scientific data. Record fingerprint scope. Resume comparison uses scoped fingerprint for new records, treating git commit as informational when only irrelevant docs changed; committed runtime edits still invalidate resume. Legacy unscoped records must not silently be reinterpreted as matching.
-- [ ] Run `python -m pytest tests/unit/run tests/unit/inference/test_inference_io_manager.py tests/unit/workflows/test_infer_workflow_exec.py tests/integration/test_run_contract_pilot.py -q` → exit 0; update docs; commit `fix: preserve ensemble defaults and scoped run provenance`.
+- [x] RED: nested run evidence, logs and unrelated docs/untracked data do not alter resume source identity; modifying tracked runtime Python source does. Retain tests for clean/dirty source changes and root-independent identity.
+- [x] Generate external model logical refs from content identity plus basename (not absolute paths). Preserve same-input deduplication and checksum conflict detection.
+- [x] Scope provenance to package runtime source and packaging/runtime configuration (`src/dpeva`, `pyproject.toml`); exclude arbitrary docs, datasets, logs and any `.dpeva` component. Compute a content fingerprint of the selected tracked runtime files (including clean content, deletions and symlinks), plus untracked Python runtime additions under package source without scanning arbitrary untracked scientific data. Record fingerprint scope. Resume comparison uses scoped fingerprint for new records, treating git commit as informational when only irrelevant docs changed; committed runtime edits still invalidate resume. Legacy unscoped records must not silently be reinterpreted as matching.
+- [x] Run `python -m pytest tests/unit/run tests/unit/inference/test_inference_io_manager.py tests/unit/workflows/test_infer_workflow_exec.py tests/integration/test_run_contract_pilot.py -q` → exit 0; update docs; commit `fix: preserve ensemble defaults and scoped run provenance`.
 
 ### Task 3: Bind completion and outputs to the current attempt
 
@@ -106,12 +106,12 @@ assert a["ref"] != b["ref"]
 
 **Interfaces:** Add a shared attempt-output baseline/freshness helper in run/artifacts.py consumed by feature/infer. Existing validators remain reusable; current run may register only outputs produced/rewritten in its attempt. Keep output paths unchanged and do not remove user outputs.
 
-- [ ] RED: isolated empty Python feature test fails before fix; successful Python feature emits marker after validation, failures never do, independent of preceding logger state.
-- [ ] RED: preexisting nonempty output + successful no-op command must not pass as a newly produced artifact. Real rewrites (including identical bytes rewritten in a new attempt) must remain valid. Retained verified resume artifacts preserve their original provenance.
-- [ ] Move outer workflow marker emission after artifact validation/registration and FINISHED transition; avoid duplicate or early inner markers. Test both isolated and combined runs.
-- [ ] Snapshot declared existing output identities before execution using precise file metadata (device/inode, size, mtime_ns, ctime_ns), and accept only newly created or demonstrably rewritten files for new attempt attribution. This is a freshness check, not adversarial producer authentication; avoid hashing every historical large descriptor file before a run. Apply corresponding freshness checks to generated local/Slurm command guards so a shell success marker cannot certify stale files. Preserve expected-pool/per-model checks. Avoid imposing a new output directory layout.
-- [ ] Training guards select frozen artifact per backend: PT checkpoint file vs TF frozen_model.pb; verify JAX/PD/PT-expt backend conventions from installed upstream code or explicit local contract before choosing, and fail preflight for an unprovable contract rather than falsely requiring PT output. Keep lcurve validation only where the generated training contract produces it.
-- [ ] Run `python -m pytest tests/unit/workflows/test_final_review_execution_contract.py tests/unit/workflows/test_feature_workflow_submission.py tests/unit/workflows/test_infer_workflow_exec.py tests/unit/feature/test_execution_manager.py tests/unit/inference/test_inference_execution_manager.py tests/unit/training/test_training_managers.py tests/unit/compatibility/test_deepmd_adapter.py tests/unit/run tests/integration/test_run_contract_pilot.py -q` → exit 0. Run the formerly failing test alone → exit 0. Commit `fix: certify only current-attempt workflow outputs`.
+- [x] RED: isolated empty Python feature test fails before fix; successful Python feature emits marker after validation, failures never do, independent of preceding logger state.
+- [x] RED: preexisting nonempty output + successful no-op command must not pass as a newly produced artifact. Real rewrites (including identical bytes rewritten in a new attempt) must remain valid. Retained verified resume artifacts preserve their original provenance.
+- [x] Move outer workflow marker emission after artifact validation/registration and FINISHED transition; avoid duplicate or early inner markers. Test both isolated and combined runs.
+- [x] Snapshot declared existing output identities before execution using precise file metadata (device/inode, size, mtime_ns, ctime_ns), and accept only newly created or demonstrably rewritten files for new attempt attribution. This is a freshness check, not adversarial producer authentication; avoid hashing every historical large descriptor file before a run. Apply corresponding freshness checks to generated local/Slurm command guards so a shell success marker cannot certify stale files. Preserve expected-pool/per-model checks. Avoid imposing a new output directory layout.
+- [x] Training guards select frozen artifact per backend: PT checkpoint file vs TF frozen_model.pb; verify JAX/PD/PT-expt backend conventions from installed upstream code or explicit local contract before choosing, and fail preflight for an unprovable contract rather than falsely requiring PT output. Keep lcurve validation only where the generated training contract produces it.
+- [x] Run `python -m pytest tests/unit/workflows/test_final_review_execution_contract.py tests/unit/workflows/test_feature_workflow_submission.py tests/unit/workflows/test_infer_workflow_exec.py tests/unit/feature/test_execution_manager.py tests/unit/inference/test_inference_execution_manager.py tests/unit/training/test_training_managers.py tests/unit/compatibility/test_deepmd_adapter.py tests/unit/run tests/integration/test_run_contract_pilot.py -q` → exit 0. Run the formerly failing test alone → exit 0. Commit `fix: certify only current-attempt workflow outputs`.
 
 ### Task 4: Preserve installation compatibility and separate diagnostic lanes
 
@@ -121,16 +121,16 @@ assert a["ref"] != b["ref"]
 
 **Interfaces:** Keep default installation supplying DeepMD through `deepmd-kit>=3.1.2,<3.3`; retain `[deepmd]` as the explicit `>=3.2,<3.3` lane. Constants/doctor distinguish retained 3.1 legacy envelope from exact 3.2 qualification. Capability matrix remains strictly the 3.2 evidence matrix, never relabel 3.1 as newly qualified.
 
-- [ ] RED dependency test expects bounded core DeepMD plus narrower optional lane; diagnostic tests distinguish 3.1.2 legacy acceptance, 3.2 acceptance, unsupported old/future releases, and prereleases not bypassing all bounds.
+- [x] RED dependency test expects bounded core DeepMD plus narrower optional lane; diagnostic tests distinguish 3.1.2 legacy acceptance, 3.2 acceptance, unsupported old/future releases, and prereleases not bypassing all bounds.
 
 ```python
 assert "deepmd-kit>=3.1.2,<3.3" in metadata["project"]["dependencies"]
 assert metadata["project"]["optional-dependencies"]["deepmd"] == ["deepmd-kit>=3.2,<3.3"]
 ```
 
-- [ ] Restore bounded default dependency; describe preprovisioned environment installs with explicit `--no-deps` (caller must provision all dependencies), not an allegedly dependency-free default installation.
-- [ ] Keep existing 3.1.2 runtime envelope without claiming new scientific verification. Doctor reports the qualified 3.2 lane separately; new-only optional surfaces cannot turn otherwise usable legacy runtime into a blanket incompatible result. Do not admit arbitrary dev versions as universally compatible.
-- [ ] Run `python -m pytest tests/unit/test_dependency_contracts.py tests/unit/run/test_doctor.py tests/unit/utils/test_env_check.py tests/unit/test_cli.py -q` → exit 0; commit `fix: preserve default DeepMD installation compatibility`.
+- [x] Restore bounded default dependency; describe preprovisioned environment installs with explicit `--no-deps` (caller must provision all dependencies), not an allegedly dependency-free default installation.
+- [x] Keep existing 3.1.2 runtime envelope without claiming new scientific verification. Doctor reports the qualified 3.2 lane separately; new-only optional surfaces cannot turn otherwise usable legacy runtime into a blanket incompatible result. Do not admit arbitrary dev versions as universally compatible.
+- [x] Run `python -m pytest tests/unit/test_dependency_contracts.py tests/unit/run/test_doctor.py tests/unit/utils/test_env_check.py tests/unit/test_cli.py -q` → exit 0; commit `fix: preserve default DeepMD installation compatibility`.
 
 ### Task 5: Make CI and qualification scope executable and lightweight
 
@@ -140,12 +140,12 @@ assert metadata["project"]["optional-dependencies"]["deepmd"] == ["deepmd-kit>=3
 
 **Interfaces:** Existing gate manifest remains single command source. Explicit qualification scope `dpa4` requires only six regular/EMA cases and corresponding preflight; `all` additionally requires genuine DPA4C. Old scope-less input retains old all-case semantics. Selection must never permit missing required evidence within a scope to pass.
 
-- [ ] RED: required DPA4 CPU lane works without DPA4C fixture; explicitly selected experimental lane requires real DPA4C. Missing PT model/data always fails required supported lane.
-- [ ] Split supported CPU gate from experimental DPA4C gate; scope-specific fixture requirements and skipped-case rejection. CI supported lane runs automatically; experimental lane explicit/manual and fail-closed when requested. Broaden trigger paths to runtime consumers, gate and validation scripts. Invoke pytest through run_gate rather than copy commands.
-- [ ] Add routine integration CI job using existing integration gate; genuine Slurm/GPU tests retain named opt-in skips. Retain reused supported-evidence validation in unit/release profiles; no universal full SAI rerun.
-- [ ] Add explicit DPA4-only scope to preparation/submission/preflight/collection where currently all-case coupling prevents rerun; maintain old scope-less job compatibility and historical attestations. No job submissions in this task.
-- [ ] Gate docs deployment before write permissions are exercised: use a read-only prerequisite validation job calling shared `release` profile, then deployment job with `needs`; no deployment from an unchecked main push. Keep tag/manual behavior with the same prerequisite. Use existing profiles rather than a new governance layer.
-- [ ] Run `python -m pytest tests/contract/deepmd/test_fixture_gate.py tests/unit/scripts/test_run_gate.py tests/unit/scripts/test_deepmd_32_qualification.py tests/unit/scripts/test_ci_contracts.py -q` → exit 0 (omit final file only if no new suite was necessary and report exact alternative). Run `bash -n scripts/validation/run_deepmd_32_qualification.slurm` → exit 0. Commit `ci: separate supported qualification and gate deployment`.
+- [x] RED: required DPA4 CPU lane works without DPA4C fixture; explicitly selected experimental lane requires real DPA4C. Missing PT model/data always fails required supported lane.
+- [x] Split supported CPU gate from experimental DPA4C gate; scope-specific fixture requirements and skipped-case rejection. CI supported lane runs automatically; experimental lane explicit/manual and fail-closed when requested. Broaden trigger paths to runtime consumers, gate and validation scripts. Invoke pytest through run_gate rather than copy commands.
+- [x] Add routine integration CI job using existing integration gate; genuine Slurm/GPU tests retain named opt-in skips. Retain reused supported-evidence validation in unit/release profiles; no universal full SAI rerun.
+- [x] Add explicit DPA4-only scope to preparation/submission/preflight/collection where currently all-case coupling prevents rerun; maintain old scope-less job compatibility and historical attestations. No job submissions in this task.
+- [x] Gate docs deployment before write permissions are exercised: use a read-only prerequisite validation job calling shared `release` profile, then deployment job with `needs`; no deployment from an unchecked main push. Keep tag/manual behavior with the same prerequisite. Use existing profiles rather than a new governance layer.
+- [x] Run `python -m pytest tests/contract/deepmd/test_fixture_gate.py tests/unit/scripts/test_run_gate.py tests/unit/scripts/test_deepmd_32_qualification.py tests/unit/scripts/test_ci_contracts.py -q` → exit 0 (omit final file only if no new suite was necessary and report exact alternative). Run `bash -n scripts/validation/run_deepmd_32_qualification.slurm` → exit 0. Commit `ci: separate supported qualification and gate deployment`.
 
 ### Task 6: Prepare 0.8.2 release identity and align current governance docs
 
@@ -155,12 +155,12 @@ assert metadata["project"]["optional-dependencies"]["deepmd"] == ["deepmd-kit>=3
 
 **Interfaces:** `dpeva.__version__` is 0.8.2; Sphinx imports/derives that version rather than independent literals where feasible; release helper updates maintained version surfaces and provides a check-only path suitable for shared gate. Historical release notes/attestations retain their recorded old versions.
 
-- [ ] RED: release helper/check detects mismatched README/current guide/package version; pilot tests compare manifest version with the imported version source. Add safe explicit-version parsing tests so invalid versions cannot be written.
-- [ ] Set version 0.8.2; synchronize current version surfaces. Add release notes describing DeepMD3.2 exact supported operations, legacy defaults, intentional fail-closed changes and known experimental boundaries.
-- [ ] Amend current SPEC/index with the later user-approved patch positioning and completion state, replacing future mandatory cross-family language with optional independent-family review policy; retain historical reviews/evidence. Keep plans as historical records with a superseding pointer rather than rewriting their implementation history.
-- [ ] Clarify evaluation card is an evidence index, not model revalidation/ranking; do not expand it into another scientific gate. Preserve Linux non-overwriting publication scope and disclose it; no cross-platform rewrite in this release.
-- [ ] Run `python -m pytest tests/unit/scripts/test_release_helper.py tests/integration/test_run_contract_pilot.py -q` → exit 0, `python scripts/run_gate.py release` → exit 0 with named external-fixture skips only. Build `python -m build --no-isolation` (install build tool only if absent, no runtime replacement), inspect wheel/sdist metadata version and packaged capability JSON. Smoke the wheel in an isolated system-site-packages venv with `pip install --no-deps` and CLI help plus capability-resource loading from outside checkout; record dependency resolution as metadata validation, not a newly qualified GPU runtime.
-- [ ] Record raw results/revision and known remote CI readiness boundary in report, update indexes, commit `chore: prepare v0.8.2 compatibility release`.
+- [x] RED: release helper/check detects mismatched README/current guide/package version; pilot tests compare manifest version with the imported version source. Add safe explicit-version parsing tests so invalid versions cannot be written.
+- [x] Set version 0.8.2; synchronize current version surfaces. Add release notes describing DeepMD3.2 exact supported operations, legacy defaults, intentional fail-closed changes and known experimental boundaries.
+- [x] Amend current SPEC/index with the later user-approved patch positioning and completion state, replacing future mandatory cross-family language with optional independent-family review policy; retain historical reviews/evidence. Keep plans as historical records with a superseding pointer rather than rewriting their implementation history.
+- [x] Clarify evaluation card is an evidence index, not model revalidation/ranking; do not expand it into another scientific gate. Preserve Linux non-overwriting publication scope and disclose it; no cross-platform rewrite in this release.
+- [x] Run `python -m pytest tests/unit/scripts/test_release_helper.py tests/integration/test_run_contract_pilot.py -q` → exit 0, `python scripts/run_gate.py release` → exit 0 with named external-fixture skips only. Build `python -m build --no-isolation` (install build tool only if absent, no runtime replacement), inspect wheel/sdist metadata version and packaged capability JSON. Smoke the wheel in an isolated system-site-packages venv with `pip install --no-deps` and CLI help plus capability-resource loading from outside checkout; record dependency resolution as metadata validation, not a newly qualified GPU runtime.
+- [x] Record raw results/revision and known remote CI readiness boundary in report, update indexes, commit `chore: prepare v0.8.2 compatibility release`.
 
 ## Completion Boundary
 
