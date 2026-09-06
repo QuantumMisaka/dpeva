@@ -94,3 +94,27 @@ def test_release_profile_checks_version_surfaces() -> None:
         "scripts/release_helper.py",
         "--check",
     )
+
+
+@pytest.mark.parametrize("surface", ["INIT_FILE", "README_FILE", "DEV_GUIDE"])
+@pytest.mark.parametrize("operation", ["check", "update"])
+def test_duplicate_version_declarations_rejected_before_any_writes(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, surface: str, operation: str
+) -> None:
+    _version_surfaces(tmp_path, package="0.8.2", readme="0.8.2", guide="0.8.2")
+    _use_root(monkeypatch, tmp_path)
+    duplicate = getattr(release_helper, surface)
+    content = duplicate.read_text(encoding="utf-8")
+    duplicate.write_text(content + content.replace("0.8.2", "0.8.1"), encoding="utf-8")
+    before = {
+        path: path.read_bytes()
+        for path in (release_helper.INIT_FILE, release_helper.README_FILE, release_helper.DEV_GUIDE)
+    }
+
+    with pytest.raises(ValueError, match="exactly one maintained version"):
+        if operation == "check":
+            release_helper.main(["--check"])
+        else:
+            release_helper.update_files("0.8.3")
+
+    assert {path: path.read_bytes() for path in before} == before

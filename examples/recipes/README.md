@@ -57,6 +57,8 @@ dpeva train examples/recipes/training/config_train.json
 Located in `inference/`.
 Evaluates trained models on a test set (candidate pool) and writes raw `dp test` outputs.
 Set `auto_analysis=true` only for local backend if you want chained analysis.
+Chained analysis emits one completion marker after every model succeeds and the parent run
+reaches `finished`; individual analysis stages do not emit it. Standalone analysis keeps its marker.
 For Slurm, run `dpeva analysis` after jobs finish.
 
 `feature` 与 `infer` 支持可选运行契约参数：`--run-id` 固定清单身份，

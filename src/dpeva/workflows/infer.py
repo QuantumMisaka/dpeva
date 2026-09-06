@@ -316,7 +316,7 @@ class InferenceWorkflow:
                     "allow_ref_energy_lstsq_completion": False,
                 }
                 workflow = AnalysisWorkflow(analysis_config)
-                workflow.run()
+                workflow.run(emit_completion_marker=False)
 
                 metrics_path = os.path.join(analysis_output_dir, FILENAME_METRICS_JSON)
                 if os.path.exists(metrics_path):

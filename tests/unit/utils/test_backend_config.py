@@ -30,6 +30,13 @@ class TestDPCommandBuilderBackend:
             warnings.simplefilter("ignore", DeprecationWarning)
             assert DPCommandBuilder.train("input.json") == "dp --pt train input.json"
             assert DPCommandBuilder.freeze() == "dp --pt freeze"
+            assert DPCommandBuilder.freeze("frozen.pt") == "dp --pt freeze -o frozen.pt"
+            assert DPCommandBuilder.eval_desc("model.pt", "data", "desc", "head", "desc.log") == (
+                "dp --pt eval-desc -s data -m model.pt -o desc --head head > desc.log 2>&1"
+            )
+            assert DPCommandBuilder.embed("model.pt", "data", "embed", "head", "fp64", "embed.log") == (
+                "dp --pt embed -s data -m model.pt -o embed --dtype fp64 --head head > embed.log 2>&1"
+            )
             assert DPCommandBuilder.test("model.pt", "data", "results") == (
                 "dp --pt test -s data -m model.pt -d results"
             )

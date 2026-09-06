@@ -273,6 +273,7 @@ DPEVA_TAG: WORKFLOW_FINISHED
 
 - `train`、`collect`、`label` 等主流程会在成功结束时输出该标记。
 - 本地 `feature` / `infer` 仅在当次运行的产物验证、登记和 manifest `finished` 转换完成后输出工作流标记；Slurm 场景更稳妥的推进锚点仍是各作业输出与状态共同验证完成后再进入下游。
+- 本地 `infer` 启用 `auto_analysis` 时，嵌套 analysis 不输出独立完成标记；全部模型分析成功且父清单进入 `finished` 后只输出一次。任意模型分析失败时父清单为 `failed`，不会留下提前完成标记。独立 `dpeva analysis` 保留原有标记。
 
 ## 6. 异常处理与退出码
 

@@ -26,10 +26,10 @@ def _read(path: Path) -> str:
 
 
 def _declared_version(path: Path, pattern: re.Pattern[str]) -> str:
-    match = pattern.search(_read(path))
-    if match is None:
-        raise ValueError(f"Could not find maintained version in {path}")
-    return match.group("version")
+    matches = list(pattern.finditer(_read(path)))
+    if len(matches) != 1:
+        raise ValueError(f"Could not find exactly one maintained version in {path}")
+    return matches[0].group("version")
 
 
 def _validate_version(value: str) -> str:
@@ -68,7 +68,7 @@ def _replace_version(
     replacement: str,
     path: Path,
 ) -> str:
-    updated, count = pattern.subn(replacement, content, count=1)
+    updated, count = pattern.subn(replacement, content)
     if count != 1:
         raise ValueError(f"Could not find exactly one maintained version in {path}")
     return updated

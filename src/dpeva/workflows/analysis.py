@@ -76,8 +76,8 @@ class AnalysisWorkflow:
             allow_ref_energy_lstsq_completion=self.config.allow_ref_energy_lstsq_completion
         )
         
-    def run(self):
-        """Run analysis workflow in dataset or model_test mode."""
+    def run(self, *, emit_completion_marker: bool = True):
+        """Run analysis; nested callers leave completion to their parent."""
         if self.backend == "slurm":
             self._submit_to_slurm()
             return
@@ -96,7 +96,8 @@ class AnalysisWorkflow:
             else:
                 self._run_model_mode(output_dir)
             self.logger.info("Analysis completed successfully.")
-            self.logger.info(WORKFLOW_FINISHED_TAG)
+            if emit_completion_marker:
+                self.logger.info(WORKFLOW_FINISHED_TAG)
         except Exception as e:
             self.logger.error(f"Analysis failed: {e}", exc_info=True)
             raise

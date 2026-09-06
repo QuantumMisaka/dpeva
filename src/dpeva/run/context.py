@@ -31,6 +31,11 @@ _STRUCTURAL_ENTRY_LIMIT = 256
 _STRUCTURAL_NODE_LIMIT = 4096
 _RUNTIME_FINGERPRINT_VERSION = "1"
 _RUNTIME_FINGERPRINT_SCOPE = ["src/dpeva", "pyproject.toml"]
+_RUNTIME_GIT_PATHSPEC = [
+    *_RUNTIME_FINGERPRINT_SCOPE,
+    ":(exclude,glob)**/.dpeva",
+    ":(exclude,glob)**/.dpeva/**",
+]
 _DEFAULT_CONFIG_METADATA: dict[str, Any] = {
     "schema_version": "1.0",
     "input_schema_version": "1.0",
@@ -747,19 +752,14 @@ def source_identity(
             text=True, capture_output=True,
         )
         status_result = run(
-            ["git", "status", "--porcelain=v1", "-z", "--untracked-files=all"],
+            ["git", "status", "--porcelain=v1", "-z", "--untracked-files=all",
+             "--", *_RUNTIME_GIT_PATHSPEC],
             cwd=repository, check=False, text=False, capture_output=True,
         )
     except (OSError, subprocess.SubprocessError):
         return identity
     if commit_result.returncode == 0 and commit_result.stdout.strip():
         identity["git_commit"] = commit_result.stdout.strip()
-    if status_result.returncode == 0:
-        entries = _publishable_git_status(status_result.stdout, repository)
-        identity["dirty"] = bool(entries)
-        identity["dirty_fingerprint"] = hashlib.sha256(
-            b"\0".join(entries)
-        ).hexdigest()
     identity["runtime_fingerprint_version"] = _RUNTIME_FINGERPRINT_VERSION
     identity["runtime_fingerprint_scope"] = list(_RUNTIME_FINGERPRINT_SCOPE)
     identity["runtime_fingerprint"] = _runtime_fingerprint(
@@ -768,10 +768,20 @@ def source_identity(
         status_result.stdout if status_result.returncode == 0 else b"",
         run=run,
     )
+    if status_result.returncode == 0:
+        entries = _publishable_git_status(status_result.stdout)
+        identity["dirty"] = bool(entries)
+        # Reuse the scoped content digest: informational dirty metadata must
+        # never trigger a second, repository-wide pass over dataset contents.
+        identity["dirty_fingerprint"] = hashlib.sha256(
+            b"\0".join([*entries, identity["runtime_fingerprint"].encode("ascii")])
+        ).hexdigest()
     return identity
 
 
 def _is_runtime_path(relative: str) -> bool:
+    if ".dpeva" in Path(relative).parts:
+        return False
     return relative == "pyproject.toml" or relative == "src/dpeva" or relative.startswith(
         "src/dpeva/"
     )
@@ -791,7 +801,7 @@ def _runtime_fingerprint(
     while still recording deleted tracked files and symlink targets.
     """
     tracked_result = run(
-        ["git", "ls-files", "--cached", "-z", "--", "src/dpeva", "pyproject.toml"],
+        ["git", "ls-files", "--cached", "-z", "--", *_RUNTIME_GIT_PATHSPEC],
         cwd=repository,
         check=False,
         text=False,
@@ -816,7 +826,9 @@ def _runtime_fingerprint(
     for paths in _status_paths(status_output):
         for path in paths:
             relative = os.fsdecode(path)
-            if relative.startswith("src/dpeva/") and relative.endswith(".py"):
+            if _is_runtime_path(relative) and (
+                relative.endswith(".py") or relative == "pyproject.toml"
+            ):
                 runtime_paths.add(relative)
 
     records: list[bytes] = []
@@ -870,8 +882,8 @@ def _status_paths(output: bytes | str) -> list[list[bytes]]:
     return paths
 
 
-def _publishable_git_status(output: bytes | str, repository: Path) -> list[bytes]:
-    """Hash raw NUL-delimited porcelain entries without machine paths."""
+def _publishable_git_status(output: bytes | str) -> list[bytes]:
+    """Collect scoped porcelain metadata without opening any files."""
     raw = output if isinstance(output, bytes) else output.encode("utf-8")
     fields = raw.split(b"\0")
     entries: list[bytes] = []
@@ -888,27 +900,13 @@ def _publishable_git_status(output: bytes | str, repository: Path) -> list[bytes
                 continue
             paths.append(fields[index])
             index += 1
-        if not all(item == b".dpeva" or not item.startswith(b".dpeva/") for item in paths):
-            continue
-        parts = [status]
-        for item in paths:
-            candidate = repository / os.fsdecode(item)
-            if candidate.is_symlink():
-                try:
-                    content = b"symlink:" + os.fsencode(os.readlink(candidate))
-                except OSError:
-                    content = b"unreadable"
-            elif candidate.is_file():
-                try:
-                    content = b"sha256:" + _sha256(candidate).encode("ascii")
-                except OSError:
-                    content = b"unreadable"
-            elif not candidate.exists():
-                content = b"deleted"
-            else:
-                content = b"non-file"
-            parts.extend((item, content))
-        entries.append(b"\0".join(parts))
+        scoped = [
+            item for item in paths
+            if _is_runtime_path(os.fsdecode(item))
+            and (status != b"??" or item.endswith(b".py") or item == b"pyproject.toml")
+        ]
+        if scoped:
+            entries.append(b"\0".join([status, *scoped]))
     return sorted(entries)
 
 

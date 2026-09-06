@@ -145,6 +145,10 @@ DP-EVA (Deep Potential EVolution Accelerator, 深度势能演化加速器) 是�
 
 工作流只有在进程/作业成功、声明产物已验证且 run manifest 进入 `finished` 时才算完成。
 单独写入 completion marker 不足以证明成功；失败、partial 和 submitted 必须保留其状态与证据。
+本地 infer 的自动分析由父工作流统一发出完成标记；每个嵌套 analysis 只记录阶段结果，
+全部分析成功且父清单进入 `finished` 后才输出一次标记。独立 analysis 保留原有完成标记。
+来源身份的 Git 查询在枚举前限定 runtime scope，并排除任意深度 `.dpeva`；dirty 元数据
+复用 runtime 内容摘要，不为 provenance 读取无关文档、数据集或日志内容。
 
 #### 1.6.5 AGENTS 与开发文档的治理边界
 *   `AGENTS.md` 只承担项目开发最小入口职责，用于帮助 AI 与人类开发者快速建立项目心智模型。

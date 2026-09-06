@@ -384,9 +384,9 @@ def test_source_identity_requires_tracked_package_file_and_counts_untracked(tmp_
     source = repo / "src/dpeva/__init__.py"
     source.parent.mkdir(parents=True)
     source.write_text("# source")
-    (repo / "src/new.py").write_text("new-v1")
+    (repo / "src/dpeva/new.py").write_text("new-v1")
     (repo / ".git").mkdir()
-    statuses = {"clean": "", "dirty": "?? src/new.py\n"}
+    statuses = {"clean": "", "dirty": "?? src/dpeva/new.py\n"}
     for label, status in statuses.items():
         calls: list[list[str]] = []
 
@@ -404,7 +404,10 @@ def test_source_identity_requires_tracked_package_file_and_counts_untracked(tmp_
         assert identity["git_commit"] == "d" * 40
         assert identity["dirty"] is (label == "dirty")
         assert all(str(repo) not in value for value in identity.values() if isinstance(value, str))
-        assert ["git", "status", "--porcelain=v1", "-z", "--untracked-files=all"] in calls
+        status_call = next(command for command in calls if command[1] == "status")
+        assert status_call[2:6] == ["--porcelain=v1", "-z", "--untracked-files=all", "--"]
+        assert "src/dpeva" in status_call[6:]
+        assert "pyproject.toml" in status_call[6:]
 
 
 def test_source_identity_does_not_claim_enclosing_consumer_repo(tmp_path: Path) -> None:
@@ -433,7 +436,7 @@ def test_source_identity_ignores_run_evidence_and_fingerprints_other_dirty_paths
     statuses = {
         "clean": "",
         "evidence-only": "?? .dpeva/runs/current/run.json\n",
-        "untracked": "?? src/new.py\n",
+        "untracked": "?? src/dpeva/new.py\n",
         "modified": " M src/dpeva/__init__.py\n",
     }
     identities = {}
@@ -461,7 +464,7 @@ def test_source_identity_changes_when_same_status_path_content_changes(tmp_path:
     source.parent.mkdir(parents=True)
     source.write_text("# tracked-v1")
     (repo / ".git").mkdir()
-    untracked = repo / "src/new.py"
+    untracked = repo / "src/dpeva/new.py"
     untracked.write_text("untracked-v1")
 
     def run(command, **kwargs):
@@ -471,7 +474,7 @@ def test_source_identity_changes_when_same_status_path_content_changes(tmp_path:
             return subprocess.CompletedProcess(command, 0, "src/dpeva/__init__.py\n", "")
         if command[1:3] == ["rev-parse", "HEAD"]:
             return subprocess.CompletedProcess(command, 0, "1" * 40 + "\n", "")
-        return subprocess.CompletedProcess(command, 0, " M src/dpeva/__init__.py\0?? src/new.py\0", "")
+        return subprocess.CompletedProcess(command, 0, " M src/dpeva/__init__.py\0?? src/dpeva/new.py\0", "")
 
     first = source_identity(source, run=run)
     source.write_text("# tracked-v2")
@@ -505,7 +508,7 @@ def test_source_identity_real_git_raw_paths_are_content_sensitive(tmp_path: Path
     assert modified["dirty"] is True
     assert clean["dirty_fingerprint"] != modified["dirty_fingerprint"]
 
-    untracked = repo / "未追踪 file name.py"
+    untracked = repo / "src/dpeva/未追踪 file name.py"
     untracked.write_text("untracked-v1", encoding="utf-8")
     untracked_v1 = source_identity(source)
     untracked.write_text("untracked-v2", encoding="utf-8")
@@ -535,7 +538,9 @@ def test_source_identity_real_git_rename_record_is_consumed(tmp_path: Path) -> N
     assert identity["dirty_fingerprint"]
 
 
-def test_source_identity_scopes_clean_runtime_content_and_ignores_docs_evidence(tmp_path: Path) -> None:
+def test_source_identity_scopes_clean_runtime_content_and_ignores_docs_evidence(
+    tmp_path: Path, monkeypatch
+) -> None:
     repo = tmp_path / "runtime repo"
     source = repo / "src/dpeva/__init__.py"
     source.parent.mkdir(parents=True)
@@ -566,7 +571,19 @@ def test_source_identity_scopes_clean_runtime_content_and_ignores_docs_evidence(
     (repo / "scientific-data" / "raw.xyz").write_text("data", encoding="utf-8")
     (repo / ".dpeva").mkdir()
     (repo / ".dpeva" / "run.json").write_text("evidence", encoding="utf-8")
+    (repo / "job.log").write_text("log", encoding="utf-8")
+    (source.parent / "untracked-array.npy").write_bytes(b"scientific array")
+    reads = []
+    original_open = Path.open
+
+    def record_read(path, mode="r", *args, **kwargs):
+        if "r" in mode:
+            reads.append(path)
+        return original_open(path, mode, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "open", record_read)
     docs_dirty = source_identity(source)
+    assert set(reads) == {source, repo / "pyproject.toml"}
     assert docs_dirty["runtime_fingerprint"] == clean["runtime_fingerprint"]
 
     git("add", "docs/notes.md")
@@ -582,6 +599,48 @@ def test_source_identity_scopes_clean_runtime_content_and_ignores_docs_evidence(
     (repo / "src/dpeva/runtime_extra.py").write_text("runtime-v2", encoding="utf-8")
     runtime_dirty = source_identity(source)
     assert runtime_dirty["runtime_fingerprint"] != tracked_dirty["runtime_fingerprint"]
+    git("add", "src/dpeva/__init__.py", "src/dpeva/runtime_extra.py")
+    git("commit", "-qm", "runtime-change")
+    runtime_committed = source_identity(source)
+    assert runtime_committed["runtime_fingerprint"] == runtime_dirty["runtime_fingerprint"]
+    assert runtime_committed["runtime_fingerprint"] != clean["runtime_fingerprint"]
+
+
+@pytest.mark.parametrize("tracked", [False, True])
+@pytest.mark.parametrize("relative", [".dpeva/cache.py", "src/dpeva/.dpeva/cache.py", "src/dpeva/nested/.dpeva/cache.py"])
+def test_source_identity_excludes_nested_run_evidence_before_reads(
+    tmp_path: Path, monkeypatch, tracked: bool, relative: str
+) -> None:
+    source = tmp_path / "src/dpeva/__init__.py"
+    source.parent.mkdir(parents=True)
+    source.write_text("runtime", encoding="utf-8")
+    evidence = tmp_path / relative
+    evidence.parent.mkdir(parents=True, exist_ok=True)
+    evidence.write_text("evidence-v1", encoding="utf-8")
+
+    def git(*args):
+        subprocess.run(["git", *args], cwd=tmp_path, check=True, capture_output=True)
+
+    git("init", "-q")
+    git("config", "user.email", "test@example.invalid")
+    git("config", "user.name", "test")
+    git("add", "src/dpeva/__init__.py")
+    if tracked:
+        git("add", relative)
+    git("commit", "-qm", "initial")
+    clean = source_identity(source)
+    evidence.write_text("evidence-v2", encoding="utf-8")
+    original_open = Path.open
+
+    def forbid_evidence_read(path, mode="r", *args, **kwargs):
+        if "r" in mode:
+            assert ".dpeva" not in path.parts, f"Read run evidence: {path}"
+        return original_open(path, mode, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "open", forbid_evidence_read)
+    changed = source_identity(source)
+    assert changed["dirty"] is False
+    assert changed["runtime_fingerprint"] == clean["runtime_fingerprint"]
 
 
 def test_resume_uses_scoped_runtime_fingerprint_and_rejects_legacy_unscoped_source(

@@ -103,7 +103,9 @@ submission backend。未知字段与新旧字段冲突仍然严格失败。
 Slurm 多模型 infer 若仅部分 JobID 提交成功，父清单保持 `submitted` 并保留失败子记录，
 但命令以退出码 `1` 返回；全部提交失败才记为 `failed`。
 清单 `source` 记录 DP-EVA 包版本，并在 git 信息可观察时记录 commit、dirty 状态与稳定
-dirty fingerprint（运行自身的 `.dpeva` 证据路径不计入）。新清单还记录版本化的
+dirty fingerprint（dirty 元数据也限定 runtime scope，并复用 runtime 内容摘要）。
+Git 查询在枚举前排除 scope 外路径及任意深度的 `.dpeva`，不读取无关文档、数据集或日志内容。
+新清单还记录版本化的
 `runtime_fingerprint` 及其 scope：`src/dpeva` 与 `pyproject.toml` 的 tracked 内容、删除和
 symlink，以及 `src/dpeva` 下未追踪的 Python runtime 文件；文档、数据集、日志和任意
 `.dpeva` 内容不在 scope 内。resume 使用该 scoped fingerprint：只改文档的 commit 不会

@@ -1,5 +1,6 @@
 import hashlib
 import json
+import logging
 import shlex
 import subprocess
 import sys
@@ -17,6 +18,7 @@ from dpeva.utils.logs import close_workflow_logger
 from dpeva.utils.exceptions import PartialWorkflowError, WorkflowError
 from dpeva.workflows.feature import FeatureWorkflow
 from dpeva.workflows.infer import InferenceWorkflow
+from dpeva.workflows.analysis import AnalysisWorkflow
 
 
 def _feature_config(tmp_path, *, backend="local", savedir=None):
@@ -216,35 +218,65 @@ def test_infer_real_local_children_do_not_leak_marker_on_partial(
     ).read_text(encoding="utf-8")
 
 
-def test_infer_real_local_child_does_not_leak_marker_on_analysis_failure(
-    tmp_path, monkeypatch
+@pytest.mark.parametrize("fail_second", [False, True])
+def test_infer_nested_analysis_emits_only_finished_parent_marker(
+    tmp_path, monkeypatch, fail_second
 ) -> None:
     config = _infer_config(tmp_path)
     config.auto_analysis = True
+    second = config.work_dir / "1" / "model.ckpt.pt"
+    second.parent.mkdir(parents=True)
+    second.write_bytes(b"model")
+    manifest = config.work_dir / ".dpeva/runs/infer-nested-analysis/run.json"
+    analyzed = []
+    marker_states = []
+
+    class MarkerObserver(logging.Handler):
+        def emit(self, record):
+            if record.getMessage() == WORKFLOW_FINISHED_TAG:
+                marker_states.append(json.loads(manifest.read_text())["status"])
 
     def successful_test(self, **kwargs):
         return "printf 'prediction\\n' > results.e.out"
 
-    def fail_analysis(self):
-        raise WorkflowError("analysis failed")
+    def analyze_model(self, output_dir):
+        model_index = Path(output_dir).parents[1].name
+        analyzed.append(model_index)
+        if fail_second and model_index == "1":
+            raise WorkflowError("second model analysis failed")
+        self.io_manager.save_metrics({"e_mae": 0.1})
 
     monkeypatch.setattr(DeepMDAdapter, "test", successful_test)
-    monkeypatch.setattr(InferenceWorkflow, "analyze_results", fail_analysis)
+    # Keep both workflow run methods and the nested logging lifecycle real.
+    monkeypatch.setattr(AnalysisWorkflow, "_run_model_mode", analyze_model)
+    observer = MarkerObserver()
+    logging.getLogger("dpeva").addHandler(observer)
     try:
-        with pytest.raises(WorkflowError, match="analysis failed"):
-            InferenceWorkflow(
-                config, run_options=RunOptions(run_id="infer-analysis-failed")
-            ).run()
+        workflow = InferenceWorkflow(
+            config, run_options=RunOptions(run_id="infer-nested-analysis")
+        )
+        if fail_second:
+            with pytest.raises(WorkflowError):
+                workflow.run()
+        else:
+            workflow.run()
     finally:
+        logging.getLogger("dpeva").removeHandler(observer)
         close_workflow_logger("dpeva", str(config.work_dir / LOG_FILE_INFER))
 
-    payload = json.loads(
-        (config.work_dir / ".dpeva/runs/infer-analysis-failed/run.json").read_text()
-    )
-    assert payload["status"] == "failed"
-    assert WORKFLOW_FINISHED_TAG not in (
+    payload = json.loads(manifest.read_text())
+    assert analyzed == ["0", "1"]
+    assert payload["status"] == ("failed" if fail_second else "finished")
+    assert marker_states == ([] if fail_second else ["finished"])
+    assert (
         config.work_dir / LOG_FILE_INFER
-    ).read_text(encoding="utf-8")
+    ).read_text(encoding="utf-8").count(WORKFLOW_FINISHED_TAG) == (0 if fail_second else 1)
+    logs = [item for item in payload["artifacts"] if item["kind"] == "log"]
+    assert logs
+    for artifact in logs:
+        assert artifact["checksum"] == hashlib.sha256(
+            (config.work_dir / artifact["path"]).read_bytes()
+        ).hexdigest()
 
 
 def test_feature_missing_output_is_artifact_failure(tmp_path, monkeypatch) -> None:
