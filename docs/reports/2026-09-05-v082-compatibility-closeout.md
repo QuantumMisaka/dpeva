@@ -88,8 +88,20 @@ The retained records cover:
 4. `python -m build --no-isolation` in an isolated build-tool venv, wheel/sdist
    metadata and capability JSON inspection, and outside-checkout wheel smoke.
 
-The exact record names are `final-focused.typescript`,
-`final-release.typescript`, and `final-build-package-smoke.typescript`.
+At the final source revision `b4a29f1`, the focused boundary passed with 38
+tests. The corrected shared `release` profile passed with 47 tests and seven
+named external-fixture skips. The first release record failed before this
+correction because its ignored wrapper replaced `PATH` with a minimal list and
+hid the WSL CUDA driver directory; the retained DeepMD stderr identified
+`libcuda.so` loading as the first failing operation. Prepending the project
+environment to the existing quoted `PATH` restored driver discovery and made
+the same release profile pass without a production change.
+
+The exact final record names are `final-focused.typescript`,
+`final-release-corrected.typescript`, and `package-corrected-v2.typescript`.
+The earlier failed `final-release.typescript`, diagnostic integration
+reproduction, and first package-inspection attempt remain retained as
+historical evidence rather than being overwritten.
 
 The raw logs, not a copied terminal excerpt in this report, are the
 authoritative results and revision binding. The implementation task report in
