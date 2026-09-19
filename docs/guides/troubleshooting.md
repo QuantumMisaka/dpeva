@@ -2,7 +2,7 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-06-10
+last-updated: 2026-09-20
 owner: Docs Owner
 ---
 
@@ -91,6 +91,28 @@ DPEVA_TAG: WORKFLOW_FINISHED
 
 - 确认训练集与候选池在 `type_map.raw` 的元素顺序一致
 - Analysis 的 `type_map` 必须与训练/数据一致
+
+### 5.3 `deepmd/lmdb` 输入无法加载或被拒绝
+
+症状：
+
+- `load_systems` 报 `DatasetLoadError`，提示 "Reading 'deepmd/lmdb' requires dpdata>=1.1"
+- Feature 的 `eval-desc`/`embed` 在提交前报 "cannot consume a DeepMD LMDB dataset"
+- Analysis/Clean 报 `-d` 明细 "reports an LMDB data source"
+
+处理：
+
+- 先跑 `dpeva doctor --json`：`dpdata.lmdb` 检查为 `ok` 表示当前环境可读 LMDB；
+  为 `unavailable` 时升级到 `dpdata>=1.1`（预置环境需重建或补装）
+- 数据路径按 deepmd-kit 的判定规则识别：目录名以 `.lmdb` 结尾，或目录内含 `data.mdb`
+- LMDB 不保存目录级体系身份，读回结果按**组成分组**；需要逐 system 统计或
+  `target_systems=` 筛选时，改用同一数据集的 `deepmd/npy`/`npy/mixed` 副本
+- `dp eval-desc`/`dp embed` 上游不支持 LMDB；Feature 工作流请指向 npy/mixed 副本，
+  或使用进程内 `DescriptorGenerator` 路径
+- 训练（`dp train`）支持 LMDB，但 `training_data.systems` 必须是**单个 LMDB 路径**；
+  不要把多个 LMDB 放在一个容器目录里让 DP-EVA 展开
+- `dp test` 自报的聚合指标在 LMDB 上有效；逐帧逐 system 的明细归属需要
+  帧索引映射（见 `docs/superpowers/plans/2026-09-20-lmdb-format-compatibility.md`）
 
 ## 6. 作业与调度类问题（Slurm）
 

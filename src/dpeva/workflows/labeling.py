@@ -221,7 +221,9 @@ class LabelingWorkflow:
                         if d.name.startswith("."):
                             continue
                         logger.info(f"Loading dataset: {d.name}")
-                        loaded = load_systems(str(d), fmt="auto")
+                        # An empty pool is a legitimate state for this discovery
+                        # scan; the workflow reports it and keeps going.
+                        loaded = load_systems(str(d), fmt="auto", on_empty="warn")
                         if loaded:
                             ms = dpdata.MultiSystems()
                             for s in loaded:

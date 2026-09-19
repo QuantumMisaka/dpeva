@@ -21,6 +21,10 @@ implementation work. They are not a replacement for project-level plans in
 
 - [v0.8.2 compatibility closeout](2026-09-05-v082-compatibility-closeout.md): six tasks and independent final re-review completed; branch retained without merge, push, tag, or publication. [Verified closeout](../../reports/2026-09-05-v082-compatibility-closeout.md).
 
+## Proposed plans
+
+- [LMDB 数据格式兼容](2026-09-20-lmdb-format-compatibility.md)（status: proposed）: 读侧契约、失败语义、能力矩阵 `data_format` 维度、消费链对齐与写出侧的完整编排；执行前需确认计划 §2 的 D1–D5 决策门。需求来源见 [LMDB 读取支持提案](../../reports/2026-09-19-lmdb-read-support.md)。
+
 ## Superseding status pointer
 
 The Plans A–E files remain historical execution records and are not rewritten when

@@ -12,6 +12,7 @@ from dpeva.compatibility import DeepMDAdapter
 from dpeva.submission import JobManager, JobConfig
 from dpeva.submission.guards import guarded_command
 from dpeva.utils.exceptions import WorkflowError
+from dpeva.io.dataset import is_lmdb_path
 
 class TrainingConfigManager:
     """
@@ -61,14 +62,30 @@ class TrainingConfigManager:
             # 2. Expand directory if it's a container folder
             current_systems_path = data_config["systems"]
             if isinstance(current_systems_path, str) and os.path.isdir(current_systems_path):
+                if is_lmdb_path(current_systems_path):
+                    # deepmd-kit reads LMDB as a single data source, so the path
+                    # must reach the training config unchanged.
+                    self.logger.info(
+                        f"Task {task_idx}: {section_name} uses a DeepMD LMDB dataset; "
+                        "passing the path through unchanged."
+                    )
                 # Check if this directory is ITSELF a system (has type.raw)
-                if not os.path.exists(os.path.join(current_systems_path, "type.raw")):
+                elif not os.path.exists(os.path.join(current_systems_path, "type.raw")):
                     # It's likely a container directory. Scan for subdirectories.
                     sub_dirs = [
                         os.path.join(current_systems_path, d)
                         for d in os.listdir(current_systems_path)
                         if os.path.isdir(os.path.join(current_systems_path, d))
                     ]
+                    lmdb_sub_dirs = [d for d in sub_dirs if is_lmdb_path(d)]
+                    if lmdb_sub_dirs:
+                        raise ValueError(
+                            f"Task {task_idx}: {section_name} path '{current_systems_path}' contains "
+                            f"LMDB dataset(s) {lmdb_sub_dirs} next to other entries. deepmd-kit reads an "
+                            "LMDB as one data source, so a container of datasets cannot be expanded "
+                            "into a system list. Point the config at the LMDB directory itself, or at "
+                            "one deepmd/npy tree."
+                        )
                     if sub_dirs:
                         sub_dirs.sort()
                         data_config["systems"] = sub_dirs

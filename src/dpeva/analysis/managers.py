@@ -16,7 +16,7 @@ from dpeva.constants import (
     UNIT_ENERGY_PER_ATOM,
     UNIT_FORCE,
 )
-from dpeva.io.dataset import load_systems
+from dpeva.io.dataset import is_lmdb_path, load_systems
 from collections import Counter
 
 
@@ -86,6 +86,15 @@ class AnalysisIOManager:
         """Load composition info using dpdata."""
         if not data_path or not os.path.exists(data_path):
             self.logger.warning("dpdata not available or data_path invalid. Skipping composition loading.")
+            return None, None
+
+        if is_lmdb_path(data_path):
+            self.logger.warning(
+                "Skipping composition loading for LMDB input %s: dp test evaluates an LMDB as "
+                "nloc groups, so per-frame composition cannot be aligned with the system order "
+                "used here yet. Relative energies fall back to mean subtraction.",
+                data_path,
+            )
             return None, None
 
         try:

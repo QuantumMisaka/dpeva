@@ -93,7 +93,7 @@ def test_verify_atom_counts(tmp_path):
     mock_sys1 = {"atom_types": [0, 0, 1]}
     mock_sys2 = {"atom_types": [0]*10}
     
-    def side_effect_load(path):
+    def side_effect_load(path, on_empty="error"):
         name = os.path.basename(path)
         if name == "sys1":
             return [mock_sys1]

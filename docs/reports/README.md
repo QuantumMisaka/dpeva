@@ -45,7 +45,8 @@ owner: Docs Owner
 
 ## 5. Active Focused Reports
 
-- 当前无 active focused report。已闭环专题报告请查看 [v0.8.0 归档报告索引](../archive/v0.8.0/reports/README.md)。
+- [2026-09-19-lmdb-read-support.md](2026-09-19-lmdb-read-support.md) — 数据侧格式扩展提案：`io.dataset` 支持 `deepmd/lmdb` 输入，并把「零 system 加载」从静默返回空改为报错（含依赖边界 `dpdata>=1.1`、验收标准与 GitHub issue 摘要）。
+- 已闭环专题报告请查看 [v0.8.0 归档报告索引](../archive/v0.8.0/reports/README.md)。
 
 ## 6. Active Experiment Series
 

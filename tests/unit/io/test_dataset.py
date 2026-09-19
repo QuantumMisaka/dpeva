@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 from unittest.mock import MagicMock, patch
-from dpeva.io.dataset import load_systems
+from dpeva.io.dataset import DatasetLoadError, load_systems
 
 class TestDatasetLoader:
     @pytest.fixture
@@ -90,8 +90,19 @@ class TestDatasetLoader:
 
     def test_load_systems_invalid_path(self, data_dir):
         """Test behavior with invalid path."""
-        systems = load_systems(str(data_dir / "nonexistent"), fmt="auto")
-        assert len(systems) == 0
+        with pytest.raises(DatasetLoadError, match="auto-discover"):
+            load_systems(str(data_dir / "nonexistent"), fmt="auto")
+
+    def test_load_systems_invalid_path_can_be_tolerated(self, data_dir):
+        """Callers that deliberately tolerate an empty dataset opt in explicitly."""
+        systems = load_systems(
+            str(data_dir / "nonexistent"), fmt="auto", on_empty="warn"
+        )
+        assert systems == []
+
+    def test_load_systems_rejects_unknown_empty_policy(self, data_dir):
+        with pytest.raises(ValueError, match="on_empty must be one of"):
+            load_systems(str(data_dir), fmt="auto", on_empty="ignore")
 
     def test_load_single_system_optimization(self, data_dir):
         """Test the optimization path for loading a single system directory."""
@@ -141,7 +152,7 @@ class TestDatasetLoader:
         (data_dir / "subsys").mkdir()
         
         # Mock _load_single_path to succeed for subsys and fail for others
-        def side_effect(path, name):
+        def side_effect(path, name, fmt="auto"):
             if "set.000" in path:
                 raise ValueError("Should not be called")
             if "subsys" in path:
@@ -153,15 +164,15 @@ class TestDatasetLoader:
         with patch("dpeva.io.dataset._load_single_path", side_effect=side_effect) as mock_load:
             # We also need to mock MultiSystems to fail so it goes to fallback
             with patch("dpeva.io.dataset.dpdata.MultiSystems.from_file", side_effect=Exception("Fail")):
-                load_systems(str(data_dir), fmt="auto")
-                
-                # Should contain sys1, sys2, subsys. Should NOT contain set.000
-                # load_systems scans dirs. sys1, sys2, subsys, set.000 are in data_dir.
-                # set.000 should be filtered out by the new logic.
-                
-                # Verify load was NOT called for set.000
-                for call in mock_load.call_args_list:
-                    assert "set.000" not in call[0][0], f"set.000 should be filtered but was called: {call[0][0]}"
+                systems = load_systems(str(data_dir), fmt="auto")
+
+                # The fallback scan must load the real system directories and
+                # never treat the internal set.000 folder as a system.
+                assert len(systems) == 3
+                loaded_paths = [call[0][0] for call in mock_load.call_args_list]
+                assert any("sys1" in path for path in loaded_paths)
+                assert any("subsys" in path for path in loaded_paths)
+                assert not any("set.000" in path for path in loaded_paths)
  
 
     def test_fix_duplicate_atom_names(self):

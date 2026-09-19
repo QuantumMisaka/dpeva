@@ -2,7 +2,7 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-07-01
+last-updated: 2026-09-20
 owner: Workflow Owner
 ---
 
@@ -36,6 +36,11 @@ owner: Workflow Owner
 默认安装在核心依赖中提供有界的 `deepmd-kit>=3.1.2,<3.3`，用于保留现有
 3.1.2 运行包络。这个依赖边界是安装兼容性承诺，不是新的科学能力验证；能力
 矩阵和 3.2 证据仍由显式 lane 单独管理。在项目根目录执行：
+
+核心依赖中的 `dpdata>=1.1` 是数据侧能力边界：读取 `deepmd/lmdb` 需要该下限，
+`lmdb` 与 `msgpack` 由 dpdata 自身引入。预置环境（`--no-deps`）若仍是
+`dpdata<1.1`，`deepmd/lmdb` 输入会被明确拒绝；`dpeva doctor` 的 `dpdata.lmdb`
+检查会报告实际可读性。
 
 ```bash
 python -m pip install -e .

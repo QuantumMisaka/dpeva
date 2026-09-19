@@ -7,6 +7,8 @@ import logging
 import numpy as np
 import os
 
+from dpeva.io.dataset import DatasetLoadError, is_lmdb_detail_label
+
 class DPTestResultParser:
     """
     Parses the output results from `dp test` command.
@@ -254,6 +256,14 @@ class DPTestResultParser:
                         parts = line.split(':')
                         if len(parts) >= 2:
                             raw_path = parts[0].strip().lstrip('#').strip()
+                            if is_lmdb_detail_label(raw_path):
+                                raise DatasetLoadError(
+                                    f"{filename} reports an LMDB data source ({raw_path!r}). "
+                                    "dp test evaluates an LMDB as nloc groups, so these rows cannot "
+                                    "be attributed to systems yet; DP-EVA refuses to emit per-system "
+                                    "statistics from them. Use the deepmd/npy copy of the dataset, or "
+                                    "consume the dp test aggregates directly."
+                                )
                             path_clean = os.path.normpath(raw_path)
                             path_parts = path_clean.split(os.sep)
                             path_parts = [p for p in path_parts if p and p != '.']
@@ -335,7 +345,7 @@ class DPTestResultParser:
                 
                 if os.path.exists(sys_path):
                     try:
-                        systems = load_systems(sys_path)
+                        systems = load_systems(sys_path, on_empty="warn")
                         if systems and len(systems) > 0:
                             natom = len(systems[0]["atom_types"])
                             natom_source = "testdata_dir"

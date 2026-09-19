@@ -50,6 +50,55 @@ class TestFeatureExecutionManager:
         assert "module load deepmd" in job_config.env_setup
         assert job_config.partition == "gpu"
 
+    def test_submit_cli_job_rejects_lmdb_before_submission(self, mock_job_manager, tmp_path):
+        """dp eval-desc / dp embed have no LMDB reader, so refuse before scheduling."""
+        lmdb = tmp_path / "pool.lmdb"
+        lmdb.mkdir()
+        (lmdb / "data.mdb").write_bytes(b"")
+        manager = FeatureExecutionManager(
+            backend="slurm",
+            slurm_config={"partition": "gpu"},
+            env_setup="",
+            dp_backend="pt",
+            omp_threads=1,
+        )
+
+        with pytest.raises(ValueError, match="cannot consume a DeepMD LMDB dataset"):
+            manager.submit_cli_job(
+                data_path=str(lmdb),
+                output_dir=str(tmp_path / "out"),
+                model_path="model.pt",
+                head=None,
+                sub_pools=[],
+            )
+
+        mock_job_manager.return_value.generate_script.assert_not_called()
+
+    def test_submit_cli_job_rejects_lmdb_pool(self, mock_job_manager, tmp_path):
+        """A multi-pool input that contains an LMDB pool is refused as well."""
+        container = tmp_path / "pools"
+        (container / "p1.lmdb").mkdir(parents=True)
+        (container / "p1.lmdb" / "data.mdb").write_bytes(b"")
+        manager = FeatureExecutionManager(
+            backend="slurm",
+            slurm_config={"partition": "gpu"},
+            env_setup="",
+            dp_backend="pt",
+            omp_threads=1,
+        )
+
+        with pytest.raises(ValueError, match="cannot consume a DeepMD LMDB dataset"):
+            manager.submit_cli_job(
+                data_path=str(container),
+                output_dir=str(tmp_path / "out"),
+                model_path="model.pt",
+                head=None,
+                sub_pools=["p1.lmdb"],
+                feature_exporter="embed",
+            )
+
+        mock_job_manager.return_value.generate_script.assert_not_called()
+
     def test_submit_cli_job_multi_pool(self, mock_job_manager, tmp_path):
         """Test CLI job submission for multi-pool."""
         manager = FeatureExecutionManager(

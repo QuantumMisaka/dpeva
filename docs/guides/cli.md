@@ -2,7 +2,7 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-09-06
+last-updated: 2026-09-20
 owner: Docs Owner
 ---
 
@@ -84,7 +84,8 @@ DeepMD 版本检查保留两个诊断 lane：稳定的 `>=3.1.2,<3.3` 是默认�
 `unavailable`。每项可带 `required=false` 表示信息性能力（例如 CUDA/GPU 和可选
 后端），其不可用不会阻止 CPU-safe 工作流。默认检查 DeepMD 版本以及 `test`、
 `eval-desc`、`embed` CLI surface，并显式报告 dpdata、Torch/CUDA、GPU 可见性和
-可选后端。
+可选后端。`dpdata.lmdb` 是独立的信息性检查：它报告当前 dpdata 能否读取
+`deepmd/lmdb`（需要 `dpdata>=1.1`），不可用不会把仅使用 npy/mixed 的环境判为失败。
 
 ## 4. 子命令职责、输入输出与配置
 

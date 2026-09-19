@@ -16,6 +16,8 @@ from dpeva.constants import (
 )
 
 
+DPDATA_MIN_LMDB_VERSION = "1.1"
+
 DEEPMD_RUNTIME_DETAIL = (
     f"runtime envelope >= {LEGACY_MIN_DEEPMD_VERSION}, < {MAX_DEEPMD_VERSION}"
 )
@@ -217,6 +219,52 @@ def _probe_python_package(name: str, *, required: bool) -> DoctorCheck:
     )
 
 
+def probe_dpdata_lmdb(dpdata: DoctorCheck) -> DoctorCheck:
+    """Report whether the installed dpdata can read ``deepmd/lmdb`` datasets.
+
+    Reading LMDB needs ``dpdata>=1.1``; that floor is a data-IO capability, not
+    a DeepMD version claim, so it is reported independently and never turns a
+    working npy-only environment into a failed report.
+    """
+    detail_prefix = f"LMDB read requires dpdata>={DPDATA_MIN_LMDB_VERSION}"
+    if dpdata.status != "ok" or dpdata.version is None:
+        return DoctorCheck(
+            name="dpdata.lmdb",
+            status="unavailable",
+            version=dpdata.version,
+            detail=f"{detail_prefix}; dpdata is not importable ({dpdata.detail})",
+            required=False,
+        )
+    try:
+        parsed = Version(dpdata.version)
+    except InvalidVersion:
+        return DoctorCheck(
+            name="dpdata.lmdb",
+            status="unknown",
+            version=dpdata.version,
+            detail=f"unparsed dpdata version; {detail_prefix}",
+            required=False,
+        )
+    if parsed < Version(DPDATA_MIN_LMDB_VERSION):
+        return DoctorCheck(
+            name="dpdata.lmdb",
+            status="unavailable",
+            version=dpdata.version,
+            detail=(
+                f"{detail_prefix}; dpdata {dpdata.version} cannot read deepmd/lmdb "
+                "(install dpdata>=1.1 or use the deepmd/npy copy)"
+            ),
+            required=False,
+        )
+    return DoctorCheck(
+        name="dpdata.lmdb",
+        status="ok",
+        version=dpdata.version,
+        detail=f"deepmd/lmdb readable (dpdata {dpdata.version}, lmdb/msgpack come with dpdata)",
+        required=False,
+    )
+
+
 def _probe_torch_cuda(
     torch_module: Any | None = None,
     cuda_probe: Callable[[Any], bool] | None = None,
@@ -266,6 +314,7 @@ def _default_checks(
         )
     )
     checks.append(_probe_python_package("dpdata", required=True))
+    checks.append(probe_dpdata_lmdb(checks[-1]))
     checks.append(_probe_python_package("torch", required=True))
     checks.append(_probe_torch_cuda(torch_module=torch_module, cuda_probe=cuda_probe))
     gpu = _probe_command("gpu.visibility", ["nvidia-smi", "-L"], run=run, required=False)

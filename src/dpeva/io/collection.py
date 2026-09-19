@@ -125,7 +125,7 @@ class CollectionIOManager:
     def count_frames(self, data_dir: str, fmt: str = "auto") -> int:
         """Counts total frames in dataset."""
         try:
-            systems = load_systems(data_dir, fmt=fmt)
+            systems = load_systems(data_dir, fmt=fmt, on_empty="warn")
             return sum(len(sys) for sys in systems)
         except Exception as e:
             self.logger.warning(f"Failed to count frames in {data_dir}: {e}")

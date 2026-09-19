@@ -35,6 +35,33 @@ def test_load_composition_info_returns_none_for_invalid_path(tmp_path):
     assert atom_nums is None
 
 
+def test_load_composition_info_skips_lmdb_and_warns(tmp_path, caplog):
+    """An LMDB is evaluated by nloc groups, so its composition cannot be aligned yet."""
+    lmdb_dir = tmp_path / "data.lmdb"
+    lmdb_dir.mkdir()
+    (lmdb_dir / "data.mdb").write_bytes(b"")
+    manager = InferenceIOManager(str(tmp_path))
+
+    with caplog.at_level("WARNING"):
+        atom_counts, atom_nums = manager.load_composition_info(str(lmdb_dir))
+
+    assert (atom_counts, atom_nums) == (None, None)
+    assert "LMDB" in caplog.text
+    assert "mean subtraction" in caplog.text
+
+
+@patch("dpeva.inference.managers.load_systems")
+def test_load_composition_info_does_not_read_lmdb(mock_load_systems, tmp_path):
+    lmdb_dir = tmp_path / "data.lmdb"
+    lmdb_dir.mkdir()
+    (lmdb_dir / "data.mdb").write_bytes(b"")
+    manager = InferenceIOManager(str(tmp_path))
+
+    manager.load_composition_info(str(lmdb_dir))
+
+    mock_load_systems.assert_not_called()
+
+
 @patch("dpeva.inference.managers.load_systems", side_effect=RuntimeError("dpdata failed"))
 def test_load_composition_info_falls_back_to_none_on_exception(mock_load_systems, tmp_path):
     data_dir = tmp_path / "data"

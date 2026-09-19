@@ -125,8 +125,8 @@ class UQManager:
                     continue
             
             try:
-                # Load system
-                systems = load_systems(sys_path)
+                # Load system; an unresolved path stays a skip, not a failure.
+                systems = load_systems(sys_path, on_empty="warn")
                 if not systems:
                     continue
                     

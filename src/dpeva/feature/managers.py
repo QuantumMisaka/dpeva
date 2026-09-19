@@ -10,6 +10,7 @@ from dpeva.compatibility import DeepMDAdapter
 from dpeva.submission import JobManager, JobConfig
 from dpeva.submission.guards import guarded_command
 from dpeva.utils.exceptions import WorkflowError
+from dpeva.io.dataset import is_lmdb_path
 
 logger = logging.getLogger(__name__)
 
@@ -108,6 +109,17 @@ class FeatureExecutionManager:
         abs_data_path = os.path.abspath(data_path)
         abs_output_dir = os.path.abspath(output_dir)
         os.makedirs(abs_output_dir, exist_ok=True)
+
+        if is_lmdb_path(abs_data_path) or any(
+            is_lmdb_path(os.path.join(abs_data_path, pool)) for pool in sub_pools
+        ):
+            raise ValueError(
+                f"feature_exporter={feature_exporter!r} cannot consume a DeepMD LMDB dataset "
+                f"({data_path!r}): deepmd-kit builds 'dp eval-desc'/'dp embed' on expand_sys_str + "
+                "DeepmdData, which have no LMDB reader (verified on 3.2.0 GA, the local dev build "
+                "and upstream master). Use the deepmd/npy copy of the dataset, or compute "
+                "descriptors in-process with DescriptorGenerator."
+            )
 
         if feature_exporter == "eval_desc":
             if feature_kind != "descriptor":

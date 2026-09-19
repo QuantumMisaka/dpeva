@@ -10,6 +10,7 @@ from dpeva.run.doctor import (
     DoctorReport,
     build_doctor_report,
     probe_deepmd,
+    probe_dpdata_lmdb,
 )
 
 
@@ -21,6 +22,29 @@ def test_import_dpeva_does_not_probe_external_commands(monkeypatch) -> None:
     )
 
     importlib.reload(dpeva)
+
+
+def test_probe_dpdata_lmdb_reports_available_capability() -> None:
+    check = probe_dpdata_lmdb(DoctorCheck(name="dpdata", status="ok", version="1.1.0", detail="import succeeded"))
+
+    assert check.name == "dpdata.lmdb"
+    assert check.status == "ok"
+    assert check.required is False
+
+
+def test_probe_dpdata_lmdb_flags_old_dpdata_without_failing() -> None:
+    check = probe_dpdata_lmdb(DoctorCheck(name="dpdata", status="ok", version="1.0.2", detail="import succeeded"))
+
+    assert check.status == "unavailable"
+    assert check.required is False
+    assert "dpdata>=1.1" in check.detail
+
+
+def test_probe_dpdata_lmdb_handles_missing_package() -> None:
+    check = probe_dpdata_lmdb(DoctorCheck(name="dpdata", status="missing", detail="package unavailable"))
+
+    assert check.status == "unavailable"
+    assert check.required is False
 
 
 def test_probe_deepmd_available_is_structured() -> None:

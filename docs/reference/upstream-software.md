@@ -2,7 +2,7 @@
 title: Upstream Software
 status: active
 audience: Users / Developers
-last-updated: 2026-09-06
+last-updated: 2026-09-20
 owner: Docs Owner
 ---
 
@@ -63,10 +63,24 @@ policy capability，不映射为 DeepMD CLI command。
 ## 2. dpdata
 
 - 仓库地址：https://github.com/deepmodeling/dpdata
-- 核心功能：处理 `deepmd/npy`、`deepmd/npy/mixed` 等机器学习势结构数据格式。
+- 版本下限：`dpdata>=1.1`（核心依赖）。读取 `deepmd/lmdb` 需要 `>=1.1`；`lmdb` 与 `msgpack`
+  由 dpdata 自身声明为运行依赖，DP-EVA 不新增直接依赖。
+- 核心功能：处理 `deepmd/npy`、`deepmd/npy/mixed`、`deepmd/lmdb` 等机器学习势结构数据格式。
 - 在 DP-EVA 中的作用：
   - 负责数据集加载、结构读写与多系统数据组织。
   - 为采样、标注、分析等流程提供统一的数据结构接口。
+
+### 2.1 数据格式支持矩阵（2026-09-20 实测）
+
+| 消费方 | `deepmd/npy` / `npy/mixed` | `deepmd/lmdb` | 说明 |
+|---|---|---|---|
+| DP-EVA 读侧（`dpeva.io.dataset.load_systems`） | ✓ | ✓（dpdata≥1.1） | LMDB 只经 `dpdata.MultiSystems` 读取；体系分组口径为**组成分组** |
+| `dp train`（`training_data` / `validation_data`） | ✓ | ✓ | 要求 `systems` 为**单个字符串**路径，deepmd-kit 3.2 起原生流式读取 |
+| `dp test` | ✓ | ✓ | 整个 LMDB 视作 1 个数据源，按 nloc 分组评测；`-d` 明细行序 = nloc 组升序 |
+| `dp eval-desc` / `dp embed` | ✓ | ✗ | 上游基于 `expand_sys_str` + `DeepmdData`，无 LMDB 读取分支（3.2.0 GA、本地 dev 构建与 upstream master 均已核实）；DP-EVA 在提交作业前拒绝该组合 |
+
+`dp test` 在 LMDB 上不保留目录级体系身份，因此 DP-EVA 目前拒绝从 LMDB 明细文件推导
+逐 system 统计（见 `docs/guides/troubleshooting.md` §5.3）；`dp test` 自报的聚合指标不受影响。
 
 ## 3. ABACUS
 
@@ -106,7 +120,7 @@ policy capability，不映射为 DeepMD CLI command。
 | 依赖 | 主要阶段 | 角色定位 |
 |---|---|---|
 | DeepMD-kit | Train / Infer / Feature（默认有界；显式 3.2 lane） | 机器学习势训练与推理计算引擎；默认 `>=3.1.2,<3.3`，用户 extra `dpeva[deepmd]`，研究生产锁定 `==3.2.0` |
-| dpdata | Data IO / Labeling / Analysis | 结构数据格式与系统组织层 |
+| dpdata | Data IO / Labeling / Analysis | 结构数据格式与系统组织层；核心依赖下限 `>=1.1`（`deepmd/lmdb` 读取需要） |
 | ABACUS | Labeling | 第一性原理计算后端 |
 | ASE | Labeling / Exploration | 原子结构对象与结构读写基础 |
 | atst-tools | Exploration（可选） | md/relax 轨迹探索后端 |

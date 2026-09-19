@@ -71,6 +71,32 @@ class TestTrainingConfigManager:
         assert str(container / "sys1") in systems
         assert str(container / "sys2") in systems
 
+    def test_resolve_data_path_passes_lmdb_through(self, config_manager, tmp_path):
+        """deepmd-kit reads an LMDB as one data source, so the path must stay a string."""
+        lmdb = tmp_path / "data" / "train.lmdb"
+        lmdb.mkdir(parents=True)
+        (lmdb / "data.mdb").write_bytes(b"")
+        (lmdb / "lock.mdb").write_bytes(b"")
+
+        config = config_manager.base_config.copy()
+        config["training"]["training_data"]["systems"] = str(lmdb)
+
+        config_manager.resolve_data_path(config, 0)
+
+        assert config["training"]["training_data"]["systems"] == str(lmdb)
+
+    def test_resolve_data_path_rejects_container_of_lmdb(self, config_manager, tmp_path):
+        """A directory holding LMDB sets cannot be expanded into a system list."""
+        container = tmp_path / "data" / "container"
+        (container / "train.lmdb").mkdir(parents=True)
+        (container / "train.lmdb" / "data.mdb").write_bytes(b"")
+
+        config = config_manager.base_config.copy()
+        config["training"]["training_data"]["systems"] = str(container)
+
+        with pytest.raises(ValueError, match="contains LMDB dataset"):
+            config_manager.resolve_data_path(config, 0)
+
     def test_resolve_data_path_override(self, config_manager):
         """Test override mechanism."""
         config = config_manager.base_config.copy()
