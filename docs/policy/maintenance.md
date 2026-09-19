@@ -2,7 +2,7 @@
 title: 文档版本管理与维护机制 (Maintenance)
 status: active
 audience: Maintainers
-last-updated: 2026-09-05
+last-updated: 2026-09-20
 owner: Docs Owner
 ---
 
@@ -16,6 +16,21 @@ owner: Docs Owner
   - 更新示例（`examples/recipes`）
   - 更新/新增回归测试（unit 或 integration）
 - 报告与归档文档默认冻结：新增通过“新文件”形式，不在旧报告中“覆盖式修改结论”。
+
+### 1.1 文档新鲜度与冻结记录
+
+`python scripts/run_gate.py docs_freshness`（`scripts/check_docs_freshness.py`）要求活文档在
+窗口内被复核。两类文档按不同规则处理：
+
+- **活文档**（Guide / Reference / 索引 README / 策略）：复核后更新 front matter 的
+  `last-updated`；超期即门禁失败，提示需要复核。
+- **冻结记录**（带日期的审计、审查、合规报告，以及架构决策 ADR，例如
+  `architecture/decisions/<date>-<topic>.md`、`governance/reviews/*_<date>.md`）：其价值在于
+  记录当时状态，**不得**为了通过门禁而改写时间戳；改在 front matter 声明
+  `status: record`，该文件即从新鲜度扫描中豁免（脚本会打印豁免数量）。
+
+新增冻结记录时：`status: record` + 在文件名或正文中保留日期身份；不要把它改成 `active`
+再手工维护 `last-updated`。
 
 ## 2. Ownership（责任到人/模块）
 
@@ -62,7 +77,7 @@ Owner 可以是角色而非具体姓名；但每篇 `active` 文档必须有 Own
 
 - 基线门禁：文档变更必须通过 `python scripts/run_gate.py docs_pr`；完整发布必须通过
   `python scripts/run_gate.py release`。命令与 argv 只维护在
-  [`scripts/gates.toml`](../../scripts/gates.toml)。
+  `scripts/gates.toml`。
 - 责任归属：
   - 所有 `active` 文档必须声明 `owner` 或 `owners`
   - Owner 角色映射与覆盖追踪统一维护在 `docs/governance/inventory/owners-matrix.md`

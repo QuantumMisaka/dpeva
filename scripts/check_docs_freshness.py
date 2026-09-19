@@ -10,6 +10,11 @@ import yaml
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_EXCLUDE_DIRS = ["archive", "_templates", "assets", "build", "img", "source"]
+# Dated audit/review records and architecture decision records are frozen by the
+# maintenance policy: their value is the record of the state at that time, so
+# they are exempt from the "review within N days" sweep instead of having their
+# timestamps rewritten.  Living documents must carry a reviewed `last-updated`.
+RECORD_STATUS = "record"
 
 
 def parse_front_matter(content):
@@ -63,12 +68,18 @@ def check_freshness(root_dir, days_threshold=30, exclude_dirs=None):
     now = datetime.now().astimezone()
     threshold = timedelta(days=days_threshold)
     stale_files = []
+    record_files = []
 
     print(f"Checking documentation freshness (Threshold: {days_threshold} days)...")
 
     for file_path in root_path.rglob("*.md"):
         rel_path = file_path.relative_to(root_path)
         if any(part in exclude_dirs for part in rel_path.parts):
+            continue
+
+        meta = parse_front_matter(file_path.read_text(encoding="utf-8")) or {}
+        if str(meta.get("status", "")).strip().lower() == RECORD_STATUS:
+            record_files.append(str(rel_path))
             continue
 
         last_modified = get_front_matter_last_updated(file_path, now.tzinfo)
@@ -79,6 +90,8 @@ def check_freshness(root_dir, days_threshold=30, exclude_dirs=None):
             if age > threshold:
                 stale_files.append((str(rel_path), age.days))
 
+    if record_files:
+        print(f"Skipped {len(record_files)} frozen record(s) with status: {RECORD_STATUS}.")
     return stale_files
 
 
