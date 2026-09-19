@@ -44,7 +44,7 @@ dev = [
     "pytest>=7.0",
     "pytest-cov>=4.0",
     "black>=22.0",
-    "ruff>=0.1.0",
+    "ruff>=0.15,<0.17",
     "mypy>=1.0",
     "tomli>=1.1.0; python_version < '3.11'",
 ]
@@ -77,6 +77,16 @@ where = ["src"]
 
 [tool.setuptools.package-data]
 dpeva = ["compatibility/*.json"]
+
+[tool.ruff]
+target-version = "py310"
+
+[tool.ruff.lint]
+# The lint gate declares its rule set explicitly so that a new ruff release
+# cannot silently expand `python scripts/run_gate.py lint` into a repository-wide
+# rewrite. The current selection is the historical ruff default set, which the
+# whole repository passes; widening it is a deliberate, reviewable change.
+select = ["E4", "E7", "E9", "F"]
 
 [tool.setuptools.dynamic]
 version = {attr = "dpeva.__version__"}

@@ -1,4 +1,5 @@
 import json
+import importlib.util
 import os
 import shlex
 import shutil
@@ -39,6 +40,21 @@ def _require_slurm():
         pytest.skip("sbatch not found in PATH")
     if shutil.which("squeue") is None:
         pytest.skip("squeue not found in PATH")
+
+
+def _require_deepmd_runtime():
+    """Skip when the DeepMD CLI cannot actually run in this environment.
+
+    The dev extra installs the bounded ``deepmd-kit`` package but not torch, so
+    ``dp eval-desc`` / ``dp test`` abort in a bare CI environment.  The chain is
+    exercised where a working runtime exists instead of reporting a false
+    failure here.
+    """
+    interpreter_dp = Path(sys.executable).resolve().parent / "dp"
+    if shutil.which("dp") is None and not interpreter_dp.is_file():
+        pytest.skip("dp executable not found in PATH")
+    if importlib.util.find_spec("torch") is None:
+        pytest.skip("DeepMD runtime requires torch; the dev extra does not install it")
 
 
 def _env_setup_lines(backend: str) -> list[str]:
@@ -124,9 +140,7 @@ def _write_config(path: Path, cfg: dict) -> None:
 def test_multidatapool_e2e(tmp_path: Path, backend: str):
     if backend == "slurm":
         _require_slurm()
-    
-    # For local execution, we might want to skip if dependencies (like deepmd) are not installed in current env
-    # But we assume the dev env has them.
+    _require_deepmd_runtime()
 
     src_root = _source_data_root()
     work_dir = tmp_path / "work"

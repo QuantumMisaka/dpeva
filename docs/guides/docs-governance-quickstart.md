@@ -29,8 +29,8 @@ owner: Docs Owner
 
 ## 3. 提交前最低检查
 
-可执行门禁目录是 [`scripts/gates.toml`](../../scripts/gates.toml)，分发器是
-[`scripts/run_gate.py`](../../scripts/run_gate.py)。文档变更执行：
+可执行门禁目录是 `scripts/gates.toml`，分发器是
+`scripts/run_gate.py`。文档变更执行：
 
 ```bash
 python scripts/run_gate.py docs_pr

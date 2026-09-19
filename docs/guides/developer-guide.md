@@ -85,7 +85,7 @@ DP-EVA (Deep Potential EVolution Accelerator, 深度势能演化加速器) 是�
     *   **技术细节**: 将详细的实现细节、配置参数字典、算法推导等内容沉淀至 `docs/reference/` 或 `docs/guides/` 下的专项文档中。
     *   **废弃清理**: 及时标记并清理过时的文档与代码。
     *   **治理入口**: 首次参与贡献请先阅读 `docs/guides/docs-governance-quickstart.md`。
-    *   **提交前检查**: 使用 [gate manifest](../../scripts/gates.toml) 中声明的 `docs_pr` profile：`python scripts/run_gate.py docs_pr`。
+    *   **提交前检查**: 使用 gate manifest `scripts/gates.toml` 中声明的 `docs_pr` profile：`python scripts/run_gate.py docs_pr`。
 
 ### 1.5 核心工程契约 (Core Engineering Contracts)
 
@@ -135,7 +135,7 @@ DP-EVA (Deep Potential EVolution Accelerator, 深度势能演化加速器) 是�
 *   首次参与贡献时，建议先阅读 `docs/guides/docs-governance-quickstart.md`
 
 #### 1.6.3 提交前质量门禁
-*   可执行门禁目录是 [`scripts/gates.toml`](../../scripts/gates.toml)；[`scripts/run_gate.py`](../../scripts/run_gate.py) 是本地与托管入口唯一的命令分发器。
+*   可执行门禁目录是 `scripts/gates.toml`；`scripts/run_gate.py` 是本地与托管入口唯一的命令分发器。
 *   日常代码检查：`python scripts/run_gate.py local`。
 *   文档检查：`python scripts/run_gate.py docs_pr`；发布检查：`python scripts/run_gate.py release`。
 *   每个 profile 只证明其声明的层级；DeepMD 资格 profile 只在发布改变 DeepMD 能力声明时调用。当前能力矩阵仅有 3 条 DPA4 `supported` 记录，DPA4C 仍为 experimental。

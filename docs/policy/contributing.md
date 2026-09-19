@@ -74,7 +74,7 @@ owner: Docs Owner
 ## 7. 稳态化提交流程（标准）
 
 1. 在提交前执行 `python scripts/run_gate.py docs_pr`；门禁命令的唯一来源是
-   [`scripts/gates.toml`](../../scripts/gates.toml)。需要完整发布验证时执行
+   `scripts/gates.toml`。需要完整发布验证时执行
    `python scripts/run_gate.py release`。
 2. 在英文 PR 描述中填写：
    - 变更摘要和 public-contract impact；

@@ -51,19 +51,36 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Check protected fixture availability
+        id: fixtures
+        env:
+          DPEVA_DEEPMD_CONTRACT_FIXTURE_URL: ${{ secrets.DPEVA_DEEPMD_CONTRACT_FIXTURE_URL || vars.DPEVA_DEEPMD_CONTRACT_FIXTURE_URL }}
+          DPEVA_DEEPMD_CONTRACT_FIXTURE_SHA256: ${{ secrets.DPEVA_DEEPMD_CONTRACT_FIXTURE_SHA256 || vars.DPEVA_DEEPMD_CONTRACT_FIXTURE_SHA256 }}
+        run: |
+          if [ -n "${DPEVA_DEEPMD_CONTRACT_FIXTURE_URL:-}" ] && \
+             [ -n "${DPEVA_DEEPMD_CONTRACT_FIXTURE_SHA256:-}" ]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=DeepMD DPA4 CPU contract skipped::Protected fixture bundle is not configured (DPEVA_DEEPMD_CONTRACT_FIXTURE_URL / DPEVA_DEEPMD_CONTRACT_FIXTURE_SHA256). Configure the deepmd-contract environment to enable this lane; until then the DPA4 CPU contract stays unverified rather than failing."
+          fi
+
       - name: Set up Python
+        if: steps.fixtures.outputs.available == 'true'
         uses: actions/setup-python@v5
         with:
           python-version: "3.10"
           cache: "pip"
 
       - name: Install exact DeepMD contract environment
+        if: steps.fixtures.outputs.available == 'true'
         run: |
           python -m pip install --upgrade pip
           python -m pip install -e '.[dev]'
           python -m pip install 'deepmd-kit==3.2.0'
 
       - name: Prepare protected DeepMD contract fixture bundle
+        if: steps.fixtures.outputs.available == 'true'
         env:
           DPEVA_DEEPMD_CONTRACT_FIXTURE_URL: ${{ secrets.DPEVA_DEEPMD_CONTRACT_FIXTURE_URL || vars.DPEVA_DEEPMD_CONTRACT_FIXTURE_URL }}
           DPEVA_DEEPMD_CONTRACT_FIXTURE_SHA256: ${{ secrets.DPEVA_DEEPMD_CONTRACT_FIXTURE_SHA256 || vars.DPEVA_DEEPMD_CONTRACT_FIXTURE_SHA256 }}
@@ -100,10 +117,11 @@ jobs:
           } >> "$GITHUB_ENV"
 
       - name: Run supported DPA4 CPU contract gate
+        if: steps.fixtures.outputs.available == 'true'
         run: python scripts/run_gate.py deepmd_contract
 
       - name: Upload DeepMD contract evidence
-        if: always()
+        if: always() && steps.fixtures.outputs.available == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: deepmd-cpu-contract
@@ -121,19 +139,38 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Check protected fixture availability
+        id: fixtures
+        env:
+          DPEVA_DEEPMD_CONTRACT_FIXTURE_URL: ${{ secrets.DPEVA_DEEPMD_CONTRACT_FIXTURE_URL || vars.DPEVA_DEEPMD_CONTRACT_FIXTURE_URL }}
+          DPEVA_DEEPMD_CONTRACT_FIXTURE_SHA256: ${{ secrets.DPEVA_DEEPMD_CONTRACT_FIXTURE_SHA256 || vars.DPEVA_DEEPMD_CONTRACT_FIXTURE_SHA256 }}
+          DPEVA_DEEPMD_DPA4C_HEAD: ${{ vars.DPEVA_DEEPMD_DPA4C_HEAD }}
+        run: |
+          if [ -n "${DPEVA_DEEPMD_CONTRACT_FIXTURE_URL:-}" ] && \
+             [ -n "${DPEVA_DEEPMD_CONTRACT_FIXTURE_SHA256:-}" ] && \
+             [ -n "${DPEVA_DEEPMD_DPA4C_HEAD:-}" ]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=Experimental DPA4C CPU contract skipped::Protected fixture bundle or DPA4C head is not configured; the experimental lane stays unverified rather than failing. It must be dispatched explicitly with run_dpa4c anyway."
+          fi
+
       - name: Set up Python
+        if: steps.fixtures.outputs.available == 'true'
         uses: actions/setup-python@v5
         with:
           python-version: "3.10"
           cache: "pip"
 
       - name: Install exact DeepMD contract environment
+        if: steps.fixtures.outputs.available == 'true'
         run: |
           python -m pip install --upgrade pip
           python -m pip install -e '.[dev]'
           python -m pip install 'deepmd-kit==3.2.0'
 
       - name: Prepare protected experimental DPA4C fixture bundle
+        if: steps.fixtures.outputs.available == 'true'
         env:
           DPEVA_DEEPMD_CONTRACT_FIXTURE_URL: ${{ secrets.DPEVA_DEEPMD_CONTRACT_FIXTURE_URL || vars.DPEVA_DEEPMD_CONTRACT_FIXTURE_URL }}
           DPEVA_DEEPMD_CONTRACT_FIXTURE_SHA256: ${{ secrets.DPEVA_DEEPMD_CONTRACT_FIXTURE_SHA256 || vars.DPEVA_DEEPMD_CONTRACT_FIXTURE_SHA256 }}
@@ -170,10 +207,11 @@ jobs:
           } >> "$GITHUB_ENV"
 
       - name: Run experimental DPA4C CPU contract gate
+        if: steps.fixtures.outputs.available == 'true'
         run: python scripts/run_gate.py deepmd_dpa4c_contract
 
       - name: Upload experimental DPA4C contract evidence
-        if: always()
+        if: always() && steps.fixtures.outputs.available == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: deepmd-dpa4c-experimental-contract

@@ -68,7 +68,7 @@ owner: Docs Owner
   必须包含 docs 更新说明。仅当新增或更新 active 文档时要求 owner/owners；仅当工作属于
   重大架构、迁移或发布时按文档生命周期维护计划/报告。
 
-门禁目录与命令只维护在 [`scripts/gates.toml`](../../scripts/gates.toml)；本页解释
+门禁目录与命令只维护在 `scripts/gates.toml`；本页解释
 验收含义，不复制 argv。`release` profile 包含无写入的版本面一致性检查；Sphinx
 release identity 从包版本导入。DeepMD 资格门禁不属于普通文档/软件发布的默认证明，只有
 发布声明 DeepMD 能力时才单独调用，并且必须引用真实资格证据。
