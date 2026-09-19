@@ -2,7 +2,7 @@
 title: Technical Reports
 status: active
 audience: Developers
-last-updated: 2026-09-06
+last-updated: 2026-09-20
 owner: Docs Owner
 ---
 
@@ -45,7 +45,7 @@ owner: Docs Owner
 
 ## 5. Active Focused Reports
 
-- [2026-09-19-lmdb-read-support.md](2026-09-19-lmdb-read-support.md) — 数据侧格式扩展提案：`io.dataset` 支持 `deepmd/lmdb` 输入，并把「零 system 加载」从静默返回空改为报错（含依赖边界 `dpdata>=1.1`、验收标准与 GitHub issue 摘要）。
+- [2026-09-19-lmdb-read-support.md](2026-09-19-lmdb-read-support.md) — 数据侧格式扩展提案：`io.dataset` 支持 `deepmd/lmdb` 输入，并把「零 system 加载」从静默返回空改为报错（含依赖边界 `dpdata>=1.1`、验收标准与 GitHub issue 摘要）。**读侧已实施**（`bf1b58d`）；报告内容按冻结原则保持原样，剩余范围与决策门见 [实施计划](../superpowers/plans/2026-09-20-lmdb-format-compatibility.md)，上游 `eval-desc`/`embed` 缺口见 [deepmd-kit#6034](https://github.com/deepmodeling/deepmd-kit/issues/6034)。
 - 已闭环专题报告请查看 [v0.8.0 归档报告索引](../archive/v0.8.0/reports/README.md)。
 
 ## 6. Active Experiment Series

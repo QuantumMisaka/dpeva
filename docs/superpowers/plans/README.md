@@ -23,7 +23,7 @@ implementation work. They are not a replacement for project-level plans in
 
 ## Proposed plans
 
-- [LMDB 数据格式兼容](2026-09-20-lmdb-format-compatibility.md)（status: proposed）: 读侧契约、失败语义、能力矩阵 `data_format` 维度、消费链对齐与写出侧的完整编排；执行前需确认计划 §2 的 D1–D5 决策门。需求来源见 [LMDB 读取支持提案](../../reports/2026-09-19-lmdb-read-support.md)。
+- [LMDB 数据格式兼容](2026-09-20-lmdb-format-compatibility.md)（status: proposed）: 读侧契约、失败语义、能力矩阵 `data_format` 维度、消费链对齐与写出侧的完整编排。**Phase 1 已实施**（`bf1b58d`、`ac58940`，见计划 §9.3）；Phase 2–5 与决策门 D2–D4 仍待确认。需求来源见 [LMDB 读取支持提案](../../reports/2026-09-19-lmdb-read-support.md)。
 
 ## Superseding status pointer
 

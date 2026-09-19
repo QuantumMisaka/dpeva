@@ -374,3 +374,27 @@ LMDB 是扁平帧存储，按组成分组读回；原始目录级体系身份只
 - **Ruling（LMDB 分组命名）**：LMDB 读回的分组没有名称，`load_systems` 为其合成 `"<lmdb 目录名>[<组成式>]"` 作为 `target_name`，用于日志与图表标签；不声称这是原始体系名。代价：若下游把它当成真实体系名做匹配，会得到组成分组语义——已在文档与本记录中说明。
 - **Ruling（拒绝而非静默降级）**：`target_systems`、`-d` 明细解析、`eval-desc`/`embed`、容器多 LMDB 四类场景一律前置报错，而不是给出"看起来合理"的结果。代价：原先能被静默容忍的用法会显式失败（例如用 LMDB 跑 Clean），这正是本次要消除的失败模式。
 - **偏离**：计划 T9 原定实现帧索引映射；本轮先落"识别并拒绝"，因为把 nloc 组映射回体系还需同时回答 D3 的承诺等级与 sidecar 缺失策略。
+
+### 9.3 落地、CI 与收口判定（2026-09-20）
+
+**落地提交（已在 main）**
+
+| commit | 内容 |
+|---|---|
+| `bf1b58d` | `feat(io): read deepmd/lmdb datasets and fail loud on unreadable inputs`（T1–T4、T7、T8 拒绝分支、T9 拒绝分支、T6 登记） |
+| `ac58940` | `docs: reference upstream LMDB issue for eval-desc/embed`（回填上游 issue 编号） |
+
+**CI 结果（推送后核对）**
+
+| 检查 | 结果 | 归因 |
+|---|---|---|
+| `Python Quality / unit-tests` | ✅ | 本轮改动通过 CI 单测与覆盖率门 |
+| `Python Quality / audit` | ✅ | — |
+| `Python Quality / explore-extra-smoke` | ✅ | — |
+| `Python Quality / lint` | ❌ 既有 | dev extra 只声明 `ruff>=0.1.0`，CI 使用 ruff 0.16.8；**基线 commit `8cf5c51` 上已有 1071 条**报错，本地 ruff 0.15.15 全绿 |
+| `Python Quality / integration-tests` | ❌ 既有 | `test_multidatapool_e2e[local]` 在 `8cf5c51` 上同样失败：dev extra 不含 torch，`dp eval-desc` 无法启动 |
+| `Docs Build & Check` | ❌ 既有 | 8 条 `myst.xref_missing`，全部来自 5 个本轮未改动文件（指向 `../../scripts/gates.toml`）；main 自 2026-09-06 起红，本地因 doctree 缓存未暴露 |
+| `Documentation Governance` | ❌ 既有 | `docs_audit` + freshness（多篇文档 >90 天），2026-09-14 周更已红 |
+| `DeepMD 3.2 CPU Contract` / `Deploy Docs` | ❌ 既有 | 需受保护 fixture 的 qualification lane / 跟随 docs 构建失败 |
+
+**收口判定**：本轮交付范围（读侧契约、失败语义、可支持路径透传、不可支持组合前置拒绝、依赖边界与 doctor、文档与追踪登记）已完成并推送，CI 中直接检验本改动的三项检查全绿。计划自身保持 `proposed`：Phase 2–5 与决策门 D2–D4 未实施，表内其余红灯为既有问题，不由本轮引入、也不在本计划范围内。
