@@ -36,7 +36,7 @@
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="../../../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="../../../_static/documentation_options.js?v=7b805e1b"></script>
+    <script src="../../../_static/documentation_options.js?v=5b31c4f0"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -524,7 +524,7 @@ window.runMermaid = runMermaid;</script>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../../reference/index.html">Reference</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../../reference/README.html">Reference（权威参考）</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../reference/validation.html">参数校验与约束（Validation Rules）</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../reference/upstream-software.html">上游软件与核心依赖（Upstream Software）</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../reference/upstream-software.html">上游软件与依赖边界（Upstream Software）</a></li>
 </ul>
 </details></li>
 </ul>
@@ -679,13 +679,19 @@ document.write(`
 <span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Union</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">dpeva.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">InferenceConfig</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dpeva.inference.managers</span><span class="w"> </span><span class="kn">import</span> <span class="n">InferenceIOManager</span><span class="p">,</span> <span class="n">InferenceExecutionManager</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dpeva.constants</span><span class="w"> </span><span class="kn">import</span> <span class="n">WORKFLOW_FINISHED_TAG</span><span class="p">,</span> <span class="n">LOG_FILE_INFER</span><span class="p">,</span> <span class="n">FILENAME_METRICS_JSON</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dpeva.utils.logs</span><span class="w"> </span><span class="kn">import</span> <span class="n">setup_workflow_logger</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">dpeva.utils.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">WorkflowError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dpeva.utils.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">PartialWorkflowError</span><span class="p">,</span> <span class="n">WorkflowError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dpeva.run.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">RunContext</span><span class="p">,</span> <span class="n">RunOptions</span><span class="p">,</span> <span class="n">input_identity</span><span class="p">,</span> <span class="n">source_identity</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dpeva.run.artifacts</span><span class="w"> </span><span class="kn">import</span> <span class="n">AttemptOutputBaseline</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dpeva.run.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelArtifactRef</span><span class="p">,</span> <span class="n">require_backend</span><span class="p">,</span> <span class="n">require_operation</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dpeva.run.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">JobRecord</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dpeva.run.status</span><span class="w"> </span><span class="kn">import</span> <span class="n">RunEventKind</span><span class="p">,</span> <span class="n">RunState</span>
 
 <div class="viewcode-block" id="InferenceWorkflow">
 <a class="viewcode-back" href="../../../api/workflows.html#dpeva.workflows.InferenceWorkflow">[文档]</a>
@@ -696,7 +702,15 @@ document.write(`
 <span class="sd">    Refactored using DDD Managers.</span>
 <span class="sd">    """</span>
     
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Dict</span><span class="p">,</span> <span class="n">InferenceConfig</span><span class="p">],</span> <span class="n">config_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">config</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Dict</span><span class="p">,</span> <span class="n">InferenceConfig</span><span class="p">],</span>
+        <span class="n">config_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">original_config</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">config_metadata</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">run_options</span><span class="p">:</span> <span class="n">RunOptions</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
 <span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Initialize the Inference Workflow.</span>
 
@@ -709,8 +723,23 @@ document.write(`
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">config</span>
 
+        <span class="bp">self</span><span class="o">.</span><span class="n">original_config</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">original_config</span> <span class="k">if</span> <span class="n">original_config</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"json"</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">config_metadata</span> <span class="o">=</span> <span class="n">config_metadata</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">run_options</span> <span class="o">=</span> <span class="n">run_options</span> <span class="ow">or</span> <span class="n">RunOptions</span><span class="p">()</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">config_path</span> <span class="o">=</span> <span class="n">config_path</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_setup_logger</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">model_ref_paths</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">config_path</span><span class="p">:</span>
+            <span class="n">config_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config_path</span><span class="p">)</span><span class="o">.</span><span class="n">expanduser</span><span class="p">()</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span><span class="o">.</span><span class="n">parent</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">model_ref_paths</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">path</span>
+                <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">()</span><span class="o">.</span><span class="n">is_absolute</span><span class="p">()</span>
+                <span class="k">else</span> <span class="p">(</span><span class="n">config_dir</span> <span class="o">/</span> <span class="n">path</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
+                <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">model_ref_paths</span>
+            <span class="p">]</span>
         
         <span class="c1"># Core Configurations</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">work_dir</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">work_dir</span><span class="p">)</span>
@@ -730,8 +759,24 @@ document.write(`
         <span class="bp">self</span><span class="o">.</span><span class="n">task_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">task_name</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">head</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">model_head</span>
         
-        <span class="c1"># Model discovery</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">models_paths</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">io_manager</span><span class="o">.</span><span class="n">discover_models</span><span class="p">()</span>
+        <span class="c1"># Model identity. Explicit references are authoritative; the empty</span>
+        <span class="c1"># configuration remains a one-release bridge for existing work dirs.</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">model_ref_paths</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model_refs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ModelArtifactRef</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">io_manager</span><span class="o">.</span><span class="n">load_model_refs</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">model_ref_paths</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="s2">"model_ref_paths is empty; using legacy numeric-directory model discovery "</span>
+                <span class="s2">"(regular-only) for this release (family=legacy-unknown)"</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model_refs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">io_manager</span><span class="o">.</span><span class="n">discover_model_refs</span><span class="p">(</span>
+                <span class="n">family</span><span class="o">=</span><span class="s2">"legacy-unknown"</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">dp_backend</span>
+            <span class="p">)</span>
+        <span class="k">for</span> <span class="n">ref</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_refs</span><span class="p">:</span>
+            <span class="n">require_backend</span><span class="p">(</span><span class="n">ref</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">dp_backend</span><span class="p">)</span>
+            <span class="n">require_operation</span><span class="p">(</span><span class="n">ref</span><span class="p">,</span> <span class="s2">"test"</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">models_paths</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">io_manager</span><span class="o">.</span><span class="n">paths_from_refs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_refs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Discovered </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">models_paths</span><span class="p">)</span><span class="si">}</span><span class="s2"> models in </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">work_dir</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_setup_logger</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -748,6 +793,142 @@ document.write(`
 <span class="sd">        3. Submits parallel inference jobs (dp test) via Slurm or Local backend.</span>
 <span class="sd">        4. Optionally triggers analysis based on explicit config.</span>
 <span class="sd">        """</span>
+        <span class="n">env_backend</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"DPEVA_INTERNAL_BACKEND"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">env_backend</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Overriding backend to '</span><span class="si">{</span><span class="n">env_backend</span><span class="si">}</span><span class="s2">'"</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">execution_manager</span><span class="o">.</span><span class="n">backend</span> <span class="o">=</span> <span class="n">env_backend</span>
+
+        <span class="n">context</span> <span class="o">=</span> <span class="n">RunContext</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+            <span class="n">work_dir</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">work_dir</span><span class="p">,</span>
+            <span class="n">workflow</span><span class="o">=</span><span class="s2">"infer"</span><span class="p">,</span>
+            <span class="n">options</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">run_options</span><span class="p">,</span>
+            <span class="n">original_config</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">original_config</span><span class="p">,</span>
+            <span class="n">normalized_config</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"json"</span><span class="p">),</span>
+            <span class="n">config_metadata</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config_metadata</span><span class="p">,</span>
+            <span class="n">source_factory</span><span class="o">=</span><span class="n">source_identity</span><span class="p">,</span>
+            <span class="n">input_factories</span><span class="o">=</span><span class="p">[</span>
+                <span class="k">lambda</span><span class="p">:</span> <span class="n">input_identity</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data_path</span><span class="p">,</span> <span class="s2">"dataset"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">work_dir</span><span class="p">),</span>
+                <span class="o">*</span><span class="p">[</span>
+                    <span class="k">lambda</span> <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">:</span> <span class="n">input_identity</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s2">"model"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">work_dir</span><span class="p">,</span> <span class="n">require_exists</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">model</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">models_paths</span>
+                <span class="p">],</span>
+            <span class="p">],</span>
+        <span class="p">)</span>
+        <span class="n">log_baseline</span> <span class="o">=</span> <span class="n">AttemptOutputBaseline</span><span class="o">.</span><span class="n">capture</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_discover_log_files</span><span class="p">())</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">backend</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">execution_manager</span><span class="o">.</span><span class="n">backend</span>
+            <span class="n">state</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">recorder</span><span class="o">.</span><span class="n">manifest</span><span class="o">.</span><span class="n">status</span>
+            <span class="k">if</span> <span class="n">state</span> <span class="ow">is</span> <span class="n">RunState</span><span class="o">.</span><span class="n">CREATED</span><span class="p">:</span>
+                <span class="n">context</span><span class="o">.</span><span class="n">recorder</span><span class="o">.</span><span class="n">transition</span><span class="p">(</span><span class="n">RunState</span><span class="o">.</span><span class="n">VALIDATED</span><span class="p">)</span>
+                <span class="n">state</span> <span class="o">=</span> <span class="n">RunState</span><span class="o">.</span><span class="n">VALIDATED</span>
+            <span class="k">if</span> <span class="n">state</span> <span class="ow">is</span> <span class="n">RunState</span><span class="o">.</span><span class="n">PARTIAL</span><span class="p">:</span>
+                <span class="n">context</span><span class="o">.</span><span class="n">recorder</span><span class="o">.</span><span class="n">transition</span><span class="p">(</span><span class="n">RunState</span><span class="o">.</span><span class="n">RUNNING</span><span class="p">,</span> <span class="n">RunEventKind</span><span class="o">.</span><span class="n">RESUME</span><span class="p">)</span>
+                <span class="n">state</span> <span class="o">=</span> <span class="n">RunState</span><span class="o">.</span><span class="n">RUNNING</span>
+            <span class="k">if</span> <span class="n">state</span> <span class="ow">is</span> <span class="n">RunState</span><span class="o">.</span><span class="n">VALIDATED</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">backend</span> <span class="o">!=</span> <span class="s2">"slurm"</span><span class="p">:</span>
+                    <span class="n">context</span><span class="o">.</span><span class="n">recorder</span><span class="o">.</span><span class="n">transition</span><span class="p">(</span><span class="n">RunState</span><span class="o">.</span><span class="n">RUNNING</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">state</span> <span class="ow">is</span> <span class="n">RunState</span><span class="o">.</span><span class="n">SUBMITTED</span> <span class="ow">and</span> <span class="n">backend</span> <span class="o">==</span> <span class="s2">"local"</span><span class="p">:</span>
+                <span class="n">context</span><span class="o">.</span><span class="n">recorder</span><span class="o">.</span><span class="n">transition</span><span class="p">(</span><span class="n">RunState</span><span class="o">.</span><span class="n">RUNNING</span><span class="p">)</span>
+            <span class="n">records</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_run_body</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="n">records</span><span class="p">:</span>
+                <span class="n">context</span><span class="o">.</span><span class="n">recorder</span><span class="o">.</span><span class="n">add_job</span><span class="p">(</span><span class="n">record</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">execution_manager</span><span class="o">.</span><span class="n">backend</span> <span class="o">==</span> <span class="s2">"slurm"</span><span class="p">:</span>
+                <span class="n">submitted</span> <span class="o">=</span> <span class="p">[</span><span class="n">record</span> <span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="n">records</span> <span class="k">if</span> <span class="n">record</span><span class="o">.</span><span class="n">status</span> <span class="ow">is</span> <span class="n">RunState</span><span class="o">.</span><span class="n">SUBMITTED</span><span class="p">]</span>
+                <span class="n">failed</span> <span class="o">=</span> <span class="p">[</span><span class="n">record</span> <span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="n">records</span> <span class="k">if</span> <span class="n">record</span><span class="o">.</span><span class="n">status</span> <span class="ow">is</span> <span class="n">RunState</span><span class="o">.</span><span class="n">FAILED</span><span class="p">]</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">submitted</span><span class="p">:</span>
+                    <span class="n">context</span><span class="o">.</span><span class="n">recorder</span><span class="o">.</span><span class="n">fail</span><span class="p">(</span><span class="n">category</span><span class="o">=</span><span class="s2">"EXECUTION"</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="s2">"all inference jobs failed"</span><span class="p">)</span>
+                    <span class="k">raise</span> <span class="n">WorkflowError</span><span class="p">(</span><span class="s2">"all inference jobs failed"</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">failed</span><span class="p">:</span>
+                    <span class="c1"># A Slurm submission is an asynchronous boundary: once any</span>
+                    <span class="c1"># child has a valid JobID, the parent remains submitted even</span>
+                    <span class="c1"># when another sbatch call failed. Keep the failed child</span>
+                    <span class="c1"># evidence and return a non-zero signal for the caller.</span>
+                    <span class="k">if</span> <span class="n">context</span><span class="o">.</span><span class="n">recorder</span><span class="o">.</span><span class="n">manifest</span><span class="o">.</span><span class="n">status</span> <span class="ow">is</span> <span class="n">RunState</span><span class="o">.</span><span class="n">VALIDATED</span><span class="p">:</span>
+                        <span class="n">context</span><span class="o">.</span><span class="n">recorder</span><span class="o">.</span><span class="n">transition</span><span class="p">(</span><span class="n">RunState</span><span class="o">.</span><span class="n">SUBMITTED</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                        <span class="s2">"Some inference jobs failed to submit; successful jobs remain submitted."</span>
+                    <span class="p">)</span>
+                    <span class="k">raise</span> <span class="n">PartialWorkflowError</span><span class="p">(</span><span class="s2">"one or more inference jobs failed"</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">context</span><span class="o">.</span><span class="n">recorder</span><span class="o">.</span><span class="n">manifest</span><span class="o">.</span><span class="n">status</span> <span class="ow">is</span> <span class="n">RunState</span><span class="o">.</span><span class="n">VALIDATED</span><span class="p">:</span>
+                    <span class="n">context</span><span class="o">.</span><span class="n">recorder</span><span class="o">.</span><span class="n">transition</span><span class="p">(</span><span class="n">RunState</span><span class="o">.</span><span class="n">SUBMITTED</span><span class="p">)</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">auto_analysis</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">"auto_analysis=true is ignored when backend is not local."</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Inference jobs submitted. Run analysis workflow separately after jobs finish."</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_register_existing_logs</span><span class="p">(</span><span class="n">context</span><span class="p">,</span> <span class="n">log_baseline</span><span class="p">)</span>
+                <span class="k">return</span>
+
+            <span class="n">successful</span> <span class="o">=</span> <span class="p">[</span><span class="n">record</span> <span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="n">records</span> <span class="k">if</span> <span class="n">record</span><span class="o">.</span><span class="n">status</span> <span class="ow">is</span> <span class="n">RunState</span><span class="o">.</span><span class="n">FINISHED</span><span class="p">]</span>
+            <span class="n">failed</span> <span class="o">=</span> <span class="p">[</span><span class="n">record</span> <span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="n">records</span> <span class="k">if</span> <span class="n">record</span><span class="o">.</span><span class="n">status</span> <span class="ow">is</span> <span class="n">RunState</span><span class="o">.</span><span class="n">FAILED</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">model_name</span><span class="p">,</span> <span class="n">artifact_paths</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">execution_manager</span><span class="o">.</span><span class="n">last_artifacts</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">context</span><span class="o">.</span><span class="n">register_verified_artifacts</span><span class="p">(</span>
+                    <span class="s2">"inference"</span><span class="p">,</span>
+                    <span class="p">[</span><span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">artifact_paths</span><span class="p">],</span>
+                    <span class="n">baseline</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">execution_manager</span><span class="o">.</span><span class="n">last_artifact_baselines</span><span class="p">[</span><span class="n">model_name</span><span class="p">],</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">successful</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_register_existing_logs</span><span class="p">(</span><span class="n">context</span><span class="p">,</span> <span class="n">log_baseline</span><span class="p">)</span>
+                <span class="n">message</span> <span class="o">=</span> <span class="s2">"all inference jobs failed"</span>
+                <span class="n">category</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_failure_category</span><span class="p">(</span><span class="n">failed</span><span class="p">)</span>
+                <span class="n">context</span><span class="o">.</span><span class="n">recorder</span><span class="o">.</span><span class="n">fail</span><span class="p">(</span><span class="n">category</span><span class="o">=</span><span class="n">category</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="n">message</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="n">WorkflowError</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">failed</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_register_existing_logs</span><span class="p">(</span><span class="n">context</span><span class="p">,</span> <span class="n">log_baseline</span><span class="p">)</span>
+                <span class="n">category</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_failure_category</span><span class="p">(</span><span class="n">failed</span><span class="p">)</span>
+                <span class="n">context</span><span class="o">.</span><span class="n">recorder</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span>
+                    <span class="n">category</span><span class="o">=</span><span class="n">category</span><span class="p">,</span>
+                    <span class="n">message</span><span class="o">=</span><span class="s2">"one or more inference jobs failed"</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="k">raise</span> <span class="n">PartialWorkflowError</span><span class="p">(</span><span class="s2">"one or more inference jobs failed"</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">auto_analysis</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Auto analysis enabled. Starting analysis..."</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">analyze_results</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Auto analysis disabled. Run analysis workflow separately after jobs finish."</span><span class="p">)</span>
+            <span class="n">context</span><span class="o">.</span><span class="n">recorder</span><span class="o">.</span><span class="n">transition</span><span class="p">(</span><span class="n">RunState</span><span class="o">.</span><span class="n">FINISHED</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">WORKFLOW_FINISHED_TAG</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_register_existing_logs</span><span class="p">(</span><span class="n">context</span><span class="p">,</span> <span class="n">log_baseline</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="c1"># Terminal states written above must remain the original exception;</span>
+            <span class="c1"># only unrecorded execution errors need a generic failure event.</span>
+            <span class="n">mixed_slurm_submission</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="nb">isinstance</span><span class="p">(</span><span class="n">exc</span><span class="p">,</span> <span class="n">PartialWorkflowError</span><span class="p">)</span>
+                <span class="ow">and</span> <span class="n">context</span><span class="o">.</span><span class="n">recorder</span><span class="o">.</span><span class="n">manifest</span><span class="o">.</span><span class="n">status</span> <span class="ow">is</span> <span class="n">RunState</span><span class="o">.</span><span class="n">SUBMITTED</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="ow">not</span> <span class="n">mixed_slurm_submission</span>
+                <span class="ow">and</span> <span class="n">context</span><span class="o">.</span><span class="n">recorder</span><span class="o">.</span><span class="n">manifest</span><span class="o">.</span><span class="n">status</span>
+                <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span><span class="n">RunState</span><span class="o">.</span><span class="n">FAILED</span><span class="p">,</span> <span class="n">RunState</span><span class="o">.</span><span class="n">PARTIAL</span><span class="p">,</span> <span class="n">RunState</span><span class="o">.</span><span class="n">FINISHED</span><span class="p">}</span>
+            <span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_register_existing_logs</span><span class="p">(</span><span class="n">context</span><span class="p">,</span> <span class="n">log_baseline</span><span class="p">)</span>
+                <span class="n">context</span><span class="o">.</span><span class="n">recorder</span><span class="o">.</span><span class="n">fail</span><span class="p">(</span><span class="n">category</span><span class="o">=</span><span class="s2">"EXECUTION"</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">exc</span><span class="p">))</span>
+            <span class="k">raise</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_register_existing_logs</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">context</span><span class="p">:</span> <span class="n">RunContext</span><span class="p">,</span>
+        <span class="n">baseline</span><span class="p">:</span> <span class="n">AttemptOutputBaseline</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">paths</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_discover_log_files</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">baseline</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">paths</span> <span class="o">=</span> <span class="n">baseline</span><span class="o">.</span><span class="n">fresh</span><span class="p">(</span><span class="n">paths</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">paths</span><span class="p">:</span>
+            <span class="n">context</span><span class="o">.</span><span class="n">register_verified_artifacts</span><span class="p">(</span><span class="s2">"log"</span><span class="p">,</span> <span class="n">paths</span><span class="p">,</span> <span class="n">baseline</span><span class="o">=</span><span class="n">baseline</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_discover_log_files</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]:</span>
+        <span class="n">names</span> <span class="o">=</span> <span class="p">{</span><span class="n">LOG_FILE_INFER</span><span class="p">,</span> <span class="s2">"test.log"</span><span class="p">,</span> <span class="s2">"eval_desc.log"</span><span class="p">,</span> <span class="s2">"eval_desc.err"</span><span class="p">,</span> <span class="s2">"eval-desc.log"</span><span class="p">,</span> <span class="s2">"eval-desc.err"</span><span class="p">}</span>
+        <span class="n">found</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Path</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">root</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">work_dir</span><span class="p">)</span><span class="o">.</span><span class="n">expanduser</span><span class="p">()</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">root</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">root</span><span class="o">.</span><span class="n">rglob</span><span class="p">(</span><span class="s2">"*"</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">is_file</span><span class="p">()</span> <span class="ow">and</span> <span class="n">path</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="n">names</span> <span class="ow">and</span> <span class="n">path</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span><span class="o">.</span><span class="n">st_size</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">found</span><span class="p">[</span><span class="n">path</span><span class="o">.</span><span class="n">resolve</span><span class="p">()]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">found</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_run_body</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">JobRecord</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Validate inputs and submit all model jobs."""</span>
         <span class="c1"># Configure logging: log to inference.log, but DO NOT capture stdout (propagate=True)</span>
         <span class="n">setup_workflow_logger</span><span class="p">(</span>
             <span class="n">logger_name</span><span class="o">=</span><span class="s2">"dpeva"</span><span class="p">,</span>
@@ -756,12 +937,6 @@ document.write(`
             <span class="n">capture_stdout</span><span class="o">=</span><span class="kc">False</span>
         <span class="p">)</span>
 
-        <span class="c1"># Check backend override</span>
-        <span class="n">env_backend</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"DPEVA_INTERNAL_BACKEND"</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">env_backend</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Overriding backend to '</span><span class="si">{</span><span class="n">env_backend</span><span class="si">}</span><span class="s2">'"</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">execution_manager</span><span class="o">.</span><span class="n">backend</span> <span class="o">=</span> <span class="n">env_backend</span>
-            
         <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Initializing Inference Workflow (Backend: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">execution_manager</span><span class="o">.</span><span class="n">backend</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
         
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_path</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data_path</span><span class="p">):</span>
@@ -773,7 +948,7 @@ document.write(`
             <span class="k">raise</span> <span class="n">WorkflowError</span><span class="p">(</span><span class="s2">"No models provided for inference."</span><span class="p">)</span>
 
         <span class="c1"># Submit Jobs</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">execution_manager</span><span class="o">.</span><span class="n">submit_jobs</span><span class="p">(</span>
+        <span class="n">records</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">execution_manager</span><span class="o">.</span><span class="n">submit_jobs</span><span class="p">(</span>
             <span class="n">models_paths</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">models_paths</span><span class="p">,</span>
             <span class="n">data_path</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">data_path</span><span class="p">,</span>
             <span class="n">work_dir</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">work_dir</span><span class="p">,</span>
@@ -782,15 +957,15 @@ document.write(`
             <span class="n">results_prefix</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">results_prefix</span>
         <span class="p">)</span>
         
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">auto_analysis</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">execution_manager</span><span class="o">.</span><span class="n">backend</span> <span class="o">==</span> <span class="s2">"local"</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Auto analysis enabled. Starting analysis..."</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">analyze_results</span><span class="p">()</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">auto_analysis</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">execution_manager</span><span class="o">.</span><span class="n">backend</span> <span class="o">!=</span> <span class="s2">"local"</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">"auto_analysis=true is ignored when backend is not local."</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Inference jobs submitted. Run analysis workflow separately after jobs finish."</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Auto analysis disabled. Run analysis workflow separately after jobs finish."</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">records</span>
 
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_failure_category</span><span class="p">(</span><span class="n">records</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">JobRecord</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Choose deterministic top-level evidence while retaining child detail."""</span>
+        <span class="n">categories</span> <span class="o">=</span> <span class="p">{</span><span class="n">record</span><span class="o">.</span><span class="n">failure_category</span> <span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="n">records</span><span class="p">}</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">categories</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="kc">None</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">categories</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">categories</span><span class="p">))</span>
+        <span class="k">return</span> <span class="s2">"EXECUTION"</span>
 
 <div class="viewcode-block" id="InferenceWorkflow.analyze_results">
 <a class="viewcode-back" href="../../../api/workflows.html#dpeva.workflows.InferenceWorkflow.analyze_results">[文档]</a>
@@ -826,7 +1001,7 @@ document.write(`
                     <span class="s2">"allow_ref_energy_lstsq_completion"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
                 <span class="p">}</span>
                 <span class="n">workflow</span> <span class="o">=</span> <span class="n">AnalysisWorkflow</span><span class="p">(</span><span class="n">analysis_config</span><span class="p">)</span>
-                <span class="n">workflow</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+                <span class="n">workflow</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">emit_completion_marker</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
                 <span class="n">metrics_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">analysis_output_dir</span><span class="p">,</span> <span class="n">FILENAME_METRICS_JSON</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">metrics_path</span><span class="p">):</span>
@@ -851,9 +1026,7 @@ document.write(`
             <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"Analysis completed with </span><span class="si">{</span><span class="n">failed_count</span><span class="si">}</span><span class="s2"> failures out of </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">models_paths</span><span class="p">)</span><span class="si">}</span><span class="s2"> models."</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
             <span class="c1"># Raise exception to signal workflow failure (non-zero exit code)</span>
-            <span class="k">raise</span> <span class="n">WorkflowError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">WORKFLOW_FINISHED_TAG</span><span class="p">)</span></div>
+            <span class="k">raise</span> <span class="n">WorkflowError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span></div>
 </div>
 
 </pre></div>

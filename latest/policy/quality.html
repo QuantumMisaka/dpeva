@@ -37,7 +37,7 @@
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="../_static/documentation_options.js?v=7b805e1b"></script>
+    <script src="../_static/documentation_options.js?v=5b31c4f0"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -166,7 +166,7 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="../reference/index.html">Reference</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../reference/README.html">Reference（权威参考）</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../reference/validation.html">参数校验与约束（Validation Rules）</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../reference/upstream-software.html">上游软件与核心依赖（Upstream Software）</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reference/upstream-software.html">上游软件与依赖边界（Upstream Software）</a></li>
 </ul>
 </details></li>
 </ul>
@@ -449,14 +449,22 @@ document.write(`
 <section id="id4">
 <h2>4. 稳态化验收门槛（强制）<a class="headerlink" href="#id4" title="Link to this heading">#</a></h2>
 <ul class="simple">
-<li><p><strong>Build Gate</strong>：<code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">html</span> <span class="pre">SPHINXOPTS=&quot;-W</span> <span class="pre">--keep-going&quot;</span></code> 通过，WARNING=0</p></li>
-<li><p><strong>Governance Gate</strong>：<code class="docutils literal notranslate"><span class="pre">scripts/doc_check.py</span></code> 通过，结构/元信息/链接/绝对路径检查均通过</p></li>
-<li><p><strong>Freshness Gate</strong>：<code class="docutils literal notranslate"><span class="pre">scripts/check_docs_freshness.py</span> <span class="pre">--days</span> <span class="pre">90</span></code> 通过</p></li>
+<li><p><strong>Docs profile</strong>：<code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">scripts/run_gate.py</span> <span class="pre">docs_pr</span></code> 通过；该 profile 包含文档结构、
+新鲜度、warning-as-error 构建、产物和 PR linkcheck。</p></li>
+<li><p><strong>Release profile</strong>：<code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">scripts/run_gate.py</span> <span class="pre">release</span></code> 通过；它还包含代码、单元、
+integration、traceability 和可选 extra 检查。</p></li>
 <li><p><strong>Ownership Gate</strong>：<code class="docutils literal notranslate"><span class="pre">active</span></code> 文档 owner 覆盖率=100%，并与 <code class="docutils literal notranslate"><span class="pre">docs/governance/inventory/owners-matrix.md</span></code> 一致</p></li>
 <li><p><strong>PR Gate</strong>：PR 模板须如实填写变更影响、必要同步、验证证据与风险；若为接口变更，
 必须包含 docs 更新说明。仅当新增或更新 active 文档时要求 owner/owners；仅当工作属于
 重大架构、迁移或发布时按文档生命周期维护计划/报告。</p></li>
 </ul>
+<p>门禁目录与命令只维护在 <code class="docutils literal notranslate"><span class="pre">scripts/gates.toml</span></code>；本页解释
+验收含义，不复制 argv。<code class="docutils literal notranslate"><span class="pre">release</span></code> profile 包含无写入的版本面一致性检查；Sphinx
+release identity 从包版本导入。DeepMD 资格门禁不属于普通文档/软件发布的默认证明，只有
+发布声明 DeepMD 能力时才单独调用，并且必须引用真实资格证据。</p>
+<p>eval-card 只索引已存在的模型、谱系与指标证据，不是模型重验证、排名或新增科学门禁。
+数据 bundle 的不覆盖发布契约限定为 Linux <code class="docutils literal notranslate"><span class="pre">renameat2(RENAME_NOREPLACE)</span></code> 的进程可见
+原子性；不支持该原语的平台 fail closed，本版本不提供跨平台 fallback。</p>
 </section>
 </section>
 

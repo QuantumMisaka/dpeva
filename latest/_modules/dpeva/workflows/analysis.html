@@ -36,7 +36,7 @@
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="../../../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="../../../_static/documentation_options.js?v=7b805e1b"></script>
+    <script src="../../../_static/documentation_options.js?v=5b31c4f0"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -524,7 +524,7 @@ window.runMermaid = runMermaid;</script>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../../reference/index.html">Reference</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../../reference/README.html">Reference（权威参考）</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../reference/validation.html">参数校验与约束（Validation Rules）</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../reference/upstream-software.html">上游软件与核心依赖（Upstream Software）</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../reference/upstream-software.html">上游软件与依赖边界（Upstream Software）</a></li>
 </ul>
 </details></li>
 </ul>
@@ -758,8 +758,8 @@ document.write(`
         
 <div class="viewcode-block" id="AnalysisWorkflow.run">
 <a class="viewcode-back" href="../../../api/workflows.html#dpeva.workflows.AnalysisWorkflow.run">[文档]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">"""Run analysis workflow in dataset or model_test mode."""</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">emit_completion_marker</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Run analysis; nested callers leave completion to their parent."""</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">backend</span> <span class="o">==</span> <span class="s2">"slurm"</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_submit_to_slurm</span><span class="p">()</span>
             <span class="k">return</span>
@@ -778,7 +778,8 @@ document.write(`
             <span class="k">else</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_run_model_mode</span><span class="p">(</span><span class="n">output_dir</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Analysis completed successfully."</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">WORKFLOW_FINISHED_TAG</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">emit_completion_marker</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">WORKFLOW_FINISHED_TAG</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Analysis failed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
             <span class="k">raise</span>

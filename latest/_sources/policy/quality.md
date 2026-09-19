@@ -2,7 +2,7 @@
 title: 文档质量标准 (Documentation Quality Standard)
 status: active
 audience: Maintainers
-last-updated: 2026-09-02
+last-updated: 2026-09-06
 owner: Docs Owner
 ---
 
@@ -59,10 +59,20 @@ owner: Docs Owner
 
 ## 4. 稳态化验收门槛（强制）
 
-- **Build Gate**：`make html SPHINXOPTS="-W --keep-going"` 通过，WARNING=0
-- **Governance Gate**：`scripts/doc_check.py` 通过，结构/元信息/链接/绝对路径检查均通过
-- **Freshness Gate**：`scripts/check_docs_freshness.py --days 90` 通过
+- **Docs profile**：`python scripts/run_gate.py docs_pr` 通过；该 profile 包含文档结构、
+  新鲜度、warning-as-error 构建、产物和 PR linkcheck。
+- **Release profile**：`python scripts/run_gate.py release` 通过；它还包含代码、单元、
+  integration、traceability 和可选 extra 检查。
 - **Ownership Gate**：`active` 文档 owner 覆盖率=100%，并与 `docs/governance/inventory/owners-matrix.md` 一致
 - **PR Gate**：PR 模板须如实填写变更影响、必要同步、验证证据与风险；若为接口变更，
   必须包含 docs 更新说明。仅当新增或更新 active 文档时要求 owner/owners；仅当工作属于
   重大架构、迁移或发布时按文档生命周期维护计划/报告。
+
+门禁目录与命令只维护在 `scripts/gates.toml`；本页解释
+验收含义，不复制 argv。`release` profile 包含无写入的版本面一致性检查；Sphinx
+release identity 从包版本导入。DeepMD 资格门禁不属于普通文档/软件发布的默认证明，只有
+发布声明 DeepMD 能力时才单独调用，并且必须引用真实资格证据。
+
+eval-card 只索引已存在的模型、谱系与指标证据，不是模型重验证、排名或新增科学门禁。
+数据 bundle 的不覆盖发布契约限定为 Linux `renameat2(RENAME_NOREPLACE)` 的进程可见
+原子性；不支持该原语的平台 fail closed，本版本不提供跨平台 fallback。

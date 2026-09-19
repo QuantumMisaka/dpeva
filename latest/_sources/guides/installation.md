@@ -2,7 +2,7 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-07-01
+last-updated: 2026-09-20
 owner: Workflow Owner
 ---
 
@@ -31,9 +31,16 @@ owner: Workflow Owner
 
 ## 4. 安装方式
 
-### 4.1 可编辑安装（推荐用于开发/使用）
+### 4.1 Core：默认安装（含 DeepMD 兼容包络）
 
-在项目根目录执行：
+默认安装在核心依赖中提供有界的 `deepmd-kit>=3.1.2,<3.3`，用于保留现有
+3.1.2 运行包络。这个依赖边界是安装兼容性承诺，不是新的科学能力验证；能力
+矩阵和 3.2 证据仍由显式 lane 单独管理。在项目根目录执行：
+
+核心依赖中的 `dpdata>=1.1` 是数据侧能力边界：读取 `deepmd/lmdb` 需要该下限，
+`lmdb` 与 `msgpack` 由 dpdata 自身引入。预置环境（`--no-deps`）若仍是
+`dpdata<1.1`，`deepmd/lmdb` 输入会被明确拒绝；`dpeva doctor` 的 `dpdata.lmdb`
+检查会报告实际可读性。
 
 ```bash
 python -m pip install -e .
@@ -45,13 +52,62 @@ python -m pip install -e .
 dpeva --help
 ```
 
-### 4.2 开发依赖（可选）
+### 4.2 Dev：开发与测试依赖（可选）
 
 ```bash
 python -m pip install -e '.[dev]'
 ```
 
-### 4.3 Exploration 可选依赖
+`dev` extra 只提供测试、格式化和类型检查工具，不额外改变核心 DeepMD 包络或
+安装 `atst-tools`。需要明确 3.2 lane 的测试时，显式叠加下一节的 runtime extra。
+
+### 4.3 DeepMD runtime：显式 3.2 运行时 lane
+
+默认安装已经提供 3.1.2 起的 DeepMD 兼容包络。训练、推理或特征工作流若要
+显式解析 3.2 lane，在 core 安装上启用 DeepMD extra：
+
+```bash
+python -m pip install -e '.[deepmd]'
+```
+
+该 extra 的依赖范围是 `deepmd-kit>=3.2,<3.3`。这是用户环境的依赖解析
+边界，不表示该范围内的每个版本行为完全等价。
+
+验证运行时能力：
+
+```bash
+dpeva doctor
+dp --version
+```
+
+`doctor` 是显式环境检查。稳定的 3.1.2--3.1.x 运行时会报告 `deepmd` 包络
+可用，同时将 3.2 qualification 单独标为未声明；3.2 lane 则单独报告
+qualification。旧版本、未来版本和 prerelease 不会绕过边界。
+
+### 4.4 预置环境：由调用方承担全部依赖
+
+如果平台已经预置并验证了完整运行环境，可以显式跳过依赖解析：
+
+```bash
+python -m pip install --no-deps -e .
+```
+
+`--no-deps` 不是无依赖的默认安装。调用方必须自行提供 `pyproject.toml` 中的
+全部依赖（包括 `deepmd-kit`），并保存环境版本与 `dpeva doctor --json` 结果。
+
+### 4.5 Research production：研究生产精确锁定
+
+正式科研结果使用独立环境，并将 DeepMD 精确锁定为 `deepmd-kit==3.2.0`：
+
+```bash
+python -m pip install -e '.[deepmd]' 'deepmd-kit==3.2.0'
+```
+
+同时保存环境锁文件、`dpeva doctor --json` 和 `dp --version` 输出作为运行
+记录。研究生产环境不能只依赖 `>=3.2,<3.3` 范围来声称可复现，也不能把范围内
+其他版本未经验证的行为当作 3.2.0 等价物。
+
+### 4.6 Exploration 可选依赖
 
 `dpeva explore` 通过可选 `atst-tools` backend 调用轨迹探索工作流。该依赖不进入核心安装，需要时单独启用：
 
@@ -71,24 +127,11 @@ atst --help
 - `dpeva[explore]` 只安装 DP-EVA 的 exploration backend 依赖。
 - ABACUS、DeePMD 模型文件、赝势和轨道文件仍由具体 ATST 配置与运行环境提供。
 
-## 5. 外部依赖：DeepMD-kit
+## 5. 外部环境说明
 
-DP-EVA 的多数 Workflow 依赖 DeepMD-kit 的 `dp` 命令（例如 `dp train/test/eval-desc`）。
-
-要求：
-
-- `dp` 命令可在 `PATH` 中找到
-
-验证：
-
-```bash
-dp --version
-```
-
-说明：
-
-- 若 `dp` 不可用，导入 `dpeva` 时会给出警告提示，但并不阻止安装。
-- 在 Slurm 环境中，建议通过 `submission.env_setup` 显式加载 DeepMD 环境（不要依赖交互式 shell）。
+DP-EVA 的 DeepMD 工作流通过 `dp` 命令调用 DeepMD-kit（例如
+`dp train/test/eval-desc`）。在 Slurm 环境中，建议通过
+`submission.env_setup` 显式加载已锁定的 DeepMD 环境，不要依赖交互式 shell。
 
 参考：
 

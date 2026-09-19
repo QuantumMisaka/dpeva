@@ -2,7 +2,7 @@
 title: GitHub Actions 部署指南 (Deployment Guide)
 status: active
 audience: Maintainers / DevOps
-last-updated: 2026-06-10
+last-updated: 2026-09-06
 owner: Trae AI Agent
 ---
 
@@ -32,67 +32,19 @@ owner: Trae AI Agent
 
 ## 3. 工作流文件详解 (`.github/workflows/docs-deploy.yml`)
 
-### 3.1 完整配置
+### 3.1 权限与前置门禁
 
-```yaml
-name: Deploy Docs
-
-on:
-  push:
-    branches:
-      - main
-    tags:
-      - 'v*'
-  workflow_dispatch:
-
-permissions:
-  contents: write
-
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0 # 获取所有历史以支持版本信息
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.10'
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -e .[docs]
-          # 安装 Sphinx 多版本支持插件 (如果尚未包含在 [docs] 中)
-          # pip install sphinx-multiversion
-
-      - name: Fix Links (Pre-build)
-        run: |
-          python docs/scripts/fix_links.py
-
-      - name: Build Sphinx Docs
-        run: |
-          cd docs
-          make html
-
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./docs/build/html
-          destination_dir: ${{ github.ref_name == 'main' && 'latest' || github.ref_name }}
-          keep_files: true # 保留旧版本目录
-```
+工作流默认权限是 `contents: read`。main push、`v*` tag 和手动触发都必须先通过
+`release-validation`；该 prerequisite 只调用 gate manifest 的共享 `release` profile，
+不复制其命令。只有声明 `needs: release-validation` 的 `deploy` job 获得
+`contents: write`，因此未经检查的触发不会写入 Pages 分支。
 
 ### 3.2 关键步骤说明
 
-1.  **Checkout**: 使用 `fetch-depth: 0` 确保能获取 Git 标签和提交历史，这对生成版本号至关重要。
-2.  **Install Dependencies**: 安装项目本身 (`pip install -e .`) 以便 `autodoc` 能导入源码生成 API 文档。
-3.  **Fix Links**: 运行我们编写的 `scripts/fix_links.py`，修正绝对路径链接，防止 404 错误。
-4.  **Build**: 执行 `make html` 生成静态文件。
-5.  **Deploy**: 使用 `peaceiris/actions-gh-pages` 插件。
+1.  **Release Validation**: 在只读权限下安装 release 所需依赖，并执行共享 `release` profile。
+2.  **Checkout**: deploy job 使用 `fetch-depth: 0` 获取完整版本信息。
+3.  **Build**: deploy job 通过 manifest 的 `docs_build` gate 生成静态文件。
+4.  **Deploy**: 仅该依赖 job 使用 `peaceiris/actions-gh-pages`。
     *   `destination_dir`: 动态设置为 `latest` (对应 main 分支) 或 `vX.Y.Z` (对应 Tag)。
     *   `keep_files: true`: 增量发布，确保推送新版本时不会删除旧版本目录。
 

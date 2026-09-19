@@ -37,7 +37,7 @@
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="../_static/documentation_options.js?v=7b805e1b"></script>
+    <script src="../_static/documentation_options.js?v=5b31c4f0"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -167,7 +167,7 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="../reference/index.html">Reference</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../reference/README.html">Reference（权威参考）</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../reference/validation.html">参数校验与约束（Validation Rules）</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../reference/upstream-software.html">上游软件与核心依赖（Upstream Software）</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reference/upstream-software.html">上游软件与依赖边界（Upstream Software）</a></li>
 </ul>
 </details></li>
 </ul>
@@ -364,15 +364,18 @@ document.write(`
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">1. 文档版本策略</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">1. 文档版本策略</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">1.1 文档新鲜度与冻结记录</a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#ownership">2. Ownership（责任到人/模块）</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#raci">2.1 RACI 职责矩阵</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">3. 变更触发规则（何时必须更新文档）</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">3. 变更触发规则（何时必须更新文档）</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#review">4. Review 流程（建议）</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">5. 文档过期治理（建议）</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">6. 稳态化运行基线（必须满足）</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">5. 文档过期治理（建议）</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">6. 稳态化运行基线（必须满足）</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#process-asset-management">7. 过程资产管理规范 (Process Asset Management)</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#code-review-reports">7.1 代码审查报告 (Code Review Reports)</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#feature-plans-specs">7.2 功能开发细则 (Feature Plans/Specs)</a></li>
@@ -381,6 +384,7 @@ document.write(`
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#index-maintenance">7.4 索引文件维护 (Index Maintenance)</a></li>
 </ul>
 </li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">8. 轻量治理规则审计</a></li>
 </ul>
             </nav>
         </div>
@@ -407,6 +411,21 @@ document.write(`
 </li>
 <li><p>报告与归档文档默认冻结：新增通过“新文件”形式，不在旧报告中“覆盖式修改结论”。</p></li>
 </ul>
+<section id="id2">
+<h3>1.1 文档新鲜度与冻结记录<a class="headerlink" href="#id2" title="Link to this heading">#</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">scripts/run_gate.py</span> <span class="pre">docs_freshness</span></code>（<code class="docutils literal notranslate"><span class="pre">scripts/check_docs_freshness.py</span></code>）要求活文档在
+窗口内被复核。两类文档按不同规则处理：</p>
+<ul class="simple">
+<li><p><strong>活文档</strong>（Guide / Reference / 索引 README / 策略）：复核后更新 front matter 的
+<code class="docutils literal notranslate"><span class="pre">last-updated</span></code>；超期即门禁失败，提示需要复核。</p></li>
+<li><p><strong>冻结记录</strong>（带日期的审计、审查、合规报告，以及架构决策 ADR，例如
+<code class="docutils literal notranslate"><span class="pre">architecture/decisions/&lt;date&gt;-&lt;topic&gt;.md</span></code>、<code class="docutils literal notranslate"><span class="pre">governance/reviews/*_&lt;date&gt;.md</span></code>）：其价值在于
+记录当时状态，<strong>不得</strong>为了通过门禁而改写时间戳；改在 front matter 声明
+<code class="docutils literal notranslate"><span class="pre">status:</span> <span class="pre">record</span></code>，该文件即从新鲜度扫描中豁免（脚本会打印豁免数量）。</p></li>
+</ul>
+<p>新增冻结记录时：<code class="docutils literal notranslate"><span class="pre">status:</span> <span class="pre">record</span></code> + 在文件名或正文中保留日期身份；不要把它改成 <code class="docutils literal notranslate"><span class="pre">active</span></code>
+再手工维护 <code class="docutils literal notranslate"><span class="pre">last-updated</span></code>。</p>
+</section>
 </section>
 <section id="ownership">
 <h2>2. Ownership（责任到人/模块）<a class="headerlink" href="#ownership" title="Link to this heading">#</a></h2>
@@ -465,8 +484,8 @@ document.write(`
 </div>
 </section>
 </section>
-<section id="id2">
-<h2>3. 变更触发规则（何时必须更新文档）<a class="headerlink" href="#id2" title="Link to this heading">#</a></h2>
+<section id="id3">
+<h2>3. 变更触发规则（何时必须更新文档）<a class="headerlink" href="#id3" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p>新增/修改 Pydantic 配置字段：必须更新 <code class="docutils literal notranslate"><span class="pre">docs/reference/*</span></code></p></li>
 <li><p>变更输出目录命名、日志文件名、完成标记：必须更新 Slurm 与集成测试相关文档</p></li>
@@ -481,8 +500,8 @@ document.write(`
 <li><p>若变更涉及用户接口或配置字段，建议在 PR 描述中附“迁移说明”与“最小示例”</p></li>
 </ul>
 </section>
-<section id="id3">
-<h2>5. 文档过期治理（建议）<a class="headerlink" href="#id3" title="Link to this heading">#</a></h2>
+<section id="id4">
+<h2>5. 文档过期治理（建议）<a class="headerlink" href="#id4" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p>每季度（或每 2 个 release）做一次 docs 体检：</p>
 <ul>
@@ -493,16 +512,12 @@ document.write(`
 </li>
 </ul>
 </section>
-<section id="id4">
-<h2>6. 稳态化运行基线（必须满足）<a class="headerlink" href="#id4" title="Link to this heading">#</a></h2>
+<section id="id5">
+<h2>6. 稳态化运行基线（必须满足）<a class="headerlink" href="#id5" title="Link to this heading">#</a></h2>
 <ul class="simple">
-<li><p>基线门禁：</p>
-<ul>
-<li><p><code class="docutils literal notranslate"><span class="pre">python3</span> <span class="pre">scripts/doc_check.py</span></code> 必须通过</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">python3</span> <span class="pre">scripts/check_docs_freshness.py</span> <span class="pre">--days</span> <span class="pre">90</span></code> 必须通过</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">html</span> <span class="pre">SPHINXOPTS=&quot;-W</span> <span class="pre">--keep-going&quot;</span></code> 必须通过</p></li>
-</ul>
-</li>
+<li><p>基线门禁：文档变更必须通过 <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">scripts/run_gate.py</span> <span class="pre">docs_pr</span></code>；完整发布必须通过
+<code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">scripts/run_gate.py</span> <span class="pre">release</span></code>。命令与 argv 只维护在
+<code class="docutils literal notranslate"><span class="pre">scripts/gates.toml</span></code>。</p></li>
 <li><p>责任归属：</p>
 <ul>
 <li><p>所有 <code class="docutils literal notranslate"><span class="pre">active</span></code> 文档必须声明 <code class="docutils literal notranslate"><span class="pre">owner</span></code> 或 <code class="docutils literal notranslate"><span class="pre">owners</span></code></p></li>
@@ -587,11 +602,23 @@ document.write(`
 <li><p><strong>强制检查</strong>:</p>
 <ul>
 <li><p>任何 Markdown 文件的增删改，必须检查 <code class="docutils literal notranslate"><span class="pre">docs/source/**/*.rst</span></code> 是否有对应的 <code class="docutils literal notranslate"><span class="pre">toctree</span></code> 引用需要更新。</p></li>
-<li><p>运行 <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">html</span></code> 确保无 <code class="docutils literal notranslate"><span class="pre">WARNING:</span> <span class="pre">toctree</span> <span class="pre">contains</span> <span class="pre">reference</span> <span class="pre">to</span> <span class="pre">nonexisting</span> <span class="pre">document</span></code> 报错。</p></li>
+<li><p>运行 <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">scripts/run_gate.py</span> <span class="pre">docs_pr</span></code>，由 manifest 声明的 warning-as-error 构建确认无失效 toctree。</p></li>
 </ul>
 </li>
 </ul>
 </section>
+</section>
+<section id="id6">
+<h2>8. 轻量治理规则审计<a class="headerlink" href="#id6" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">docs/governance/rules.json</span></code> 只登记有明确 Owner、依据、enforcement path 和
+<code class="docutils literal notranslate"><span class="pre">trigger_paths</span></code> 的活动治理机制，最多八条；它不复制 SPEC 的需求清单。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">trigger_paths</span></code> 只证明仓库内存在可复核的触发入口或配置路径，不证明 CI 历史运行、远程服务状态或科学结果。</p></li>
+<li><p>季度 <code class="docutils literal notranslate"><span class="pre">governance-audit</span></code> workflow 仅生成并上传报告，不自动改写、删除文件或创建 Issue；默认报告模式即使发现问题也返回成功。</p></li>
+<li><p>发布评审如需阻断语义，维护者显式运行
+<code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">scripts/audit_governance_rules.py</span> <span class="pre">--strict</span></code>；修复或退役规则后更新
+<code class="docutils literal notranslate"><span class="pre">last_reviewed</span></code> 或移除记录。</p></li>
+</ul>
 </section>
 </section>
 
@@ -640,15 +667,18 @@ document.write(`
   </div>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">1. 文档版本策略</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">1. 文档版本策略</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">1.1 文档新鲜度与冻结记录</a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#ownership">2. Ownership（责任到人/模块）</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#raci">2.1 RACI 职责矩阵</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">3. 变更触发规则（何时必须更新文档）</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">3. 变更触发规则（何时必须更新文档）</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#review">4. Review 流程（建议）</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">5. 文档过期治理（建议）</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">6. 稳态化运行基线（必须满足）</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">5. 文档过期治理（建议）</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">6. 稳态化运行基线（必须满足）</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#process-asset-management">7. 过程资产管理规范 (Process Asset Management)</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#code-review-reports">7.1 代码审查报告 (Code Review Reports)</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#feature-plans-specs">7.2 功能开发细则 (Feature Plans/Specs)</a></li>
@@ -657,6 +687,7 @@ document.write(`
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#index-maintenance">7.4 索引文件维护 (Index Maintenance)</a></li>
 </ul>
 </li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">8. 轻量治理规则审计</a></li>
 </ul>
   </nav></div>
 

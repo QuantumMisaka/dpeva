@@ -37,7 +37,7 @@
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="../_static/documentation_options.js?v=7b805e1b"></script>
+    <script src="../_static/documentation_options.js?v=5b31c4f0"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -167,7 +167,7 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="../reference/index.html">Reference</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../reference/README.html">Reference（权威参考）</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../reference/validation.html">参数校验与约束（Validation Rules）</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../reference/upstream-software.html">上游软件与核心依赖（Upstream Software）</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reference/upstream-software.html">上游软件与依赖边界（Upstream Software）</a></li>
 </ul>
 </details></li>
 </ul>
@@ -378,6 +378,7 @@ document.write(`
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#dpdata-multi-datapool">5. 数据类问题（dpdata / Multi DataPool）</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpdata">5.1 dpdata 目录结构不符合预期</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#type-map">5.2 <code class="docutils literal notranslate"><span class="pre">type_map</span></code> 不一致导致元素映射错误</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#deepmd-lmdb">5.3 <code class="docutils literal notranslate"><span class="pre">deepmd/lmdb</span></code> 输入无法加载或被拒绝</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#slurm">6. 作业与调度类问题（Slurm）</a><ul class="nav section-nav flex-column">
@@ -495,6 +496,30 @@ document.write(`
 <ul class="simple">
 <li><p>确认训练集与候选池在 <code class="docutils literal notranslate"><span class="pre">type_map.raw</span></code> 的元素顺序一致</p></li>
 <li><p>Analysis 的 <code class="docutils literal notranslate"><span class="pre">type_map</span></code> 必须与训练/数据一致</p></li>
+</ul>
+</section>
+<section id="deepmd-lmdb">
+<h3>5.3 <code class="docutils literal notranslate"><span class="pre">deepmd/lmdb</span></code> 输入无法加载或被拒绝<a class="headerlink" href="#deepmd-lmdb" title="Link to this heading">#</a></h3>
+<p>症状：</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">load_systems</span></code> 报 <code class="docutils literal notranslate"><span class="pre">DatasetLoadError</span></code>，提示 &quot;Reading 'deepmd/lmdb' requires dpdata&gt;=1.1&quot;</p></li>
+<li><p>Feature 的 <code class="docutils literal notranslate"><span class="pre">eval-desc</span></code>/<code class="docutils literal notranslate"><span class="pre">embed</span></code> 在提交前报 &quot;cannot consume a DeepMD LMDB dataset&quot;</p></li>
+<li><p>Analysis/Clean 报 <code class="docutils literal notranslate"><span class="pre">-d</span></code> 明细 &quot;reports an LMDB data source&quot;</p></li>
+</ul>
+<p>处理：</p>
+<ul class="simple">
+<li><p>先跑 <code class="docutils literal notranslate"><span class="pre">dpeva</span> <span class="pre">doctor</span> <span class="pre">--json</span></code>：<code class="docutils literal notranslate"><span class="pre">dpdata.lmdb</span></code> 检查为 <code class="docutils literal notranslate"><span class="pre">ok</span></code> 表示当前环境可读 LMDB；
+为 <code class="docutils literal notranslate"><span class="pre">unavailable</span></code> 时升级到 <code class="docutils literal notranslate"><span class="pre">dpdata&gt;=1.1</span></code>（预置环境需重建或补装）</p></li>
+<li><p>数据路径按 deepmd-kit 的判定规则识别：目录名以 <code class="docutils literal notranslate"><span class="pre">.lmdb</span></code> 结尾，或目录内含 <code class="docutils literal notranslate"><span class="pre">data.mdb</span></code></p></li>
+<li><p>LMDB 不保存目录级体系身份，读回结果按<strong>组成分组</strong>；需要逐 system 统计或
+<code class="docutils literal notranslate"><span class="pre">target_systems=</span></code> 筛选时，改用同一数据集的 <code class="docutils literal notranslate"><span class="pre">deepmd/npy</span></code>/<code class="docutils literal notranslate"><span class="pre">npy/mixed</span></code> 副本</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">eval-desc</span></code>/<code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">embed</span></code> 上游不支持 LMDB；Feature 工作流请指向 npy/mixed 副本，
+或使用进程内 <code class="docutils literal notranslate"><span class="pre">DescriptorGenerator</span></code> 路径。上游跟踪 issue：
+<a class="reference external" href="https://github.com/deepmodeling/deepmd-kit/issues/6034">deepmodeling/deepmd-kit#6034</a></p></li>
+<li><p>训练（<code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">train</span></code>）支持 LMDB，但 <code class="docutils literal notranslate"><span class="pre">training_data.systems</span></code> 必须是<strong>单个 LMDB 路径</strong>；
+不要把多个 LMDB 放在一个容器目录里让 DP-EVA 展开</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">test</span></code> 自报的聚合指标在 LMDB 上有效；逐帧逐 system 的明细归属需要
+帧索引映射（见 <code class="docutils literal notranslate"><span class="pre">docs/superpowers/plans/2026-09-20-lmdb-format-compatibility.md</span></code>）</p></li>
 </ul>
 </section>
 </section>
@@ -618,6 +643,7 @@ document.write(`
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#dpdata-multi-datapool">5. 数据类问题（dpdata / Multi DataPool）</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpdata">5.1 dpdata 目录结构不符合预期</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#type-map">5.2 <code class="docutils literal notranslate"><span class="pre">type_map</span></code> 不一致导致元素映射错误</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#deepmd-lmdb">5.3 <code class="docutils literal notranslate"><span class="pre">deepmd/lmdb</span></code> 输入无法加载或被拒绝</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#slurm">6. 作业与调度类问题（Slurm）</a><ul class="nav section-nav flex-column">

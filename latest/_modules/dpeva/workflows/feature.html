@@ -36,7 +36,7 @@
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="../../../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="../../../_static/documentation_options.js?v=7b805e1b"></script>
+    <script src="../../../_static/documentation_options.js?v=5b31c4f0"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -524,7 +524,7 @@ window.runMermaid = runMermaid;</script>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../../reference/index.html">Reference</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../../reference/README.html">Reference（权威参考）</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../reference/validation.html">参数校验与约束（Validation Rules）</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../reference/upstream-software.html">上游软件与核心依赖（Upstream Software）</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../reference/upstream-software.html">上游软件与依赖边界（Upstream Software）</a></li>
 </ul>
 </details></li>
 </ul>
@@ -678,7 +678,8 @@ document.write(`
   <h1>dpeva.workflows.feature 源代码</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Union</span><span class="p">,</span> <span class="n">Dict</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">Dict</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">dpeva.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">FeatureConfig</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dpeva.feature.managers</span><span class="w"> </span><span class="kn">import</span> <span class="n">FeatureIOManager</span><span class="p">,</span> <span class="n">FeatureExecutionManager</span>
@@ -686,6 +687,15 @@ document.write(`
 <span class="kn">from</span><span class="w"> </span><span class="nn">dpeva.constants</span><span class="w"> </span><span class="kn">import</span> <span class="n">WORKFLOW_FINISHED_TAG</span><span class="p">,</span> <span class="n">LOG_FILE_FEATURE</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dpeva.utils.logs</span><span class="w"> </span><span class="kn">import</span> <span class="n">setup_workflow_logger</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dpeva.utils.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">WorkflowError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dpeva.run.artifacts</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">AttemptOutputBaseline</span><span class="p">,</span>
+    <span class="n">ArtifactValidationError</span><span class="p">,</span>
+    <span class="n">snapshot_feature_outputs</span><span class="p">,</span>
+    <span class="n">validate_feature_outputs</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dpeva.run.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">RunContext</span><span class="p">,</span> <span class="n">RunOptions</span><span class="p">,</span> <span class="n">input_identity</span><span class="p">,</span> <span class="n">source_identity</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dpeva.run.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">JobRecord</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dpeva.run.status</span><span class="w"> </span><span class="kn">import</span> <span class="n">RunEventKind</span><span class="p">,</span> <span class="n">RunState</span>
 
 <div class="viewcode-block" id="FeatureWorkflow">
 <a class="viewcode-back" href="../../../api/workflows.html#dpeva.workflows.FeatureWorkflow">[文档]</a>
@@ -695,7 +705,14 @@ document.write(`
 <span class="sd">    Refactored using DDD Managers.</span>
 <span class="sd">    """</span>
     
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Dict</span><span class="p">,</span> <span class="n">FeatureConfig</span><span class="p">]):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">config</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Dict</span><span class="p">,</span> <span class="n">FeatureConfig</span><span class="p">],</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">original_config</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">config_metadata</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">run_options</span><span class="p">:</span> <span class="n">RunOptions</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
 <span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Initialize the Feature Workflow.</span>
 
@@ -706,6 +723,12 @@ document.write(`
             <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">FeatureConfig</span><span class="p">(</span><span class="o">**</span><span class="n">config</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">config</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">original_config</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">original_config</span> <span class="k">if</span> <span class="n">original_config</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"json"</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">config_metadata</span> <span class="o">=</span> <span class="n">config_metadata</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">run_options</span> <span class="o">=</span> <span class="n">run_options</span> <span class="ow">or</span> <span class="n">RunOptions</span><span class="p">()</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_setup_logger</span><span class="p">()</span>
         
@@ -740,6 +763,7 @@ document.write(`
             <span class="n">dp_backend</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">dp_backend</span><span class="p">,</span>
             <span class="n">omp_threads</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">omp_threads</span>
         <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_expected_feature_pools</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         
     <span class="k">def</span><span class="w"> </span><span class="nf">_setup_logger</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
@@ -755,6 +779,113 @@ document.write(`
 <span class="sd">        3. Generates descriptors via CLI (dp eval-desc) or Python API (DeepPot).</span>
 <span class="sd">        4. Handles local or Slurm execution.</span>
 <span class="sd">        """</span>
+        <span class="n">context</span> <span class="o">=</span> <span class="n">RunContext</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+            <span class="n">work_dir</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span><span class="p">,</span>
+            <span class="n">workflow</span><span class="o">=</span><span class="s2">"feature"</span><span class="p">,</span>
+            <span class="n">options</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">run_options</span><span class="p">,</span>
+            <span class="n">original_config</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">original_config</span><span class="p">,</span>
+            <span class="n">normalized_config</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"json"</span><span class="p">),</span>
+            <span class="n">config_metadata</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config_metadata</span><span class="p">,</span>
+            <span class="n">source_factory</span><span class="o">=</span><span class="n">source_identity</span><span class="p">,</span>
+            <span class="n">input_factories</span><span class="o">=</span><span class="p">[</span>
+                <span class="k">lambda</span><span class="p">:</span> <span class="n">input_identity</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data_path</span><span class="p">,</span> <span class="s2">"dataset"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span><span class="p">),</span>
+                <span class="k">lambda</span><span class="p">:</span> <span class="n">input_identity</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_path</span><span class="p">,</span> <span class="s2">"model"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">require_exists</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+            <span class="p">],</span>
+        <span class="p">)</span>
+        <span class="n">log_baseline</span> <span class="o">=</span> <span class="n">AttemptOutputBaseline</span><span class="o">.</span><span class="n">capture</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_discover_log_files</span><span class="p">())</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">backend</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">backend</span>
+            <span class="n">state</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">recorder</span><span class="o">.</span><span class="n">manifest</span><span class="o">.</span><span class="n">status</span>
+            <span class="k">if</span> <span class="n">state</span> <span class="ow">is</span> <span class="n">RunState</span><span class="o">.</span><span class="n">CREATED</span><span class="p">:</span>
+                <span class="n">context</span><span class="o">.</span><span class="n">recorder</span><span class="o">.</span><span class="n">transition</span><span class="p">(</span><span class="n">RunState</span><span class="o">.</span><span class="n">VALIDATED</span><span class="p">)</span>
+                <span class="n">state</span> <span class="o">=</span> <span class="n">RunState</span><span class="o">.</span><span class="n">VALIDATED</span>
+            <span class="k">if</span> <span class="n">state</span> <span class="ow">is</span> <span class="n">RunState</span><span class="o">.</span><span class="n">PARTIAL</span><span class="p">:</span>
+                <span class="n">context</span><span class="o">.</span><span class="n">recorder</span><span class="o">.</span><span class="n">transition</span><span class="p">(</span><span class="n">RunState</span><span class="o">.</span><span class="n">RUNNING</span><span class="p">,</span> <span class="n">RunEventKind</span><span class="o">.</span><span class="n">RESUME</span><span class="p">)</span>
+                <span class="n">state</span> <span class="o">=</span> <span class="n">RunState</span><span class="o">.</span><span class="n">RUNNING</span>
+            <span class="k">if</span> <span class="n">state</span> <span class="ow">is</span> <span class="n">RunState</span><span class="o">.</span><span class="n">VALIDATED</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">backend</span> <span class="o">!=</span> <span class="s2">"slurm"</span><span class="p">:</span>
+                    <span class="n">context</span><span class="o">.</span><span class="n">recorder</span><span class="o">.</span><span class="n">transition</span><span class="p">(</span><span class="n">RunState</span><span class="o">.</span><span class="n">RUNNING</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">state</span> <span class="ow">is</span> <span class="n">RunState</span><span class="o">.</span><span class="n">SUBMITTED</span> <span class="ow">and</span> <span class="n">backend</span> <span class="o">==</span> <span class="s2">"local"</span><span class="p">:</span>
+                <span class="n">context</span><span class="o">.</span><span class="n">recorder</span><span class="o">.</span><span class="n">transition</span><span class="p">(</span><span class="n">RunState</span><span class="o">.</span><span class="n">RUNNING</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_expected_feature_pools</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">io_manager</span><span class="o">.</span><span class="n">detect_multi_pool_structure</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">data_path</span>
+            <span class="p">)</span>
+            <span class="n">output_baseline</span> <span class="o">=</span> <span class="n">snapshot_feature_outputs</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">output_dir_path</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">feature_exporter</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_expected_feature_pools</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">submission_output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_run_body</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">backend</span> <span class="o">==</span> <span class="s2">"slurm"</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">submission_output</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                    <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">"Slurm submission did not return text output"</span><span class="p">)</span>
+                <span class="n">job_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">execution_manager</span><span class="o">.</span><span class="n">job_manager</span><span class="o">.</span><span class="n">parse_sbatch_job_id</span><span class="p">(</span>
+                    <span class="n">submission_output</span>
+                <span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">job_id</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Slurm submission returned no job id"</span><span class="p">)</span>
+                <span class="n">context</span><span class="o">.</span><span class="n">recorder</span><span class="o">.</span><span class="n">add_job</span><span class="p">(</span>
+                    <span class="n">JobRecord</span><span class="p">(</span>
+                        <span class="n">name</span><span class="o">=</span><span class="s2">"feature"</span><span class="p">,</span>
+                        <span class="n">backend</span><span class="o">=</span><span class="s2">"slurm"</span><span class="p">,</span>
+                        <span class="n">job_id</span><span class="o">=</span><span class="n">job_id</span><span class="p">,</span>
+                        <span class="n">status</span><span class="o">=</span><span class="n">RunState</span><span class="o">.</span><span class="n">SUBMITTED</span><span class="p">,</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+                <span class="k">if</span> <span class="n">context</span><span class="o">.</span><span class="n">recorder</span><span class="o">.</span><span class="n">manifest</span><span class="o">.</span><span class="n">status</span> <span class="ow">is</span> <span class="n">RunState</span><span class="o">.</span><span class="n">VALIDATED</span><span class="p">:</span>
+                    <span class="n">context</span><span class="o">.</span><span class="n">recorder</span><span class="o">.</span><span class="n">transition</span><span class="p">(</span><span class="n">RunState</span><span class="o">.</span><span class="n">SUBMITTED</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_register_existing_logs</span><span class="p">(</span><span class="n">context</span><span class="p">,</span> <span class="n">log_baseline</span><span class="p">)</span>
+                <span class="k">return</span>
+            <span class="n">outputs</span> <span class="o">=</span> <span class="n">validate_feature_outputs</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">output_dir_path</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">feature_exporter</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_expected_feature_pools</span><span class="p">,</span>
+                <span class="n">output_baseline</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">context</span><span class="o">.</span><span class="n">register_verified_artifacts</span><span class="p">(</span>
+                <span class="s2">"feature"</span><span class="p">,</span> <span class="n">outputs</span><span class="p">,</span> <span class="n">baseline</span><span class="o">=</span><span class="n">output_baseline</span>
+            <span class="p">)</span>
+            <span class="n">context</span><span class="o">.</span><span class="n">recorder</span><span class="o">.</span><span class="n">transition</span><span class="p">(</span><span class="n">RunState</span><span class="o">.</span><span class="n">FINISHED</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">WORKFLOW_FINISHED_TAG</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_register_existing_logs</span><span class="p">(</span><span class="n">context</span><span class="p">,</span> <span class="n">log_baseline</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">ArtifactValidationError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_register_existing_logs</span><span class="p">(</span><span class="n">context</span><span class="p">,</span> <span class="n">log_baseline</span><span class="p">)</span>
+            <span class="n">context</span><span class="o">.</span><span class="n">recorder</span><span class="o">.</span><span class="n">fail</span><span class="p">(</span><span class="n">category</span><span class="o">=</span><span class="s2">"ARTIFACT"</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">exc</span><span class="p">))</span>
+            <span class="k">raise</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_register_existing_logs</span><span class="p">(</span><span class="n">context</span><span class="p">,</span> <span class="n">log_baseline</span><span class="p">)</span>
+            <span class="n">context</span><span class="o">.</span><span class="n">recorder</span><span class="o">.</span><span class="n">fail</span><span class="p">(</span><span class="n">category</span><span class="o">=</span><span class="s2">"EXECUTION"</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">exc</span><span class="p">))</span>
+            <span class="k">raise</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_register_existing_logs</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">context</span><span class="p">:</span> <span class="n">RunContext</span><span class="p">,</span>
+        <span class="n">baseline</span><span class="p">:</span> <span class="n">AttemptOutputBaseline</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">paths</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_discover_log_files</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">baseline</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">paths</span> <span class="o">=</span> <span class="n">baseline</span><span class="o">.</span><span class="n">fresh</span><span class="p">(</span><span class="n">paths</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">paths</span><span class="p">:</span>
+            <span class="n">context</span><span class="o">.</span><span class="n">register_verified_artifacts</span><span class="p">(</span><span class="s2">"log"</span><span class="p">,</span> <span class="n">paths</span><span class="p">,</span> <span class="n">baseline</span><span class="o">=</span><span class="n">baseline</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_discover_log_files</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Discover concrete feature and DeepMD eval-desc logs in pool layouts."""</span>
+        <span class="n">names</span> <span class="o">=</span> <span class="p">{</span><span class="n">LOG_FILE_FEATURE</span><span class="p">,</span> <span class="s2">"eval_desc.log"</span><span class="p">,</span> <span class="s2">"eval_desc.err"</span><span class="p">,</span> <span class="s2">"eval-desc.log"</span><span class="p">,</span> <span class="s2">"eval-desc.err"</span><span class="p">}</span>
+        <span class="n">found</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Path</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">root</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_dir_path</span>
+        <span class="k">if</span> <span class="n">root</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">root</span><span class="o">.</span><span class="n">rglob</span><span class="p">(</span><span class="s2">"*"</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">is_file</span><span class="p">()</span> <span class="ow">and</span> <span class="n">path</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="n">names</span> <span class="ow">and</span> <span class="n">path</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span><span class="o">.</span><span class="n">st_size</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">found</span><span class="p">[</span><span class="n">path</span><span class="o">.</span><span class="n">resolve</span><span class="p">()]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">found</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">output_dir_path</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">Path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span><span class="p">)</span><span class="o">.</span><span class="n">expanduser</span><span class="p">()</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_run_body</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Execute the pre-existing scientific feature generation operations."""</span>
         <span class="c1"># Configure logging: log to feature.log, but DO NOT capture stdout (propagate=True)</span>
         <span class="n">setup_workflow_logger</span><span class="p">(</span>
             <span class="n">logger_name</span><span class="o">=</span><span class="s2">"dpeva"</span><span class="p">,</span>
@@ -777,9 +908,9 @@ document.write(`
                 <span class="p">)</span>
             <span class="c1"># CLI Mode: Use dp eval-desc</span>
             <span class="c1"># Detect multi-pool structure</span>
-            <span class="n">sub_pools</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">io_manager</span><span class="o">.</span><span class="n">detect_multi_pool_structure</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data_path</span><span class="p">)</span>
+            <span class="n">sub_pools</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expected_feature_pools</span>
             
-            <span class="bp">self</span><span class="o">.</span><span class="n">execution_manager</span><span class="o">.</span><span class="n">submit_cli_job</span><span class="p">(</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">execution_manager</span><span class="o">.</span><span class="n">submit_cli_job</span><span class="p">(</span>
                 <span class="n">data_path</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">data_path</span><span class="p">,</span>
                 <span class="n">output_dir</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span><span class="p">,</span>
                 <span class="n">model_path</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model_path</span><span class="p">,</span>
@@ -803,14 +934,14 @@ document.write(`
                         <span class="n">omp_threads</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">omp_threads</span>
                     <span class="p">)</span>
                     
-                    <span class="bp">self</span><span class="o">.</span><span class="n">execution_manager</span><span class="o">.</span><span class="n">run_local_python_recursion</span><span class="p">(</span>
+                    <span class="n">return_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">execution_manager</span><span class="o">.</span><span class="n">run_local_python_recursion</span><span class="p">(</span>
                         <span class="n">generator</span><span class="p">,</span>
                         <span class="n">data_path</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">data_path</span><span class="p">,</span>
                         <span class="n">output_dir</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span><span class="p">,</span>
                         <span class="n">output_mode</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">output_mode</span><span class="p">,</span>
                         <span class="n">feature_kind</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">feature_kind</span><span class="p">,</span>
                     <span class="p">)</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">WORKFLOW_FINISHED_TAG</span><span class="p">)</span>
+                    <span class="k">return</span> <span class="n">return_value</span>
                     
                 <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">"DeepMD-kit not available for Python mode."</span><span class="p">)</span>
@@ -821,7 +952,7 @@ document.write(`
             
             <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">execution_manager</span><span class="o">.</span><span class="n">backend</span> <span class="o">==</span> <span class="s2">"slurm"</span><span class="p">:</span>
                 <span class="c1"># Slurm: Submit a python script</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">execution_manager</span><span class="o">.</span><span class="n">submit_python_slurm_job</span><span class="p">(</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">execution_manager</span><span class="o">.</span><span class="n">submit_python_slurm_job</span><span class="p">(</span>
                     <span class="n">data_path</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">data_path</span><span class="p">,</span>
                     <span class="n">output_dir</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span><span class="p">,</span>
                     <span class="n">model_path</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model_path</span><span class="p">,</span>
@@ -833,7 +964,6 @@ document.write(`
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Unknown mode: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">mode</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
             <span class="k">raise</span> <span class="n">WorkflowError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Unknown mode: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">mode</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span></div>
-</div>
 
 </pre></div>
 

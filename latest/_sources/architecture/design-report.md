@@ -1,6 +1,6 @@
 ---
 title: Document
-status: active
+status: record
 audience: Developers
 last-updated: 2026-06-10
 owner: Architect

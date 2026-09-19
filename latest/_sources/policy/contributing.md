@@ -2,7 +2,7 @@
 title: 文档贡献指南 (Contributing)
 status: active
 audience: Developers / Maintainers
-last-updated: 2026-09-02
+last-updated: 2026-09-05
 owner: Docs Owner
 ---
 
@@ -73,10 +73,9 @@ owner: Docs Owner
 
 ## 7. 稳态化提交流程（标准）
 
-1. 在提交前执行：
-   - `python3 scripts/doc_check.py`
-   - `python3 scripts/check_docs_freshness.py --days 90`
-   - `make html SPHINXOPTS="-W --keep-going"`
+1. 在提交前执行 `python scripts/run_gate.py docs_pr`；门禁命令的唯一来源是
+   `scripts/gates.toml`。需要完整发布验证时执行
+   `python scripts/run_gate.py release`。
 2. 在英文 PR 描述中填写：
    - 变更摘要和 public-contract impact；
    - 必要的文档、recipe、依赖或运行环境同步；

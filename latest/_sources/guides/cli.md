@@ -2,7 +2,7 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-06-10
+last-updated: 2026-09-20
 owner: Docs Owner
 ---
 
@@ -11,7 +11,7 @@ owner: Docs Owner
 - Status: active
 - Audience: Users / Developers
 - Applies-To: CLI 模式（推荐）
-- Last-Updated: 2026-06-10
+- Last-Updated: 2026-09-06
 
 ## 1. 目的与范围
 
@@ -19,7 +19,7 @@ owner: Docs Owner
 
 范围：
 
-- `dpeva train / infer / feature / explore / collect / label / analysis / clean`
+- `dpeva train / infer / feature / explore / collect / label / analysis / clean / doctor / eval-card`
 - `--no-banner`
 
 ## 2. 相关方
@@ -37,28 +37,84 @@ dpeva --help
 dpeva train --help
 ```
 
-### 3.2 通用命令格式
+### 3.2 工作流命令格式
 
 ```bash
-dpeva <subcommand> <config_path>
+dpeva <workflow> <config_path>
 ```
 
 可选参数：
 
 ```bash
-dpeva --no-banner <subcommand> <config_path>
+dpeva --no-banner <workflow> <config_path>
 ```
 
-CLI 会在参数解析阶段对 `<config_path>` 执行统一前置校验（存在性、可读性、JSON 文件后缀）。
+`feature` 与 `infer` 还支持运行证据选项：`--run-id ID` 固定本次运行身份，
+`--resume` 恢复未完成的本地运行；已进入 `submitted` 的 Slurm 运行会在提交前拒绝
+resume（调度器轮询/恢复不在本试点范围），不会创建新作业。使用带必填 `--reason`
+的 `--force` 创建显式新尝试。`--resume` 与 `--force` 互斥；运行清单写入配置工作目录下的
+`.dpeva/runs/<run-id>/run.json`。
+
+除 `doctor` 外的工作流都要求提供 `<config_path>`；CLI 会在参数解析阶段对它执行统一前置校验（存在性、可读性、JSON 文件后缀）。`doctor` 是不需要配置文件的独立环境检查命令，格式见下节。
 
 实现入口：`src/dpeva/cli.py`（基于 `argparse`）。
 
+配置加载的 Python 兼容接口为 `load_and_resolve_config(path) -> dict`，返回已完成迁移和相对
+路径解析的配置 mapping。需要运行证据、原始输入和迁移 warning 的内部消费者使用
+`load_config_with_metadata(path) -> MigrationResult`；两者都不会改写源 JSON。旧版顶层 submission
+字段会记录迁移 warning，并继续拒绝未知字段和冲突值。
+
+### 3.3 doctor（环境能力检查）
+
+```bash
+dpeva doctor
+dpeva doctor --json
+```
+
+`doctor` 显式检查当前运行环境的 DeepMD 能力。默认输出每项检查的人类可读结果；`--json` 输出 schema 版本为 `1.0` 的机器可读报告。JSON 模式不会输出欢迎 banner，因此标准输出始终只有 JSON。
+
+DeepMD 版本检查保留两个诊断 lane：稳定的 `>=3.1.2,<3.3` 是默认运行时包络，
+`deepmd.qualified` 单独报告 `>=3.2,<3.3` 的 3.2 qualification。3.1 环境可以
+保持 `deepmd: ok`，但不会因此获得 3.2 科学验证；旧版本、未来版本和 prerelease
+不会绕过边界。仅 3.2 lane 需要的 CLI surface 在 legacy 环境中作为
+`required=false` 信息性检查，不会把仍可用的旧环境整体判为失败。
+
+报告顶层 `status` 为 `ok` 时命令退出码为 `0`；任一必需检查不是 `ok` 时退出码为 `1`。
+检查状态可能包括 `ok`、`missing`、`error`、`unknown`、`incompatible` 和
+`unavailable`。每项可带 `required=false` 表示信息性能力（例如 CUDA/GPU 和可选
+后端），其不可用不会阻止 CPU-safe 工作流。默认检查 DeepMD 版本以及 `test`、
+`eval-desc`、`embed` CLI surface，并显式报告 dpdata、Torch/CUDA、GPU 可见性和
+可选后端。`dpdata.lmdb` 是独立的信息性检查：它报告当前 dpdata 能否读取
+`deepmd/lmdb`（需要 `dpdata>=1.1`），不可用不会把仅使用 npy/mixed 的环境判为失败。
+
 ## 4. 子命令职责、输入输出与配置
 
-所有子命令的第一个参数均为配置 JSON 路径。配置字段的权威查表入口：
+除 `doctor` 外，所有工作流子命令的第一个参数均为配置 JSON 路径；`doctor` 不接收配置路径。配置字段的权威查表入口：
 
 - API Reference（Sphinx 生成的配置字段文档）
 - ../reference/validation.md
+
+### 4.9 eval-card（候选评估卡片）
+
+`eval-card` 是既有证据的机器可读索引：它将模型引用、数据谱系和评测证据组装为候选交接卡片，
+不是模型重验证或科学排名门禁。它不会启动评测、复制活动中的 FT2DP 任务清单或推断科学排名。六个固定维度始终存在，
+未提供证据标记为 `not-run`，配置了但无法读取或校验的证据标记为 `failed`，并保留证据路径。
+
+`examples/recipes/evaluation/config_eval_card.json` 是配置模板，不是可直接执行的
+candidate artifact。填入真实 model-ref、dataset manifest 和 metric 文件后，再运行：
+
+```bash
+dpeva eval-card path/to/filled-eval-card.json
+```
+
+配置文件中的相对路径均相对该配置文件所在目录解析，包括 `output_path`、
+`model_ref_path`、六个可选 metric 路径和 `dataset_manifest_paths`。输出卡片以原子方式发布，
+不会覆盖已存在的目标文件；如需生成新的候选卡片，请使用新的输出路径。配置模板见
+`examples/recipes/evaluation/config_eval_card.json`。
+卡片中的本地 `model_ref`、`dataset_refs`、metric `evidence_ref` 和本地下游反馈引用均是
+相对于卡片目录的 POSIX 逻辑引用；将包含这些目标的 candidate package 整体搬迁后仍可解析。
+相对路径只解决可移植定位，不单独提供不可变性；不可变性由引用目标自身的 no-overwrite、校验和
+及其验证契约承担。HTTP/其他下游 URI 保持原样。
 
 ### 4.1 train（并行微调训练）
 
@@ -88,6 +144,12 @@ CLI 会在参数解析阶段对 `<config_path>` 执行统一前置校验（存�
 
 示例配置：`examples/recipes/inference/config_infer.json`
 
+例如指定可复查的运行身份：
+
+```bash
+dpeva infer config.json --run-id infer-20260904-a1b2c3
+```
+
 ### 4.3 feature（描述符生成）
 
 - 输入
@@ -99,6 +161,8 @@ CLI 会在参数解析阶段对 `<config_path>` 执行统一前置校验（存�
   - `savedir/eval_desc.log`（常用监控锚点）
 
 示例配置：`examples/recipes/feature_generation/config_feature.json`
+
+`feature` 同样支持上述 `--run-id`、`--resume`、`--force` 和 `--reason` 选项。
 
 ### 4.4 explore（轨迹探索，可选）
 
@@ -147,6 +211,17 @@ CLI 会在参数解析阶段对 `<config_path>` 执行统一前置校验（存�
   - `work_dir/outputs/anomalies`（异常或被筛出结果）
   - 当 `integration_enabled=true` 时，额外输出 `merged_training_data_path`（未指定时默认 `work_dir/outputs/merged_training_data`）
   - 整合统计文件：`<merged_training_data_path>/integration_summary.json`
+  - 数据谱系清单：`<merged_training_data_path>/dataset-manifest.json` 是当前代的兼容指针，
+    并保留不可变的 `dataset-manifest-<generation>.json`；统计文件中的
+    `dataset_manifest_path` 是相对于输出目录的不可变清单引用，同时记录 generation 和
+    SHA-256。清单记录父数据集、合并后的帧/体系数、去重移除数、type map 和逻辑来源引用；
+    当前整合不会伪造不可解析的 parent manifest ref，仅保留逻辑来源标签；
+    未声明来源、未解释的重复/交集或 type map 冲突会在下游交接前失败；显式去重会保存
+    overlap/removal evidence 与机器可读 `validation_result`（含 rule version）。
+  - 发布采用 sibling staging 目录与 Linux `renameat2(RENAME_NOREPLACE)`，在进程可见范围内
+    原子且不覆盖并发产生的目标目录；不支持该原语的平台直接失败，不回退到普通 rename。
+    该发布语义不提供 crash 后目录持久化或递归 fsync dpdata 树的保证；JSON 文件可能进行
+    文件级 flush，不能外推为整个 bundle 的 durability 保证。
 
 ### 4.7 analysis（双模式分析）
 
@@ -193,12 +268,13 @@ DP-EVA 在多数核心工作流及其实际执行日志中会输出统一标记�
 DPEVA_TAG: WORKFLOW_FINISHED
 ```
 
-建议外部编排器通过监控日志出现该标记推进下一步（尤其是 Slurm 场景）。
+`WORKFLOW_FINISHED` is written only after the guarded command returns zero and all declared artifacts pass validation as outputs created or observably rewritten by the current attempt. A pre-existing non-empty file is not sufficient. Local workflow markers are emitted after verified artifacts are registered and the run manifest reaches `finished`; generated Bash jobs apply the same freshness rule before their marker. Consumers MUST require both a successful process/job state and the marker; the marker alone is not proof of success. `sbatch` returning a JobID establishes only `submitted`, not `finished`.
 
 说明：
 
 - `train`、`collect`、`label` 等主流程会在成功结束时输出该标记。
-- `infer` 在 `auto_analysis=true` 且本地链式分析完成时会由分析阶段输出该标记；Slurm 场景更稳妥的推进锚点仍是各模型 `test_job.out` 完成后再显式执行 `dpeva analysis`。
+- 本地 `feature` / `infer` 仅在当次运行的产物验证、登记和 manifest `finished` 转换完成后输出工作流标记；Slurm 场景更稳妥的推进锚点仍是各作业输出与状态共同验证完成后再进入下游。
+- 本地 `infer` 启用 `auto_analysis` 时，嵌套 analysis 不输出独立完成标记；全部模型分析成功且父清单进入 `finished` 后只输出一次。任意模型分析失败时父清单为 `failed`，不会留下提前完成标记。独立 `dpeva analysis` 保留原有标记。
 
 ## 6. 异常处理与退出码
 
@@ -206,6 +282,14 @@ DPEVA_TAG: WORKFLOW_FINISHED
   - **正常执行**：0。
   - **参数解析失败**：2（例如 config 文件不存在、不可读、路径不是文件，或参数形态错误）。
   - **运行期失败**：1（配置内容不合法、业务逻辑失败、外部命令失败等）。
+- **doctor 环境检查**：报告 `status=ok` 时为 0，否则为 1；`doctor --json` 的标准输出仅包含 JSON 报告。
+- **局部完成**：本地 infer 只要有一个模型成功、另一个失败，就写入 `partial`
+  清单并以退出码 `1` 返回；所有模型失败则为 `failed`。输出缺失/为空时清单
+  顶层类别为 `ARTIFACT`，命令异常为 `EXECUTION`；混合失败类别确定性归为
+  `EXECUTION`，但每个 `JobRecord` 保留具体类别。Slurm 的 `sbatch` 回执只表示
+  `submitted`，不会伪造 `finished`。Slurm 多模型提交若部分 JobID 成功、部分提交失败，
+  父清单仍保持 `submitted`（保留成功 JobID 与失败子记录），但工作流立即以退出码 `1`
+  报告提交不完整；只有全部提交失败才将父清单记为 `failed`。
   - 注意：CLI 对用户输入类错误优先给出可操作提示，避免无意义堆栈噪音；内部异常仍会保留堆栈用于排障。
 
 - 常见异常类型
@@ -230,6 +314,8 @@ dpeva label config.json --stage prepare
 
 ## 7. 变更记录
 
+- 2026-09-05：补充 DeepMD 默认 3.1.2 运行包络与独立 3.2 qualification 诊断 lane。
+- 2026-09-04：新增 `doctor` 环境能力检查及 `--json` 稳定 JSON 输出契约。
 - 2026-06-11：补充 `dpeva explore` manifest、输入结构快照和结果结构回收契约。
 - 2026-06-10：新增 `dpeva explore` 可选轨迹探索入口，记录 `atst-tools` backend 的 md/relax 边界。
 - 2026-03-03：更新退出码契约说明，明确 `WorkflowError` 会导致退出码 1。

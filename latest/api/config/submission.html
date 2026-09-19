@@ -37,7 +37,7 @@
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="../../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="../../_static/documentation_options.js?v=7b805e1b"></script>
+    <script src="../../_static/documentation_options.js?v=5b31c4f0"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -167,7 +167,7 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../reference/index.html">Reference</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../reference/README.html">Reference（权威参考）</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../reference/validation.html">参数校验与约束（Validation Rules）</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../reference/upstream-software.html">上游软件与核心依赖（Upstream Software）</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../reference/upstream-software.html">上游软件与依赖边界（Upstream Software）</a></li>
 </ul>
 </details></li>
 </ul>
@@ -369,7 +369,7 @@ document.write(`
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.BaseWorkflowConfig.omp_threads"><code class="docutils literal notranslate"><span class="pre">BaseWorkflowConfig.omp_threads</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.BaseWorkflowConfig.submission"><code class="docutils literal notranslate"><span class="pre">BaseWorkflowConfig.submission</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.BaseWorkflowConfig.work_dir"><code class="docutils literal notranslate"><span class="pre">BaseWorkflowConfig.work_dir</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.BaseWorkflowConfig.extract_flat_submission_config"><code class="docutils literal notranslate"><span class="pre">BaseWorkflowConfig.extract_flat_submission_config</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.BaseWorkflowConfig.migrate_legacy_submission"><code class="docutils literal notranslate"><span class="pre">BaseWorkflowConfig.migrate_legacy_submission</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.BaseWorkflowConfig.validate_dp_backend"><code class="docutils literal notranslate"><span class="pre">BaseWorkflowConfig.validate_dp_backend</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.BaseWorkflowConfig.validate_omp_threads"><code class="docutils literal notranslate"><span class="pre">BaseWorkflowConfig.validate_omp_threads</span></code></a></li>
 </ul>
@@ -425,11 +425,9 @@ document.write(`
 </dd></dl>
 
 <dl class="py method pydantic_validator">
-<dt class="sig sig-object py" id="dpeva.config.BaseWorkflowConfig.extract_flat_submission_config">
-<em class="property"><span class="pre">validator</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">extract_flat_submission_config</span></span><em class="autodoc_pydantic_validator_arrow property">&#160; <span class="pre">»</span>&#160; </em><em class="xref py py-obj"><span class="pre">all</span> <span class="pre">fields</span></em><a class="reference internal" href="../../_modules/dpeva/config.html#BaseWorkflowConfig.extract_flat_submission_config"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#dpeva.config.BaseWorkflowConfig.extract_flat_submission_config" title="Link to this definition">#</a></dt>
-<dd><p>Allow flat config to populate nested submission config for backward compatibility.
-e.g. {'backend': 'slurm'} -&gt; {'submission': {'backend': 'slurm'}}</p>
-</dd></dl>
+<dt class="sig sig-object py" id="dpeva.config.BaseWorkflowConfig.migrate_legacy_submission">
+<em class="property"><span class="pre">validator</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">migrate_legacy_submission</span></span><em class="autodoc_pydantic_validator_arrow property">&#160; <span class="pre">»</span>&#160; </em><em class="xref py py-obj"><span class="pre">all</span> <span class="pre">fields</span></em><a class="reference internal" href="../../_modules/dpeva/config.html#BaseWorkflowConfig.migrate_legacy_submission"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#dpeva.config.BaseWorkflowConfig.migrate_legacy_submission" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
 
 <dl class="py method pydantic_validator">
 <dt class="sig sig-object py" id="dpeva.config.BaseWorkflowConfig.validate_dp_backend">
@@ -539,7 +537,7 @@ e.g. {'backend': 'slurm'} -&gt; {'submission': {'backend': 'slurm'}}</p>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.BaseWorkflowConfig.omp_threads"><code class="docutils literal notranslate"><span class="pre">BaseWorkflowConfig.omp_threads</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.BaseWorkflowConfig.submission"><code class="docutils literal notranslate"><span class="pre">BaseWorkflowConfig.submission</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.BaseWorkflowConfig.work_dir"><code class="docutils literal notranslate"><span class="pre">BaseWorkflowConfig.work_dir</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.BaseWorkflowConfig.extract_flat_submission_config"><code class="docutils literal notranslate"><span class="pre">BaseWorkflowConfig.extract_flat_submission_config</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.BaseWorkflowConfig.migrate_legacy_submission"><code class="docutils literal notranslate"><span class="pre">BaseWorkflowConfig.migrate_legacy_submission</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.BaseWorkflowConfig.validate_dp_backend"><code class="docutils literal notranslate"><span class="pre">BaseWorkflowConfig.validate_dp_backend</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.BaseWorkflowConfig.validate_omp_threads"><code class="docutils literal notranslate"><span class="pre">BaseWorkflowConfig.validate_omp_threads</span></code></a></li>
 </ul>

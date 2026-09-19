@@ -37,7 +37,7 @@
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="../_static/documentation_options.js?v=7b805e1b"></script>
+    <script src="../_static/documentation_options.js?v=5b31c4f0"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -167,7 +167,7 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="../reference/index.html">Reference</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../reference/README.html">Reference（权威参考）</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../reference/validation.html">参数校验与约束（Validation Rules）</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../reference/upstream-software.html">上游软件与核心依赖（Upstream Software）</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reference/upstream-software.html">上游软件与依赖边界（Upstream Software）</a></li>
 </ul>
 </details></li>
 </ul>
@@ -367,13 +367,15 @@ document.write(`
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">1. 目的与范围</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">2. 相关方</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">3. 路径解析规则（强烈建议使用相对路径）</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">3.1 规则</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">3.2 常见路径字段</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">3.0 数据集格式边界</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">3.1 规则</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">3.2 常见路径字段</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#submission-local-slurm">4. Submission 配置（Local / Slurm）</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#local">4.1 Local 最小配置</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#slurm">4.2 Slurm 最小配置</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">4.0 运行身份与证据</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow">5. 各 Workflow 最小配置示例</a><ul class="nav section-nav flex-column">
@@ -381,13 +383,14 @@ document.write(`
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#train">5.2 Train</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#infer">5.3 Infer</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#collect">5.4 Collect</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#analysis">5.5 Analysis</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#labeling">5.6 Labeling</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#exploration">5.7 Exploration</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#label-integration">5.5 Label integration</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#analysis">5.6 Analysis</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#labeling">5.7 Labeling</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#exploration">5.8 Exploration</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">6. 异常处理</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">7. 变更记录</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id8">6. 异常处理</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id9">7. 变更记录</a></li>
 </ul>
             </nav>
         </div>
@@ -404,7 +407,7 @@ document.write(`
 <ul class="simple">
 <li><p>Status: active</p></li>
 <li><p>Audience: Users / Developers</p></li>
-<li><p>Last-Updated: 2026-07-04</p></li>
+<li><p>Last-Updated: 2026-09-06</p></li>
 </ul>
 <section id="id1">
 <h2>1. 目的与范围<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
@@ -425,15 +428,26 @@ document.write(`
 <section id="id3">
 <h2>3. 路径解析规则（强烈建议使用相对路径）<a class="headerlink" href="#id3" title="Link to this heading">#</a></h2>
 <section id="id4">
-<h3>3.1 规则<a class="headerlink" href="#id4" title="Link to this heading">#</a></h3>
+<h3>3.0 数据集格式边界<a class="headerlink" href="#id4" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p>受支持的数据集输入：<code class="docutils literal notranslate"><span class="pre">deepmd/npy</span></code>、<code class="docutils literal notranslate"><span class="pre">deepmd/npy/mixed</span></code>、<code class="docutils literal notranslate"><span class="pre">deepmd/lmdb</span></code>（需要 <code class="docutils literal notranslate"><span class="pre">dpdata&gt;=1.1</span></code>）。</p></li>
+<li><p>LMDB 输入由 dpdata 按<strong>组成分组</strong>读回，不保留目录级体系身份；依赖 system 名称的配置
+（如 Clean 的逐 system 归属、<code class="docutils literal notranslate"><span class="pre">target_systems</span></code> 筛选）在 LMDB 上会被明确拒绝。</p></li>
+<li><p>Feature 工作流的 <code class="docutils literal notranslate"><span class="pre">feature_exporter=&quot;eval_desc&quot;</span></code>/<code class="docutils literal notranslate"><span class="pre">&quot;embed&quot;</span></code> 上游不支持 LMDB，DP-EVA 在
+提交作业前拒绝；请提供 npy/mixed 副本或使用进程内描述符生成。</p></li>
+<li><p>完整支持矩阵与实测依据见 <code class="docutils literal notranslate"><span class="pre">docs/reference/upstream-software.md</span></code> §2.1。</p></li>
+</ul>
+</section>
+<section id="id5">
+<h3>3.1 规则<a class="headerlink" href="#id5" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p>配置文件中推荐写相对路径，便于迁移与复现。</p></li>
 <li><p>CLI 会把相对路径按“配置文件所在目录”解析为绝对路径。</p></li>
 </ul>
 <p>参考实现：<code class="docutils literal notranslate"><span class="pre">src/dpeva/utils/config.py</span></code> 的 <code class="docutils literal notranslate"><span class="pre">resolve_config_paths</span></code>。</p>
 </section>
-<section id="id5">
-<h3>3.2 常见路径字段<a class="headerlink" href="#id5" title="Link to this heading">#</a></h3>
+<section id="id6">
+<h3>3.2 常见路径字段<a class="headerlink" href="#id6" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">work_dir</span></code>：Train/Infer/Feature/Analysis 常用的工作目录</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">project</span></code>：Collect 常用的项目目录</p></li>
@@ -445,6 +459,13 @@ document.write(`
 </section>
 <section id="submission-local-slurm">
 <h2>4. Submission 配置（Local / Slurm）<a class="headerlink" href="#submission-local-slurm" title="Link to this heading">#</a></h2>
+<p>从文件读取配置时，CLI 先执行一次显式兼容迁移，再进行严格配置校验。新配置应始终使用嵌套的 <code class="docutils literal notranslate"><span class="pre">submission</span></code> 对象；旧版顶层 <code class="docutils literal notranslate"><span class="pre">backend</span></code>、<code class="docutils literal notranslate"><span class="pre">env_setup</span></code>、<code class="docutils literal notranslate"><span class="pre">slurm_config</span></code>、<code class="docutils literal notranslate"><span class="pre">slurm_array</span></code> 和 <code class="docutils literal notranslate"><span class="pre">slurm_array_task_limit</span></code> 会被移动到该对象，并输出包含替代字段和退役目标版本的 warning。若新旧写法同时出现且值不同，迁移会直接失败。</p>
+<p>迁移在内存副本上进行，用户提供的源 JSON 不会被覆盖。规范化配置会在后续 run manifest 中单独记录。所有公开配置模型均拒绝未知字段，因此拼写错误必须在提交前修正；迁移只接受有明确映射的旧字段，不会吞掉任意扩展字段。</p>
+<p>Python API 同样在 <code class="docutils literal notranslate"><span class="pre">BaseWorkflowConfig</span></code> 的公开模型边界执行这次迁移，因此直接调用
+<code class="docutils literal notranslate"><span class="pre">InferenceConfig.model_validate(...)</span></code>、<code class="docutils literal notranslate"><span class="pre">FeatureConfig.model_validate(...)</span></code> 或其他工作流模型时，
+仍可读取上述旧字段；输入 mapping 不会被修改。<code class="docutils literal notranslate"><span class="pre">AnalysisConfig</span></code> 也支持该兼容边界。
+<code class="docutils literal notranslate"><span class="pre">ExplorationConfig.backend</span></code> 是探索后端自己的原生字段（例如 <code class="docutils literal notranslate"><span class="pre">atst-tools</span></code>），不会被解释为
+submission backend。未知字段与新旧字段冲突仍然严格失败。</p>
 <section id="local">
 <h3>4.1 Local 最小配置<a class="headerlink" href="#local" title="Link to this heading">#</a></h3>
 <div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
@@ -474,6 +495,46 @@ document.write(`
 </pre></div>
 </div>
 <p>常用扩展字段：<code class="docutils literal notranslate"><span class="pre">partition/qos/gpus_per_node/cpus_per_task/account</span></code>。</p>
+</section>
+<section id="id7">
+<h3>4.0 运行身份与证据<a class="headerlink" href="#id7" title="Link to this heading">#</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">feature</span></code> 与 <code class="docutils literal notranslate"><span class="pre">infer</span></code> 的 CLI 运行会在工作目录生成
+<code class="docutils literal notranslate"><span class="pre">.dpeva/runs/&lt;run-id&gt;/run.json</span></code>，并保存单次读取的原始配置与规范化配置快照。
+每个新建的 schema <code class="docutils literal notranslate"><span class="pre">1.0</span></code> 运行都会写入 <code class="docutils literal notranslate"><span class="pre">config.metadata.json</span></code>，记录输入 schema <code class="docutils literal notranslate"><span class="pre">1.0</span></code>
+与迁移 warning（无 warning 时为空列表），并由清单的 <code class="docutils literal notranslate"><span class="pre">config.metadata</span></code> 相对引用指向它；
+迁移前的 legacy 清单可能没有该引用，resume 时仅接受隐含的默认 metadata。使用 <code class="docutils literal notranslate"><span class="pre">--run-id</span></code> 可固定身份；已有
+身份默认拒绝覆盖，未完成的本地运行可用 <code class="docutils literal notranslate"><span class="pre">--resume</span></code>，已提交的 Slurm 运行会在提交
+前拒绝 resume，需要重跑时使用带审计说明 <code class="docutils literal notranslate"><span class="pre">--reason</span></code> 的 <code class="docutils literal notranslate"><span class="pre">--force</span></code>。运行清单中的 <code class="docutils literal notranslate"><span class="pre">finished</span></code>
+只表示本地命令成功，且输出文件非空、属于当前 attempt 的新建或可观察重写并已校验；
+目录中未被本次执行改写的历史文件不能让 no-op 命令成功，也不会作为本 attempt 的新产物登记。
+该 freshness 判定使用 device/inode/size/mtime_ns/ctime_ns 元数据，不会在执行前读取或散列全部历史大型数组；
+相同字节只要在本 attempt 中被正常重写仍是有效产物。Slurm 仅记录 <code class="docutils literal notranslate"><span class="pre">submitted</span></code>。
+多 pool feature 输出会逐 pool 校验：<code class="docutils literal notranslate"><span class="pre">eval-desc</span></code> 要求每个 pool 至少有一个非空
+<code class="docutils literal notranslate"><span class="pre">.npy</span></code>，<code class="docutils literal notranslate"><span class="pre">embed</span></code> 要求每个 pool 有非空 <code class="docutils literal notranslate"><span class="pre">embedding.hdf5</span></code>。
+Slurm 多模型 infer 若仅部分 JobID 提交成功，父清单保持 <code class="docutils literal notranslate"><span class="pre">submitted</span></code> 并保留失败子记录，
+但命令以退出码 <code class="docutils literal notranslate"><span class="pre">1</span></code> 返回；全部提交失败才记为 <code class="docutils literal notranslate"><span class="pre">failed</span></code>。
+清单 <code class="docutils literal notranslate"><span class="pre">source</span></code> 记录 DP-EVA 包版本，并在 git 信息可观察时记录 commit、dirty 状态与稳定
+dirty fingerprint（dirty 元数据也限定 runtime scope，并复用 runtime 内容摘要）。
+Git 查询在枚举前排除 scope 外路径及任意深度的 <code class="docutils literal notranslate"><span class="pre">.dpeva</span></code>，不读取无关文档、数据集或日志内容。
+新清单还记录版本化的
+<code class="docutils literal notranslate"><span class="pre">runtime_fingerprint</span></code> 及其 scope：<code class="docutils literal notranslate"><span class="pre">src/dpeva</span></code> 与 <code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code> 的 tracked 内容、删除和
+symlink，以及 <code class="docutils literal notranslate"><span class="pre">src/dpeva</span></code> 下未追踪的 Python runtime 文件；文档、数据集、日志和任意
+<code class="docutils literal notranslate"><span class="pre">.dpeva</span></code> 内容不在 scope 内。resume 使用该 scoped fingerprint：只改文档的 commit 不会
+改变 runtime identity，已提交或未提交的 runtime 修改会拒绝 resume；没有 scoped fingerprint
+的 legacy 清单不会被重新解释为匹配。模型输入使用流式 SHA-256，数据集目录使用明确标注的有界 structural identity，路径只
+使用相对/逻辑引用。实际生成的日志文件存在且非空时才会登记为 <code class="docutils literal notranslate"><span class="pre">log</span></code> artifact，不会
+凭空创建日志记录。</p>
+<p>Inference 在没有 <code class="docutils literal notranslate"><span class="pre">model_ref_paths</span></code> 时兼容旧的数字目录布局，但默认每个目录只选择
+<code class="docutils literal notranslate"><span class="pre">model.ckpt.pt</span></code> regular checkpoint，不会隐式把 <code class="docutils literal notranslate"><span class="pre">model_ema.ckpt.pt</span></code> 加入 ensemble。需要
+执行 EMA 时，为该文件提供显式 model-reference JSON，并设置 <code class="docutils literal notranslate"><span class="pre">&quot;role&quot;:</span> <span class="pre">&quot;ema&quot;</span></code>；显式
+references 可以在同一个 ensemble 中同时列出 regular 与 EMA。工作目录外的模型引用使用
+basename 加内容 SHA-256 组成逻辑 ref，不把绝对路径写入 run identity。</p>
+<p>训练脚本的完成 guard 按 backend 校验可证明的实际产物：<code class="docutils literal notranslate"><span class="pre">pt</span></code> 使用稳定 regular checkpoint
+（默认 <code class="docutils literal notranslate"><span class="pre">model.ckpt.pt</span></code>，避免猜测依模型而变的 <code class="docutils literal notranslate"><span class="pre">.pth</span></code>/<code class="docutils literal notranslate"><span class="pre">.pt2</span></code> freeze 后缀），<code class="docutils literal notranslate"><span class="pre">tf</span></code> 使用
+<code class="docutils literal notranslate"><span class="pre">frozen_model.pb</span></code>，<code class="docutils literal notranslate"><span class="pre">pt-expt</span></code> 使用 <code class="docutils literal notranslate"><span class="pre">frozen_model.pte</span></code>，<code class="docutils literal notranslate"><span class="pre">jax</span></code> 使用 <code class="docutils literal notranslate"><span class="pre">frozen_model.hlo</span></code>，<code class="docutils literal notranslate"><span class="pre">pd</span></code>
+同时要求 <code class="docutils literal notranslate"><span class="pre">frozen_model.json</span></code> 与 <code class="docutils literal notranslate"><span class="pre">frozen_model.pdiparams</span></code>。<code class="docutils literal notranslate"><span class="pre">training.save_ckpt</span></code> 和
+<code class="docutils literal notranslate"><span class="pre">training.disp_file</span></code> 的自定义路径会进入对应 guard；当 <code class="docutils literal notranslate"><span class="pre">disp_training=false</span></code> 时上游不会保证
+曲线文件非空，因此完成 guard 只要求 backend 产物。原有输出布局保持不变。</p>
 <p>支持 Slurm array 的 workflow 可设置：</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">slurm_array=true</span></code>：将同质任务合并为 Slurm array，而不是逐个 <code class="docutils literal notranslate"><span class="pre">sbatch</span></code>。</p></li>
@@ -513,9 +574,24 @@ descriptor 可通过 <code class="docutils literal notranslate"><span class="pre
 <span class="p">}</span>
 </pre></div>
 </div>
-<p>正式的 DPA4C 支持需要 DeepMD-kit 3.2.0 或更新版本。当前 <code class="docutils literal notranslate"><span class="pre">pt-expt</span></code>
+<p>正式的 DPA4C 支持走 DeepMD-kit 3.2 兼容性通道。用户运行时可安装
+<code class="docutils literal notranslate"><span class="pre">dpeva[deepmd]</span></code>，其依赖范围为 <code class="docutils literal notranslate"><span class="pre">deepmd-kit&gt;=3.2,&lt;3.3</span></code>；该范围内的版本不应被
+视为行为完全等价。研究生产环境必须单独锁定 <code class="docutils literal notranslate"><span class="pre">deepmd-kit==3.2.0</span></code>，并记录
+<code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">--version</span></code>，不能用范围依赖代替精确锁定。当前 <code class="docutils literal notranslate"><span class="pre">pt-expt</span></code>
 backend 提供 descriptor 提取，但尚未提供 <code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">embed</span></code> 所需的组合
 <code class="docutils literal notranslate"><span class="pre">eval_embedding</span></code> 接口，因此这一路径应使用 <code class="docutils literal notranslate"><span class="pre">eval_desc</span></code>。</p>
+<p>当前 DeepMD 3.2 兼容性通道已有 3 条 <code class="docutils literal notranslate"><span class="pre">supported</span></code> 能力：DPA4
+pt test/eval-desc/embed。这些声明同时
+绑定 CPU contract JobID <code class="docutils literal notranslate"><span class="pre">1128442</span></code> 和完成的 SAI V100 qualification JobID
+<code class="docutils literal notranslate"><span class="pre">1128260</span></code>；脱敏 SAI promotion aggregate 与三个 CPU attestation 位于
+<code class="docutils literal notranslate"><span class="pre">docs/reports/evidence/deepmd-3.2/</span></code>。证据只证明选定 regular 模型、regular+EMA
+V100 命令链完成，不构成科学精度或所有下游 head 的支持声明。一次
+<code class="docutils literal notranslate"><span class="pre">pt-expt</span> <span class="pre">eval-desc</span></code> 虽然执行成功，但事后 descriptor inspection 证明所用 artifact
+实际为 DPA4 而非 DPA4C；因此周期性 DPA4C 路线仍为 experimental，不能因命令
+成功而晋级。其余能力状态以 capability manifest 和报告为准。</p>
+<p>V100 aggregate 中六条 retained attestation 分别覆盖 DPA4 regular/EMA 的
+<code class="docutils literal notranslate"><span class="pre">pt</span> <span class="pre">test</span></code>、<code class="docutils literal notranslate"><span class="pre">pt</span> <span class="pre">eval-desc</span></code> 和 <code class="docutils literal notranslate"><span class="pre">pt</span> <span class="pre">embed</span></code>；它们是历史资格证据，不会因 v0.8.2
+打包而重新执行或扩大声明。</p>
 <p>DeepMD PyTorch 模型可使用 <code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">embed</span></code> 导出 HDF5 embedding。该路线会在 <code class="docutils literal notranslate"><span class="pre">savedir/embedding.hdf5</span></code> 中保留 <code class="docutils literal notranslate"><span class="pre">descriptor</span></code>、<code class="docutils literal notranslate"><span class="pre">atomic_feature</span></code>、<code class="docutils literal notranslate"><span class="pre">structural_feature</span></code> 和 <code class="docutils literal notranslate"><span class="pre">atom_types</span></code>；HDF5 dataset 由 DeepMD 使用 gzip + shuffle 压缩。<code class="docutils literal notranslate"><span class="pre">feature_kind=&quot;descriptor&quot;</span></code> 读取 <code class="docutils literal notranslate"><span class="pre">descriptor</span></code>，<code class="docutils literal notranslate"><span class="pre">feature_kind=&quot;fitting_last_layer&quot;</span></code> 对应 <code class="docutils literal notranslate"><span class="pre">atomic_feature</span></code>。</p>
 <div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
 <span class="w">  </span><span class="nt">"work_dir"</span><span class="p">:</span><span class="w"> </span><span class="s2">"./"</span><span class="p">,</span>
@@ -611,8 +687,32 @@ backend 提供 descriptor 提取，但尚未提供 <code class="docutils literal
 <li><p><code class="docutils literal notranslate"><span class="pre">llpr_collect_score</span></code>：支持 <code class="docutils literal notranslate"><span class="pre">energy_uncertainty_per_atom</span></code>（默认）、<code class="docutils literal notranslate"><span class="pre">energy_ensemble_std_per_atom</span></code>、<code class="docutils literal notranslate"><span class="pre">force_uncertainty_max</span></code>。当前 detached feature workflow 只支持 energy；force DPOSE 仍需要可微 DeepMD PyTorch graph adapter。</p></li>
 </ul>
 </section>
+<section id="label-integration">
+<h3>5.5 Label integration<a class="headerlink" href="#label-integration" title="Link to this heading">#</a></h3>
+<p>标注工作流启用数据整合时，可使用以下字段控制合并输出：</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="nt">"integration_enabled"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"integration_deduplicate"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"integration_output_format"</span><span class="p">:</span><span class="w"> </span><span class="s2">"deepmd/npy/mixed"</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>整合成功后，在 <code class="docutils literal notranslate"><span class="pre">merged_training_data_path</span></code> 下同时生成
+<code class="docutils literal notranslate"><span class="pre">integration_summary.json</span></code>、当前代兼容指针 <code class="docutils literal notranslate"><span class="pre">dataset-manifest.json</span></code> 和不可变的
+<code class="docutils literal notranslate"><span class="pre">dataset-manifest-&lt;generation&gt;.json</span></code>。summary 的 <code class="docutils literal notranslate"><span class="pre">dataset_manifest_path</span></code> 是相对于
+输出目录的不可变清单引用，并同时记录 generation 与 SHA-256。清单只记录
+<code class="docutils literal notranslate"><span class="pre">existing-training</span></code>、<code class="docutils literal notranslate"><span class="pre">new-labeled</span></code> 等逻辑来源，不固化机器绝对路径，并记录父集合帧数、
+去重移除帧数、最终帧/体系数、canonical type map 以及导出文件 SHA-256 的证据强度。
+当前整合仅保留 <code class="docutils literal notranslate"><span class="pre">existing-training</span></code> / <code class="docutils literal notranslate"><span class="pre">new-labeled</span></code> 逻辑来源标签，不生成无法解析的
+parent manifest ref；待父清单随 bundle 一并固化后再扩展该引用。
+未声明来源、未解释的重复/交集或 type map 冲突会在导出和下游交接前失败；显式去重会在清单中保存 overlap/removal evidence 与 <code class="docutils literal notranslate"><span class="pre">validation_result</span></code>（含 rule version）。<code class="docutils literal notranslate"><span class="pre">intersection_summary.method</span></code> 使用 <code class="docutils literal notranslate"><span class="pre">frame-identity-v1</span></code> 表示逐帧交集（必须 overlap=removed），使用 <code class="docutils literal notranslate"><span class="pre">filter-v1</span></code> 表示无交集的一般过滤；零移除使用 <code class="docutils literal notranslate"><span class="pre">not-run</span></code>。
+发布目标使用进程可见的不覆盖语义：同文件系统的 sibling staging 目录通过
+<code class="docutils literal notranslate"><span class="pre">renameat2(RENAME_NOREPLACE)</span></code> 原子发布，竞争目标不会被覆盖；不支持该原语的平台直接
+fail-closed，不使用普通 rename 回退。该契约不声称 crash 后的目录持久化或递归 fsync
+dpdata 树；JSON 文件写入可能进行文件级 flush，不能外推为整个 bundle 的 durability 保证。</p>
+</section>
 <section id="analysis">
-<h3>5.5 Analysis<a class="headerlink" href="#analysis" title="Link to this heading">#</a></h3>
+<h3>5.6 Analysis<a class="headerlink" href="#analysis" title="Link to this heading">#</a></h3>
 <div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
 <span class="w">  </span><span class="nt">"mode"</span><span class="p">:</span><span class="w"> </span><span class="s2">"model_test"</span><span class="p">,</span>
 <span class="w">  </span><span class="nt">"result_dir"</span><span class="p">:</span><span class="w"> </span><span class="s2">"0/test_val"</span><span class="p">,</span>
@@ -654,7 +754,7 @@ backend 提供 descriptor 提取，但尚未提供 <code class="docutils literal
 </ul>
 </section>
 <section id="labeling">
-<h3>5.6 Labeling<a class="headerlink" href="#labeling" title="Link to this heading">#</a></h3>
+<h3>5.7 Labeling<a class="headerlink" href="#labeling" title="Link to this heading">#</a></h3>
 <div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
 <span class="w">  </span><span class="nt">"input_data_path"</span><span class="p">:</span><span class="w"> </span><span class="s2">"./candidate_dpdata"</span><span class="p">,</span>
 <span class="w">  </span><span class="nt">"work_dir"</span><span class="p">:</span><span class="w"> </span><span class="s2">"./labeling_work"</span><span class="p">,</span>
@@ -717,7 +817,7 @@ backend 提供 descriptor 提取，但尚未提供 <code class="docutils literal
 </ul>
 </section>
 <section id="exploration">
-<h3>5.7 Exploration<a class="headerlink" href="#exploration" title="Link to this heading">#</a></h3>
+<h3>5.8 Exploration<a class="headerlink" href="#exploration" title="Link to this heading">#</a></h3>
 <div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
 <span class="w">  </span><span class="nt">"work_dir"</span><span class="p">:</span><span class="w"> </span><span class="s2">"./explore_work"</span><span class="p">,</span>
 <span class="w">  </span><span class="nt">"backend"</span><span class="p">:</span><span class="w"> </span><span class="s2">"atst-tools"</span><span class="p">,</span>
@@ -731,16 +831,16 @@ backend 提供 descriptor 提取，但尚未提供 <code class="docutils literal
 <p>运行完成后，DPEVA 会在 <code class="docutils literal notranslate"><span class="pre">work_dir/dpeva_exploration_result.json</span></code> 写入标准 manifest。若配置了 <code class="docutils literal notranslate"><span class="pre">input_structure_paths</span></code>，这些结构会作为可追溯输入快照写入 <code class="docutils literal notranslate"><span class="pre">work_dir/dpeva_inputs/</span></code>；若配置了 <code class="docutils literal notranslate"><span class="pre">result_structure_paths</span></code>，这些路径必须在 backend 成功后存在并可由 ASE 读取。</p>
 </section>
 </section>
-<section id="id6">
-<h2>6. 异常处理<a class="headerlink" href="#id6" title="Link to this heading">#</a></h2>
+<section id="id8">
+<h2>6. 异常处理<a class="headerlink" href="#id8" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p>配置校验失败：对照 <code class="docutils literal notranslate"><span class="pre">/docs/reference/validation.md</span></code> 的跨字段依赖与范围约束</p></li>
 <li><p>输入路径不存在：检查相对路径是否以 config 所在目录为基准</p></li>
 <li><p>历史字段不兼容：优先以 <code class="docutils literal notranslate"><span class="pre">sampler_type</span> <span class="pre">+</span> <span class="pre">direct_*</span> <span class="pre">/</span> <span class="pre">step*_*</span></code> 的新参数体系为准</p></li>
 </ul>
 </section>
-<section id="id7">
-<h2>7. 变更记录<a class="headerlink" href="#id7" title="Link to this heading">#</a></h2>
+<section id="id9">
+<h2>7. 变更记录<a class="headerlink" href="#id9" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p>2026-07-05：补充 <code class="docutils literal notranslate"><span class="pre">slurm_array</span></code> / <code class="docutils literal notranslate"><span class="pre">slurm_array_task_limit</span></code> 与 SAI-1344 FP11 4GPU MPI fallback 实测建议。</p></li>
 <li><p>2026-07-04：补充 Labeling <code class="docutils literal notranslate"><span class="pre">labeling_task_classes</span></code>，明确 SAI ABACUS 单卡与 MPI 多卡 launcher/resource mode。</p></li>
@@ -803,13 +903,15 @@ backend 提供 descriptor 提取，但尚未提供 <code class="docutils literal
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">1. 目的与范围</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">2. 相关方</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">3. 路径解析规则（强烈建议使用相对路径）</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">3.1 规则</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">3.2 常见路径字段</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">3.0 数据集格式边界</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">3.1 规则</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">3.2 常见路径字段</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#submission-local-slurm">4. Submission 配置（Local / Slurm）</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#local">4.1 Local 最小配置</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#slurm">4.2 Slurm 最小配置</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">4.0 运行身份与证据</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow">5. 各 Workflow 最小配置示例</a><ul class="nav section-nav flex-column">
@@ -817,13 +919,14 @@ backend 提供 descriptor 提取，但尚未提供 <code class="docutils literal
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#train">5.2 Train</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#infer">5.3 Infer</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#collect">5.4 Collect</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#analysis">5.5 Analysis</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#labeling">5.6 Labeling</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#exploration">5.7 Exploration</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#label-integration">5.5 Label integration</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#analysis">5.6 Analysis</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#labeling">5.7 Labeling</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#exploration">5.8 Exploration</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">6. 异常处理</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">7. 变更记录</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id8">6. 异常处理</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id9">7. 变更记录</a></li>
 </ul>
   </nav></div>
 

@@ -2,7 +2,7 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-07-07
+last-updated: 2026-09-06
 owner: Docs Owner
 ---
 
@@ -10,14 +10,14 @@ owner: Docs Owner
 
 - Status: active
 - Audience: Developers
-- Last-Updated: 2026-07-07
+- Last-Updated: 2026-09-06
 - Related:
   - 配置字段字典：`API Reference`（由 `src/dpeva/config.py` 自动生成）
   - 校验规则补充：`docs/reference/validation.md`
   - 上游软件与职责：`docs/reference/upstream-software.md`
 
-* **版本**: 0.8.1
-* **生成日期**: 2026-07-07
+* **版本**: 0.8.2
+* **生成日期**: 2026-09-06
 * **作者**: Quantum Misaka with Trae SOLO
 
 ---
@@ -85,7 +85,7 @@ DP-EVA (Deep Potential EVolution Accelerator, 深度势能演化加速器) 是�
     *   **技术细节**: 将详细的实现细节、配置参数字典、算法推导等内容沉淀至 `docs/reference/` 或 `docs/guides/` 下的专项文档中。
     *   **废弃清理**: 及时标记并清理过时的文档与代码。
     *   **治理入口**: 首次参与贡献请先阅读 `docs/guides/docs-governance-quickstart.md`。
-    *   **提交前检查**: 执行 `python3 scripts/doc_check.py`、`python3 scripts/check_docs_freshness.py --days 90`、`make -C docs html SPHINXOPTS="-W --keep-going"`。
+    *   **提交前检查**: 使用 gate manifest `scripts/gates.toml` 中声明的 `docs_pr` profile：`python scripts/run_gate.py docs_pr`。
 
 ### 1.5 核心工程契约 (Core Engineering Contracts)
 
@@ -135,13 +135,22 @@ DP-EVA (Deep Potential EVolution Accelerator, 深度势能演化加速器) 是�
 *   首次参与贡献时，建议先阅读 `docs/guides/docs-governance-quickstart.md`
 
 #### 1.6.3 提交前质量门禁
-*   代码质量：`ruff check src tests scripts`
-*   单元测试优先：`pytest tests/unit`
-*   文档治理：`python3 scripts/doc_check.py`
-*   文档新鲜度：`python3 scripts/check_docs_freshness.py --days 90`
-*   Sphinx 构建：`make -C docs html SPHINXOPTS="-W --keep-going"`
+*   可执行门禁目录是 `scripts/gates.toml`；`scripts/run_gate.py` 是本地与托管入口唯一的命令分发器。
+*   日常代码检查：`python scripts/run_gate.py local`。
+*   文档检查：`python scripts/run_gate.py docs_pr`；发布检查：`python scripts/run_gate.py release`。
+*   每个 profile 只证明其声明的层级；DeepMD 资格 profile 只在发布改变 DeepMD 能力声明时调用。当前能力矩阵仅有 3 条 DPA4 `supported` 记录，DPA4C 仍为 experimental。
+*   需要查看单个门禁或 profile 时运行 `python scripts/run_gate.py --list`；不要在本页复制 gate argv。
 
-#### 1.6.4 AGENTS 与开发文档的治理边界
+#### 1.6.4 运行完成语义
+
+工作流只有在进程/作业成功、声明产物已验证且 run manifest 进入 `finished` 时才算完成。
+单独写入 completion marker 不足以证明成功；失败、partial 和 submitted 必须保留其状态与证据。
+本地 infer 的自动分析由父工作流统一发出完成标记；每个嵌套 analysis 只记录阶段结果，
+全部分析成功且父清单进入 `finished` 后才输出一次标记。独立 analysis 保留原有完成标记。
+来源身份的 Git 查询在枚举前限定 runtime scope，并排除任意深度 `.dpeva`；dirty 元数据
+复用 runtime 内容摘要，不为 provenance 读取无关文档、数据集或日志内容。
+
+#### 1.6.5 AGENTS 与开发文档的治理边界
 *   `AGENTS.md` 只承担项目开发最小入口职责，用于帮助 AI 与人类开发者快速建立项目心智模型。
 *   若某项内容可以在本页完整说明，就不应继续保留在 `AGENTS.md` 中；`AGENTS.md` 不再充当第二份开发手册。
 *   `.trae/rules/project_rules.md` 负责 AI 行为规则，不应在 `AGENTS.md` 中重复。
@@ -165,7 +174,9 @@ dpeva/
 │   └── ...
 ├── examples/scripts/       # [脚本示例] Python / Shell 调用示例
 ├── scripts/                # [项目维护] 自动化与 CI/CD 脚本 (CI/CD, Release, Audit)
-│   ├── gate.sh             # 质量门禁入口
+│   ├── gate.sh             # 质量门禁兼容入口（委托 gate manifest）
+│   ├── gates.toml          # 可执行门禁目录
+│   ├── run_gate.py         # 门禁分发器
 │   ├── audit.py            # 代码静态分析工具
 │   ├── check_docs.py       # 文档一致性检查
 │   └── release_helper.py   # 版本发布助手
@@ -336,7 +347,7 @@ DP-EVA 专为高性能计算 (HPC) 环境设计，其 Slurm 后端支持以下�
     *   **Training**: 训练阶段，每个模型（如 4 个 Ensemble 模型）会被分配独立的 Slurm 作业 (`train.slurm`)，从而在集群中并行训练，极大缩短总耗时。
     *   **Inference**: 推理阶段 (v0.4.5+)，每个模型的测试任务 (`dp test`) 同样被封装为独立的 Slurm 作业 (`run_test.slurm`)，实现多模型并行推理。
 *   **一任务一作业 (One-Task-One-Job)**: 摒弃了将所有任务打包进单一作业的串行模式，确保每个子任务都能独占申请到的计算资源（如 GPU），避免资源争抢和效率瓶颈。
-*   **状态监控**: 所有 Slurm 作业在完成后会输出 `DPEVA_TAG: WORKFLOW_FINISHED` 标记，便于自动化工具监控任务状态。
+*   **状态监控**: 仅当命令成功、声明产物通过当前 attempt 的 freshness/内容校验且 manifest 进入 `finished` 后，顶层工作流才写出 `DPEVA_TAG: WORKFLOW_FINISHED`；Slurm 提交本身只证明 `submitted`。
 
 ---
 
@@ -518,15 +529,7 @@ Auto-UQ 用于根据数据分布自动确定筛选边界；具体的字段与约
 
 用户自行开展单元测试时，需要自行配置好 Python 环境，确保 `dpeva` 命令在环境内并处于最新状态，且 `pytest` 已安装。
 
-*   **运行单元测试 (Unit Tests)**:
-    ```bash
-    # 基础运行
-    pytest tests/unit
-    
-    # 带覆盖率报告的运行 (推荐)
-    mkdir -p build/coverage
-    pytest tests/unit --cov=src/dpeva --cov-branch --cov-report=term --cov-report=json:build/coverage/coverage-unit.json --cov-fail-under=80
-    ```
+*   **运行单元测试 (Unit Tests)**：执行 `python scripts/run_gate.py unit`；该门禁负责覆盖率参数和 `build/coverage/` 输出。
     *   **规范**:
         *   **Mock 外部依赖**: 所有对 `dp`, `dpdata`, `slurm` 的调用必须被 Mock，严禁在单元测试中产生实际的文件 I/O 或进程提交。
         *   **日志验证**: 涉及日志输出的逻辑，需验证 `setup_workflow_logger` 是否被正确调用。
@@ -536,6 +539,22 @@ Auto-UQ 用于根据数据分布自动确定筛选边界；具体的字段与约
         *   **Golden Value**: 与 NumPy 手算结果比对，误差容忍度 < 1e-5。
         *   **边界测试**: 覆盖 NaN, Inf, 空数据, 单点数据等极端场景。
         *   **覆盖率要求**: 核心模块行覆盖率需达到 100%。
+
+*   **运行集成测试 (Integration Tests)**：`integration` profile 是日常集成测试的唯一命令入口，
+    `python-quality` 托管工作流会自动运行该 profile。真实 Slurm/GPU 用例继续使用测试内具名的
+    环境能力 skip，不能把没有显式 opt-in 的托管 runner 解释为集群资格证明。
+
+*   **运行 DeepMD 3.2 合同 (DeepMD Contract)**：托管工作流把稳定 DPA4 CPU 合同与
+    experimental DPA4C 合同分开。DPA4 lane 在相关变更和每周计划上自动运行，只要求 PT 模型
+    与 periodic data；DPA4C lane 仅能通过手动输入显式选择，并要求真实 DPA4C fixture 与
+    family inspection。两条 lane 都固定 `deepmd-kit==3.2.0`，且只调用 gate manifest 中已有
+    gate。DPA4C 即使执行成功仍保持 experimental，不产生 promotion。
+    已提交 supported evidence 的完整性仍由 unit suite 验证，因此 `unit` 与包含它的
+    `release` profile 复用同一验证；普通 release 不会触发一次新的完整 SAI qualification。
+
+*   **文档部署门禁**：main、tag 和手动触发统一先在只读 job 中运行共享 `release` profile；
+    只有 prerequisite 成功后的 deploy job 才取得 `contents: write`。发布工作流不维护第二份
+    gate 命令或独立审批层。
 
 *   **运行兼容性测试 (Compatibility Test)**:
     ```bash
@@ -569,8 +588,8 @@ DPEVA_TAG: WORKFLOW_FINISHED
 ```
 
 **监控建议**:
-*   外部调度系统应通过 `grep` 或正则表达式持续监控任务的 Log 文件（如 `train.log`, `collection.log`, `eval_desc.log` 或 Slurm `.out` 文件）。
-*   一旦检测到该 Tag，即可判定当前步骤已从应用层逻辑上成功结束，可以安全触发后续任务。
+*   外部调度系统可以通过日志中的 Tag 定位候选完成事件，但必须同时读取对应 run manifest 的终态并检查进程/作业退出状态与已验证产物。
+*   `partial`、`failed` 或仅 `submitted` 的运行不能因子任务日志出现旧 marker 而被提升为完成。
 
 ---
 
@@ -588,13 +607,21 @@ DPEVA_TAG: WORKFLOW_FINISHED
 
 ### 6.1.1 Release Helper 使用约定
 
-- `scripts/release_helper.py` 只负责同步 `src/dpeva/__init__.py` 与 `README.md` 中的版本号。
+- `scripts/release_helper.py` 同步 `src/dpeva/__init__.py`、README 版本徽章与本页当前版本字段；Sphinx 从包版本导入 release identity，不维护第四份字面量。
+- `python scripts/release_helper.py --check` 是无写入的版本一致性检查，并已进入 `release` profile；显式版本只接受无前缀的 `X.Y.Z`。
 - 发布说明的权威写入位置始终是本文件的 `### 6.2 版本历史`，脚本不会自动追加版本条目。
-- 使用脚本完成版本号更新后，必须手动在 `#### Current Era (v0.8.x)` 顶部追加新版本记录，再执行提交与打 tag。
+- 使用脚本完成版本号更新后，必须手动在 `#### Current Era (v0.8.x)` 顶部追加新版本记录并执行发布门禁。提交、打 tag 与发布仍是分离的授权动作。
 
 ### 6.2 版本历史
 
 #### **Current Era (v0.8.x)**
+
+*   **v0.8.2** (2026-09-06):
+    *   **[兼容性]** 默认安装继续保留 `deepmd-kit>=3.1.2,<3.3` 的 legacy 运行包络；`dpeva[deepmd]` 提供 `>=3.2,<3.3` lane，研究生产仍精确锁定 `3.2.0`，版本范围本身不是科学资格结论。
+    *   **[DeepMD 3.2]** 能力矩阵仅将 DPA4 PT `test`、`eval-desc`、`embed` 三条记录标为 `supported`，并保留 CPU contract 与 V100 上 regular/EMA 共六条历史 SAI attestation；DPA4C periodic `pt-expt eval-desc` 仍为 `experimental`，不新增科学资格声明。
+    *   **[可靠运行]** 严格配置迁移、scoped runtime provenance、regular-only legacy 模型发现、current-attempt 输出 freshness、顶层 completion marker 与 fail-closed 部分失败语义共同收口；旧配置兼容读取不吞掉冲突或未知字段。
+    *   **[评估与发布]** eval-card 只索引既有模型、谱系与指标证据，不重跑模型、不生成科学排名；数据 bundle 继续使用 Linux `renameat2(RENAME_NOREPLACE)` 进程可见原子不覆盖发布，不承诺跨平台 fallback 或 crash durability。
+    *   **[发布工程]** 版本统一为 `0.8.2`，Sphinx 直接导入包版本，release helper 增加安全显式版本解析、当前版本面同步与 `--check` 门禁；本地 release/build/wheel smoke 证据见兼容性收口报告，远端 CI 和独立终审仍是合入前外部检查。
 
 *   **v0.8.1** (2026-07-07):
     *   **[发布]** 版本升级至 `0.8.1`，同步 `__init__`、README 版本徽章、Sphinx `conf.py` 与开发文档中的版本标识，并以 `v0.8.1` tag 固化发布点。

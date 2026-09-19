@@ -37,7 +37,7 @@
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="../_static/documentation_options.js?v=7b805e1b"></script>
+    <script src="../_static/documentation_options.js?v=5b31c4f0"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -167,7 +167,7 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="../reference/index.html">Reference</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../reference/README.html">Reference（权威参考）</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../reference/validation.html">参数校验与约束（Validation Rules）</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../reference/upstream-software.html">上游软件与核心依赖（Upstream Software）</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reference/upstream-software.html">上游软件与依赖边界（Upstream Software）</a></li>
 </ul>
 </details></li>
 </ul>
@@ -367,7 +367,7 @@ document.write(`
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">1. 部署架构</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#repository-settings">2. 前置配置 (Repository Settings)</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#github-workflows-docs-deploy-yml">3. 工作流文件详解 (<code class="docutils literal notranslate"><span class="pre">.github/workflows/docs-deploy.yml</span></code>)</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">3.1 完整配置</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">3.1 权限与前置门禁</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">3.2 关键步骤说明</a></li>
 </ul>
 </li>
@@ -423,67 +423,19 @@ document.write(`
 <section id="github-workflows-docs-deploy-yml">
 <h2>3. 工作流文件详解 (<code class="docutils literal notranslate"><span class="pre">.github/workflows/docs-deploy.yml</span></code>)<a class="headerlink" href="#github-workflows-docs-deploy-yml" title="Link to this heading">#</a></h2>
 <section id="id2">
-<h3>3.1 完整配置<a class="headerlink" href="#id2" title="Link to this heading">#</a></h3>
-<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Deploy Docs</span>
-
-<span class="nt">on</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">push</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">branches</span><span class="p">:</span>
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">main</span>
-<span class="w">    </span><span class="nt">tags</span><span class="p">:</span>
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">'v*'</span>
-<span class="w">  </span><span class="nt">workflow_dispatch</span><span class="p">:</span>
-
-<span class="nt">permissions</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">contents</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">write</span>
-
-<span class="nt">jobs</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">deploy</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">runs-on</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ubuntu-latest</span>
-<span class="w">    </span><span class="nt">steps</span><span class="p">:</span>
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">actions/checkout@v4</span>
-<span class="w">        </span><span class="nt">with</span><span class="p">:</span>
-<span class="w">          </span><span class="nt">fetch-depth</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span><span class="w"> </span><span class="c1"># 获取所有历史以支持版本信息</span>
-
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Set up Python</span>
-<span class="w">        </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">actions/setup-python@v5</span>
-<span class="w">        </span><span class="nt">with</span><span class="p">:</span>
-<span class="w">          </span><span class="nt">python-version</span><span class="p">:</span><span class="w"> </span><span class="s">'3.10'</span>
-
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Install dependencies</span>
-<span class="w">        </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
-<span class="w">          </span><span class="no">python -m pip install --upgrade pip</span>
-<span class="w">          </span><span class="no">pip install -e .[docs]</span>
-<span class="w">          </span><span class="no"># 安装 Sphinx 多版本支持插件 (如果尚未包含在 [docs] 中)</span>
-<span class="w">          </span><span class="no"># pip install sphinx-multiversion</span>
-
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Fix Links (Pre-build)</span>
-<span class="w">        </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
-<span class="w">          </span><span class="no">python docs/scripts/fix_links.py</span>
-
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Build Sphinx Docs</span>
-<span class="w">        </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
-<span class="w">          </span><span class="no">cd docs</span>
-<span class="w">          </span><span class="no">make html</span>
-
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Deploy to GitHub Pages</span>
-<span class="w">        </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">peaceiris/actions-gh-pages@v3</span>
-<span class="w">        </span><span class="nt">with</span><span class="p">:</span>
-<span class="w">          </span><span class="nt">github_token</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${{ secrets.GITHUB_TOKEN }}</span>
-<span class="w">          </span><span class="nt">publish_dir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">./docs/build/html</span>
-<span class="w">          </span><span class="nt">destination_dir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${{ github.ref_name == 'main' &amp;&amp; 'latest' || github.ref_name }}</span>
-<span class="w">          </span><span class="nt">keep_files</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w"> </span><span class="c1"># 保留旧版本目录</span>
-</pre></div>
-</div>
+<h3>3.1 权限与前置门禁<a class="headerlink" href="#id2" title="Link to this heading">#</a></h3>
+<p>工作流默认权限是 <code class="docutils literal notranslate"><span class="pre">contents:</span> <span class="pre">read</span></code>。main push、<code class="docutils literal notranslate"><span class="pre">v*</span></code> tag 和手动触发都必须先通过
+<code class="docutils literal notranslate"><span class="pre">release-validation</span></code>；该 prerequisite 只调用 gate manifest 的共享 <code class="docutils literal notranslate"><span class="pre">release</span></code> profile，
+不复制其命令。只有声明 <code class="docutils literal notranslate"><span class="pre">needs:</span> <span class="pre">release-validation</span></code> 的 <code class="docutils literal notranslate"><span class="pre">deploy</span></code> job 获得
+<code class="docutils literal notranslate"><span class="pre">contents:</span> <span class="pre">write</span></code>，因此未经检查的触发不会写入 Pages 分支。</p>
 </section>
 <section id="id3">
 <h3>3.2 关键步骤说明<a class="headerlink" href="#id3" title="Link to this heading">#</a></h3>
 <ol class="arabic simple">
-<li><p><strong>Checkout</strong>: 使用 <code class="docutils literal notranslate"><span class="pre">fetch-depth:</span> <span class="pre">0</span></code> 确保能获取 Git 标签和提交历史，这对生成版本号至关重要。</p></li>
-<li><p><strong>Install Dependencies</strong>: 安装项目本身 (<code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">-e</span> <span class="pre">.</span></code>) 以便 <code class="docutils literal notranslate"><span class="pre">autodoc</span></code> 能导入源码生成 API 文档。</p></li>
-<li><p><strong>Fix Links</strong>: 运行我们编写的 <code class="docutils literal notranslate"><span class="pre">scripts/fix_links.py</span></code>，修正绝对路径链接，防止 404 错误。</p></li>
-<li><p><strong>Build</strong>: 执行 <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">html</span></code> 生成静态文件。</p></li>
-<li><p><strong>Deploy</strong>: 使用 <code class="docutils literal notranslate"><span class="pre">peaceiris/actions-gh-pages</span></code> 插件。</p>
+<li><p><strong>Release Validation</strong>: 在只读权限下安装 release 所需依赖，并执行共享 <code class="docutils literal notranslate"><span class="pre">release</span></code> profile。</p></li>
+<li><p><strong>Checkout</strong>: deploy job 使用 <code class="docutils literal notranslate"><span class="pre">fetch-depth:</span> <span class="pre">0</span></code> 获取完整版本信息。</p></li>
+<li><p><strong>Build</strong>: deploy job 通过 manifest 的 <code class="docutils literal notranslate"><span class="pre">docs_build</span></code> gate 生成静态文件。</p></li>
+<li><p><strong>Deploy</strong>: 仅该依赖 job 使用 <code class="docutils literal notranslate"><span class="pre">peaceiris/actions-gh-pages</span></code>。</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">destination_dir</span></code>: 动态设置为 <code class="docutils literal notranslate"><span class="pre">latest</span></code> (对应 main 分支) 或 <code class="docutils literal notranslate"><span class="pre">vX.Y.Z</span></code> (对应 Tag)。</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">keep_files:</span> <span class="pre">true</span></code>: 增量发布，确保推送新版本时不会删除旧版本目录。</p></li>
@@ -604,7 +556,7 @@ python<span class="w"> </span>-m<span class="w"> </span>http.server<span class="
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">1. 部署架构</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#repository-settings">2. 前置配置 (Repository Settings)</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#github-workflows-docs-deploy-yml">3. 工作流文件详解 (<code class="docutils literal notranslate"><span class="pre">.github/workflows/docs-deploy.yml</span></code>)</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">3.1 完整配置</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">3.1 权限与前置门禁</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">3.2 关键步骤说明</a></li>
 </ul>
 </li>

@@ -37,7 +37,7 @@
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="../../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="../../_static/documentation_options.js?v=7b805e1b"></script>
+    <script src="../../_static/documentation_options.js?v=5b31c4f0"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -167,7 +167,7 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../reference/index.html">Reference</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../reference/README.html">Reference（权威参考）</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../reference/validation.html">参数校验与约束（Validation Rules）</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../reference/upstream-software.html">上游软件与核心依赖（Upstream Software）</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../reference/upstream-software.html">上游软件与依赖边界（Upstream Software）</a></li>
 </ul>
 </details></li>
 </ul>
@@ -368,6 +368,7 @@ document.write(`
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.InferenceConfig.auto_analysis"><code class="docutils literal notranslate"><span class="pre">InferenceConfig.auto_analysis</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.InferenceConfig.data_path"><code class="docutils literal notranslate"><span class="pre">InferenceConfig.data_path</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.InferenceConfig.model_head"><code class="docutils literal notranslate"><span class="pre">InferenceConfig.model_head</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.InferenceConfig.model_ref_paths"><code class="docutils literal notranslate"><span class="pre">InferenceConfig.model_ref_paths</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.InferenceConfig.ref_energies"><code class="docutils literal notranslate"><span class="pre">InferenceConfig.ref_energies</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.InferenceConfig.results_prefix"><code class="docutils literal notranslate"><span class="pre">InferenceConfig.results_prefix</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.InferenceConfig.task_name"><code class="docutils literal notranslate"><span class="pre">InferenceConfig.task_name</span></code></a></li>
@@ -406,6 +407,12 @@ document.write(`
 <dt class="sig sig-object py" id="dpeva.config.InferenceConfig.model_head">
 <em class="property"><span class="pre">field</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">model_head</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#dpeva.config.InferenceConfig.model_head" title="Link to this definition">#</a></dt>
 <dd><p>Model head name (optional for frozen models).</p>
+</dd></dl>
+
+<dl class="py attribute pydantic_field">
+<dt class="sig sig-object py" id="dpeva.config.InferenceConfig.model_ref_paths">
+<em class="property"><span class="pre">field</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">model_ref_paths</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Path</span><span class="p"><span class="pre">]</span></span></em><em class="property"> <span class="pre">[Optional]</span></em><a class="headerlink" href="#dpeva.config.InferenceConfig.model_ref_paths" title="Link to this definition">#</a></dt>
+<dd><p>Explicit JSON ModelArtifactRef files.  When empty, inference uses the one-release legacy numeric-directory discovery bridge.</p>
 </dd></dl>
 
 <dl class="py attribute pydantic_field">
@@ -478,6 +485,7 @@ document.write(`
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.InferenceConfig.auto_analysis"><code class="docutils literal notranslate"><span class="pre">InferenceConfig.auto_analysis</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.InferenceConfig.data_path"><code class="docutils literal notranslate"><span class="pre">InferenceConfig.data_path</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.InferenceConfig.model_head"><code class="docutils literal notranslate"><span class="pre">InferenceConfig.model_head</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.InferenceConfig.model_ref_paths"><code class="docutils literal notranslate"><span class="pre">InferenceConfig.model_ref_paths</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.InferenceConfig.ref_energies"><code class="docutils literal notranslate"><span class="pre">InferenceConfig.ref_energies</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.InferenceConfig.results_prefix"><code class="docutils literal notranslate"><span class="pre">InferenceConfig.results_prefix</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpeva.config.InferenceConfig.task_name"><code class="docutils literal notranslate"><span class="pre">InferenceConfig.task_name</span></code></a></li>

@@ -36,7 +36,7 @@
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="../../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="../../_static/documentation_options.js?v=7b805e1b"></script>
+    <script src="../../_static/documentation_options.js?v=5b31c4f0"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -524,7 +524,7 @@ window.runMermaid = runMermaid;</script>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../reference/index.html">Reference</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../reference/README.html">Reference（权威参考）</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../reference/validation.html">参数校验与约束（Validation Rules）</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../reference/upstream-software.html">上游软件与核心依赖（Upstream Software）</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../reference/upstream-software.html">上游软件与依赖边界（Upstream Software）</a></li>
 </ul>
 </details></li>
 </ul>
@@ -682,6 +682,7 @@ document.write(`
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
 
@@ -727,10 +728,42 @@ document.write(`
     <span class="n">DEFAULT_CLEAN_RESULTS_PREFIX</span><span class="p">,</span>
     <span class="n">DEFAULT_CLEAN_STRICT_ALIGNMENT</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dpeva.config_migration</span><span class="w"> </span><span class="kn">import</span> <span class="n">migrate_legacy_config</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_migrate_workflow_input</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Normalize documented legacy submission aliases at model boundaries."""</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">value</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">migrate_legacy_config</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">warnings</span><span class="p">:</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"legacy config field </span><span class="si">{</span><span class="n">item</span><span class="o">.</span><span class="n">field</span><span class="si">}</span><span class="s2">; use </span><span class="si">{</span><span class="n">item</span><span class="o">.</span><span class="n">replacement</span><span class="si">}</span><span class="s2">; "</span>
+            <span class="sa">f</span><span class="s2">"removal target </span><span class="si">{</span><span class="n">item</span><span class="o">.</span><span class="n">removal_version</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="ne">DeprecationWarning</span><span class="p">,</span>
+            <span class="n">stacklevel</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">result</span><span class="o">.</span><span class="n">normalized</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">StrictConfigModel</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Base for public configuration models.</span>
+
+<span class="sd">    Legacy aliases are normalized before model validation by</span>
+<span class="sd">    :mod:`dpeva.config_migration`; silently dropping unknown fields here would</span>
+<span class="sd">    make misspelled scientific parameters indistinguishable from intentional</span>
+<span class="sd">    defaults.</span>
+<span class="sd">    """</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span>
+        <span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">,</span>
+        <span class="n">populate_by_name</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">protected_namespaces</span><span class="o">=</span><span class="p">(),</span>
+    <span class="p">)</span>
+
 
 <div class="viewcode-block" id="SubmissionConfig">
 <a class="viewcode-back" href="../../api/config/submission.html#dpeva.config.SubmissionConfig">[文档]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">SubmissionConfig</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SubmissionConfig</span><span class="p">(</span><span class="n">StrictConfigModel</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Configuration for job submission."""</span>
     <span class="n">backend</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"local"</span><span class="p">,</span> <span class="s2">"slurm"</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="n">DEFAULT_BACKEND</span><span class="p">,</span> 
@@ -768,10 +801,8 @@ document.write(`
 
 <div class="viewcode-block" id="BaseWorkflowConfig">
 <a class="viewcode-back" href="../../api/config/submission.html#dpeva.config.BaseWorkflowConfig">[文档]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">BaseWorkflowConfig</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">BaseWorkflowConfig</span><span class="p">(</span><span class="n">StrictConfigModel</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Base configuration for all workflows."""</span>
-    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s1">'ignore'</span><span class="p">,</span> <span class="n">populate_by_name</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">protected_namespaces</span><span class="o">=</span><span class="p">())</span>
-
     <span class="n">work_dir</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default_factory</span><span class="o">=</span><span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">,</span> 
         <span class="n">description</span><span class="o">=</span><span class="s2">"Working directory."</span>
@@ -788,6 +819,14 @@ document.write(`
         <span class="n">default_factory</span><span class="o">=</span><span class="n">SubmissionConfig</span><span class="p">,</span> 
         <span class="n">description</span><span class="o">=</span><span class="s2">"Submission configuration."</span>
     <span class="p">)</span>
+
+<div class="viewcode-block" id="BaseWorkflowConfig.migrate_legacy_submission">
+<a class="viewcode-back" href="../../api/config/submission.html#dpeva.config.BaseWorkflowConfig.migrate_legacy_submission">[文档]</a>
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"before"</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">migrate_legacy_submission</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_migrate_workflow_input</span><span class="p">(</span><span class="n">value</span><span class="p">)</span></div>
+
     
 <div class="viewcode-block" id="BaseWorkflowConfig.validate_dp_backend">
 <a class="viewcode-back" href="../../api/config/submission.html#dpeva.config.BaseWorkflowConfig.validate_dp_backend">[文档]</a>
@@ -811,36 +850,6 @@ document.write(`
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">and</span> <span class="n">v</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"omp_threads must be &gt;= 1"</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">v</span></div>
-
-
-<div class="viewcode-block" id="BaseWorkflowConfig.extract_flat_submission_config">
-<a class="viewcode-back" href="../../api/config/submission.html#dpeva.config.BaseWorkflowConfig.extract_flat_submission_config">[文档]</a>
-    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s1">'before'</span><span class="p">)</span>
-    <span class="nd">@classmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">extract_flat_submission_config</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""</span>
-<span class="sd">        Allow flat config to populate nested submission config for backward compatibility.</span>
-<span class="sd">        e.g. {'backend': 'slurm'} -&gt; {'submission': {'backend': 'slurm'}}</span>
-<span class="sd">        """</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-            <span class="c1"># If submission is not explicitly provided, try to build it from flat keys</span>
-            <span class="k">if</span> <span class="s2">"submission"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
-                <span class="n">backend</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"backend"</span><span class="p">,</span> <span class="n">DEFAULT_BACKEND</span><span class="p">)</span>
-                <span class="n">slurm_config</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"slurm_config"</span><span class="p">,</span> <span class="p">{})</span>
-                <span class="n">env_setup</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"env_setup"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
-                <span class="n">submission_config</span> <span class="o">=</span> <span class="p">{</span>
-                    <span class="s2">"backend"</span><span class="p">:</span> <span class="n">backend</span><span class="p">,</span>
-                    <span class="s2">"slurm_config"</span><span class="p">:</span> <span class="n">slurm_config</span><span class="p">,</span>
-                    <span class="s2">"env_setup"</span><span class="p">:</span> <span class="n">env_setup</span>
-                <span class="p">}</span>
-                <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"slurm_array"</span><span class="p">,</span> <span class="s2">"slurm_array_task_limit"</span><span class="p">):</span>
-                    <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
-                        <span class="n">submission_config</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
-
-                <span class="c1"># Only create if there's something non-default or if backend is present</span>
-                <span class="c1"># But to be safe, we always populate it</span>
-                <span class="n">data</span><span class="p">[</span><span class="s2">"submission"</span><span class="p">]</span> <span class="o">=</span> <span class="n">submission_config</span>
-        <span class="k">return</span> <span class="n">data</span></div>
 </div>
 
 
@@ -908,10 +917,8 @@ document.write(`
 
 <div class="viewcode-block" id="ExplorationConfig">
 <a class="viewcode-back" href="../../api/config/exploration.html#dpeva.config.ExplorationConfig">[文档]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">ExplorationConfig</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ExplorationConfig</span><span class="p">(</span><span class="n">StrictConfigModel</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Configuration for optional trajectory exploration backends."""</span>
-
-    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s1">'ignore'</span><span class="p">,</span> <span class="n">populate_by_name</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">protected_namespaces</span><span class="o">=</span><span class="p">())</span>
 
     <span class="n">work_dir</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default_factory</span><span class="o">=</span><span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">,</span>
@@ -945,10 +952,8 @@ document.write(`
 
 <div class="viewcode-block" id="AnalysisConfig">
 <a class="viewcode-back" href="../../api/config/analysis.html#dpeva.config.AnalysisConfig">[文档]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">AnalysisConfig</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">AnalysisConfig</span><span class="p">(</span><span class="n">StrictConfigModel</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Configuration for Analysis Workflow (Post-processing)."""</span>
-    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s1">'ignore'</span><span class="p">,</span> <span class="n">populate_by_name</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">protected_namespaces</span><span class="o">=</span><span class="p">())</span>
-
     <span class="n">mode</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"model_test"</span><span class="p">,</span> <span class="s2">"dataset"</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="s2">"model_test"</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Analysis mode."</span><span class="p">)</span>
     <span class="n">result_dir</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Path to DP test results directory."</span><span class="p">)</span>
     <span class="n">dataset_dir</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Path to dataset directory for dataset analysis mode."</span><span class="p">)</span>
@@ -999,22 +1004,12 @@ document.write(`
         <span class="n">description</span><span class="o">=</span><span class="s2">"Path to configuration file for Slurm self-submission."</span>
     <span class="p">)</span>
 
-<div class="viewcode-block" id="AnalysisConfig.extract_flat_submission_config">
-<a class="viewcode-back" href="../../api/config/analysis.html#dpeva.config.AnalysisConfig.extract_flat_submission_config">[文档]</a>
-    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s1">'before'</span><span class="p">)</span>
+<div class="viewcode-block" id="AnalysisConfig.migrate_legacy_submission">
+<a class="viewcode-back" href="../../api/config/analysis.html#dpeva.config.AnalysisConfig.migrate_legacy_submission">[文档]</a>
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"before"</span><span class="p">)</span>
     <span class="nd">@classmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">extract_flat_submission_config</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="s2">"submission"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
-            <span class="n">submission_config</span> <span class="o">=</span> <span class="p">{</span>
-                <span class="s2">"backend"</span><span class="p">:</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"backend"</span><span class="p">,</span> <span class="n">DEFAULT_BACKEND</span><span class="p">),</span>
-                <span class="s2">"slurm_config"</span><span class="p">:</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"slurm_config"</span><span class="p">,</span> <span class="p">{}),</span>
-                <span class="s2">"env_setup"</span><span class="p">:</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"env_setup"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
-            <span class="p">}</span>
-            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"slurm_array"</span><span class="p">,</span> <span class="s2">"slurm_array_task_limit"</span><span class="p">):</span>
-                <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
-                    <span class="n">submission_config</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
-            <span class="n">data</span><span class="p">[</span><span class="s2">"submission"</span><span class="p">]</span> <span class="o">=</span> <span class="n">submission_config</span>
-        <span class="k">return</span> <span class="n">data</span></div>
+    <span class="k">def</span><span class="w"> </span><span class="nf">migrate_legacy_submission</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_migrate_workflow_input</span><span class="p">(</span><span class="n">value</span><span class="p">)</span></div>
 
 
     <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s1">'after'</span><span class="p">)</span>
@@ -1060,7 +1055,7 @@ document.write(`
         <span class="n">description</span><span class="o">=</span><span class="s2">"Whether to require strict system/frame alignment between dataset and inference results."</span>
     <span class="p">)</span>
 
-<span class="k">class</span><span class="w"> </span><span class="nc">LabelingTaskSelectorConfig</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">LabelingTaskSelectorConfig</span><span class="p">(</span><span class="n">StrictConfigModel</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Selector used to assign generated labeling tasks to resource classes."""</span>
 
     <span class="n">min_atoms</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Inclusive minimum atom count."</span><span class="p">)</span>
@@ -1071,7 +1066,7 @@ document.write(`
     <span class="n">stru_types</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Structure types to include."</span><span class="p">)</span>
 
 
-<span class="k">class</span><span class="w"> </span><span class="nc">LabelingTaskClassConfig</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">LabelingTaskClassConfig</span><span class="p">(</span><span class="n">StrictConfigModel</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Resource and launcher mode for a group of labeling tasks."""</span>
 
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Stable task class name used under inputs/&lt;name&gt;/N_*."</span><span class="p">)</span>
@@ -1112,6 +1107,13 @@ document.write(`
 <span class="k">class</span><span class="w"> </span><span class="nc">InferenceConfig</span><span class="p">(</span><span class="n">BaseWorkflowConfig</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Configuration for Inference Workflow."""</span>
     <span class="n">data_path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Path to test dataset."</span><span class="p">)</span>
+    <span class="n">model_ref_paths</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">"Explicit JSON ModelArtifactRef files.  When empty, inference "</span>
+            <span class="s2">"uses the one-release legacy numeric-directory discovery bridge."</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
     <span class="n">model_head</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Model head name (optional for frozen models)."</span><span class="p">)</span>
     <span class="n">results_prefix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">DEFAULT_RESULTS_PREFIX</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Output file prefix."</span><span class="p">)</span>
     <span class="n">task_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">DEFAULT_INFER_TASK_NAME</span>
@@ -1120,6 +1122,28 @@ document.write(`
         <span class="n">description</span><span class="o">=</span><span class="s2">"Whether to trigger analysis after inference execution."</span>
     <span class="p">)</span>
     <span class="n">ref_energies</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Reference energies per element for cohesive energy calculation."</span><span class="p">)</span></div>
+
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">EvaluationCardConfig</span><span class="p">(</span><span class="n">StrictConfigModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Configuration for assembling one candidate evaluation card.</span>
+
+<span class="sd">    The card is an evidence index. Metric files are optional and are</span>
+<span class="sd">    represented explicitly when absent or invalid; model and dataset</span>
+<span class="sd">    references are required strict schema-1.0 evidence anchors.</span>
+<span class="sd">    """</span>
+
+    <span class="n">candidate_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">min_length</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">model_ref_path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Strict JSON ModelArtifactRef evidence file."</span><span class="p">)</span>
+    <span class="n">output_path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Destination for the assembled card."</span><span class="p">)</span>
+    <span class="n">in_domain_cumulative_path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">iter11_last_wave_path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">historical_domain_path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">matpes_retention_path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">training_cost_path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">surface_slice_path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">dataset_manifest_paths</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">downstream_feedback_ref</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
 
 
 <div class="viewcode-block" id="LabelingConfig">

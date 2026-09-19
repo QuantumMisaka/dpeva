@@ -37,7 +37,7 @@
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="../_static/documentation_options.js?v=7b805e1b"></script>
+    <script src="../_static/documentation_options.js?v=5b31c4f0"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -167,7 +167,7 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="../reference/index.html">Reference</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../reference/README.html">Reference（权威参考）</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../reference/validation.html">参数校验与约束（Validation Rules）</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../reference/upstream-software.html">上游软件与核心依赖（Upstream Software）</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reference/upstream-software.html">上游软件与依赖边界（Upstream Software）</a></li>
 </ul>
 </details></li>
 </ul>
@@ -368,12 +368,15 @@ document.write(`
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">2. 相关方</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#python">3. Python 环境要求</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">4. 安装方式</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">4.1 可编辑安装（推荐用于开发/使用）</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">4.2 开发依赖（可选）</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#exploration">4.3 Exploration 可选依赖</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core-deepmd">4.1 Core：默认安装（含 DeepMD 兼容包络）</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dev">4.2 Dev：开发与测试依赖（可选）</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#deepmd-runtime-3-2-lane">4.3 DeepMD runtime：显式 3.2 运行时 lane</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">4.4 预置环境：由调用方承担全部依赖</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#research-production">4.5 Research production：研究生产精确锁定</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#exploration">4.6 Exploration 可选依赖</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#deepmd-kit">5. 外部依赖：DeepMD-kit</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">5. 外部环境说明</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">6. 下一步</a></li>
 </ul>
             </nav>
@@ -415,9 +418,15 @@ document.write(`
 </section>
 <section id="id3">
 <h2>4. 安装方式<a class="headerlink" href="#id3" title="Link to this heading">#</a></h2>
-<section id="id4">
-<h3>4.1 可编辑安装（推荐用于开发/使用）<a class="headerlink" href="#id4" title="Link to this heading">#</a></h3>
-<p>在项目根目录执行：</p>
+<section id="core-deepmd">
+<h3>4.1 Core：默认安装（含 DeepMD 兼容包络）<a class="headerlink" href="#core-deepmd" title="Link to this heading">#</a></h3>
+<p>默认安装在核心依赖中提供有界的 <code class="docutils literal notranslate"><span class="pre">deepmd-kit&gt;=3.1.2,&lt;3.3</span></code>，用于保留现有
+3.1.2 运行包络。这个依赖边界是安装兼容性承诺，不是新的科学能力验证；能力
+矩阵和 3.2 证据仍由显式 lane 单独管理。在项目根目录执行：</p>
+<p>核心依赖中的 <code class="docutils literal notranslate"><span class="pre">dpdata&gt;=1.1</span></code> 是数据侧能力边界：读取 <code class="docutils literal notranslate"><span class="pre">deepmd/lmdb</span></code> 需要该下限，
+<code class="docutils literal notranslate"><span class="pre">lmdb</span></code> 与 <code class="docutils literal notranslate"><span class="pre">msgpack</span></code> 由 dpdata 自身引入。预置环境（<code class="docutils literal notranslate"><span class="pre">--no-deps</span></code>）若仍是
+<code class="docutils literal notranslate"><span class="pre">dpdata&lt;1.1</span></code>，<code class="docutils literal notranslate"><span class="pre">deepmd/lmdb</span></code> 输入会被明确拒绝；<code class="docutils literal notranslate"><span class="pre">dpeva</span> <span class="pre">doctor</span></code> 的 <code class="docutils literal notranslate"><span class="pre">dpdata.lmdb</span></code>
+检查会报告实际可读性。</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.
 </pre></div>
 </div>
@@ -426,14 +435,53 @@ document.write(`
 </pre></div>
 </div>
 </section>
-<section id="id5">
-<h3>4.2 开发依赖（可选）<a class="headerlink" href="#id5" title="Link to this heading">#</a></h3>
+<section id="dev">
+<h3>4.2 Dev：开发与测试依赖（可选）<a class="headerlink" href="#dev" title="Link to this heading">#</a></h3>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s1">'.[dev]'</span>
 </pre></div>
 </div>
+<p><code class="docutils literal notranslate"><span class="pre">dev</span></code> extra 只提供测试、格式化和类型检查工具，不额外改变核心 DeepMD 包络或
+安装 <code class="docutils literal notranslate"><span class="pre">atst-tools</span></code>。需要明确 3.2 lane 的测试时，显式叠加下一节的 runtime extra。</p>
+</section>
+<section id="deepmd-runtime-3-2-lane">
+<h3>4.3 DeepMD runtime：显式 3.2 运行时 lane<a class="headerlink" href="#deepmd-runtime-3-2-lane" title="Link to this heading">#</a></h3>
+<p>默认安装已经提供 3.1.2 起的 DeepMD 兼容包络。训练、推理或特征工作流若要
+显式解析 3.2 lane，在 core 安装上启用 DeepMD extra：</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s1">'.[deepmd]'</span>
+</pre></div>
+</div>
+<p>该 extra 的依赖范围是 <code class="docutils literal notranslate"><span class="pre">deepmd-kit&gt;=3.2,&lt;3.3</span></code>。这是用户环境的依赖解析
+边界，不表示该范围内的每个版本行为完全等价。</p>
+<p>验证运行时能力：</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>dpeva<span class="w"> </span>doctor
+dp<span class="w"> </span>--version
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">doctor</span></code> 是显式环境检查。稳定的 3.1.2--3.1.x 运行时会报告 <code class="docutils literal notranslate"><span class="pre">deepmd</span></code> 包络
+可用，同时将 3.2 qualification 单独标为未声明；3.2 lane 则单独报告
+qualification。旧版本、未来版本和 prerelease 不会绕过边界。</p>
+</section>
+<section id="id4">
+<h3>4.4 预置环境：由调用方承担全部依赖<a class="headerlink" href="#id4" title="Link to this heading">#</a></h3>
+<p>如果平台已经预置并验证了完整运行环境，可以显式跳过依赖解析：</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>--no-deps<span class="w"> </span>-e<span class="w"> </span>.
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">--no-deps</span></code> 不是无依赖的默认安装。调用方必须自行提供 <code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code> 中的
+全部依赖（包括 <code class="docutils literal notranslate"><span class="pre">deepmd-kit</span></code>），并保存环境版本与 <code class="docutils literal notranslate"><span class="pre">dpeva</span> <span class="pre">doctor</span> <span class="pre">--json</span></code> 结果。</p>
+</section>
+<section id="research-production">
+<h3>4.5 Research production：研究生产精确锁定<a class="headerlink" href="#research-production" title="Link to this heading">#</a></h3>
+<p>正式科研结果使用独立环境，并将 DeepMD 精确锁定为 <code class="docutils literal notranslate"><span class="pre">deepmd-kit==3.2.0</span></code>：</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s1">'.[deepmd]'</span><span class="w"> </span><span class="s1">'deepmd-kit==3.2.0'</span>
+</pre></div>
+</div>
+<p>同时保存环境锁文件、<code class="docutils literal notranslate"><span class="pre">dpeva</span> <span class="pre">doctor</span> <span class="pre">--json</span></code> 和 <code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">--version</span></code> 输出作为运行
+记录。研究生产环境不能只依赖 <code class="docutils literal notranslate"><span class="pre">&gt;=3.2,&lt;3.3</span></code> 范围来声称可复现，也不能把范围内
+其他版本未经验证的行为当作 3.2.0 等价物。</p>
 </section>
 <section id="exploration">
-<h3>4.3 Exploration 可选依赖<a class="headerlink" href="#exploration" title="Link to this heading">#</a></h3>
+<h3>4.6 Exploration 可选依赖<a class="headerlink" href="#exploration" title="Link to this heading">#</a></h3>
 <p><code class="docutils literal notranslate"><span class="pre">dpeva</span> <span class="pre">explore</span></code> 通过可选 <code class="docutils literal notranslate"><span class="pre">atst-tools</span></code> backend 调用轨迹探索工作流。该依赖不进入核心安装，需要时单独启用：</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s1">'.[explore]'</span>
 </pre></div>
@@ -450,22 +498,11 @@ atst<span class="w"> </span>--help
 </ul>
 </section>
 </section>
-<section id="deepmd-kit">
-<h2>5. 外部依赖：DeepMD-kit<a class="headerlink" href="#deepmd-kit" title="Link to this heading">#</a></h2>
-<p>DP-EVA 的多数 Workflow 依赖 DeepMD-kit 的 <code class="docutils literal notranslate"><span class="pre">dp</span></code> 命令（例如 <code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">train/test/eval-desc</span></code>）。</p>
-<p>要求：</p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">dp</span></code> 命令可在 <code class="docutils literal notranslate"><span class="pre">PATH</span></code> 中找到</p></li>
-</ul>
-<p>验证：</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>dp<span class="w"> </span>--version
-</pre></div>
-</div>
-<p>说明：</p>
-<ul class="simple">
-<li><p>若 <code class="docutils literal notranslate"><span class="pre">dp</span></code> 不可用，导入 <code class="docutils literal notranslate"><span class="pre">dpeva</span></code> 时会给出警告提示，但并不阻止安装。</p></li>
-<li><p>在 Slurm 环境中，建议通过 <code class="docutils literal notranslate"><span class="pre">submission.env_setup</span></code> 显式加载 DeepMD 环境（不要依赖交互式 shell）。</p></li>
-</ul>
+<section id="id5">
+<h2>5. 外部环境说明<a class="headerlink" href="#id5" title="Link to this heading">#</a></h2>
+<p>DP-EVA 的 DeepMD 工作流通过 <code class="docutils literal notranslate"><span class="pre">dp</span></code> 命令调用 DeepMD-kit（例如
+<code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">train/test/eval-desc</span></code>）。在 Slurm 环境中，建议通过
+<code class="docutils literal notranslate"><span class="pre">submission.env_setup</span></code> 显式加载已锁定的 DeepMD 环境，不要依赖交互式 shell。</p>
 <p>参考：</p>
 <ul class="simple">
 <li><p>/docs/guides/slurm.md</p></li>
@@ -533,12 +570,15 @@ atst<span class="w"> </span>--help
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">2. 相关方</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#python">3. Python 环境要求</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">4. 安装方式</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">4.1 可编辑安装（推荐用于开发/使用）</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">4.2 开发依赖（可选）</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#exploration">4.3 Exploration 可选依赖</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core-deepmd">4.1 Core：默认安装（含 DeepMD 兼容包络）</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dev">4.2 Dev：开发与测试依赖（可选）</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#deepmd-runtime-3-2-lane">4.3 DeepMD runtime：显式 3.2 运行时 lane</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">4.4 预置环境：由调用方承担全部依赖</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#research-production">4.5 Research production：研究生产精确锁定</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#exploration">4.6 Exploration 可选依赖</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#deepmd-kit">5. 外部依赖：DeepMD-kit</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">5. 外部环境说明</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">6. 下一步</a></li>
 </ul>
   </nav></div>

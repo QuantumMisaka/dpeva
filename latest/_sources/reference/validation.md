@@ -16,6 +16,22 @@ owner: Docs Owner
 
 本文档说明了 DP-EVA 系统中各参数的校验逻辑和约束条件，这些规则由 Pydantic 验证器在运行时强制执行。
 
+## 0. 配置迁移与未知字段
+
+CLI 的配置读取顺序固定为：读取源 JSON → 在内存副本上迁移受支持的旧扁平提交字段 → 解析相对路径 → 使用严格模型校验 → 提交工作流。源 JSON 永不原位改写。
+
+所有公开配置模型使用 `extra="forbid"`。未知或拼写错误的字段会在提交前触发 `ValidationError`，不会静默采用默认值。兼容迁移仅处理下列顶层字段，并将其移入 `submission`：
+
+| 旧字段 | 规范字段 | 退役目标 |
+| :--- | :--- | :--- |
+| `backend`（值为 `local` 或 `slurm`） | `submission.backend` | `1.0` |
+| `slurm_config` | `submission.slurm_config` | `1.0` |
+| `env_setup` | `submission.env_setup` | `1.0` |
+| `slurm_array` | `submission.slurm_array` | `1.0` |
+| `slurm_array_task_limit` | `submission.slurm_array_task_limit` | `1.0` |
+
+每个迁移字段都会输出形如 `legacy config field backend; use submission.backend; removal target 1.0` 的 warning。探索工作流的 `backend="atst-tools"` 是工作流自身字段，不会被误判为提交 backend。
+
 ## 1. 基础类型校验
 所有参数必须符合定义的 Python 类型。
 *   **Path**: 必须是字符串或 Path 对象，且部分路径必须在文件系统中实际存在（参见具体参数说明）。

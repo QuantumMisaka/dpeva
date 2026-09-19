@@ -37,7 +37,7 @@
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="../../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="../../_static/documentation_options.js?v=7b805e1b"></script>
+    <script src="../../_static/documentation_options.js?v=5b31c4f0"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -167,7 +167,7 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../reference/index.html">Reference</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../reference/README.html">Reference（权威参考）</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../reference/validation.html">参数校验与约束（Validation Rules）</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../reference/upstream-software.html">上游软件与核心依赖（Upstream Software）</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../reference/upstream-software.html">上游软件与依赖边界（Upstream Software）</a></li>
 </ul>
 </details></li>
 </ul>
@@ -377,7 +377,10 @@ document.write(`
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">5.2 后续扩展用例（模板已覆盖）</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">6. 运行说明（面向 Slurm 环境）</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">6. 运行说明（面向 Slurm 环境）</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#deepmd-3-2-v100-qualification">6.1 DeepMD 3.2 V100 qualification</a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id8">7. 风险与边界</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id9">8. 异常处理</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id10">9. 变更记录</a></li>
@@ -397,7 +400,7 @@ document.write(`
 <ul class="simple">
 <li><p>Status: active</p></li>
 <li><p>Audience: Developers / Infra</p></li>
-<li><p>Last-Updated: 2026-06-10</p></li>
+<li><p>Last-Updated: 2026-09-06</p></li>
 </ul>
 <p>本报告给出基于真实生产目录 <code class="docutils literal notranslate"><span class="pre">/test/test-for-multiple-datapool</span></code> (File missing) 反推的集成测试设计，并交付可执行的 Slurm 编排用例与输入裁剪方案。</p>
 <section id="id1">
@@ -505,6 +508,38 @@ document.write(`
 </section>
 <section id="id7">
 <h2>6. 运行说明（面向 Slurm 环境）<a class="headerlink" href="#id7" title="Link to this heading">#</a></h2>
+<section id="deepmd-3-2-v100-qualification">
+<h3>6.1 DeepMD 3.2 V100 qualification<a class="headerlink" href="#deepmd-3-2-v100-qualification" title="Link to this heading">#</a></h3>
+<p>DeepMD 3.2 的 SAI qualification 使用
+<code class="docutils literal notranslate"><span class="pre">scripts/validation/prepare_deepmd_32_qualification.py</span></code>、
+<code class="docutils literal notranslate"><span class="pre">submit_deepmd_32_qualification.py</span></code> 与
+<code class="docutils literal notranslate"><span class="pre">collect_deepmd_32_qualification.py</span></code>。准备阶段必须传入显式 model root；脚本只记录
+regular/EMA checkpoint 路径和 SHA-256，不复制科研产物。计算节点显式 source
+<code class="docutils literal notranslate"><span class="pre">scripts/env/dpeva-dpa4.env</span></code>，先以 <code class="docutils literal notranslate"><span class="pre">launch.json</span></code> 重新校验 input/script/model 的
+SHA-256、精确 DeepMD 3.2.0、V100 GPU 和 Torch CUDA，再生成 <code class="docutils literal notranslate"><span class="pre">commands/*.json</span></code>、环境锁、GPU/Torch/CUDA 与
+artifact checks。默认作业约束是 <code class="docutils literal notranslate"><span class="pre">4V100</span></code>、单节点单任务单 GPU、<code class="docutils literal notranslate"><span class="pre">improper-gpu</span></code>、最长
+30 分钟，禁止额外 <code class="docutils literal notranslate"><span class="pre">mem</span></code>/<code class="docutils literal notranslate"><span class="pre">cpus</span></code> 资源声明。</p>
+<p>准备、提交、compute-node preflight、命令 runner 与 collector 共享同一个 scope 契约。
+显式 <code class="docutils literal notranslate"><span class="pre">dpa4</span></code> scope 只要求 regular/EMA 的 <code class="docutils literal notranslate"><span class="pre">pt</span> <span class="pre">test</span></code>、<code class="docutils literal notranslate"><span class="pre">pt</span> <span class="pre">eval-desc</span></code>、<code class="docutils literal notranslate"><span class="pre">pt</span> <span class="pre">embed</span></code> 六个 case
+及共同的四项环境记录；collector 还要求对应 preflight，并在任何必需 case 缺失、失败、
+跳过或多出 scope 外记录时 fail closed。<code class="docutils literal notranslate"><span class="pre">all</span></code> scope 额外要求经过 family inspection 的真实
+DPA4C periodic <code class="docutils literal notranslate"><span class="pre">pt-expt</span> <span class="pre">eval-desc</span></code>。没有 <code class="docutils literal notranslate"><span class="pre">scope</span></code> 字段的历史 input/job 仍按 <code class="docutils literal notranslate"><span class="pre">all</span></code> 解释，
+调用者不能在提交、runner 或 collection 时把它重新解释为 <code class="docutils literal notranslate"><span class="pre">dpa4</span></code>。</p>
+<p><code class="docutils literal notranslate"><span class="pre">dpa4</span></code> scope 不要求 <code class="docutils literal notranslate"><span class="pre">DPEVA_DEEPMD_DPA4C_MODEL</span></code> 或 DPA4C head；<code class="docutils literal notranslate"><span class="pre">all</span></code> scope 两者仍必需。
+scope 只缩小一次新资格运行的执行集合，不改写既有能力矩阵或证据：当前仍只有三项 supported
+DPA4 能力和六条历史 SAI attestation，DPA4C 仍为 experimental。本节不授权或触发作业提交。</p>
+<p>qualification 作业使用独立的 <code class="docutils literal notranslate"><span class="pre">dpeva-dpa4-320</span></code> 环境（SAI 实测 DeepMD-kit 精确
+<code class="docutils literal notranslate"><span class="pre">3.2.0</span></code>）；普通 DP-EVA 开发与测试仍默认使用 <code class="docutils literal notranslate"><span class="pre">dpeva-dpa4</span></code>（当前为
+<code class="docutils literal notranslate"><span class="pre">3.2.0b1.dev67</span></code>）。脚本在 source 环境脚本前显式设置环境名，preflight 同时核对
+<code class="docutils literal notranslate"><span class="pre">CONDA_DEFAULT_ENV</span></code> 与 <code class="docutils literal notranslate"><span class="pre">CONDA_PREFIX</span></code> basename，避免 <code class="docutils literal notranslate"><span class="pre">--export=NONE</span></code> 下继承或误用环境。</p>
+<p>提交前应在干净登录 shell 中完成 rehash；提交脚本只执行一次 <code class="docutils literal notranslate"><span class="pre">sbatch</span></code>，并把结果写入
+唯一外部 job directory 和原子更新的 <code class="docutils literal notranslate"><span class="pre">latest.json</span></code>。<code class="docutils literal notranslate"><span class="pre">launch.json</span></code> 在 <code class="docutils literal notranslate"><span class="pre">sbatch</span></code> 前原子
+落盘，以避免 scheduler 等待期间的 race；<code class="docutils literal notranslate"><span class="pre">submission.json</span></code> 在获得 JobID 后再写入。
+<code class="docutils literal notranslate"><span class="pre">latest.json</span></code> 是引用，不是可供 collector 直接扫描的目录；collector 默认只做 inspect，
+<code class="docutils literal notranslate"><span class="pre">--finalize</span></code> 仅由作业 EXIT trap 使用，<code class="docutils literal notranslate"><span class="pre">--require-complete</span></code> 要求所有命令、环境和 artifact
+证据完成。提交本身不等于作业完成。</p>
+<p>本仓库不声明该 qualification 的科学数值结论；报告模板见
+<code class="docutils literal notranslate"><span class="pre">docs/reports/templates/deepmd-3.2-qualification.md</span></code>。</p>
 <p>运行前置：</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">sbatch</span></code>、<code class="docutils literal notranslate"><span class="pre">squeue</span></code> 可用</p></li>
@@ -522,6 +557,7 @@ document.write(`
 </ul>
 </li>
 </ul>
+</section>
 </section>
 <section id="id8">
 <h2>7. 风险与边界<a class="headerlink" href="#id8" title="Link to this heading">#</a></h2>
@@ -605,7 +641,10 @@ document.write(`
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">5.2 后续扩展用例（模板已覆盖）</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">6. 运行说明（面向 Slurm 环境）</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">6. 运行说明（面向 Slurm 环境）</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#deepmd-3-2-v100-qualification">6.1 DeepMD 3.2 V100 qualification</a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id8">7. 风险与边界</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id9">8. 异常处理</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id10">9. 变更记录</a></li>

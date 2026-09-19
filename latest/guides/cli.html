@@ -37,7 +37,7 @@
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="../_static/documentation_options.js?v=7b805e1b"></script>
+    <script src="../_static/documentation_options.js?v=5b31c4f0"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -167,7 +167,7 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="../reference/index.html">Reference</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../reference/README.html">Reference（权威参考）</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../reference/validation.html">参数校验与约束（Validation Rules）</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../reference/upstream-software.html">上游软件与核心依赖（Upstream Software）</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reference/upstream-software.html">上游软件与依赖边界（Upstream Software）</a></li>
 </ul>
 </details></li>
 </ul>
@@ -368,10 +368,12 @@ document.write(`
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">2. 相关方</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">3. 总体用法</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">3.1 帮助信息</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">3.2 通用命令格式</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">3.2 工作流命令格式</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#doctor">3.3 doctor（环境能力检查）</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">4. 子命令职责、输入输出与配置</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#eval-card">4.9 eval-card（候选评估卡片）</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#train">4.1 train（并行微调训练）</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#infer">4.2 infer（并行推理）</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#feature">4.3 feature（描述符生成）</a></li>
@@ -402,14 +404,14 @@ document.write(`
 <li><p>Status: active</p></li>
 <li><p>Audience: Users / Developers</p></li>
 <li><p>Applies-To: CLI 模式（推荐）</p></li>
-<li><p>Last-Updated: 2026-06-10</p></li>
+<li><p>Last-Updated: 2026-09-06</p></li>
 </ul>
 <section id="id1">
 <h2>1. 目的与范围<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
 <p>本页说明 DP-EVA 的统一命令行入口、子命令职责、配置文件约定、输出与失败定位方式。</p>
 <p>范围：</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">dpeva</span> <span class="pre">train</span> <span class="pre">/</span> <span class="pre">infer</span> <span class="pre">/</span> <span class="pre">feature</span> <span class="pre">/</span> <span class="pre">explore</span> <span class="pre">/</span> <span class="pre">collect</span> <span class="pre">/</span> <span class="pre">label</span> <span class="pre">/</span> <span class="pre">analysis</span> <span class="pre">/</span> <span class="pre">clean</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">dpeva</span> <span class="pre">train</span> <span class="pre">/</span> <span class="pre">infer</span> <span class="pre">/</span> <span class="pre">feature</span> <span class="pre">/</span> <span class="pre">explore</span> <span class="pre">/</span> <span class="pre">collect</span> <span class="pre">/</span> <span class="pre">label</span> <span class="pre">/</span> <span class="pre">analysis</span> <span class="pre">/</span> <span class="pre">clean</span> <span class="pre">/</span> <span class="pre">doctor</span> <span class="pre">/</span> <span class="pre">eval-card</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">--no-banner</span></code></p></li>
 </ul>
 </section>
@@ -431,25 +433,73 @@ dpeva<span class="w"> </span>train<span class="w"> </span>--help
 </div>
 </section>
 <section id="id5">
-<h3>3.2 通用命令格式<a class="headerlink" href="#id5" title="Link to this heading">#</a></h3>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>dpeva<span class="w"> </span>&lt;subcommand&gt;<span class="w"> </span>&lt;config_path&gt;
+<h3>3.2 工作流命令格式<a class="headerlink" href="#id5" title="Link to this heading">#</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>dpeva<span class="w"> </span>&lt;workflow&gt;<span class="w"> </span>&lt;config_path&gt;
 </pre></div>
 </div>
 <p>可选参数：</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>dpeva<span class="w"> </span>--no-banner<span class="w"> </span>&lt;subcommand&gt;<span class="w"> </span>&lt;config_path&gt;
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>dpeva<span class="w"> </span>--no-banner<span class="w"> </span>&lt;workflow&gt;<span class="w"> </span>&lt;config_path&gt;
 </pre></div>
 </div>
-<p>CLI 会在参数解析阶段对 <code class="docutils literal notranslate"><span class="pre">&lt;config_path&gt;</span></code> 执行统一前置校验（存在性、可读性、JSON 文件后缀）。</p>
+<p><code class="docutils literal notranslate"><span class="pre">feature</span></code> 与 <code class="docutils literal notranslate"><span class="pre">infer</span></code> 还支持运行证据选项：<code class="docutils literal notranslate"><span class="pre">--run-id</span> <span class="pre">ID</span></code> 固定本次运行身份，
+<code class="docutils literal notranslate"><span class="pre">--resume</span></code> 恢复未完成的本地运行；已进入 <code class="docutils literal notranslate"><span class="pre">submitted</span></code> 的 Slurm 运行会在提交前拒绝
+resume（调度器轮询/恢复不在本试点范围），不会创建新作业。使用带必填 <code class="docutils literal notranslate"><span class="pre">--reason</span></code>
+的 <code class="docutils literal notranslate"><span class="pre">--force</span></code> 创建显式新尝试。<code class="docutils literal notranslate"><span class="pre">--resume</span></code> 与 <code class="docutils literal notranslate"><span class="pre">--force</span></code> 互斥；运行清单写入配置工作目录下的
+<code class="docutils literal notranslate"><span class="pre">.dpeva/runs/&lt;run-id&gt;/run.json</span></code>。</p>
+<p>除 <code class="docutils literal notranslate"><span class="pre">doctor</span></code> 外的工作流都要求提供 <code class="docutils literal notranslate"><span class="pre">&lt;config_path&gt;</span></code>；CLI 会在参数解析阶段对它执行统一前置校验（存在性、可读性、JSON 文件后缀）。<code class="docutils literal notranslate"><span class="pre">doctor</span></code> 是不需要配置文件的独立环境检查命令，格式见下节。</p>
 <p>实现入口：<code class="docutils literal notranslate"><span class="pre">src/dpeva/cli.py</span></code>（基于 <code class="docutils literal notranslate"><span class="pre">argparse</span></code>）。</p>
+<p>配置加载的 Python 兼容接口为 <code class="docutils literal notranslate"><span class="pre">load_and_resolve_config(path)</span> <span class="pre">-&gt;</span> <span class="pre">dict</span></code>，返回已完成迁移和相对
+路径解析的配置 mapping。需要运行证据、原始输入和迁移 warning 的内部消费者使用
+<code class="docutils literal notranslate"><span class="pre">load_config_with_metadata(path)</span> <span class="pre">-&gt;</span> <span class="pre">MigrationResult</span></code>；两者都不会改写源 JSON。旧版顶层 submission
+字段会记录迁移 warning，并继续拒绝未知字段和冲突值。</p>
+</section>
+<section id="doctor">
+<h3>3.3 doctor（环境能力检查）<a class="headerlink" href="#doctor" title="Link to this heading">#</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>dpeva<span class="w"> </span>doctor
+dpeva<span class="w"> </span>doctor<span class="w"> </span>--json
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">doctor</span></code> 显式检查当前运行环境的 DeepMD 能力。默认输出每项检查的人类可读结果；<code class="docutils literal notranslate"><span class="pre">--json</span></code> 输出 schema 版本为 <code class="docutils literal notranslate"><span class="pre">1.0</span></code> 的机器可读报告。JSON 模式不会输出欢迎 banner，因此标准输出始终只有 JSON。</p>
+<p>DeepMD 版本检查保留两个诊断 lane：稳定的 <code class="docutils literal notranslate"><span class="pre">&gt;=3.1.2,&lt;3.3</span></code> 是默认运行时包络，
+<code class="docutils literal notranslate"><span class="pre">deepmd.qualified</span></code> 单独报告 <code class="docutils literal notranslate"><span class="pre">&gt;=3.2,&lt;3.3</span></code> 的 3.2 qualification。3.1 环境可以
+保持 <code class="docutils literal notranslate"><span class="pre">deepmd:</span> <span class="pre">ok</span></code>，但不会因此获得 3.2 科学验证；旧版本、未来版本和 prerelease
+不会绕过边界。仅 3.2 lane 需要的 CLI surface 在 legacy 环境中作为
+<code class="docutils literal notranslate"><span class="pre">required=false</span></code> 信息性检查，不会把仍可用的旧环境整体判为失败。</p>
+<p>报告顶层 <code class="docutils literal notranslate"><span class="pre">status</span></code> 为 <code class="docutils literal notranslate"><span class="pre">ok</span></code> 时命令退出码为 <code class="docutils literal notranslate"><span class="pre">0</span></code>；任一必需检查不是 <code class="docutils literal notranslate"><span class="pre">ok</span></code> 时退出码为 <code class="docutils literal notranslate"><span class="pre">1</span></code>。
+检查状态可能包括 <code class="docutils literal notranslate"><span class="pre">ok</span></code>、<code class="docutils literal notranslate"><span class="pre">missing</span></code>、<code class="docutils literal notranslate"><span class="pre">error</span></code>、<code class="docutils literal notranslate"><span class="pre">unknown</span></code>、<code class="docutils literal notranslate"><span class="pre">incompatible</span></code> 和
+<code class="docutils literal notranslate"><span class="pre">unavailable</span></code>。每项可带 <code class="docutils literal notranslate"><span class="pre">required=false</span></code> 表示信息性能力（例如 CUDA/GPU 和可选
+后端），其不可用不会阻止 CPU-safe 工作流。默认检查 DeepMD 版本以及 <code class="docutils literal notranslate"><span class="pre">test</span></code>、
+<code class="docutils literal notranslate"><span class="pre">eval-desc</span></code>、<code class="docutils literal notranslate"><span class="pre">embed</span></code> CLI surface，并显式报告 dpdata、Torch/CUDA、GPU 可见性和
+可选后端。<code class="docutils literal notranslate"><span class="pre">dpdata.lmdb</span></code> 是独立的信息性检查：它报告当前 dpdata 能否读取
+<code class="docutils literal notranslate"><span class="pre">deepmd/lmdb</span></code>（需要 <code class="docutils literal notranslate"><span class="pre">dpdata&gt;=1.1</span></code>），不可用不会把仅使用 npy/mixed 的环境判为失败。</p>
 </section>
 </section>
 <section id="id6">
 <h2>4. 子命令职责、输入输出与配置<a class="headerlink" href="#id6" title="Link to this heading">#</a></h2>
-<p>所有子命令的第一个参数均为配置 JSON 路径。配置字段的权威查表入口：</p>
+<p>除 <code class="docutils literal notranslate"><span class="pre">doctor</span></code> 外，所有工作流子命令的第一个参数均为配置 JSON 路径；<code class="docutils literal notranslate"><span class="pre">doctor</span></code> 不接收配置路径。配置字段的权威查表入口：</p>
 <ul class="simple">
 <li><p>API Reference（Sphinx 生成的配置字段文档）</p></li>
 <li><p>../reference/validation.md</p></li>
 </ul>
+<section id="eval-card">
+<h3>4.9 eval-card（候选评估卡片）<a class="headerlink" href="#eval-card" title="Link to this heading">#</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">eval-card</span></code> 是既有证据的机器可读索引：它将模型引用、数据谱系和评测证据组装为候选交接卡片，
+不是模型重验证或科学排名门禁。它不会启动评测、复制活动中的 FT2DP 任务清单或推断科学排名。六个固定维度始终存在，
+未提供证据标记为 <code class="docutils literal notranslate"><span class="pre">not-run</span></code>，配置了但无法读取或校验的证据标记为 <code class="docutils literal notranslate"><span class="pre">failed</span></code>，并保留证据路径。</p>
+<p><code class="docutils literal notranslate"><span class="pre">examples/recipes/evaluation/config_eval_card.json</span></code> 是配置模板，不是可直接执行的
+candidate artifact。填入真实 model-ref、dataset manifest 和 metric 文件后，再运行：</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>dpeva<span class="w"> </span>eval-card<span class="w"> </span>path/to/filled-eval-card.json
+</pre></div>
+</div>
+<p>配置文件中的相对路径均相对该配置文件所在目录解析，包括 <code class="docutils literal notranslate"><span class="pre">output_path</span></code>、
+<code class="docutils literal notranslate"><span class="pre">model_ref_path</span></code>、六个可选 metric 路径和 <code class="docutils literal notranslate"><span class="pre">dataset_manifest_paths</span></code>。输出卡片以原子方式发布，
+不会覆盖已存在的目标文件；如需生成新的候选卡片，请使用新的输出路径。配置模板见
+<code class="docutils literal notranslate"><span class="pre">examples/recipes/evaluation/config_eval_card.json</span></code>。
+卡片中的本地 <code class="docutils literal notranslate"><span class="pre">model_ref</span></code>、<code class="docutils literal notranslate"><span class="pre">dataset_refs</span></code>、metric <code class="docutils literal notranslate"><span class="pre">evidence_ref</span></code> 和本地下游反馈引用均是
+相对于卡片目录的 POSIX 逻辑引用；将包含这些目标的 candidate package 整体搬迁后仍可解析。
+相对路径只解决可移植定位，不单独提供不可变性；不可变性由引用目标自身的 no-overwrite、校验和
+及其验证契约承担。HTTP/其他下游 URI 保持原样。</p>
+</section>
 <section id="train">
 <h3>4.1 train（并行微调训练）<a class="headerlink" href="#train" title="Link to this heading">#</a></h3>
 <ul class="simple">
@@ -494,6 +544,10 @@ dpeva<span class="w"> </span>train<span class="w"> </span>--help
 </li>
 </ul>
 <p>示例配置：<code class="docutils literal notranslate"><span class="pre">examples/recipes/inference/config_infer.json</span></code></p>
+<p>例如指定可复查的运行身份：</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>dpeva<span class="w"> </span>infer<span class="w"> </span>config.json<span class="w"> </span>--run-id<span class="w"> </span>infer-20260904-a1b2c3
+</pre></div>
+</div>
 </section>
 <section id="feature">
 <h3>4.3 feature（描述符生成）<a class="headerlink" href="#feature" title="Link to this heading">#</a></h3>
@@ -513,6 +567,7 @@ dpeva<span class="w"> </span>train<span class="w"> </span>--help
 </li>
 </ul>
 <p>示例配置：<code class="docutils literal notranslate"><span class="pre">examples/recipes/feature_generation/config_feature.json</span></code></p>
+<p><code class="docutils literal notranslate"><span class="pre">feature</span></code> 同样支持上述 <code class="docutils literal notranslate"><span class="pre">--run-id</span></code>、<code class="docutils literal notranslate"><span class="pre">--resume</span></code>、<code class="docutils literal notranslate"><span class="pre">--force</span></code> 和 <code class="docutils literal notranslate"><span class="pre">--reason</span></code> 选项。</p>
 </section>
 <section id="explore">
 <h3>4.4 explore（轨迹探索，可选）<a class="headerlink" href="#explore" title="Link to this heading">#</a></h3>
@@ -589,6 +644,17 @@ dpeva<span class="w"> </span>train<span class="w"> </span>--help
 <li><p><code class="docutils literal notranslate"><span class="pre">work_dir/outputs/anomalies</span></code>（异常或被筛出结果）</p></li>
 <li><p>当 <code class="docutils literal notranslate"><span class="pre">integration_enabled=true</span></code> 时，额外输出 <code class="docutils literal notranslate"><span class="pre">merged_training_data_path</span></code>（未指定时默认 <code class="docutils literal notranslate"><span class="pre">work_dir/outputs/merged_training_data</span></code>）</p></li>
 <li><p>整合统计文件：<code class="docutils literal notranslate"><span class="pre">&lt;merged_training_data_path&gt;/integration_summary.json</span></code></p></li>
+<li><p>数据谱系清单：<code class="docutils literal notranslate"><span class="pre">&lt;merged_training_data_path&gt;/dataset-manifest.json</span></code> 是当前代的兼容指针，
+并保留不可变的 <code class="docutils literal notranslate"><span class="pre">dataset-manifest-&lt;generation&gt;.json</span></code>；统计文件中的
+<code class="docutils literal notranslate"><span class="pre">dataset_manifest_path</span></code> 是相对于输出目录的不可变清单引用，同时记录 generation 和
+SHA-256。清单记录父数据集、合并后的帧/体系数、去重移除数、type map 和逻辑来源引用；
+当前整合不会伪造不可解析的 parent manifest ref，仅保留逻辑来源标签；
+未声明来源、未解释的重复/交集或 type map 冲突会在下游交接前失败；显式去重会保存
+overlap/removal evidence 与机器可读 <code class="docutils literal notranslate"><span class="pre">validation_result</span></code>（含 rule version）。</p></li>
+<li><p>发布采用 sibling staging 目录与 Linux <code class="docutils literal notranslate"><span class="pre">renameat2(RENAME_NOREPLACE)</span></code>，在进程可见范围内
+原子且不覆盖并发产生的目标目录；不支持该原语的平台直接失败，不回退到普通 rename。
+该发布语义不提供 crash 后目录持久化或递归 fsync dpdata 树的保证；JSON 文件可能进行
+文件级 flush，不能外推为整个 bundle 的 durability 保证。</p></li>
 </ul>
 </li>
 </ul>
@@ -651,11 +717,12 @@ dpeva<span class="w"> </span>train<span class="w"> </span>--help
 <div class="highlight-text notranslate"><div class="highlight"><pre><span></span>DPEVA_TAG: WORKFLOW_FINISHED
 </pre></div>
 </div>
-<p>建议外部编排器通过监控日志出现该标记推进下一步（尤其是 Slurm 场景）。</p>
+<p><code class="docutils literal notranslate"><span class="pre">WORKFLOW_FINISHED</span></code> is written only after the guarded command returns zero and all declared artifacts pass validation as outputs created or observably rewritten by the current attempt. A pre-existing non-empty file is not sufficient. Local workflow markers are emitted after verified artifacts are registered and the run manifest reaches <code class="docutils literal notranslate"><span class="pre">finished</span></code>; generated Bash jobs apply the same freshness rule before their marker. Consumers MUST require both a successful process/job state and the marker; the marker alone is not proof of success. <code class="docutils literal notranslate"><span class="pre">sbatch</span></code> returning a JobID establishes only <code class="docutils literal notranslate"><span class="pre">submitted</span></code>, not <code class="docutils literal notranslate"><span class="pre">finished</span></code>.</p>
 <p>说明：</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">train</span></code>、<code class="docutils literal notranslate"><span class="pre">collect</span></code>、<code class="docutils literal notranslate"><span class="pre">label</span></code> 等主流程会在成功结束时输出该标记。</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">infer</span></code> 在 <code class="docutils literal notranslate"><span class="pre">auto_analysis=true</span></code> 且本地链式分析完成时会由分析阶段输出该标记；Slurm 场景更稳妥的推进锚点仍是各模型 <code class="docutils literal notranslate"><span class="pre">test_job.out</span></code> 完成后再显式执行 <code class="docutils literal notranslate"><span class="pre">dpeva</span> <span class="pre">analysis</span></code>。</p></li>
+<li><p>本地 <code class="docutils literal notranslate"><span class="pre">feature</span></code> / <code class="docutils literal notranslate"><span class="pre">infer</span></code> 仅在当次运行的产物验证、登记和 manifest <code class="docutils literal notranslate"><span class="pre">finished</span></code> 转换完成后输出工作流标记；Slurm 场景更稳妥的推进锚点仍是各作业输出与状态共同验证完成后再进入下游。</p></li>
+<li><p>本地 <code class="docutils literal notranslate"><span class="pre">infer</span></code> 启用 <code class="docutils literal notranslate"><span class="pre">auto_analysis</span></code> 时，嵌套 analysis 不输出独立完成标记；全部模型分析成功且父清单进入 <code class="docutils literal notranslate"><span class="pre">finished</span></code> 后只输出一次。任意模型分析失败时父清单为 <code class="docutils literal notranslate"><span class="pre">failed</span></code>，不会留下提前完成标记。独立 <code class="docutils literal notranslate"><span class="pre">dpeva</span> <span class="pre">analysis</span></code> 保留原有标记。</p></li>
 </ul>
 </section>
 <section id="id8">
@@ -666,6 +733,17 @@ dpeva<span class="w"> </span>train<span class="w"> </span>--help
 <li><p><strong>正常执行</strong>：0。</p></li>
 <li><p><strong>参数解析失败</strong>：2（例如 config 文件不存在、不可读、路径不是文件，或参数形态错误）。</p></li>
 <li><p><strong>运行期失败</strong>：1（配置内容不合法、业务逻辑失败、外部命令失败等）。</p></li>
+</ul>
+</li>
+<li><p><strong>doctor 环境检查</strong>：报告 <code class="docutils literal notranslate"><span class="pre">status=ok</span></code> 时为 0，否则为 1；<code class="docutils literal notranslate"><span class="pre">doctor</span> <span class="pre">--json</span></code> 的标准输出仅包含 JSON 报告。</p></li>
+<li><p><strong>局部完成</strong>：本地 infer 只要有一个模型成功、另一个失败，就写入 <code class="docutils literal notranslate"><span class="pre">partial</span></code>
+清单并以退出码 <code class="docutils literal notranslate"><span class="pre">1</span></code> 返回；所有模型失败则为 <code class="docutils literal notranslate"><span class="pre">failed</span></code>。输出缺失/为空时清单
+顶层类别为 <code class="docutils literal notranslate"><span class="pre">ARTIFACT</span></code>，命令异常为 <code class="docutils literal notranslate"><span class="pre">EXECUTION</span></code>；混合失败类别确定性归为
+<code class="docutils literal notranslate"><span class="pre">EXECUTION</span></code>，但每个 <code class="docutils literal notranslate"><span class="pre">JobRecord</span></code> 保留具体类别。Slurm 的 <code class="docutils literal notranslate"><span class="pre">sbatch</span></code> 回执只表示
+<code class="docutils literal notranslate"><span class="pre">submitted</span></code>，不会伪造 <code class="docutils literal notranslate"><span class="pre">finished</span></code>。Slurm 多模型提交若部分 JobID 成功、部分提交失败，
+父清单仍保持 <code class="docutils literal notranslate"><span class="pre">submitted</span></code>（保留成功 JobID 与失败子记录），但工作流立即以退出码 <code class="docutils literal notranslate"><span class="pre">1</span></code>
+报告提交不完整；只有全部提交失败才将父清单记为 <code class="docutils literal notranslate"><span class="pre">failed</span></code>。</p>
+<ul>
 <li><p>注意：CLI 对用户输入类错误优先给出可操作提示，避免无意义堆栈噪音；内部异常仍会保留堆栈用于排障。</p></li>
 </ul>
 </li>
@@ -694,6 +772,8 @@ dpeva<span class="w"> </span>label<span class="w"> </span>config.json<span class
 <section id="id9">
 <h2>7. 变更记录<a class="headerlink" href="#id9" title="Link to this heading">#</a></h2>
 <ul class="simple">
+<li><p>2026-09-05：补充 DeepMD 默认 3.1.2 运行包络与独立 3.2 qualification 诊断 lane。</p></li>
+<li><p>2026-09-04：新增 <code class="docutils literal notranslate"><span class="pre">doctor</span></code> 环境能力检查及 <code class="docutils literal notranslate"><span class="pre">--json</span></code> 稳定 JSON 输出契约。</p></li>
 <li><p>2026-06-11：补充 <code class="docutils literal notranslate"><span class="pre">dpeva</span> <span class="pre">explore</span></code> manifest、输入结构快照和结果结构回收契约。</p></li>
 <li><p>2026-06-10：新增 <code class="docutils literal notranslate"><span class="pre">dpeva</span> <span class="pre">explore</span></code> 可选轨迹探索入口，记录 <code class="docutils literal notranslate"><span class="pre">atst-tools</span></code> backend 的 md/relax 边界。</p></li>
 <li><p>2026-03-03：更新退出码契约说明，明确 <code class="docutils literal notranslate"><span class="pre">WorkflowError</span></code> 会导致退出码 1。</p></li>
@@ -755,10 +835,12 @@ dpeva<span class="w"> </span>label<span class="w"> </span>config.json<span class
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">2. 相关方</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">3. 总体用法</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">3.1 帮助信息</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">3.2 通用命令格式</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">3.2 工作流命令格式</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#doctor">3.3 doctor（环境能力检查）</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">4. 子命令职责、输入输出与配置</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#eval-card">4.9 eval-card（候选评估卡片）</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#train">4.1 train（并行微调训练）</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#infer">4.2 infer（并行推理）</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#feature">4.3 feature（描述符生成）</a></li>

@@ -37,7 +37,7 @@
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="../_static/documentation_options.js?v=7b805e1b"></script>
+    <script src="../_static/documentation_options.js?v=5b31c4f0"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -167,7 +167,7 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="../reference/index.html">Reference</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../reference/README.html">Reference（权威参考）</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../reference/validation.html">参数校验与约束（Validation Rules）</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../reference/upstream-software.html">上游软件与核心依赖（Upstream Software）</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reference/upstream-software.html">上游软件与依赖边界（Upstream Software）</a></li>
 </ul>
 </details></li>
 </ul>
@@ -464,13 +464,9 @@ document.write(`
 <section id="id7">
 <h2>7. 稳态化提交流程（标准）<a class="headerlink" href="#id7" title="Link to this heading">#</a></h2>
 <ol class="arabic simple">
-<li><p>在提交前执行：</p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">python3</span> <span class="pre">scripts/doc_check.py</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">python3</span> <span class="pre">scripts/check_docs_freshness.py</span> <span class="pre">--days</span> <span class="pre">90</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">html</span> <span class="pre">SPHINXOPTS=&quot;-W</span> <span class="pre">--keep-going&quot;</span></code></p></li>
-</ul>
-</li>
+<li><p>在提交前执行 <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">scripts/run_gate.py</span> <span class="pre">docs_pr</span></code>；门禁命令的唯一来源是
+<code class="docutils literal notranslate"><span class="pre">scripts/gates.toml</span></code>。需要完整发布验证时执行
+<code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">scripts/run_gate.py</span> <span class="pre">release</span></code>。</p></li>
 <li><p>在英文 PR 描述中填写：</p>
 <ul class="simple">
 <li><p>变更摘要和 public-contract impact；</p></li>

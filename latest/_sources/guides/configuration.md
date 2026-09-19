@@ -2,7 +2,7 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-07-04
+last-updated: 2026-09-20
 owner: Docs Owner
 ---
 
@@ -10,7 +10,7 @@ owner: Docs Owner
 
 - Status: active
 - Audience: Users / Developers
-- Last-Updated: 2026-07-04
+- Last-Updated: 2026-09-06
 
 ## 1. 目的与范围
 
@@ -26,6 +26,15 @@ owner: Docs Owner
 - 平台维护：提供 Slurm 队列/环境初始化建议
 
 ## 3. 路径解析规则（强烈建议使用相对路径）
+
+### 3.0 数据集格式边界
+
+- 受支持的数据集输入：`deepmd/npy`、`deepmd/npy/mixed`、`deepmd/lmdb`（需要 `dpdata>=1.1`）。
+- LMDB 输入由 dpdata 按**组成分组**读回，不保留目录级体系身份；依赖 system 名称的配置
+  （如 Clean 的逐 system 归属、`target_systems` 筛选）在 LMDB 上会被明确拒绝。
+- Feature 工作流的 `feature_exporter="eval_desc"`/`"embed"` 上游不支持 LMDB，DP-EVA 在
+  提交作业前拒绝；请提供 npy/mixed 副本或使用进程内描述符生成。
+- 完整支持矩阵与实测依据见 `docs/reference/upstream-software.md` §2.1。
 
 ### 3.1 规则
 
@@ -43,6 +52,16 @@ owner: Docs Owner
 - `root_savedir`：Collect 输出目录
 
 ## 4. Submission 配置（Local / Slurm）
+
+从文件读取配置时，CLI 先执行一次显式兼容迁移，再进行严格配置校验。新配置应始终使用嵌套的 `submission` 对象；旧版顶层 `backend`、`env_setup`、`slurm_config`、`slurm_array` 和 `slurm_array_task_limit` 会被移动到该对象，并输出包含替代字段和退役目标版本的 warning。若新旧写法同时出现且值不同，迁移会直接失败。
+
+迁移在内存副本上进行，用户提供的源 JSON 不会被覆盖。规范化配置会在后续 run manifest 中单独记录。所有公开配置模型均拒绝未知字段，因此拼写错误必须在提交前修正；迁移只接受有明确映射的旧字段，不会吞掉任意扩展字段。
+
+Python API 同样在 `BaseWorkflowConfig` 的公开模型边界执行这次迁移，因此直接调用
+`InferenceConfig.model_validate(...)`、`FeatureConfig.model_validate(...)` 或其他工作流模型时，
+仍可读取上述旧字段；输入 mapping 不会被修改。`AnalysisConfig` 也支持该兼容边界。
+`ExplorationConfig.backend` 是探索后端自己的原生字段（例如 `atst-tools`），不会被解释为
+submission backend。未知字段与新旧字段冲突仍然严格失败。
 
 ### 4.1 Local 最小配置
 
@@ -74,6 +93,48 @@ owner: Docs Owner
 ```
 
 常用扩展字段：`partition/qos/gpus_per_node/cpus_per_task/account`。
+
+### 4.0 运行身份与证据
+
+`feature` 与 `infer` 的 CLI 运行会在工作目录生成
+`.dpeva/runs/<run-id>/run.json`，并保存单次读取的原始配置与规范化配置快照。
+每个新建的 schema `1.0` 运行都会写入 `config.metadata.json`，记录输入 schema `1.0`
+与迁移 warning（无 warning 时为空列表），并由清单的 `config.metadata` 相对引用指向它；
+迁移前的 legacy 清单可能没有该引用，resume 时仅接受隐含的默认 metadata。使用 `--run-id` 可固定身份；已有
+身份默认拒绝覆盖，未完成的本地运行可用 `--resume`，已提交的 Slurm 运行会在提交
+前拒绝 resume，需要重跑时使用带审计说明 `--reason` 的 `--force`。运行清单中的 `finished`
+只表示本地命令成功，且输出文件非空、属于当前 attempt 的新建或可观察重写并已校验；
+目录中未被本次执行改写的历史文件不能让 no-op 命令成功，也不会作为本 attempt 的新产物登记。
+该 freshness 判定使用 device/inode/size/mtime_ns/ctime_ns 元数据，不会在执行前读取或散列全部历史大型数组；
+相同字节只要在本 attempt 中被正常重写仍是有效产物。Slurm 仅记录 `submitted`。
+多 pool feature 输出会逐 pool 校验：`eval-desc` 要求每个 pool 至少有一个非空
+`.npy`，`embed` 要求每个 pool 有非空 `embedding.hdf5`。
+Slurm 多模型 infer 若仅部分 JobID 提交成功，父清单保持 `submitted` 并保留失败子记录，
+但命令以退出码 `1` 返回；全部提交失败才记为 `failed`。
+清单 `source` 记录 DP-EVA 包版本，并在 git 信息可观察时记录 commit、dirty 状态与稳定
+dirty fingerprint（dirty 元数据也限定 runtime scope，并复用 runtime 内容摘要）。
+Git 查询在枚举前排除 scope 外路径及任意深度的 `.dpeva`，不读取无关文档、数据集或日志内容。
+新清单还记录版本化的
+`runtime_fingerprint` 及其 scope：`src/dpeva` 与 `pyproject.toml` 的 tracked 内容、删除和
+symlink，以及 `src/dpeva` 下未追踪的 Python runtime 文件；文档、数据集、日志和任意
+`.dpeva` 内容不在 scope 内。resume 使用该 scoped fingerprint：只改文档的 commit 不会
+改变 runtime identity，已提交或未提交的 runtime 修改会拒绝 resume；没有 scoped fingerprint
+的 legacy 清单不会被重新解释为匹配。模型输入使用流式 SHA-256，数据集目录使用明确标注的有界 structural identity，路径只
+使用相对/逻辑引用。实际生成的日志文件存在且非空时才会登记为 `log` artifact，不会
+凭空创建日志记录。
+
+Inference 在没有 `model_ref_paths` 时兼容旧的数字目录布局，但默认每个目录只选择
+`model.ckpt.pt` regular checkpoint，不会隐式把 `model_ema.ckpt.pt` 加入 ensemble。需要
+执行 EMA 时，为该文件提供显式 model-reference JSON，并设置 `"role": "ema"`；显式
+references 可以在同一个 ensemble 中同时列出 regular 与 EMA。工作目录外的模型引用使用
+basename 加内容 SHA-256 组成逻辑 ref，不把绝对路径写入 run identity。
+
+训练脚本的完成 guard 按 backend 校验可证明的实际产物：`pt` 使用稳定 regular checkpoint
+（默认 `model.ckpt.pt`，避免猜测依模型而变的 `.pth`/`.pt2` freeze 后缀），`tf` 使用
+`frozen_model.pb`，`pt-expt` 使用 `frozen_model.pte`，`jax` 使用 `frozen_model.hlo`，`pd`
+同时要求 `frozen_model.json` 与 `frozen_model.pdiparams`。`training.save_ckpt` 和
+`training.disp_file` 的自定义路径会进入对应 guard；当 `disp_training=false` 时上游不会保证
+曲线文件非空，因此完成 guard 只要求 backend 产物。原有输出布局保持不变。
 
 支持 Slurm array 的 workflow 可设置：
 
@@ -117,9 +178,26 @@ descriptor 可通过 `dp --pt-expt eval-desc` 提取，单任务模型无需设�
 }
 ```
 
-正式的 DPA4C 支持需要 DeepMD-kit 3.2.0 或更新版本。当前 `pt-expt`
+正式的 DPA4C 支持走 DeepMD-kit 3.2 兼容性通道。用户运行时可安装
+`dpeva[deepmd]`，其依赖范围为 `deepmd-kit>=3.2,<3.3`；该范围内的版本不应被
+视为行为完全等价。研究生产环境必须单独锁定 `deepmd-kit==3.2.0`，并记录
+`dp --version`，不能用范围依赖代替精确锁定。当前 `pt-expt`
 backend 提供 descriptor 提取，但尚未提供 `dp embed` 所需的组合
 `eval_embedding` 接口，因此这一路径应使用 `eval_desc`。
+
+当前 DeepMD 3.2 兼容性通道已有 3 条 `supported` 能力：DPA4
+pt test/eval-desc/embed。这些声明同时
+绑定 CPU contract JobID `1128442` 和完成的 SAI V100 qualification JobID
+`1128260`；脱敏 SAI promotion aggregate 与三个 CPU attestation 位于
+`docs/reports/evidence/deepmd-3.2/`。证据只证明选定 regular 模型、regular+EMA
+V100 命令链完成，不构成科学精度或所有下游 head 的支持声明。一次
+`pt-expt eval-desc` 虽然执行成功，但事后 descriptor inspection 证明所用 artifact
+实际为 DPA4 而非 DPA4C；因此周期性 DPA4C 路线仍为 experimental，不能因命令
+成功而晋级。其余能力状态以 capability manifest 和报告为准。
+
+V100 aggregate 中六条 retained attestation 分别覆盖 DPA4 regular/EMA 的
+`pt test`、`pt eval-desc` 和 `pt embed`；它们是历史资格证据，不会因 v0.8.2
+打包而重新执行或扩大声明。
 
 DeepMD PyTorch 模型可使用 `dp embed` 导出 HDF5 embedding。该路线会在 `savedir/embedding.hdf5` 中保留 `descriptor`、`atomic_feature`、`structural_feature` 和 `atom_types`；HDF5 dataset 由 DeepMD 使用 gzip + shuffle 压缩。`feature_kind="descriptor"` 读取 `descriptor`，`feature_kind="fitting_last_layer"` 对应 `atomic_feature`。
 
@@ -221,7 +299,33 @@ LLPR / energy DPOSE 可作为 Collect UQ backend 使用。最小 energy LLPR 只
 - `llpr_ensemble_output_path`：自定义 `energy_ensemble.npy` 输出路径；未设置时写到 Collect 输出根目录下。
 - `llpr_collect_score`：支持 `energy_uncertainty_per_atom`（默认）、`energy_ensemble_std_per_atom`、`force_uncertainty_max`。当前 detached feature workflow 只支持 energy；force DPOSE 仍需要可微 DeepMD PyTorch graph adapter。
 
-### 5.5 Analysis
+### 5.5 Label integration
+
+标注工作流启用数据整合时，可使用以下字段控制合并输出：
+
+```json
+{
+  "integration_enabled": true,
+  "integration_deduplicate": true,
+  "integration_output_format": "deepmd/npy/mixed"
+}
+```
+
+整合成功后，在 `merged_training_data_path` 下同时生成
+`integration_summary.json`、当前代兼容指针 `dataset-manifest.json` 和不可变的
+`dataset-manifest-<generation>.json`。summary 的 `dataset_manifest_path` 是相对于
+输出目录的不可变清单引用，并同时记录 generation 与 SHA-256。清单只记录
+`existing-training`、`new-labeled` 等逻辑来源，不固化机器绝对路径，并记录父集合帧数、
+去重移除帧数、最终帧/体系数、canonical type map 以及导出文件 SHA-256 的证据强度。
+当前整合仅保留 `existing-training` / `new-labeled` 逻辑来源标签，不生成无法解析的
+parent manifest ref；待父清单随 bundle 一并固化后再扩展该引用。
+未声明来源、未解释的重复/交集或 type map 冲突会在导出和下游交接前失败；显式去重会在清单中保存 overlap/removal evidence 与 `validation_result`（含 rule version）。`intersection_summary.method` 使用 `frame-identity-v1` 表示逐帧交集（必须 overlap=removed），使用 `filter-v1` 表示无交集的一般过滤；零移除使用 `not-run`。
+发布目标使用进程可见的不覆盖语义：同文件系统的 sibling staging 目录通过
+`renameat2(RENAME_NOREPLACE)` 原子发布，竞争目标不会被覆盖；不支持该原语的平台直接
+fail-closed，不使用普通 rename 回退。该契约不声称 crash 后的目录持久化或递归 fsync
+dpdata 树；JSON 文件写入可能进行文件级 flush，不能外推为整个 bundle 的 durability 保证。
+
+### 5.6 Analysis
 
 ```json
 {
@@ -257,7 +361,7 @@ Analysis 相关建议：
 - 单变量分布图默认不显示 `All Data` 图例；dataset 元素占比/存在性使用多色饼图。
 - quantity-aware 默认下，Force / Virial 的 hexbin enhanced parity 会在右侧信息栏同时展示 Error Density 与 colorbar，colorbar 表示每个 hexbin 中样本数量。
 
-### 5.6 Labeling
+### 5.7 Labeling
 
 ```json
 {
@@ -321,7 +425,7 @@ SAI 上的 ABACUS labeling 如需同时处理普通单卡任务与 highmem/multi
 - 没有配置 `labeling_task_classes` 时，DP-EVA 保持旧的单一 `submission` 行为，兼容既有配置。
 - SAI-1344 `16V100` 实测不接受 `flood-gpu`/`rush-gpu` 的 1GPU 请求（`QOSMinGRES`）。FP11 类似批量任务应使用 4GPU MPI fallback；若 `rush-gpu` array 命中 `QOSMaxSubmitJobPerUserLimit`，应改用 `flood-gpu` 完成批量提交。
 
-### 5.7 Exploration
+### 5.8 Exploration
 
 ```json
 {

@@ -2,7 +2,7 @@
 title: 文档版本管理与维护机制 (Maintenance)
 status: active
 audience: Maintainers
-last-updated: 2026-06-10
+last-updated: 2026-09-20
 owner: Docs Owner
 ---
 
@@ -16,6 +16,21 @@ owner: Docs Owner
   - 更新示例（`examples/recipes`）
   - 更新/新增回归测试（unit 或 integration）
 - 报告与归档文档默认冻结：新增通过“新文件”形式，不在旧报告中“覆盖式修改结论”。
+
+### 1.1 文档新鲜度与冻结记录
+
+`python scripts/run_gate.py docs_freshness`（`scripts/check_docs_freshness.py`）要求活文档在
+窗口内被复核。两类文档按不同规则处理：
+
+- **活文档**（Guide / Reference / 索引 README / 策略）：复核后更新 front matter 的
+  `last-updated`；超期即门禁失败，提示需要复核。
+- **冻结记录**（带日期的审计、审查、合规报告，以及架构决策 ADR，例如
+  `architecture/decisions/<date>-<topic>.md`、`governance/reviews/*_<date>.md`）：其价值在于
+  记录当时状态，**不得**为了通过门禁而改写时间戳；改在 front matter 声明
+  `status: record`，该文件即从新鲜度扫描中豁免（脚本会打印豁免数量）。
+
+新增冻结记录时：`status: record` + 在文件名或正文中保留日期身份；不要把它改成 `active`
+再手工维护 `last-updated`。
 
 ## 2. Ownership（责任到人/模块）
 
@@ -60,10 +75,9 @@ Owner 可以是角色而非具体姓名；但每篇 `active` 文档必须有 Own
 
 ## 6. 稳态化运行基线（必须满足）
 
-- 基线门禁：
-  - `python3 scripts/doc_check.py` 必须通过
-  - `python3 scripts/check_docs_freshness.py --days 90` 必须通过
-  - `make html SPHINXOPTS="-W --keep-going"` 必须通过
+- 基线门禁：文档变更必须通过 `python scripts/run_gate.py docs_pr`；完整发布必须通过
+  `python scripts/run_gate.py release`。命令与 argv 只维护在
+  `scripts/gates.toml`。
 - 责任归属：
   - 所有 `active` 文档必须声明 `owner` 或 `owners`
   - Owner 角色映射与覆盖追踪统一维护在 `docs/governance/inventory/owners-matrix.md`
@@ -117,5 +131,14 @@ Owner 可以是角色而非具体姓名；但每篇 `active` 文档必须有 Own
   - 子目录索引（如 `docs/source/reference/index.rst`）负责该板块的文件列表。
 - **强制检查**:
   - 任何 Markdown 文件的增删改，必须检查 `docs/source/**/*.rst` 是否有对应的 `toctree` 引用需要更新。
-  - 运行 `make html` 确保无 `WARNING: toctree contains reference to nonexisting document` 报错。
+  - 运行 `python scripts/run_gate.py docs_pr`，由 manifest 声明的 warning-as-error 构建确认无失效 toctree。
 
+## 8. 轻量治理规则审计
+
+- `docs/governance/rules.json` 只登记有明确 Owner、依据、enforcement path 和
+  `trigger_paths` 的活动治理机制，最多八条；它不复制 SPEC 的需求清单。
+- `trigger_paths` 只证明仓库内存在可复核的触发入口或配置路径，不证明 CI 历史运行、远程服务状态或科学结果。
+- 季度 `governance-audit` workflow 仅生成并上传报告，不自动改写、删除文件或创建 Issue；默认报告模式即使发现问题也返回成功。
+- 发布评审如需阻断语义，维护者显式运行
+  `python scripts/audit_governance_rules.py --strict`；修复或退役规则后更新
+  `last_reviewed` 或移除记录。
