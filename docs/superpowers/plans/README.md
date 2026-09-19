@@ -1,8 +1,8 @@
 ---
 title: Superpowers Execution Plans
-status: active
+status: historical-execution-records
 audience: Developers / AI Agents
-last-updated: 2026-09-06
+last-updated: 2026-09-20
 owner: Docs Owner
 ---
 
@@ -10,11 +10,20 @@ owner: Docs Owner
 
 Execution plans in this directory preserve task-level checklists for agentic
 implementation work. They are not a replacement for project-level plans in
-`docs/plans/`.
+`docs/plans/`. A plan's original checkbox list captures the approved execution
+design at that time; it is not a live status tracker.
 
-## Active Execution Plans
+## Current status authority
 
-- Current tracked active execution plans: none.
+- For the FT2DP-v2.2 campaign, the non-Git workspace tracker
+  `docs/tasks/ft2dp-v2.2.md` is the sole
+  current status and acceptance authority. Its checkpoint index is
+  `docs/checkpoints/INDEX.md`.
+- These historical plans have execution-status prose at their end and must
+  link back to the workspace tracker for any continuing work:
+  - `2026-07-10-sai-dpa4-env-rename-finetune.md`
+  - `2026-07-11-dpa4-multitask-forgetting-study.md`
+  - `2026-09-02-pr-template-and-dpa4c-review-governance.md`
 - v0.8.1 archived execution plans are listed in [docs/archive/v0.8.1/plans/README.md](../../archive/v0.8.1/plans/README.md).
 
 ## Completed, pending integration
