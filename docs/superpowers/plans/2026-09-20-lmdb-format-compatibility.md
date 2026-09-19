@@ -63,7 +63,7 @@ owner: Workflow Owner (IO) / Compatibility Owner
 | `dp freeze` / `change-bias` | 与数据格式无关 | — |
 | LMDB 判定规则 | `str(path).endswith(".lmdb") or Path(path, "data.mdb").is_file()` | `dpmodel/utils/lmdb_data.py::is_lmdb` |
 
-上游状态（2026-09-20 查询 GitHub API）：master 的 `entrypoints/eval_desc.py`、`entrypoints/embedding.py`、`utils/data.py` 对 lmdb 的引用数均为 0；issue/PR 搜索 `repo:deepmodeling/deepmd-kit lmdb eval-desc` 命中 0 条。即该缺口既非"版本落后"，也不在上游在途计划中——若 D2 选择"等待上游"，需先自行提交 issue 并据此登记 `blocked-upstream`（manifest 规则要求 `upstream_issue`）。
+上游状态（2026-09-20 查询 GitHub API）：master 的 `entrypoints/eval_desc.py`、`entrypoints/embedding.py`、`utils/data.py` 对 lmdb 的引用数均为 0；issue/PR 搜索 `repo:deepmodeling/deepmd-kit lmdb eval-desc` 命中 0 条。即该缺口既非"版本落后"，也不在上游在途计划中。已提交上游跟踪 issue：[deepmodeling/deepmd-kit#6034](https://github.com/deepmodeling/deepmd-kit/issues/6034)（含复现、根因与输出布局建议）。若 D2 选择"等待上游"，manifest 记录可据此登记 `blocked-upstream` 并引用该编号；否则按 `unsupported` 登记，DP-EVA 侧仍保持提交前拒绝。
 
 ### 1.3 DP-EVA 现状缺陷清单（本计划要闭合的对象）
 
