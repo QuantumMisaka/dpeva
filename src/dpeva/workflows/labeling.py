@@ -293,7 +293,8 @@ class LabelingWorkflow:
                 gpus_per_node=slurm_conf.get("gpus_per_node"),
                 cpus_per_task=slurm_conf.get("cpus_per_task"),
                 walltime=slurm_conf.get("walltime", "24:00:00"),
-                env_setup=env_setup
+                env_setup=env_setup,
+                custom_headers=slurm_conf.get("custom_headers", "")
             )
             try:
                 job_id = self.job_manager.submit_python_script(
@@ -352,6 +353,7 @@ class LabelingWorkflow:
                 cpus_per_task=slurm_conf.get("cpus_per_task"),
                 walltime=slurm_conf.get("walltime", "24:00:00"),
                 env_setup=env_setup,
+                custom_headers=slurm_conf.get("custom_headers", ""),
             )
             try:
                 job_id = self.job_manager.submit_array(

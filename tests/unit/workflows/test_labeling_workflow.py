@@ -572,7 +572,11 @@ class TestLabelingWorkflow:
                     "source /etc/profile",
                     "module load abacus/LTSv3.10.1-sm70-auto",
                 ],
-                "slurm_config": {"partition": "4V100", "qos": "flood-1o2gpu"},
+                "slurm_config": {
+                    "partition": "4V100",
+                    "qos": "flood-1o2gpu",
+                    "custom_headers": ["#SBATCH --exclude=4v100n28"],
+                },
             },
             dft_params={},
             attempt_params=[],
@@ -631,6 +635,8 @@ class TestLabelingWorkflow:
         assert highmem_config.job_name == "fp-highmem-att0"
         assert normal_config.gpus_per_node == 1
         assert highmem_config.gpus_per_node == 4
+        assert normal_config.custom_headers == ["#SBATCH --exclude=4v100n28"]
+        assert highmem_config.custom_headers == ["#SBATCH --exclude=4v100n28"]
         assert normal_call.kwargs["array_task_limit"] == 2
         assert highmem_call.kwargs["array_task_limit"] == 2
 
@@ -801,6 +807,7 @@ class TestLabelingWorkflow:
             submission={
                 "backend": "slurm",
                 "slurm_array": False,
+                "slurm_config": {"custom_headers": ["#SBATCH --exclude=4v100n28"]},
             },
             dft_params={},
             attempt_params=[],
@@ -820,3 +827,5 @@ class TestLabelingWorkflow:
         assert job_ids == ["100"]
         workflow.job_manager.submit_python_script.assert_called_once()
         workflow.job_manager.submit_array.assert_not_called()
+        job_config = workflow.job_manager.submit_python_script.call_args.args[2]
+        assert job_config.custom_headers == ["#SBATCH --exclude=4v100n28"]
