@@ -65,6 +65,22 @@ Optional trajectory exploration through `atst-tools` is installed separately:
 pip install -e '.[explore]'
 ```
 
+### 模型与数据获取
+
+DP-EVA 需要一个 DPA 预训练模型作为微调基座，以及用于主动学习循环的候选数据。公开资源：
+
+| 资源 | 位置 | 说明 |
+|---|---|---|
+| DPA-3.1-3M 预训练模型 | [AIS Square 模型库](https://www.aissquare.com/models/343)（`aissquare.com/models`，条目 id=343） | 通用 DPA-3.x 多任务预训练模型，用作 `base_model_path`；使用时需指定 `model_head` |
+| FT2DP-dataset-FeCHO-v1 数据集 | [AIS Square 数据集](https://www.aissquare.com/datasets/306)（`aissquare.com/datasets`，条目 id=306） | 铁基 FTS 场景数据集，可作为训练集/候选池的使用示例 |
+
+只想先确认环境可用时不必下载任何外部资源：仓库自带的
+`tests/integration/data/DPA-3.1-3M.pt` 与几帧 dpdata 夹具即可跑通最小闭环，见
+[Smoke Demo](docs/guides/smoke-demo.md)。
+
+外部模型可用环境变量覆盖默认位置：`DPEVA_DPA3_MODEL_PATH`、`DPEVA_DPA4_MODEL_PATH`；
+夹具说明与目录约定见 [tests/integration/data/README.md](tests/integration/data/README.md)。
+
 ### Usage
 
 DP-EVA provides a unified CLI `dpeva` for all workflows. See [CLI Guide](docs/guides/cli.md) for more details.
@@ -99,10 +115,13 @@ For detailed configuration examples, see `examples/recipes/`.
 
 > 📘 **Latest Documentation**
 >
-> Start from the repository documentation index:
+> Docs site: [**quantummisaka.github.io/dpeva/latest**](https://quantummisaka.github.io/dpeva/latest/)
+>
+> Repository index:
 > [**Docs Index**](docs/README.md) | [**Guides**](docs/guides/README.md) | [**Reports**](docs/reports/README.md)
 
 *   **Getting Started**: [Quickstart](docs/guides/quickstart.md) | [Installation](docs/guides/installation.md)
+*   **Onboarding**: [Smoke Demo（自带夹具）](docs/guides/smoke-demo.md) | [SAI Quickstart](docs/guides/sai-quickstart.md)
 *   **Reference**: [Reference Index](docs/reference/README.md) | [CLI](docs/guides/cli.md)
 *   **Upstream**: [Upstream Software](docs/reference/upstream-software.md)
 *   **Developer**: [Developer Guide](docs/guides/developer-guide.md) | [Architecture](docs/architecture/README.md)

@@ -2,7 +2,7 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-09-20
+last-updated: 2026-10-11
 owner: Workflow Owner
 ---
 
@@ -51,6 +51,9 @@ python -m pip install -e .
 ```bash
 dpeva --help
 ```
+
+想立刻确认「装完就能跑」，可用仓库自带夹具跑一条最小闭环（无需下载外部模型或数据）：
+[smoke-demo.md](https://github.com/QuantumMisaka/dpeva/blob/main/docs/guides/smoke-demo.md)。
 
 ### 4.2 Dev：开发与测试依赖（可选）
 
