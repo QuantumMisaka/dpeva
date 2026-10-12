@@ -2,7 +2,7 @@
 title: Unwired Module Audit Template
 status: active
 audience: Maintainers / Developers
-last-updated: 2026-06-27
+last-updated: 2026-10-11
 owner: Docs Owner
 ---
 

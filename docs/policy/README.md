@@ -2,7 +2,7 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-07-04
+last-updated: 2026-10-11
 owner: Docs Owner
 ---
 
@@ -10,7 +10,7 @@ owner: Docs Owner
 
 - Status: active
 - Audience: Maintainers / Developers
-- Last-Updated: 2026-07-04
+- Last-Updated: 2026-10-11
 
 本目录用于存放文档体系的制度与规范（Owner、质量标准、贡献流程等），作为 `docs/` 治理的单一权威来源。
 
