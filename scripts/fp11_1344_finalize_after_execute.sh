@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-FP11_ROOT="${FP11_ROOT:-/home/pku-jianghong/liuzhaoqing/fp11-sai1344/fp11}"
-REPO_ROOT="${REPO_ROOT:-/home/pku-jianghong/liuzhaoqing/fp11-sai1344/dpeva}"
-DPEVA_BIN="${DPEVA_BIN:-/home/pku-jianghong/liuzhaoqing/.conda/envs/dpeva-dpa4/bin/dpeva}"
-PYTHON_BIN="${PYTHON_BIN:-/home/pku-jianghong/liuzhaoqing/.conda/envs/dpeva-dpa4/bin/python}"
+FP11_ROOT="${FP11_ROOT:-$HOME/fp11-sai1344/fp11}"
+REPO_ROOT="${REPO_ROOT:-$HOME/fp11-sai1344/dpeva}"
+DPEVA_BIN="${DPEVA_BIN:-$HOME/.conda/envs/dpeva-dpa4/bin/dpeva}"
+PYTHON_BIN="${PYTHON_BIN:-$HOME/.conda/envs/dpeva-dpa4/bin/python}"
 CONFIG_NAME="${CONFIG_NAME:-config_gpu_1344.json}"
 EXECUTE_SESSION="${EXECUTE_SESSION:-fp11_1344_execute}"
 FINALIZE_SESSION="${FINALIZE_SESSION:-fp11_1344_finalize}"

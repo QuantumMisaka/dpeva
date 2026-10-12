@@ -10,7 +10,7 @@
 
 set -euo pipefail
 
-cd /home/pku-jianghong/liuzhaoqing/work/ft2dp-dpeva/dpeva
+cd "${DPEVA_REPO:-$SLURM_SUBMIT_DIR}"
 
 source /opt/devtools/anaconda3/etc/profile.d/conda.sh
 conda activate dpeva-dpa4

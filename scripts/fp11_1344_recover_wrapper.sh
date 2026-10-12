@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT=/home/pku-jianghong/liuzhaoqing/fp11-sai1344
+ROOT="${FP11_WORKSPACE_ROOT:-$HOME/fp11-sai1344}"
 FP11_DIR="${ROOT}/fp11"
 DPEVA_DIR="${ROOT}/dpeva"
 INTERVAL="${1:-300}"

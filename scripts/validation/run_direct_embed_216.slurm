@@ -12,7 +12,7 @@
 
 set -euo pipefail
 
-REPO="/home/pku-jianghong/liuzhaoqing/work/ft2dp-dpeva/dpeva"
+REPO="${DPEVA_REPO:-$SLURM_SUBMIT_DIR}"
 CASE_ROOT="${REPO}/practices/dpeva-dpa4-test/dpa4-dpeva-test"
 DATA="${CASE_ROOT}/issue_dpa4_plus_eval_desc_oom/sampled_dpdata/216"
 MODEL="${CASE_ROOT}/DPA4-Plus-OMat24-16M.pt"
@@ -27,13 +27,15 @@ export DP_INTERFACE_PREC=high
 export OMP_NUM_THREADS=2
 
 rm -f "${OUT}"
+export DPEVA_EMBED_OUT="${OUT}"
 dp --pt embed -s "${DATA}" -m "${MODEL}" -o "${OUT}" --dtype fp32
 
 python - <<'PY'
 import h5py
+import os
 from dpeva.io.collection import CollectionIOManager
 
-path = "/home/pku-jianghong/liuzhaoqing/work/ft2dp-dpeva/dpeva/practices/dpeva-dpa4-test/dpa4-dpeva-test/embed_validation/direct_embed_216/embedding.hdf5"
+path = os.environ["DPEVA_EMBED_OUT"]
 with h5py.File(path, "r") as h5:
     groups = sorted(h5.keys())
     assert groups, "no HDF5 groups written"

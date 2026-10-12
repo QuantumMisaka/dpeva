@@ -10,7 +10,7 @@
 
 set -euo pipefail
 
-REPO="/home/pku-jianghong/liuzhaoqing/work/ft2dp-dpeva/dpeva"
+REPO="${DPEVA_REPO:-$SLURM_SUBMIT_DIR}"
 cd "${REPO}"
 
 source "${REPO}/scripts/env/dpeva-dpa4-embed-test.env"
