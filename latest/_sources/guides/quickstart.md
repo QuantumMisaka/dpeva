@@ -2,7 +2,7 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-09-20
+last-updated: 2026-10-11
 owner: Workflow Owner
 ---
 
@@ -38,6 +38,11 @@ owner: Workflow Owner
 
 - Python 环境可导入 `dpeva`（开发模式安装推荐）
 - DeepMD-kit `dp` 命令可用（至少覆盖 `dp train/test/eval-desc`）
+- 一个 DPA 基座模型与一份数据集：
+  - 公开资源入口（DPA-3.1-3M 模型、FT2DP-dataset-FeCHO-v1）见仓库根 `README.md` 的「模型与数据获取」；
+  - 只想先确认环境可用时，可直接使用仓库自带夹具，见
+    [smoke-demo.md](https://github.com/QuantumMisaka/dpeva/blob/main/docs/guides/smoke-demo.md)
+    （无需下载外部资源；外部模型可用 `DPEVA_DPA3_MODEL_PATH` / `DPEVA_DPA4_MODEL_PATH` 覆盖）。
 
 ### 3.2 可选：Slurm 环境
 

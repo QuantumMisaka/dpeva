@@ -45,7 +45,7 @@
     <script>DOCUMENTATION_OPTIONS.pagename = 'guides/quickstart';</script>
     <link rel="index" title="索引" href="../genindex.html" />
     <link rel="search" title="搜索" href="../search.html" />
-    <link rel="next" title="CLI 使用指南" href="cli.html" />
+    <link rel="next" title="Smoke Demo（仓库自带夹具最小闭环）" href="smoke-demo.html" />
     <link rel="prev" title="安装与环境准备（Installation）" href="installation.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="zh-CN"/>
@@ -154,6 +154,8 @@
 <ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="installation.html">安装与环境准备（Installation）</a></li>
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">Quickstart（最短路径跑通）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="smoke-demo.html">Smoke Demo（仓库自带夹具最小闭环）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sai-quickstart.html">SAI 快速上手（Slurm 用户）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cli.html">CLI 使用指南</a></li>
 <li class="toctree-l1"><a class="reference internal" href="configuration.html">配置编写指南（Configuration）</a></li>
 </ul>
@@ -436,6 +438,14 @@ document.write(`
 <ul class="simple">
 <li><p>Python 环境可导入 <code class="docutils literal notranslate"><span class="pre">dpeva</span></code>（开发模式安装推荐）</p></li>
 <li><p>DeepMD-kit <code class="docutils literal notranslate"><span class="pre">dp</span></code> 命令可用（至少覆盖 <code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">train/test/eval-desc</span></code>）</p></li>
+<li><p>一个 DPA 基座模型与一份数据集：</p>
+<ul>
+<li><p>公开资源入口（DPA-3.1-3M 模型、FT2DP-dataset-FeCHO-v1）见仓库根 <code class="docutils literal notranslate"><span class="pre">README.md</span></code> 的「模型与数据获取」；</p></li>
+<li><p>只想先确认环境可用时，可直接使用仓库自带夹具，见
+<a class="reference external" href="https://github.com/QuantumMisaka/dpeva/blob/main/docs/guides/smoke-demo.md">smoke-demo.md</a>
+（无需下载外部资源；外部模型可用 <code class="docutils literal notranslate"><span class="pre">DPEVA_DPA3_MODEL_PATH</span></code> / <code class="docutils literal notranslate"><span class="pre">DPEVA_DPA4_MODEL_PATH</span></code> 覆盖）。</p></li>
+</ul>
+</li>
 </ul>
 </section>
 <section id="slurm">
@@ -612,11 +622,11 @@ document.write(`
       </div>
     </a>
     <a class="right-next"
-       href="cli.html"
+       href="smoke-demo.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">下一页</p>
-        <p class="prev-next-title">CLI 使用指南</p>
+        <p class="prev-next-title">Smoke Demo（仓库自带夹具最小闭环）</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>

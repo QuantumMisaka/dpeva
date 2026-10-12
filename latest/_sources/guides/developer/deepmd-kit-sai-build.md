@@ -2,7 +2,7 @@
 title: DeepMD-kit SAI Build Guide
 status: active
 audience: Developers / Platform Maintainers
-last-updated: 2026-07-01
+last-updated: 2026-10-11
 owner: Platform Maintainers
 ---
 

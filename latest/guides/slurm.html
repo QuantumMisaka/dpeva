@@ -154,6 +154,8 @@
 <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="installation.html">安装与环境准备（Installation）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart（最短路径跑通）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="smoke-demo.html">Smoke Demo（仓库自带夹具最小闭环）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sai-quickstart.html">SAI 快速上手（Slurm 用户）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cli.html">CLI 使用指南</a></li>
 <li class="toctree-l1"><a class="reference internal" href="configuration.html">配置编写指南（Configuration）</a></li>
 </ul>
@@ -407,7 +409,7 @@ document.write(`
 <li><p>Status: active</p></li>
 <li><p>Audience: Users / Developers / Infra</p></li>
 <li><p>Applies-To: <code class="docutils literal notranslate"><span class="pre">submission.backend=&quot;slurm&quot;</span></code></p></li>
-<li><p>Last-Updated: 2026-07-05</p></li>
+<li><p>Last-Updated: 2026-10-11</p></li>
 </ul>
 <section id="id1">
 <h2>1. 目的与范围<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
@@ -475,6 +477,8 @@ document.write(`
 <li><p><code class="docutils literal notranslate"><span class="pre">launcher_mode=&quot;abacus&quot;</span></code> 不应加载 SAI rank-map，也不应引用 <code class="docutils literal notranslate"><span class="pre">MAP_OPT</span></code>。</p></li>
 <li><p>SAI-1344 <code class="docutils literal notranslate"><span class="pre">16V100</span></code> 上，<code class="docutils literal notranslate"><span class="pre">flood-gpu</span></code>/<code class="docutils literal notranslate"><span class="pre">rush-gpu</span></code> 的 1GPU 请求实测被 <code class="docutils literal notranslate"><span class="pre">QOSMinGRES</span></code> 拒绝；FP11 批量 fallback 使用 4GPU MPI，并优先选择能接受大 array 的 <code class="docutils literal notranslate"><span class="pre">flood-gpu</span></code>。</p></li>
 </ul>
+<p>SAI 环境准备、首次自检与配置要点的汇总入口见
+<a class="reference external" href="https://github.com/QuantumMisaka/dpeva/blob/main/docs/guides/sai-quickstart.md">sai-quickstart.md</a>。</p>
 </section>
 </section>
 <section id="id5">
@@ -585,6 +589,7 @@ dpeva<span class="w"> </span>collect<span class="w"> </span>configs/collect.json
 <section id="id16">
 <h2>7. 变更记录<a class="headerlink" href="#id16" title="Link to this heading">#</a></h2>
 <ul class="simple">
+<li><p>2026-10-11：文档治理新鲜度复核，确认内容与链接仍有效；补充指向 SAI 快速上手页的交叉链接；无契约变更。</p></li>
 <li><p>2026-07-05：补充 Labeling Slurm array 行为、array worker 约定与 SAI-1344 FP11 QOS 实测注意事项。</p></li>
 <li><p>2026-03-11：更新配置字段入口为 API Reference，并同步 infer 日志文件名为 <code class="docutils literal notranslate"><span class="pre">test_job.out</span></code>。</p></li>
 <li><p>2026-03-03：更新完成标记语义，明确“部分失败不输出完成标记”。</p></li>

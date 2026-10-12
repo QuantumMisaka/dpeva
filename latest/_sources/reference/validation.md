@@ -2,7 +2,7 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-07-04
+last-updated: 2026-10-11
 owner: Docs Owner
 ---
 
@@ -10,7 +10,7 @@ owner: Docs Owner
 
 - Status: active
 - Audience: Developers
-- Last-Updated: 2026-07-04
+- Last-Updated: 2026-10-11
 
 本文件用于作为参数校验规则的单一权威来源。
 

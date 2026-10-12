@@ -2,7 +2,7 @@
 title: Guides（操作指南导航）
 status: active
 audience: Developers / Users
-last-updated: 2026-07-01
+last-updated: 2026-10-11
 owner: Docs Owner
 ---
 
@@ -22,6 +22,8 @@ owner: Docs Owner
 
 - 环境安装：`installation.md`
 - 快速跑通：`quickstart.md`
+- 自带夹具冒烟闭环：`smoke-demo.md`
+- SAI 快速上手（Slurm 用户）：`sai-quickstart.md`
 - 命令行指南：`cli.md`
 - 配置编写：`configuration.md`
 - Slurm 指南：`slurm.md`

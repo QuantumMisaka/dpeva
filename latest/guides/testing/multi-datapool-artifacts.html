@@ -154,6 +154,8 @@
 <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../installation.html">安装与环境准备（Installation）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quickstart（最短路径跑通）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../smoke-demo.html">Smoke Demo（仓库自带夹具最小闭环）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sai-quickstart.html">SAI 快速上手（Slurm 用户）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../cli.html">CLI 使用指南</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../configuration.html">配置编写指南（Configuration）</a></li>
 </ul>
@@ -393,7 +395,7 @@ document.write(`
 <ul class="simple">
 <li><p>Status: active</p></li>
 <li><p>Audience: Developers</p></li>
-<li><p>Last-Updated: 2026-06-27</p></li>
+<li><p>Last-Updated: 2026-10-11</p></li>
 </ul>
 <p>目标目录：以仓库内多数据池测试资产为参照，例如 <code class="docutils literal notranslate"><span class="pre">tests/</span></code> 中的相关集成测试输入输出目录。</p>
 <p>本文档用于把生产级运行产物拆解为“输入资产 / 输出资产”，并将其映射到 DP-EVA 各 Workflow 的配置字段（对照 <code class="docutils literal notranslate"><span class="pre">examples/recipes/</span></code>）。</p>
@@ -623,6 +625,7 @@ document.write(`
 <section id="id5">
 <h2>5. 变更记录<a class="headerlink" href="#id5" title="Link to this heading">#</a></h2>
 <ul class="simple">
+<li><p>2026-10-11：文档治理新鲜度复核，确认生产目录 I/O 拆解、workflow 映射与链接仍有效；无契约变更。</p></li>
 <li><p>2026-06-27：文档治理新鲜度复核，确认生产目录 I/O 拆解与 Workflow 映射仍作为测试专题参考；无契约变更。</p></li>
 <li><p>2026-03-26：补充 joint 多数据池新增总结图 <code class="docutils literal notranslate"><span class="pre">Final_sampled_PCAview_by_pool.png</span></code> 的触发条件与输出约定。</p></li>
 <li><p>2026-02-18：补齐生产目录 I/O 拆解与 Workflow 配置映射，并作为集成测试专题附录。</p></li>
