@@ -2,7 +2,7 @@
 title: Upstream Software
 status: active
 audience: Users / Developers
-last-updated: 2026-09-20
+last-updated: 2026-10-12
 owner: Docs Owner
 ---
 
@@ -10,7 +10,7 @@ owner: Docs Owner
 
 - Status: active
 - Audience: Users / Developers
-- Last-Updated: 2026-09-06
+- Last-Updated: 2026-10-12
 
 本文档汇总 DP-EVA 的上游软件，说明其仓库位置、安装层级与在本项目中的职责边界。
 
@@ -100,7 +100,7 @@ policy capability，不映射为 DeepMD CLI command。
 
 ## 5. atst-tools（可选）
 
-- 仓库地址：本项目 `test/atst-tools` 参考仓库；发布包为 `atst-tools`。
+- 仓库地址：发布包为 `atst-tools`；开发期使用本地 `test/atst-tools` 参考检出（不在本仓库内）。
 - 核心功能：基于 ASE 的轨迹探索与过渡态工具。
 - 在 DP-EVA 中的作用：
   - 作为可选 exploration backend，首版支持 `md` 与 `relax`。

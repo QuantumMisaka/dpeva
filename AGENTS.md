@@ -29,5 +29,5 @@ DP-EVA 是面向 DPA 大模型高效微调的主动学习框架。主链路由�
 
 ## Developing Environment
 
-- 项目测试机器：SAI超算，可调用`sai-user-guide` skill 获取更多信息。
-- 项目测试环境：`dpeva-dpa4` conda env. 该环境一方包含dpeva项目依赖，一方包含dpa4测试依赖
+- 项目验证环境：SAI 超算（集群侧说明见 `docs/guides/slurm.md` 与 `docs/guides/sai-quickstart.md`）。
+- 测试环境：`dpeva-dpa4` conda env，同时包含 dpeva 项目依赖与 DPA4 测试依赖；搭建方法见 `docs/guides/developer/deepmd-kit-sai-build.md`。
