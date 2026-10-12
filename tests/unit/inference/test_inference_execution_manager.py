@@ -137,7 +137,7 @@ class TestInferenceExecutionManager:
         # Let's look at InferenceExecutionManager.submit_jobs implementation.
         
         # Actually, looking at the error log again carefully:
-        # 'dp --pt test -s /home/pku-jianghong/liuzhaoqing/work/ft2dp-dpeva/dpeva/test_runs/pytest-of-liuzhaoqing/pytest-6/test_...oqing/pytest-6/test_submit_jobs_slurm_paralle1/work/model_0.pt -d res --head head\necho "DPEVA_TAG: WORKFLOW_FINISHED"'
+        # 'dp --pt test -s .../work/model_0.pt -d res --head head\necho "DPEVA_TAG: WORKFLOW_FINISHED"'
         # The path after -s is `.../work/model_0.pt`.
         # This means `system` argument received the model path!
         # And `model` argument seems to be missing from the command string entirely.

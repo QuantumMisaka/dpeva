@@ -20,9 +20,9 @@ def parse_args() -> argparse.Namespace:
         epilog=(
             "Examples:\n"
             "  python tools/compare_npy_mixed_structures.py "
-            "--npy_dir test/sampled_dpdata_npy --mixed_dir test/sampled_dpdata\n"
+            "--npy_dir ./sampled_dpdata_npy --mixed_dir ./sampled_dpdata\n"
             "  python tools/compare_npy_mixed_structures.py "
-            "--npy_dir test/sampled_dpdata_npy --mixed_dir test/sampled_dpdata --coord_decimals 5"
+            "--npy_dir ./sampled_dpdata_npy --mixed_dir ./sampled_dpdata --coord_decimals 5"
         ),
         formatter_class=argparse.RawTextHelpFormatter,
     )

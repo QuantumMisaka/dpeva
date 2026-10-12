@@ -23,9 +23,9 @@ def parse_args() -> argparse.Namespace:
         epilog=(
             "Examples:\n"
             "  python tools/verify_structure_descriptor_mapping.py "
-            "--data_dir test/sampled_dpdata --desc_dir test/desc_train --fmt deepmd/npy/mixed\n"
+            "--data_dir ./sampled_dpdata --desc_dir ./desc_train --fmt deepmd/npy/mixed\n"
             "  python tools/verify_structure_descriptor_mapping.py "
-            "--data_dir test/sampled_dpdata_npy --desc_dir test/desc_train_npy --fmt deepmd/npy"
+            "--data_dir ./sampled_dpdata_npy --desc_dir ./desc_train_npy --fmt deepmd/npy"
         ),
         formatter_class=argparse.RawTextHelpFormatter,
     )

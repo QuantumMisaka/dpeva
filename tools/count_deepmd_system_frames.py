@@ -13,8 +13,8 @@ def parse_args() -> argparse.Namespace:
         description="Quickly report system count and total frame count for a DeepMD dataset.",
         epilog=(
             "Examples:\n"
-            "  python tools/count_deepmd_system_frames.py --data_dir test/sampled_dpdata --fmt deepmd/npy/mixed\n"
-            "  python tools/count_deepmd_system_frames.py --data_dir test/sampled_dpdata_npy --fmt deepmd/npy --detail"
+            "  python tools/count_deepmd_system_frames.py --data_dir ./sampled_dpdata --fmt deepmd/npy/mixed\n"
+            "  python tools/count_deepmd_system_frames.py --data_dir ./sampled_dpdata_npy --fmt deepmd/npy --detail"
         ),
         formatter_class=argparse.RawTextHelpFormatter,
     )

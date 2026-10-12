@@ -205,7 +205,7 @@ SEE INFORMATION IN : OUT.ABACUS/
 探针目录：
 
 ```text
-/home/pku-jianghong/liuzhaoqing/sai-1344-abacus-probe-20260704-114002
+~/sai-1344-abacus-probe-20260704-114002
 ```
 
 第一次提交：
@@ -243,7 +243,7 @@ SEE INFORMATION IN : OUT.ABACUS/
 成功任务使用的脚本：
 
 ```text
-/home/pku-jianghong/liuzhaoqing/sai-1344-abacus-probe-20260704-114002/probe_abacus_fixed.sbatch
+~/sai-1344-abacus-probe-20260704-114002/probe_abacus_fixed.sbatch
 ```
 
 ## 9. 迁移期 IO 注意事项
