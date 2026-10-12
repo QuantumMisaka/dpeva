@@ -2,7 +2,7 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-10-11
+last-updated: 2026-10-12
 owner: Docs Owner
 ---
 
@@ -10,7 +10,7 @@ owner: Docs Owner
 
 - Status: active
 - Audience: Developers
-- Last-Updated: 2026-10-11
+- Last-Updated: 2026-10-12
 
 本目录用于存放“项目级、可共享、可追溯”的开发计划文档，不承载 AI 执行期草案。
 
@@ -25,7 +25,7 @@ owner: Docs Owner
 - **Active**: 当前有效且需要团队协作的计划。
 - **Completed**: 完成后归档至 `docs/archive/vX.Y.Z/plans/`，并从活跃索引移除。
 - **Naming**: `YYYY-MM-DD-<topic>-plan.md` 或 `vX.Y.Z-<topic>-plan.md`。
-- **Ingestion Rule**: 草案先放 `.trae/documents/`；仅“收敛计划”才迁入本目录。
+- **Ingestion Rule**: 草案先放本地草稿目录（不入库，如 `.trae/documents/`）；仅“收敛计划”才迁入本目录。
 
 ## 3. AI 执行文档边界
 

@@ -18,9 +18,14 @@ test/
 .*cache/
 logs/
 
+# Local AI-assistant workspaces: kept on contributor machines, not part of the repository.
+.trae/
+.superpowers/
+
 # Local experiment data and heavy runtime artifacts.
 practices/sampled_dpdata/
 practices/other_dpdata/
+practices/dpeva-dpa4-test/
 practices/uq_correlation/work/
 practices/uq_correlation/outputs/features/
 practices/uq_correlation/outputs/figures/

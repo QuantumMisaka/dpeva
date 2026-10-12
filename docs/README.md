@@ -2,7 +2,7 @@
 title: DP-EVA 文档导航 (Docs Index)
 status: active
 audience: Users / Developers
-last-updated: 2026-10-11
+last-updated: 2026-10-12
 owner: Quantum Misaka
 ---
 
@@ -56,7 +56,7 @@ owner: Quantum Misaka
 
 | 位置 | 文档类型 | 可见性 | 生命周期 |
 |---|---|---|---|
-| `.trae/documents/` | AI 执行期草案、临时计划、阶段记录 | 工作空间内部 | 任务期内可变，不要求 Sphinx 暴露 |
+| 本地草稿目录（不入库，如 `.trae/documents/`） | AI 执行期草案、临时计划、阶段记录 | 个人本地 | 任务期内可变，不作为仓库文档 |
 | `docs/plans/` | 团队共享、可复盘、可发布的收敛计划 | 项目文档系统 | 完成后归档至 `docs/archive/vX.Y.Z/plans/` |
 | `docs/reports/` | 当前版本代码审查报告和其他类型报告存放位置（评审/实验/发布总结） | 项目文档系统 | 发布后归档至 `docs/archive/vX.Y.Z/reports/` |
 | `docs/archive/` | 历史只读资产 | 默认不进主导航 | 长期保留，禁止覆盖式重写 |
@@ -64,7 +64,7 @@ owner: Quantum Misaka
 ### 2.2 Sphinx 展示策略
 
 - `docs/source/index.rst` 只绑定“面向读者的稳定入口”，避免把过程性草稿直接暴露到主导航。
-- `docs/plans/`、`docs/reports/` 仅收录“可复盘、可共享”的文档；草案先放 `.trae/documents/`。
+- `docs/plans/`、`docs/reports/` 仅收录“可复盘、可共享”的文档；草案先放在本地不入库的草稿目录（如 `.trae/documents/`）。
 - `docs/assets/` 作为静态资源目录，不作为独立页面展示。
 - `docs/archive/` 默认不进入主导航，按需通过归档索引访问。
 
@@ -85,7 +85,7 @@ owner: Quantum Misaka
 
 ### 3.1 过程资产迁移规则（AI 与人类开发统一）
 
-1. 草案阶段：文档放置 `.trae/documents/`，允许高频迭代。
+1. 草案阶段：文档放在本地不入库的草稿目录（如 `.trae/documents/`），允许高频迭代。
 2. 收敛阶段：当计划/结论稳定且需团队共享时，迁移至 `docs/plans/` 或 `docs/reports/`。
 3. 发布阶段：版本发布或任务闭环后，归档至 `docs/archive/vX.Y.Z/{plans,reports}/` 并更新索引。
 4. 展示阶段：仅“收敛文档”进入 Sphinx 导航，避免将过程噪音暴露给最终读者。

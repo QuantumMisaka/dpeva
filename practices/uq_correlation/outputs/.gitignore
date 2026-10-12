@@ -2,7 +2,6 @@
 !.gitignore
 !correlation_summary.csv
 !enrichment_summary.csv
-!preflight_summary.json
 !report.md
 !tangent_lo_force_error_summary.csv
 !tangent_lo_thresholds.json

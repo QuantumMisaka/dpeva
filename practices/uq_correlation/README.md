@@ -38,7 +38,7 @@ model requires a non-default head.
 
 ## Main Outputs
 
-- `outputs/preflight_summary.json`
+- `outputs/preflight_summary.json` (generated locally; not tracked in Git)
 - `outputs/qbc_force_frame_table.csv`
 - `outputs/llpr_energy_uq.csv`
 - `outputs/uq_error_frame_table.csv`
