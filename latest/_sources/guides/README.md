@@ -16,13 +16,13 @@ owner: Docs Owner
 - 文档治理上手：`docs-governance-quickstart.md`
 - 过程资产生命周期：`process-asset-lifecycle.md`
 - 配置文档维护：`developer/config-docs-maintenance.md`
-- SAI DeepMD-kit 源码构建：`developer/deepmd-kit-sai-build.md`
+- 已有 SAI 环境的 DeepMD-kit 源码构建记录：`developer/deepmd-kit-sai-build.md`
 
 ## 2. 使用与运维指南
 
 - 环境安装：`installation.md`
 - 快速跑通：`quickstart.md`
-- 自带夹具冒烟闭环：`smoke-demo.md`
+- 自带夹具 Local 四阶段示例：`quickstart.md` 与 `../../examples/recipes/quickstart/`
 - SAI 快速上手（Slurm 用户）：`sai-quickstart.md`
 - 命令行指南：`cli.md`
 - 配置编写：`configuration.md`

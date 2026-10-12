@@ -2,7 +2,7 @@
 title: 文档结构与命名规范 (Docs Structure & Naming)
 status: active
 audience: Maintainers / Developers
-last-updated: 2026-09-20
+last-updated: 2026-10-12
 owner: Docs Owner
 ---
 
@@ -69,7 +69,6 @@ owner: Docs Owner
 │   └── testing
 │       ├── README.md
 │       ├── integration-slurm.md
-│       ├── integration-config-templates.md
 │       └── multi-datapool-artifacts.md
 ├── reference
 │   ├── README.md

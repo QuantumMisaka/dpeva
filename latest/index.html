@@ -155,7 +155,6 @@
 <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="guides/installation.html">安装与环境准备（Installation）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guides/quickstart.html">Quickstart（最短路径跑通）</a></li>
-<li class="toctree-l1"><a class="reference internal" href="guides/smoke-demo.html">Smoke Demo（仓库自带夹具最小闭环）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guides/sai-quickstart.html">SAI 快速上手（Slurm 用户）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guides/cli.html">CLI 使用指南</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guides/configuration.html">配置编写指南（Configuration）</a></li>
@@ -212,7 +211,6 @@
 <li class="toctree-l1"><a class="reference internal" href="guides/developer/config-docs-maintenance.html">变量说明文档维护指南</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guides/developer/deepmd-kit-sai-build.html">SAI 服务器 DeepMD-kit 安装配置指南</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guides/testing/README.html">Testing（测试指南）</a></li>
-<li class="toctree-l1"><a class="reference internal" href="guides/testing/integration-config-templates.html">DP-EVA 集成测试最小配置模板（Slurm）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guides/testing/integration-slurm.html">DP-EVA 集成测试设计与交付报告（Slurm + Multi DataPool）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guides/testing/multi-datapool-artifacts.html">test-for-multiple-datapool 生产目录输入输出分析</a></li>
 <li class="toctree-l1"><a class="reference internal" href="policy/contributing.html">文档贡献指南（Contributing）</a></li>
@@ -381,32 +379,16 @@ document.write(`
 <li class="toctree-l2"><a class="reference internal" href="guides/installation.html#id1">1. 目的与范围</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guides/installation.html#id2">2. 相关方</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guides/installation.html#python">3. Python 环境要求</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/installation.html#id3">4. 安装方式</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/installation.html#id5">5. 外部环境说明</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/installation.html#id6">6. 下一步</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/installation.html#local-pytorch">4. 从零准备 Local PyTorch 环境</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/installation.html#id3">5. 其它安装方式与依赖边界</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/installation.html#id5">6. 预置集群环境</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/installation.html#id6">7. 下一步</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="guides/quickstart.html">Quickstart（最短路径跑通）</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="guides/quickstart.html#id1">1. 目的与范围</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/quickstart.html#id2">2. 相关方</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/quickstart.html#id3">3. 前置条件</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/quickstart.html#id5">4. 最小目录与配置约定</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/quickstart.html#quickstart-local">5. Quickstart：Local 一次跑通（建议先跑）</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/quickstart.html#quickstart-slurm">6. Quickstart：Slurm 一次跑通（链式编排）</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/quickstart.html#id6">7. 异常处理与排查入口</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/quickstart.html#id9">8. 变更记录</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="guides/smoke-demo.html">Smoke Demo（仓库自带夹具最小闭环）</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="guides/smoke-demo.html#id1">1. 目的与范围</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/smoke-demo.html#id2">2. 自带夹具</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/smoke-demo.html#id3">3. 前置条件</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/smoke-demo.html#id4">4. 准备最小工作目录</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/smoke-demo.html#id5">5. 运行</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/smoke-demo.html#id6">6. 预期产物与完成标记</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/smoke-demo.html#id7">7. 限制与常见问题</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/smoke-demo.html#id8">8. 相关文档</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/smoke-demo.html#id9">9. 变更记录</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/quickstart.html#id1">准备</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/quickstart.html#id2">依次运行</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/quickstart.html#id3">查看产物</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="guides/sai-quickstart.html">SAI 快速上手（Slurm 用户）</a><ul>

@@ -154,7 +154,6 @@
 <ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="installation.html">安装与环境准备（Installation）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart（最短路径跑通）</a></li>
-<li class="toctree-l1"><a class="reference internal" href="smoke-demo.html">Smoke Demo（仓库自带夹具最小闭环）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="sai-quickstart.html">SAI 快速上手（Slurm 用户）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cli.html">CLI 使用指南</a></li>
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">配置编写指南（Configuration）</a></li>
@@ -211,7 +210,6 @@
 <li class="toctree-l1"><a class="reference internal" href="developer/config-docs-maintenance.html">变量说明文档维护指南</a></li>
 <li class="toctree-l1"><a class="reference internal" href="developer/deepmd-kit-sai-build.html">SAI 服务器 DeepMD-kit 安装配置指南</a></li>
 <li class="toctree-l1"><a class="reference internal" href="testing/README.html">Testing（测试指南）</a></li>
-<li class="toctree-l1"><a class="reference internal" href="testing/integration-config-templates.html">DP-EVA 集成测试最小配置模板（Slurm）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="testing/integration-slurm.html">DP-EVA 集成测试设计与交付报告（Slurm + Multi DataPool）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="testing/multi-datapool-artifacts.html">test-for-multiple-datapool 生产目录输入输出分析</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../policy/contributing.html">文档贡献指南（Contributing）</a></li>
@@ -409,7 +407,7 @@ document.write(`
 <ul class="simple">
 <li><p>Status: active</p></li>
 <li><p>Audience: Users / Developers</p></li>
-<li><p>Last-Updated: 2026-09-06</p></li>
+<li><p>Last-Updated: 2026-10-12</p></li>
 </ul>
 <section id="id1">
 <h2>1. 目的与范围<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
@@ -444,7 +442,9 @@ document.write(`
 <h3>3.1 规则<a class="headerlink" href="#id5" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p>配置文件中推荐写相对路径，便于迁移与复现。</p></li>
-<li><p>CLI 会把相对路径按“配置文件所在目录”解析为绝对路径。</p></li>
+<li><p>CLI 会把显式路径字段按“配置文件所在目录”解析为绝对路径，包括 Collect 的 <code class="docutils literal notranslate"><span class="pre">project</span></code>。</p></li>
+<li><p>例如 <code class="docutils literal notranslate"><span class="pre">configs/collect.json</span></code> 内的 <code class="docutils literal notranslate"><span class="pre">&quot;project&quot;:</span> <span class="pre">&quot;../work&quot;</span></code> 指向与 <code class="docutils literal notranslate"><span class="pre">configs/</span></code> 同级的 <code class="docutils literal notranslate"><span class="pre">work/</span></code>，不受执行命令时的目录影响。</p></li>
+<li><p>迁移说明：v0.8.2 中显式 <code class="docutils literal notranslate"><span class="pre">project</span></code> 曾遗漏路径解析而依赖 shell 当前目录。升级后，若旧配置依赖该行为，请把 <code class="docutils literal notranslate"><span class="pre">project</span></code> 改为相对于配置文件的路径，或使用绝对路径。省略该字段的默认值、直接传入 Python 配置对象的行为不变。</p></li>
 </ul>
 <p>参考实现：<code class="docutils literal notranslate"><span class="pre">src/dpeva/utils/config.py</span></code> 的 <code class="docutils literal notranslate"><span class="pre">resolve_config_paths</span></code>。</p>
 </section>

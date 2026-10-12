@@ -46,7 +46,7 @@
     <link rel="index" title="索引" href="../../genindex.html" />
     <link rel="search" title="搜索" href="../../search.html" />
     <link rel="next" title="test-for-multiple-datapool 生产目录输入输出分析" href="multi-datapool-artifacts.html" />
-    <link rel="prev" title="DP-EVA 集成测试最小配置模板（Slurm）" href="integration-config-templates.html" />
+    <link rel="prev" title="Testing（测试指南）" href="README.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="zh-CN"/>
   </head>
@@ -154,7 +154,6 @@
 <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../installation.html">安装与环境准备（Installation）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quickstart（最短路径跑通）</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../smoke-demo.html">Smoke Demo（仓库自带夹具最小闭环）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../sai-quickstart.html">SAI 快速上手（Slurm 用户）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../cli.html">CLI 使用指南</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../configuration.html">配置编写指南（Configuration）</a></li>
@@ -211,7 +210,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../developer/config-docs-maintenance.html">变量说明文档维护指南</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../developer/deepmd-kit-sai-build.html">SAI 服务器 DeepMD-kit 安装配置指南</a></li>
 <li class="toctree-l1"><a class="reference internal" href="README.html">Testing（测试指南）</a></li>
-<li class="toctree-l1"><a class="reference internal" href="integration-config-templates.html">DP-EVA 集成测试最小配置模板（Slurm）</a></li>
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">DP-EVA 集成测试设计与交付报告（Slurm + Multi DataPool）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="multi-datapool-artifacts.html">test-for-multiple-datapool 生产目录输入输出分析</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../policy/contributing.html">文档贡献指南（Contributing）</a></li>
@@ -410,7 +408,8 @@ document.write(`
 <ul class="simple">
 <li><p>开发计划文档：/plans/integration-slurm-plan.md</p></li>
 <li><p>生产目录 I/O 分析：./multi-datapool-artifacts.md</p></li>
-<li><p>Workflow 最小配置模板说明：./integration-config-templates.md</p></li>
+<li><p>本集成测试专用配置：<code class="docutils literal notranslate"><span class="pre">tests/integration/slurm_multidatapool/configs/</span></code>；新人 Local 示例见
+<a class="reference internal" href="../quickstart.html"><span class="doc">Quickstart</span></a> 与 <code class="docutils literal notranslate"><span class="pre">examples/recipes/quickstart/</span></code></p></li>
 <li><p>Slurm 集成测试（代码）：</p>
 <ul>
 <li><p>用例：<a class="reference external" href="https://github.com/QuantumMisaka/dpeva/blob/main/tests/integration/test_slurm_multidatapool_e2e.py">test_slurm_multidatapool_e2e.py</a></p></li>
@@ -468,7 +467,8 @@ document.write(`
 </li>
 <li><p>训练 input.json：</p>
 <ul>
-<li><p>基于生产 input.json 生成最小训练 input（将 <code class="docutils literal notranslate"><span class="pre">numb_steps</span></code> 缩至 10，<code class="docutils literal notranslate"><span class="pre">disp_freq</span></code> 设为 1）</p></li>
+<li><p>以 <code class="docutils literal notranslate"><span class="pre">examples/recipes/quickstart/input.json</span></code> 为唯一跟踪模板，在测试临时目录中
+将 <code class="docutils literal notranslate"><span class="pre">numb_steps</span></code> 缩至 10、<code class="docutils literal notranslate"><span class="pre">disp_freq</span></code> 设为 1；不另存一份测试专用模板</p></li>
 </ul>
 </li>
 </ul>
@@ -550,6 +550,7 @@ DPA4 能力和六条历史 SAI attestation，DPA4C 仍为 experimental。本节�
 <p>执行（默认跳过，需要显式开启）：</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">DPEVA_RUN_SLURM_ITEST=1</span></code></p></li>
+<li><p>使用相同真实 DeepMD 链路的 Local 集成测试另需 <code class="docutils literal notranslate"><span class="pre">DPEVA_RUN_LOCAL_ITEST=1</span></code></p></li>
 <li><p>可选设置：</p>
 <ul>
 <li><p><code class="docutils literal notranslate"><span class="pre">DPEVA_TEST_ENV_SETUP</span></code></p></li>
@@ -597,12 +598,12 @@ DPA4 能力和六条历史 SAI attestation，DPA4C 仍为 experimental。本节�
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="integration-config-templates.html"
+       href="README.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">上一页</p>
-        <p class="prev-next-title">DP-EVA 集成测试最小配置模板（Slurm）</p>
+        <p class="prev-next-title">Testing（测试指南）</p>
       </div>
     </a>
     <a class="right-next"

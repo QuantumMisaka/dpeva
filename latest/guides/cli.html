@@ -154,7 +154,6 @@
 <ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="installation.html">安装与环境准备（Installation）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart（最短路径跑通）</a></li>
-<li class="toctree-l1"><a class="reference internal" href="smoke-demo.html">Smoke Demo（仓库自带夹具最小闭环）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="sai-quickstart.html">SAI 快速上手（Slurm 用户）</a></li>
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">CLI 使用指南</a></li>
 <li class="toctree-l1"><a class="reference internal" href="configuration.html">配置编写指南（Configuration）</a></li>
@@ -211,7 +210,6 @@
 <li class="toctree-l1"><a class="reference internal" href="developer/config-docs-maintenance.html">变量说明文档维护指南</a></li>
 <li class="toctree-l1"><a class="reference internal" href="developer/deepmd-kit-sai-build.html">SAI 服务器 DeepMD-kit 安装配置指南</a></li>
 <li class="toctree-l1"><a class="reference internal" href="testing/README.html">Testing（测试指南）</a></li>
-<li class="toctree-l1"><a class="reference internal" href="testing/integration-config-templates.html">DP-EVA 集成测试最小配置模板（Slurm）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="testing/integration-slurm.html">DP-EVA 集成测试设计与交付报告（Slurm + Multi DataPool）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="testing/multi-datapool-artifacts.html">test-for-multiple-datapool 生产目录输入输出分析</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../policy/contributing.html">文档贡献指南（Contributing）</a></li>
@@ -599,6 +597,8 @@ candidate artifact。填入真实 model-ref、dataset manifest 和 metric 文件
 </section>
 <section id="collect-uq-filtering-sampling-export">
 <h3>4.5 collect（UQ + Filtering + Sampling + Export）<a class="headerlink" href="#collect-uq-filtering-sampling-export" title="Link to this heading">#</a></h3>
+<p>从 JSON 文件读取时，显式 <code class="docutils literal notranslate"><span class="pre">project</span></code> 与其他路径字段一样相对于配置文件目录解析；
+旧版依赖 shell 当前目录的 Collect 配置需调整，见 <a class="reference internal" href="configuration.html"><span class="doc">配置与路径规则</span></a>。</p>
 <p><code class="docutils literal notranslate"><span class="pre">collect</span></code> 在 Slurm 后端采用自调用方式提交 worker（配置路径会被传入，避免“冻结配置”写盘）。</p>
 <ul class="simple">
 <li><p>输入（核心）</p>

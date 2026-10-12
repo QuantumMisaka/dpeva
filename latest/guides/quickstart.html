@@ -45,7 +45,7 @@
     <script>DOCUMENTATION_OPTIONS.pagename = 'guides/quickstart';</script>
     <link rel="index" title="索引" href="../genindex.html" />
     <link rel="search" title="搜索" href="../search.html" />
-    <link rel="next" title="Smoke Demo（仓库自带夹具最小闭环）" href="smoke-demo.html" />
+    <link rel="next" title="SAI 快速上手（Slurm 用户）" href="sai-quickstart.html" />
     <link rel="prev" title="安装与环境准备（Installation）" href="installation.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="zh-CN"/>
@@ -154,7 +154,6 @@
 <ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="installation.html">安装与环境准备（Installation）</a></li>
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">Quickstart（最短路径跑通）</a></li>
-<li class="toctree-l1"><a class="reference internal" href="smoke-demo.html">Smoke Demo（仓库自带夹具最小闭环）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="sai-quickstart.html">SAI 快速上手（Slurm 用户）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cli.html">CLI 使用指南</a></li>
 <li class="toctree-l1"><a class="reference internal" href="configuration.html">配置编写指南（Configuration）</a></li>
@@ -211,7 +210,6 @@
 <li class="toctree-l1"><a class="reference internal" href="developer/config-docs-maintenance.html">变量说明文档维护指南</a></li>
 <li class="toctree-l1"><a class="reference internal" href="developer/deepmd-kit-sai-build.html">SAI 服务器 DeepMD-kit 安装配置指南</a></li>
 <li class="toctree-l1"><a class="reference internal" href="testing/README.html">Testing（测试指南）</a></li>
-<li class="toctree-l1"><a class="reference internal" href="testing/integration-config-templates.html">DP-EVA 集成测试最小配置模板（Slurm）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="testing/integration-slurm.html">DP-EVA 集成测试设计与交付报告（Slurm + Multi DataPool）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="testing/multi-datapool-artifacts.html">test-for-multiple-datapool 生产目录输入输出分析</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../policy/contributing.html">文档贡献指南（Contributing）</a></li>
@@ -366,30 +364,9 @@ document.write(`
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">1. 目的与范围</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">2. 相关方</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">3. 前置条件</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">3.1 基础环境</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#slurm">3.2 可选：Slurm 环境</a></li>
-</ul>
-</li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">4. 最小目录与配置约定</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#quickstart-local">5. Quickstart：Local 一次跑通（建议先跑）</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#feature">5.1 Feature（生成描述符）</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#train-n">5.2 Train（训练 N 个模型）</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#infer">5.3 Infer（候选池推理）</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#collect-uq-sampling-export">5.4 Collect（UQ + Sampling + Export）</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#label-dft">5.5 Label（DFT 标注）</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#analysis">5.6 Analysis（结果统计）</a></li>
-</ul>
-</li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#quickstart-slurm">6. Quickstart：Slurm 一次跑通（链式编排）</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">7. 异常处理与排查入口</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">7.1 如何判断“任务完成”</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id8">7.2 常见错误类型</a></li>
-</ul>
-</li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id9">8. 变更记录</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">准备</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">依次运行</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">查看产物</a></li>
 </ul>
             </nav>
         </div>
@@ -403,201 +380,72 @@ document.write(`
                   
   <section id="quickstart">
 <h1>Quickstart（最短路径跑通）<a class="headerlink" href="#quickstart" title="Link to this heading">#</a></h1>
-<ul class="simple">
-<li><p>Status: active</p></li>
-<li><p>Audience: Users / Developers</p></li>
-<li><p>Applies-To: CLI 模式（推荐）</p></li>
-<li><p>Last-Updated: 2026-06-10</p></li>
-</ul>
+<p>本页使用仓库自带的模型、数据与 <code class="docutils literal notranslate"><span class="pre">examples/recipes/quickstart/</span></code> 中的四份配置，
+依次运行 <code class="docutils literal notranslate"><span class="pre">feature</span> <span class="pre">→</span> <span class="pre">train</span> <span class="pre">→</span> <span class="pre">infer</span> <span class="pre">→</span> <span class="pre">collect</span></code>。示例只用于熟悉命令和产物；训练数据只有
+1 帧、候选数据只有 5 帧，不能据此判断模型精度或采样效果。正式运行时请换用自己的
+模型与数据，并阅读 <a class="reference internal" href="configuration.html"><span class="doc">配置与路径说明</span></a>。</p>
 <section id="id1">
-<h2>1. 目的与范围<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
-<p>目标：用最短路径跑通一次 DP-EVA 的关键链路，并明确：</p>
-<ul class="simple">
-<li><p>配置文件写在哪里、关键字段是什么</p></li>
-<li><p>输出产物在哪里、怎样判断任务完成</p></li>
-<li><p>失败时去哪里看日志、如何快速定位问题</p></li>
-</ul>
-<p>范围：</p>
-<ul class="simple">
-<li><p>覆盖 CLI 子命令：<code class="docutils literal notranslate"><span class="pre">train</span> <span class="pre">/</span> <span class="pre">infer</span> <span class="pre">/</span> <span class="pre">feature</span> <span class="pre">/</span> <span class="pre">collect</span> <span class="pre">/</span> <span class="pre">label</span> <span class="pre">/</span> <span class="pre">analysis</span></code></p></li>
-<li><p>给出 Local 与 Slurm 两种运行方式的最小示例</p></li>
-</ul>
+<h2>准备<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
+<p>克隆仓库后，按 <a class="reference internal" href="installation.html"><span class="doc">安装指南</span></a> 准备含 PyTorch 后端的 DeepMD-kit 环境。
+确认 <code class="docutils literal notranslate"><span class="pre">dpeva</span></code>、<code class="docutils literal notranslate"><span class="pre">dp</span></code> 都来自当前环境：</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/QuantumMisaka/dpeva.git
+<span class="nb">cd</span><span class="w"> </span>dpeva
+dpeva<span class="w"> </span>doctor
+dp<span class="w"> </span>--version
+</pre></div>
+</div>
+<p>四份配置与训练输入位于 <code class="docutils literal notranslate"><span class="pre">examples/recipes/quickstart/</span></code>；它们引用仓库内
+<code class="docutils literal notranslate"><span class="pre">tests/integration/data/</span></code> 的小型夹具。配置中的文件路径相对<strong>配置文件所在目录</strong>解析，
+无需复制夹具、手改 <code class="docutils literal notranslate"><span class="pre">input.json</span></code> 或建立第二套工作目录。从仓库外执行时，把下方的
+<code class="docutils literal notranslate"><span class="pre">examples/recipes/quickstart/*.json</span></code> 换成对应配置文件的绝对路径即可。</p>
 </section>
 <section id="id2">
-<h2>2. 相关方<a class="headerlink" href="#id2" title="Link to this heading">#</a></h2>
-<ul class="simple">
-<li><p>使用者：准备数据、运行工作流、查看结果</p></li>
-<li><p>开发者：维护配置模型、CLI 行为、输出目录约定</p></li>
-<li><p>集群/平台维护：提供 DeepMD 环境与 Slurm 队列配置</p></li>
-</ul>
+<h2>依次运行<a class="headerlink" href="#id2" title="Link to this heading">#</a></h2>
+<p>在仓库根目录执行：</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>dpeva<span class="w"> </span>feature<span class="w"> </span>examples/recipes/quickstart/feature.json
+dpeva<span class="w"> </span>train<span class="w">   </span>examples/recipes/quickstart/train.json
+dpeva<span class="w"> </span>infer<span class="w">   </span>examples/recipes/quickstart/infer.json
+dpeva<span class="w"> </span>collect<span class="w"> </span>examples/recipes/quickstart/collect.json
+</pre></div>
+</div>
+<p>Local backend 同步执行。先等当前命令成功返回，再运行下一条。训练包括 3 个短步数模型，
+仍可能耗时；可用 GPU 加速。需要在 Slurm 上执行时，参阅
+<a class="reference internal" href="sai-quickstart.html"><span class="doc">SAI 快速上手</span></a> 和 <a class="reference internal" href="slurm.html"><span class="doc">Slurm 指南</span></a>。</p>
 </section>
 <section id="id3">
-<h2>3. 前置条件<a class="headerlink" href="#id3" title="Link to this heading">#</a></h2>
-<section id="id4">
-<h3>3.1 基础环境<a class="headerlink" href="#id4" title="Link to this heading">#</a></h3>
-<ul class="simple">
-<li><p>Python 环境可导入 <code class="docutils literal notranslate"><span class="pre">dpeva</span></code>（开发模式安装推荐）</p></li>
-<li><p>DeepMD-kit <code class="docutils literal notranslate"><span class="pre">dp</span></code> 命令可用（至少覆盖 <code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">train/test/eval-desc</span></code>）</p></li>
-<li><p>一个 DPA 基座模型与一份数据集：</p>
-<ul>
-<li><p>公开资源入口（DPA-3.1-3M 模型、FT2DP-dataset-FeCHO-v1）见仓库根 <code class="docutils literal notranslate"><span class="pre">README.md</span></code> 的「模型与数据获取」；</p></li>
-<li><p>只想先确认环境可用时，可直接使用仓库自带夹具，见
-<a class="reference external" href="https://github.com/QuantumMisaka/dpeva/blob/main/docs/guides/smoke-demo.md">smoke-demo.md</a>
-（无需下载外部资源；外部模型可用 <code class="docutils literal notranslate"><span class="pre">DPEVA_DPA3_MODEL_PATH</span></code> / <code class="docutils literal notranslate"><span class="pre">DPEVA_DPA4_MODEL_PATH</span></code> 覆盖）。</p></li>
-</ul>
-</li>
-</ul>
-</section>
-<section id="slurm">
-<h3>3.2 可选：Slurm 环境<a class="headerlink" href="#slurm" title="Link to this heading">#</a></h3>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">sbatch/squeue</span></code> 可用</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">submission.backend=&quot;slurm&quot;</span></code> 且可正常提交短作业</p></li>
-</ul>
-</section>
-</section>
-<section id="id5">
-<h2>4. 最小目录与配置约定<a class="headerlink" href="#id5" title="Link to this heading">#</a></h2>
-<p>推荐工作目录结构（示意）：</p>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>work/
-├── configs/
-│   ├── feature.json
-│   ├── train.json
-│   ├── infer.json
-│   ├── collect.json
-│   └── analysis.json
-├── sampled_dpdata/                 # 训练集（含能量/力等标注）
-├── other_dpdata_all/               # 候选池（可无标注，多数据池结构）
-└── DPA-3.1-3M.pt                   # 基础模型（示例）
-</pre></div>
+<h2>查看产物<a class="headerlink" href="#id3" title="Link to this heading">#</a></h2>
+<p>所有输出位于 <code class="docutils literal notranslate"><span class="pre">examples/recipes/quickstart/work/</span></code>：</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>阶段</p></th>
+<th class="head"><p>主要产物</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Feature</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">desc_pool/amourC/C2.npy</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>Train</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">0/</span></code>、<code class="docutils literal notranslate"><span class="pre">1/</span></code>、<code class="docutils literal notranslate"><span class="pre">2/</span></code> 下的模型与训练日志</p></td>
+</tr>
+<tr class="row-even"><td><p>Infer</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">0..2/test_val/</span></code> 下的 <code class="docutils literal notranslate"><span class="pre">results.*.out</span></code> 和日志</p></td>
+</tr>
+<tr class="row-odd"><td><p>Collect</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">dpeva_uq_result/dataframe/</span></code> 下的 CSV、<code class="docutils literal notranslate"><span class="pre">dpdata/</span></code> 导出目录</p></td>
+</tr>
+</tbody>
+</table>
 </div>
-<p>关键输出约定（常见）：</p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">work_dir/0..N-1/</span></code>：训练输出（模型与日志）</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">work_dir/&lt;i&gt;/&lt;task_name&gt;/</span></code>：推理输出（<code class="docutils literal notranslate"><span class="pre">results.*.out</span></code> 与 <code class="docutils literal notranslate"><span class="pre">test_job.out</span></code>）</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">savedir</span></code>：描述符输出目录（Feature）</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">root_savedir</span></code>：采集/筛选输出（Collect）</p></li>
-</ul>
-</section>
-<section id="quickstart-local">
-<h2>5. Quickstart：Local 一次跑通（建议先跑）<a class="headerlink" href="#quickstart-local" title="Link to this heading">#</a></h2>
-<p>本节假设你在 <code class="docutils literal notranslate"><span class="pre">work/</span></code> 目录下执行，且配置文件写在 <code class="docutils literal notranslate"><span class="pre">work/configs/</span></code>。</p>
-<p>参考最小配置模板：</p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">examples/recipes/</span></code>：../examples/recipes/</p></li>
-<li><p>配置字段字典：API Reference（Sphinx 生成的配置字段文档）</p></li>
-</ul>
-<section id="feature">
-<h3>5.1 Feature（生成描述符）<a class="headerlink" href="#feature" title="Link to this heading">#</a></h3>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>dpeva<span class="w"> </span>feature<span class="w"> </span>configs/feature.json
-</pre></div>
-</div>
-<p>验证输出：</p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">savedir/</span></code> 目录存在</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">eval_desc.log</span></code> 或对应日志文件包含完成标记（见 7.1）</p></li>
-</ul>
-</section>
-<section id="train-n">
-<h3>5.2 Train（训练 N 个模型）<a class="headerlink" href="#train-n" title="Link to this heading">#</a></h3>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>dpeva<span class="w"> </span>train<span class="w"> </span>configs/train.json
-</pre></div>
-</div>
-<p>验证输出：</p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">0/..N-1/</span></code> 目录生成</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">0/model.ckpt.pt</span></code>（或同等训练产物）存在</p></li>
-</ul>
-</section>
-<section id="infer">
-<h3>5.3 Infer（候选池推理）<a class="headerlink" href="#infer" title="Link to this heading">#</a></h3>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>dpeva<span class="w"> </span>infer<span class="w"> </span>configs/infer.json
-</pre></div>
-</div>
-<p>验证输出：</p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">0/&lt;task_name&gt;/results.e.out</span></code> 存在</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">0/&lt;task_name&gt;/test_job.out</span></code> 存在</p></li>
-</ul>
-</section>
-<section id="collect-uq-sampling-export">
-<h3>5.4 Collect（UQ + Sampling + Export）<a class="headerlink" href="#collect-uq-sampling-export" title="Link to this heading">#</a></h3>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>dpeva<span class="w"> </span>collect<span class="w"> </span>configs/collect.json
-</pre></div>
-</div>
-<p>验证输出：</p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">&lt;root_savedir&gt;/dataframe/df_uq_desc_sampled-final.csv</span></code> 存在</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">&lt;root_savedir&gt;/dpdata/</span></code> 下导出目录存在</p></li>
-</ul>
-</section>
-<section id="label-dft">
-<h3>5.5 Label（DFT 标注）<a class="headerlink" href="#label-dft" title="Link to this heading">#</a></h3>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>dpeva<span class="w"> </span>label<span class="w"> </span>configs/label.json
-</pre></div>
-</div>
-<p>验证输出：</p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">work_dir/outputs/cleaned/</span></code> 存在</p></li>
-<li><p>若开启 integration，<code class="docutils literal notranslate"><span class="pre">integration_summary.json</span></code> 存在</p></li>
-</ul>
-</section>
-<section id="analysis">
-<h3>5.6 Analysis（结果统计）<a class="headerlink" href="#analysis" title="Link to this heading">#</a></h3>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>dpeva<span class="w"> </span>analysis<span class="w"> </span>configs/analysis.json
-</pre></div>
-</div>
-<p>验证输出：</p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">output_dir/</span></code> 下生成统计/图表文件</p></li>
-</ul>
-</section>
-</section>
-<section id="quickstart-slurm">
-<h2>6. Quickstart：Slurm 一次跑通（链式编排）<a class="headerlink" href="#quickstart-slurm" title="Link to this heading">#</a></h2>
-<p>当 <code class="docutils literal notranslate"><span class="pre">submission.backend=&quot;slurm&quot;</span></code> 时，多数工作流会提交作业并返回。</p>
-<p>建议用“完成标记 + 日志监控”的方式串联：</p>
-<ul class="simple">
-<li><p>训练日志：<code class="docutils literal notranslate"><span class="pre">&lt;work_dir&gt;/&lt;i&gt;/train.out</span></code></p></li>
-<li><p>推理日志：<code class="docutils literal notranslate"><span class="pre">&lt;work_dir&gt;/&lt;i&gt;/&lt;task_name&gt;/test_job.out</span></code></p></li>
-<li><p>Feature 日志：<code class="docutils literal notranslate"><span class="pre">&lt;savedir&gt;/eval_desc.log</span></code></p></li>
-<li><p>Collect 日志：<code class="docutils literal notranslate"><span class="pre">collect_slurm.out</span></code>（以具体配置/脚本输出为准）</p></li>
-</ul>
-<p>集成测试实现参考：</p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">tests/integration/test_slurm_multidatapool_e2e.py</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">docs/guides/testing/integration-slurm.md</span></code></p></li>
-</ul>
-</section>
-<section id="id6">
-<h2>7. 异常处理与排查入口<a class="headerlink" href="#id6" title="Link to this heading">#</a></h2>
-<section id="id7">
-<h3>7.1 如何判断“任务完成”<a class="headerlink" href="#id7" title="Link to this heading">#</a></h3>
-<p>DP-EVA 以统一完成标记作为应用层完成锚点：</p>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>DPEVA_TAG: WORKFLOW_FINISHED
-</pre></div>
-</div>
-<p>建议外部编排系统通过监控日志出现该标记来推进后续任务。</p>
-</section>
-<section id="id8">
-<h3>7.2 常见错误类型<a class="headerlink" href="#id8" title="Link to this heading">#</a></h3>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">dp</span></code> 不可用 / 版本不匹配：检查 DeepMD 环境、<code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">--version</span></code></p></li>
-<li><p>数据目录结构不符合预期：检查 Multi DataPool 目录结构与 <code class="docutils literal notranslate"><span class="pre">type_map.raw/type.raw</span></code></p></li>
-<li><p>Slurm 提交失败：检查 partition/qos/gpu/cpu 资源字段与队列限制</p></li>
-</ul>
-<p>排障入口：</p>
-<ul class="simple">
-<li><p>./troubleshooting.md</p></li>
-</ul>
-</section>
-</section>
-<section id="id9">
-<h2>8. 变更记录<a class="headerlink" href="#id9" title="Link to this heading">#</a></h2>
-<ul class="simple">
-<li><p>2026-03-11：补齐 <code class="docutils literal notranslate"><span class="pre">label</span></code> 子命令 Quickstart 步骤，并同步推理日志文件名与配置入口。</p></li>
-<li><p>2026-02-18：补齐 Local/Slurm Quickstart 的最小链路与完成标记约定，统一链接入口。</p></li>
-</ul>
+<p>成功的工作流会输出 <code class="docutils literal notranslate"><span class="pre">DPEVA_TAG:</span> <span class="pre">WORKFLOW_FINISHED</span></code>；具体日志位置见
+<a class="reference internal" href="testing/multi-datapool-artifacts.html"><span class="doc">产物约定</span></a>。此小夹具的 collect 阶段可能选出
+0 帧，仍会导出候选数据；这是输入规模所致，不是科学效果验证。若失败，先查看
+<a class="reference internal" href="troubleshooting.html"><span class="doc">排障指南</span></a>，尤其检查 <code class="docutils literal notranslate"><span class="pre">dp</span></code> 是否在 <code class="docutils literal notranslate"><span class="pre">PATH</span></code>、数据路径以及相邻阶段
+的模型数量和任务目录是否一致。重跑前应清理这次示例生成的旧产物，以免旧文件混入
+当前结果。</p>
+<p>接下来可按 <a class="reference internal" href="../reference/index.html"><span class="doc">配置参考</span></a> 准备自己的工作目录；标注与分析等其它
+工作流的参数和示例见 <a class="reference internal" href="cli.html"><span class="doc">CLI 指南</span></a> 与仓库中的
+<code class="docutils literal notranslate"><span class="pre">examples/recipes/README.md</span></code>。</p>
 </section>
 </section>
 
@@ -622,11 +470,11 @@ document.write(`
       </div>
     </a>
     <a class="right-next"
-       href="smoke-demo.html"
+       href="sai-quickstart.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">下一页</p>
-        <p class="prev-next-title">Smoke Demo（仓库自带夹具最小闭环）</p>
+        <p class="prev-next-title">SAI 快速上手（Slurm 用户）</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -646,30 +494,9 @@ document.write(`
   </div>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">1. 目的与范围</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">2. 相关方</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">3. 前置条件</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">3.1 基础环境</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#slurm">3.2 可选：Slurm 环境</a></li>
-</ul>
-</li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">4. 最小目录与配置约定</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#quickstart-local">5. Quickstart：Local 一次跑通（建议先跑）</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#feature">5.1 Feature（生成描述符）</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#train-n">5.2 Train（训练 N 个模型）</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#infer">5.3 Infer（候选池推理）</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#collect-uq-sampling-export">5.4 Collect（UQ + Sampling + Export）</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#label-dft">5.5 Label（DFT 标注）</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#analysis">5.6 Analysis（结果统计）</a></li>
-</ul>
-</li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#quickstart-slurm">6. Quickstart：Slurm 一次跑通（链式编排）</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">7. 异常处理与排查入口</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">7.1 如何判断“任务完成”</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id8">7.2 常见错误类型</a></li>
-</ul>
-</li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id9">8. 变更记录</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">准备</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">依次运行</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">查看产物</a></li>
 </ul>
   </nav></div>
 

@@ -512,7 +512,6 @@ window.runMermaid = runMermaid;</script>
 <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="installation.html">安装与环境准备（Installation）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart（最短路径跑通）</a></li>
-<li class="toctree-l1"><a class="reference internal" href="smoke-demo.html">Smoke Demo（仓库自带夹具最小闭环）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="sai-quickstart.html">SAI 快速上手（Slurm 用户）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cli.html">CLI 使用指南</a></li>
 <li class="toctree-l1"><a class="reference internal" href="configuration.html">配置编写指南（Configuration）</a></li>
@@ -569,7 +568,6 @@ window.runMermaid = runMermaid;</script>
 <li class="toctree-l1"><a class="reference internal" href="developer/config-docs-maintenance.html">变量说明文档维护指南</a></li>
 <li class="toctree-l1"><a class="reference internal" href="developer/deepmd-kit-sai-build.html">SAI 服务器 DeepMD-kit 安装配置指南</a></li>
 <li class="toctree-l1"><a class="reference internal" href="testing/README.html">Testing（测试指南）</a></li>
-<li class="toctree-l1"><a class="reference internal" href="testing/integration-config-templates.html">DP-EVA 集成测试最小配置模板（Slurm）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="testing/integration-slurm.html">DP-EVA 集成测试设计与交付报告（Slurm + Multi DataPool）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="testing/multi-datapool-artifacts.html">test-for-multiple-datapool 生产目录输入输出分析</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../policy/contributing.html">文档贡献指南（Contributing）</a></li>
@@ -831,7 +829,7 @@ document.write(`
 <ul class="simple">
 <li><p>Status: active</p></li>
 <li><p>Audience: Developers</p></li>
-<li><p>Last-Updated: 2026-09-06</p></li>
+<li><p>Last-Updated: 2026-10-12</p></li>
 <li><p>Related:</p>
 <ul>
 <li><p>配置字段字典：<code class="docutils literal notranslate"><span class="pre">API</span> <span class="pre">Reference</span></code>（由 <code class="docutils literal notranslate"><span class="pre">src/dpeva/config.py</span></code> 自动生成）</p></li>
@@ -1029,7 +1027,7 @@ document.write(`
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">AGENTS.md</span></code> 只承担项目开发最小入口职责，用于帮助 AI 与人类开发者快速建立项目心智模型。</p></li>
 <li><p>若某项内容可以在本页完整说明，就不应继续保留在 <code class="docutils literal notranslate"><span class="pre">AGENTS.md</span></code> 中；<code class="docutils literal notranslate"><span class="pre">AGENTS.md</span></code> 不再充当第二份开发手册。</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">.trae/rules/project_rules.md</span></code> 负责 AI 行为规则，不应在 <code class="docutils literal notranslate"><span class="pre">AGENTS.md</span></code> 中重复。</p></li>
+<li><p>本地 AI 工作台不随仓库分发；贡献者共同遵循 <code class="docutils literal notranslate"><span class="pre">AGENTS.md</span></code> 与本手册，不能依赖个人工作台中的规则文件。</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">docs/reference/*</span></code> 负责字段字典与校验正文，不应在 <code class="docutils literal notranslate"><span class="pre">AGENTS.md</span></code> 或本页中重复复制。</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">docs/guides/*</span></code>、<code class="docutils literal notranslate"><span class="pre">docs/policy/*</span></code>、<code class="docutils literal notranslate"><span class="pre">docs/governance/*</span></code> 负责完整流程与治理细则，<code class="docutils literal notranslate"><span class="pre">AGENTS.md</span></code> 只保留跳转与最小摘要。</p></li>
 </ul>
@@ -1054,7 +1052,7 @@ document.write(`
 │   ├── gates.toml          # 可执行门禁目录
 │   ├── run_gate.py         # 门禁分发器
 │   ├── audit.py            # 代码静态分析工具
-│   ├── check_docs.py       # 文档一致性检查
+│   ├── doc_check.py        # 文档元信息与链接检查
 │   └── release_helper.py   # 版本发布助手
 ├── tools/                  # [业务工具] DeepMD 数据处理与校验实用程序
 │   ├── count_deepmd_system_frames.py
@@ -1464,7 +1462,7 @@ dpeva<span class="w"> </span>label<span class="w"> </span>config_label.json<span
 <h3>5.1 代码规范<a class="headerlink" href="#id18" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p><strong>日志</strong>: 禁止在 <code class="docutils literal notranslate"><span class="pre">src/dpeva</span></code> 库文件中调用 <code class="docutils literal notranslate"><span class="pre">logging.basicConfig()</span></code>。仅在 <code class="docutils literal notranslate"><span class="pre">runner</span></code> 脚本中配置全局日志。</p></li>
-<li><p><strong>路径</strong>: 所有文件操作应使用绝对路径 (<code class="docutils literal notranslate"><span class="pre">os.path.abspath</span></code>)。</p></li>
+<li><p><strong>路径</strong>: 示例与配置优先写相对路径；CLI 在加载时按配置文件目录解析，包括 Collect 的显式 <code class="docutils literal notranslate"><span class="pre">project</span></code>。底层使用解析后的路径，避免隐式依赖 shell 当前目录。</p></li>
 <li><p><strong>异常</strong>: 显式捕获并记录异常，避免静默失败。</p></li>
 <li><p><strong>数据接口</strong>: 使用 <code class="docutils literal notranslate"><span class="pre">dpeva.io.types.PredictionData</span></code> 传递预测结果，禁止传递裸字典。</p></li>
 <li><p><strong>变量命名</strong>: 统一输入数据路径变量名为 <code class="docutils literal notranslate"><span class="pre">data_path</span></code> (Feature/Inference Workflow)。</p></li>
@@ -1472,26 +1470,15 @@ dpeva<span class="w"> </span>label<span class="w"> </span>config_label.json<span
 </section>
 <section id="id19">
 <h3>5.2 验证测试<a class="headerlink" href="#id19" title="Link to this heading">#</a></h3>
-<p>在开发阶段，你可以通过<code class="docutils literal notranslate"><span class="pre">conda</span> <span class="pre">activate</span> <span class="pre">dpeva-dev</span></code> 加载所需环境，并在项目目录下运行 <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">--upgrade</span> <span class="pre">.</span></code> 更新开发依赖，确保测试环境与开发环境保持一致。</p>
-<p>用户自行开展单元测试时，需要自行配置好 Python 环境，确保 <code class="docutils literal notranslate"><span class="pre">dpeva</span></code> 命令在环境内并处于最新状态，且 <code class="docutils literal notranslate"><span class="pre">pytest</span></code> 已安装。</p>
-<ul>
-<li><p><strong>运行单元测试 (Unit Tests)</strong>：执行 <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">scripts/run_gate.py</span> <span class="pre">unit</span></code>；该门禁负责覆盖率参数和 <code class="docutils literal notranslate"><span class="pre">build/coverage/</span></code> 输出。</p>
+<p>按 <a class="reference internal" href="installation.html"><span class="doc">安装指南</span></a> 准备运行环境，再安装 <code class="docutils literal notranslate"><span class="pre">.[dev]</span></code>（文档变更另装 <code class="docutils literal notranslate"><span class="pre">.[docs]</span></code>）。
+预置的 <code class="docutils literal notranslate"><span class="pre">dpeva-dpa4</span></code> 仅是维护者使用的环境名，不要求贡献者具有同名环境。</p>
 <ul class="simple">
-<li><p><strong>规范</strong>:</p>
+<li><p><strong>运行单元测试 (Unit Tests)</strong>：执行 <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">scripts/run_gate.py</span> <span class="pre">unit</span></code>；覆盖率参数与阈值以 <code class="docutils literal notranslate"><span class="pre">scripts/gates.toml</span></code> 为准。</p>
 <ul>
-<li><p><strong>Mock 外部依赖</strong>: 所有对 <code class="docutils literal notranslate"><span class="pre">dp</span></code>, <code class="docutils literal notranslate"><span class="pre">dpdata</span></code>, <code class="docutils literal notranslate"><span class="pre">slurm</span></code> 的调用必须被 Mock，严禁在单元测试中产生实际的文件 I/O 或进程提交。</p></li>
-<li><p><strong>日志验证</strong>: 涉及日志输出的逻辑，需验证 <code class="docutils literal notranslate"><span class="pre">setup_workflow_logger</span></code> 是否被正确调用。</p></li>
-<li><p><strong>异常覆盖</strong>: 必须覆盖所有 <code class="docutils literal notranslate"><span class="pre">try-except</span></code> 分支，确保异常被正确捕获和记录。</p></li>
-</ul>
-</li>
-<li><p><strong>覆盖范围</strong>: 核心算法 (UQCalculator, UQFilter, DIRECTSampler) 的逻辑验证。</p></li>
-<li><p><strong>测试策略</strong>:</p>
-<ul>
-<li><p><strong>Golden Value</strong>: 与 NumPy 手算结果比对，误差容忍度 &lt; 1e-5。</p></li>
-<li><p><strong>边界测试</strong>: 覆盖 NaN, Inf, 空数据, 单点数据等极端场景。</p></li>
-<li><p><strong>覆盖率要求</strong>: 核心模块行覆盖率需达到 100%。</p></li>
-</ul>
-</li>
+<li><p>验证公共行为、数值结果和错误边界；只有调用顺序本身是契约时才断言内部调用次数。</p></li>
+<li><p>文件和路径测试使用 <code class="docutils literal notranslate"><span class="pre">tmp_path</span></code>；允许快速、确定性的真实文件 I/O。Mock 昂贵的训练、集群提交或外部服务，不用全量 Mock 替代路径、产物和序列化验证。</p></li>
+<li><p>日志检查关注用户可观察的成功、失败及诊断信息；不要求每个测试锁定 logger 初始化细节。</p></li>
+<li><p>数值测试使用有依据的期望值、容差及确定性输入，覆盖影响行为的空数据、非有限值和小样本边界。</p></li>
 </ul>
 </li>
 <li><p><strong>运行集成测试 (Integration Tests)</strong>：<code class="docutils literal notranslate"><span class="pre">integration</span></code> profile 是日常集成测试的唯一命令入口，
@@ -1507,6 +1494,13 @@ gate。DPA4C 即使执行成功仍保持 experimental，不产生 promotion。
 <li><p><strong>文档部署门禁</strong>：main、tag 和手动触发统一先在只读 job 中运行共享 <code class="docutils literal notranslate"><span class="pre">release</span></code> profile；
 只有 prerequisite 成功后的 deploy job 才取得 <code class="docutils literal notranslate"><span class="pre">contents:</span> <span class="pre">write</span></code>。发布工作流不维护第二份
 gate 命令或独立审批层。</p></li>
+</ul>
+<p>临时 smoke、修复探针和一次性验收脚本在开发期间使用即可。收尾时把独有行为迁入
+相应 unit/integration/contract 测试，把用户操作迁入 <code class="docutils literal notranslate"><span class="pre">examples/recipes/</span></code>（使用相对路径），
+确认承接和活跃引用后移除重复入口。跨进程、真实上游和集群契约仍归相应测试层；
+冻结科学证据保留其原始适用范围，不因脚本清理而宣称获得新的资格。
+用户教程直接引用实际 recipe，避免在 Markdown 内维护第二套完整 JSON。</p>
+<ul>
 <li><p><strong>运行兼容性测试 (Compatibility Test)</strong>:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span><span class="nb">test</span>
 python<span class="w"> </span>run_compat_test.py

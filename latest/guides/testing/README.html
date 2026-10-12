@@ -45,7 +45,7 @@
     <script>DOCUMENTATION_OPTIONS.pagename = 'guides/testing/README';</script>
     <link rel="index" title="索引" href="../../genindex.html" />
     <link rel="search" title="搜索" href="../../search.html" />
-    <link rel="next" title="DP-EVA 集成测试最小配置模板（Slurm）" href="integration-config-templates.html" />
+    <link rel="next" title="DP-EVA 集成测试设计与交付报告（Slurm + Multi DataPool）" href="integration-slurm.html" />
     <link rel="prev" title="SAI 服务器 DeepMD-kit 安装配置指南" href="../developer/deepmd-kit-sai-build.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="zh-CN"/>
@@ -154,7 +154,6 @@
 <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../installation.html">安装与环境准备（Installation）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quickstart（最短路径跑通）</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../smoke-demo.html">Smoke Demo（仓库自带夹具最小闭环）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../sai-quickstart.html">SAI 快速上手（Slurm 用户）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../cli.html">CLI 使用指南</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../configuration.html">配置编写指南（Configuration）</a></li>
@@ -211,7 +210,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../developer/config-docs-maintenance.html">变量说明文档维护指南</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../developer/deepmd-kit-sai-build.html">SAI 服务器 DeepMD-kit 安装配置指南</a></li>
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">Testing（测试指南）</a></li>
-<li class="toctree-l1"><a class="reference internal" href="integration-config-templates.html">DP-EVA 集成测试最小配置模板（Slurm）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="integration-slurm.html">DP-EVA 集成测试设计与交付报告（Slurm + Multi DataPool）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="multi-datapool-artifacts.html">test-for-multiple-datapool 生产目录输入输出分析</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../policy/contributing.html">文档贡献指南（Contributing）</a></li>
@@ -373,13 +371,16 @@ document.write(`
 <ul class="simple">
 <li><p>Status: active</p></li>
 <li><p>Audience: Developers / QA</p></li>
-<li><p>Last-Updated: 2026-06-10</p></li>
+<li><p>Last-Updated: 2026-10-12</p></li>
 </ul>
-<p>本目录用于存放测试相关文档，包括集成测试方案、Slurm 编排约定、验收标准与测试资产说明。</p>
+<p>本目录记录开发验证与集成环境约定。首次使用项目时请从
+<a class="reference internal" href="../quickstart.html"><span class="doc">Quickstart</span></a> 和 <code class="docutils literal notranslate"><span class="pre">examples/recipes/quickstart/</span></code> 开始；本目录中的
+Slurm 测试配置属于自动化测试，不作为另一套用户示例维护。</p>
 <p>推荐入口：</p>
 <ul class="simple">
-<li><p>Slurm 集成测试设计与交付报告（主页）：./integration-slurm.md</p></li>
-<li><p>Slurm 集成测试执行计划：/docs/plans/integration-slurm-plan.md</p></li>
+<li><p>日常贡献检查与测试分层：<a class="reference internal" href="../developer-guide.html"><span class="doc">开发手册</span></a></p></li>
+<li><p>Slurm 集成测试设计与环境变量：<a class="reference internal" href="integration-slurm.html"><span class="doc">integration-slurm.md</span></a></p></li>
+<li><p>输入数据和产物结构：<a class="reference internal" href="multi-datapool-artifacts.html"><span class="doc">multi-datapool-artifacts.md</span></a></p></li>
 </ul>
 </section>
 
@@ -404,11 +405,11 @@ document.write(`
       </div>
     </a>
     <a class="right-next"
-       href="integration-config-templates.html"
+       href="integration-slurm.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">下一页</p>
-        <p class="prev-next-title">DP-EVA 集成测试最小配置模板（Slurm）</p>
+        <p class="prev-next-title">DP-EVA 集成测试设计与交付报告（Slurm + Multi DataPool）</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>

@@ -46,7 +46,7 @@
     <link rel="index" title="索引" href="../genindex.html" />
     <link rel="search" title="搜索" href="../search.html" />
     <link rel="next" title="CLI 使用指南" href="cli.html" />
-    <link rel="prev" title="Smoke Demo（仓库自带夹具最小闭环）" href="smoke-demo.html" />
+    <link rel="prev" title="Quickstart（最短路径跑通）" href="quickstart.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="zh-CN"/>
   </head>
@@ -154,7 +154,6 @@
 <ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="installation.html">安装与环境准备（Installation）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart（最短路径跑通）</a></li>
-<li class="toctree-l1"><a class="reference internal" href="smoke-demo.html">Smoke Demo（仓库自带夹具最小闭环）</a></li>
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">SAI 快速上手（Slurm 用户）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cli.html">CLI 使用指南</a></li>
 <li class="toctree-l1"><a class="reference internal" href="configuration.html">配置编写指南（Configuration）</a></li>
@@ -211,7 +210,6 @@
 <li class="toctree-l1"><a class="reference internal" href="developer/config-docs-maintenance.html">变量说明文档维护指南</a></li>
 <li class="toctree-l1"><a class="reference internal" href="developer/deepmd-kit-sai-build.html">SAI 服务器 DeepMD-kit 安装配置指南</a></li>
 <li class="toctree-l1"><a class="reference internal" href="testing/README.html">Testing（测试指南）</a></li>
-<li class="toctree-l1"><a class="reference internal" href="testing/integration-config-templates.html">DP-EVA 集成测试最小配置模板（Slurm）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="testing/integration-slurm.html">DP-EVA 集成测试设计与交付报告（Slurm + Multi DataPool）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="testing/multi-datapool-artifacts.html">test-for-multiple-datapool 生产目录输入输出分析</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../policy/contributing.html">文档贡献指南（Contributing）</a></li>
@@ -391,15 +389,15 @@ document.write(`
 <li><p>Status: active</p></li>
 <li><p>Audience: Users / Developers / Platform Maintainers</p></li>
 <li><p>Applies-To: <code class="docutils literal notranslate"><span class="pre">submission.backend=&quot;slurm&quot;</span></code> 的 SAI 运行环境</p></li>
-<li><p>Last-Updated: 2026-10-11</p></li>
+<li><p>Last-Updated: 2026-10-12</p></li>
 </ul>
 <section id="id1">
 <h2>1. 目的与范围<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
 <p>本页把「在 SAI 上第一次把 DP-EVA 跑起来」需要的最少信息集中到一处，并逐条给出
 权威出处，避免重复维护字段定义。字段语义请查阅
-<a class="reference external" href="https://github.com/QuantumMisaka/dpeva/blob/main/docs/reference/validation.md">validation.md</a>
+<a class="reference internal" href="../reference/validation.html"><span class="doc">validation.md</span></a>
 与 Sphinx API Reference；Slurm 行为与排障细节的单一权威来源是
-<a class="reference external" href="https://github.com/QuantumMisaka/dpeva/blob/main/docs/guides/slurm.md">slurm.md</a>。</p>
+<a class="reference internal" href="slurm.html"><span class="doc">slurm.md</span></a>。</p>
 </section>
 <section id="id2">
 <h2>2. 环境<a class="headerlink" href="#id2" title="Link to this heading">#</a></h2>
@@ -412,11 +410,11 @@ document.write(`
 </thead>
 <tbody>
 <tr class="row-even"><td><p>Conda 环境</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">dpeva-dpa4</span></code></p></td>
-<td><p><a class="reference external" href="https://github.com/QuantumMisaka/dpeva/blob/main/docs/guides/developer/deepmd-kit-sai-build.md">deepmd-kit-sai-build.md</a></p></td>
+<td><p>预置 <code class="docutils literal notranslate"><span class="pre">dpeva-dpa4</span></code></p></td>
+<td><p><a class="reference internal" href="developer/deepmd-kit-sai-build.html"><span class="doc">SAI 构建记录</span></a></p></td>
 </tr>
 <tr class="row-odd"><td><p>环境加载脚本</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">source</span> <span class="pre">scripts/env/dpeva-dpa4.env</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">source</span> <span class="pre">&quot;${DPEVA_REPO:?}/scripts/env/dpeva-dpa4.env&quot;</span></code></p></td>
 <td><p>仓库内 <code class="docutils literal notranslate"><span class="pre">scripts/env/dpeva-dpa4.env</span></code></p></td>
 </tr>
 <tr class="row-even"><td><p>DeepMD-kit</p></td>
@@ -426,23 +424,25 @@ document.write(`
 </tbody>
 </table>
 </div>
-<p>从源码构建 DeepMD-kit（而不是使用 PyPI/Conda 预构建包）的完整流程、CUDA/PyTorch
-后端选择与验证方法，见
-<a class="reference external" href="https://github.com/QuantumMisaka/dpeva/blob/main/docs/guides/developer/deepmd-kit-sai-build.md">deepmd-kit-sai-build.md</a>；
-本页不复制其步骤。</p>
+<p><a class="reference internal" href="developer/deepmd-kit-sai-build.html"><span class="doc">SAI 构建记录</span></a> 以已有 <code class="docutils literal notranslate"><span class="pre">dpeva-dpa4</span></code> 环境和未入库的
+<code class="docutils literal notranslate"><span class="pre">test/deepmd-kit</span></code> 源码检出为前提，说明的是该环境的升级与验证。新账号从零建环境
+请先阅读 <a class="reference internal" href="installation.html"><span class="doc">安装指南</span></a>，再向集群维护者确认 GPU、模块和队列配置。</p>
 </section>
 <section id="id3">
 <h2>3. 安装与自检<a class="headerlink" href="#id3" title="Link to this heading">#</a></h2>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/QuantumMisaka/dpeva.git
 <span class="nb">cd</span><span class="w"> </span>dpeva
-pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.
+<span class="nb">export</span><span class="w"> </span><span class="nv">DPEVA_REPO</span><span class="o">=</span><span class="s2">"</span><span class="k">$(</span><span class="nb">pwd</span><span class="w"> </span>-P<span class="k">)</span><span class="s2">"</span>
+<span class="nb">source</span><span class="w"> </span><span class="s2">"</span><span class="si">${</span><span class="nv">DPEVA_REPO</span><span class="p">:?</span><span class="si">}</span><span class="s2">/scripts/env/dpeva-dpa4.env"</span>
+python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>--no-deps<span class="w"> </span>-e<span class="w"> </span>.
 dpeva<span class="w"> </span>doctor
+dp<span class="w"> </span>--version
 </pre></div>
 </div>
-<p>安装方式与依赖边界（默认 DeepMD 运行时包络、<code class="docutils literal notranslate"><span class="pre">.[deepmd]</span></code> extra、<code class="docutils literal notranslate"><span class="pre">--no-deps</span></code> 的含义）
-见 <a class="reference external" href="https://github.com/QuantumMisaka/dpeva/blob/main/docs/guides/installation.md">installation.md</a>。
+<p>这里的 <code class="docutils literal notranslate"><span class="pre">--no-deps</span></code> 只适用于已由平台完整预置依赖的环境。安装方式与依赖边界见
+<a class="reference internal" href="installation.html"><span class="doc">安装指南</span></a>。
 <code class="docutils literal notranslate"><span class="pre">dpeva</span> <span class="pre">doctor</span></code> 会报告 DeepMD 运行时包络、
-<code class="docutils literal notranslate"><span class="pre">dp</span></code> 子命令可用性、<code class="docutils literal notranslate"><span class="pre">dpdata</span></code>/<code class="docutils literal notranslate"><span class="pre">torch</span></code>/CUDA 可见性等；<strong>先让它全绿再提交作业</strong>。</p>
+<code class="docutils literal notranslate"><span class="pre">dp</span></code> 子命令可用性、<code class="docutils literal notranslate"><span class="pre">dpdata</span></code>/<code class="docutils literal notranslate"><span class="pre">torch</span></code>/CUDA 可见性等；提交前检查本次工作流所需项。</p>
 </section>
 <section id="id4">
 <h2>4. 提交配置要点<a class="headerlink" href="#id4" title="Link to this heading">#</a></h2>
@@ -452,7 +452,7 @@ dpeva<span class="w"> </span>doctor
 <span class="w">  </span><span class="nt">"submission"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="nt">"backend"</span><span class="p">:</span><span class="w"> </span><span class="s2">"slurm"</span><span class="p">,</span>
 <span class="w">    </span><span class="nt">"env_setup"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-<span class="w">      </span><span class="s2">"source scripts/env/dpeva-dpa4.env"</span><span class="p">,</span>
+<span class="w">      </span><span class="s2">"source \"${DPEVA_REPO:?}/scripts/env/dpeva-dpa4.env\""</span><span class="p">,</span>
 <span class="w">      </span><span class="s2">"export DP_INTERFACE_PREC=high"</span>
 <span class="w">    </span><span class="p">],</span>
 <span class="w">    </span><span class="nt">"slurm_config"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
@@ -469,20 +469,23 @@ dpeva<span class="w"> </span>doctor
 </div>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">submission.env_setup</span></code>：作业内的环境加载命令。Slurm 作业是非交互 shell，
-<strong>不要依赖登录时已 source 的环境</strong>。</p></li>
+不能依赖提交 shell 的当前目录或已 source 的环境。提交 <code class="docutils literal notranslate"><span class="pre">dpeva</span></code> 前在 shell 中
+<code class="docutils literal notranslate"><span class="pre">export</span> <span class="pre">DPEVA_REPO=&quot;$(pwd</span> <span class="pre">-P)&quot;</span></code>，确保这是源码仓库的真实绝对路径；默认 <code class="docutils literal notranslate"><span class="pre">sbatch</span></code>
+会将已导出的变量传给作业。若集群使用 <code class="docutils literal notranslate"><span class="pre">--export=NONE</span></code> 或过滤提交环境，需在作业
+环境中显式提供相同的绝对路径。<code class="docutils literal notranslate"><span class="pre">${DPEVA_REPO:?}</span></code> 在变量缺失时立即失败，避免
+作业误从 <code class="docutils literal notranslate"><span class="pre">work/0</span></code> 等任务目录寻找脚本。</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">partition</span></code> / <code class="docutils literal notranslate"><span class="pre">qos</span></code> / <code class="docutils literal notranslate"><span class="pre">account</span></code>：按集群策略补齐，字段清单见
-<a class="reference external" href="https://github.com/QuantumMisaka/dpeva/blob/main/docs/reference/validation.md">validation.md</a>。</p></li>
+<a class="reference internal" href="../reference/validation.html"><span class="doc">validation.md</span></a>。</p></li>
 <li><p>端到端可复制的示例：<code class="docutils literal notranslate"><span class="pre">examples/recipes/labeling/config_sai_abacus_slurm.json</span></code>
 （ABACUS 标注，含 class-aware 的 <code class="docutils literal notranslate"><span class="pre">labeling_task_classes</span></code>）与 <code class="docutils literal notranslate"><span class="pre">examples/recipes/</span></code>
 下的其它 workflow 模板。</p></li>
-<li><p>先用仓库自带夹具跑通最小闭环（Local backend 也可）再上集群：
-<a class="reference external" href="https://github.com/QuantumMisaka/dpeva/blob/main/docs/guides/smoke-demo.md">smoke-demo.md</a>。</p></li>
+<li><p>首次使用可按 <a class="reference internal" href="quickstart.html"><span class="doc">Quickstart</span></a> 用仓库自带夹具跑 Local 链路。</p></li>
 </ul>
 </section>
 <section id="id5">
 <h2>5. 已知坑（逐条给出处）<a class="headerlink" href="#id5" title="Link to this heading">#</a></h2>
 <p>以下每一条都来自
-<a class="reference external" href="https://github.com/QuantumMisaka/dpeva/blob/main/docs/guides/slurm.md">slurm.md</a>
+<a class="reference internal" href="slurm.html"><span class="doc">slurm.md</span></a>
 的实测记录，这里只做索引：</p>
 <ol class="arabic simple">
 <li><p><strong>QOSMinGRES 拒绝 1GPU 请求</strong>：<code class="docutils literal notranslate"><span class="pre">flood-gpu</span></code> / <code class="docutils literal notranslate"><span class="pre">rush-gpu</span></code> 上实测 1 GPU 申请会被
@@ -495,31 +498,30 @@ dpeva<span class="w"> </span>doctor
 集群对 array 总数有限制时应调整 QOS、拆分数据或降低批量规模。见 slurm.md §3.3。</p></li>
 <li><p><strong>长作业与大分区</strong>：单卡排队过久时可用 <code class="docutils literal notranslate"><span class="pre">8V100V0</span></code>，该分区通常要求每节点 GPU 数量
 按 4 的倍数申请（可用 <code class="docutils literal notranslate"><span class="pre">--gpus-per-node=4</span></code> 跑单进程验证）。见
-<a class="reference external" href="https://github.com/QuantumMisaka/dpeva/blob/main/docs/guides/developer/deepmd-kit-sai-build.md">deepmd-kit-sai-build.md</a> §9.3 与 GPU 验证小节。</p></li>
+<a class="reference internal" href="developer/deepmd-kit-sai-build.html"><span class="doc">deepmd-kit-sai-build.md</span></a> §9.3 与 GPU 验证小节。</p></li>
 <li><p><strong>登录节点没有 GPU</strong>：登录节点 <code class="docutils literal notranslate"><span class="pre">nvidia-smi</span></code> 失败属正常现象，GPU 可用性结论必须
 来自 Slurm 分配的计算节点。见
-<a class="reference external" href="https://github.com/QuantumMisaka/dpeva/blob/main/docs/guides/developer/deepmd-kit-sai-build.md">deepmd-kit-sai-build.md</a> §9.4。</p></li>
+<a class="reference internal" href="developer/deepmd-kit-sai-build.html"><span class="doc">deepmd-kit-sai-build.md</span></a> §9.4。</p></li>
 </ol>
 </section>
 <section id="id6">
 <h2>6. 完成标记与监控<a class="headerlink" href="#id6" title="Link to this heading">#</a></h2>
 <p>DP-EVA 以 <code class="docutils literal notranslate"><span class="pre">DPEVA_TAG:</span> <span class="pre">WORKFLOW_FINISHED</span></code> 作为应用层完成锚点；部分失败时不会输出该
 标记，且 CLI 返回非零退出码。监控命令与日志命名见
-<a class="reference external" href="https://github.com/QuantumMisaka/dpeva/blob/main/docs/guides/slurm.md">slurm.md</a> §4–§5。</p>
+<a class="reference internal" href="slurm.html"><span class="doc">slurm.md</span></a> §4–§5。</p>
 </section>
 <section id="id7">
 <h2>7. 相关文档<a class="headerlink" href="#id7" title="Link to this heading">#</a></h2>
 <ul class="simple">
-<li><p>Slurm 使用与排障：<a class="reference external" href="https://github.com/QuantumMisaka/dpeva/blob/main/docs/guides/slurm.md">slurm.md</a></p></li>
-<li><p>最短路径与字段说明：<a class="reference external" href="https://github.com/QuantumMisaka/dpeva/blob/main/docs/guides/quickstart.md">quickstart.md</a>、<a class="reference external" href="https://github.com/QuantumMisaka/dpeva/blob/main/docs/guides/configuration.md">configuration.md</a></p></li>
-<li><p>自带夹具冒烟：<a class="reference external" href="https://github.com/QuantumMisaka/dpeva/blob/main/docs/guides/smoke-demo.md">smoke-demo.md</a></p></li>
-<li><p>排障总入口：<a class="reference external" href="https://github.com/QuantumMisaka/dpeva/blob/main/docs/guides/troubleshooting.md">troubleshooting.md</a></p></li>
+<li><p>Slurm 使用与排障：<a class="reference internal" href="slurm.html"><span class="doc">slurm.md</span></a></p></li>
+<li><p>最短路径与字段说明：<a class="reference internal" href="quickstart.html"><span class="doc">quickstart.md</span></a>、<a class="reference internal" href="configuration.html"><span class="doc">configuration.md</span></a></p></li>
+<li><p>排障总入口：<a class="reference internal" href="troubleshooting.html"><span class="doc">troubleshooting.md</span></a></p></li>
 </ul>
 </section>
 <section id="id8">
 <h2>8. 变更记录<a class="headerlink" href="#id8" title="Link to this heading">#</a></h2>
 <ul class="simple">
-<li><p>2026-10-11：新增 SAI 用户快速上手页，汇总既有出处并交叉链接 slurm.md / smoke-demo.md。</p></li>
+<li><p>2026-10-12：作业环境脚本改用仓库绝对路径，区分预置环境与从零安装。</p></li>
 </ul>
 </section>
 </section>
@@ -536,12 +538,12 @@ dpeva<span class="w"> </span>doctor
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="smoke-demo.html"
+       href="quickstart.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">上一页</p>
-        <p class="prev-next-title">Smoke Demo（仓库自带夹具最小闭环）</p>
+        <p class="prev-next-title">Quickstart（最短路径跑通）</p>
       </div>
     </a>
     <a class="right-next"
