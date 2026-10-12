@@ -1,0 +1,168 @@
+---
+title: Document
+status: active
+audience: Developers
+last-updated: 2026-09-06
+owner: Workflow Owner
+---
+
+# DP-EVA 集成测试设计与交付报告（Slurm + Multi DataPool）
+
+- Status: active
+- Audience: Developers / Infra
+- Last-Updated: 2026-09-06
+
+本报告给出基于真实生产目录 `/test/test-for-multiple-datapool` (File missing) 反推的集成测试设计，并交付可执行的 Slurm 编排用例与输入裁剪方案。
+
+## 1. 交付物索引
+
+- 开发计划文档：/plans/integration-slurm-plan.md
+- 生产目录 I/O 分析：./multi-datapool-artifacts.md
+- Workflow 最小配置模板说明：./integration-config-templates.md
+- Slurm 集成测试（代码）：
+  - 用例：[test_slurm_multidatapool_e2e.py](https://github.com/QuantumMisaka/dpeva/blob/main/tests/integration/test_slurm_multidatapool_e2e.py)
+  - 编排器：[orchestrator.py](https://github.com/QuantumMisaka/dpeva/blob/main/tests/integration/slurm_multidatapool/orchestrator.py)
+  - Slurm 工具：[slurm_utils.py](https://github.com/QuantumMisaka/dpeva/blob/main/tests/integration/slurm_multidatapool/slurm_utils.py)
+  - 输入裁剪：[data_minimizer.py](https://github.com/QuantumMisaka/dpeva/blob/main/tests/integration/slurm_multidatapool/data_minimizer.py)
+- 最小配置模板（文件）：[tests/integration/slurm_multidatapool/configs](https://github.com/QuantumMisaka/dpeva/tree/main/tests/integration/slurm_multidatapool/configs)
+
+## 2. 相关方
+
+- 开发者：维护 `tests/integration` 用例与编排逻辑
+- 平台维护：保障 Slurm 与 DeepMD 环境可用
+- 使用者：参考本报告在集群上跑通链路并定位失败原因
+
+## 3. 关键编排原则
+
+### 3.1 Slurm 作业链式触发
+
+DP-EVA 的 Train/Infer/Feature/Collect Worker 在成功结束时输出标准标记：
+
+- `DPEVA_TAG: WORKFLOW_FINISHED`（定义于 [constants.py](https://github.com/QuantumMisaka/dpeva/blob/main/src/dpeva/constants.py)）
+
+集成测试编排基于“监控日志出现该标记”推进下一步，从而：
+
+- 避免依赖 `squeue` 的不稳定状态判断（排队/重排/延迟写日志等）
+- 不需要 DP-EVA 内置实现 Slurm blocking wait（多数 Workflow 只负责提交）
+
+### 3.2 CollectionWorkflow 完成标记补齐
+
+Collect 阶段也必须具备统一完成锚点。当前已在 [collect.py](https://github.com/QuantumMisaka/dpeva/blob/main/src/dpeva/workflows/collect.py) 的本地执行路径末尾输出完成标记，使得 Slurm 自调用 worker 的 `collect_slurm.out` 可被稳定监控。
+
+## 4. 输入裁剪策略（降本）
+
+测试数据来自生产目录，但运行时会裁剪到最小规模（在 pytest 的 `tmp_path` 内生成），以显著降低 Feature/Infer/Collect 的计算与 IO。
+
+裁剪规则（当前 smoke 用例）：
+
+- 候选池（Multi Pool）保留 1 个 pool + 1 个 system：
+  - `other_dpdata_all/mptrj-FeCOH/C0Fe4H0O8`
+  - 截断为前 20 帧（原始 92 帧）
+- 训练集（Single Pool）保留 1 个 system：
+  - `sampled_dpdata/122`
+  - 原始已是 1 帧，不再额外裁剪
+- 训练 input.json：
+  - 基于生产 input.json 生成最小训练 input（将 `numb_steps` 缩至 10，`disp_freq` 设为 1）
+
+实现位置：[data_minimizer.py](https://github.com/QuantumMisaka/dpeva/blob/main/tests/integration/slurm_multidatapool/data_minimizer.py)
+
+## 5. 集成测试用例设计
+
+### 5.1 用例：Multi DataPool 全链路 Smoke（Slurm）
+
+文件：[test_slurm_multidatapool_e2e.py](https://github.com/QuantumMisaka/dpeva/blob/main/tests/integration/test_slurm_multidatapool_e2e.py)
+
+链路：
+
+1. Feature（候选池）→ `desc_pool/<pool>/<system>.npy`
+2. Feature（训练集）→ `desc_train/<system>.npy`
+3. Train（3 模型）→ `0..2/model.ckpt.pt` + `train.out`（含完成标记）
+4. Infer（3 模型）→ `0..2/test_val/results.e.out` + `test_job.out`（含完成标记）
+5. Collect（CPU）→ `dpeva_uq_result/dataframe/final_df.csv` + `collect_slurm.out`（含完成标记）
+
+核心断言（最小验收输出）：
+
+- 描述符文件存在（Feature 输出）
+- `model.ckpt.pt` 存在（Train 输出）
+- `results.e.out` 存在（Infer 输出）
+- `final_df.csv` 存在（Collect 输出）
+- 每一步日志出现 `DPEVA_TAG: WORKFLOW_FINISHED`（串联锚点）
+
+### 5.2 后续扩展用例（模板已覆盖）
+
+- Collect Joint Sampling（训练集去重采样）：`collect_joint.json`
+- 2-DIRECT（结构级 + 原子级两步采样）：对齐 `sampler_type="2-direct"` 的参数组
+
+参考：
+
+- API Reference（Sphinx 生成的配置字段文档）
+
+## 6. 运行说明（面向 Slurm 环境）
+
+### 6.1 DeepMD 3.2 V100 qualification
+
+DeepMD 3.2 的 SAI qualification 使用
+`scripts/validation/prepare_deepmd_32_qualification.py`、
+`submit_deepmd_32_qualification.py` 与
+`collect_deepmd_32_qualification.py`。准备阶段必须传入显式 model root；脚本只记录
+regular/EMA checkpoint 路径和 SHA-256，不复制科研产物。计算节点显式 source
+`scripts/env/dpeva-dpa4.env`，先以 `launch.json` 重新校验 input/script/model 的
+SHA-256、精确 DeepMD 3.2.0、V100 GPU 和 Torch CUDA，再生成 `commands/*.json`、环境锁、GPU/Torch/CUDA 与
+artifact checks。默认作业约束是 `4V100`、单节点单任务单 GPU、`improper-gpu`、最长
+30 分钟，禁止额外 `mem`/`cpus` 资源声明。
+
+准备、提交、compute-node preflight、命令 runner 与 collector 共享同一个 scope 契约。
+显式 `dpa4` scope 只要求 regular/EMA 的 `pt test`、`pt eval-desc`、`pt embed` 六个 case
+及共同的四项环境记录；collector 还要求对应 preflight，并在任何必需 case 缺失、失败、
+跳过或多出 scope 外记录时 fail closed。`all` scope 额外要求经过 family inspection 的真实
+DPA4C periodic `pt-expt eval-desc`。没有 `scope` 字段的历史 input/job 仍按 `all` 解释，
+调用者不能在提交、runner 或 collection 时把它重新解释为 `dpa4`。
+
+`dpa4` scope 不要求 `DPEVA_DEEPMD_DPA4C_MODEL` 或 DPA4C head；`all` scope 两者仍必需。
+scope 只缩小一次新资格运行的执行集合，不改写既有能力矩阵或证据：当前仍只有三项 supported
+DPA4 能力和六条历史 SAI attestation，DPA4C 仍为 experimental。本节不授权或触发作业提交。
+
+qualification 作业使用独立的 `dpeva-dpa4-320` 环境（SAI 实测 DeepMD-kit 精确
+`3.2.0`）；普通 DP-EVA 开发与测试仍默认使用 `dpeva-dpa4`（当前为
+`3.2.0b1.dev67`）。脚本在 source 环境脚本前显式设置环境名，preflight 同时核对
+`CONDA_DEFAULT_ENV` 与 `CONDA_PREFIX` basename，避免 `--export=NONE` 下继承或误用环境。
+
+提交前应在干净登录 shell 中完成 rehash；提交脚本只执行一次 `sbatch`，并把结果写入
+唯一外部 job directory 和原子更新的 `latest.json`。`launch.json` 在 `sbatch` 前原子
+落盘，以避免 scheduler 等待期间的 race；`submission.json` 在获得 JobID 后再写入。
+`latest.json` 是引用，不是可供 collector 直接扫描的目录；collector 默认只做 inspect，
+`--finalize` 仅由作业 EXIT trap 使用，`--require-complete` 要求所有命令、环境和 artifact
+证据完成。提交本身不等于作业完成。
+
+本仓库不声明该 qualification 的科学数值结论；报告模板见
+`docs/reports/templates/deepmd-3.2-qualification.md`。
+
+运行前置：
+
+- `sbatch`、`squeue` 可用
+- DeepMD-kit `dp` 命令可用
+
+执行（默认跳过，需要显式开启）：
+
+- `DPEVA_RUN_SLURM_ITEST=1`
+- 可选设置：
+  - `DPEVA_TEST_ENV_SETUP`
+  - `DPEVA_TEST_GPU_PARTITION`、`DPEVA_TEST_GPU_QOS`
+  - `DPEVA_TEST_CPU_PARTITION`、`DPEVA_TEST_CPU_QOS`
+  - `DPEVA_SLURM_ITEST_TIMEOUT_S`
+
+## 7. 风险与边界
+
+- 该集成测试依赖 Slurm 与 DeepMD 运行环境，不建议默认纳入无 Slurm 的 CI。
+- `collect_slurm.out`、`train.out`、`test_job.out` 等日志文件名来自当前 Workflow/Manager 的 JobConfig 固化设置；若未来变更，应同步更新编排器的监控路径。
+
+## 8. 异常处理
+
+- 作业提交失败：优先检查 `submission.slurm_config` 的 `partition/qos/account` 与资源字段。
+- 日志无完成标记：直接查看日志末尾堆栈，确认是否为外部命令失败或输入数据问题。
+- 目录结构不一致：以实际产物为准，在测试用例断言与本文档中同步更新路径约定。
+
+## 9. 变更记录
+
+- 2026-03-11：更新配置字段入口与推理日志文件名，确保与当前实现一致。
+- 2026-02-18：形成测试专题主页，统一交付物索引、链式编排原则与运行说明。
