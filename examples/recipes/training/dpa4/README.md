@@ -10,9 +10,10 @@ This directory provides `input.json` templates for DPA4 training in the DP-EVA e
 
 ## Notes
 
-- These files are aligned with the DPA4 end-to-end test recipes under `test/dpa4-dpeva-test/e2e_dpa4_*_filter128/`.
+- These files were aligned during development with the DPA4 end-to-end test recipes in a local `test/` workspace (not tracked in this repository).
 - Each template uses `batch_size` set to `filter:128` and the same `OMAT24.hdf5` training statistics file used by the corresponding test recipe.
 - Copy the desired template into your working training directory, or reference it from a matching `config_train.json`.
+- The templates default `training_data.systems` to `./sampled_dpdata` and `validation_data.systems` to `./other_dpdata`; prepare these directories in your working copy (or adjust the paths).
 - The wrapper configs keep the same Slurm backend defaults used by the test recipes.
 
 ## DeepMD 3.2 compatibility boundary

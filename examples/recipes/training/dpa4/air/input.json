@@ -221,7 +221,7 @@
             "_comment": "that's all"
         },
         "validation_data": {
-            "systems": "/home/pku-jianghong/liuzhaoqing/work/ft2dp-dpeva/dpeva/test/dpa4-dpeva-test/other_dpdata",
+            "systems": "./other_dpdata",
             "batch_size": 1,
             "numb_batch": 1
         },
