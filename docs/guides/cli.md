@@ -181,6 +181,9 @@ dpeva infer config.json --run-id infer-20260904-a1b2c3
 
 ### 4.5 collect（UQ + Filtering + Sampling + Export）
 
+从 JSON 文件读取时，显式 `project` 与其他路径字段一样相对于配置文件目录解析；
+旧版依赖 shell 当前目录的 Collect 配置需调整，见 {doc}`配置与路径规则 </guides/configuration>`。
+
 `collect` 在 Slurm 后端采用自调用方式提交 worker（配置路径会被传入，避免“冻结配置”写盘）。
 
 - 输入（核心）

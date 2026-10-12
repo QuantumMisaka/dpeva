@@ -18,7 +18,8 @@ owner: Workflow Owner
 
 - 开发计划文档：/plans/integration-slurm-plan.md
 - 生产目录 I/O 分析：./multi-datapool-artifacts.md
-- Workflow 最小配置模板说明：./integration-config-templates.md
+- 本集成测试专用配置：`tests/integration/slurm_multidatapool/configs/`；新人 Local 示例见
+  {doc}`Quickstart </guides/quickstart>` 与 `examples/recipes/quickstart/`
 - Slurm 集成测试（代码）：
   - 用例：[test_slurm_multidatapool_e2e.py](https://github.com/QuantumMisaka/dpeva/blob/main/tests/integration/test_slurm_multidatapool_e2e.py)
   - 编排器：[orchestrator.py](https://github.com/QuantumMisaka/dpeva/blob/main/tests/integration/slurm_multidatapool/orchestrator.py)
@@ -62,7 +63,8 @@ Collect 阶段也必须具备统一完成锚点。当前已在 [collect.py](http
   - `sampled_dpdata/122`
   - 原始已是 1 帧，不再额外裁剪
 - 训练 input.json：
-  - 基于生产 input.json 生成最小训练 input（将 `numb_steps` 缩至 10，`disp_freq` 设为 1）
+  - 以 `examples/recipes/quickstart/input.json` 为唯一跟踪模板，在测试临时目录中
+    将 `numb_steps` 缩至 10、`disp_freq` 设为 1；不另存一份测试专用模板
 
 实现位置：[data_minimizer.py](https://github.com/QuantumMisaka/dpeva/blob/main/tests/integration/slurm_multidatapool/data_minimizer.py)
 
@@ -145,6 +147,7 @@ qualification 作业使用独立的 `dpeva-dpa4-320` 环境（SAI 实测 DeepMD-
 执行（默认跳过，需要显式开启）：
 
 - `DPEVA_RUN_SLURM_ITEST=1`
+- 使用相同真实 DeepMD 链路的 Local 集成测试另需 `DPEVA_RUN_LOCAL_ITEST=1`
 - 可选设置：
   - `DPEVA_TEST_ENV_SETUP`
   - `DPEVA_TEST_GPU_PARTITION`、`DPEVA_TEST_GPU_QOS`

@@ -3,6 +3,31 @@
 This directory contains configuration templates for the core workflows in DP-EVA.
 Executable example scripts are maintained in `examples/scripts/`.
 
+## Start here: local four-stage example
+
+`quickstart/` is a ready-to-run `feature → train → infer → collect` recipe. Its
+JSON paths are relative to the recipe files, so the commands can be run from
+any directory by supplying the corresponding absolute JSON paths. From the
+repository root:
+
+```bash
+dpeva feature examples/recipes/quickstart/feature.json
+dpeva train examples/recipes/quickstart/train.json
+dpeva infer examples/recipes/quickstart/infer.json
+dpeva collect examples/recipes/quickstart/collect.json
+```
+
+The example reads the small datasets and pretrained model already tracked in
+`tests/integration/data/`. Its 30-step DeepMD input is included as
+`quickstart/input.json`; no editing is needed. All generated files go under
+`quickstart/work/`, which Git ignores. A working DeepMD `dp` command with the
+PyTorch backend is required to execute the stages. This tiny dataset is for
+learning the workflow, not for measuring model quality.
+
+For the SAI feature embedding template, export `DPEVA_REPO` as the absolute
+repository root before submission; its job environment loads
+`scripts/env/dpeva-dpa4.env` independently of the task working directory.
+
 ## Compatibility notes
 
 Recipes should use the nested `submission` object. Existing Python callers may continue using

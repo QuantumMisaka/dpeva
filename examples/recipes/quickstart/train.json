@@ -1,0 +1,13 @@
+{
+  "work_dir": "work",
+  "input_json_path": "input.json",
+  "num_models": 3,
+  "training_mode": "init",
+  "seeds": [19090, 42, 10032],
+  "training_seeds": [19090, 42, 10032],
+  "model_head": "OC22",
+  "base_model_path": "../../../tests/integration/data/DPA-3.1-3M.pt",
+  "training_data_path": "../../../tests/integration/data/sampled_dpdata",
+  "omp_threads": 2,
+  "submission": {"backend": "local"}
+}

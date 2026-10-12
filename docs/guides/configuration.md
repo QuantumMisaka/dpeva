@@ -2,7 +2,7 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-09-20
+last-updated: 2026-10-12
 owner: Docs Owner
 ---
 
@@ -10,7 +10,7 @@ owner: Docs Owner
 
 - Status: active
 - Audience: Users / Developers
-- Last-Updated: 2026-09-06
+- Last-Updated: 2026-10-12
 
 ## 1. 目的与范围
 
@@ -39,7 +39,9 @@ owner: Docs Owner
 ### 3.1 规则
 
 - 配置文件中推荐写相对路径，便于迁移与复现。
-- CLI 会把相对路径按“配置文件所在目录”解析为绝对路径。
+- CLI 会把显式路径字段按“配置文件所在目录”解析为绝对路径，包括 Collect 的 `project`。
+- 例如 `configs/collect.json` 内的 `"project": "../work"` 指向与 `configs/` 同级的 `work/`，不受执行命令时的目录影响。
+- 迁移说明：v0.8.2 中显式 `project` 曾遗漏路径解析而依赖 shell 当前目录。升级后，若旧配置依赖该行为，请把 `project` 改为相对于配置文件的路径，或使用绝对路径。省略该字段的默认值、直接传入 Python 配置对象的行为不变。
 
 参考实现：`src/dpeva/utils/config.py` 的 `resolve_config_paths`。
 

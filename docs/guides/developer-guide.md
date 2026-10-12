@@ -2,7 +2,7 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-09-06
+last-updated: 2026-10-12
 owner: Docs Owner
 ---
 
@@ -10,7 +10,7 @@ owner: Docs Owner
 
 - Status: active
 - Audience: Developers
-- Last-Updated: 2026-09-06
+- Last-Updated: 2026-10-12
 - Related:
   - 配置字段字典：`API Reference`（由 `src/dpeva/config.py` 自动生成）
   - 校验规则补充：`docs/reference/validation.md`
@@ -153,7 +153,7 @@ DP-EVA (Deep Potential EVolution Accelerator, 深度势能演化加速器) 是�
 #### 1.6.5 AGENTS 与开发文档的治理边界
 *   `AGENTS.md` 只承担项目开发最小入口职责，用于帮助 AI 与人类开发者快速建立项目心智模型。
 *   若某项内容可以在本页完整说明，就不应继续保留在 `AGENTS.md` 中；`AGENTS.md` 不再充当第二份开发手册。
-*   `.trae/rules/project_rules.md` 负责 AI 行为规则，不应在 `AGENTS.md` 中重复。
+*   本地 AI 工作台不随仓库分发；贡献者共同遵循 `AGENTS.md` 与本手册，不能依赖个人工作台中的规则文件。
 *   `docs/reference/*` 负责字段字典与校验正文，不应在 `AGENTS.md` 或本页中重复复制。
 *   `docs/guides/*`、`docs/policy/*`、`docs/governance/*` 负责完整流程与治理细则，`AGENTS.md` 只保留跳转与最小摘要。
 
@@ -178,7 +178,7 @@ dpeva/
 │   ├── gates.toml          # 可执行门禁目录
 │   ├── run_gate.py         # 门禁分发器
 │   ├── audit.py            # 代码静态分析工具
-│   ├── check_docs.py       # 文档一致性检查
+│   ├── doc_check.py        # 文档元信息与链接检查
 │   └── release_helper.py   # 版本发布助手
 ├── tools/                  # [业务工具] DeepMD 数据处理与校验实用程序
 │   ├── count_deepmd_system_frames.py
@@ -518,27 +518,21 @@ Auto-UQ 用于根据数据分布自动确定筛选边界；具体的字段与约
 
 ### 5.1 代码规范
 *   **日志**: 禁止在 `src/dpeva` 库文件中调用 `logging.basicConfig()`。仅在 `runner` 脚本中配置全局日志。
-*   **路径**: 所有文件操作应使用绝对路径 (`os.path.abspath`)。
+*   **路径**: 示例与配置优先写相对路径；CLI 在加载时按配置文件目录解析，包括 Collect 的显式 `project`。底层使用解析后的路径，避免隐式依赖 shell 当前目录。
 *   **异常**: 显式捕获并记录异常，避免静默失败。
 *   **数据接口**: 使用 `dpeva.io.types.PredictionData` 传递预测结果，禁止传递裸字典。
 *   **变量命名**: 统一输入数据路径变量名为 `data_path` (Feature/Inference Workflow)。
 
 ### 5.2 验证测试
 
-在开发阶段，你可以通过`conda activate dpeva-dev` 加载所需环境，并在项目目录下运行 `pip install --upgrade .` 更新开发依赖，确保测试环境与开发环境保持一致。
+按 {doc}`安装指南 </guides/installation>` 准备运行环境，再安装 `.[dev]`（文档变更另装 `.[docs]`）。
+预置的 `dpeva-dpa4` 仅是维护者使用的环境名，不要求贡献者具有同名环境。
 
-用户自行开展单元测试时，需要自行配置好 Python 环境，确保 `dpeva` 命令在环境内并处于最新状态，且 `pytest` 已安装。
-
-*   **运行单元测试 (Unit Tests)**：执行 `python scripts/run_gate.py unit`；该门禁负责覆盖率参数和 `build/coverage/` 输出。
-    *   **规范**:
-        *   **Mock 外部依赖**: 所有对 `dp`, `dpdata`, `slurm` 的调用必须被 Mock，严禁在单元测试中产生实际的文件 I/O 或进程提交。
-        *   **日志验证**: 涉及日志输出的逻辑，需验证 `setup_workflow_logger` 是否被正确调用。
-        *   **异常覆盖**: 必须覆盖所有 `try-except` 分支，确保异常被正确捕获和记录。
-    *   **覆盖范围**: 核心算法 (UQCalculator, UQFilter, DIRECTSampler) 的逻辑验证。
-    *   **测试策略**: 
-        *   **Golden Value**: 与 NumPy 手算结果比对，误差容忍度 < 1e-5。
-        *   **边界测试**: 覆盖 NaN, Inf, 空数据, 单点数据等极端场景。
-        *   **覆盖率要求**: 核心模块行覆盖率需达到 100%。
+*   **运行单元测试 (Unit Tests)**：执行 `python scripts/run_gate.py unit`；覆盖率参数与阈值以 `scripts/gates.toml` 为准。
+    *   验证公共行为、数值结果和错误边界；只有调用顺序本身是契约时才断言内部调用次数。
+    *   文件和路径测试使用 `tmp_path`；允许快速、确定性的真实文件 I/O。Mock 昂贵的训练、集群提交或外部服务，不用全量 Mock 替代路径、产物和序列化验证。
+    *   日志检查关注用户可观察的成功、失败及诊断信息；不要求每个测试锁定 logger 初始化细节。
+    *   数值测试使用有依据的期望值、容差及确定性输入，覆盖影响行为的空数据、非有限值和小样本边界。
 
 *   **运行集成测试 (Integration Tests)**：`integration` profile 是日常集成测试的唯一命令入口，
     `python-quality` 托管工作流会自动运行该 profile。真实 Slurm/GPU 用例继续使用测试内具名的
@@ -555,6 +549,12 @@ Auto-UQ 用于根据数据分布自动确定筛选边界；具体的字段与约
 *   **文档部署门禁**：main、tag 和手动触发统一先在只读 job 中运行共享 `release` profile；
     只有 prerequisite 成功后的 deploy job 才取得 `contents: write`。发布工作流不维护第二份
     gate 命令或独立审批层。
+
+临时 smoke、修复探针和一次性验收脚本在开发期间使用即可。收尾时把独有行为迁入
+相应 unit/integration/contract 测试，把用户操作迁入 `examples/recipes/`（使用相对路径），
+确认承接和活跃引用后移除重复入口。跨进程、真实上游和集群契约仍归相应测试层；
+冻结科学证据保留其原始适用范围，不因脚本清理而宣称获得新的资格。
+用户教程直接引用实际 recipe，避免在 Markdown 内维护第二套完整 JSON。
 
 *   **运行兼容性测试 (Compatibility Test)**:
     ```bash

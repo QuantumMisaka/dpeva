@@ -1,0 +1,19 @@
+{
+  "project": "work",
+  "uq_select_scheme": "tangent_lo",
+  "testing_dir": "test_val",
+  "results_prefix": "results",
+  "desc_dir": "work/desc_pool",
+  "testdata_dir": "../../../tests/integration/data/other_dpdata_all",
+  "root_savedir": "work/dpeva_uq_result",
+  "num_models": 3,
+  "sampler_type": "direct",
+  "direct_n_clusters": 3,
+  "direct_k": 1,
+  "direct_thr_init": 0.1,
+  "fig_dpi": 150,
+  "uq_trust_mode": "auto",
+  "uq_trust_ratio": 0.5,
+  "uq_trust_width": 0.15,
+  "submission": {"backend": "local"}
+}

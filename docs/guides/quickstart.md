@@ -1,191 +1,68 @@
 ---
-title: Document
+title: Quickstart（自带示例跑通 Local 工作流）
 status: active
-audience: Developers
-last-updated: 2026-10-11
+audience: Users / Developers
+last-updated: 2026-10-12
 owner: Workflow Owner
 ---
 
 # Quickstart（最短路径跑通）
 
-- Status: active
-- Audience: Users / Developers
-- Applies-To: CLI 模式（推荐）
-- Last-Updated: 2026-06-10
+本页使用仓库自带的模型、数据与 `examples/recipes/quickstart/` 中的四份配置，
+依次运行 `feature → train → infer → collect`。示例只用于熟悉命令和产物；训练数据只有
+1 帧、候选数据只有 5 帧，不能据此判断模型精度或采样效果。正式运行时请换用自己的
+模型与数据，并阅读 {doc}`配置与路径说明 </guides/configuration>`。
 
-## 1. 目的与范围
+## 准备
 
-目标：用最短路径跑通一次 DP-EVA 的关键链路，并明确：
-
-- 配置文件写在哪里、关键字段是什么
-- 输出产物在哪里、怎样判断任务完成
-- 失败时去哪里看日志、如何快速定位问题
-
-范围：
-
-- 覆盖 CLI 子命令：`train / infer / feature / collect / label / analysis`
-- 给出 Local 与 Slurm 两种运行方式的最小示例
-
-## 2. 相关方
-
-- 使用者：准备数据、运行工作流、查看结果
-- 开发者：维护配置模型、CLI 行为、输出目录约定
-- 集群/平台维护：提供 DeepMD 环境与 Slurm 队列配置
-
-## 3. 前置条件
-
-### 3.1 基础环境
-
-- Python 环境可导入 `dpeva`（开发模式安装推荐）
-- DeepMD-kit `dp` 命令可用（至少覆盖 `dp train/test/eval-desc`）
-- 一个 DPA 基座模型与一份数据集：
-  - 公开资源入口（DPA-3.1-3M 模型、FT2DP-dataset-FeCHO-v1）见仓库根 `README.md` 的「模型与数据获取」；
-  - 只想先确认环境可用时，可直接使用仓库自带夹具，见
-    [smoke-demo.md](https://github.com/QuantumMisaka/dpeva/blob/main/docs/guides/smoke-demo.md)
-    （无需下载外部资源；外部模型可用 `DPEVA_DPA3_MODEL_PATH` / `DPEVA_DPA4_MODEL_PATH` 覆盖）。
-
-### 3.2 可选：Slurm 环境
-
-- `sbatch/squeue` 可用
-- `submission.backend="slurm"` 且可正常提交短作业
-
-## 4. 最小目录与配置约定
-
-推荐工作目录结构（示意）：
-
-```text
-work/
-├── configs/
-│   ├── feature.json
-│   ├── train.json
-│   ├── infer.json
-│   ├── collect.json
-│   └── analysis.json
-├── sampled_dpdata/                 # 训练集（含能量/力等标注）
-├── other_dpdata_all/               # 候选池（可无标注，多数据池结构）
-└── DPA-3.1-3M.pt                   # 基础模型（示例）
-```
-
-关键输出约定（常见）：
-
-- `work_dir/0..N-1/`：训练输出（模型与日志）
-- `work_dir/<i>/<task_name>/`：推理输出（`results.*.out` 与 `test_job.out`）
-- `savedir`：描述符输出目录（Feature）
-- `root_savedir`：采集/筛选输出（Collect）
-
-## 5. Quickstart：Local 一次跑通（建议先跑）
-
-本节假设你在 `work/` 目录下执行，且配置文件写在 `work/configs/`。
-
-参考最小配置模板：
-
-- `examples/recipes/`：../examples/recipes/
-- 配置字段字典：API Reference（Sphinx 生成的配置字段文档）
-
-### 5.1 Feature（生成描述符）
+克隆仓库后，按 {doc}`安装指南 </guides/installation>` 准备含 PyTorch 后端的 DeepMD-kit 环境。
+确认 `dpeva`、`dp` 都来自当前环境：
 
 ```bash
-dpeva feature configs/feature.json
+git clone https://github.com/QuantumMisaka/dpeva.git
+cd dpeva
+dpeva doctor
+dp --version
 ```
 
-验证输出：
+四份配置与训练输入位于 `examples/recipes/quickstart/`；它们引用仓库内
+`tests/integration/data/` 的小型夹具。配置中的文件路径相对**配置文件所在目录**解析，
+无需复制夹具、手改 `input.json` 或建立第二套工作目录。从仓库外执行时，把下方的
+`examples/recipes/quickstart/*.json` 换成对应配置文件的绝对路径即可。
 
-- `savedir/` 目录存在
-- `eval_desc.log` 或对应日志文件包含完成标记（见 7.1）
+## 依次运行
 
-### 5.2 Train（训练 N 个模型）
+在仓库根目录执行：
 
 ```bash
-dpeva train configs/train.json
+dpeva feature examples/recipes/quickstart/feature.json
+dpeva train   examples/recipes/quickstart/train.json
+dpeva infer   examples/recipes/quickstart/infer.json
+dpeva collect examples/recipes/quickstart/collect.json
 ```
 
-验证输出：
+Local backend 同步执行。先等当前命令成功返回，再运行下一条。训练包括 3 个短步数模型，
+仍可能耗时；可用 GPU 加速。需要在 Slurm 上执行时，参阅
+{doc}`SAI 快速上手 </guides/sai-quickstart>` 和 {doc}`Slurm 指南 </guides/slurm>`。
 
-- `0/..N-1/` 目录生成
-- `0/model.ckpt.pt`（或同等训练产物）存在
+## 查看产物
 
-### 5.3 Infer（候选池推理）
+所有输出位于 `examples/recipes/quickstart/work/`：
 
-```bash
-dpeva infer configs/infer.json
-```
+| 阶段 | 主要产物 |
+| --- | --- |
+| Feature | `desc_pool/amourC/C2.npy` |
+| Train | `0/`、`1/`、`2/` 下的模型与训练日志 |
+| Infer | `0..2/test_val/` 下的 `results.*.out` 和日志 |
+| Collect | `dpeva_uq_result/dataframe/` 下的 CSV、`dpdata/` 导出目录 |
 
-验证输出：
+成功的工作流会输出 `DPEVA_TAG: WORKFLOW_FINISHED`；具体日志位置见
+{doc}`产物约定 </guides/testing/multi-datapool-artifacts>`。此小夹具的 collect 阶段可能选出
+0 帧，仍会导出候选数据；这是输入规模所致，不是科学效果验证。若失败，先查看
+{doc}`排障指南 </guides/troubleshooting>`，尤其检查 `dp` 是否在 `PATH`、数据路径以及相邻阶段
+的模型数量和任务目录是否一致。重跑前应清理这次示例生成的旧产物，以免旧文件混入
+当前结果。
 
-- `0/<task_name>/results.e.out` 存在
-- `0/<task_name>/test_job.out` 存在
-
-### 5.4 Collect（UQ + Sampling + Export）
-
-```bash
-dpeva collect configs/collect.json
-```
-
-验证输出：
-
-- `<root_savedir>/dataframe/df_uq_desc_sampled-final.csv` 存在
-- `<root_savedir>/dpdata/` 下导出目录存在
-
-### 5.5 Label（DFT 标注）
-
-```bash
-dpeva label configs/label.json
-```
-
-验证输出：
-
-- `work_dir/outputs/cleaned/` 存在
-- 若开启 integration，`integration_summary.json` 存在
-
-### 5.6 Analysis（结果统计）
-
-```bash
-dpeva analysis configs/analysis.json
-```
-
-验证输出：
-
-- `output_dir/` 下生成统计/图表文件
-
-## 6. Quickstart：Slurm 一次跑通（链式编排）
-
-当 `submission.backend="slurm"` 时，多数工作流会提交作业并返回。
-
-建议用“完成标记 + 日志监控”的方式串联：
-
-- 训练日志：`<work_dir>/<i>/train.out`
-- 推理日志：`<work_dir>/<i>/<task_name>/test_job.out`
-- Feature 日志：`<savedir>/eval_desc.log`
-- Collect 日志：`collect_slurm.out`（以具体配置/脚本输出为准）
-
-集成测试实现参考：
-
-- `tests/integration/test_slurm_multidatapool_e2e.py`
-- `docs/guides/testing/integration-slurm.md`
-
-## 7. 异常处理与排查入口
-
-### 7.1 如何判断“任务完成”
-
-DP-EVA 以统一完成标记作为应用层完成锚点：
-
-```text
-DPEVA_TAG: WORKFLOW_FINISHED
-```
-
-建议外部编排系统通过监控日志出现该标记来推进后续任务。
-
-### 7.2 常见错误类型
-
-- `dp` 不可用 / 版本不匹配：检查 DeepMD 环境、`dp --version`
-- 数据目录结构不符合预期：检查 Multi DataPool 目录结构与 `type_map.raw/type.raw`
-- Slurm 提交失败：检查 partition/qos/gpu/cpu 资源字段与队列限制
-
-排障入口：
-
-- ./troubleshooting.md
-
-## 8. 变更记录
-
-- 2026-03-11：补齐 `label` 子命令 Quickstart 步骤，并同步推理日志文件名与配置入口。
-- 2026-02-18：补齐 Local/Slurm Quickstart 的最小链路与完成标记约定，统一链接入口。
+接下来可按 {doc}`配置参考 </reference/index>` 准备自己的工作目录；标注与分析等其它
+工作流的参数和示例见 {doc}`CLI 指南 </guides/cli>` 与仓库中的
+`examples/recipes/README.md`。

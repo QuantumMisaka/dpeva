@@ -1,15 +1,63 @@
 import hashlib
 import json
+import sys
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 import dpdata
 import pytest
 
+import dpeva.cli as cli
 from dpeva.config import LabelingConfig
 from dpeva.labeling.integration import DataIntegrationManager
 from dpeva.workflows.analysis import AnalysisWorkflow
 from dpeva.workflows.labeling import LabelingWorkflow
+
+
+class _FakeMultiSystems(list):
+    def append(self, system):  # noqa: D102 - mirrors the dpdata API used by LabelingWorkflow.
+        super().append(system)
+
+
+def test_label_prepare_cli_routes_dataset_to_manager(monkeypatch, tmp_path: Path) -> None:
+    data_dir = tmp_path / "sampled_dpdata"
+    data_dir.mkdir()
+    (data_dir / "type.raw").write_text("0\n", encoding="utf-8")
+    config_path = tmp_path / "label.json"
+    config_path.write_text(
+        json.dumps(
+            {
+                "work_dir": str(tmp_path / "label_work"),
+                "input_data_path": str(data_dir),
+                "pp_dir": str(tmp_path / "pp"),
+                "orb_dir": str(tmp_path / "orb"),
+                "submission": {"backend": "local"},
+                "dft_params": {"ecutwfc": 100},
+                "pp_map": {"H": "H.upf"},
+                "orb_map": {"H": "H.orb"},
+                "attempt_params": [],
+            }
+        ),
+        encoding="utf-8",
+    )
+    prepared_bundle = tmp_path / "label_work" / "inputs" / "N_000000"
+    prepared_bundle.mkdir(parents=True)
+    mock_manager = MagicMock()
+    mock_manager.prepare_tasks.return_value = [prepared_bundle]
+
+    monkeypatch.setattr(sys, "argv", ["dpeva", "--no-banner", "label", str(config_path), "--stage", "prepare"])
+    monkeypatch.setattr("dpeva.workflows.labeling.LabelingManager", lambda _config: mock_manager)
+    monkeypatch.setattr("dpeva.workflows.labeling.dpdata.MultiSystems", _FakeMultiSystems)
+    monkeypatch.setattr(
+        "dpeva.workflows.labeling.load_systems",
+        lambda *_args, **_kwargs: [SimpleNamespace()],
+    )
+
+    cli.main()
+
+    mock_manager.prepare_tasks.assert_called_once()
+    assert list(mock_manager.prepare_tasks.call_args.args[0]) == ["sampled_dpdata"]
 
 
 @patch("dpeva.workflows.analysis.DatasetAnalysisManager")

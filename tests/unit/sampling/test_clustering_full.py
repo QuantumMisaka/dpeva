@@ -1,10 +1,51 @@
 
 import numpy as np
 import logging
+import warnings
 from unittest.mock import MagicMock, patch
+import pytest
+from sklearn.exceptions import ConvergenceWarning
 from dpeva.sampling.clustering import BirchClustering
 
 class TestBirchClustering:
+
+    def test_empty_features_are_rejected(self):
+        with pytest.raises(ValueError, match="Input PCAfeatures cannot be empty"):
+            BirchClustering(n=2).transform(np.empty((0, 2)))
+
+    def test_target_is_capped_to_available_samples(self, caplog):
+        features = np.array([[0.0, 0.0], [1.0, 1.0]])
+        model = MagicMock()
+        model.subcluster_labels_ = [0, 1]
+        model.subcluster_centers_ = features
+        model.predict.return_value = np.array([0, 1])
+        with patch("dpeva.sampling.clustering.Birch") as mock_birch:
+            mock_birch.return_value.fit.return_value = model
+            with caplog.at_level(logging.WARNING):
+                result = BirchClustering(n=3).transform(features)
+
+        assert "Number of samples (2) is less than target clusters (3)" in caplog.text
+        assert mock_birch.call_args.kwargs["n_clusters"] == 2
+        np.testing.assert_array_equal(result["labels"], [0, 1])
+
+    def test_sklearn_convergence_warning_is_suppressed(self):
+        features = np.array([[0.0, 0.0], [1.0, 1.0]])
+        model = MagicMock()
+        model.subcluster_labels_ = [0, 1]
+        model.subcluster_centers_ = features
+        model.predict.return_value = np.array([0, 1])
+
+        def fit_with_warning(_features):
+            warnings.warn("forced warning", ConvergenceWarning, stacklevel=2)
+            return model
+
+        with patch("dpeva.sampling.clustering.Birch") as mock_birch:
+            mock_birch.return_value.fit.side_effect = fit_with_warning
+            with warnings.catch_warnings(record=True) as captured:
+                warnings.simplefilter("always")
+                BirchClustering(n=2).transform(features)
+
+        assert not any(issubclass(item.category, ConvergenceWarning) for item in captured)
     
     def test_fit_n_clusters_iteration(self):
         """Test that threshold decreases to reach n clusters."""

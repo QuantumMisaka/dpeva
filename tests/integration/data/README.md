@@ -1,7 +1,7 @@
 # Integration Data Fixtures
 
 This directory keeps small integration-test datasets in Git, together with the
-DPA-3.1-3M pretrained model used by the local smoke path.
+DPA-3.1-3M pretrained model used by the local quickstart example.
 
 `DPA-3.1-3M.pt` (47,176,032 bytes) is tracked in this repository since commit
 `da7babf`, so a plain clone is enough to run the fixtures. Larger DeePMD
@@ -14,7 +14,7 @@ or point tests to an external cache with environment variables:
 
 The dataset slices in this directory (`sampled_dpdata/122` with 1 labeled frame,
 `other_dpdata_all/amourC/C2` with 5 unlabeled frames) are also the inputs for the
-documented smoke closure; see `docs/guides/smoke-demo.md`. Their frame counts are
+[quickstart example](../../../examples/recipes/quickstart/README.md). Their frame counts are
 deliberately tiny and must not be used as a scientific benchmark.
 
 The real DeePMD LLPR/DPOSE validation is opt-in and GPU-node only:

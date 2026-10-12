@@ -35,7 +35,7 @@ def resolve_config_paths(config: Dict[str, Any], config_file_path: str, path_key
     # Default keys if not provided
     if path_keys is None:
         path_keys = [
-            "data_path", "model_path", "savedir", "work_dir", 
+            "data_path", "model_path", "savedir", "work_dir", "project",
             "input_json_path", "base_model_path", "training_data_path",
             "desc_dir", "testdata_dir", "training_desc_dir", "root_savedir",
             "output_basedir", "result_dir", "output_dir", "config_path",

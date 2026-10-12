@@ -28,42 +28,24 @@ DP-EVA is an active learning framework designed for efficient fine-tuning of DPA
 
 ### Installation
 
-For detailed installation instructions, please refer to the [Installation Guide](docs/guides/installation.md).
+下面是从零准备 **CPU + PyTorch** 环境的最短步骤；GPU 与集群环境请按
+[安装指南](docs/guides/installation.md)选择后端和环境模块。
 
 ```bash
 git clone https://github.com/QuantumMisaka/dpeva.git
 cd dpeva
-pip install -e .
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+python -m pip install -e '.[deepmd]'
+dpeva doctor
+dp --version
 ```
 
-默认安装包含有界的 DeepMD-kit 运行时依赖 `deepmd-kit>=3.1.2,<3.3`，以保留
-现有 3.1.2 运行环境的兼容边界。它不等同于新的科学能力验证；需要明确使用
-3.2 能力 lane 时，安装用户运行时 extra：
-
-```bash
-pip install -e '.[deepmd]'
-```
-
-该 extra 的依赖范围为 `deepmd-kit>=3.2,<3.3`；能力矩阵仍严格只记录已验证的
-3.2 证据，不会把 3.1 运行时重新标记为已验证能力。研究生产环境请在独立环境
-文件或锁文件中固定 `deepmd-kit==3.2.0`，并保留 `dp --version` 证据；范围不代表
-其中所有版本行为等价。
-
-如果平台已经预置并验证了完整运行环境，可跳过依赖解析，但调用方必须自行提供
-`pyproject.toml` 中的全部依赖（包括 DeepMD）：
-
-```bash
-python -m pip install --no-deps -e .
-```
-
-`--no-deps` 只表示安装器不补齐依赖，不是 DP-EVA 的无依赖默认安装；安装后请用
-`dpeva doctor` 检查当前环境。
-
-Optional trajectory exploration through `atst-tools` is installed separately:
-
-```bash
-pip install -e '.[explore]'
-```
+默认安装的 DeepMD-kit 包络为 `>=3.1.2,<3.3`，上面的 `deepmd` extra 则选择
+`>=3.2,<3.3`；具体版本与 PyTorch 后端需要为正式科研结果单独锁定。平台预置环境
+可采用 `--no-deps` 安装，前提是平台提供全部依赖。轨迹探索使用独立的 `explore`
+extra；各方式与验证步骤见[安装指南](docs/guides/installation.md)。
 
 ### 模型与数据获取
 
@@ -74,9 +56,9 @@ DP-EVA 需要一个 DPA 预训练模型作为微调基座，以及用于主动�
 | DPA-3.1-3M 预训练模型 | [AIS Square 模型库](https://www.aissquare.com/models/343)（`aissquare.com/models`，条目 id=343） | 通用 DPA-3.x 多任务预训练模型，用作 `base_model_path`；使用时需指定 `model_head` |
 | FT2DP-dataset-FeCHO-v1 数据集 | [AIS Square 数据集](https://www.aissquare.com/datasets/306)（`aissquare.com/datasets`，条目 id=306） | 铁基 FTS 场景数据集，可作为训练集/候选池的使用示例 |
 
-只想先确认环境可用时不必下载任何外部资源：仓库自带的
-`tests/integration/data/DPA-3.1-3M.pt` 与几帧 dpdata 夹具即可跑通最小闭环，见
-[Smoke Demo](docs/guides/smoke-demo.md)。
+只想先确认环境可用时不必下载任何外部资源：仓库自带模型与几帧 dpdata 夹具的
+四阶段配置见 [Quickstart](docs/guides/quickstart.md) 和
+[examples/recipes/quickstart/](examples/recipes/quickstart/)。
 
 外部模型可用环境变量覆盖默认位置：`DPEVA_DPA3_MODEL_PATH`、`DPEVA_DPA4_MODEL_PATH`；
 夹具说明与目录约定见 [tests/integration/data/README.md](tests/integration/data/README.md)。
@@ -121,7 +103,7 @@ For detailed configuration examples, see `examples/recipes/`.
 > [**Docs Index**](docs/README.md) | [**Guides**](docs/guides/README.md) | [**Reports**](docs/reports/README.md)
 
 *   **Getting Started**: [Quickstart](docs/guides/quickstart.md) | [Installation](docs/guides/installation.md)
-*   **Onboarding**: [Smoke Demo（自带夹具）](docs/guides/smoke-demo.md) | [SAI Quickstart](docs/guides/sai-quickstart.md)
+*   **Onboarding**: [Local Quickstart（自带夹具）](docs/guides/quickstart.md) | [SAI Quickstart](docs/guides/sai-quickstart.md)
 *   **Reference**: [Reference Index](docs/reference/README.md) | [CLI](docs/guides/cli.md)
 *   **Upstream**: [Upstream Software](docs/reference/upstream-software.md)
 *   **Developer**: [Developer Guide](docs/guides/developer-guide.md) | [Architecture](docs/architecture/README.md)

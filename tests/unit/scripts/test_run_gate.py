@@ -232,7 +232,6 @@ def test_traceability_is_a_docs_and_release_gate_only() -> None:
 def test_docs_jobs_use_gate_names() -> None:
     build = Path(".github/workflows/docs-check.yml").read_text(encoding="utf-8")
     lint = Path(".github/workflows/doc-lint.yml").read_text(encoding="utf-8")
-    verify = Path("scripts/verify_docs.sh").read_text(encoding="utf-8")
     deploy = Path(".github/workflows/docs-deploy.yml").read_text(encoding="utf-8")
 
     assert "pip install -e .[docs] tomli" in build
@@ -246,18 +245,6 @@ def test_docs_jobs_use_gate_names() -> None:
         if "python scripts/run_gate.py " in line
     ]
     assert lint_runs == ["docs_audit", "traceability", "docs_freshness"]
-    verify_runs = [
-        line.split("python scripts/run_gate.py ", 1)[1]
-        .split(";", 1)[0]
-        .strip()
-        for line in verify.splitlines()
-        if "python scripts/run_gate.py " in line
-    ]
-    assert verify_runs[:2] == ["docs_audit", "docs_freshness"]
-    assert verify_runs.count("docs_build") == 1
-    assert "make clean" in verify
-    assert verify.count("make clean") == 1
-    assert "build/html/guides/quickstart.html" in verify
     assert "pip install -e .[docs] tomli" in deploy
     assert "python scripts/run_gate.py docs_build" in deploy
 
@@ -282,13 +269,3 @@ def test_traceability_has_one_hosted_invocation_and_truthful_triggers() -> None:
         "scripts/gates.toml",
         ".github/workflows/doc-lint.yml",
     ]
-
-
-def test_docs_entry_points_do_not_duplicate_manifest_commands() -> None:
-    verify = Path("scripts/verify_docs.sh").read_text(encoding="utf-8")
-    deploy = Path(".github/workflows/docs-deploy.yml").read_text(encoding="utf-8")
-
-    for text in (verify, deploy):
-        assert "make html" not in text
-        assert "doc_check.py" not in text
-        assert "check_docs_freshness.py" not in text

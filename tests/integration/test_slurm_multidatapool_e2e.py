@@ -21,11 +21,15 @@ def _project_root() -> Path:
 
 
 def _source_data_root() -> Path:
-    # Points to the local integration test data (golden set)
-    # If not present, one should run setup_data.py
+    # The minimal integration fixture is tracked with the repository.
     data_dir = _project_root() / "tests" / "integration" / "data"
-    if not (data_dir / "input.json").exists():
-        pytest.fail(f"Integration test data not found at {data_dir}. Run tests/integration/setup_data.py first.")
+    required = (
+        data_dir / "DPA-3.1-3M.pt",
+        data_dir / "other_dpdata_all" / "amourC" / "C2" / "set.000" / "coord.npy",
+        data_dir / "sampled_dpdata" / "122" / "set.000" / "coord.npy",
+    )
+    if any(not path.is_file() for path in required):
+        pytest.fail(f"Integration test fixture missing at {data_dir}; restore the tracked files.")
     return data_dir
 
 
@@ -140,6 +144,8 @@ def _write_config(path: Path, cfg: dict) -> None:
 def test_multidatapool_e2e(tmp_path: Path, backend: str):
     if backend == "slurm":
         _require_slurm()
+    elif os.environ.get("DPEVA_RUN_LOCAL_ITEST") != "1":
+        pytest.skip("Set DPEVA_RUN_LOCAL_ITEST=1 to enable the local DeepMD training integration test")
     _require_deepmd_runtime()
 
     src_root = _source_data_root()
@@ -154,7 +160,7 @@ def test_multidatapool_e2e(tmp_path: Path, backend: str):
     )
     prepare_minimal_dataset(src_root=src_root, dst_root=work_dir, spec=spec)
 
-    base_input = src_root / "input.json"
+    base_input = _project_root() / "examples" / "recipes" / "quickstart" / "input.json"
     write_minimal_training_input(
         base_input_path=base_input,
         out_path=work_dir / "input.json",

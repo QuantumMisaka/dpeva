@@ -6,6 +6,7 @@ on:
     paths:
       - "src/**"
       - "tests/**"
+      - "examples/recipes/**"
       - "scripts/**"
       - "pyproject.toml"
       - "AGENTS.md"
@@ -15,6 +16,7 @@ on:
     paths:
       - "src/**"
       - "tests/**"
+      - "examples/recipes/**"
       - "scripts/**"
       - "pyproject.toml"
       - "AGENTS.md"

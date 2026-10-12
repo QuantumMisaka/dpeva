@@ -1,6 +1,21 @@
 import os
 
+import pytest
+
 from dpeva.utils.config import resolve_config_paths
+
+
+@pytest.mark.parametrize("project", ["work", "/shared/active-learning"])
+def test_collect_project_resolves_from_config_not_process_cwd(tmp_path, monkeypatch, project):
+    config_path = tmp_path / "recipes" / "collect.json"
+    config_path.parent.mkdir(parents=True)
+    monkeypatch.chdir(tmp_path)
+
+    config = {"project": project}
+    resolved = resolve_config_paths(config, str(config_path))
+
+    expected = project if os.path.isabs(project) else str(config_path.parent / project)
+    assert resolved["project"] == expected
 
 
 def test_resolve_config_paths_resolves_relative_paths(tmp_path):

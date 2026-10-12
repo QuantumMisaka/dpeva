@@ -18,7 +18,7 @@ owner: Quantum Misaka
 - 项目概览与快速开始：[README.md](README.md)
 - 安装与环境准备：[installation.md](guides/installation.md)
 - Quickstart（最短路径跑通）：[quickstart.md](guides/quickstart.md)
-- Smoke Demo（仓库自带夹具最小闭环，无需外部下载）：[smoke-demo.md](guides/smoke-demo.md)
+- 自带夹具的四阶段 Local 示例：[quickstart recipes](../examples/recipes/quickstart/README.md)
 - SAI 快速上手（Slurm 用户）：[sai-quickstart.md](guides/sai-quickstart.md)
 - CLI 使用指南：[cli.md](guides/cli.md)
 - 核心上游软件与职责：[upstream-software.md](reference/upstream-software.md)
@@ -26,6 +26,7 @@ owner: Quantum Misaka
 ### 1.2 开发者（要改代码/加功能/修Bug）
 
 - 开发流程标准与架构说明：[developer-guide.md](guides/developer-guide.md)
+- 本地与集成测试入口：[testing/README.md](guides/testing/README.md)
 - 配置字段权威参考（查表）：[reference/index.rst](reference/index.rst)
 - 参数验证与约束补充：[validation.md](reference/validation.md)
 - 核心上游软件与职责：[upstream-software.md](reference/upstream-software.md)

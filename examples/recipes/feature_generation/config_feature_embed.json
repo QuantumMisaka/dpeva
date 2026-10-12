@@ -12,7 +12,7 @@
         "backend": "slurm",
         "env_setup": [
             "nvidia-smi dmon -s pucvmte -o T > nvdmon_job-${SLURM_JOB_ID}.log &",
-            "source scripts/env/dpeva-dpa4-embed-test.env"
+            "source \"${DPEVA_REPO:?Set DPEVA_REPO to the repository root}/scripts/env/dpeva-dpa4.env\""
         ],
         "slurm_config": {
             "partition": "4V100",

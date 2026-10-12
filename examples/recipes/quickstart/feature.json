@@ -1,0 +1,9 @@
+{
+  "data_path": "../../../tests/integration/data/other_dpdata_all",
+  "model_path": "../../../tests/integration/data/DPA-3.1-3M.pt",
+  "savedir": "work/desc_pool",
+  "model_head": "OC22",
+  "mode": "cli",
+  "omp_threads": 2,
+  "submission": {"backend": "local"}
+}
