@@ -395,11 +395,12 @@ document.write(`
                   
   <section id="sai-deepmd-kit">
 <h1>SAI 服务器 DeepMD-kit 安装配置指南<a class="headerlink" href="#sai-deepmd-kit" title="Link to this heading">#</a></h1>
-<p>本页记录在本项目 SAI 服务器环境中，将 <code class="docutils literal notranslate"><span class="pre">dpeva-dpa4</span></code> Conda 环境里的
-<code class="docutils literal notranslate"><span class="pre">deepmd-kit</span></code> 与仓库内 <code class="docutils literal notranslate"><span class="pre">test/deepmd-kit</span></code> 源码同步的构建、安装和验证方法。</p>
+<p>本页记录在 SAI 服务器环境中，将 <code class="docutils literal notranslate"><span class="pre">dpeva-dpa4</span></code> Conda 环境里的
+<code class="docutils literal notranslate"><span class="pre">deepmd-kit</span></code> 与本地 <code class="docutils literal notranslate"><span class="pre">test/deepmd-kit</span></code> 源码检出差同步的构建、安装和验证方法
+（<code class="docutils literal notranslate"><span class="pre">test/</span></code> 为本地参考检出，不在本仓库内）。</p>
 <p>适用场景：</p>
 <ul class="simple">
-<li><p>需要从 <code class="docutils literal notranslate"><span class="pre">test/deepmd-kit</span></code> 本地源码安装 DeepMD-kit，而不是使用 PyPI/Conda
+<li><p>需要从本地 <code class="docutils literal notranslate"><span class="pre">test/deepmd-kit</span></code> 源码检出差安装 DeepMD-kit，而不是使用 PyPI/Conda
 预构建版本。</p></li>
 <li><p>需要保留 <code class="docutils literal notranslate"><span class="pre">dpeva-dpa4</span></code> 环境中的 <code class="docutils literal notranslate"><span class="pre">torch</span> <span class="pre">2.11.0+cu126</span></code>。</p></li>
 <li><p>需要 CUDA 12.6.3 和 PyTorch 后端，并在 V100 GPU 上实际验证 <code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">embed</span></code>
@@ -435,7 +436,7 @@ Slurm 分配计算节点验证。</p></li>
 <td><p><code class="docutils literal notranslate"><span class="pre">dpeva-dpa4</span></code></p></td>
 </tr>
 <tr class="row-odd"><td><p>DeepMD-kit 源码</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">test/deepmd-kit</span></code></p></td>
+<td><p>本地 <code class="docutils literal notranslate"><span class="pre">test/deepmd-kit</span></code> 检出（不入库）</p></td>
 </tr>
 <tr class="row-even"><td><p>源码提交</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">73de44b1f94471b2e3bdb6b11f57b34d7bc791bb</span></code></p></td>
@@ -471,7 +472,7 @@ Slurm 分配计算节点验证。</p></li>
 <section id="id3">
 <h2>3. 前置检查<a class="headerlink" href="#id3" title="Link to this heading">#</a></h2>
 <p>从项目根目录执行：</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>/home/pku-jianghong/liuzhaoqing/work/ft2dp-dpeva/dpeva
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span><span class="s2">"</span><span class="k">$(</span>git<span class="w"> </span>rev-parse<span class="w"> </span>--show-toplevel<span class="k">)</span><span class="s2">"</span>
 <span class="nb">source</span><span class="w"> </span>scripts/env/dpeva-dpa4.env
 
 python<span class="w"> </span>-W<span class="w"> </span>ignore<span class="w"> </span>-c<span class="w"> </span><span class="s1">'import torch; print(torch.__version__); print(torch.version.cuda)'</span>
@@ -494,7 +495,7 @@ nvcc<span class="w"> </span>--version
 <p>使用 wheel 构建而不是直接 editable 安装，便于保留构建产物和日志。关键点是
 <code class="docutils literal notranslate"><span class="pre">--no-build-isolation</span> <span class="pre">--no-deps</span></code>：构建使用当前 <code class="docutils literal notranslate"><span class="pre">dpeva-dpa4</span></code> 环境里的 Torch，
 避免 pip 重新解析或替换核心 CUDA/Torch 依赖。</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>/home/pku-jianghong/liuzhaoqing/work/ft2dp-dpeva/dpeva
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span><span class="s2">"</span><span class="k">$(</span>git<span class="w"> </span>rev-parse<span class="w"> </span>--show-toplevel<span class="k">)</span><span class="s2">"</span>
 <span class="nb">source</span><span class="w"> </span>scripts/env/dpeva-dpa4.env
 
 <span class="nv">STAMP</span><span class="o">=</span><span class="k">$(</span>date<span class="w"> </span>+%Y%m%d-%H%M%S<span class="k">)</span>
@@ -538,7 +539,7 @@ Created deepmd_kit-...whl
 </section>
 <section id="id4">
 <h2>5. 安装 wheel<a class="headerlink" href="#id4" title="Link to this heading">#</a></h2>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>/home/pku-jianghong/liuzhaoqing/work/ft2dp-dpeva/dpeva
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span><span class="s2">"</span><span class="k">$(</span>git<span class="w"> </span>rev-parse<span class="w"> </span>--show-toplevel<span class="k">)</span><span class="s2">"</span>
 <span class="nb">source</span><span class="w"> </span>scripts/env/dpeva-dpa4.env
 
 <span class="nv">LOGDIR</span><span class="o">=</span>/path/to/logs/deepmd-dpeva-dpa4-YYYYmmdd-HHMMSS
@@ -654,7 +655,7 @@ embedding 的邻居表构建即可运行。</p>
 <p>完整 GPU 验证需要同时检查版本、CUDA 可见性和 <code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">embed</span></code> 输出：</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>srun<span class="w"> </span>--partition<span class="o">=</span>8V100V0<span class="w"> </span>--nodes<span class="o">=</span><span class="m">1</span><span class="w"> </span>--ntasks<span class="o">=</span><span class="m">1</span><span class="w"> </span>--gpus-per-node<span class="o">=</span><span class="m">4</span><span class="w"> </span>--time<span class="o">=</span><span class="m">00</span>:10:00<span class="w"> </span>bash<span class="w"> </span>-lc<span class="w"> </span><span class="s1">'</span>
 <span class="s1">set -euo pipefail</span>
-<span class="s1">cd /home/pku-jianghong/liuzhaoqing/work/ft2dp-dpeva/dpeva</span>
+<span class="s1">cd "$(git rev-parse --show-toplevel)"</span>
 <span class="s1">LOGDIR=/path/to/logs/deepmd-dpeva-dpa4-YYYYmmdd-HHMMSS</span>
 <span class="s1">source scripts/env/dpeva-dpa4.env</span>
 <span class="s1">export OMP_NUM_THREADS=1</span>

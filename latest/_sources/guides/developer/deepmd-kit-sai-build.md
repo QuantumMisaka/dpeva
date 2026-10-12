@@ -2,18 +2,19 @@
 title: DeepMD-kit SAI Build Guide
 status: active
 audience: Developers / Platform Maintainers
-last-updated: 2026-10-11
+last-updated: 2026-10-12
 owner: Platform Maintainers
 ---
 
 # SAI 服务器 DeepMD-kit 安装配置指南
 
-本页记录在本项目 SAI 服务器环境中，将 `dpeva-dpa4` Conda 环境里的
-`deepmd-kit` 与仓库内 `test/deepmd-kit` 源码同步的构建、安装和验证方法。
+本页记录在 SAI 服务器环境中，将 `dpeva-dpa4` Conda 环境里的
+`deepmd-kit` 与本地 `test/deepmd-kit` 源码检出差同步的构建、安装和验证方法
+（`test/` 为本地参考检出，不在本仓库内）。
 
 适用场景：
 
-- 需要从 `test/deepmd-kit` 本地源码安装 DeepMD-kit，而不是使用 PyPI/Conda
+- 需要从本地 `test/deepmd-kit` 源码检出差安装 DeepMD-kit，而不是使用 PyPI/Conda
   预构建版本。
 - 需要保留 `dpeva-dpa4` 环境中的 `torch 2.11.0+cu126`。
 - 需要 CUDA 12.6.3 和 PyTorch 后端，并在 V100 GPU 上实际验证 `dp embed`
@@ -41,7 +42,7 @@ owner: Platform Maintainers
 | 项目 | 已验证值 |
 |---|---|
 | Conda 环境 | `dpeva-dpa4` |
-| DeepMD-kit 源码 | `test/deepmd-kit` |
+| DeepMD-kit 源码 | 本地 `test/deepmd-kit` 检出（不入库） |
 | 源码提交 | `73de44b1f94471b2e3bdb6b11f57b34d7bc791bb` |
 | 源码 describe | `v3.2.0b0-67-g73de44b1` |
 | 安装版本 | `3.2.0b1.dev67+g73de44b1f` |
@@ -57,7 +58,7 @@ owner: Platform Maintainers
 从项目根目录执行：
 
 ```bash
-cd /home/pku-jianghong/liuzhaoqing/work/ft2dp-dpeva/dpeva
+cd "$(git rev-parse --show-toplevel)"
 source scripts/env/dpeva-dpa4.env
 
 python -W ignore -c 'import torch; print(torch.__version__); print(torch.version.cuda)'
@@ -81,7 +82,7 @@ nvcc --version
 避免 pip 重新解析或替换核心 CUDA/Torch 依赖。
 
 ```bash
-cd /home/pku-jianghong/liuzhaoqing/work/ft2dp-dpeva/dpeva
+cd "$(git rev-parse --show-toplevel)"
 source scripts/env/dpeva-dpa4.env
 
 STAMP=$(date +%Y%m%d-%H%M%S)
@@ -127,7 +128,7 @@ Created deepmd_kit-...whl
 ## 5. 安装 wheel
 
 ```bash
-cd /home/pku-jianghong/liuzhaoqing/work/ft2dp-dpeva/dpeva
+cd "$(git rev-parse --show-toplevel)"
 source scripts/env/dpeva-dpa4.env
 
 LOGDIR=/path/to/logs/deepmd-dpeva-dpa4-YYYYmmdd-HHMMSS
@@ -260,7 +261,7 @@ PY'
 ```bash
 srun --partition=8V100V0 --nodes=1 --ntasks=1 --gpus-per-node=4 --time=00:10:00 bash -lc '
 set -euo pipefail
-cd /home/pku-jianghong/liuzhaoqing/work/ft2dp-dpeva/dpeva
+cd "$(git rev-parse --show-toplevel)"
 LOGDIR=/path/to/logs/deepmd-dpeva-dpa4-YYYYmmdd-HHMMSS
 source scripts/env/dpeva-dpa4.env
 export OMP_NUM_THREADS=1
