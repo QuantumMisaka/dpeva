@@ -2,7 +2,7 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-07-05
+last-updated: 2026-10-11
 owner: Workflow Owner
 ---
 
@@ -11,7 +11,7 @@ owner: Workflow Owner
 - Status: active
 - Audience: Users / Developers / Infra
 - Applies-To: `submission.backend="slurm"`
-- Last-Updated: 2026-07-05
+- Last-Updated: 2026-10-11
 
 ## 1. 目的与范围
 
@@ -74,6 +74,9 @@ SAI ABACUS 注意事项：
 - `launcher_mode="mpi_abacus"` 会在 `source /etc/profile` 后自动插入 `source /opt/sai_config/mps_mapping.d/${SLURM_JOB_PARTITION}.bash`。
 - `launcher_mode="abacus"` 不应加载 SAI rank-map，也不应引用 `MAP_OPT`。
 - SAI-1344 `16V100` 上，`flood-gpu`/`rush-gpu` 的 1GPU 请求实测被 `QOSMinGRES` 拒绝；FP11 批量 fallback 使用 4GPU MPI，并优先选择能接受大 array 的 `flood-gpu`。
+
+SAI 环境准备、首次自检与配置要点的汇总入口见
+[sai-quickstart.md](https://github.com/QuantumMisaka/dpeva/blob/main/docs/guides/sai-quickstart.md)。
 
 ## 4. 工作流脚本与日志约定
 
@@ -173,6 +176,7 @@ tail -f 0/test_val/test_job.out | grep -F "DPEVA_TAG: WORKFLOW_FINISHED"
 
 ## 7. 变更记录
 
+- 2026-10-11：文档治理新鲜度复核，确认内容与链接仍有效；补充指向 SAI 快速上手页的交叉链接；无契约变更。
 - 2026-07-05：补充 Labeling Slurm array 行为、array worker 约定与 SAI-1344 FP11 QOS 实测注意事项。
 - 2026-03-11：更新配置字段入口为 API Reference，并同步 infer 日志文件名为 `test_job.out`。
 - 2026-03-03：更新完成标记语义，明确“部分失败不输出完成标记”。

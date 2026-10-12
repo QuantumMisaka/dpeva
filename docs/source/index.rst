@@ -13,6 +13,8 @@ If you use DP-EVA, please cite the project article: `DP-EVA in Clean Energy <htt
 
    guides/installation
    guides/quickstart
+   guides/smoke-demo
+   guides/sai-quickstart
    guides/cli
    guides/configuration
 
