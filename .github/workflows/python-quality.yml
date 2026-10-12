@@ -13,14 +13,6 @@ on:
       - ".github/workflows/python-quality.yml"
   pull_request:
     branches: ["main", "develop"]
-    paths:
-      - "src/**"
-      - "tests/**"
-      - "examples/recipes/**"
-      - "scripts/**"
-      - "pyproject.toml"
-      - "AGENTS.md"
-      - ".github/workflows/python-quality.yml"
   workflow_dispatch:
     inputs:
       run_mypy:
@@ -108,7 +100,7 @@ jobs:
           python scripts/run_gate.py explore_cli
           python scripts/run_gate.py atst_cli
 
-  audit:
+  python-audit:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:

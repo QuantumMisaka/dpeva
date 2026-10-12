@@ -262,7 +262,8 @@ def test_traceability_has_one_hosted_invocation_and_truthful_triggers() -> None:
     rules = json.loads(Path("docs/governance/rules.json").read_text(encoding="utf-8"))
 
     assert lint.count("python scripts/run_gate.py traceability") == 1
-    assert lint.count('"scripts/check_traceability.py"') == 2
+    # PRs always run governance; push events still watch the checker itself.
+    assert '"scripts/check_traceability.py"' in lint
     assert "python scripts/run_gate.py traceability" not in docs_check
     traceability = next(rule for rule in rules if rule["rule_id"] == "CAPABILITY-TRACEABILITY")
     assert traceability["trigger_paths"] == [

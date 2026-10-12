@@ -1,0 +1,31 @@
+name: Bug report / 问题报告
+description: Report a reproducible problem in DP-EVA.
+title: "[Bug]: "
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Expected and actual behavior / 预期与实际行为
+      description: Explain what you expected and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction / 最小复现
+      description: Include commands, a minimal config, and small shareable input or fixture references. Remove credentials and private data.
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment / 环境
+      description: DP-EVA version or commit, OS, Python version, installation method, and relevant DeepMD/PyTorch versions. For cluster problems, include backend and scheduler details.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs / 相关日志
+      description: Paste the error and surrounding lines; include dpeva doctor output when relevant. Redact private information.
+      render: text

@@ -98,3 +98,20 @@ def test_docs_deploy_validates_shared_release_profile_before_write_job() -> None
         and job["permissions"].get("contents") == "write"
     ]
     assert writers == ["deploy"]
+
+
+def test_required_checks_run_on_every_main_pull_request() -> None:
+    required = {
+        "python-quality.yml": {"lint", "unit-tests", "integration-tests", "python-audit", "explore-extra-smoke"},
+        "docs-check.yml": {"build-docs"},
+        "doc-lint.yml": {"doc-lint"},
+    }
+    for filename, names in required.items():
+        workflow = _workflow(filename)
+        trigger = workflow["on"]["pull_request"]
+        assert "main" in trigger["branches"]
+        assert not ({"paths", "paths-ignore", "types"} & trigger.keys())
+        jobs = workflow["jobs"]
+        for name in names:
+            assert "if" not in jobs[name]
+            assert "needs" not in jobs[name]

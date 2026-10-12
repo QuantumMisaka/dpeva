@@ -110,6 +110,13 @@ For detailed configuration examples, see `examples/recipes/`.
 *   **Governance**: [Policy](docs/policy/README.md) | [Plans](docs/plans/README.md)
 *   **Review**: [Repository Audit 2026-04-01](docs/archive/v0.8.0/reports/2026-04-01-Code-Review-Repository-Audit.md) | [Reports Index](docs/reports/README.md) | [Archive Index](docs/archive/README.md)
 
+## Contributing
+
+Start with [CONTRIBUTING.md](CONTRIBUTING.md) for reporting bugs, proposing changes,
+setting up a development environment, and opening your first pull request.
+Questions and scientific workflow discussions belong in
+[Discussions](https://github.com/QuantumMisaka/dpeva/discussions).
+
 ## Citation
 
 If you use DP-EVA, please cite the project article:
