@@ -2,7 +2,7 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-10-12
+last-updated: 2026-10-13
 owner: Workflow Owner
 ---
 
@@ -10,7 +10,7 @@ owner: Workflow Owner
 
 - Status: active
 - Audience: Users / Developers
-- Last-Updated: 2026-10-12
+- Last-Updated: 2026-10-13
 
 ## 1. 目的与范围
 
@@ -31,9 +31,11 @@ owner: Workflow Owner
 
 ## 4. 从零准备 Local PyTorch 环境
 
-下面以支持 CPU 的 PyTorch 后端为例。从仓库根目录创建独立 Python 环境：
+下面以支持 CPU 的 PyTorch 后端为例。先获取源码，再在仓库根目录创建独立 Python 环境；已有检出的用户直接进入仓库即可：
 
 ```bash
+git clone https://github.com/QuantumMisaka/dpeva.git
+cd dpeva
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip
