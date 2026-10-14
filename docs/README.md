@@ -2,7 +2,7 @@
 title: DP-EVA 文档导航 (Docs Index)
 status: active
 audience: Users / Developers
-last-updated: 2026-10-12
+last-updated: 2026-10-13
 owner: Quantum Misaka
 ---
 
@@ -11,11 +11,15 @@ owner: Quantum Misaka
 
 本文档是 `docs/` 的统一入口：提供读者分流、权威信息源定位、以及文档维护规则。
 
+当前文档以中文为主要维护语言，后续逐步补充英文版本，形成中英双语文档。
+仓库根 README 保持全英文，详细安装与上手步骤统一在本体系维护。
+语言与翻译约定见[文档贡献指南](policy/contributing.md)。
+
 ## 1. 我应该读哪一类文档？
 
 ### 1.1 使用者（想把流程跑起来）
 
-- 项目概览与快速开始：[README.md](README.md)
+- 英文项目概览：[README.md](../README.md)
 - 安装与环境准备：[installation.md](guides/installation.md)
 - Quickstart（最短路径跑通）：[quickstart.md](guides/quickstart.md)
 - 自带夹具的四阶段 Local 示例：[quickstart recipes](../examples/recipes/quickstart/README.md)
