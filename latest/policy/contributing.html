@@ -366,15 +366,18 @@ document.write(`
                 <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">1. 目的与范围</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">2. 相关方</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">3. 基本原则</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">4. 文档类型与落点</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">4.1 草案与项目文档迁移规则</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">3. 基本原则</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">3.1 语言与翻译</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">5. 必备元信息</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">4. 文档类型与落点</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">4.1 草案与项目文档迁移规则</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">5. 必备元信息</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#review">6. Review 与验收</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">7. 稳态化提交流程（标准）</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id8">8. 模板</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id8">7. 稳态化提交流程（标准）</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id9">8. 模板</a></li>
 </ul>
             </nav>
         </div>
@@ -411,9 +414,19 @@ document.write(`
 <li><p>与代码一致：用户接口（CLI/配置/输出目录/完成标记）变更必须在同一 PR 内同步更新文档。</p></li>
 <li><p>禁止文件系统绝对路径链接：禁止 <code class="docutils literal notranslate"><span class="pre">/home/...</span></code>、<code class="docutils literal notranslate"><span class="pre">C:\...</span></code>；引用仓库代码文件请使用仓库 URL。</p></li>
 </ul>
-</section>
 <section id="id4">
-<h2>4. 文档类型与落点<a class="headerlink" href="#id4" title="Link to this heading">#</a></h2>
+<h3>3.1 语言与翻译<a class="headerlink" href="#id4" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p>仓库根 <code class="docutils literal notranslate"><span class="pre">README.md</span></code> 保持全英文，负责项目概览与导航；详细安装、Quickstart 和 CLI 操作进入对应指南，避免多处维护。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">docs/</span></code> 当前以中文为主要维护语言；命令、字段名、API 标识符和引文保留原文，无需机械翻译。</p></li>
+<li><p>后续逐步提供中英双语，优先翻译安装、Quickstart、配置与贡献指南，不要求每次中文修订等待全站翻译完成。</p></li>
+<li><p>新增译文时注明对应源文档及同步版本，并提供双向语言入口；行为变更同步更新已有译文，暂时未同步时显式标注差异。</p></li>
+<li><p>双语页面共享同一套代码示例与配置模板，不复制维护两套可执行示例。历史归档保持原语言，不批量改写。</p></li>
+</ul>
+</section>
+</section>
+<section id="id5">
+<h2>4. 文档类型与落点<a class="headerlink" href="#id5" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p>分类与落点以 <code class="docutils literal notranslate"><span class="pre">docs/source/policy/docs-structure.md</span></code> 为准。</p></li>
 </ul>
@@ -428,8 +441,8 @@ document.write(`
 <li><p>历史归档：<code class="docutils literal notranslate"><span class="pre">docs/archive/</span></code></p></li>
 <li><p>执行期草案：<code class="docutils literal notranslate"><span class="pre">.trae/documents/</span></code>（不直接作为项目文档入口）</p></li>
 </ul>
-<section id="id5">
-<h3>4.1 草案与项目文档迁移规则<a class="headerlink" href="#id5" title="Link to this heading">#</a></h3>
+<section id="id6">
+<h3>4.1 草案与项目文档迁移规则<a class="headerlink" href="#id6" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p>AI/开发执行期文档先放 <code class="docutils literal notranslate"><span class="pre">.trae/documents/</span></code>。</p></li>
 <li><p>当内容进入“团队共享、可复盘、可发布”的状态时，迁移到 <code class="docutils literal notranslate"><span class="pre">docs/plans/</span></code> 或 <code class="docutils literal notranslate"><span class="pre">docs/reports/</span></code>。</p></li>
@@ -437,8 +450,8 @@ document.write(`
 </ul>
 </section>
 </section>
-<section id="id6">
-<h2>5. 必备元信息<a class="headerlink" href="#id6" title="Link to this heading">#</a></h2>
+<section id="id7">
+<h2>5. 必备元信息<a class="headerlink" href="#id7" title="Link to this heading">#</a></h2>
 <p>所有标记为 <code class="docutils literal notranslate"><span class="pre">Status:</span> <span class="pre">active</span></code> 的文档必须包含：</p>
 <ul class="simple">
 <li><p>Status / Audience / Last-Updated / Owner(s)</p></li>
@@ -461,8 +474,8 @@ document.write(`
 <code class="docutils literal notranslate"><span class="pre">None</span></code> 或说明原因。</p></li>
 </ul>
 </section>
-<section id="id7">
-<h2>7. 稳态化提交流程（标准）<a class="headerlink" href="#id7" title="Link to this heading">#</a></h2>
+<section id="id8">
+<h2>7. 稳态化提交流程（标准）<a class="headerlink" href="#id8" title="Link to this heading">#</a></h2>
 <ol class="arabic simple">
 <li><p>在提交前执行 <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">scripts/run_gate.py</span> <span class="pre">docs_pr</span></code>；门禁命令的唯一来源是
 <code class="docutils literal notranslate"><span class="pre">scripts/gates.toml</span></code>。需要完整发布验证时执行
@@ -480,8 +493,8 @@ document.write(`
 <p>计划与报告适用于重大架构、迁移或发布工作，并按文档生命周期维护；普通 PR 不以归档
 计划/报告作为模板必填项。</p>
 </section>
-<section id="id8">
-<h2>8. 模板<a class="headerlink" href="#id8" title="Link to this heading">#</a></h2>
+<section id="id9">
+<h2>8. 模板<a class="headerlink" href="#id9" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p>页面模板：/docs/_templates/page.md</p></li>
 <li><p>ADR 模板：/docs/_templates/adr.md</p></li>
@@ -537,15 +550,18 @@ document.write(`
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">1. 目的与范围</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">2. 相关方</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">3. 基本原则</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">4. 文档类型与落点</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">4.1 草案与项目文档迁移规则</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">3. 基本原则</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">3.1 语言与翻译</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">5. 必备元信息</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">4. 文档类型与落点</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">4.1 草案与项目文档迁移规则</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">5. 必备元信息</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#review">6. Review 与验收</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">7. 稳态化提交流程（标准）</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id8">8. 模板</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id8">7. 稳态化提交流程（标准）</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id9">8. 模板</a></li>
 </ul>
   </nav></div>
 

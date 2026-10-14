@@ -367,6 +367,7 @@ document.write(`
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">准备</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">依次运行</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">查看产物</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">换用自己的模型与数据</a></li>
 </ul>
             </nav>
         </div>
@@ -386,11 +387,9 @@ document.write(`
 模型与数据，并阅读 <a class="reference internal" href="configuration.html"><span class="doc">配置与路径说明</span></a>。</p>
 <section id="id1">
 <h2>准备<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
-<p>克隆仓库后，按 <a class="reference internal" href="installation.html"><span class="doc">安装指南</span></a> 准备含 PyTorch 后端的 DeepMD-kit 环境。
-确认 <code class="docutils literal notranslate"><span class="pre">dpeva</span></code>、<code class="docutils literal notranslate"><span class="pre">dp</span></code> 都来自当前环境：</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/QuantumMisaka/dpeva.git
-<span class="nb">cd</span><span class="w"> </span>dpeva
-dpeva<span class="w"> </span>doctor
+<p>先按 <a class="reference internal" href="installation.html"><span class="doc">安装指南</span></a> 获取源码并准备含 PyTorch 后端的 DeepMD-kit 环境。
+完成后进入仓库根目录，确认 <code class="docutils literal notranslate"><span class="pre">dpeva</span></code>、<code class="docutils literal notranslate"><span class="pre">dp</span></code> 都来自当前环境：</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>dpeva<span class="w"> </span>doctor
 dp<span class="w"> </span>--version
 </pre></div>
 </div>
@@ -447,6 +446,34 @@ dpeva<span class="w"> </span>collect<span class="w"> </span>examples/recipes/qui
 工作流的参数和示例见 <a class="reference internal" href="cli.html"><span class="doc">CLI 指南</span></a> 与仓库中的
 <code class="docutils literal notranslate"><span class="pre">examples/recipes/README.md</span></code>。</p>
 </section>
+<section id="id4">
+<h2>换用自己的模型与数据<a class="headerlink" href="#id4" title="Link to this heading">#</a></h2>
+<p>熟悉示例后，将 recipe 中的模型与数据路径改为自己的输入。公开资源包括：</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>资源</p></th>
+<th class="head"><p>入口</p></th>
+<th class="head"><p>用途</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>DPA-3.1-3M 预训练模型</p></td>
+<td><p><a class="reference external" href="https://www.aissquare.com/models/343">AIS Square 模型库</a></p></td>
+<td><p>用作微调基座 <code class="docutils literal notranslate"><span class="pre">base_model_path</span></code>，按模型选择 <code class="docutils literal notranslate"><span class="pre">model_head</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>FT2DP-dataset-FeCHO-v1</p></td>
+<td><p><a class="reference external" href="https://www.aissquare.com/datasets/306">AIS Square 数据集</a></p></td>
+<td><p>铁基 FTS 场景的训练集与候选池示例</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>普通 CLI 工作流通过 JSON 配置指定模型和数据路径。测试夹具文档中的
+<code class="docutils literal notranslate"><span class="pre">DPEVA_DPA3_MODEL_PATH</span></code>、<code class="docutils literal notranslate"><span class="pre">DPEVA_DPA4_MODEL_PATH</span></code> 属于测试入口约定，
+不是所有 CLI 工作流通用的模型路径覆盖开关。字段与路径规则见
+<a class="reference internal" href="configuration.html"><span class="doc">配置指南</span></a>；安装、后端选择与科研环境版本锁定见
+<a class="reference internal" href="installation.html"><span class="doc">安装指南</span></a>。</p>
+</section>
 </section>
 
 
@@ -497,6 +524,7 @@ dpeva<span class="w"> </span>collect<span class="w"> </span>examples/recipes/qui
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">准备</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">依次运行</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">查看产物</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">换用自己的模型与数据</a></li>
 </ul>
   </nav></div>
 

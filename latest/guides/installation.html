@@ -395,7 +395,7 @@ document.write(`
 <ul class="simple">
 <li><p>Status: active</p></li>
 <li><p>Audience: Users / Developers</p></li>
-<li><p>Last-Updated: 2026-10-12</p></li>
+<li><p>Last-Updated: 2026-10-13</p></li>
 </ul>
 <section id="id1">
 <h2>1. 目的与范围<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
@@ -419,8 +419,10 @@ document.write(`
 </section>
 <section id="local-pytorch">
 <h2>4. 从零准备 Local PyTorch 环境<a class="headerlink" href="#local-pytorch" title="Link to this heading">#</a></h2>
-<p>下面以支持 CPU 的 PyTorch 后端为例。从仓库根目录创建独立 Python 环境：</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>.venv
+<p>下面以支持 CPU 的 PyTorch 后端为例。先获取源码，再在仓库根目录创建独立 Python 环境；已有检出的用户直接进入仓库即可：</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/QuantumMisaka/dpeva.git
+<span class="nb">cd</span><span class="w"> </span>dpeva
+python3<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>.venv
 <span class="nb">source</span><span class="w"> </span>.venv/bin/activate
 python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>--upgrade<span class="w"> </span>pip
 python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>torch<span class="w"> </span>--index-url<span class="w"> </span>https://download.pytorch.org/whl/cpu
