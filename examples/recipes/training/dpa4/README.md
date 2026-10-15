@@ -32,7 +32,7 @@ alone. The periodic DPA4C `pt-expt eval-desc` route remains experimental until
 a genuine DPA4C artifact passes model-family preflight.
 
 Before using a route in a research run, consult
-[`DeepMD 3.2 compatibility report`](../../../reports/2026-09-04-deepmd-3.2-compatibility.md)
+[`DeepMD 3.2 compatibility report`](../../../../docs/reports/2026-09-04-deepmd-3.2-compatibility.md)
 and `src/dpeva/compatibility/deepmd-3.2.json`. The two DPA4C non-PBC routes
 remain blocked by upstream issue #6002. Future promotions require a new bounded
 qualification and complete producer-issued evidence.
