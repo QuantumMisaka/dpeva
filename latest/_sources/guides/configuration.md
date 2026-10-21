@@ -2,7 +2,7 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-10-12
+last-updated: 2026-10-15
 owner: Docs Owner
 ---
 
@@ -103,8 +103,11 @@ submission backend。未知字段与新旧字段冲突仍然严格失败。
 每个新建的 schema `1.0` 运行都会写入 `config.metadata.json`，记录输入 schema `1.0`
 与迁移 warning（无 warning 时为空列表），并由清单的 `config.metadata` 相对引用指向它；
 迁移前的 legacy 清单可能没有该引用，resume 时仅接受隐含的默认 metadata。使用 `--run-id` 可固定身份；已有
-身份默认拒绝覆盖，未完成的本地运行可用 `--resume`，已提交的 Slurm 运行会在提交
-前拒绝 resume，需要重跑时使用带审计说明 `--reason` 的 `--force`。运行清单中的 `finished`
+身份默认拒绝覆盖。`--resume` 要求原配置、输入与运行代码证据一致，且原运行未终结、
+未处于 `submitted` 状态；`failed`、`finished`、`submitted` 均拒绝 resume。
+需要创建新尝试时使用 `--run-id ID --force --reason "说明"`，先确保旧进程或作业不再运行。
+这些选项仅适用于 Feature/Infer，不表示训练 checkpoint 续训或自动跳过成功子任务。
+运行清单中的 `finished`
 只表示本地命令成功，且输出文件非空、属于当前 attempt 的新建或可观察重写并已校验；
 目录中未被本次执行改写的历史文件不能让 no-op 命令成功，也不会作为本 attempt 的新产物登记。
 该 freshness 判定使用 device/inode/size/mtime_ns/ctime_ns 元数据，不会在执行前读取或散列全部历史大型数组；
@@ -460,3 +463,26 @@ Exploration 是可选能力。使用 `backend: "atst-tools"` 前需安装 `dpeva
 - 2026-03-16：Analysis 最小配置增加 `data_path`、`enable_cohesive_energy`、`allow_ref_energy_lstsq_completion`，并补充 Cohesive Energy 配置建议。
 - 2026-03-11：配置字段权威入口改为 API Reference，并补充 Labeling 最小配置示例。
 - 2026-02-18：补齐路径解析、Submission 结构与最小配置示例。
+
+
+## 替换入门示例中的模型与数据
+
+入门 recipe 的用途是演示阶段连接。迁移到自己的体系时，按下表核对输入；字段的
+完整定义仍以 Reference 为准。
+
+| 变更 | 需要同步核对的配置 |
+| --- | --- |
+| 替换训练数据 | `training_data_path`、DeepMD 输入中的训练/验证数据设置、标签可用性与元素映射；重新选择训练步数、批量大小和损失参数 |
+| 替换候选池 | Feature 的 `data_path`、Infer 的 `data_path`、Collect 的 `testdata_dir` 指向同一批数据；新描述符和推理结果必须来自这批数据 |
+| 替换预训练模型 | Train 的 `base_model_path` 与配套 `input_json_path`；Feature 的 `model_path`；各阶段实际需要的 `model_head` 和 `dp_backend` |
+| 更换模型家族或后端 | 训练模板中的 descriptor/fitting 配置、type map、统计输入、导出产物与下游操作支持范围；不能只替换模型路径 |
+
+模型头不应机械统一：多任务基座需指定其实际存在的头，训练模式可能生成不同的
+微调头，单任务或导出后的模型是否需要 head 应按模型和 backend 契约选择。
+`training_mode="init"` 会为首个模型使用配置的头，其余模型采用 `RANDOM` 初始化；
+它与从训练 checkpoint 恢复不是同一概念。
+
+现有 DPA4 模板位于 `examples/recipes/training/dpa4/`。其中的数据、模型和统计输入
+需要自行准备，Slurm 参数需按所在集群调整；这些模板不是自带数据的 Quickstart。
+使用前阅读该目录 README 中链接的 DeepMD 兼容性报告，确认所需操作的支持范围。
+更换模型或输入后使用新的工作目录，避免混用旧描述符、旧 ensemble 和新候选池。

@@ -153,6 +153,7 @@
         <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
 <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="installation.html">安装与环境准备（Installation）</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/QuantumMisaka/dpeva/tree/main/examples/tutorials/paper_case">Paper case tutorial (CPU notebooks)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart（最短路径跑通）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="sai-quickstart.html">SAI 快速上手（Slurm 用户）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cli.html">CLI 使用指南</a></li>
@@ -368,9 +369,10 @@ document.write(`
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">2. 相关方</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">3. 总体排查顺序（强制建议）</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">3.1 任务完成锚点</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">3.2 选择重跑方式</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">4. 环境类问题</a><ul class="nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">4. 环境类问题</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dp-command-not-found">4.1 <code class="docutils literal notranslate"><span class="pre">dp:</span> <span class="pre">command</span> <span class="pre">not</span> <span class="pre">found</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#deepmd">4.2 DeepMD 版本不匹配/行为差异</a></li>
 </ul>
@@ -384,15 +386,15 @@ document.write(`
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#slurm">6. 作业与调度类问题（Slurm）</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#sbatch">6.1 <code class="docutils literal notranslate"><span class="pre">sbatch</span></code> 提交失败</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pending">6.2 长时间 pending</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">6.3 日志不落盘/找不到日志文件</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">6.3 日志不落盘/找不到日志文件</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#nan-inf">7. 数值类问题（NaN/Inf/聚类不收敛）</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#uq-nan-inf">7.1 UQ 分布异常或全 NaN/Inf</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">7.2 聚类不收敛或采样结果为空</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id8">7.2 聚类不收敛或采样结果为空</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id8">8. 变更记录</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id9">8. 变更记录</a></li>
 </ul>
             </nav>
         </div>
@@ -439,9 +441,45 @@ document.write(`
 </div>
 <p>没有该标记时，优先认为任务“未成功结束”，需要继续追踪日志中的异常堆栈或外部命令错误输出。</p>
 </section>
-</section>
 <section id="id5">
-<h2>4. 环境类问题<a class="headerlink" href="#id5" title="Link to this heading">#</a></h2>
+<h3>3.2 选择重跑方式<a class="headerlink" href="#id5" title="Link to this heading">#</a></h3>
+<p>先保存错误日志，确认旧进程或 Slurm 作业已结束，再决定是否重用输出目录。
+<code class="docutils literal notranslate"><span class="pre">--force</span></code> 或移动目录都不会取消仍在运行的作业。Quickstart 的默认重新开始方式见
+<a class="reference internal" href="quickstart.html"><span class="doc">入门指南</span></a>。</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>场景</p></th>
+<th class="head"><p>当前支持的做法</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>想从头重做小型示例</p></td>
+<td><p>备份整个示例工作目录，从第一阶段重新运行</p></td>
+</tr>
+<tr class="row-odd"><td><p>Feature/Infer 中断，清单仍为未终结且非 <code class="docutils literal notranslate"><span class="pre">submitted</span></code> 状态</p></td>
+<td><p>配置、输入、运行代码证据一致时，可指定原 <code class="docutils literal notranslate"><span class="pre">--run-id</span> <span class="pre">ID</span> <span class="pre">--resume</span></code>；这会创建新尝试，不保证跳过已成功的子任务</p></td>
+</tr>
+<tr class="row-even"><td><p>Feature/Infer 已记录 <code class="docutils literal notranslate"><span class="pre">failed</span></code> 或 <code class="docutils literal notranslate"><span class="pre">finished</span></code></p></td>
+<td><p>不能 resume；排除原因后，用原 <code class="docutils literal notranslate"><span class="pre">--run-id</span> <span class="pre">ID</span> <span class="pre">--force</span> <span class="pre">--reason</span> <span class="pre">&quot;原因&quot;</span></code> 显式创建新尝试，或使用新工作目录</p></td>
+</tr>
+<tr class="row-odd"><td><p>Slurm 清单为 <code class="docutils literal notranslate"><span class="pre">submitted</span></code></p></td>
+<td><p>先查调度器状态与作业日志，不能把 CLI 返回当作计算完成；当前不支持 scheduler resume，重新提交前确认旧作业结束</p></td>
+</tr>
+<tr class="row-even"><td><p>Train 或 Collect 失败</p></td>
+<td><p>没有统一的 <code class="docutils literal notranslate"><span class="pre">--resume/--force</span></code> 接口；先修复输入或环境，隔离旧输出后重新执行相应工作流。Train 不能据此声称从 checkpoint 续训</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>保留成功阶段时，只复用已确认成功且与当前配置、输入匹配的产物。沿
+<code class="docutils literal notranslate"><span class="pre">feature</span> <span class="pre">→</span> <span class="pre">train</span> <span class="pre">→</span> <span class="pre">infer</span> <span class="pre">→</span> <span class="pre">collect</span></code> 的示例操作时，实际依赖还需分别核对：
+更换候选池要重建对应描述符和推理结果；更换训练数据或训练模型后应重新训练、
+推理，再采集。更换 Feature 基座模型则需要重建描述符。不要仅凭目录存在判断
+上游已成功，也不要从未结束的 Slurm 作业输出中启动下游阶段。</p>
+</section>
+</section>
+<section id="id6">
+<h2>4. 环境类问题<a class="headerlink" href="#id6" title="Link to this heading">#</a></h2>
 <section id="dp-command-not-found">
 <h3>4.1 <code class="docutils literal notranslate"><span class="pre">dp:</span> <span class="pre">command</span> <span class="pre">not</span> <span class="pre">found</span></code><a class="headerlink" href="#dp-command-not-found" title="Link to this heading">#</a></h3>
 <p>症状：</p>
@@ -546,8 +584,8 @@ document.write(`
 <li><p>适当降低资源申请（缩短 walltime、减少 GPU/CPU）</p></li>
 </ul>
 </section>
-<section id="id6">
-<h3>6.3 日志不落盘/找不到日志文件<a class="headerlink" href="#id6" title="Link to this heading">#</a></h3>
+<section id="id7">
+<h3>6.3 日志不落盘/找不到日志文件<a class="headerlink" href="#id7" title="Link to this heading">#</a></h3>
 <p>处理：</p>
 <ul class="simple">
 <li><p>以提交目录为准确认 <code class="docutils literal notranslate"><span class="pre">.out</span></code> 位置（建议固定 <code class="docutils literal notranslate"><span class="pre">work_dir</span></code> 并在其中提交）</p></li>
@@ -566,8 +604,8 @@ document.write(`
 <li><p>若输入数据包含异常结构（box/coord 形状不一致），先修复数据</p></li>
 </ul>
 </section>
-<section id="id7">
-<h3>7.2 聚类不收敛或采样结果为空<a class="headerlink" href="#id7" title="Link to this heading">#</a></h3>
+<section id="id8">
+<h3>7.2 聚类不收敛或采样结果为空<a class="headerlink" href="#id8" title="Link to this heading">#</a></h3>
 <p>处理：</p>
 <ul class="simple">
 <li><p>检查 <code class="docutils literal notranslate"><span class="pre">sampler_type</span></code> 与参数组是否匹配（direct vs 2-direct）</p></li>
@@ -576,8 +614,8 @@ document.write(`
 </ul>
 </section>
 </section>
-<section id="id8">
-<h2>8. 变更记录<a class="headerlink" href="#id8" title="Link to this heading">#</a></h2>
+<section id="id9">
+<h2>8. 变更记录<a class="headerlink" href="#id9" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p>2026-02-18：补齐 Troubleshooting 的结构化排查路径与四类常见问题处理建议。</p></li>
 </ul>
@@ -633,9 +671,10 @@ document.write(`
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">2. 相关方</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">3. 总体排查顺序（强制建议）</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">3.1 任务完成锚点</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">3.2 选择重跑方式</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">4. 环境类问题</a><ul class="nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">4. 环境类问题</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dp-command-not-found">4.1 <code class="docutils literal notranslate"><span class="pre">dp:</span> <span class="pre">command</span> <span class="pre">not</span> <span class="pre">found</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#deepmd">4.2 DeepMD 版本不匹配/行为差异</a></li>
 </ul>
@@ -649,15 +688,15 @@ document.write(`
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#slurm">6. 作业与调度类问题（Slurm）</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#sbatch">6.1 <code class="docutils literal notranslate"><span class="pre">sbatch</span></code> 提交失败</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pending">6.2 长时间 pending</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">6.3 日志不落盘/找不到日志文件</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">6.3 日志不落盘/找不到日志文件</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#nan-inf">7. 数值类问题（NaN/Inf/聚类不收敛）</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#uq-nan-inf">7.1 UQ 分布异常或全 NaN/Inf</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">7.2 聚类不收敛或采样结果为空</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id8">7.2 聚类不收敛或采样结果为空</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id8">8. 变更记录</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id9">8. 变更记录</a></li>
 </ul>
   </nav></div>
 

@@ -154,6 +154,7 @@
         <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
 <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="guides/installation.html">安装与环境准备（Installation）</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/QuantumMisaka/dpeva/tree/main/examples/tutorials/paper_case">Paper case tutorial (CPU notebooks)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guides/quickstart.html">Quickstart（最短路径跑通）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guides/sai-quickstart.html">SAI 快速上手（Slurm 用户）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guides/cli.html">CLI 使用指南</a></li>
@@ -380,16 +381,19 @@ document.write(`
 <li class="toctree-l2"><a class="reference internal" href="guides/installation.html#id2">2. 相关方</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guides/installation.html#python">3. Python 环境要求</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guides/installation.html#local-pytorch">4. 从零准备 Local PyTorch 环境</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/installation.html#id3">5. 其它安装方式与依赖边界</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/installation.html#id5">6. 预置集群环境</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/installation.html#id6">7. 下一步</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/installation.html#id4">5. 其它安装方式与依赖边界</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/installation.html#id8">6. 预置集群环境</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/installation.html#id9">7. 下一步</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/QuantumMisaka/dpeva/tree/main/examples/tutorials/paper_case">Paper case tutorial (CPU notebooks)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guides/quickstart.html">Quickstart（最短路径跑通）</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="guides/quickstart.html#id1">准备</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/quickstart.html#id2">依次运行</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/quickstart.html#id3">查看产物</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/quickstart.html#id4">换用自己的模型与数据</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/quickstart.html#id2">选择运行位置</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/quickstart.html#id3">依次运行</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/quickstart.html#id4">查看产物</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/quickstart.html#id5">从头重新运行示例</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/quickstart.html#id6">换用自己的模型与数据</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="guides/sai-quickstart.html">SAI 快速上手（Slurm 用户）</a><ul>
@@ -421,6 +425,7 @@ document.write(`
 <li class="toctree-l2"><a class="reference internal" href="guides/configuration.html#workflow">5. 各 Workflow 最小配置示例</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guides/configuration.html#id8">6. 异常处理</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guides/configuration.html#id9">7. 变更记录</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/configuration.html#id10">替换入门示例中的模型与数据</a></li>
 </ul>
 </li>
 </ul>
@@ -442,11 +447,11 @@ document.write(`
 <li class="toctree-l2"><a class="reference internal" href="guides/troubleshooting.html#id1">1. 目的与范围</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guides/troubleshooting.html#id2">2. 相关方</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guides/troubleshooting.html#id3">3. 总体排查顺序（强制建议）</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/troubleshooting.html#id5">4. 环境类问题</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/troubleshooting.html#id6">4. 环境类问题</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guides/troubleshooting.html#dpdata-multi-datapool">5. 数据类问题（dpdata / Multi DataPool）</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guides/troubleshooting.html#slurm">6. 作业与调度类问题（Slurm）</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guides/troubleshooting.html#nan-inf">7. 数值类问题（NaN/Inf/聚类不收敛）</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/troubleshooting.html#id8">8. 变更记录</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/troubleshooting.html#id9">8. 变更记录</a></li>
 </ul>
 </li>
 </ul>

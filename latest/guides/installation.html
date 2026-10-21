@@ -153,6 +153,7 @@
         <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
 <ul class="current nav bd-sidenav">
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">安装与环境准备（Installation）</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/QuantumMisaka/dpeva/tree/main/examples/tutorials/paper_case">Paper case tutorial (CPU notebooks)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart（最短路径跑通）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="sai-quickstart.html">SAI 快速上手（Slurm 用户）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cli.html">CLI 使用指南</a></li>
@@ -366,19 +367,25 @@ document.write(`
                 <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">1. 目的与范围</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">2. 相关方</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#python">3. Python 环境要求</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#python">3. Python 环境要求</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">3.1 按用途选择环境</a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#local-pytorch">4. 从零准备 Local PyTorch 环境</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">5. 其它安装方式与依赖边界</a><ul class="nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">5. 其它安装方式与依赖边界</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core-deepmd">5.1 Core：默认安装（含 DeepMD 兼容包络）</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dev">5.2 Dev：开发与测试依赖（可选）</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#deepmd-runtime-3-2-lane">5.3 DeepMD runtime：显式 3.2 运行时 lane</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">5.4 预置环境：由调用方承担全部依赖</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">5.4 预置环境：由调用方承担全部依赖</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#research-production">5.5 Research production：研究生产精确锁定</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#exploration">5.6 Exploration 可选依赖</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">5.7 文档构建依赖</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpose">5.8 DPOSE 可选依赖</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">5.9 源码、发布包与示例数据</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">6. 预置集群环境</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">7. 下一步</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id8">6. 预置集群环境</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id9">7. 下一步</a></li>
 </ul>
             </nav>
         </div>
@@ -395,7 +402,7 @@ document.write(`
 <ul class="simple">
 <li><p>Status: active</p></li>
 <li><p>Audience: Users / Developers</p></li>
-<li><p>Last-Updated: 2026-10-13</p></li>
+<li><p>Last-Updated: 2026-10-21</p></li>
 </ul>
 <section id="id1">
 <h2>1. 目的与范围<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
@@ -415,7 +422,37 @@ document.write(`
 <li><p>Python：<code class="docutils literal notranslate"><span class="pre">&gt;=3.10</span></code></p></li>
 <li><p>包名：<code class="docutils literal notranslate"><span class="pre">dpeva</span></code></p></li>
 </ul>
-<p>依赖定义以 <a class="reference external" href="https://github.com/QuantumMisaka/dpeva/blob/main/pyproject.toml">pyproject.toml</a> 为准。</p>
+<p>依赖定义以 <a class="reference external" href="https://github.com/QuantumMisaka/dpeva/blob/main/pyproject.toml">pyproject.toml</a> 为准。
+以下 shell 命令面向 Linux / WSL。<code class="docutils literal notranslate"><span class="pre">requires-python</span></code> 声明包的 Python 下限；实际可用版本还取决于
+所选 DeepMD、PyTorch 及计算平台，不能将它视为所有后端的完整测试矩阵。</p>
+<section id="id3">
+<h3>3.1 按用途选择环境<a class="headerlink" href="#id3" title="Link to this heading">#</a></h3>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>用途</p></th>
+<th class="head"><p>环境与入口</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>20–30 分钟论文教学</p></td>
+<td><p>克隆完整仓库，按 <a class="reference external" href="https://github.com/QuantumMisaka/dpeva/tree/main/examples/tutorials/paper_case">CPU notebook 教程</a>运行 <code class="docutils literal notranslate"><span class="pre">run.py</span></code>；使用独立轻量环境，无需 DeepMD、GPU 或模型权重</p></td>
+</tr>
+<tr class="row-odd"><td><p>实际 feature/train/infer/collect 工作流</p></td>
+<td><p>按第 4 节安装完整环境，再运行 Quickstart</p></td>
+</tr>
+<tr class="row-even"><td><p>开发与文档维护</p></td>
+<td><p>完整环境上启用 <code class="docutils literal notranslate"><span class="pre">dev</span></code> / <code class="docutils literal notranslate"><span class="pre">docs</span></code>，见第 5 节</p></td>
+</tr>
+<tr class="row-odd"><td><p>SAI 或其他集群生产任务</p></td>
+<td><p>使用验证过的后端环境及站点调度配置，见第 6 节</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>CPU 教程的启动脚本支持 Python 3.10–3.13，依赖在其 <code class="docutils literal notranslate"><span class="pre">requirements.txt</span></code> 中单独管理。
+从仓库根目录运行 <code class="docutils literal notranslate"><span class="pre">python3</span> <span class="pre">examples/tutorials/paper_case/run.py</span></code> 即可准备环境并执行四章；
+首次安装需联网，之后可加 <code class="docutils literal notranslate"><span class="pre">--offline</span></code>。它不等价于安装完整 <code class="docutils literal notranslate"><span class="pre">dpeva</span></code> CLI 环境。</p>
+</section>
 </section>
 <section id="local-pytorch">
 <h2>4. 从零准备 Local PyTorch 环境<a class="headerlink" href="#local-pytorch" title="Link to this heading">#</a></h2>
@@ -425,32 +462,45 @@ document.write(`
 python3<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>.venv
 <span class="nb">source</span><span class="w"> </span>.venv/bin/activate
 python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>--upgrade<span class="w"> </span>pip
-python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>torch<span class="w"> </span>--index-url<span class="w"> </span>https://download.pytorch.org/whl/cpu
+python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span><span class="s1">'deepmd-kit[torch]&gt;=3.2,&lt;3.3'</span><span class="w"> </span>--extra-index-url<span class="w"> </span>https://download.pytorch.org/whl/cpu
 python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s1">'.[deepmd]'</span>
 dpeva<span class="w"> </span>doctor
 dp<span class="w"> </span>--version
+python<span class="w"> </span>-c<span class="w"> </span><span class="s2">"import deepmd.pt.model; print('DeepMD PyTorch backend loaded')"</span>
 </pre></div>
 </div>
-<p>DeepMD-kit 的上游<a class="reference external" href="https://docs.deepmodeling.com/projects/deepmd/en/stable/install/easy-install.html">安装指南</a>
-将 PyTorch 的 CPU 安装分为「先安装 CPU Torch，再安装 DeepMD-kit」；此处
-<code class="docutils literal notranslate"><span class="pre">dpeva[deepmd]</span></code> 安装会解析后者的 3.2 运行时依赖。若要用 NVIDIA GPU，先按
-上游指南选择与驱动匹配的 PyTorch/CUDA 安装方式，再安装 <code class="docutils literal notranslate"><span class="pre">dpeva[deepmd]</span></code> 并在
-实际计算节点检查 <code class="docutils literal notranslate"><span class="pre">torch.cuda.is_available()</span></code>。默认依赖和 <code class="docutils literal notranslate"><span class="pre">deepmd</span></code> extra 本身只约束
-DeepMD-kit 版本，不负责选择 PyTorch 的 CPU/CUDA wheel。</p>
+<p>此处显式安装 <strong>DeepMD-kit 自己的 <code class="docutils literal notranslate"><span class="pre">[torch]</span></code> extra</strong>，由其 wheel 元数据选择匹配的
+PyTorch 版本并带入 <code class="docutils literal notranslate"><span class="pre">mpich</span></code> 等后端依赖；CPU wheel 通过 PyTorch 的 CPU 索引取得。
+这与只约束 DeepMD 版本的 <strong>DP-EVA <code class="docutils literal notranslate"><span class="pre">[deepmd]</span></code> extra</strong> 是两件事。
+不要先安装不受约束的最新版 PyTorch 再只装裸 <code class="docutils literal notranslate"><span class="pre">deepmd-kit</span></code>：当前 3.2.0 wheel 的
+<code class="docutils literal notranslate"><span class="pre">torch</span></code> extra 要求 PyTorch 2.11.0，并包含其自定义算子加载所需的依赖。</p>
+<p><code class="docutils literal notranslate"><span class="pre">dpeva</span> <span class="pre">doctor</span></code> 检查版本与命令能力，不能单独证明 DeepMD 自定义算子可加载；
+上面的最后一条命令进一步检查 PyTorch 后端加载，包括二进制兼容性。
+本次 Linux / Python 3.12、DeepMD 3.2.0、PyTorch 2.11.0+cpu 验证通过后端加载和
+仓库 DPA3 夹具的单帧 CPU 推理；其他平台仍需在目标环境执行。
+该 wheel 在此纯 CPU 环境会打印 <code class="docutils literal notranslate"><span class="pre">libcudart.so.12</span></code> 加载提示，但 CPU 推理正常完成；
+这不代表 CUDA 可用，GPU 工作流仍需单独配置和验证。</p>
+<p>GPU 安装与源码构建参阅 DeepMD-kit 的上游<a class="reference external" href="https://docs.deepmodeling.com/projects/deepmd/en/stable/install/easy-install.html">安装指南</a>。
+选择与驱动、DeepMD wheel 匹配的 PyTorch/CUDA 版本后，在实际计算节点检查
+<code class="docutils literal notranslate"><span class="pre">torch.cuda.is_available()</span></code> 并加载后端。默认依赖和 <code class="docutils literal notranslate"><span class="pre">deepmd</span></code> extra 本身只约束
+DeepMD-kit 版本，不负责选择 PyTorch 的 CPU/CUDA wheel；集群自编译环境使用
+与其构建配置匹配的依赖，不直接套用本节的 PyPI wheel 配方。</p>
 <p>示例输入随源码仓库提供。安装后按 <a class="reference internal" href="quickstart.html"><span class="doc">Quickstart</span></a> 使用
 <code class="docutils literal notranslate"><span class="pre">examples/recipes/quickstart/</span></code> 中的相对路径配置运行四阶段 Local 链路。</p>
 </section>
-<section id="id3">
-<h2>5. 其它安装方式与依赖边界<a class="headerlink" href="#id3" title="Link to this heading">#</a></h2>
+<section id="id4">
+<h2>5. 其它安装方式与依赖边界<a class="headerlink" href="#id4" title="Link to this heading">#</a></h2>
 <section id="core-deepmd">
 <h3>5.1 Core：默认安装（含 DeepMD 兼容包络）<a class="headerlink" href="#core-deepmd" title="Link to this heading">#</a></h3>
 <p>默认安装在核心依赖中提供有界的 <code class="docutils literal notranslate"><span class="pre">deepmd-kit&gt;=3.1.2,&lt;3.3</span></code>，用于保留现有
 3.1.2 运行包络。这个依赖边界是安装兼容性承诺，不是新的科学能力验证；能力
-矩阵和 3.2 证据仍由显式 lane 单独管理。在项目根目录执行：</p>
+矩阵和 3.2 证据仍由显式 lane 单独管理。</p>
 <p>核心依赖中的 <code class="docutils literal notranslate"><span class="pre">dpdata&gt;=1.1</span></code> 是数据侧能力边界：读取 <code class="docutils literal notranslate"><span class="pre">deepmd/lmdb</span></code> 需要该下限，
 <code class="docutils literal notranslate"><span class="pre">lmdb</span></code> 与 <code class="docutils literal notranslate"><span class="pre">msgpack</span></code> 由 dpdata 自身引入。预置环境（<code class="docutils literal notranslate"><span class="pre">--no-deps</span></code>）若仍是
 <code class="docutils literal notranslate"><span class="pre">dpdata&lt;1.1</span></code>，<code class="docutils literal notranslate"><span class="pre">deepmd/lmdb</span></code> 输入会被明确拒绝；<code class="docutils literal notranslate"><span class="pre">dpeva</span> <span class="pre">doctor</span></code> 的 <code class="docutils literal notranslate"><span class="pre">dpdata.lmdb</span></code>
 检查会报告实际可读性。</p>
+<p><code class="docutils literal notranslate"><span class="pre">pandas</span></code> 用于表格、UQ 和采样数据处理，<code class="docutils literal notranslate"><span class="pre">packaging</span></code> 用于运行时版本判定；
+两者均为直接核心依赖。在项目根目录执行：</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.
 </pre></div>
 </div>
@@ -487,8 +537,8 @@ dp<span class="w"> </span>--version
 可用，同时将 3.2 qualification 单独标为未声明；3.2 lane 则单独报告
 qualification。旧版本、未来版本和 prerelease 不会绕过边界。</p>
 </section>
-<section id="id4">
-<h3>5.4 预置环境：由调用方承担全部依赖<a class="headerlink" href="#id4" title="Link to this heading">#</a></h3>
+<section id="id5">
+<h3>5.4 预置环境：由调用方承担全部依赖<a class="headerlink" href="#id5" title="Link to this heading">#</a></h3>
 <p>如果平台已经预置并验证了完整运行环境，可以显式跳过依赖解析：</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>--no-deps<span class="w"> </span>-e<span class="w"> </span>.
 </pre></div>
@@ -523,9 +573,40 @@ atst<span class="w"> </span>--help
 <li><p>ABACUS、DeePMD 模型文件、赝势和轨道文件仍由具体 ATST 配置与运行环境提供。</p></li>
 </ul>
 </section>
+<section id="id6">
+<h3>5.7 文档构建依赖<a class="headerlink" href="#id6" title="Link to this heading">#</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s1">'.[docs]'</span>
+python<span class="w"> </span>scripts/run_gate.py<span class="w"> </span>docs_pr
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">docs</span></code> 包含 Sphinx、主题、Markdown/图表扩展，以及文档检查用的 PyYAML 和
+Python 3.10 下的 TOML 解析器；系统还需提供 <code class="docutils literal notranslate"><span class="pre">make</span></code>。它会同时安装核心依赖。
+维护代码和文档时可合并安装 <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">pip</span> <span class="pre">install</span> <span class="pre">-e</span> <span class="pre">'.[dev,docs]'</span></code>。</p>
 </section>
-<section id="id5">
-<h2>6. 预置集群环境<a class="headerlink" href="#id5" title="Link to this heading">#</a></h2>
+<section id="dpose">
+<h3>5.8 DPOSE 可选依赖<a class="headerlink" href="#dpose" title="Link to this heading">#</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">dpose</span></code> extra 提供 PyTorch，供需要自动微分或读取 PyTorch checkpoint 的 DPOSE 路径使用：</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s1">'.[dpose]'</span>
+</pre></div>
+</div>
+<p>已有 CPU/GPU PyTorch 环境时继续使用匹配的安装源。此 extra 不代替实际模型、
+最后一层权重和后端适配要求；配置与适用范围见 <a class="reference internal" href="configuration.html"><span class="doc">配置指南</span></a>。
+论文 CPU notebook 使用归档委员会预测，不需要启用此 extra。</p>
+</section>
+<section id="id7">
+<h3>5.9 源码、发布包与示例数据<a class="headerlink" href="#id7" title="Link to this heading">#</a></h3>
+<p>本页的 <code class="docutils literal notranslate"><span class="pre">-e</span></code> 命令用于源码开发安装。部署固定源码副本时可在仓库根目录运行
+<code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">pip</span> <span class="pre">install</span> <span class="pre">.</span></code>；需要完整 PyTorch 工作流时仍先按第 4 节准备后端。</p>
+<p>截至 2026-10-21，PyPI 尚未提供可查询的 <code class="docutils literal notranslate"><span class="pre">dpeva</span></code> 发布记录，当前使用源码安装。
+发布后可在已准备后端的环境中使用 <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">pip</span> <span class="pre">install</span> <span class="pre">'dpeva[deepmd]'</span></code>，
+并按实际发布版本锁定依赖。源码版本与 PyPI 发布版本应分别记录。</p>
+<p>wheel 只包含 <code class="docutils literal notranslate"><span class="pre">src/</span></code> 下的 Python 包及声明的包数据；源码发行包通过 <code class="docutils literal notranslate"><span class="pre">MANIFEST.in</span></code>
+排除 <code class="docutils literal notranslate"><span class="pre">examples/tutorials/</span></code> 和集成测试模型权重。安装发布包不会取得论文教学数据、
+notebook 或 Quickstart 所需的完整夹具；运行这些示例需另行克隆完整 Git 仓库。</p>
+</section>
+</section>
+<section id="id8">
+<h2>6. 预置集群环境<a class="headerlink" href="#id8" title="Link to this heading">#</a></h2>
 <p>DP-EVA 的 DeepMD 工作流通过 <code class="docutils literal notranslate"><span class="pre">dp</span></code> 命令调用 DeepMD-kit（例如
 <code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">train/test/eval-desc</span></code>）。在 Slurm 环境中，建议通过
 <code class="docutils literal notranslate"><span class="pre">submission.env_setup</span></code> 显式加载已锁定的 DeepMD 环境，不要依赖交互式 shell。
@@ -543,9 +624,10 @@ SAI 的 <code class="docutils literal notranslate"><span class="pre">dpeva-dpa4<
 <li><p><a class="reference internal" href="../reference/upstream-software.html"><span class="doc">上游软件</span></a></p></li>
 </ul>
 </section>
-<section id="id6">
-<h2>7. 下一步<a class="headerlink" href="#id6" title="Link to this heading">#</a></h2>
+<section id="id9">
+<h2>7. 下一步<a class="headerlink" href="#id9" title="Link to this heading">#</a></h2>
 <ul class="simple">
+<li><p>学习论文方法：<a class="reference external" href="https://github.com/QuantumMisaka/dpeva/tree/main/examples/tutorials/paper_case">CPU 交互教程</a></p></li>
 <li><p>最短路径跑通：<a class="reference internal" href="quickstart.html"><span class="doc">Quickstart</span></a></p></li>
 <li><p>CLI 使用方式：<a class="reference internal" href="cli.html"><span class="doc">CLI 指南</span></a></p></li>
 <li><p>配置与路径解析：<a class="reference internal" href="configuration.html"><span class="doc">配置指南</span></a></p></li>
@@ -600,19 +682,25 @@ SAI 的 <code class="docutils literal notranslate"><span class="pre">dpeva-dpa4<
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">1. 目的与范围</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">2. 相关方</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#python">3. Python 环境要求</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#python">3. Python 环境要求</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">3.1 按用途选择环境</a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#local-pytorch">4. 从零准备 Local PyTorch 环境</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">5. 其它安装方式与依赖边界</a><ul class="nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">5. 其它安装方式与依赖边界</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core-deepmd">5.1 Core：默认安装（含 DeepMD 兼容包络）</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dev">5.2 Dev：开发与测试依赖（可选）</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#deepmd-runtime-3-2-lane">5.3 DeepMD runtime：显式 3.2 运行时 lane</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">5.4 预置环境：由调用方承担全部依赖</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">5.4 预置环境：由调用方承担全部依赖</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#research-production">5.5 Research production：研究生产精确锁定</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#exploration">5.6 Exploration 可选依赖</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">5.7 文档构建依赖</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dpose">5.8 DPOSE 可选依赖</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">5.9 源码、发布包与示例数据</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">6. 预置集群环境</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">7. 下一步</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id8">6. 预置集群环境</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id9">7. 下一步</a></li>
 </ul>
   </nav></div>
 

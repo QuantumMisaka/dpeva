@@ -153,6 +153,7 @@
         <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
 <ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="installation.html">安装与环境准备（Installation）</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/QuantumMisaka/dpeva/tree/main/examples/tutorials/paper_case">Paper case tutorial (CPU notebooks)</a></li>
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">Quickstart（最短路径跑通）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="sai-quickstart.html">SAI 快速上手（Slurm 用户）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cli.html">CLI 使用指南</a></li>
@@ -365,9 +366,11 @@ document.write(`
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">准备</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">依次运行</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">查看产物</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">换用自己的模型与数据</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">选择运行位置</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">依次运行</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">查看产物</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">从头重新运行示例</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">换用自己的模型与数据</a></li>
 </ul>
             </nav>
         </div>
@@ -399,7 +402,19 @@ dp<span class="w"> </span>--version
 <code class="docutils literal notranslate"><span class="pre">examples/recipes/quickstart/*.json</span></code> 换成对应配置文件的绝对路径即可。</p>
 </section>
 <section id="id2">
-<h2>依次运行<a class="headerlink" href="#id2" title="Link to this heading">#</a></h2>
+<h2>选择运行位置<a class="headerlink" href="#id2" title="Link to this heading">#</a></h2>
+<p>Local backend 会在启动命令的当前机器上直接计算，不会自动申请 Slurm 资源。
+独占 Linux 服务器可在确认资源可用后执行；共享集群用户应先按站点规则取得
+交互式计算资源，再在计算节点运行下面的 Local 示例，或改用 Slurm 提交配置。
+不要在登录节点直接执行这组计算命令。通用提交方法见
+<a class="reference internal" href="slurm.html"><span class="doc">Slurm 指南</span></a>，SAI 的环境与队列配置见
+<a class="reference internal" href="sai-quickstart.html"><span class="doc">SAI 快速上手</span></a>。</p>
+<p>示例虽然只有几帧数据，仍会加载预训练模型并训练 3 个模型；数据帧数不能作为
+内存需求的估计。当前没有可供承诺的统一耗时或峰值内存数字，应按实际模型、
+硬件和 DeepMD 环境安排资源。先运行 <code class="docutils literal notranslate"><span class="pre">dpeva</span> <span class="pre">doctor</span></code> 检查实际计算环境。</p>
+</section>
+<section id="id3">
+<h2>依次运行<a class="headerlink" href="#id3" title="Link to this heading">#</a></h2>
 <p>在仓库根目录执行：</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>dpeva<span class="w"> </span>feature<span class="w"> </span>examples/recipes/quickstart/feature.json
 dpeva<span class="w"> </span>train<span class="w">   </span>examples/recipes/quickstart/train.json
@@ -411,8 +426,8 @@ dpeva<span class="w"> </span>collect<span class="w"> </span>examples/recipes/qui
 仍可能耗时；可用 GPU 加速。需要在 Slurm 上执行时，参阅
 <a class="reference internal" href="sai-quickstart.html"><span class="doc">SAI 快速上手</span></a> 和 <a class="reference internal" href="slurm.html"><span class="doc">Slurm 指南</span></a>。</p>
 </section>
-<section id="id3">
-<h2>查看产物<a class="headerlink" href="#id3" title="Link to this heading">#</a></h2>
+<section id="id4">
+<h2>查看产物<a class="headerlink" href="#id4" title="Link to this heading">#</a></h2>
 <p>所有输出位于 <code class="docutils literal notranslate"><span class="pre">examples/recipes/quickstart/work/</span></code>：</p>
 <div class="pst-scrollable-table-container"><table class="table">
 <thead>
@@ -440,15 +455,47 @@ dpeva<span class="w"> </span>collect<span class="w"> </span>examples/recipes/qui
 <a class="reference internal" href="testing/multi-datapool-artifacts.html"><span class="doc">产物约定</span></a>。此小夹具的 collect 阶段可能选出
 0 帧，仍会导出候选数据；这是输入规模所致，不是科学效果验证。若失败，先查看
 <a class="reference internal" href="troubleshooting.html"><span class="doc">排障指南</span></a>，尤其检查 <code class="docutils literal notranslate"><span class="pre">dp</span></code> 是否在 <code class="docutils literal notranslate"><span class="pre">PATH</span></code>、数据路径以及相邻阶段
-的模型数量和任务目录是否一致。重跑前应清理这次示例生成的旧产物，以免旧文件混入
-当前结果。</p>
+的模型数量和任务目录是否一致。重新开始的方法见下节。</p>
 <p>接下来可按 <a class="reference internal" href="../reference/index.html"><span class="doc">配置参考</span></a> 准备自己的工作目录；标注与分析等其它
 工作流的参数和示例见 <a class="reference internal" href="cli.html"><span class="doc">CLI 指南</span></a> 与仓库中的
 <code class="docutils literal notranslate"><span class="pre">examples/recipes/README.md</span></code>。</p>
 </section>
-<section id="id4">
-<h2>换用自己的模型与数据<a class="headerlink" href="#id4" title="Link to this heading">#</a></h2>
-<p>熟悉示例后，将 recipe 中的模型与数据路径改为自己的输入。公开资源包括：</p>
+<section id="id5">
+<h2>从头重新运行示例<a class="headerlink" href="#id5" title="Link to this heading">#</a></h2>
+<p>先确认上一次 Local 进程已退出；如果改成了 Slurm 提交，则先确认关联作业均已结束
+或已取消。移动输出目录不会停止计算任务。排查问题时保留日志与运行清单，
+不要先删除出错现场。</p>
+<p>对于这份小型示例，默认做法是备份整个 <code class="docutils literal notranslate"><span class="pre">work/</span></code> 后，从 Feature 开始重跑。
+在仓库根目录执行以下命令，只移动本示例的输出，不移动模型、数据或配置：</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span>-d<span class="w"> </span>examples/recipes/quickstart/work<span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<span class="w">    </span>mkdir<span class="w"> </span>-p<span class="w"> </span><span class="s2">"</span><span class="nv">$HOME</span><span class="s2">/scratch"</span><span class="w"> </span><span class="o">&amp;&amp;</span>
+<span class="w">    </span><span class="nv">quickstart_backup_dir</span><span class="o">=</span><span class="k">$(</span>mktemp<span class="w"> </span>-d<span class="w"> </span><span class="s2">"</span><span class="nv">$HOME</span><span class="s2">/scratch/dpeva-quickstart.XXXXXX"</span><span class="k">)</span><span class="w"> </span><span class="o">&amp;&amp;</span>
+<span class="w">    </span>mv<span class="w"> </span>examples/recipes/quickstart/work<span class="w"> </span><span class="s2">"</span><span class="nv">$quickstart_backup_dir</span><span class="s2">/work"</span><span class="w"> </span><span class="o">&amp;&amp;</span>
+<span class="w">    </span><span class="nb">printf</span><span class="w"> </span><span class="s1">'Previous outputs saved to %s\n'</span><span class="w"> </span><span class="s2">"</span><span class="nv">$quickstart_backup_dir</span><span class="s2">/work"</span>
+<span class="k">fi</span>
+</pre></div>
+</div>
+<p>原来存在 <code class="docutils literal notranslate"><span class="pre">work/</span></code> 时，只有看到 <code class="docutils literal notranslate"><span class="pre">Previous</span> <span class="pre">outputs</span> <span class="pre">saved</span> <span class="pre">to</span> <span class="pre">...</span></code> 且命令无报错，
+才继续重跑；备份失败时先处理错误，不要覆盖原输出。原来没有 <code class="docutils literal notranslate"><span class="pre">work/</span></code> 则可直接开始。
+然后重新执行上文四条工作流命令。该方法保留旧日志、模型与 <code class="docutils literal notranslate"><span class="pre">.dpeva</span></code> 清单，
+新运行使用空工作目录。需要保留已成功阶段、恢复中断运行或重新提交作业时，
+先阅读 <a class="reference internal" href="troubleshooting.html"><span class="doc">排障与重跑说明</span></a>；四个阶段并不共享统一的
+断点续跑能力。</p>
+</section>
+<section id="id6">
+<h2>换用自己的模型与数据<a class="headerlink" href="#id6" title="Link to this heading">#</a></h2>
+<p>熟悉示例后，按以下两种情况准备自己的配置：</p>
+<ul class="simple">
+<li><p><strong>沿用本示例模型，只替换数据</strong>：修改训练数据与候选数据路径；Feature、Infer、
+Collect 应指向同一候选池。核对训练标签、元素映射和训练设置，不要把示例的
+30 步训练当作科研生产参数。</p></li>
+<li><p><strong>更换模型或模型家族</strong>：同时选择匹配的 DeepMD 训练模板、模型头与 <code class="docutils literal notranslate"><span class="pre">dp_backend</span></code>。
+本例的 <code class="docutils literal notranslate"><span class="pre">input.json</span></code> 绑定 DPA3 架构，不能仅替换模型文件路径就视为适用于 DPA4。
+DPA4 的现有模板位于 <code class="docutils literal notranslate"><span class="pre">examples/recipes/training/dpa4/</span></code>，使用前需要准备外部模型、
+数据和相应训练统计输入，并调整其提交配置。</p></li>
+</ul>
+<p>具体字段之间的匹配关系见 <a class="reference internal" href="configuration.html"><span class="doc">配置指南</span></a>。
+公开资源包括：</p>
 <div class="pst-scrollable-table-container"><table class="table">
 <thead>
 <tr class="row-odd"><th class="head"><p>资源</p></th>
@@ -522,9 +569,11 @@ dpeva<span class="w"> </span>collect<span class="w"> </span>examples/recipes/qui
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">准备</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">依次运行</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">查看产物</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">换用自己的模型与数据</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">选择运行位置</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">依次运行</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">查看产物</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">从头重新运行示例</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">换用自己的模型与数据</a></li>
 </ul>
   </nav></div>
 

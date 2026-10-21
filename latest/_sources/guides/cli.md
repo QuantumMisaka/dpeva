@@ -2,7 +2,7 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-09-20
+last-updated: 2026-10-15
 owner: Docs Owner
 ---
 
@@ -50,10 +50,14 @@ dpeva --no-banner <workflow> <config_path>
 ```
 
 `feature` 与 `infer` 还支持运行证据选项：`--run-id ID` 固定本次运行身份，
-`--resume` 恢复未完成的本地运行；已进入 `submitted` 的 Slurm 运行会在提交前拒绝
-resume（调度器轮询/恢复不在本试点范围），不会创建新作业。使用带必填 `--reason`
-的 `--force` 创建显式新尝试。`--resume` 与 `--force` 互斥；运行清单写入配置工作目录下的
-`.dpeva/runs/<run-id>/run.json`。
+`--resume` 在原配置、输入与运行代码证据一致时，为未终结且未处于 `submitted`
+状态的原运行创建新尝试。`failed`、`finished` 和 `submitted` 均不能直接 resume；
+调度器轮询与恢复不在当前范围。`--resume` 不承诺跳过已完成子任务或从模型 checkpoint 续算。
+使用带必填 `--reason` 的 `--force` 创建显式新尝试，并保留旧尝试记录；它不会自动取消
+旧作业，也不是训练断点续训。两者均必须同时提供原 `--run-id`，且互斥。
+运行清单写入配置工作目录下的 `.dpeva/runs/<run-id>/run.json`。
+Train 与 Collect 不提供这组运行证据选项。场景选择见
+{doc}`排障指南 </guides/troubleshooting>`。
 
 除 `doctor` 外的工作流都要求提供 `<config_path>`；CLI 会在参数解析阶段对它执行统一前置校验（存在性、可读性、JSON 文件后缀）。`doctor` 是不需要配置文件的独立环境检查命令，格式见下节。
 

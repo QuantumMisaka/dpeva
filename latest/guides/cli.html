@@ -153,6 +153,7 @@
         <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
 <ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="installation.html">安装与环境准备（Installation）</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/QuantumMisaka/dpeva/tree/main/examples/tutorials/paper_case">Paper case tutorial (CPU notebooks)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart（最短路径跑通）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="sai-quickstart.html">SAI 快速上手（Slurm 用户）</a></li>
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">CLI 使用指南</a></li>
@@ -442,10 +443,14 @@ dpeva<span class="w"> </span>train<span class="w"> </span>--help
 </pre></div>
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">feature</span></code> 与 <code class="docutils literal notranslate"><span class="pre">infer</span></code> 还支持运行证据选项：<code class="docutils literal notranslate"><span class="pre">--run-id</span> <span class="pre">ID</span></code> 固定本次运行身份，
-<code class="docutils literal notranslate"><span class="pre">--resume</span></code> 恢复未完成的本地运行；已进入 <code class="docutils literal notranslate"><span class="pre">submitted</span></code> 的 Slurm 运行会在提交前拒绝
-resume（调度器轮询/恢复不在本试点范围），不会创建新作业。使用带必填 <code class="docutils literal notranslate"><span class="pre">--reason</span></code>
-的 <code class="docutils literal notranslate"><span class="pre">--force</span></code> 创建显式新尝试。<code class="docutils literal notranslate"><span class="pre">--resume</span></code> 与 <code class="docutils literal notranslate"><span class="pre">--force</span></code> 互斥；运行清单写入配置工作目录下的
-<code class="docutils literal notranslate"><span class="pre">.dpeva/runs/&lt;run-id&gt;/run.json</span></code>。</p>
+<code class="docutils literal notranslate"><span class="pre">--resume</span></code> 在原配置、输入与运行代码证据一致时，为未终结且未处于 <code class="docutils literal notranslate"><span class="pre">submitted</span></code>
+状态的原运行创建新尝试。<code class="docutils literal notranslate"><span class="pre">failed</span></code>、<code class="docutils literal notranslate"><span class="pre">finished</span></code> 和 <code class="docutils literal notranslate"><span class="pre">submitted</span></code> 均不能直接 resume；
+调度器轮询与恢复不在当前范围。<code class="docutils literal notranslate"><span class="pre">--resume</span></code> 不承诺跳过已完成子任务或从模型 checkpoint 续算。
+使用带必填 <code class="docutils literal notranslate"><span class="pre">--reason</span></code> 的 <code class="docutils literal notranslate"><span class="pre">--force</span></code> 创建显式新尝试，并保留旧尝试记录；它不会自动取消
+旧作业，也不是训练断点续训。两者均必须同时提供原 <code class="docutils literal notranslate"><span class="pre">--run-id</span></code>，且互斥。
+运行清单写入配置工作目录下的 <code class="docutils literal notranslate"><span class="pre">.dpeva/runs/&lt;run-id&gt;/run.json</span></code>。
+Train 与 Collect 不提供这组运行证据选项。场景选择见
+<a class="reference internal" href="troubleshooting.html"><span class="doc">排障指南</span></a>。</p>
 <p>除 <code class="docutils literal notranslate"><span class="pre">doctor</span></code> 外的工作流都要求提供 <code class="docutils literal notranslate"><span class="pre">&lt;config_path&gt;</span></code>；CLI 会在参数解析阶段对它执行统一前置校验（存在性、可读性、JSON 文件后缀）。<code class="docutils literal notranslate"><span class="pre">doctor</span></code> 是不需要配置文件的独立环境检查命令，格式见下节。</p>
 <p>实现入口：<code class="docutils literal notranslate"><span class="pre">src/dpeva/cli.py</span></code>（基于 <code class="docutils literal notranslate"><span class="pre">argparse</span></code>）。</p>
 <p>配置加载的 Python 兼容接口为 <code class="docutils literal notranslate"><span class="pre">load_and_resolve_config(path)</span> <span class="pre">-&gt;</span> <span class="pre">dict</span></code>，返回已完成迁移和相对

@@ -153,6 +153,7 @@
         <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
 <ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="installation.html">安装与环境准备（Installation）</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/QuantumMisaka/dpeva/tree/main/examples/tutorials/paper_case">Paper case tutorial (CPU notebooks)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart（最短路径跑通）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="sai-quickstart.html">SAI 快速上手（Slurm 用户）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cli.html">CLI 使用指南</a></li>
@@ -391,6 +392,7 @@ document.write(`
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id8">6. 异常处理</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id9">7. 变更记录</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id10">替换入门示例中的模型与数据</a></li>
 </ul>
             </nav>
         </div>
@@ -505,8 +507,11 @@ submission backend。未知字段与新旧字段冲突仍然严格失败。</p>
 每个新建的 schema <code class="docutils literal notranslate"><span class="pre">1.0</span></code> 运行都会写入 <code class="docutils literal notranslate"><span class="pre">config.metadata.json</span></code>，记录输入 schema <code class="docutils literal notranslate"><span class="pre">1.0</span></code>
 与迁移 warning（无 warning 时为空列表），并由清单的 <code class="docutils literal notranslate"><span class="pre">config.metadata</span></code> 相对引用指向它；
 迁移前的 legacy 清单可能没有该引用，resume 时仅接受隐含的默认 metadata。使用 <code class="docutils literal notranslate"><span class="pre">--run-id</span></code> 可固定身份；已有
-身份默认拒绝覆盖，未完成的本地运行可用 <code class="docutils literal notranslate"><span class="pre">--resume</span></code>，已提交的 Slurm 运行会在提交
-前拒绝 resume，需要重跑时使用带审计说明 <code class="docutils literal notranslate"><span class="pre">--reason</span></code> 的 <code class="docutils literal notranslate"><span class="pre">--force</span></code>。运行清单中的 <code class="docutils literal notranslate"><span class="pre">finished</span></code>
+身份默认拒绝覆盖。<code class="docutils literal notranslate"><span class="pre">--resume</span></code> 要求原配置、输入与运行代码证据一致，且原运行未终结、
+未处于 <code class="docutils literal notranslate"><span class="pre">submitted</span></code> 状态；<code class="docutils literal notranslate"><span class="pre">failed</span></code>、<code class="docutils literal notranslate"><span class="pre">finished</span></code>、<code class="docutils literal notranslate"><span class="pre">submitted</span></code> 均拒绝 resume。
+需要创建新尝试时使用 <code class="docutils literal notranslate"><span class="pre">--run-id</span> <span class="pre">ID</span> <span class="pre">--force</span> <span class="pre">--reason</span> <span class="pre">&quot;说明&quot;</span></code>，先确保旧进程或作业不再运行。
+这些选项仅适用于 Feature/Infer，不表示训练 checkpoint 续训或自动跳过成功子任务。
+运行清单中的 <code class="docutils literal notranslate"><span class="pre">finished</span></code>
 只表示本地命令成功，且输出文件非空、属于当前 attempt 的新建或可观察重写并已校验；
 目录中未被本次执行改写的历史文件不能让 no-op 命令成功，也不会作为本 attempt 的新产物登记。
 该 freshness 判定使用 device/inode/size/mtime_ns/ctime_ns 元数据，不会在执行前读取或散列全部历史大型数组；
@@ -855,6 +860,41 @@ dpdata 树；JSON 文件写入可能进行文件级 flush，不能外推为整�
 <li><p>2026-02-18：补齐路径解析、Submission 结构与最小配置示例。</p></li>
 </ul>
 </section>
+<section id="id10">
+<h2>替换入门示例中的模型与数据<a class="headerlink" href="#id10" title="Link to this heading">#</a></h2>
+<p>入门 recipe 的用途是演示阶段连接。迁移到自己的体系时，按下表核对输入；字段的
+完整定义仍以 Reference 为准。</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>变更</p></th>
+<th class="head"><p>需要同步核对的配置</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>替换训练数据</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">training_data_path</span></code>、DeepMD 输入中的训练/验证数据设置、标签可用性与元素映射；重新选择训练步数、批量大小和损失参数</p></td>
+</tr>
+<tr class="row-odd"><td><p>替换候选池</p></td>
+<td><p>Feature 的 <code class="docutils literal notranslate"><span class="pre">data_path</span></code>、Infer 的 <code class="docutils literal notranslate"><span class="pre">data_path</span></code>、Collect 的 <code class="docutils literal notranslate"><span class="pre">testdata_dir</span></code> 指向同一批数据；新描述符和推理结果必须来自这批数据</p></td>
+</tr>
+<tr class="row-even"><td><p>替换预训练模型</p></td>
+<td><p>Train 的 <code class="docutils literal notranslate"><span class="pre">base_model_path</span></code> 与配套 <code class="docutils literal notranslate"><span class="pre">input_json_path</span></code>；Feature 的 <code class="docutils literal notranslate"><span class="pre">model_path</span></code>；各阶段实际需要的 <code class="docutils literal notranslate"><span class="pre">model_head</span></code> 和 <code class="docutils literal notranslate"><span class="pre">dp_backend</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>更换模型家族或后端</p></td>
+<td><p>训练模板中的 descriptor/fitting 配置、type map、统计输入、导出产物与下游操作支持范围；不能只替换模型路径</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>模型头不应机械统一：多任务基座需指定其实际存在的头，训练模式可能生成不同的
+微调头，单任务或导出后的模型是否需要 head 应按模型和 backend 契约选择。
+<code class="docutils literal notranslate"><span class="pre">training_mode=&quot;init&quot;</span></code> 会为首个模型使用配置的头，其余模型采用 <code class="docutils literal notranslate"><span class="pre">RANDOM</span></code> 初始化；
+它与从训练 checkpoint 恢复不是同一概念。</p>
+<p>现有 DPA4 模板位于 <code class="docutils literal notranslate"><span class="pre">examples/recipes/training/dpa4/</span></code>。其中的数据、模型和统计输入
+需要自行准备，Slurm 参数需按所在集群调整；这些模板不是自带数据的 Quickstart。
+使用前阅读该目录 README 中链接的 DeepMD 兼容性报告，确认所需操作的支持范围。
+更换模型或输入后使用新的工作目录，避免混用旧描述符、旧 ensemble 和新候选池。</p>
+</section>
 </section>
 
 
@@ -929,6 +969,7 @@ dpdata 树；JSON 文件写入可能进行文件级 flush，不能外推为整�
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id8">6. 异常处理</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id9">7. 变更记录</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id10">替换入门示例中的模型与数据</a></li>
 </ul>
   </nav></div>
 

@@ -511,6 +511,7 @@ window.runMermaid = runMermaid;</script>
         <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
 <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="installation.html">安装与环境准备（Installation）</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/QuantumMisaka/dpeva/tree/main/examples/tutorials/paper_case">Paper case tutorial (CPU notebooks)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart（最短路径跑通）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="sai-quickstart.html">SAI 快速上手（Slurm 用户）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cli.html">CLI 使用指南</a></li>
@@ -1470,8 +1471,18 @@ dpeva<span class="w"> </span>label<span class="w"> </span>config_label.json<span
 </section>
 <section id="id19">
 <h3>5.2 验证测试<a class="headerlink" href="#id19" title="Link to this heading">#</a></h3>
+<p>FeCHO 教学包独立于 GPU 工作流；入口为 <code class="docutils literal notranslate"><span class="pre">examples/tutorials/paper_case/README.md</span></code>。
+包含论文全量 30,656 帧结构与标签，默认全量选数；小切片作为可选交互模式。
+首次可用 <code class="docutils literal notranslate"><span class="pre">python3</span> <span class="pre">examples/tutorials/paper_case/run.py</span></code> 自动建环境并验收；
+加 <code class="docutils literal notranslate"><span class="pre">lab</span></code> 启动交互服务，已安装后加 <code class="docutils literal notranslate"><span class="pre">--offline</span></code> 复用环境。
+修改其数据、辅助函数或 notebook 时，在教学环境运行
+<code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">examples/tutorials/paper_case/scripts/verify.py</span></code>，核对身份、历史 UQ、
+无标签结构导出，并在独立 kernel 中执行各 notebook；需保存静态结果时加 <code class="docutils literal notranslate"><span class="pre">--write-notebooks</span></code>。</p>
 <p>按 <a class="reference internal" href="installation.html"><span class="doc">安装指南</span></a> 准备运行环境，再安装 <code class="docutils literal notranslate"><span class="pre">.[dev]</span></code>（文档变更另装 <code class="docutils literal notranslate"><span class="pre">.[docs]</span></code>）。
 预置的 <code class="docutils literal notranslate"><span class="pre">dpeva-dpa4</span></code> 仅是维护者使用的环境名，不要求贡献者具有同名环境。</p>
+<p>安装依赖以 <code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code> 为准；构建后端最低 setuptools 64（支持当前元数据与可编辑安装）。
+直接使用的 pandas / packaging 列为核心依赖；<code class="docutils literal notranslate"><span class="pre">dev</span></code> / <code class="docutils literal notranslate"><span class="pre">docs</span></code> 各自包含检查所需的 PyYAML，
+<code class="docutils literal notranslate"><span class="pre">docs</span></code> 同时覆盖 Python 3.10 的 TOML 解析需求。源码、发布包和教程环境的选择见安装指南。</p>
 <ul class="simple">
 <li><p><strong>运行单元测试 (Unit Tests)</strong>：执行 <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">scripts/run_gate.py</span> <span class="pre">unit</span></code>；覆盖率参数与阈值以 <code class="docutils literal notranslate"><span class="pre">scripts/gates.toml</span></code> 为准。</p>
 <ul>
@@ -1568,6 +1579,9 @@ A: 这是预期行为。在联合模式下，<code class="docutils literal notra
 <li><p><code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">scripts/release_helper.py</span> <span class="pre">--check</span></code> 是无写入的版本一致性检查，并已进入 <code class="docutils literal notranslate"><span class="pre">release</span></code> profile；显式版本只接受无前缀的 <code class="docutils literal notranslate"><span class="pre">X.Y.Z</span></code>。</p></li>
 <li><p>发布说明的权威写入位置始终是本文件的 <code class="docutils literal notranslate"><span class="pre">###</span> <span class="pre">6.2</span> <span class="pre">版本历史</span></code>，脚本不会自动追加版本条目。</p></li>
 <li><p>使用脚本完成版本号更新后，必须手动在 <code class="docutils literal notranslate"><span class="pre">####</span> <span class="pre">Current</span> <span class="pre">Era</span> <span class="pre">(v0.8.x)</span></code> 顶部追加新版本记录并执行发布门禁。提交、打 tag 与发布仍是分离的授权动作。</p></li>
+<li><p>教学数据通过 Git 分发，PyPI 不携带 <code class="docutils literal notranslate"><span class="pre">examples/tutorials/</span></code>；<code class="docutils literal notranslate"><span class="pre">MANIFEST.in</span></code> 同时排除
+<code class="docutils literal notranslate"><span class="pre">tests/integration/data/</span></code> 下的 <code class="docutils literal notranslate"><span class="pre">.pt</span></code> / <code class="docutils literal notranslate"><span class="pre">.pth</span></code> 测试权重。wheel 的包发现范围限定于 <code class="docutils literal notranslate"><span class="pre">src/</span></code>。
+构建 <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">build</span></code> 后须检查 wheel 和 sdist 的实际归档清单，不能仅依据 Git 忽略规则判断发布内容。</p></li>
 </ul>
 </section>
 <section id="id20">

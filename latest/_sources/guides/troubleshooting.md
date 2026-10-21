@@ -2,7 +2,7 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-09-20
+last-updated: 2026-10-15
 owner: Docs Owner
 ---
 
@@ -38,6 +38,26 @@ DPEVA_TAG: WORKFLOW_FINISHED
 ```
 
 没有该标记时，优先认为任务“未成功结束”，需要继续追踪日志中的异常堆栈或外部命令错误输出。
+
+### 3.2 选择重跑方式
+
+先保存错误日志，确认旧进程或 Slurm 作业已结束，再决定是否重用输出目录。
+`--force` 或移动目录都不会取消仍在运行的作业。Quickstart 的默认重新开始方式见
+{doc}`入门指南 </guides/quickstart>`。
+
+| 场景 | 当前支持的做法 |
+| --- | --- |
+| 想从头重做小型示例 | 备份整个示例工作目录，从第一阶段重新运行 |
+| Feature/Infer 中断，清单仍为未终结且非 `submitted` 状态 | 配置、输入、运行代码证据一致时，可指定原 `--run-id ID --resume`；这会创建新尝试，不保证跳过已成功的子任务 |
+| Feature/Infer 已记录 `failed` 或 `finished` | 不能 resume；排除原因后，用原 `--run-id ID --force --reason "原因"` 显式创建新尝试，或使用新工作目录 |
+| Slurm 清单为 `submitted` | 先查调度器状态与作业日志，不能把 CLI 返回当作计算完成；当前不支持 scheduler resume，重新提交前确认旧作业结束 |
+| Train 或 Collect 失败 | 没有统一的 `--resume/--force` 接口；先修复输入或环境，隔离旧输出后重新执行相应工作流。Train 不能据此声称从 checkpoint 续训 |
+
+保留成功阶段时，只复用已确认成功且与当前配置、输入匹配的产物。沿
+`feature → train → infer → collect` 的示例操作时，实际依赖还需分别核对：
+更换候选池要重建对应描述符和推理结果；更换训练数据或训练模型后应重新训练、
+推理，再采集。更换 Feature 基座模型则需要重建描述符。不要仅凭目录存在判断
+上游已成功，也不要从未结束的 Slurm 作业输出中启动下游阶段。
 
 ## 4. 环境类问题
 
