@@ -62,7 +62,9 @@ planned，不能把占位命令当作已执行证据。LMDB `train` 已有 CPU c
 SAI 200-step execution A/B（仍为 experimental；训练曲线是随机 smoke，不作
 等价性声明）；`test + deepmd/lmdb` 已由 CPU contract 与 SAI npy↔lmdb A/B
 晋级 supported。LMDB 的 `eval-desc`/`embed` 记录由上游 issue #6034 标记为
-blocked-upstream。
+blocked-upstream。2026-10-22 复核 `master` commit `a78bdfe8`：该 issue 仍
+open，`eval_desc.py`/`embedding.py` 仍走 `expand_sys_str` + `DeepmdData`，
+尚无实现 PR；因此保持 blocked-upstream。
 `candidate-evaluation` 是供上层 generic preflight 使用的 policy capability，
 不映射为 DeepMD CLI command。
 

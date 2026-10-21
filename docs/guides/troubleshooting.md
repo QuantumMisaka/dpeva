@@ -130,7 +130,8 @@ DPEVA_TAG: WORKFLOW_FINISHED
   `target_systems=` 筛选时，改用同一数据集的 `deepmd/npy`/`npy/mixed` 副本
 - `dp eval-desc`/`dp embed` 上游不支持 LMDB；Feature 工作流请指向 npy/mixed 副本，
   或使用进程内 `DescriptorGenerator` 路径。上游跟踪 issue：
-  [deepmodeling/deepmd-kit#6034](https://github.com/deepmodeling/deepmd-kit/issues/6034)
+  [deepmodeling/deepmd-kit#6034](https://github.com/deepmodeling/deepmd-kit/issues/6034)。
+  2026-10-22 复核 `master` commit `a78bdfe8`，issue 仍 open，尚无实现 PR。
 - 训练（`dp train`）支持 LMDB，但 `training_data.systems` 必须是**单个 LMDB 路径**；
   不要把多个 LMDB 放在一个容器目录里让 DP-EVA 展开。SAI 200-step execution
   A/B（JobID `1893783`）已证明两条训练路径均可完成并写出 checkpoint；短程

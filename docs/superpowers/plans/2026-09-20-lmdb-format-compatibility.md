@@ -621,3 +621,15 @@ label cleaned/anomalies 与 integration merged 均复用 WP-4A writer。
 证据：
 `docs/reports/evidence/deepmd-3.2/sai-lmdb-train-ab-job-1893783-public.json`
 及同目录 README；原始日志、lcurve、checkpoint 保留在 SAI。
+
+### 9.12 上游 LMDB exporter 状态复核（2026-10-22）
+
+- 上游 issue `deepmodeling/deepmd-kit#6034` 仍为 open；
+- `master` 最新提交
+  `a78bdfe8d5dc494a9d9a397e4a9e103a84205eaa`（2026-10-21）；
+- `deepmd/entrypoints/eval_desc.py` 与 `embedding.py` 仍使用
+  `expand_sys_str` + `DeepmdData`，没有 `is_lmdb`/`LmdbTestData` 分支；
+- `deepmd/utils/data.py` 仍无 LMDB 分支；
+- 未发现实现该 issue 的 open/closed PR；
+- 因此 `eval-desc`/`embed + deepmd/lmdb` 保持 `blocked-upstream`，暂不改
+  manifest 或引入 DP-EVA 侧替代实现。
