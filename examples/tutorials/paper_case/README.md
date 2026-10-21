@@ -97,6 +97,23 @@ python -m jupyter lab
 04 用约 1 分钟读反应误差表和表面稳定性图。第 03 章末尾公式推导留作课后阅读。
 若只有 20 分钟，01 跳过结构控件，02 只比较默认预算，04 选读一项应用结果，把主要时间留给 03。
 
+## 演示前准备
+
+首次使用先完成上面的联网安装。演示前从仓库根目录运行：
+
+```bash
+python3 examples/tutorials/paper_case/run.py --offline
+python3 examples/tutorials/paper_case/run.py lab --offline
+```
+
+第一条命令应报告四章均 `passed`，最终输出 `All tutorial checks passed`；
+确认后再用第二条命令打开 JupyterLab。按 01–04 顺序打开 notebook，先运行全部单元格，
+再调整控件；02 的预算和 03 的采样参数改动后需点击“运行采样”。
+
+现场优先演示全量默认配置；机器较慢时用小切片展示操作，科学结论结合保存的全量结果讲解。
+若现场无法启动交互，可直接讲解 notebook 已保存的日志、表格和图片；只有重新运行后控件才可操作。
+分享给听众时提供完整仓库及本 README，环境和 `work/` 导出目录由听众本地生成。
+
 ## 目录与文件
 
 ```text
