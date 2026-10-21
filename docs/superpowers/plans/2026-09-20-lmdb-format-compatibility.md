@@ -528,4 +528,24 @@ composition group 当作 Clean 的 system，会静默改变导出语义。
   - 写后回读 frame 数、`frame_system_ids`、nloc 分布和 system identity；
   - 任一项不一致 fail-loud。
 - 真实 LMDB 往返测试覆盖 system 划分和已有目标拒绝；
-- `output_format`、`label`/`integration` 的默认输出保持不变，WP-4B 仍可选。
+- `output_format`、`label`/`integration` 的默认输出保持不变；WP-4B 已在 §9.9 作为显式可选格式完成。
+
+### 9.9 WP-4B Label/integration LMDB 输出（2026-10-21）
+
+**Ruling:** `deepmd/lmdb` 作为显式可选 `output_format`，默认仍为 npy/mixed。
+LMDB 输出统一写到 `<output_dir>/dataset.lmdb`，manifest/summary 留在输出目录；
+label cleaned/anomalies 与 integration merged 均复用 WP-4A writer。
+
+**落地内容**
+
+- `VALID_LABELING_OUTPUT_FORMATS` 增加 `deepmd/lmdb`；
+- `output_format` / `integration_output_format` 接受 LMDB，配置描述更新；
+- `AbacusPostProcessor.export_data` 在 LMDB 分支调用 writer；
+- `DataIntegrationManager.integrate` 在 LMDB 分支调用 writer，manifest 记录
+  `format=deepmd/lmdb`；
+- 配置、postprocess、integration 的单元测试覆盖 LMDB 分支。
+
+**边界**
+
+- 默认输出未改变；
+- 真实 DeepMD CPU/SAI contract 仍属 WP-5。

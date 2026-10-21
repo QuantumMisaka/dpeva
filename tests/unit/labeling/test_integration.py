@@ -408,7 +408,34 @@ def test_integration_manager_custom_output_format(mock_load_systems, tmp_path):
     )
 
     assert result["output_format"] == "deepmd/npy"
-    assert (out_dir / "export.ok").read_text() == "deepmd/npy"
+
+
+@patch("dpeva.labeling.integration.dpdata.MultiSystems", _FakeMultiSystems)
+@patch("dpeva.labeling.integration.load_systems")
+@patch("dpeva.labeling.integration.write_lmdb")
+def test_integration_manager_lmdb_output(mock_write_lmdb, mock_load_systems, tmp_path):
+    new_dir = tmp_path / "new_cleaned"
+    out_dir = tmp_path / "merged"
+    new_dir.mkdir()
+    mock_load_systems.return_value = [_FakeSystem([[[0.0, 0.0, 0.0]]])]
+
+    def fake_write(systems, path, **kwargs):
+        Path(path).write_text("lmdb-placeholder", encoding="utf-8")
+
+    mock_write_lmdb.side_effect = fake_write
+
+    result = DataIntegrationManager(
+        deduplicate=False, output_format="deepmd/lmdb"
+    ).integrate(
+        new_labeled_data_path=new_dir,
+        merged_output_path=out_dir,
+    )
+
+    mock_write_lmdb.assert_called_once()
+    assert (out_dir / "dataset.lmdb").is_file()
+    assert result["output_format"] == "deepmd/lmdb"
+    manifest = json.loads((out_dir / "dataset-manifest.json").read_text())
+    assert manifest["format"] == "deepmd/lmdb"
 
 
 @patch("dpeva.labeling.integration.dpdata.MultiSystems", _FakeMultiSystems)

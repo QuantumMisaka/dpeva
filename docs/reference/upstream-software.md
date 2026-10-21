@@ -92,9 +92,10 @@ Clean 在没有 `frame_system_ids`/`system_info` 时 fail-loud。`dp test` 自�
 `type_map` 顺序和原子存储顺序不改变身份，标签数组随同一原子排列重排；
 LMDB 缺少 `real_atom_types` 时以规范化 `atom_types` 作为元素身份。
 
-写出侧目前提供显式的 `dpeva.io.lmdb_writer.write_lmdb` 转换 API：
-它按输入 system 顺序写出并回读校验 `frame_system_ids`，不改变默认
-`output_format`，也不把 LMDB 自动设为标签或集成输出。
+写出侧提供显式的 `dpeva.io.lmdb_writer.write_lmdb` 转换 API：
+它按输入 system 顺序写出并回读校验 `frame_system_ids`。Label 的
+`output_format` / `integration_output_format` 可选择 `deepmd/lmdb`，
+输出为 `<output_dir>/dataset.lmdb`；默认仍保持 npy/mixed，不自动切换。
 
 ## 3. ABACUS
 

@@ -57,7 +57,11 @@ DEFAULT_LABELING_CLEANING_THRESHOLDS: Final[dict] = {
 DEFAULT_LABELING_ATTEMPT_PARAMS: Final[list] = [
     {},
 ]
-VALID_LABELING_OUTPUT_FORMATS: Final[list] = ["deepmd/npy", "deepmd/npy/mixed"]
+VALID_LABELING_OUTPUT_FORMATS: Final[list] = [
+    "deepmd/npy",
+    "deepmd/npy/mixed",
+    "deepmd/lmdb",
+]
 DEFAULT_LABELING_OUTPUT_FORMAT: Final[str] = "deepmd/npy"
 DEFAULT_LABELING_INTEGRATION_OUTPUT_FORMAT: Final[str] = "deepmd/npy/mixed"
 

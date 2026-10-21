@@ -15,6 +15,8 @@ import dpdata
 from collections import Counter
 from scipy.linalg import lstsq
 
+from dpeva.io.lmdb_writer import write_lmdb
+
 logger = logging.getLogger(__name__)
 
 EV_A3_TO_GPA = 160.21766208
@@ -329,7 +331,10 @@ class AbacusPostProcessor:
         output_dir.mkdir(parents=True, exist_ok=True)
         
         try:
-            new_ms.to(format, str(output_dir))
+            if format == "deepmd/lmdb":
+                write_lmdb(list(new_ms), output_dir / "dataset.lmdb")
+            else:
+                new_ms.to(format, str(output_dir))
             logger.info(f"Exported {len(new_ms)} systems to {output_dir}")
         except Exception as e:
             logger.error(f"Export failed: {e}")

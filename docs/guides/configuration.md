@@ -318,6 +318,12 @@ LLPR / energy DPOSE 可作为 Collect UQ backend 使用。最小 energy LLPR 只
 }
 ```
 
+`output_format`（cleaned/anomalies）和 `integration_output_format`（merged）均支持
+`deepmd/npy`、`deepmd/npy/mixed`、`deepmd/lmdb`；默认值不变。选择
+`deepmd/lmdb` 时，数据写入对应输出目录下的 `dataset.lmdb`，manifest/summary
+仍保留在同一目录。该写出使用 WP-4A 的显式 writer，并在发布前校验 frame/system
+身份；不会把 LMDB 自动设为默认格式。
+
 整合成功后，在 `merged_training_data_path` 下同时生成
 `integration_summary.json`、当前代兼容指针 `dataset-manifest.json` 和不可变的
 `dataset-manifest-<generation>.json`。summary 的 `dataset_manifest_path` 是相对于

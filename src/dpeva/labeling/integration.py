@@ -15,6 +15,7 @@ from dpdata.data_type import Axis
 
 from dpeva.constants import DEFAULT_LABELING_INTEGRATION_OUTPUT_FORMAT
 from dpeva.io.dataset import load_systems
+from dpeva.io.lmdb_writer import write_lmdb
 from dpeva.run.dataset import (
     DatasetIntersectionSummary,
     DatasetManifest,
@@ -173,7 +174,10 @@ class DataIntegrationManager:
             )
         )
         try:
-            merged.to(self.output_format, str(staging_path))
+            if self.output_format == "deepmd/lmdb":
+                write_lmdb(list(merged), staging_path / "dataset.lmdb")
+            else:
+                merged.to(self.output_format, str(staging_path))
             content_identity = self._hash_exported_dataset(staging_path)
             manifest = manifest.model_copy(
                 update={

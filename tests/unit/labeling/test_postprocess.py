@@ -364,3 +364,22 @@ def test_export_data_logs_export_failure(mock_multi_systems, tmp_path: Path):
         pp.export_data([system], df_clean, tmp_path / "cleaned")
 
     mock_error.assert_any_call("Export failed: write failed")
+
+
+@patch("dpeva.labeling.postprocess.write_lmdb")
+@patch("dpeva.labeling.postprocess.dpdata.MultiSystems")
+def test_export_data_uses_explicit_lmdb_writer(
+    mock_multi_systems, mock_write_lmdb, tmp_path: Path
+):
+    pp = AbacusPostProcessor({})
+    system = MagicMock()
+    system.sub_system.return_value = MagicMock()
+    df_clean = pd.DataFrame([{"sys_idx": 0, "frame_idx": 0}])
+
+    pp.export_data(
+        [system], df_clean, tmp_path / "cleaned", format="deepmd/lmdb"
+    )
+
+    mock_write_lmdb.assert_called_once()
+    target = mock_write_lmdb.call_args.args[1]
+    assert str(target).endswith("cleaned/dataset.lmdb")
