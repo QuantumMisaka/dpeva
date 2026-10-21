@@ -132,7 +132,9 @@ DPEVA_TAG: WORKFLOW_FINISHED
   或使用进程内 `DescriptorGenerator` 路径。上游跟踪 issue：
   [deepmodeling/deepmd-kit#6034](https://github.com/deepmodeling/deepmd-kit/issues/6034)
 - 训练（`dp train`）支持 LMDB，但 `training_data.systems` 必须是**单个 LMDB 路径**；
-  不要把多个 LMDB 放在一个容器目录里让 DP-EVA 展开
+  不要把多个 LMDB 放在一个容器目录里让 DP-EVA 展开。SAI 200-step execution
+  A/B（JobID `1893783`）已证明两条训练路径均可完成并写出 checkpoint；短程
+  lcurve 受随机采样影响，不能据此声称训练曲线逐位等价。
 - `dp test` 自报的聚合指标在 LMDB 上有效；带 `frame_nlocs`/`frame_system_ids`
   的 LMDB 可由 `dpeva infer`/`analysis` 解析逐帧明细。缺失元数据时 parser 会
   fail-loud，不会猜测归属

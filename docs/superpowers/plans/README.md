@@ -32,7 +32,7 @@ design at that time; it is not a live status tracker.
 
 ## Active plans
 
-- [LMDB 数据格式兼容](2026-09-20-lmdb-format-compatibility.md)（status: active）: 读侧契约、失败语义、能力矩阵 `data_format` 维度、消费链对齐与写出侧的完整编排。**Phase 1 已完成**（`bf1b58d`、`ac58940`）；Phase 2–5 已按 WP-1…WP-5 完成。WP-1 能力声明、WP-2 帧索引与 infer/analysis、WP-3 跨格式身份与 Clean 原始 system 导出、WP-4 writer 与 Label LMDB 输出、WP-5 CPU contract 与 SAI A/B 均已收口；`test + deepmd/lmdb` 已晋级 supported，`train` 仍为 experimental。需求来源见 [LMDB 读取支持提案](../../reports/2026-09-19-lmdb-read-support.md)。
+- [LMDB 数据格式兼容](2026-09-20-lmdb-format-compatibility.md)（status: active）: 读侧契约、失败语义、能力矩阵 `data_format` 维度、消费链对齐与写出侧的完整编排。**Phase 1 已完成**（`bf1b58d`、`ac58940`）；Phase 2–5 已按 WP-1…WP-5 完成。WP-1 能力声明、WP-2 帧索引与 infer/analysis、WP-3 跨格式身份与 Clean 原始 system 导出、WP-4 writer 与 Label LMDB 输出、WP-5 CPU contract、SAI A/B 与 200-step training execution smoke 均已收口；`test + deepmd/lmdb` 已晋级 supported，`train` 仍为 experimental（训练曲线随机性不作等价性声明）。需求来源见 [LMDB 读取支持提案](../../reports/2026-09-19-lmdb-read-support.md)。
 
 ## Superseding status pointer
 

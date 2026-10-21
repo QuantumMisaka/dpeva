@@ -600,3 +600,24 @@ label cleaned/anomalies 与 integration merged 均复用 WP-4A writer。
   `validate_promotion_evidence`；
 - `train + deepmd/lmdb`：experimental/implemented，CPU evidence 已绑定；
 - `eval-desc`/`embed + deepmd/lmdb`：blocked-upstream（#6034）。
+
+### 9.11 真实 200-step 训练 A/B 执行 smoke（2026-10-22）
+
+**目的：** 补足 `train + deepmd/lmdb` 的真实训练执行证据，而不是把它误当成
+格式等价精度声明。
+
+- SAI 4V100 JobID `1893783`，`dpeva-dpa4-320`，`DeePMD-kit v3.2.0`；
+- 同一 16,485 帧训练集分别以 `deepmd/npy/mixed` 与 `deepmd/lmdb` 训练
+  200 step；
+- 同一 2,604 帧 npy 验证集、seed 42、`filter:255`、同一模型配置；
+- 两次 `dp --pt train` 均 rc=0，均写出 step-200 regular/EMA checkpoint；
+- step-100/200 稳态墙钟分别 mixed `34.98/37.71 s`、lmdb `36.46/35.96 s`；
+- 200-step lcurve 的 force-validation MAE 差异 13.6%，energy/RMSE 等接近；
+  这是短程随机采样差异，不能作为格式等价门；
+- 结果 JSON 明确 `execution_only=true`、`metric_equivalence_claimed=false`；
+- `train + deepmd/lmdb` 保持 experimental；`test + deepmd/lmdb` 的 supported
+  状态不受影响。
+
+证据：
+`docs/reports/evidence/deepmd-3.2/sai-lmdb-train-ab-job-1893783-public.json`
+及同目录 README；原始日志、lcurve、checkpoint 保留在 SAI。

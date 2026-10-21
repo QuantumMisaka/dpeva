@@ -26,3 +26,8 @@ LMDB-specific records:
   attestation for `test + deepmd/lmdb`.
 - `sai-lmdb-ab-job-1893546-attestation.README.md`: provenance and scope of
   that one-case attestation.
+- `sai-lmdb-train-ab-job-1893783-public.json`: 200-step training execution
+  A/B summary; the companion README explains why it is not a format
+  equivalence or promotion claim.
+- `sai-lmdb-train-ab-job-1893783.README.md`: provenance and metric boundary
+  for that training smoke.

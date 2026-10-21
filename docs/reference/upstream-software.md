@@ -58,9 +58,10 @@ CPU evidence，以及需要时的 SAI evidence 均存在并通过，Compatibilit
 blocked-upstream）。每条记录还声明 `verification_status` 与
 `required_evidence`；`implemented` 必须绑定可收集的 pytest node，尚未具备测试的
 train/fine-tune/freeze、LMDB fine-tune、pretrained alias 和 deploy 路线保持
-planned，不能把占位命令当作已执行证据。LMDB `train` 已有 CPU contract
-（仍为 experimental）；`test + deepmd/lmdb` 已由 CPU contract 与 SAI npy↔lmdb
-A/B 晋级 supported。LMDB 的 `eval-desc`/`embed` 记录由上游 issue #6034 标记为
+planned，不能把占位命令当作已执行证据。LMDB `train` 已有 CPU contract 与
+SAI 200-step execution A/B（仍为 experimental；训练曲线是随机 smoke，不作
+等价性声明）；`test + deepmd/lmdb` 已由 CPU contract 与 SAI npy↔lmdb A/B
+晋级 supported。LMDB 的 `eval-desc`/`embed` 记录由上游 issue #6034 标记为
 blocked-upstream。
 `candidate-evaluation` 是供上层 generic preflight 使用的 policy capability，
 不映射为 DeepMD CLI command。
@@ -80,7 +81,7 @@ blocked-upstream。
 | 消费方 | `deepmd/npy` / `npy/mixed` | `deepmd/lmdb` | 说明 |
 |---|---|---|---|
 | DP-EVA 读侧（`dpeva.io.dataset.load_systems`） | ✓ | ✓（dpdata≥1.1） | LMDB 只经 `dpdata.MultiSystems` 读取；体系分组口径为**组成分组** |
-| `dp train`（`training_data` / `validation_data`） | ✓ | ✓（CPU contract；experimental） | 要求 `systems` 为**单个字符串**路径，deepmd-kit 3.2 起原生流式读取 |
+| `dp train`（`training_data` / `validation_data`） | ✓ | ✓（CPU contract + SAI 200-step smoke；experimental） | 要求 `systems` 为**单个字符串**路径，deepmd-kit 3.2 起原生流式读取；训练曲线随机性不作为格式等价门 |
 | `dp test` | ✓ | ✓（supported） | 整个 LMDB 视作 1 个数据源，按 nloc 分组评测；`-d` 明细行序 = nloc 组升序，DP-EVA 用帧索引恢复归属 |
 | `dp eval-desc` / `dp embed` | ✓ | ✗ | 上游基于 `expand_sys_str` + `DeepmdData`，无 LMDB 读取分支（3.2.0 GA、本地 dev 构建与 upstream master 均已核实）；DP-EVA 在提交作业前拒绝该组合 |
 

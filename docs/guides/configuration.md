@@ -197,8 +197,9 @@ pt test/eval-desc/embed，以及 `test + deepmd/lmdb`。三条 npy 声明同时
 绑定 CPU contract JobID `1128442` 和完成的 SAI V100 qualification JobID
 `1128260`；脱敏 SAI promotion aggregate 与三个 CPU attestation 位于
 `docs/reports/evidence/deepmd-3.2/`。LMDB `test` 另绑定 CPU JobID `1893534`
-和 SAI npy↔lmdb A/B JobID `1893546`；LMDB `train` 仅有 CPU contract，仍为
-experimental。证据只证明选定 regular 模型、regular+EMA
+和 SAI npy↔lmdb A/B JobID `1893546`；LMDB `train` 另有 CPU contract 与
+SAI 200-step execution A/B JobID `1893783`，但训练曲线随机性不足以作格式
+等价声明，因此仍为 experimental。证据只证明选定 regular 模型、regular+EMA
 V100 命令链完成，不构成科学精度或所有下游 head 的支持声明。一次
 `pt-expt eval-desc` 虽然执行成功，但事后 descriptor inspection 证明所用 artifact
 实际为 DPA4 而非 DPA4C；因此周期性 DPA4C 路线仍为 experimental，不能因命令

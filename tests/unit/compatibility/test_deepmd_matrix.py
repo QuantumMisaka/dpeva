@@ -328,6 +328,24 @@ def test_lmdb_sai_ab_evidence_is_public_and_bound_to_raw_result() -> None:
             assert forbidden not in serialized
 
 
+def test_lmdb_train_ab_is_execution_only_and_sanitized() -> None:
+    path = Path(
+        "docs/reports/evidence/deepmd-3.2/"
+        "sai-lmdb-train-ab-job-1893783-public.json"
+    )
+    payload = json.loads(path.read_text(encoding="utf-8"))
+
+    assert payload["status"] == "finished"
+    assert payload["job_id"] == "1893783"
+    assert payload["execution_only"] is True
+    assert payload["metric_equivalence_claimed"] is False
+    assert payload["checkpoints_sha256"]["mixed_step_200"]
+    assert payload["checkpoints_sha256"]["lmdb_step_200"]
+    serialized = path.read_text(encoding="utf-8")
+    for forbidden in ("/home/", "/org/", "liuzhaoqing", "4v100n27"):
+        assert forbidden not in serialized
+
+
 def test_non_pbc_capabilities_remain_blocked_by_issue_6002() -> None:
     records = [
         record

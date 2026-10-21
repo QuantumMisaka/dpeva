@@ -191,7 +191,8 @@
    "src/dpeva/workflows/data_cleaning.py",
    "src/dpeva/run/doctor.py",
    "src/dpeva/compatibility/deepmd-3.2.json",
-   "scripts/validation/compare_lmdb_ab.py"
+   "scripts/validation/compare_lmdb_ab.py",
+   "scripts/validation/compare_lmdb_train_ab.py"
   ],
   "test_paths": [
    "tests/unit/io/test_dataset_lmdb.py",
@@ -209,6 +210,7 @@
    "tests/unit/run/test_doctor.py",
    "tests/unit/compatibility/test_lmdb_capability.py",
    "tests/unit/scripts/test_compare_lmdb_ab.py",
+   "tests/unit/scripts/test_compare_lmdb_train_ab.py",
    "tests/contract/deepmd/test_cli_contract.py"
   ],
   "documentation_paths": [
