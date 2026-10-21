@@ -1,0 +1,29 @@
+{
+  "attestations": [
+    {
+      "capability_key": {
+        "artifact": "checkpoint",
+        "backend": "pt",
+        "data_format": "deepmd/lmdb",
+        "environment": "cpu",
+        "model_family": "DPA4",
+        "operation": "test"
+      },
+      "case": "pt-test",
+      "deepmd_version": "DeePMD-kit v3.2.0",
+      "gpu": "SAI 4V100",
+      "job_id": "1893546",
+      "returncode": 0,
+      "schema_version": "1.0",
+      "source": "sai-v100-qualification",
+      "status": "finished",
+      "verification_command": "pytest tests/contract/deepmd/test_cli_contract.py::test_pt_test_reads_lmdb_and_attributes_detail -q"
+    }
+  ],
+  "gpu": "SAI 4V100",
+  "job_id": "1893546",
+  "qualification": "deepmd-3.2-sai-v100",
+  "raw_evidence_sha256": "9e95d567bd2b876b63de9a68c75feb5f0ff35b421fa3005dd2f2c2224ff82bc3",
+  "schema_version": "1.0",
+  "status": "finished"
+}

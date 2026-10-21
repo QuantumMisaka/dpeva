@@ -156,6 +156,66 @@ def test_parser_rejects_wrong_lmdb_group_order(tmp_path: Path) -> None:
         DPTestResultParser(str(tmp_path), head="results").parse()
 
 
+@requires_lmdb_writer
+def test_parser_attributes_32_truncated_mixed_nloc_header(tmp_path: Path) -> None:
+    target = _write_lmdb(tmp_path)
+    (tmp_path / "results.e_peratom.out").write_text(
+        "\n".join(
+            [
+                f"# {target} [nloc=2]: data_e pred_e",
+                *(["0 0"] * 4),
+            ]
+        )
+        + "\n"
+    )
+    (tmp_path / "results.f.out").write_text(
+        "\n".join(
+            [
+                f"# {target} [nloc=2]: data_fx data_fy data_fz pred_fx pred_fy pred_fz",
+                *(["0 0 0 0 0 0"] * 10),
+            ]
+        )
+        + "\n"
+    )
+
+    parsed = DPTestResultParser(str(tmp_path), head="results").parse()
+
+    assert parsed["dataname_list"] == [
+        ["mixed.lmdb#sys0", 0, 2],
+        ["mixed.lmdb#sys0", 1, 2],
+        ["mixed.lmdb#sys1", 0, 3],
+        ["mixed.lmdb#sys1", 1, 3],
+    ]
+
+
+@requires_lmdb_writer
+def test_parser_accepts_single_group_header_without_nloc(tmp_path: Path) -> None:
+    from dpdata.formats.deepmd.lmdb import dump_systems
+
+    system = _write_npy_system(
+        tmp_path, "single", [0, 0], [-1.0, -1.1]
+    )
+    target = tmp_path / "single.lmdb"
+    dump_systems([system], str(target), type_map=["Fe"])
+    (tmp_path / "results.e_peratom.out").write_text(
+        f"# {target}: data_e pred_e\n0 0\n0 0\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "results.f.out").write_text(
+        f"# {target}: data_fx data_fy data_fz pred_fx pred_fy pred_fz\n"
+        + "\n".join(["0 0 0 0 0 0"] * 4)
+        + "\n",
+        encoding="utf-8",
+    )
+
+    parsed = DPTestResultParser(str(tmp_path), head="results").parse()
+
+    assert parsed["dataname_list"] == [
+        ["single.lmdb#sys0", 0, 2],
+        ["single.lmdb#sys0", 1, 2],
+    ]
+
+
 def _write_metadata_lmdb(root: Path, metadata: dict) -> Path:
     target = root / "meta.lmdb"
     env = lmdb.open(str(target), map_size=1024 * 1024)

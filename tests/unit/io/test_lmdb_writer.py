@@ -62,6 +62,42 @@ def test_write_lmdb_preserves_system_partition(tmp_path: Path) -> None:
 
 
 @requires_lmdb_writer
+def test_write_lmdb_validates_multiframe_nloc_groups(tmp_path: Path) -> None:
+    first = _system(
+        tmp_path,
+        "first",
+        np.array(
+            [
+                [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]],
+                [[0.0, 0.0, 0.0], [1.5, 0.0, 0.0]],
+            ]
+        ),
+        np.array([-1.0, -1.1]),
+    )
+    second = _system(
+        tmp_path,
+        "second",
+        np.array(
+            [
+                [[2.0, 0.0, 0.0], [3.0, 0.0, 0.0], [4.0, 0.0, 0.0]],
+                [[2.0, 0.0, 0.0], [3.5, 0.0, 0.0], [4.0, 0.0, 0.0]],
+            ]
+        ),
+        np.array([-2.0, -2.1]),
+    )
+    target = tmp_path / "out.lmdb"
+
+    summary = write_lmdb([first, second], target, type_map=["Fe"])
+
+    index = read_lmdb_frame_index(target)
+    assert summary["nframes"] == 4
+    assert [frame.storage_index for frame in index.frames] == [0, 1, 2, 3]
+    assert {
+        nloc: len(frames) for nloc, frames in index.nloc_groups.items()
+    } == {2: 2, 3: 2}
+
+
+@requires_lmdb_writer
 def test_write_lmdb_refuses_existing_target(tmp_path: Path) -> None:
     system = _system(
         tmp_path,

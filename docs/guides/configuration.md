@@ -2,7 +2,7 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-10-21
+last-updated: 2026-10-22
 owner: Docs Owner
 ---
 
@@ -192,11 +192,13 @@ descriptor 可通过 `dp --pt-expt eval-desc` 提取，单任务模型无需设�
 backend 提供 descriptor 提取，但尚未提供 `dp embed` 所需的组合
 `eval_embedding` 接口，因此这一路径应使用 `eval_desc`。
 
-当前 DeepMD 3.2 兼容性通道已有 3 条 `supported` 能力：DPA4
-pt test/eval-desc/embed。这些声明同时
+当前 DeepMD 3.2 兼容性通道已有 4 条 `supported` 能力：DPA4
+pt test/eval-desc/embed，以及 `test + deepmd/lmdb`。三条 npy 声明同时
 绑定 CPU contract JobID `1128442` 和完成的 SAI V100 qualification JobID
 `1128260`；脱敏 SAI promotion aggregate 与三个 CPU attestation 位于
-`docs/reports/evidence/deepmd-3.2/`。证据只证明选定 regular 模型、regular+EMA
+`docs/reports/evidence/deepmd-3.2/`。LMDB `test` 另绑定 CPU JobID `1893534`
+和 SAI npy↔lmdb A/B JobID `1893546`；LMDB `train` 仅有 CPU contract，仍为
+experimental。证据只证明选定 regular 模型、regular+EMA
 V100 命令链完成，不构成科学精度或所有下游 head 的支持声明。一次
 `pt-expt eval-desc` 虽然执行成功，但事后 descriptor inspection 证明所用 artifact
 实际为 DPA4 而非 DPA4C；因此周期性 DPA4C 路线仍为 experimental，不能因命令

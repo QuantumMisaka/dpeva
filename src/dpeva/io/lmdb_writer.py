@@ -42,13 +42,13 @@ def write_lmdb(
     if target.exists() and not overwrite:
         raise FileExistsError(f"LMDB output already exists: {target}")
 
-    expected_nlocs = []
+    expected_nlocs: list[int] = []
     for index, system in enumerate(ordered_systems):
         coords = system.data.get("coords")
         atom_types = system.data.get("atom_types")
         if coords is None or atom_types is None:
             raise ValueError(f"system[{index}] must expose coords and atom_types")
-        expected_nlocs.append(int(len(atom_types)))
+        expected_nlocs.extend([int(len(atom_types))] * len(system))
 
     try:
         dump_systems(

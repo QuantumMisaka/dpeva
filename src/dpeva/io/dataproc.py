@@ -304,14 +304,45 @@ class DPTestResultParser:
             index = read_lmdb_frame_index(lmdb_path)
             expected_nlocs = list(index.nloc_groups)
             header_nlocs = [nloc for _, nloc, _ in lmdb_headers]
+            with open(e_file, 'r') as f:
+                total_data_rows = sum(
+                    1
+                    for line in f
+                    if line.strip() and not line.startswith('#')
+                )
             if any(nloc is None for nloc in header_nlocs):
-                if len(lmdb_headers) != 1 or len(expected_nlocs) != 1:
+                if len(lmdb_headers) == 1 and len(expected_nlocs) == 1:
+                    header_nlocs = expected_nlocs
+                    lmdb_headers = [
+                        (path, header_nlocs[index], line_number)
+                        for index, (path, _nloc, line_number) in enumerate(
+                            lmdb_headers
+                        )
+                    ]
+                elif (
+                    len(lmdb_headers) == 1
+                    and total_data_rows == len(index.frames)
+                ):
+                    # DeepMD 3.2.0 writes a single unlabelled header for the
+                    # complete mixed-nloc detail table.  The row order is still
+                    # the documented nloc-group order, so the frame index can
+                    # attribute every row without inventing group boundaries.
+                    return index.dataname_list, index.datanames_nframe
+                else:
                     raise DatasetLoadError(
                         f"{e_file} has an LMDB header without nloc but the dataset "
                         f"contains nloc groups {expected_nlocs}"
                     )
-                header_nlocs = expected_nlocs
             if header_nlocs != expected_nlocs:
+                if (
+                    header_nlocs == expected_nlocs[: len(header_nlocs)]
+                    and total_data_rows == len(index.frames)
+                ):
+                    # DeepMD 3.2.0 stops emitting ``[nloc=...]`` headers after
+                    # the first group while continuing to write every frame.
+                    # Preserve the documented nloc-order attribution only when
+                    # the complete row count proves that no frame was dropped.
+                    return index.dataname_list, index.datanames_nframe
                 raise DatasetLoadError(
                     f"{e_file} LMDB detail groups {header_nlocs} do not match "
                     f"dataset nloc groups {expected_nlocs}"

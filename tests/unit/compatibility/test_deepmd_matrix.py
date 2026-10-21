@@ -254,8 +254,8 @@ def test_current_matrix_has_explicit_qualified_status_distribution() -> None:
     counts = Counter(record.status for record in CapabilityMatrix.load_default().records)
     assert counts == Counter(
         {
-            "supported": 3,
-            "experimental": 10,
+            "supported": 4,
+            "experimental": 9,
             "unsupported": 4,
             "blocked-upstream": 4,
         }
@@ -303,6 +303,31 @@ def test_repository_sai_promotion_evidence_is_minimal_and_sanitized() -> None:
                 assert capability["model_family"] != "DPA4C"
 
 
+def test_lmdb_sai_ab_evidence_is_public_and_bound_to_raw_result() -> None:
+    evidence_root = Path("docs/reports/evidence/deepmd-3.2")
+    public_path = evidence_root / "sai-lmdb-ab-job-1893546-public.json"
+    attestation_path = evidence_root / "sai-lmdb-ab-job-1893546-attestation.json"
+    public = json.loads(public_path.read_text(encoding="utf-8"))
+    attestation = json.loads(attestation_path.read_text(encoding="utf-8"))
+
+    assert public["status"] == "finished"
+    assert public["job_id"] == "1893546"
+    assert public["inputs"]["npy_frames"] == 2604
+    assert public["inputs"]["lmdb_frames"] == 2604
+    assert public["inputs"]["npy_systems"] == 964
+    assert all(
+        item["passed"] and item["relative_diff"] <= 2e-5
+        for item in public["metrics"]["comparison"].values()
+    )
+    assert public["raw_evidence"]["ab_result_sha256"] == (
+        attestation["raw_evidence_sha256"]
+    )
+    for path in (public_path, attestation_path):
+        serialized = path.read_text(encoding="utf-8")
+        for forbidden in ("/home/", "/org/", "liuzhaoqing", "4v100n13"):
+            assert forbidden not in serialized
+
+
 def test_non_pbc_capabilities_remain_blocked_by_issue_6002() -> None:
     records = [
         record
@@ -322,8 +347,8 @@ def test_qualification_report_states_current_manifest_distribution() -> None:
         encoding="utf-8"
     )
     for status, count in (
-        ("supported", 3),
-        ("experimental", 10),
+        ("supported", 4),
+        ("experimental", 9),
         ("unsupported", 4),
         ("blocked-upstream", 4),
     ):

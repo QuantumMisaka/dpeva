@@ -2,7 +2,7 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-10-21
+last-updated: 2026-10-22
 owner: Docs Owner
 ---
 
@@ -136,8 +136,10 @@ DPEVA_TAG: WORKFLOW_FINISHED
 - `dp test` 自报的聚合指标在 LMDB 上有效；带 `frame_nlocs`/`frame_system_ids`
   的 LMDB 可由 `dpeva infer`/`analysis` 解析逐帧明细。缺失元数据时 parser 会
   fail-loud，不会猜测归属
-- `test + deepmd/lmdb` 仍为 experimental；真实 DeepMD CPU/SAI contract 尚未完成。
-  `clean` 在 LMDB 带 `frame_system_ids` 元数据时可用；缺失时请补齐元数据或使用
+- `test + deepmd/lmdb` 已由 DeepMD 3.2.0 CPU contract 与 SAI npy↔lmdb A/B
+  证据晋级 supported。DeepMD-kit 3.2.0 的 mixed-nloc `-d` 输出可能只有首个
+  `[nloc=...]` header；parser 仅在总行数与帧索引完全一致时按组序归属，否则
+  报错。`clean` 在 LMDB 带 `frame_system_ids` 元数据时可用；缺失时请补齐元数据或使用
   npy/mixed 副本
 
 ## 6. 作业与调度类问题（Slurm）

@@ -60,6 +60,7 @@ def attestation_specs(records: Iterable[Any], scope: str) -> list[dict[str, Any]
             "source": "sai-v100-qualification",
         }
         for record in records
+        if record.key.data_format == "deepmd/npy"
         if record.sai_verification_cases
         for case in record.sai_verification_cases
         if case in selected_cases

@@ -549,3 +549,54 @@ label cleaned/anomalies 与 integration merged 均复用 WP-4A writer。
 
 - 默认输出未改变；
 - 真实 DeepMD CPU/SAI contract 仍属 WP-5。
+
+### 9.10 WP-5 CPU contract、SAI A/B 与能力晋级（2026-10-22）
+
+**Ruling:** `test + deepmd/lmdb` 同时绑定 CPU contract 与 SAI npy↔lmdb A/B
+证据后晋级 `supported`；`train + deepmd/lmdb` 只完成 CPU contract，保持
+`experimental/implemented`；`fine-tune` 保持 planned。
+
+**CPU contract**
+
+- SAI CPU-MISC JobID `1893534`，环境 `dpeva-dpa4-320`，`DeePMD-kit v3.2.0`，
+  `8 passed / 0 skipped`，exit `0:0`；
+- 新增 `lmdb_periodic_data` fixture：优先读取 `DPEVA_DEEPMD_LMDB_DATA`，
+  否则由 protected npy fixture + `dpdata>=1.1` 生成；
+- `test` 契约执行真实 `dp --pt test -s <lmdb> -d ...`，并由
+  `DPTestResultParser` 校验帧索引归属；
+- `train` 契约执行两 step DPA4 `dp --pt train`，training/validation 均为
+  LMDB；
+- attestations 落库到
+  `docs/reports/evidence/deepmd-3.2/lmdb-cpu-job-1893534-attestations/`。
+
+**DeepMD 3.2.0 实测边界**
+
+- mixed-nloc LMDB 的 `-d` 输出只写首个 `[nloc=...]` header，但写出全部
+  2,604 行；
+- parser 仅在 header 是期望 nloc 组的前缀且总行数等于帧索引帧数时，按
+  nloc 组升序 + 组内 storage 序归属；否则 fail-loud；
+- 单 nloc 且无 `[nloc=...]` 的 header 走单组精确分支，不再把 `None`
+  传入 nloc group 查表；
+- LMDB writer 的 nloc 计数修正为“每个 system 的帧数 × nloc”，新增
+  multi-frame regression test。
+
+**SAI A/B**
+
+- JobID `1893546`，partition `4V100`，exact `dpeva-dpa4-320`，
+  `complement_validation_v5` 2,604 帧；
+- npy 与 lmdb 使用同一模型、同一命令、`-n 0`；
+- 四项 aggregate 指标相对差均为 `0`（打印精度内逐位相同）；
+- LMDB detail 2,604 帧全部由帧索引归属；该外部 LMDB 快照按 841 个组成组
+  标识，不冒充 964 个 npy 目录身份；
+- sanitized summary：
+  `docs/reports/evidence/deepmd-3.2/sai-lmdb-ab-job-1893546-public.json`；
+- one-case SAI promotion attestation（`case=pt-test`, `gpu=SAI 4V100`）：
+  `docs/reports/evidence/deepmd-3.2/sai-lmdb-ab-job-1893546-attestation.json`。
+
+**最终状态**
+
+- manifest：4 supported / 9 experimental / 4 unsupported / 4 blocked-upstream；
+- `test + deepmd/lmdb`：supported，CPU + SAI evidence 均通过
+  `validate_promotion_evidence`；
+- `train + deepmd/lmdb`：experimental/implemented，CPU evidence 已绑定；
+- `eval-desc`/`embed + deepmd/lmdb`：blocked-upstream（#6034）。
