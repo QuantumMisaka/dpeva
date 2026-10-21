@@ -2,7 +2,7 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-10-15
+last-updated: 2026-10-21
 owner: Docs Owner
 ---
 
@@ -30,8 +30,9 @@ owner: Docs Owner
 ### 3.0 数据集格式边界
 
 - 受支持的数据集输入：`deepmd/npy`、`deepmd/npy/mixed`、`deepmd/lmdb`（需要 `dpdata>=1.1`）。
-- LMDB 输入由 dpdata 按**组成分组**读回，不保留目录级体系身份；依赖 system 名称的配置
-  （如 Clean 的逐 system 归属、`target_systems` 筛选）在 LMDB 上会被明确拒绝。
+- LMDB 输入由 dpdata 按**组成分组**读回；`frame_nlocs`/`frame_system_ids` 可用于
+  `infer`/`analysis` 的逐帧明细归属。依赖原始目录级体系身份的配置
+  （如 `target_systems` 筛选、Clean 的导出划分）仍会被明确拒绝或要求 npy/mixed 副本。
 - Feature 工作流的 `feature_exporter="eval_desc"`/`"embed"` 上游不支持 LMDB，DP-EVA 在
   提交作业前拒绝；请提供 npy/mixed 副本或使用进程内描述符生成。
 - 完整支持矩阵与实测依据见 `docs/reference/upstream-software.md` §2.1。

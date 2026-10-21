@@ -18,7 +18,8 @@ owner: Workflow Owner (IO) / Compatibility Owner
 
 **2026-10-21 reopening:** 主人确认 LMDB 是后续主流数据格式，Phase 2–5 从
 deferred 改为 active。执行采用 L3 伞形计划下的 L2 工作包：WP-1 能力契约、
-WP-2 LMDB 帧索引与 infer 闭环、WP-3 跨格式身份、WP-4 写出侧、WP-5 证据晋级。
+WP-2 LMDB 帧索引与 infer/analysis 闭环、WP-3 跨格式身份与 Clean 原始 system
+划分、WP-4 写出侧、WP-5 证据晋级。
 `train`/`fine-tune + deepmd/lmdb` 先保持 experimental；`test + deepmd/lmdb`
 在 WP-2 完成前不登记；`eval-desc`/`embed + deepmd/lmdb` 记为 blocked-upstream
 （issue #6034）。
@@ -423,8 +424,8 @@ experimental 记录共享同一份尚未完成的 Phase 5 证据。
   - 新增 `eval-desc + deepmd/lmdb`、`embed + deepmd/lmdb` blocked-upstream，
     引用 issue #6034；
   - `test + deepmd/lmdb` 暂不登记，保持 no-record fail-closed，等待 WP-2。
-- 追踪矩阵和 DeepMD 3.2 兼容性报告同步到 20 条记录
-  （3 supported / 9 experimental / 4 unsupported / 4 blocked-upstream）。
+- 追踪矩阵和 DeepMD 3.2 兼容性报告同步到 21 条记录
+  （3 supported / 10 experimental / 4 unsupported / 4 blocked-upstream）。
 - 文档明确：`dpeva infer` 当前会在 LMDB `-d` 明细解析阶段拒绝，npy/mixed 是
   WP-2 完成前的可用替代路径。
 
@@ -435,5 +436,34 @@ experimental 记录共享同一份尚未完成的 Phase 5 证据。
 - `tests/unit/compatibility/test_deepmd_matrix.py`：manifest 分布与报告同步；
 - `pytest tests/unit/compatibility ... tests/unit/io/test_dataset_lmdb.py` 通过。
 
-**下一步**：WP-2 实现 `dp test -d` 帧索引和 `infer`/`analysis`/`clean` 明细归属；
-完成后才登记 `test + deepmd/lmdb` 为 experimental。
+**下一步**：WP-2 实现 `dp test -d` 帧索引和 `infer`/`analysis` 明细归属，
+完成后登记 `test + deepmd/lmdb` 为 experimental；Clean 的原始 system 划分
+进入 WP-3。
+
+### 9.5 WP-2 LMDB 帧索引与 infer/analysis 解析（2026-10-21）
+
+**Ruling:** WP-2 先闭合 `infer`/`analysis` 的 `dp test -d` 明细解析；Clean 的
+原始 system 划分导出推迟到 WP-3。理由：`dpdata.MultiSystems` 对 LMDB 读回按
+组成分组，不能保证与 `frame_system_ids` 的原始 system 划分一一对应；如果把
+composition group 当作 Clean 的 system，会静默改变导出语义。
+
+**落地内容**
+
+- 新增 `src/dpeva/io/lmdb_index.py`：
+  - 从 `__metadata__` 读取 `frame_nlocs`/`frame_system_ids`；
+  - 兼容只有 `system_info` 的旧 LMDB；
+  - 无元数据时 fail-loud，不用猜测顺序；
+  - 输出 `frame → (system_id, system_frame_index, nloc)` 及 `dp test` 排序。
+- `DPTestResultParser` 识别 LMDB detail headers，使用帧索引生成
+  `dataname_list` / `datanames_nframe`，不再拒绝 LMDB 明细。
+- 真实小 LMDB 测试覆盖混合 nloc、system 顺序、parser 消费和错误组序拒绝。
+- `test + deepmd/lmdb` 登记为 experimental/planned；真实 CPU/SAI contract 仍属 WP-5。
+- Clean 仍在需要原始 system 划分时要求 npy/mixed；WP-3 处理跨格式身份。
+
+**验证**
+
+- `conda run -n ft2dp-post ... pytest tests/unit/io/test_lmdb_index.py -q`：3 passed；
+- 默认 lane `tests/unit/io/test_lmdb_index.py`：3 passed（metadata-only）
+  + 3 skipped（dpdata<1.1 的真实 writer guard）；
+- `tests/unit/io/test_dataproc.py`：LMDB 缺失源 fail-loud，正常 LMDB 由新索引用例覆盖；
+- 后续 WP-3 完成跨格式身份后再评估 Clean 的 LMDB 导出。

@@ -8,6 +8,7 @@ import numpy as np
 import os
 
 from dpeva.io.dataset import DatasetLoadError, is_lmdb_detail_label
+from dpeva.io.lmdb_index import read_lmdb_frame_index
 
 class DPTestResultParser:
     """
@@ -274,6 +275,64 @@ class DPTestResultParser:
                                 dataname = path_parts[-1]
                             indices[dataname] = i
             return indices, len(lines)
+
+        def parse_lmdb_headers(filename):
+            headers = []
+            with open(filename, 'r') as f:
+                for line_number, line in enumerate(f):
+                    if not line.startswith('#'):
+                        continue
+                    raw_path = line.split(':', 1)[0].strip().lstrip('#').strip()
+                    if not is_lmdb_detail_label(raw_path):
+                        continue
+                    nloc = None
+                    marker = ' [nloc='
+                    if marker in raw_path:
+                        raw_path, suffix = raw_path.rsplit(marker, 1)
+                        nloc = int(suffix.rstrip(']'))
+                    headers.append((raw_path.strip(), nloc, line_number))
+            return headers
+
+        lmdb_headers = parse_lmdb_headers(e_file)
+        if lmdb_headers:
+            paths = {path for path, _, _ in lmdb_headers}
+            if len(paths) != 1:
+                raise DatasetLoadError(
+                    f"{e_file} contains multiple LMDB sources: {sorted(paths)}"
+                )
+            lmdb_path = next(iter(paths))
+            index = read_lmdb_frame_index(lmdb_path)
+            expected_nlocs = list(index.nloc_groups)
+            header_nlocs = [nloc for _, nloc, _ in lmdb_headers]
+            if any(nloc is None for nloc in header_nlocs):
+                if len(lmdb_headers) != 1 or len(expected_nlocs) != 1:
+                    raise DatasetLoadError(
+                        f"{e_file} has an LMDB header without nloc but the dataset "
+                        f"contains nloc groups {expected_nlocs}"
+                    )
+                header_nlocs = expected_nlocs
+            if header_nlocs != expected_nlocs:
+                raise DatasetLoadError(
+                    f"{e_file} LMDB detail groups {header_nlocs} do not match "
+                    f"dataset nloc groups {expected_nlocs}"
+                )
+            total_lines = 0
+            with open(e_file, 'r') as f:
+                total_lines = sum(1 for _ in f)
+            for position, (_, nloc, line_number) in enumerate(lmdb_headers):
+                next_line = (
+                    lmdb_headers[position + 1][2]
+                    if position + 1 < len(lmdb_headers)
+                    else total_lines
+                )
+                data_rows = next_line - line_number - 1
+                expected_rows = len(index.nloc_groups[nloc])
+                if data_rows != expected_rows:
+                    raise DatasetLoadError(
+                        f"{e_file} LMDB group nloc={nloc} has {data_rows} detail rows; "
+                        f"expected {expected_rows}"
+                    )
+            return index.dataname_list, index.datanames_nframe
 
         e_indices, e_total_lines = parse_indices(e_file)
         

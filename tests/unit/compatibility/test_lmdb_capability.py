@@ -37,12 +37,14 @@ def test_lmdb_training_is_experimental_until_evidence_exists(operation: str) -> 
     )
 
 
-def test_lmdb_test_stays_unregistered_until_frame_index_support_lands() -> None:
-    """dp test can read LMDB, but DP-EVA cannot attribute its detail rows yet."""
-
+def test_lmdb_test_is_experimental_until_contract_evidence_exists() -> None:
     matrix = CapabilityMatrix.load_default()
-    with pytest.raises(CapabilityUnavailable, match="no capability record"):
-        matrix.get(_lmdb_key("test"))
+    record = matrix.get(_lmdb_key("test"))
+
+    assert record.status == "experimental"
+    assert record.verification_status == "planned"
+    with pytest.raises(CapabilityUnavailable, match="experimental"):
+        matrix.require(_lmdb_key("test"))
 
 
 @pytest.mark.parametrize("operation", ["eval-desc", "embed"])

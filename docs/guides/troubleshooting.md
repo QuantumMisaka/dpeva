@@ -118,8 +118,8 @@ DPEVA_TAG: WORKFLOW_FINISHED
 
 - `load_systems` 报 `DatasetLoadError`，提示 "Reading 'deepmd/lmdb' requires dpdata>=1.1"
 - Feature 的 `eval-desc`/`embed` 在提交前报 "cannot consume a DeepMD LMDB dataset"
-- `dpeva infer` 在解析 `dp test -d` 明细时报 "LMDB data source"
-- Analysis/Clean 报 `-d` 明细 "reports an LMDB data source"
+- `dpeva infer` 在解析旧 LMDB 明细时可能报缺少 `frame_nlocs`/`frame_system_ids`
+- Clean 在需要原始 system 划分或跨格式身份时仍可能拒绝 LMDB
 
 处理：
 
@@ -133,10 +133,11 @@ DPEVA_TAG: WORKFLOW_FINISHED
   [deepmodeling/deepmd-kit#6034](https://github.com/deepmodeling/deepmd-kit/issues/6034)
 - 训练（`dp train`）支持 LMDB，但 `training_data.systems` 必须是**单个 LMDB 路径**；
   不要把多个 LMDB 放在一个容器目录里让 DP-EVA 展开
-- `dp test` 自报的聚合指标在 LMDB 上有效；逐帧逐 system 的明细归属需要
-  帧索引映射（见 `docs/superpowers/plans/2026-09-20-lmdb-format-compatibility.md`）
-- 在帧索引落地前，`test + deepmd/lmdb` 不作为可执行 capability 登记；
-  需要完整 `infer`/`analysis`/`clean` 时请使用同一数据集的 npy/mixed 副本
+- `dp test` 自报的聚合指标在 LMDB 上有效；带 `frame_nlocs`/`frame_system_ids`
+  的 LMDB 可由 `dpeva infer`/`analysis` 解析逐帧明细。缺失元数据时 parser 会
+  fail-loud，不会猜测归属
+- `test + deepmd/lmdb` 仍为 experimental；真实 DeepMD CPU/SAI contract 尚未完成。
+  `clean` 仍需要原始 system 划分；在跨格式身份完成前请使用 npy/mixed 副本
 
 ## 6. 作业与调度类问题（Slurm）
 

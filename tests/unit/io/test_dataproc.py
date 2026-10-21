@@ -245,21 +245,22 @@ class TestDPTestResultParser:
         # sys2
         assert lst[2][2] == 2
 
-    def test_lmdb_detail_source_is_refused(self, result_dir):
-        """dp test evaluates an LMDB as nloc groups, so per-system stats are refused."""
+    def test_missing_lmdb_detail_source_fails_loud(self, result_dir):
+        """A detail header naming an unavailable LMDB must not be guessed."""
         e_file = result_dir / "test.e"
         e_file.write_text("# /data/g3.lmdb [nloc=9]: 0\n1.0 1.0\n1.0 1.0\n")
 
         parser = DPTestResultParser(str(result_dir))
 
-        with pytest.raises(DatasetLoadError, match="LMDB data source"):
+        with pytest.raises(DatasetLoadError, match="Cannot open LMDB"):
             parser._get_dataname_info(str(e_file), None)
 
-    def test_lmdb_suffix_source_is_refused(self, result_dir):
+    def test_missing_lmdb_suffix_source_fails_loud(self, result_dir):
+        """A missing LMDB suffix path is a load error, not an empty data source."""
         e_file = result_dir / "test.e"
         e_file.write_text("# /data/bulk_ref_v1.lmdb: 0\n1.0 1.0\n")
 
         parser = DPTestResultParser(str(result_dir))
 
-        with pytest.raises(DatasetLoadError, match="LMDB data source"):
+        with pytest.raises(DatasetLoadError, match="Cannot open LMDB"):
             parser._get_dataname_info(str(e_file), None)
