@@ -512,4 +512,20 @@ composition group 当作 Clean 的 system，会静默改变导出语义。
 **边界**
 
 - 真实 DeepMD CPU/SAI contract 仍属 WP-5；
-- WP-4 writer/output_format 仍未开始。
+- WP-4A 显式 writer 已完成（§9.8）；WP-4B output_format 契约仍未开始。
+
+### 9.8 WP-4A 显式 LMDB writer（2026-10-21）
+
+**Ruling:** 先提供显式转换 API，不改变默认 `output_format`，也不自动把
+`label`/`integration` 输出切到 LMDB。这样可先获得可验证的写出路径，同时
+避免在未完成 WP-5 证据前改变公开产物契约。
+
+**落地内容**
+
+- 新增 `src/dpeva/io/lmdb_writer.py::write_lmdb`：
+  - 按输入 system 顺序调用 dpdata `dump_systems`；
+  - 默认 `overwrite=False`；
+  - 写后回读 frame 数、`frame_system_ids`、nloc 分布和 system identity；
+  - 任一项不一致 fail-loud。
+- 真实 LMDB 往返测试覆盖 system 划分和已有目标拒绝；
+- `output_format`、`label`/`integration` 的默认输出保持不变，WP-4B 仍可选。
