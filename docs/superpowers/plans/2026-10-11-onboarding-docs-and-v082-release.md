@@ -1,8 +1,8 @@
 ---
 title: Onboarding Docs & v0.8.2 Release Implementation Plan
-status: active
+status: completed
 audience: Developers / AI Agents
-last-updated: 2026-10-11
+last-updated: 2026-10-21
 owner: Project Maintainer
 ---
 
@@ -156,3 +156,9 @@ Files: `README.md`。
 - A5 冒烟干跑证据（或明确限制）齐备。
 - A6 本任务对 `src/**` 与 `pyproject.toml` 零改动（diff 证据）。
 - A7 报告含：逐 Task 状态、提交 SHA 列表、门禁/CI 链接、遗留问题、未触碰范围清单。
+
+## Closeout
+
+2026-10-21 收口：本计划全部 checkbox 已完成，v0.8.2 发布记录见
+[`docs/reports/2026-10-11-v082-release-cut.md`](../../reports/2026-10-11-v082-release-cut.md)。
+本计划仅作为历史执行记录保留，不再作为活跃任务。
