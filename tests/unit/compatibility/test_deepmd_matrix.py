@@ -36,7 +36,7 @@ def _key(**updates: str) -> CapabilityKey:
 
 def test_manifest_uses_only_canonical_states() -> None:
     matrix = CapabilityMatrix.load_default()
-    assert len(matrix.records) == 17
+    assert len(matrix.records) == 20
     assert {record.status for record in matrix.records} <= {
         "supported",
         "experimental",
@@ -255,9 +255,9 @@ def test_current_matrix_has_explicit_qualified_status_distribution() -> None:
     assert counts == Counter(
         {
             "supported": 3,
-            "experimental": 8,
+            "experimental": 9,
             "unsupported": 4,
-            "blocked-upstream": 2,
+            "blocked-upstream": 4,
         }
     )
 
@@ -323,11 +323,12 @@ def test_qualification_report_states_current_manifest_distribution() -> None:
     )
     for status, count in (
         ("supported", 3),
-        ("experimental", 8),
+        ("experimental", 9),
         ("unsupported", 4),
-        ("blocked-upstream", 2),
+        ("blocked-upstream", 4),
     ):
         assert f"| `{status}` | {count} |" in report
+    assert "#6034" in report
     assert "#6002" in report
     assert "1128260" in report
 

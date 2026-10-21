@@ -2,7 +2,7 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-10-15
+last-updated: 2026-10-21
 owner: Docs Owner
 ---
 
@@ -118,6 +118,7 @@ DPEVA_TAG: WORKFLOW_FINISHED
 
 - `load_systems` 报 `DatasetLoadError`，提示 "Reading 'deepmd/lmdb' requires dpdata>=1.1"
 - Feature 的 `eval-desc`/`embed` 在提交前报 "cannot consume a DeepMD LMDB dataset"
+- `dpeva infer` 在解析 `dp test -d` 明细时报 "LMDB data source"
 - Analysis/Clean 报 `-d` 明细 "reports an LMDB data source"
 
 处理：
@@ -134,6 +135,8 @@ DPEVA_TAG: WORKFLOW_FINISHED
   不要把多个 LMDB 放在一个容器目录里让 DP-EVA 展开
 - `dp test` 自报的聚合指标在 LMDB 上有效；逐帧逐 system 的明细归属需要
   帧索引映射（见 `docs/superpowers/plans/2026-09-20-lmdb-format-compatibility.md`）
+- 在帧索引落地前，`test + deepmd/lmdb` 不作为可执行 capability 登记；
+  需要完整 `infer`/`analysis`/`clean` 时请使用同一数据集的 npy/mixed 副本
 
 ## 6. 作业与调度类问题（Slurm）
 

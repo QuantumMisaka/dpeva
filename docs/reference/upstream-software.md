@@ -2,7 +2,7 @@
 title: Upstream Software
 status: active
 audience: Users / Developers
-last-updated: 2026-10-12
+last-updated: 2026-10-21
 owner: Docs Owner
 ---
 
@@ -53,12 +53,14 @@ CPU evidence，以及需要时的 SAI evidence 均存在并通过，Compatibilit
 3.2 已验证能力。legacy runtime 上缺少 3.2 才有的 CLI surface 属于信息性检查，
 不会把仍可用的旧环境整体判为 incompatible。
 
-当前 manifest 共 17 条（3 supported、8 experimental、4 unsupported、2
+当前 manifest 共 20 条（3 supported、9 experimental、4 unsupported、4
 blocked-upstream）。每条记录还声明 `verification_status` 与
 `required_evidence`；`implemented` 必须绑定可收集的 pytest node，尚未具备测试的
-train/fine-tune/freeze、LMDB、pretrained alias 和 deploy 路线保持 planned，不能把
-占位命令当作已执行证据。`candidate-evaluation` 是供上层 generic preflight 使用的
-policy capability，不映射为 DeepMD CLI command。
+train/fine-tune/freeze、LMDB train/fine-tune、pretrained alias 和 deploy 路线保持
+planned，不能把占位命令当作已执行证据。LMDB 的 `eval-desc`/`embed` 记录由上游
+issue #6034 标记为 blocked-upstream；`test + deepmd/lmdb` 暂不登记，等待
+DP-EVA 的 LMDB 帧索引与明细归属实现。`candidate-evaluation` 是供上层 generic
+preflight 使用的 policy capability，不映射为 DeepMD CLI command。
 
 ## 2. dpdata
 
@@ -81,6 +83,8 @@ policy capability，不映射为 DeepMD CLI command。
 
 `dp test` 在 LMDB 上不保留目录级体系身份，因此 DP-EVA 目前拒绝从 LMDB 明细文件推导
 逐 system 统计（见 `docs/guides/troubleshooting.md` §5.3）；`dp test` 自报的聚合指标不受影响。
+由于 `infer` 的后处理也依赖同一份 `-d` 明细，`test + deepmd/lmdb` 暂不登记为
+可执行能力，待帧索引与 parser 支持落地后再登记为 experimental。
 
 ## 3. ABACUS
 

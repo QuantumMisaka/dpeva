@@ -1,8 +1,8 @@
 ---
 title: LMDB 数据格式兼容 Implementation Plan
-status: proposed
+status: active
 audience: Developers / AI Agents
-last-updated: 2026-09-20
+last-updated: 2026-10-21
 owner: Workflow Owner (IO) / Compatibility Owner
 ---
 
@@ -15,6 +15,13 @@ owner: Workflow Owner (IO) / Compatibility Owner
 **Spec:** `docs/reports/2026-09-19-lmdb-read-support.md`（研究侧提案，status: proposed）+ 本计划 §1 实测基线（2026-09-19/20 复核并修正了该提案的三处表述）。
 
 **Authorization:** 主人 2026-09-20 要求编排完整兼容开发计划。计划落盘不改变代码；执行前需确认 §2 的 D1–D5，其中 D4/D5 影响 PR 切分。
+
+**2026-10-21 reopening:** 主人确认 LMDB 是后续主流数据格式，Phase 2–5 从
+deferred 改为 active。执行采用 L3 伞形计划下的 L2 工作包：WP-1 能力契约、
+WP-2 LMDB 帧索引与 infer 闭环、WP-3 跨格式身份、WP-4 写出侧、WP-5 证据晋级。
+`train`/`fine-tune + deepmd/lmdb` 先保持 experimental；`test + deepmd/lmdb`
+在 WP-2 完成前不登记；`eval-desc`/`embed + deepmd/lmdb` 记为 blocked-upstream
+（issue #6034）。
 
 **Architecture:** 单一格式探测原语（对齐 deepmd `is_lmdb`）→ 读侧路由（LMDB 只经 `dpdata.MultiSystems`，禁止单体系 API）→ 帧身份索引（`frame → system_id/nloc/frame_idx`）→ 能力矩阵 `data_format` 维度 + `DeepMDAdapter` preflight fail-closed → 写出侧按 D4 决定是否纳入 `output_format` 契约。
 
@@ -398,3 +405,35 @@ LMDB 是扁平帧存储，按组成分组读回；原始目录级体系身份只
 | `DeepMD 3.2 CPU Contract` / `Deploy Docs` | ❌ 既有 | 需受保护 fixture 的 qualification lane / 跟随 docs 构建失败 |
 
 **收口判定**：本轮交付范围（读侧契约、失败语义、可支持路径透传、不可支持组合前置拒绝、依赖边界与 doctor、文档与追踪登记）已完成并推送，CI 中直接检验本改动的三项检查全绿。计划自身保持 `proposed`：Phase 2–5 与决策门 D2–D4 未实施，表内其余红灯为既有问题，不由本轮引入、也不在本计划范围内。
+
+### 9.4 WP-1 能力契约（2026-10-21）
+
+**Ruling:** `fine-tune + deepmd/lmdb` 与 `train + deepmd/lmdb` 同时登记为
+experimental。DeepMDAdapter 用 operation 区分 `train` 与 `fine-tune`；只登记
+`train` 会让 DP-EVA 的主微调路径在严格 preflight 下被误拒绝。代价：两条
+experimental 记录共享同一份尚未完成的 Phase 5 证据。
+
+**落地内容**
+
+- `src/dpeva/io/dataset.py` 新增 `data_format_for(path)`；`deepmd/npy/mixed`
+  在 capability 层归入 `deepmd/npy`，只有 LMDB 使用独立 key。
+- `src/dpeva/compatibility/deepmd-3.2.json`：
+  - `train + deepmd/lmdb` 保持 experimental/planned；
+  - 新增 `fine-tune + deepmd/lmdb` experimental/planned；
+  - 新增 `eval-desc + deepmd/lmdb`、`embed + deepmd/lmdb` blocked-upstream，
+    引用 issue #6034；
+  - `test + deepmd/lmdb` 暂不登记，保持 no-record fail-closed，等待 WP-2。
+- 追踪矩阵和 DeepMD 3.2 兼容性报告同步到 20 条记录
+  （3 supported / 9 experimental / 4 unsupported / 4 blocked-upstream）。
+- 文档明确：`dpeva infer` 当前会在 LMDB `-d` 明细解析阶段拒绝，npy/mixed 是
+  WP-2 完成前的可用替代路径。
+
+**验证（本轮当前工作树）**
+
+- `tests/unit/compatibility/test_lmdb_capability.py`：能力记录与 fail-closed 语义；
+- `tests/unit/io/test_dataset_lmdb.py`：`data_format_for` 与既有 LMDB 读契约；
+- `tests/unit/compatibility/test_deepmd_matrix.py`：manifest 分布与报告同步；
+- `pytest tests/unit/compatibility ... tests/unit/io/test_dataset_lmdb.py` 通过。
+
+**下一步**：WP-2 实现 `dp test -d` 帧索引和 `infer`/`analysis`/`clean` 明细归属；
+完成后才登记 `test + deepmd/lmdb` 为 experimental。
