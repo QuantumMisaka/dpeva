@@ -1,0 +1,5 @@
+{
+  "mode": "dataset",
+  "dataset_dir": "../work/replace-with-selection-directory/label_input",
+  "output_dir": "../work/analysis_export"
+}

@@ -2,7 +2,7 @@
 title: DP-EVA 文档导航 (Docs Index)
 status: active
 audience: Users / Developers
-last-updated: 2026-10-13
+last-updated: 2026-10-21
 owner: Quantum Misaka
 ---
 
@@ -23,6 +23,7 @@ owner: Quantum Misaka
 - 安装与环境准备：[installation.md](guides/installation.md)
 - Quickstart（最短路径跑通）：[quickstart.md](guides/quickstart.md)
 - 自带夹具的四阶段 Local 示例：[quickstart recipes](../examples/recipes/quickstart/README.md)
+- 20–30 分钟 CPU 交互教学：[DP-EVA 论文案例 notebooks](../examples/tutorials/paper_case/README.md)
 - SAI 快速上手（Slurm 用户）：[sai-quickstart.md](guides/sai-quickstart.md)
 - CLI 使用指南：[cli.md](guides/cli.md)
 - 核心上游软件与职责：[upstream-software.md](reference/upstream-software.md)

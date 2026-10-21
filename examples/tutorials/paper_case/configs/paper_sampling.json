@@ -1,0 +1,12 @@
+{
+  "source": "Author archive: dpeva-data/dpeva-init/config.json and dpeva-iter1/config_collect_{joint,normal}.json",
+  "cold_start_clusters": 3000,
+  "joint_clusters": 3000,
+  "normal_clusters": 1000,
+  "direct_k": 1,
+  "direct_thr_init": 0.1,
+  "uq_select_scheme": "tangent_lo",
+  "uq_trust_mode": "auto",
+  "uq_trust_ratio": 0.5,
+  "uq_trust_width": 0.25
+}

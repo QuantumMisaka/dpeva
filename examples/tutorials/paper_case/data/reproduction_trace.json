@@ -1,0 +1,578 @@
+{
+  "date": "2026-10-21",
+  "scope": "Follow-up historical sampling trace; no exact historical selection recovered",
+  "original_joint_job": {
+    "job_id": 251065,
+    "start": "2026-03-14T19:11:34+08:00",
+    "end": "2026-03-14T19:12:25+08:00",
+    "node": "dpn01",
+    "requested_cpus": 1,
+    "allocated_cpus": 2,
+    "state": "COMPLETED",
+    "exit_code": "0:0",
+    "saved_launch_environment": "NONE",
+    "saved_batch_script": "NONE",
+    "identity_basis": "sacct times, work directory and submit path agree with archived joint collection log"
+  },
+  "cold_archive_warning": {
+    "collection_log_runs": [
+      "2026-03-14T12:01:56+08:00",
+      "2026-03-14T12:39:09+08:00"
+    ],
+    "logged_output_directory": "dpeva_sampling_direct_2_localcode_r3",
+    "archive_directory": "dpeva_sampling_direct",
+    "cannot_bind_to_earlier_saved_slurm_script": true
+  },
+  "archived_repository": {
+    "first_reflog_action": "clone",
+    "first_reflog_time": "2026-03-18T13:26:53+08:00",
+    "head": "35bf0f52cdc8333264bb29eacbc2fe9998525b3c",
+    "head_date": "2026-03-22T12:58:26+08:00",
+    "is_original_execution_worktree_snapshot": false
+  },
+  "original_source_hashes": {
+    "dpeva-data/dpeva-iter1/dpeva_post_joint/collection.log": "b3a003fd1d0bf550aaf667a46366b496b1fe77a577fc68f6834ee1ee252ff1e5",
+    "dpeva-data/dpeva-init/dpeva_sampling_direct/collection.log": "7b35e52a63be2047dcdf87e7485bf9b855bb0877e82abfee7e40ab7867c57fd8",
+    "dpeva-data/dpeva-iter1/submit_collect.slurm": "2e3cc169bff73eb727af4e5d65fdd81c60ea85420d7ff826280c5ac96a32a4c7"
+  },
+  "input_checks": {
+    "archived_candidate_shape": [
+      5339,
+      128
+    ],
+    "candidate_bit_equal_in_saved_order": true,
+    "candidate_maxdiff": 0.0,
+    "training_bit_equal_old_numpy": true
+  },
+  "training_repool_old_numpy": {
+    "numpy": "1.26.4",
+    "stage": "training_descriptors",
+    "shape": [
+      3000,
+      128
+    ],
+    "bit_equal": true,
+    "maxdiff": 0.0,
+    "unequal_entries": 0,
+    "sha256": "f24efac52b23df8ad03dbde455d4c4b630f6f27d2a67b8ff8fd41270039cf2b2"
+  },
+  "user_site_isolation_checks": [
+    {
+      "original_probe": "joint-base-default",
+      "user_site_disabled_probe": "joint-nosite-default",
+      "equal": {
+        "new": true,
+        "overlap": true,
+        "input_sha256": true,
+        "scaled_sha256": true,
+        "pcs_sha256": true,
+        "pcs_array": true,
+        "labels_array": true,
+        "selected_array": true
+      }
+    },
+    {
+      "original_probe": "joint-base-1",
+      "user_site_disabled_probe": "joint-nosite-1",
+      "equal": {
+        "new": true,
+        "overlap": true,
+        "input_sha256": true,
+        "scaled_sha256": true,
+        "pcs_sha256": true,
+        "pcs_array": true,
+        "labels_array": true,
+        "selected_array": true
+      }
+    },
+    {
+      "original_probe": "cold-base-f-default",
+      "user_site_disabled_probe": "cold-nosite-f-default",
+      "equal": {
+        "new": true,
+        "overlap": true,
+        "input_sha256": true,
+        "scaled_sha256": true,
+        "pcs_sha256": true,
+        "pcs_array": true,
+        "labels_array": true,
+        "selected_array": true
+      }
+    }
+  ],
+  "current_cpu_probe": [
+    "Architecture:                         x86_64",
+    "Model name:                           Intel(R) Xeon(R) w9-3575X",
+    "Thread(s) per core:                   2",
+    "Core(s) per socket:                   44",
+    "Socket(s):                            1"
+  ],
+  "alignment_check": {
+    "runs": 9,
+    "input_byte_offsets_mod64": [
+      0,
+      8,
+      16,
+      24,
+      32,
+      40,
+      48,
+      56
+    ],
+    "distinct_stage_hashes": {
+      "input": 1,
+      "scaled": 1,
+      "pcs": 1,
+      "selected": 1
+    },
+    "raw_probes": [
+      {
+        "offset": 0,
+        "alignment_mod64": [
+          0,
+          0,
+          48
+        ],
+        "new": 823,
+        "overlap": 706,
+        "hashes": {
+          "input": "ec5f8044723ed010cb7b7b27c1c3d598e3ae917aa2786e95c71514e30d091043",
+          "scaled": "b3323f918f80fcec92bdbeaec02bc45e7f40d2cf68e743ccb1ed0dad32f5109b",
+          "pcs": "c722e9049f31f9cf13af71fd1ed8d7e41c1c1cf13bb248926649d10f9f85e6dd",
+          "selected": "5e4b8b4593b7ce8ecfc3b1df6ac9ee793bf8f5e0286f931e923ddc02c83c791f"
+        }
+      },
+      {
+        "offset": 1,
+        "alignment_mod64": [
+          8,
+          32,
+          48
+        ],
+        "new": 823,
+        "overlap": 706,
+        "hashes": {
+          "input": "ec5f8044723ed010cb7b7b27c1c3d598e3ae917aa2786e95c71514e30d091043",
+          "scaled": "b3323f918f80fcec92bdbeaec02bc45e7f40d2cf68e743ccb1ed0dad32f5109b",
+          "pcs": "c722e9049f31f9cf13af71fd1ed8d7e41c1c1cf13bb248926649d10f9f85e6dd",
+          "selected": "5e4b8b4593b7ce8ecfc3b1df6ac9ee793bf8f5e0286f931e923ddc02c83c791f"
+        }
+      },
+      {
+        "offset": 2,
+        "alignment_mod64": [
+          16,
+          48,
+          16
+        ],
+        "new": 823,
+        "overlap": 706,
+        "hashes": {
+          "input": "ec5f8044723ed010cb7b7b27c1c3d598e3ae917aa2786e95c71514e30d091043",
+          "scaled": "b3323f918f80fcec92bdbeaec02bc45e7f40d2cf68e743ccb1ed0dad32f5109b",
+          "pcs": "c722e9049f31f9cf13af71fd1ed8d7e41c1c1cf13bb248926649d10f9f85e6dd",
+          "selected": "5e4b8b4593b7ce8ecfc3b1df6ac9ee793bf8f5e0286f931e923ddc02c83c791f"
+        }
+      },
+      {
+        "offset": 3,
+        "alignment_mod64": [
+          24,
+          0,
+          48
+        ],
+        "new": 823,
+        "overlap": 706,
+        "hashes": {
+          "input": "ec5f8044723ed010cb7b7b27c1c3d598e3ae917aa2786e95c71514e30d091043",
+          "scaled": "b3323f918f80fcec92bdbeaec02bc45e7f40d2cf68e743ccb1ed0dad32f5109b",
+          "pcs": "c722e9049f31f9cf13af71fd1ed8d7e41c1c1cf13bb248926649d10f9f85e6dd",
+          "selected": "5e4b8b4593b7ce8ecfc3b1df6ac9ee793bf8f5e0286f931e923ddc02c83c791f"
+        }
+      },
+      {
+        "offset": 4,
+        "alignment_mod64": [
+          32,
+          16,
+          48
+        ],
+        "new": 823,
+        "overlap": 706,
+        "hashes": {
+          "input": "ec5f8044723ed010cb7b7b27c1c3d598e3ae917aa2786e95c71514e30d091043",
+          "scaled": "b3323f918f80fcec92bdbeaec02bc45e7f40d2cf68e743ccb1ed0dad32f5109b",
+          "pcs": "c722e9049f31f9cf13af71fd1ed8d7e41c1c1cf13bb248926649d10f9f85e6dd",
+          "selected": "5e4b8b4593b7ce8ecfc3b1df6ac9ee793bf8f5e0286f931e923ddc02c83c791f"
+        }
+      },
+      {
+        "offset": 5,
+        "alignment_mod64": [
+          40,
+          48,
+          48
+        ],
+        "new": 823,
+        "overlap": 706,
+        "hashes": {
+          "input": "ec5f8044723ed010cb7b7b27c1c3d598e3ae917aa2786e95c71514e30d091043",
+          "scaled": "b3323f918f80fcec92bdbeaec02bc45e7f40d2cf68e743ccb1ed0dad32f5109b",
+          "pcs": "c722e9049f31f9cf13af71fd1ed8d7e41c1c1cf13bb248926649d10f9f85e6dd",
+          "selected": "5e4b8b4593b7ce8ecfc3b1df6ac9ee793bf8f5e0286f931e923ddc02c83c791f"
+        }
+      },
+      {
+        "offset": 6,
+        "alignment_mod64": [
+          48,
+          0,
+          32
+        ],
+        "new": 823,
+        "overlap": 706,
+        "hashes": {
+          "input": "ec5f8044723ed010cb7b7b27c1c3d598e3ae917aa2786e95c71514e30d091043",
+          "scaled": "b3323f918f80fcec92bdbeaec02bc45e7f40d2cf68e743ccb1ed0dad32f5109b",
+          "pcs": "c722e9049f31f9cf13af71fd1ed8d7e41c1c1cf13bb248926649d10f9f85e6dd",
+          "selected": "5e4b8b4593b7ce8ecfc3b1df6ac9ee793bf8f5e0286f931e923ddc02c83c791f"
+        }
+      },
+      {
+        "offset": 7,
+        "alignment_mod64": [
+          56,
+          48,
+          32
+        ],
+        "new": 823,
+        "overlap": 706,
+        "hashes": {
+          "input": "ec5f8044723ed010cb7b7b27c1c3d598e3ae917aa2786e95c71514e30d091043",
+          "scaled": "b3323f918f80fcec92bdbeaec02bc45e7f40d2cf68e743ccb1ed0dad32f5109b",
+          "pcs": "c722e9049f31f9cf13af71fd1ed8d7e41c1c1cf13bb248926649d10f9f85e6dd",
+          "selected": "5e4b8b4593b7ce8ecfc3b1df6ac9ee793bf8f5e0286f931e923ddc02c83c791f"
+        }
+      },
+      {
+        "offset": 0,
+        "alignment_mod64": [
+          0,
+          0,
+          32
+        ],
+        "new": 823,
+        "overlap": 706,
+        "hashes": {
+          "input": "ec5f8044723ed010cb7b7b27c1c3d598e3ae917aa2786e95c71514e30d091043",
+          "scaled": "b3323f918f80fcec92bdbeaec02bc45e7f40d2cf68e743ccb1ed0dad32f5109b",
+          "pcs": "c722e9049f31f9cf13af71fd1ed8d7e41c1c1cf13bb248926649d10f9f85e6dd",
+          "selected": "5e4b8b4593b7ce8ecfc3b1df6ac9ee793bf8f5e0286f931e923ddc02c83c791f"
+        }
+      }
+    ]
+  },
+  "historical_tie_check": {
+    "historical_candidates": 843,
+    "distinct_current_clusters": 843,
+    "matched": 737,
+    "changed": 106,
+    "changed_current_training": 41,
+    "changed_current_candidate": 65,
+    "changed_near_tie": 90,
+    "changed_near_tie_two_member_clusters": 42,
+    "changed_not_near_tie": 16,
+    "max_distance_gap": 0.09291697850047742
+  },
+  "runs": [
+    {
+      "name": "cold-nosite-f-1",
+      "stage": "cold",
+      "numpy": "1.26.4",
+      "scipy": "1.13.1",
+      "sklearn": "1.5.1",
+      "layout": "F",
+      "pcs": 14,
+      "threshold": 0.05786666666666667,
+      "total": 3000,
+      "new": 3000,
+      "historical": 3000,
+      "overlap": 2687,
+      "input_sha256": "c0e7da1d3b7b3eb52d7ae8a6730896a8ba9eb05b3ee24911e4d9502cfe70ca49",
+      "scaled_sha256": "a35b42c24ccacdf1f49ce8783725b8a55fdbef43f76aa51c50ad92f307411ed3",
+      "pcs_sha256": "11d28b749ad1b653e71b33ac541d32244d68d5e9d9106f3b7d2e8781719fd413",
+      "threadpools": [
+        {
+          "internal_api": "mkl",
+          "num_threads": 1,
+          "version": "2023.1-Product"
+        },
+        {
+          "internal_api": "openmp",
+          "num_threads": 1,
+          "version": null
+        },
+        {
+          "internal_api": "openmp",
+          "num_threads": 1,
+          "version": null
+        }
+      ],
+      "evidence_archive": "nosite-results-1891131.tar.gz"
+    },
+    {
+      "name": "cold-nosite-f-default",
+      "stage": "cold",
+      "numpy": "1.26.4",
+      "scipy": "1.13.1",
+      "sklearn": "1.5.1",
+      "layout": "F",
+      "pcs": 14,
+      "threshold": 0.05786666666666667,
+      "total": 3000,
+      "new": 3000,
+      "historical": 3000,
+      "overlap": 2576,
+      "input_sha256": "c0e7da1d3b7b3eb52d7ae8a6730896a8ba9eb05b3ee24911e4d9502cfe70ca49",
+      "scaled_sha256": "a35b42c24ccacdf1f49ce8783725b8a55fdbef43f76aa51c50ad92f307411ed3",
+      "pcs_sha256": "46b0b04ec1cf2ed8bcb0d5116a2518c5c6a0323b2e986d7244b536e4b0bbc7de",
+      "threadpools": [
+        {
+          "internal_api": "mkl",
+          "num_threads": 2,
+          "version": "2023.1-Product"
+        },
+        {
+          "internal_api": "openmp",
+          "num_threads": 2,
+          "version": null
+        },
+        {
+          "internal_api": "openmp",
+          "num_threads": 2,
+          "version": null
+        }
+      ],
+      "evidence_archive": "nosite-results-1891131.tar.gz"
+    },
+    {
+      "name": "joint-nosite-1",
+      "stage": "joint",
+      "numpy": "1.26.4",
+      "scipy": "1.13.1",
+      "sklearn": "1.5.1",
+      "layout": "C",
+      "pcs": 17,
+      "threshold": 0.0421,
+      "total": 3000,
+      "new": 827,
+      "historical": 843,
+      "overlap": 730,
+      "input_sha256": "ec5f8044723ed010cb7b7b27c1c3d598e3ae917aa2786e95c71514e30d091043",
+      "scaled_sha256": "b3323f918f80fcec92bdbeaec02bc45e7f40d2cf68e743ccb1ed0dad32f5109b",
+      "pcs_sha256": "56c41382e14aec3b5eeff2193e7b70a704db7245ac58862595b1454c087e6352",
+      "threadpools": [
+        {
+          "internal_api": "mkl",
+          "num_threads": 1,
+          "version": "2023.1-Product"
+        },
+        {
+          "internal_api": "openmp",
+          "num_threads": 1,
+          "version": null
+        },
+        {
+          "internal_api": "openmp",
+          "num_threads": 1,
+          "version": null
+        }
+      ],
+      "evidence_archive": "nosite-results-1891131.tar.gz"
+    },
+    {
+      "name": "joint-nosite-default",
+      "stage": "joint",
+      "numpy": "1.26.4",
+      "scipy": "1.13.1",
+      "sklearn": "1.5.1",
+      "layout": "C",
+      "pcs": 17,
+      "threshold": 0.0421,
+      "total": 3000,
+      "new": 823,
+      "historical": 843,
+      "overlap": 706,
+      "input_sha256": "ec5f8044723ed010cb7b7b27c1c3d598e3ae917aa2786e95c71514e30d091043",
+      "scaled_sha256": "b3323f918f80fcec92bdbeaec02bc45e7f40d2cf68e743ccb1ed0dad32f5109b",
+      "pcs_sha256": "c722e9049f31f9cf13af71fd1ed8d7e41c1c1cf13bb248926649d10f9f85e6dd",
+      "threadpools": [
+        {
+          "internal_api": "mkl",
+          "num_threads": 2,
+          "version": "2023.1-Product"
+        },
+        {
+          "internal_api": "openmp",
+          "num_threads": 2,
+          "version": null
+        },
+        {
+          "internal_api": "openmp",
+          "num_threads": 2,
+          "version": null
+        }
+      ],
+      "evidence_archive": "nosite-results-1891131.tar.gz"
+    },
+    {
+      "name": "cold-sai-dev-f-1",
+      "stage": "cold",
+      "numpy": "2.4.1",
+      "scipy": "1.17.0",
+      "sklearn": "1.8.0",
+      "layout": "F",
+      "pcs": 14,
+      "threshold": 0.05786666666666667,
+      "total": 3000,
+      "new": 3000,
+      "historical": 3000,
+      "overlap": 2699,
+      "input_sha256": "c0e7da1d3b7b3eb52d7ae8a6730896a8ba9eb05b3ee24911e4d9502cfe70ca49",
+      "scaled_sha256": "b98f36a6231288e08db4fdf07c4697f5fd880d84186163bfefacb6e34be6c40e",
+      "pcs_sha256": "d1cd0ca03a60c60cfc4274430418edd7a4b80da85aeda601ef9b965369aaea5a",
+      "threadpools": [
+        {
+          "internal_api": "openblas",
+          "num_threads": 1,
+          "version": "0.3.30",
+          "architecture": "SapphireRapids"
+        },
+        {
+          "internal_api": "openmp",
+          "num_threads": 1,
+          "version": null
+        },
+        {
+          "internal_api": "openmp",
+          "num_threads": 1,
+          "version": null
+        }
+      ],
+      "evidence_archive": "trace-results-1891265.tar.gz"
+    },
+    {
+      "name": "cold-sai-dev-f-2",
+      "stage": "cold",
+      "numpy": "2.4.1",
+      "scipy": "1.17.0",
+      "sklearn": "1.8.0",
+      "layout": "F",
+      "pcs": 14,
+      "threshold": 0.05786666666666667,
+      "total": 3000,
+      "new": 3000,
+      "historical": 3000,
+      "overlap": 2699,
+      "input_sha256": "c0e7da1d3b7b3eb52d7ae8a6730896a8ba9eb05b3ee24911e4d9502cfe70ca49",
+      "scaled_sha256": "b98f36a6231288e08db4fdf07c4697f5fd880d84186163bfefacb6e34be6c40e",
+      "pcs_sha256": "d1cd0ca03a60c60cfc4274430418edd7a4b80da85aeda601ef9b965369aaea5a",
+      "threadpools": [
+        {
+          "internal_api": "openblas",
+          "num_threads": 2,
+          "version": "0.3.30",
+          "architecture": "SapphireRapids"
+        },
+        {
+          "internal_api": "openmp",
+          "num_threads": 2,
+          "version": null
+        },
+        {
+          "internal_api": "openmp",
+          "num_threads": 2,
+          "version": null
+        }
+      ],
+      "evidence_archive": "trace-results-1891265.tar.gz"
+    },
+    {
+      "name": "joint-sai-dev-1",
+      "stage": "joint",
+      "numpy": "2.4.1",
+      "scipy": "1.17.0",
+      "sklearn": "1.8.0",
+      "layout": "C",
+      "pcs": 17,
+      "threshold": 0.0421,
+      "total": 3000,
+      "new": 821,
+      "historical": 843,
+      "overlap": 737,
+      "input_sha256": "ec5f8044723ed010cb7b7b27c1c3d598e3ae917aa2786e95c71514e30d091043",
+      "scaled_sha256": "b3323f918f80fcec92bdbeaec02bc45e7f40d2cf68e743ccb1ed0dad32f5109b",
+      "pcs_sha256": "794e7ef7b2de2b0471285abb27744660de5bf42ab88cf02f1c3c69eb1247aa36",
+      "threadpools": [
+        {
+          "internal_api": "openblas",
+          "num_threads": 1,
+          "version": "0.3.30",
+          "architecture": "SapphireRapids"
+        },
+        {
+          "internal_api": "openmp",
+          "num_threads": 1,
+          "version": null
+        },
+        {
+          "internal_api": "openmp",
+          "num_threads": 1,
+          "version": null
+        }
+      ],
+      "evidence_archive": "trace-results-1891265.tar.gz"
+    },
+    {
+      "name": "joint-sai-dev-2",
+      "stage": "joint",
+      "numpy": "2.4.1",
+      "scipy": "1.17.0",
+      "sklearn": "1.8.0",
+      "layout": "C",
+      "pcs": 17,
+      "threshold": 0.0421,
+      "total": 3000,
+      "new": 821,
+      "historical": 843,
+      "overlap": 737,
+      "input_sha256": "ec5f8044723ed010cb7b7b27c1c3d598e3ae917aa2786e95c71514e30d091043",
+      "scaled_sha256": "b3323f918f80fcec92bdbeaec02bc45e7f40d2cf68e743ccb1ed0dad32f5109b",
+      "pcs_sha256": "794e7ef7b2de2b0471285abb27744660de5bf42ab88cf02f1c3c69eb1247aa36",
+      "threadpools": [
+        {
+          "internal_api": "openblas",
+          "num_threads": 2,
+          "version": "0.3.30",
+          "architecture": "SapphireRapids"
+        },
+        {
+          "internal_api": "openmp",
+          "num_threads": 2,
+          "version": null
+        },
+        {
+          "internal_api": "openmp",
+          "num_threads": 2,
+          "version": null
+        }
+      ],
+      "evidence_archive": "trace-results-1891265.tar.gz"
+    }
+  ],
+  "limitations": [
+    "Historical complete environment and PCA/BIRCH state were not found.",
+    "File timestamps alone do not prove installation history.",
+    "Historical-point distances use current clusters and centers; this is not proof of identical historical partitions or equal retrained model accuracy."
+  ]
+}

@@ -1,0 +1,13 @@
+stage,strategy,feature,new_frames,train_frames,energy_mae_mev_atom,energy_rmse_mev_atom,force_mae_ev_A,force_rmse_ev_A,source
+cold_start,Random,None,3000,3000,3.79,8.16,0.0711,0.9578,Table 1
+cold_start,DIRECT,SOAP,3000,3000,4.74,7.40,0.0747,0.1253,Table 1
+cold_start,DIRECT,DPA3,3000,3000,3.78,6.08,0.0719,0.1083,Table 1
+cold_start,Full,None,30656,30656,3.05,5.58,0.0552,0.0822,Table 1
+iteration,DIRECT,SOAP,1000,4000,7.34,13.02,0.0887,0.3685,Table 2
+iteration,Joint-DIRECT,SOAP,1101,4101,8.48,18.83,0.0875,0.7050,Table 2
+iteration,UQ + DIRECT,SOAP,1000,4000,4.51,7.77,0.0699,0.1294,Table 2
+iteration,UQ + Joint-DIRECT,SOAP,748,3748,6.00,10.00,0.0716,0.1128,Table 2
+iteration,DIRECT,DPA3,1000,4000,3.87,6.00,0.0670,0.1005,Table 2
+iteration,Joint-DIRECT,DPA3,1261,4261,3.85,6.06,0.0662,0.0994,Table 2
+iteration,UQ + DIRECT,DPA3,1000,4000,4.07,6.48,0.0668,0.0996,Table 2
+iteration,UQ + Joint-DIRECT,DPA3,843,3843,3.67,5.87,0.0670,0.1002,Table 2

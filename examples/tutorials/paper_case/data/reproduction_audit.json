@@ -1,0 +1,938 @@
+{
+  "date": "2026-10-21",
+  "scope": "Paper sampling only; not a new training or accuracy experiment",
+  "historical_joint_new": 843,
+  "uq_frame_classification_exact": true,
+  "source_revision_sampling": "41d35760640e9c76db42e644bd7abe260d57cca7",
+  "causal_check": {
+    "comparison": [
+      "current",
+      "dpeva_dev"
+    ],
+    "input_sha256_equal": true,
+    "scaled_bitwise_equal": true,
+    "pca_max_absolute_difference": 6.772360450213455e-15,
+    "cluster_partition_ARI": 1.0,
+    "changed_representatives": 190,
+    "changed_with_nearest_distance_gap_le_1e-12": 158,
+    "changed_cluster_centers_gt_1e-12": 38,
+    "maximum_center_distance": 0.09933512622290178,
+    "frozen_pca_same_labels_and_selected_indices": true,
+    "diagnostic_script_matches_baseline": true
+  },
+  "runs": [
+    {
+      "name": "current",
+      "stage": "joint",
+      "python": "3.13.13 | packaged by conda-forge | (main, Apr  8 2026, 02:00:33) [GCC 14.3.0]",
+      "numpy": "2.5.4",
+      "scipy": "1.18.1",
+      "sklearn": "1.9.1",
+      "pcs": 17,
+      "threshold": 0.0421,
+      "total": 3000,
+      "new": 833,
+      "historical": 843,
+      "overlap": 737,
+      "order": "C",
+      "hashes": {
+        "input": "ec5f8044723ed010cb7b7b27c1c3d598e3ae917aa2786e95c71514e30d091043",
+        "scaled": "b3323f918f80fcec92bdbeaec02bc45e7f40d2cf68e743ccb1ed0dad32f5109b",
+        "pcs": "ec5530ea6148f3f86d572f869d25c76b1973f14786bf0eee5948436ec2040ec2",
+        "labels": "77a372b0989144d77db8339a96db2a6e2236bd3d534dedb7309ada79f543b50b"
+      },
+      "threadpools": [
+        {
+          "internal_api": "openmp",
+          "num_threads": 2,
+          "version": null
+        },
+        {
+          "internal_api": "openblas",
+          "num_threads": 2,
+          "version": "0.3.34.106.0",
+          "architecture": "Haswell"
+        },
+        {
+          "internal_api": "openblas",
+          "num_threads": 2,
+          "version": "0.3.31.dev",
+          "architecture": "Haswell"
+        }
+      ]
+    },
+    {
+      "name": "dpeva_dev",
+      "stage": "joint",
+      "python": "3.12.12 | packaged by Anaconda, Inc. | (main, Oct 21 2025, 20:16:04) [GCC 11.2.0]",
+      "numpy": "2.4.1",
+      "scipy": "1.17.0",
+      "sklearn": "1.8.0",
+      "pcs": 17,
+      "threshold": 0.0421,
+      "total": 3000,
+      "new": 842,
+      "historical": 843,
+      "overlap": 742,
+      "order": "C",
+      "hashes": {
+        "input": "ec5f8044723ed010cb7b7b27c1c3d598e3ae917aa2786e95c71514e30d091043",
+        "scaled": "b3323f918f80fcec92bdbeaec02bc45e7f40d2cf68e743ccb1ed0dad32f5109b",
+        "pcs": "07ac5ae0e0240e1c773fbcf265e8da6ccb97df8bbbc0fd823e4ad801aeacb030",
+        "labels": "14d21b428d3acc20b1a5dcb59f91be00b1df3f1d9aa47334e9441b912102e74d"
+      },
+      "threadpools": [
+        {
+          "internal_api": "openblas",
+          "num_threads": 2,
+          "version": "0.3.30",
+          "architecture": "Zen"
+        },
+        {
+          "internal_api": "openmp",
+          "num_threads": 2,
+          "version": null
+        },
+        {
+          "internal_api": "openmp",
+          "num_threads": 2,
+          "version": null
+        }
+      ]
+    },
+    {
+      "name": "dscribe",
+      "stage": "joint",
+      "python": "3.12.12 | packaged by Anaconda, Inc. | (main, Oct 21 2025, 20:16:04) [GCC 11.2.0]",
+      "numpy": "2.4.2",
+      "scipy": "1.17.1",
+      "sklearn": "1.8.0",
+      "pcs": 17,
+      "threshold": 0.0421,
+      "total": 3000,
+      "new": 842,
+      "historical": 843,
+      "overlap": 742,
+      "order": "C",
+      "hashes": {
+        "input": "ec5f8044723ed010cb7b7b27c1c3d598e3ae917aa2786e95c71514e30d091043",
+        "scaled": "b3323f918f80fcec92bdbeaec02bc45e7f40d2cf68e743ccb1ed0dad32f5109b",
+        "pcs": "07ac5ae0e0240e1c773fbcf265e8da6ccb97df8bbbc0fd823e4ad801aeacb030",
+        "labels": "14d21b428d3acc20b1a5dcb59f91be00b1df3f1d9aa47334e9441b912102e74d"
+      },
+      "threadpools": [
+        {
+          "internal_api": "openblas",
+          "num_threads": 2,
+          "version": "0.3.30",
+          "architecture": "Zen"
+        },
+        {
+          "internal_api": "openmp",
+          "num_threads": 2,
+          "version": null
+        }
+      ]
+    },
+    {
+      "name": "current_threads1",
+      "stage": "joint",
+      "python": "3.13.13 | packaged by conda-forge | (main, Apr  8 2026, 02:00:33) [GCC 14.3.0]",
+      "numpy": "2.5.4",
+      "scipy": "1.18.1",
+      "sklearn": "1.9.1",
+      "pcs": 17,
+      "threshold": 0.0421,
+      "total": 3000,
+      "new": 833,
+      "historical": 843,
+      "overlap": 736,
+      "order": "C",
+      "hashes": {
+        "input": "ec5f8044723ed010cb7b7b27c1c3d598e3ae917aa2786e95c71514e30d091043",
+        "scaled": "b3323f918f80fcec92bdbeaec02bc45e7f40d2cf68e743ccb1ed0dad32f5109b",
+        "pcs": "ca422555e08773aadcee0f2296d59ac2b19f1dcb7a95cefb406d0e20c0120093",
+        "labels": "77a372b0989144d77db8339a96db2a6e2236bd3d534dedb7309ada79f543b50b"
+      },
+      "threadpools": [
+        {
+          "internal_api": "openblas",
+          "num_threads": 1,
+          "version": "0.3.31.dev",
+          "architecture": "Haswell"
+        },
+        {
+          "internal_api": "openblas",
+          "num_threads": 1,
+          "version": "0.3.34.106.0",
+          "architecture": "Haswell"
+        },
+        {
+          "internal_api": "openmp",
+          "num_threads": 1,
+          "version": null
+        }
+      ]
+    },
+    {
+      "name": "current_threads6",
+      "stage": "joint",
+      "python": "3.13.13 | packaged by conda-forge | (main, Apr  8 2026, 02:00:33) [GCC 14.3.0]",
+      "numpy": "2.5.4",
+      "scipy": "1.18.1",
+      "sklearn": "1.9.1",
+      "pcs": 17,
+      "threshold": 0.0421,
+      "total": 3000,
+      "new": 830,
+      "historical": 843,
+      "overlap": 746,
+      "order": "C",
+      "hashes": {
+        "input": "ec5f8044723ed010cb7b7b27c1c3d598e3ae917aa2786e95c71514e30d091043",
+        "scaled": "b3323f918f80fcec92bdbeaec02bc45e7f40d2cf68e743ccb1ed0dad32f5109b",
+        "pcs": "cdf5a5b49db4b4b0630f5b5d2f10890f448e03da2a8f98e261f564d77b193fa3",
+        "labels": "11d087732ce1ad8dfaefd21c767c13bf9dfbc37ba2905eb2872442e790229887"
+      },
+      "threadpools": [
+        {
+          "internal_api": "openmp",
+          "num_threads": 6,
+          "version": null
+        },
+        {
+          "internal_api": "openblas",
+          "num_threads": 6,
+          "version": "0.3.34.106.0",
+          "architecture": "Haswell"
+        },
+        {
+          "internal_api": "openblas",
+          "num_threads": 6,
+          "version": "0.3.31.dev",
+          "architecture": "Haswell"
+        }
+      ]
+    },
+    {
+      "name": "cold_current_f",
+      "stage": "cold",
+      "python": "3.13.13 | packaged by conda-forge | (main, Apr  8 2026, 02:00:33) [GCC 14.3.0]",
+      "numpy": "2.5.4",
+      "scipy": "1.18.1",
+      "sklearn": "1.9.1",
+      "pcs": 14,
+      "threshold": 0.05786666666666667,
+      "total": 3000,
+      "new": 3000,
+      "historical": 3000,
+      "overlap": 2684,
+      "order": "F",
+      "hashes": {
+        "input": "c0e7da1d3b7b3eb52d7ae8a6730896a8ba9eb05b3ee24911e4d9502cfe70ca49",
+        "scaled": "b98f36a6231288e08db4fdf07c4697f5fd880d84186163bfefacb6e34be6c40e",
+        "pcs": "7a6aa900492f9ad206df6074d2397535dc08a7b7825ad0b13d40a4bddcced46f",
+        "labels": "94d821f1f0d57d376ff7a5b25caf95f85b1e4f4b588fc7edad319f5eca50cff1"
+      },
+      "threadpools": [
+        {
+          "internal_api": "openblas",
+          "num_threads": 2,
+          "version": "0.3.34.106.0",
+          "architecture": "Haswell"
+        },
+        {
+          "internal_api": "openblas",
+          "num_threads": 2,
+          "version": "0.3.31.dev",
+          "architecture": "Haswell"
+        },
+        {
+          "internal_api": "openmp",
+          "num_threads": 2,
+          "version": null
+        }
+      ]
+    },
+    {
+      "name": "diagnostic-current",
+      "pca_source": "recomputed",
+      "pca_metadata_source": "local recomputation; frozen PCs override coordinates only",
+      "stage": "joint",
+      "python": "3.13.13 | packaged by conda-forge | (main, Apr  8 2026, 02:00:33) [GCC 14.3.0]",
+      "numpy": "2.5.4",
+      "scipy": "1.18.1",
+      "sklearn": "1.9.1",
+      "pcs": 17,
+      "threshold": 0.0421,
+      "total": 3000,
+      "new": 833,
+      "historical": 843,
+      "overlap": 737,
+      "order": "C",
+      "hashes": {
+        "input": "ec5f8044723ed010cb7b7b27c1c3d598e3ae917aa2786e95c71514e30d091043",
+        "scaled": "b3323f918f80fcec92bdbeaec02bc45e7f40d2cf68e743ccb1ed0dad32f5109b",
+        "pcs": "ec5530ea6148f3f86d572f869d25c76b1973f14786bf0eee5948436ec2040ec2",
+        "labels": "77a372b0989144d77db8339a96db2a6e2236bd3d534dedb7309ada79f543b50b"
+      },
+      "threadpools": [
+        {
+          "internal_api": "openblas",
+          "num_threads": 2,
+          "version": "0.3.34.106.0",
+          "architecture": "Haswell"
+        },
+        {
+          "internal_api": "openmp",
+          "num_threads": 2,
+          "version": null
+        },
+        {
+          "internal_api": "openblas",
+          "num_threads": 2,
+          "version": "0.3.31.dev",
+          "architecture": "Haswell"
+        }
+      ]
+    },
+    {
+      "name": "diagnostic-fixed",
+      "pca_source": "examples/tutorials/paper_case/work/reproduction/dpeva_dev.npz",
+      "pca_metadata_source": "local recomputation; frozen PCs override coordinates only",
+      "stage": "joint",
+      "python": "3.13.13 | packaged by conda-forge | (main, Apr  8 2026, 02:00:33) [GCC 14.3.0]",
+      "numpy": "2.5.4",
+      "scipy": "1.18.1",
+      "sklearn": "1.9.1",
+      "pcs": 17,
+      "threshold": 0.0421,
+      "total": 3000,
+      "new": 842,
+      "historical": 843,
+      "overlap": 742,
+      "order": "C",
+      "hashes": {
+        "input": "ec5f8044723ed010cb7b7b27c1c3d598e3ae917aa2786e95c71514e30d091043",
+        "scaled": "b3323f918f80fcec92bdbeaec02bc45e7f40d2cf68e743ccb1ed0dad32f5109b",
+        "pcs": "07ac5ae0e0240e1c773fbcf265e8da6ccb97df8bbbc0fd823e4ad801aeacb030",
+        "labels": "14d21b428d3acc20b1a5dcb59f91be00b1df3f1d9aa47334e9441b912102e74d"
+      },
+      "threadpools": [
+        {
+          "internal_api": "openblas",
+          "num_threads": 2,
+          "version": "0.3.31.dev",
+          "architecture": "Haswell"
+        },
+        {
+          "internal_api": "openblas",
+          "num_threads": 2,
+          "version": "0.3.34.106.0",
+          "architecture": "Haswell"
+        },
+        {
+          "internal_api": "openmp",
+          "num_threads": 2,
+          "version": null
+        }
+      ]
+    },
+    {
+      "name": "diagnostic-cold",
+      "pca_source": "recomputed",
+      "pca_metadata_source": "local recomputation; frozen PCs override coordinates only",
+      "stage": "cold",
+      "python": "3.13.13 | packaged by conda-forge | (main, Apr  8 2026, 02:00:33) [GCC 14.3.0]",
+      "numpy": "2.5.4",
+      "scipy": "1.18.1",
+      "sklearn": "1.9.1",
+      "pcs": 14,
+      "threshold": 0.05786666666666667,
+      "total": 3000,
+      "new": 3000,
+      "historical": 3000,
+      "overlap": 2627,
+      "order": "C",
+      "hashes": {
+        "input": "c0e7da1d3b7b3eb52d7ae8a6730896a8ba9eb05b3ee24911e4d9502cfe70ca49",
+        "scaled": "f352e34791ed359666b276c0c2e78e7aaab17041891626b1a5718181ad058dd7",
+        "pcs": "1a29381729fde807b933d680cabb51d075e58b40d45107da68f99a86c90432c8",
+        "labels": "dfe14c565e473fc538622ee823f50a257cf56b2799bf0eb955519a4f48cbe203"
+      },
+      "threadpools": [
+        {
+          "internal_api": "openblas",
+          "num_threads": 2,
+          "version": "0.3.34.106.0",
+          "architecture": "Haswell"
+        },
+        {
+          "internal_api": "openmp",
+          "num_threads": 2,
+          "version": null
+        },
+        {
+          "internal_api": "openblas",
+          "num_threads": 2,
+          "version": "0.3.31.dev",
+          "architecture": "Haswell"
+        }
+      ]
+    },
+    {
+      "name": "joint-mkl-1",
+      "stage": "joint",
+      "numpy": "2.4.0",
+      "scipy": "1.16.3",
+      "sklearn": "1.8.0",
+      "pcs": 17,
+      "threshold": 0.0421,
+      "total": 3000,
+      "new": 826,
+      "historical": 843,
+      "overlap": 726,
+      "input_sha256": "ec5f8044723ed010cb7b7b27c1c3d598e3ae917aa2786e95c71514e30d091043",
+      "scaled_sha256": "b3323f918f80fcec92bdbeaec02bc45e7f40d2cf68e743ccb1ed0dad32f5109b",
+      "pcs_sha256": "dba68a1587b2a742eee28aad0ae971bae59146702dc8c09b50a0229db1e495a2",
+      "threadpools": [
+        {
+          "internal_api": "mkl",
+          "num_threads": 1,
+          "version": "2025.3-Product"
+        },
+        {
+          "internal_api": "openmp",
+          "num_threads": 1,
+          "version": null
+        },
+        {
+          "internal_api": "openmp",
+          "num_threads": 1,
+          "version": null
+        }
+      ],
+      "evidence_archive": "results-1891036.tar.gz"
+    },
+    {
+      "name": "joint-mkl-2",
+      "stage": "joint",
+      "numpy": "2.4.0",
+      "scipy": "1.16.3",
+      "sklearn": "1.8.0",
+      "pcs": 17,
+      "threshold": 0.0421,
+      "total": 3000,
+      "new": 824,
+      "historical": 843,
+      "overlap": 701,
+      "input_sha256": "ec5f8044723ed010cb7b7b27c1c3d598e3ae917aa2786e95c71514e30d091043",
+      "scaled_sha256": "b3323f918f80fcec92bdbeaec02bc45e7f40d2cf68e743ccb1ed0dad32f5109b",
+      "pcs_sha256": "67ce5a6ee1bcb2964cbfe92346e3286eefef81682b5a465b5960f298f4a14bf4",
+      "threadpools": [
+        {
+          "internal_api": "mkl",
+          "num_threads": 2,
+          "version": "2025.3-Product"
+        },
+        {
+          "internal_api": "openmp",
+          "num_threads": 2,
+          "version": null
+        },
+        {
+          "internal_api": "openmp",
+          "num_threads": 2,
+          "version": null
+        }
+      ],
+      "evidence_archive": "results-1891036.tar.gz"
+    },
+    {
+      "name": "joint-mkl-6",
+      "stage": "joint",
+      "numpy": "2.4.0",
+      "scipy": "1.16.3",
+      "sklearn": "1.8.0",
+      "pcs": 17,
+      "threshold": 0.0421,
+      "total": 3000,
+      "new": 809,
+      "historical": 843,
+      "overlap": 706,
+      "input_sha256": "ec5f8044723ed010cb7b7b27c1c3d598e3ae917aa2786e95c71514e30d091043",
+      "scaled_sha256": "b3323f918f80fcec92bdbeaec02bc45e7f40d2cf68e743ccb1ed0dad32f5109b",
+      "pcs_sha256": "ddb92aae2bd848d21878e3cf5e5f17425d6e112b1bbfc08c85508777b8a4d0c2",
+      "threadpools": [
+        {
+          "internal_api": "mkl",
+          "num_threads": 6,
+          "version": "2025.3-Product"
+        },
+        {
+          "internal_api": "openmp",
+          "num_threads": 6,
+          "version": null
+        },
+        {
+          "internal_api": "openmp",
+          "num_threads": 6,
+          "version": null
+        }
+      ],
+      "evidence_archive": "results-1891036.tar.gz"
+    },
+    {
+      "name": "cold-mkl-1",
+      "stage": "cold",
+      "numpy": "2.4.0",
+      "scipy": "1.16.3",
+      "sklearn": "1.8.0",
+      "pcs": 14,
+      "threshold": 0.05786666666666667,
+      "total": 3000,
+      "new": 3000,
+      "historical": 3000,
+      "overlap": 2636,
+      "input_sha256": "c0e7da1d3b7b3eb52d7ae8a6730896a8ba9eb05b3ee24911e4d9502cfe70ca49",
+      "scaled_sha256": "f352e34791ed359666b276c0c2e78e7aaab17041891626b1a5718181ad058dd7",
+      "pcs_sha256": "b6aa05cdd29b190f668b58198d28e3c2b5419514f91c29ae36cfa9da2be842cd",
+      "threadpools": [
+        {
+          "internal_api": "mkl",
+          "num_threads": 1,
+          "version": "2025.3-Product"
+        },
+        {
+          "internal_api": "openmp",
+          "num_threads": 1,
+          "version": null
+        },
+        {
+          "internal_api": "openmp",
+          "num_threads": 1,
+          "version": null
+        }
+      ],
+      "evidence_archive": "results-1891036.tar.gz"
+    },
+    {
+      "name": "cold-mkl-2",
+      "stage": "cold",
+      "numpy": "2.4.0",
+      "scipy": "1.16.3",
+      "sklearn": "1.8.0",
+      "pcs": 14,
+      "threshold": 0.05786666666666667,
+      "total": 3000,
+      "new": 3000,
+      "historical": 3000,
+      "overlap": 2661,
+      "input_sha256": "c0e7da1d3b7b3eb52d7ae8a6730896a8ba9eb05b3ee24911e4d9502cfe70ca49",
+      "scaled_sha256": "f352e34791ed359666b276c0c2e78e7aaab17041891626b1a5718181ad058dd7",
+      "pcs_sha256": "78f43a484ebfe71f91929f383c2309411b98501cd82f6dc1042ca0a9255217c3",
+      "threadpools": [
+        {
+          "internal_api": "mkl",
+          "num_threads": 2,
+          "version": "2025.3-Product"
+        },
+        {
+          "internal_api": "openmp",
+          "num_threads": 2,
+          "version": null
+        },
+        {
+          "internal_api": "openmp",
+          "num_threads": 2,
+          "version": null
+        }
+      ],
+      "evidence_archive": "results-1891036.tar.gz"
+    },
+    {
+      "name": "cold-mkl-6",
+      "stage": "cold",
+      "numpy": "2.4.0",
+      "scipy": "1.16.3",
+      "sklearn": "1.8.0",
+      "pcs": 14,
+      "threshold": 0.05786666666666667,
+      "total": 3000,
+      "new": 3000,
+      "historical": 3000,
+      "overlap": 2616,
+      "input_sha256": "c0e7da1d3b7b3eb52d7ae8a6730896a8ba9eb05b3ee24911e4d9502cfe70ca49",
+      "scaled_sha256": "f352e34791ed359666b276c0c2e78e7aaab17041891626b1a5718181ad058dd7",
+      "pcs_sha256": "095aafa8b9821dfe131149301b87a291815343784b70e34177d851ea1bc49afd",
+      "threadpools": [
+        {
+          "internal_api": "mkl",
+          "num_threads": 6,
+          "version": "2025.3-Product"
+        },
+        {
+          "internal_api": "openmp",
+          "num_threads": 6,
+          "version": null
+        },
+        {
+          "internal_api": "openmp",
+          "num_threads": 6,
+          "version": null
+        }
+      ],
+      "evidence_archive": "results-1891036.tar.gz"
+    },
+    {
+      "name": "joint-base-1",
+      "stage": "joint",
+      "numpy": "1.26.4",
+      "scipy": "1.13.1",
+      "sklearn": "1.8.0",
+      "pcs": 17,
+      "threshold": 0.0421,
+      "total": 3000,
+      "new": 827,
+      "historical": 843,
+      "overlap": 730,
+      "layout": "C",
+      "input_sha256": "ec5f8044723ed010cb7b7b27c1c3d598e3ae917aa2786e95c71514e30d091043",
+      "scaled_sha256": "b3323f918f80fcec92bdbeaec02bc45e7f40d2cf68e743ccb1ed0dad32f5109b",
+      "pcs_sha256": "56c41382e14aec3b5eeff2193e7b70a704db7245ac58862595b1454c087e6352",
+      "threadpools": [
+        {
+          "internal_api": "mkl",
+          "num_threads": 1,
+          "version": "2023.1-Product"
+        },
+        {
+          "internal_api": "openmp",
+          "num_threads": 1,
+          "version": null
+        },
+        {
+          "internal_api": "openmp",
+          "num_threads": 1,
+          "version": null
+        }
+      ],
+      "evidence_archive": "base-results-1891059.tar.gz"
+    },
+    {
+      "name": "joint-base-default",
+      "stage": "joint",
+      "numpy": "1.26.4",
+      "scipy": "1.13.1",
+      "sklearn": "1.8.0",
+      "pcs": 17,
+      "threshold": 0.0421,
+      "total": 3000,
+      "new": 823,
+      "historical": 843,
+      "overlap": 706,
+      "layout": "C",
+      "input_sha256": "ec5f8044723ed010cb7b7b27c1c3d598e3ae917aa2786e95c71514e30d091043",
+      "scaled_sha256": "b3323f918f80fcec92bdbeaec02bc45e7f40d2cf68e743ccb1ed0dad32f5109b",
+      "pcs_sha256": "c722e9049f31f9cf13af71fd1ed8d7e41c1c1cf13bb248926649d10f9f85e6dd",
+      "threadpools": [
+        {
+          "internal_api": "mkl",
+          "num_threads": 2,
+          "version": "2023.1-Product"
+        },
+        {
+          "internal_api": "openmp",
+          "num_threads": 2,
+          "version": null
+        },
+        {
+          "internal_api": "openmp",
+          "num_threads": 2,
+          "version": null
+        }
+      ],
+      "evidence_archive": "base-results-1891059.tar.gz"
+    },
+    {
+      "name": "cold-base-default",
+      "stage": "cold",
+      "numpy": "1.26.4",
+      "scipy": "1.13.1",
+      "sklearn": "1.8.0",
+      "pcs": 14,
+      "threshold": 0.05786666666666667,
+      "total": 3000,
+      "new": 3000,
+      "historical": 3000,
+      "overlap": 2657,
+      "layout": "C",
+      "input_sha256": "c0e7da1d3b7b3eb52d7ae8a6730896a8ba9eb05b3ee24911e4d9502cfe70ca49",
+      "scaled_sha256": "f352e34791ed359666b276c0c2e78e7aaab17041891626b1a5718181ad058dd7",
+      "pcs_sha256": "b528fa6e6170bca29791f8b69c686feca4b92037e8c69f9b9644a5e2f4db2b79",
+      "threadpools": [
+        {
+          "internal_api": "mkl",
+          "num_threads": 2,
+          "version": "2023.1-Product"
+        },
+        {
+          "internal_api": "openmp",
+          "num_threads": 2,
+          "version": null
+        },
+        {
+          "internal_api": "openmp",
+          "num_threads": 2,
+          "version": null
+        }
+      ],
+      "evidence_archive": "base-results-1891059.tar.gz"
+    },
+    {
+      "name": "cold-base-f-default",
+      "stage": "cold",
+      "numpy": "1.26.4",
+      "scipy": "1.13.1",
+      "sklearn": "1.8.0",
+      "pcs": 14,
+      "threshold": 0.05786666666666667,
+      "total": 3000,
+      "new": 3000,
+      "historical": 3000,
+      "overlap": 2576,
+      "layout": "F",
+      "input_sha256": "c0e7da1d3b7b3eb52d7ae8a6730896a8ba9eb05b3ee24911e4d9502cfe70ca49",
+      "scaled_sha256": "a35b42c24ccacdf1f49ce8783725b8a55fdbef43f76aa51c50ad92f307411ed3",
+      "pcs_sha256": "46b0b04ec1cf2ed8bcb0d5116a2518c5c6a0323b2e986d7244b536e4b0bbc7de",
+      "threadpools": [
+        {
+          "internal_api": "mkl",
+          "num_threads": 2,
+          "version": "2023.1-Product"
+        },
+        {
+          "internal_api": "openmp",
+          "num_threads": 2,
+          "version": null
+        },
+        {
+          "internal_api": "openmp",
+          "num_threads": 2,
+          "version": null
+        }
+      ],
+      "evidence_archive": "base-results-1891059.tar.gz"
+    },
+    {
+      "name": "joint-base-16",
+      "stage": "joint",
+      "numpy": "1.26.4",
+      "scipy": "1.13.1",
+      "sklearn": "1.8.0",
+      "pcs": 17,
+      "threshold": 0.0421,
+      "total": 3000,
+      "new": 845,
+      "historical": 843,
+      "overlap": 742,
+      "layout": "C",
+      "input_sha256": "ec5f8044723ed010cb7b7b27c1c3d598e3ae917aa2786e95c71514e30d091043",
+      "scaled_sha256": "b3323f918f80fcec92bdbeaec02bc45e7f40d2cf68e743ccb1ed0dad32f5109b",
+      "pcs_sha256": "8b42bd2d5345a91d6240dca79360340e12223950d608a342811f6e76703dd125",
+      "threadpools": [
+        {
+          "internal_api": "mkl",
+          "num_threads": 16,
+          "version": "2023.1-Product"
+        },
+        {
+          "internal_api": "openmp",
+          "num_threads": 16,
+          "version": null
+        },
+        {
+          "internal_api": "openmp",
+          "num_threads": 16,
+          "version": null
+        }
+      ],
+      "evidence_archive": "threads-results-1891092.tar.gz"
+    },
+    {
+      "name": "joint-base-24",
+      "stage": "joint",
+      "numpy": "1.26.4",
+      "scipy": "1.13.1",
+      "sklearn": "1.8.0",
+      "pcs": 17,
+      "threshold": 0.0421,
+      "total": 3000,
+      "new": 840,
+      "historical": 843,
+      "overlap": 734,
+      "layout": "C",
+      "input_sha256": "ec5f8044723ed010cb7b7b27c1c3d598e3ae917aa2786e95c71514e30d091043",
+      "scaled_sha256": "b3323f918f80fcec92bdbeaec02bc45e7f40d2cf68e743ccb1ed0dad32f5109b",
+      "pcs_sha256": "5ceb829dc3a3974530610a886b9a4cd2adfc0e707f0722914162514a5d4e2644",
+      "threadpools": [
+        {
+          "internal_api": "mkl",
+          "num_threads": 24,
+          "version": "2023.1-Product"
+        },
+        {
+          "internal_api": "openmp",
+          "num_threads": 24,
+          "version": null
+        },
+        {
+          "internal_api": "openmp",
+          "num_threads": 24,
+          "version": null
+        }
+      ],
+      "evidence_archive": "threads-results-1891092.tar.gz"
+    },
+    {
+      "name": "joint-base-32",
+      "stage": "joint",
+      "numpy": "1.26.4",
+      "scipy": "1.13.1",
+      "sklearn": "1.8.0",
+      "pcs": 17,
+      "threshold": 0.0421,
+      "total": 3000,
+      "new": 802,
+      "historical": 843,
+      "overlap": 712,
+      "layout": "C",
+      "input_sha256": "ec5f8044723ed010cb7b7b27c1c3d598e3ae917aa2786e95c71514e30d091043",
+      "scaled_sha256": "b3323f918f80fcec92bdbeaec02bc45e7f40d2cf68e743ccb1ed0dad32f5109b",
+      "pcs_sha256": "615388b1283e711a82ec5b88ef2712a88e5c1402979e8f01b3dd6f20519bfe4e",
+      "threadpools": [
+        {
+          "internal_api": "mkl",
+          "num_threads": 32,
+          "version": "2023.1-Product"
+        },
+        {
+          "internal_api": "openmp",
+          "num_threads": 32,
+          "version": null
+        },
+        {
+          "internal_api": "openmp",
+          "num_threads": 32,
+          "version": null
+        }
+      ],
+      "evidence_archive": "threads-results-1891092.tar.gz"
+    },
+    {
+      "name": "joint-base-4",
+      "stage": "joint",
+      "numpy": "1.26.4",
+      "scipy": "1.13.1",
+      "sklearn": "1.8.0",
+      "pcs": 17,
+      "threshold": 0.0421,
+      "total": 3000,
+      "new": 837,
+      "historical": 843,
+      "overlap": 742,
+      "layout": "C",
+      "input_sha256": "ec5f8044723ed010cb7b7b27c1c3d598e3ae917aa2786e95c71514e30d091043",
+      "scaled_sha256": "b3323f918f80fcec92bdbeaec02bc45e7f40d2cf68e743ccb1ed0dad32f5109b",
+      "pcs_sha256": "c0b70fd056075443f62ff3a25dbad42aea246fbb8d0bda38d02ea84b8cc7b2a8",
+      "threadpools": [
+        {
+          "internal_api": "mkl",
+          "num_threads": 4,
+          "version": "2023.1-Product"
+        },
+        {
+          "internal_api": "openmp",
+          "num_threads": 4,
+          "version": null
+        },
+        {
+          "internal_api": "openmp",
+          "num_threads": 4,
+          "version": null
+        }
+      ],
+      "evidence_archive": "threads-results-1891092.tar.gz"
+    },
+    {
+      "name": "joint-base-44",
+      "stage": "joint",
+      "numpy": "1.26.4",
+      "scipy": "1.13.1",
+      "sklearn": "1.8.0",
+      "pcs": 17,
+      "threshold": 0.0421,
+      "total": 3000,
+      "new": 836,
+      "historical": 843,
+      "overlap": 748,
+      "layout": "C",
+      "input_sha256": "ec5f8044723ed010cb7b7b27c1c3d598e3ae917aa2786e95c71514e30d091043",
+      "scaled_sha256": "b3323f918f80fcec92bdbeaec02bc45e7f40d2cf68e743ccb1ed0dad32f5109b",
+      "pcs_sha256": "9af1f189d13c91ed5dd1f25f5e62ccab3c240a99007e1fcd6213e034a711f72a",
+      "threadpools": [
+        {
+          "internal_api": "mkl",
+          "num_threads": 44,
+          "version": "2023.1-Product"
+        },
+        {
+          "internal_api": "openmp",
+          "num_threads": 44,
+          "version": null
+        },
+        {
+          "internal_api": "openmp",
+          "num_threads": 44,
+          "version": null
+        }
+      ],
+      "evidence_archive": "threads-results-1891092.tar.gz"
+    },
+    {
+      "name": "joint-base-8",
+      "stage": "joint",
+      "numpy": "1.26.4",
+      "scipy": "1.13.1",
+      "sklearn": "1.8.0",
+      "pcs": 17,
+      "threshold": 0.0421,
+      "total": 3000,
+      "new": 822,
+      "historical": 843,
+      "overlap": 732,
+      "layout": "C",
+      "input_sha256": "ec5f8044723ed010cb7b7b27c1c3d598e3ae917aa2786e95c71514e30d091043",
+      "scaled_sha256": "b3323f918f80fcec92bdbeaec02bc45e7f40d2cf68e743ccb1ed0dad32f5109b",
+      "pcs_sha256": "4639e1a828fd152c1bdfab0e4be1836a8dee1998d825e2c8cc41df197650f325",
+      "threadpools": [
+        {
+          "internal_api": "mkl",
+          "num_threads": 8,
+          "version": "2023.1-Product"
+        },
+        {
+          "internal_api": "openmp",
+          "num_threads": 8,
+          "version": null
+        },
+        {
+          "internal_api": "openmp",
+          "num_threads": 8,
+          "version": null
+        }
+      ],
+      "evidence_archive": "threads-results-1891092.tar.gz"
+    }
+  ]
+}

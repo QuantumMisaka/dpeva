@@ -1,0 +1,5 @@
+.venv/
+.venv-tutorial/
+work/
+.ipynb_checkpoints/
+__pycache__/

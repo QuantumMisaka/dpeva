@@ -1,2 +1,9 @@
 include LICENCE
 include README.md
+
+# Teaching notebooks and full scientific datasets are distributed via Git,
+# never in the PyPI sdist. Wheels discover packages exclusively under src/.
+prune examples/tutorials
+
+# Pretrained integration-test weights are external fixtures, not runtime data.
+recursive-exclude tests/integration/data *.pt *.pth

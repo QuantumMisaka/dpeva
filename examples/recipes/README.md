@@ -3,6 +3,9 @@
 This directory contains configuration templates for the core workflows in DP-EVA.
 Executable example scripts are maintained in `examples/scripts/`.
 
+For a CPU classroom demonstration with real paper data, see the
+[DP-EVA paper case notebooks](../tutorials/paper_case/README.md).
+
 ## Start here: local four-stage example
 
 `quickstart/` is a ready-to-run `feature → train → infer → collect` recipe. Its

@@ -2,7 +2,7 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-10-12
+last-updated: 2026-10-21
 owner: Docs Owner
 ---
 
@@ -525,6 +525,14 @@ Auto-UQ 用于根据数据分布自动确定筛选边界；具体的字段与约
 
 ### 5.2 验证测试
 
+FeCHO 教学包独立于 GPU 工作流；入口为 `examples/tutorials/paper_case/README.md`。
+包含论文全量 30,656 帧结构与标签，默认全量选数；小切片作为可选交互模式。
+首次可用 `python3 examples/tutorials/paper_case/run.py` 自动建环境并验收；
+加 `lab` 启动交互服务，已安装后加 `--offline` 复用环境。
+修改其数据、辅助函数或 notebook 时，在教学环境运行
+`python examples/tutorials/paper_case/scripts/verify.py`，核对身份、历史 UQ、
+无标签结构导出，并在独立 kernel 中执行各 notebook；需保存静态结果时加 `--write-notebooks`。
+
 按 {doc}`安装指南 </guides/installation>` 准备运行环境，再安装 `.[dev]`（文档变更另装 `.[docs]`）。
 预置的 `dpeva-dpa4` 仅是维护者使用的环境名，不要求贡献者具有同名环境。
 
@@ -611,6 +619,9 @@ DPEVA_TAG: WORKFLOW_FINISHED
 - `python scripts/release_helper.py --check` 是无写入的版本一致性检查，并已进入 `release` profile；显式版本只接受无前缀的 `X.Y.Z`。
 - 发布说明的权威写入位置始终是本文件的 `### 6.2 版本历史`，脚本不会自动追加版本条目。
 - 使用脚本完成版本号更新后，必须手动在 `#### Current Era (v0.8.x)` 顶部追加新版本记录并执行发布门禁。提交、打 tag 与发布仍是分离的授权动作。
+- 教学数据通过 Git 分发，PyPI 不携带 `examples/tutorials/`；`MANIFEST.in` 同时排除
+  `tests/integration/data/` 下的 `.pt` / `.pth` 测试权重。wheel 的包发现范围限定于 `src/`。
+  构建 `python -m build` 后须检查 wheel 和 sdist 的实际归档清单，不能仅依据 Git 忽略规则判断发布内容。
 
 ### 6.2 版本历史
 

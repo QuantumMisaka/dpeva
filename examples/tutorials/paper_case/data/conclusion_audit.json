@@ -1,0 +1,332 @@
+{
+  "kind": "Tutorial conclusion assessment; no training or inference rerun",
+  "threadpools": [
+    {
+      "internal_api": "openmp",
+      "version": null,
+      "num_threads": 2
+    },
+    {
+      "internal_api": "openblas",
+      "version": "0.3.34.106.0",
+      "num_threads": 2,
+      "architecture": "Haswell"
+    },
+    {
+      "internal_api": "openblas",
+      "version": "0.3.31.dev",
+      "num_threads": 2,
+      "architecture": "Haswell"
+    }
+  ],
+  "versions": {
+    "python": "3.13.13",
+    "numpy": "2.5.4",
+    "scipy": "1.18.1",
+    "sklearn": "1.9.1"
+  },
+  "cold_start": {
+    "input_frames": 30656,
+    "selected": 3000,
+    "retained_pcs": 14,
+    "metric": "Mean occupied-bin coverage across retained PCs, 50 bins per PC, common PCA basis",
+    "current_per_pc": [
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      0.9795918367346939,
+      0.9787234042553191,
+      0.9772727272727273,
+      0.9787234042553191,
+      0.9166666666666666,
+      0.9361702127659575
+    ],
+    "historical_per_pc": [
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      0.9795918367346939,
+      0.9787234042553191,
+      0.9772727272727273,
+      0.9787234042553191,
+      0.9166666666666666,
+      0.9574468085106383
+    ],
+    "current_mean": 0.9833677322821917,
+    "historical_mean": 0.9848874891210974,
+    "random_seeds": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19
+    ],
+    "random_mean_each": [
+      0.8984239148823386,
+      0.9222294865721915,
+      0.9069035071890043,
+      0.894683931461504,
+      0.8907257966740164,
+      0.900968983614446,
+      0.9042435990699127,
+      0.8970437251993916,
+      0.8919527700552451,
+      0.9102215137229248,
+      0.8891335177342556,
+      0.8949215403210193,
+      0.8830674886699637,
+      0.8934600925200143,
+      0.8876596355591145,
+      0.8811909978138808,
+      0.8951734397821023,
+      0.8950505927709574,
+      0.9024086971069167,
+      0.8917301026517267
+    ],
+    "random_mean": 0.8965596666685464,
+    "random_min": 0.8811909978138808,
+    "random_max": 0.9222294865721915
+  },
+  "uq": {
+    "error_metric": "Maximum atomic force-vector error per frame [eV/A], from archived base-member predictions; not force RMSE",
+    "threshold_note": "0.3, 0.5 and 1.0 eV/A are post-selection diagnostic thresholds, not paper acceptance criteria or sampling inputs",
+    "classification_counts": {
+      "accurate": 22217,
+      "candidate": 5339,
+      "failed": 100
+    },
+    "per_region_error": {
+      "accurate": {
+        "median": 0.3875832514005271,
+        "p95": 0.7098733550928454,
+        "max": 1.4514608427536173
+      },
+      "candidate": {
+        "median": 0.5071702514783484,
+        "p95": 1.131916600179478,
+        "max": 3.837108166477073
+      },
+      "failed": {
+        "median": 1.3065438606453128,
+        "p95": 4.626771535229697,
+        "max": 8.838784195907708
+      }
+    },
+    "qbc_only_accurate_count": 21864,
+    "qbc_low_but_dual_notaccurate": 1020,
+    "qbc_low_but_dual_candidate": 1019,
+    "qbc_low_but_dual_failed": 1,
+    "qbc_error_spearman": 0.24913207074909377,
+    "rnd_error_spearman": 0.3782905704165134,
+    "error_gt_0.3": {
+      "qbc_high_but_dual_accurate": 753,
+      "qbc_low": 14230,
+      "rescued_from_qbc_low": 785,
+      "still_dual_accurate": 14198
+    },
+    "error_gt_0.5": {
+      "qbc_high_but_dual_accurate": 409,
+      "qbc_low": 6478,
+      "rescued_from_qbc_low": 471,
+      "still_dual_accurate": 6416
+    },
+    "error_gt_1.0": {
+      "qbc_high_but_dual_accurate": 10,
+      "qbc_low": 129,
+      "rescued_from_qbc_low": 16,
+      "still_dual_accurate": 123
+    },
+    "qbc_high_but_dual_accurate": 1373
+  },
+  "sampling_counts": {
+    "normal_no_uq": {
+      "candidate_count": 27656,
+      "cluster_budget": 1000,
+      "new": 1000,
+      "training_representatives": 0,
+      "retained_pcs": 13
+    },
+    "joint_no_uq": {
+      "candidate_count": 27656,
+      "cluster_budget": 3000,
+      "new": 1308,
+      "training_representatives": 1692,
+      "retained_pcs": 14
+    },
+    "normal_uq": {
+      "candidate_count": 5339,
+      "cluster_budget": 1000,
+      "new": 1000,
+      "training_representatives": 0,
+      "retained_pcs": 16
+    },
+    "joint_uq": {
+      "candidate_count": 5339,
+      "cluster_budget": 3000,
+      "new": 833,
+      "training_representatives": 2167,
+      "retained_pcs": 17
+    }
+  },
+  "joint_diagnostic": {
+    "metric_space": "Common weighted PCA fit on UQ candidates + historical training features; dimensionless distances",
+    "selection_fit": "Each selection method retains its own original PCA/clustering; comparisons project selected identities into the common joint PCA",
+    "methods": {
+      "joint": {
+        "n": 833,
+        "median_nearest_train": 0.08817821683119831,
+        "mean_nearest_train": 0.08646041130894903,
+        "p10_nearest_train": 0.050912471564004795,
+        "coverage_with_training": 0.9951970788315326
+      },
+      "normal_equal_new_count": {
+        "n": 833,
+        "median_nearest_train": 0.08129447691732919,
+        "mean_nearest_train": 0.08102470996900964,
+        "p10_nearest_train": 0.043395966891047445,
+        "coverage_with_training": 0.9975740296118448
+      },
+      "historical": {
+        "n": 843,
+        "median_nearest_train": 0.0874685836924235,
+        "mean_nearest_train": 0.08544986962026634,
+        "p10_nearest_train": 0.04933392197650442,
+        "coverage_with_training": 0.9951480592236893
+      }
+    },
+    "random_seeds": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19
+    ],
+    "random": [
+      {
+        "median_nearest_train": 0.06950447445391564,
+        "coverage_with_training": 0.9927711084433772
+      },
+      {
+        "median_nearest_train": 0.06830888731128057,
+        "coverage_with_training": 0.9963975590236094
+      },
+      {
+        "median_nearest_train": 0.06951003402948361,
+        "coverage_with_training": 0.9939475790316126
+      },
+      {
+        "median_nearest_train": 0.06912889724998843,
+        "coverage_with_training": 0.9951730692276911
+      },
+      {
+        "median_nearest_train": 0.06940991622366462,
+        "coverage_with_training": 0.9939965986394559
+      },
+      {
+        "median_nearest_train": 0.06919608317077873,
+        "coverage_with_training": 0.9939965986394559
+      },
+      {
+        "median_nearest_train": 0.06645848367919016,
+        "coverage_with_training": 0.9939965986394559
+      },
+      {
+        "median_nearest_train": 0.06981983752647755,
+        "coverage_with_training": 0.9951480592236893
+      },
+      {
+        "median_nearest_train": 0.07049191056882682,
+        "coverage_with_training": 0.9976230492196879
+      },
+      {
+        "median_nearest_train": 0.06836117727788842,
+        "coverage_with_training": 0.9951970788315326
+      },
+      {
+        "median_nearest_train": 0.06919608317077873,
+        "coverage_with_training": 0.9927711084433772
+      },
+      {
+        "median_nearest_train": 0.07090737839708926,
+        "coverage_with_training": 0.9939965986394559
+      },
+      {
+        "median_nearest_train": 0.06979386002060682,
+        "coverage_with_training": 0.9927711084433772
+      },
+      {
+        "median_nearest_train": 0.07007381115953022,
+        "coverage_with_training": 0.9951480592236893
+      },
+      {
+        "median_nearest_train": 0.07103749362626485,
+        "coverage_with_training": 0.9951480592236893
+      },
+      {
+        "median_nearest_train": 0.07135342454449628,
+        "coverage_with_training": 0.9939715886354543
+      },
+      {
+        "median_nearest_train": 0.06886280732720726,
+        "coverage_with_training": 0.9927711084433772
+      },
+      {
+        "median_nearest_train": 0.07085058158296574,
+        "coverage_with_training": 0.9927711084433772
+      },
+      {
+        "median_nearest_train": 0.06856372038757026,
+        "coverage_with_training": 0.9939965986394559
+      },
+      {
+        "median_nearest_train": 0.0696958133072624,
+        "coverage_with_training": 0.9927711084433772
+      }
+    ],
+    "not_a_paper_metric": true
+  },
+  "training_fraction": {
+    "current": 0.12503262004175367,
+    "historical": 0.1253588204592902
+  }
+}

@@ -1,10 +1,17 @@
 # DP-EVA Examples
 
-This directory contains minimal reproducible examples (recipes) for DP-EVA workflows.
+This directory contains interactive tutorials, workflow configuration recipes, and helper scripts for DP-EVA.
+
+## Interactive teaching notebooks (CPU)
+
+Start with the [DP-EVA paper case tutorial](tutorials/paper_case/README.md)
+for a 20–30 minute demonstration using real paper data. Four notebooks cover
+representation, DIRECT, uncertainty, joint sampling, and workflow handoff.
+They include precomputed data and need only the tutorial's CPU dependencies.
 
 ## ⚠️ Important Prerequisites
 
-Before running any examples, especially with `dpeva` CLI or Slurm submission:
+Before running the workflow recipes with `dpeva` CLI or Slurm submission:
 
 1.  **Check Environment Paths**:
     Open the configuration files (e.g., `config_collect_normal.json`) and verify the `env_setup` section.
@@ -18,6 +25,8 @@ Before running any examples, especially with `dpeva` CLI or Slurm submission:
 
 ## Directory Structure
 
+-   **`tutorials/`**: CPU notebooks with bundled paper data and teaching instructions.
+    -   See [tutorials/README.md](tutorials/README.md) to start.
 -   **`recipes/`**: The core collection of configuration templates for all DP-EVA workflows.
     -   See [recipes/README.md](recipes/README.md) for detailed usage instructions.
 -   **`scripts/`**: Executable helper scripts for recipe configurations.
