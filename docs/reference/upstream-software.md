@@ -85,8 +85,8 @@ experimental，因为 DP-EVA 已能从 `frame_nlocs`/`frame_system_ids` 构造
 
 `dp test` 在 LMDB 上不保留目录级体系身份，但 DP-EVA 的 parser 现在通过
 `frame_nlocs`/`frame_system_ids` 恢复帧级 system 归属（缺失元数据时 fail-loud）。
-`infer`/`analysis` 的明细解析因此可用；`clean` 仍依赖原始 system 划分与
-跨格式身份，暂不作为 LMDB 完整支持声明。`dp test` 自报的聚合指标不受影响。
+`infer`/`analysis` 的明细解析和 Clean 的原始 system 导出因此可用；
+Clean 在没有 `frame_system_ids`/`system_info` 时 fail-loud。`dp test` 自报的聚合指标不受影响。
 
 `label` integration 的帧去重使用 canonical element/geometry identity：
 `type_map` 顺序和原子存储顺序不改变身份，标签数组随同一原子排列重排；

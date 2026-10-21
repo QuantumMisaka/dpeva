@@ -19,7 +19,7 @@ owner: Workflow Owner (IO) / Compatibility Owner
 **2026-10-21 reopening:** 主人确认 LMDB 是后续主流数据格式，Phase 2–5 从
 deferred 改为 active。执行采用 L3 伞形计划下的 L2 工作包：WP-1 能力契约、
 WP-2 LMDB 帧索引与 infer/analysis 闭环、WP-3 跨格式身份与 Clean 原始 system
-划分、WP-4 写出侧、WP-5 证据晋级。
+划分、WP-4 写出侧、WP-5 证据晋级。WP-3 已在同日完成。
 `train`/`fine-tune + deepmd/lmdb` 先保持 experimental；`test + deepmd/lmdb`
 在 WP-2 完成前不登记；`eval-desc`/`embed + deepmd/lmdb` 记为 blocked-upstream
 （issue #6034）。
@@ -490,5 +490,26 @@ composition group 当作 Clean 的 system，会静默改变导出语义。
 
 **边界**
 
-- WP-3B 仍负责 Clean 的原始 `frame_system_ids` system 划分与导出；
+- WP-3B 已完成 Clean 的原始 `frame_system_ids` system 划分与导出（见 §9.7）；
 - 本次没有把 LMDB composition group 冒充原始 system，也没有扩大 `output_format`。
+
+### 9.7 WP-3B Clean 原始 system 导出（2026-10-21）
+
+**Ruling:** `dpeva clean` 的 LMDB 分支使用 `frame_system_ids` 恢复原始 system，
+不使用 `dpdata.MultiSystems` 的 composition group。若 LMDB 缺少
+`frame_system_ids`/`system_info`，直接 fail-loud；不猜测 system 划分。
+
+**落地内容**
+
+- 新增 `src/dpeva/io/lmdb_systems.py::load_lmdb_systems_by_id`：
+  - 使用 dpdata 1.1 LMDB codec 读取每帧；
+  - 按 `frame_system_ids` 分组，保留 frame 顺序；
+  - 生成 `target_name=<lmdb>#sys<id>`，与 parser 的 dataname 对齐；
+  - 同一 composition 的多个原始 system 不会被合并。
+- `DataCleaningWorkflow` 在 LMDB 输入时调用该 loader；npy/mixed 路径保持原逻辑。
+- 测试覆盖同一 composition 两个 system 的划分与标签保留；缺失 system identity 时 fail-loud。
+
+**边界**
+
+- 真实 DeepMD CPU/SAI contract 仍属 WP-5；
+- WP-4 writer/output_format 仍未开始。

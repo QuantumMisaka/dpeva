@@ -119,7 +119,7 @@ DPEVA_TAG: WORKFLOW_FINISHED
 - `load_systems` 报 `DatasetLoadError`，提示 "Reading 'deepmd/lmdb' requires dpdata>=1.1"
 - Feature 的 `eval-desc`/`embed` 在提交前报 "cannot consume a DeepMD LMDB dataset"
 - `dpeva infer` 在解析旧 LMDB 明细时可能报缺少 `frame_nlocs`/`frame_system_ids`
-- Clean 在需要原始 system 划分或跨格式身份时仍可能拒绝 LMDB
+- Clean 在 LMDB 缺少 `frame_system_ids`/`system_info` 时会拒绝猜测原始 system 划分
 
 处理：
 
@@ -137,7 +137,8 @@ DPEVA_TAG: WORKFLOW_FINISHED
   的 LMDB 可由 `dpeva infer`/`analysis` 解析逐帧明细。缺失元数据时 parser 会
   fail-loud，不会猜测归属
 - `test + deepmd/lmdb` 仍为 experimental；真实 DeepMD CPU/SAI contract 尚未完成。
-  `clean` 仍需要原始 system 划分；在跨格式身份完成前请使用 npy/mixed 副本
+  `clean` 在 LMDB 带 `frame_system_ids` 元数据时可用；缺失时请补齐元数据或使用
+  npy/mixed 副本
 
 ## 6. 作业与调度类问题（Slurm）
 

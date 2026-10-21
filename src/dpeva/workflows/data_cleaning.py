@@ -10,7 +10,8 @@ import pandas as pd
 from dpeva.config import DataCleaningConfig
 from dpeva.constants import LOG_FILE_CLEAN, WORKFLOW_FINISHED_TAG
 from dpeva.io.dataproc import DPTestResultParser
-from dpeva.io.dataset import load_systems
+from dpeva.io.dataset import is_lmdb_path, load_systems
+from dpeva.io.lmdb_systems import load_lmdb_systems_by_id
 from dpeva.utils.logs import setup_workflow_logger
 from dpeva.utils.security import normalize_sys_name, safe_join
 
@@ -45,8 +46,13 @@ class DataCleaningWorkflow:
         if not parsed.get("has_ground_truth", False):
             raise ValueError("Data cleaning requires labeled inference results with ground truth columns.")
         metrics_df = self._build_metrics_dataframe(parsed)
-        target_systems = sorted(metrics_df["system"].unique().tolist())
-        systems = load_systems(str(self.config.dataset_dir), fmt="auto", target_systems=target_systems)
+        if is_lmdb_path(self.config.dataset_dir):
+            systems = load_lmdb_systems_by_id(str(self.config.dataset_dir))
+        else:
+            target_systems = sorted(metrics_df["system"].unique().tolist())
+            systems = load_systems(
+                str(self.config.dataset_dir), fmt="auto", target_systems=target_systems
+            )
         if not systems:
             raise ValueError(f"No systems loaded from dataset directory: {self.config.dataset_dir}")
         keep_indices_map, decision_map, summary = self._select_frames(metrics_df, systems)

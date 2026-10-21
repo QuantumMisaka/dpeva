@@ -34,6 +34,7 @@ class LmdbFrameIndex:
     frames: tuple[LmdbFrameRef, ...]
     test_order: tuple[LmdbFrameRef, ...]
     nloc_groups: Mapping[int, tuple[LmdbFrameRef, ...]]
+    has_system_identity: bool
 
     @property
     def dataname_list(self) -> list[list[object]]:
@@ -226,6 +227,7 @@ def read_lmdb_frame_index(path) -> LmdbFrameIndex:
                 "LMDB frame_nlocs conflicts with system_info-derived nloc values"
             )
 
+        has_system_identity = frame_system_ids is not None or system_ids is not None
         if frame_system_ids is None:
             if system_ids is not None:
                 frame_system_ids = system_ids
@@ -282,4 +284,5 @@ def read_lmdb_frame_index(path) -> LmdbFrameIndex:
         frames=tuple(frames),
         test_order=test_order,
         nloc_groups=nloc_groups,
+        has_system_identity=has_system_identity,
     )

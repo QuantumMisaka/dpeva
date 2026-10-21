@@ -31,8 +31,9 @@ owner: Docs Owner
 
 - 受支持的数据集输入：`deepmd/npy`、`deepmd/npy/mixed`、`deepmd/lmdb`（需要 `dpdata>=1.1`）。
 - LMDB 输入由 dpdata 按**组成分组**读回；`frame_nlocs`/`frame_system_ids` 可用于
-  `infer`/`analysis` 的逐帧明细归属。依赖原始目录级体系身份的配置
-  （如 `target_systems` 筛选、Clean 的导出划分）仍会被明确拒绝或要求 npy/mixed 副本。
+  `infer`/`analysis` 的逐帧明细归属。Clean 在这些元数据存在时按
+  `frame_system_ids` 恢复原始 system 并导出；若元数据不足则 fail-loud，
+  不使用 composition group 冒充原始 system。
 - Feature 工作流的 `feature_exporter="eval_desc"`/`"embed"` 上游不支持 LMDB，DP-EVA 在
   提交作业前拒绝；请提供 npy/mixed 副本或使用进程内描述符生成。
 - 完整支持矩阵与实测依据见 `docs/reference/upstream-software.md` §2.1。
