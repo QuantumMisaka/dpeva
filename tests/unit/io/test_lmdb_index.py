@@ -11,7 +11,7 @@ import msgpack
 from packaging.version import Version
 
 from dpeva.io.dataproc import DPTestResultParser
-from dpeva.io.dataset import DatasetLoadError
+from dpeva.io.dataset import DatasetLoadError, load_systems
 from dpeva.io.lmdb_index import read_lmdb_frame_index
 
 requires_lmdb_writer = pytest.mark.skipif(
@@ -57,6 +57,19 @@ def _write_lmdb(root: Path) -> Path:
     target = root / "mixed.lmdb"
     dump_systems(systems, str(target), type_map=["Fe", "C"])
     return target
+
+
+def _write_identity_npy(root: Path, name: str, *, atom_types: list[int], coords, forces):
+    system_dir = root / name
+    (system_dir / "set.000").mkdir(parents=True)
+    (system_dir / "type.raw").write_text(" ".join(str(t) for t in atom_types))
+    (system_dir / "type_map.raw").write_text("H O")
+    np.save(system_dir / "set.000" / "coord.npy", np.asarray(coords, dtype=float).reshape(1, -1, 3))
+    np.save(system_dir / "set.000" / "box.npy", np.eye(3).reshape(1, 9) * 10.0)
+    np.save(system_dir / "set.000" / "energy.npy", np.array([-1.0]))
+    np.save(system_dir / "set.000" / "force.npy", np.asarray(forces, dtype=float).reshape(1, -1, 3))
+    np.save(system_dir / "set.000" / "virial.npy", np.zeros((1, 9)))
+    return dpdata.LabeledSystem(str(system_dir), fmt="deepmd/npy")
 
 
 @requires_lmdb_writer
@@ -208,3 +221,34 @@ def test_metadata_index_rejects_system_with_multiple_nlocs(tmp_path: Path) -> No
 
     with pytest.raises(DatasetLoadError, match="multiple nloc"):
         read_lmdb_frame_index(target)
+
+
+@requires_lmdb_writer
+def test_npy_and_lmdb_share_canonical_frame_identity(tmp_path: Path) -> None:
+    from dpeva.labeling.integration import DataIntegrationManager
+
+    npy_dir = tmp_path / "npy"
+    _write_identity_npy(
+        tmp_path,
+        "npy",
+        atom_types=[0, 1],
+        coords=[[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]],
+        forces=[[0.1, 0.0, 0.0], [0.2, 0.0, 0.0]],
+    )
+    lmdb_source = _write_identity_npy(
+        tmp_path,
+        "source",
+        atom_types=[1, 0],
+        coords=[[1.0, 0.0, 0.0], [0.0, 0.0, 0.0]],
+        forces=[[0.2, 0.0, 0.0], [0.1, 0.0, 0.0]],
+    )
+    lmdb_dir = tmp_path / "identity.lmdb"
+    from dpdata.formats.deepmd.lmdb import dump_systems
+
+    dump_systems([lmdb_source], str(lmdb_dir), type_map=["H", "O"])
+
+    npy_frame = load_systems(str(npy_dir))[0]
+    lmdb_frame = load_systems(str(lmdb_dir))[0]
+
+    assert DataIntegrationManager._frame_identity(npy_frame) == DataIntegrationManager._frame_identity(lmdb_frame)
+    assert DataIntegrationManager._frame_label_identity(npy_frame) == DataIntegrationManager._frame_label_identity(lmdb_frame)

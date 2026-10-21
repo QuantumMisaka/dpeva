@@ -27,7 +27,7 @@ owner: Docs Owner
 | `run.contract` | run manifest 的 identity、状态、事件、产物和失败语义 | `tests/unit/run/test_context.py`; `tests/unit/run/test_recorder.py`; `tests/integration/test_run_contract_pilot.py` | `docs/reports/2026-09-04-run-contract-pilot-report.md` |
 | `lineage.evaluation-card` | 数据谱系、模型引用和六维 evaluation card | `tests/unit/run/test_dataset_lineage.py`; `tests/unit/run/test_model_ref.py`; `tests/unit/evaluation/test_card.py`; `tests/integration/test_evaluation_card_cli.py` | `docs/reports/2026-09-04-dataset-lineage-eval-card-acceptance.md` |
 | `compatibility.deepmd-3.2` | DeepMD 3.2 CLI contract 与 capability evidence | `tests/unit/compatibility/test_deepmd_matrix.py`; `tests/unit/compatibility/test_deepmd_adapter.py`; `tests/contract/deepmd/test_cli_contract.py` | `docs/reports/2026-09-04-deepmd-3.2-compatibility.md` |
-| `io.dataset.lmdb` | LMDB 读侧、训练透传、`dp test -d` 帧归属、不可支持组合 fail-closed | `tests/unit/io/test_dataset_lmdb.py`; `tests/unit/io/test_lmdb_index.py`; `tests/unit/training/test_training_managers.py`; `tests/unit/feature/test_execution_manager.py`; `tests/unit/io/test_dataproc.py`; `tests/unit/compatibility/test_lmdb_capability.py` | `docs/reports/2026-09-19-lmdb-read-support.md` |
+| `io.dataset.lmdb` | LMDB 读侧、训练透传、`dp test -d` 帧归属、跨格式身份、不可支持组合 fail-closed | `tests/unit/io/test_dataset_lmdb.py`; `tests/unit/io/test_lmdb_index.py`; `tests/unit/labeling/test_integration.py`; `tests/unit/training/test_training_managers.py`; `tests/unit/feature/test_execution_manager.py`; `tests/unit/io/test_dataproc.py`; `tests/unit/compatibility/test_lmdb_capability.py` | `docs/reports/2026-09-19-lmdb-read-support.md` |
 
 ## 统一完成语义
 

@@ -88,6 +88,10 @@ experimental，因为 DP-EVA 已能从 `frame_nlocs`/`frame_system_ids` 构造
 `infer`/`analysis` 的明细解析因此可用；`clean` 仍依赖原始 system 划分与
 跨格式身份，暂不作为 LMDB 完整支持声明。`dp test` 自报的聚合指标不受影响。
 
+`label` integration 的帧去重使用 canonical element/geometry identity：
+`type_map` 顺序和原子存储顺序不改变身份，标签数组随同一原子排列重排；
+LMDB 缺少 `real_atom_types` 时以规范化 `atom_types` 作为元素身份。
+
 ## 3. ABACUS
 
 - 仓库地址：https://github.com/deepmodeling/abacus-develop

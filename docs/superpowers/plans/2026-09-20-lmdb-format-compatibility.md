@@ -467,3 +467,28 @@ composition group 当作 Clean 的 system，会静默改变导出语义。
   + 3 skipped（dpdata<1.1 的真实 writer guard）；
 - `tests/unit/io/test_dataproc.py`：LMDB 缺失源 fail-loud，正常 LMDB 由新索引用例覆盖；
 - 后续 WP-3 完成跨格式身份后再评估 Clean 的 LMDB 导出。
+
+### 9.6 WP-3A 跨格式 canonical frame identity（2026-10-21）
+
+**Ruling:** `_frame_identity` 不再把 `atom_names`/`type_map` 的顺序或原始
+`atom_types` 索引直接纳入身份；它先把原子映射到元素名，再按
+`(element, coordinates)` 稳定排序，并对同一排列下的原子级标签做同样重排。
+代价：历史上仅因 type-map 顺序不同而被视为不同的帧，现在会被识别为同一结构；
+这是跨 npy/lmdb 去重所需的行为变更。
+
+**落地内容**
+
+- `src/dpeva/labeling/integration.py`：
+  - 结构身份使用 canonical elements + coords + cell/PBC；
+  - `forces` 等带 atom axis 的标签随 canonical permutation 重排；
+  - `real_atom_types` 优先映射回真实元素名，缺失时使用规范化 `atom_types`；
+  - 标签内容不同仍保持 conflict fail-closed。
+- 新增真实 npy/lmdb 同构帧测试：不同原子存储顺序和 type-map 顺序得到同一
+  `frame_identity` 与 `frame_label_identity`。
+- `tests/unit/labeling/test_integration.py` 更新旧断言：type-map 重排不再改变身份；
+  cell/PBC 和实际 force 差异仍改变相应身份。
+
+**边界**
+
+- WP-3B 仍负责 Clean 的原始 `frame_system_ids` system 划分与导出；
+- 本次没有把 LMDB composition group 冒充原始 system，也没有扩大 `output_format`。

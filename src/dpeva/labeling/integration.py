@@ -11,6 +11,7 @@ from typing import Dict, Optional, List
 
 import dpdata
 import numpy as np
+from dpdata.data_type import Axis
 
 from dpeva.constants import DEFAULT_LABELING_INTEGRATION_OUTPUT_FORMAT
 from dpeva.io.dataset import load_systems
@@ -442,33 +443,116 @@ class DataIntegrationManager:
 
     @classmethod
     def _frame_identity(cls, frame) -> str:
-        """Hash frame structure, including cell/PBC and atom/type-map identity."""
+        """Hash frame structure independent of atom storage/type-map order."""
         data = frame.data
+        canonical = cls._canonical_frame_arrays(frame)
         payload = {
-            "atom_names": list(data.get("atom_names", [])),
-            "type_map": list(data.get("type_map", data.get("atom_names", []))),
-            "atom_types": cls._array_identity(data.get("atom_types", []), integer=True),
-            "coords": cls._array_identity(data.get("coords", [])),
+            "elements": canonical["elements"],
+            "real_elements": canonical["real_elements"],
+            "coords": cls._array_identity(canonical["coords"]),
             "cells": cls._array_identity(data.get("cells", [])),
             "pbc": not bool(getattr(frame, "nopbc", data.get("nopbc", False))),
-            "real_atom_names": list(data.get("real_atom_names", [])),
-            "real_atom_types": cls._array_identity(data.get("real_atom_types", []), integer=True),
         }
         return hashlib.sha256(cls._canonical_json(payload)).hexdigest()
 
     @classmethod
     def _frame_label_identity(cls, frame) -> str:
-        """Hash every non-structural label actually present on the frame."""
+        """Hash labels after applying the frame's canonical atom permutation."""
         structural = {
             "atom_names", "type_map", "atom_numbs", "atom_types", "orig", "cells", "coords",
             "nopbc", "real_atom_names", "real_atom_types",
         }
+        canonical = cls._canonical_frame_arrays(frame)
         labels = {
-            key: cls._array_identity(value)
+            key: cls._array_identity(
+                cls._canonical_label_array(frame, key, value, canonical["permutation"])
+            )
             for key, value in sorted(frame.data.items())
             if key not in structural
         }
         return hashlib.sha256(cls._canonical_json(labels)).hexdigest()
+
+    @classmethod
+    def _canonical_frame_arrays(cls, frame) -> Dict[str, object]:
+        """Return atom-name and coordinate arrays in a stable element/geometry order."""
+        data = frame.data
+        atom_names = list(data.get("atom_names", []))
+        atom_types = np.asarray(data.get("atom_types", []), dtype=int).reshape(-1)
+        coords = np.asarray(data.get("coords", []), dtype=float)
+        if coords.ndim == 3 and coords.shape[0] == 1:
+            coords = coords[0]
+        if coords.ndim != 2:
+            raise ValueError(f"frame coords must resolve to a 2-D array, got {coords.shape}")
+        if atom_types.size != coords.shape[0]:
+            raise ValueError(
+                f"frame atom_types/coords mismatch: {atom_types.size} vs {coords.shape[0]}"
+            )
+        elements = [
+            atom_names[int(type_index)]
+            if 0 <= int(type_index) < len(atom_names)
+            else f"Type_{int(type_index)}"
+            for type_index in atom_types
+        ]
+        permutation = np.asarray(
+            sorted(
+                range(len(elements)),
+                key=lambda index: (elements[index], tuple(coords[index]), index),
+            ),
+            dtype=int,
+        )
+        canonical_elements = [elements[index] for index in permutation]
+
+        real_types = data.get("real_atom_types")
+        real_names = list(data.get("real_atom_names", []))
+        if real_types is None:
+            real_elements = canonical_elements
+        else:
+            real_array = np.asarray(real_types, dtype=int)
+            if real_array.ndim == 2 and real_array.shape[0] == 1:
+                real_array = real_array[0]
+            if real_array.ndim != 1 or real_array.size != len(elements):
+                raise ValueError(
+                    "real_atom_types must resolve to one integer per atom"
+                )
+            real_array = real_array[permutation]
+            real_elements = [
+                real_names[int(type_index)]
+                if 0 <= int(type_index) < len(real_names)
+                else f"RealType_{int(type_index)}"
+                for type_index in real_array
+            ]
+
+        return {
+            "elements": canonical_elements,
+            "real_elements": real_elements,
+            "coords": coords[permutation],
+            "permutation": permutation,
+        }
+
+    @classmethod
+    def _canonical_label_array(cls, frame, key: str, value, permutation):
+        """Apply the canonical atom permutation to one label array when applicable."""
+        if value is None:
+            return None
+        array = np.asarray(value)
+        if array.ndim == 0 or array.dtype.kind in {"O", "U", "S"}:
+            return value
+        n_atoms = len(permutation)
+        atom_axis = None
+        for data_type in getattr(type(frame), "DTYPES", ()):
+            if data_type.name == key and data_type.shape is not None:
+                if Axis.NATOMS in data_type.shape:
+                    atom_axis = data_type.shape.index(Axis.NATOMS)
+                break
+        if atom_axis is None:
+            candidate_axes = [
+                axis for axis, size in enumerate(array.shape) if size == n_atoms
+            ]
+            if len(candidate_axes) == 1:
+                atom_axis = candidate_axes[0]
+        if atom_axis is not None and array.shape[atom_axis] == n_atoms:
+            return np.take(array, permutation, axis=atom_axis)
+        return value
 
     @staticmethod
     def _canonical_json(payload) -> bytes:
