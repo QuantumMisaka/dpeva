@@ -536,6 +536,10 @@ FeCHO 教学包独立于 GPU 工作流；入口为 `examples/tutorials/paper_cas
 按 {doc}`安装指南 </guides/installation>` 准备运行环境，再安装 `.[dev]`（文档变更另装 `.[docs]`）。
 预置的 `dpeva-dpa4` 仅是维护者使用的环境名，不要求贡献者具有同名环境。
 
+安装依赖以 `pyproject.toml` 为准；构建后端最低 setuptools 64（支持当前元数据与可编辑安装）。
+直接使用的 pandas / packaging 列为核心依赖；`dev` / `docs` 各自包含检查所需的 PyYAML，
+`docs` 同时覆盖 Python 3.10 的 TOML 解析需求。源码、发布包和教程环境的选择见安装指南。
+
 *   **运行单元测试 (Unit Tests)**：执行 `python scripts/run_gate.py unit`；覆盖率参数与阈值以 `scripts/gates.toml` 为准。
     *   验证公共行为、数值结果和错误边界；只有调用顺序本身是契约时才断言内部调用次数。
     *   文件和路径测试使用 `tmp_path`；允许快速、确定性的真实文件 I/O。Mock 昂贵的训练、集群提交或外部服务，不用全量 Mock 替代路径、产物和序列化验证。

@@ -74,7 +74,7 @@ owner: Quantum Misaka
 - `docs/assets/` 作为静态资源目录，不作为独立页面展示。
 - `docs/archive/` 默认不进入主导航，按需通过归档索引访问。
 
-### 2.1 现行文档与归档文档判别规则
+### 2.3 现行文档与归档文档判别规则
 
 - 现行规范只在 `docs/guides/`、`docs/reference/`、`docs/policy/`、`docs/governance/` 维护。
 - `docs/archive/` 仅保留历史上下文，不作为现行规范来源。

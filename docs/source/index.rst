@@ -12,6 +12,7 @@ If you use DP-EVA, please cite the project article: `DP-EVA in Clean Energy <htt
    :caption: Getting Started
 
    guides/installation
+   Paper case tutorial (CPU notebooks) <https://github.com/QuantumMisaka/dpeva/tree/main/examples/tutorials/paper_case>
    guides/quickstart
    guides/sai-quickstart
    guides/cli

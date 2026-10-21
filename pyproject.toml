@@ -1,5 +1,6 @@
 [build-system]
-requires = ["setuptools>=45", "wheel"]
+# PEP 621 metadata and PEP 660 editable installs used by the installation guide.
+requires = ["setuptools>=64", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -27,6 +28,8 @@ classifiers = [
 ]
 dependencies = [
     "numpy>=1.20.0",
+    "pandas>=1.5",
+    "packaging>=21",
     "scipy>=1.7.0",
     "scikit-learn>=1.0.0",
     "dpdata>=1.1",
@@ -46,6 +49,7 @@ dev = [
     "black>=22.0",
     "ruff>=0.15,<0.17",
     "mypy>=1.0",
+    "PyYAML>=6",
     "tomli>=1.1.0; python_version < '3.11'",
 ]
 deepmd = [
@@ -57,6 +61,8 @@ docs = [
     "myst-parser",
     "autodoc-pydantic",
     "sphinxcontrib-mermaid",
+    "PyYAML>=6",
+    "tomli>=1.1.0; python_version < '3.11'",
 ]
 explore = [
     "atst-tools>=2.1.0",
@@ -67,6 +73,9 @@ dpose = [
 
 [project.urls]
 Homepage = "https://github.com/QuantumMisaka/dpeva"
+Documentation = "https://quantummisaka.github.io/dpeva/latest/"
+Repository = "https://github.com/QuantumMisaka/dpeva"
+Issues = "https://github.com/QuantumMisaka/dpeva/issues"
 Paper = "https://doi.org/10.1093/ce/zkag029"
 
 [project.scripts]

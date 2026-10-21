@@ -33,9 +33,12 @@ preferred-citation:
       given-names: Mohan
     - family-names: Jiang
       given-names: Hong
-  title: "DP-EVA: Data-Efficient Fine-Tuning Framework via Maximizing Pre-Trained Knowledge of Large Atomistic Models for Developing Domain-Specific Machine Learning Interatomic Potentials"
+  title: "DP-EVA: data-efficient fine-tuning framework via maximizing pretrained knowledge of large atomistic models for developing domain-specific machine-learning interatomic potentials"
   journal: "Clean Energy"
   year: 2026
-  pages: "zkag029"
+  volume: 10
+  issue: 4
+  start: 103
+  end: 116
   doi: "10.1093/ce/zkag029"
   url: "https://doi.org/10.1093/ce/zkag029"

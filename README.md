@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="docs/img/DP-EVA-Logo-0312.png" alt="DP-EVA Logo" width="100%">
+  <img src="https://raw.githubusercontent.com/QuantumMisaka/dpeva/main/docs/img/DP-EVA-Logo-0312.png" alt="DP-EVA Logo" width="100%">
   <p>
     <em>The DP-EVA identity bridges deep potential scientific modeling ('DP') and radical AI evolution ('EVA'), connected by an acceleration beam that filters order from chaos. It symbolizes the awakening of critical data from the vast chemical space to accelerate scientific discovery.</em>
   </p>
@@ -18,7 +18,7 @@ DP-EVA is an active learning framework designed for efficient fine-tuning of DPA
 
 *   **Active Learning Loop**: Independent workflows for training, inference, feature generation, collection, and labeling.
 *   **Data Collection**: Collects data from target data pool based on DPA fine-tuning and descriptor.
-    *   **2D Shallow UQ**: Supports 2-Dimensional Uncertainty Quantification (UQ) with Query by Committee (QbC) and Random Network Distillation (RND) in the shallow layer (fitting-net) of DPA model.
+    *   **2D Shallow UQ**: Supports 2-Dimensional Uncertainty Quantification (UQ) with Query by Committee (QbC) and an RND-inspired deviation from a pretrained-initialized baseline in the shallow ensemble (fitting-net) of a DPA model.
     *   **Smart Sampling**: Use DIRECT sampling based on DPA descriptor to select the most representative configurations in target data pool.
 *   **HPC Ready**: Built-in `JobManager` supports seamless switching between Local and Slurm backends, with optimized task packing for massive labeling jobs.
 *   **User and Agent Friendly**: Provides a unified CLI `dpeva` for all elementary workflows to both user and AI agent.
@@ -26,14 +26,36 @@ DP-EVA is an active learning framework designed for efficient fine-tuning of DPA
 
 ## Getting Started
 
-Start with the [installation guide](docs/guides/installation.md), then follow
-[Quickstart](docs/guides/quickstart.md) to run a local four-stage workflow using
-the model and small datasets included in the repository. No external data
-download is needed for this example.
+Choose an entry point for your task:
 
-For cluster execution, see the [SAI guide](docs/guides/sai-quickstart.md) and
-[Slurm guide](docs/guides/slurm.md). Reusable configurations live in
-[examples/recipes](examples/recipes/README.md).
+| Goal | Start here | Requirements |
+|---|---|---|
+| Learn the paper's methods | [Paper case tutorial](https://github.com/QuantumMisaka/dpeva/blob/main/examples/tutorials/paper_case/README.md): four Chinese notebooks for a 20–30 minute session | CPU, Python 3.10–3.13; all 30,656 structures and precomputed features are included |
+| Run actual model workflows | [Installation](https://github.com/QuantumMisaka/dpeva/blob/main/docs/guides/installation.md), then [Quickstart](https://github.com/QuantumMisaka/dpeva/blob/main/docs/guides/quickstart.md) | DeepMD-kit with a matching PyTorch backend; repository model and small datasets |
+| Develop or build documentation | [Contributing](https://github.com/QuantumMisaka/dpeva/blob/main/CONTRIBUTING.md) | Source checkout with the `dev` / `docs` extras |
+
+For the CPU tutorial, clone the complete repository and run:
+
+```bash
+git clone https://github.com/QuantumMisaka/dpeva.git
+cd dpeva
+python3 examples/tutorials/paper_case/run.py
+```
+
+The launcher creates a dedicated environment and executes all four notebooks.
+Append `lab` to the same command to open JupyterLab; add `--offline` after the first installation.
+The tutorial needs no GPU, DeepMD runtime or model download. It recomputes data
+analysis and selection; model accuracy and application results come from the paper.
+
+For training, inference and feature generation, follow the full installation
+guide. The default package includes `deepmd-kit>=3.1.2,<3.3`; the `deepmd` extra
+selects `>=3.2,<3.3`. Choose CPU/GPU PyTorch separately as described in the guide.
+Tutorial data and notebooks are distributed through Git and excluded from PyPI
+packages. The Quickstart model also requires the complete repository checkout.
+
+For cluster execution, see the [SAI guide](https://github.com/QuantumMisaka/dpeva/blob/main/docs/guides/sai-quickstart.md) and
+[Slurm guide](https://github.com/QuantumMisaka/dpeva/blob/main/docs/guides/slurm.md). Reusable configurations live in
+[examples/recipes](https://github.com/QuantumMisaka/dpeva/blob/main/examples/recipes/README.md).
 
 ## Documentation
 
@@ -42,14 +64,14 @@ translations will be added incrementally toward bilingual documentation;
 the repository README is maintained in English.
 
 - **Documentation site**: [Latest documentation](https://quantummisaka.github.io/dpeva/latest/)
-- **Start here**: [Documentation index](docs/README.md) | [Installation](docs/guides/installation.md) | [Quickstart](docs/guides/quickstart.md)
-- **Configure workflows**: [CLI guide](docs/guides/cli.md) | [Configuration guide](docs/guides/configuration.md) | [Reference](docs/reference/README.md)
-- **Develop and contribute**: [Developer guide](docs/guides/developer-guide.md) | [Architecture](docs/architecture/README.md) | [Testing](tests/README.md)
-- **Project records**: [Reports](docs/reports/README.md) | [Archive](docs/archive/README.md)
+- **Start here**: [Documentation index](https://github.com/QuantumMisaka/dpeva/blob/main/docs/README.md) | [Installation](https://github.com/QuantumMisaka/dpeva/blob/main/docs/guides/installation.md) | [Quickstart](https://github.com/QuantumMisaka/dpeva/blob/main/docs/guides/quickstart.md)
+- **Configure workflows**: [CLI guide](https://github.com/QuantumMisaka/dpeva/blob/main/docs/guides/cli.md) | [Configuration guide](https://github.com/QuantumMisaka/dpeva/blob/main/docs/guides/configuration.md) | [Reference](https://github.com/QuantumMisaka/dpeva/blob/main/docs/reference/README.md)
+- **Develop and contribute**: [Developer guide](https://github.com/QuantumMisaka/dpeva/blob/main/docs/guides/developer-guide.md) | [Architecture](https://github.com/QuantumMisaka/dpeva/blob/main/docs/architecture/README.md) | [Testing](https://github.com/QuantumMisaka/dpeva/blob/main/tests/README.md)
+- **Project records**: [Reports](https://github.com/QuantumMisaka/dpeva/blob/main/docs/reports/README.md) | [Archive](https://github.com/QuantumMisaka/dpeva/blob/main/docs/archive/README.md)
 
 ## Contributing
 
-Start with [CONTRIBUTING.md](CONTRIBUTING.md) for reporting bugs, proposing changes,
+Start with [CONTRIBUTING.md](https://github.com/QuantumMisaka/dpeva/blob/main/CONTRIBUTING.md) for reporting bugs, proposing changes,
 setting up a development environment, and opening your first pull request.
 Questions and scientific workflow discussions belong in
 [Discussions](https://github.com/QuantumMisaka/dpeva/discussions).
@@ -58,15 +80,17 @@ Questions and scientific workflow discussions belong in
 
 If you use DP-EVA, please cite the project article:
 
-Zhaoqing Liu, Zhe Deng, Huabo Zhao, Han Wang, Mohan Chen, Hong Jiang, DP-EVA: Data-Efficient Fine-Tuning Framework via Maximizing Pre-Trained Knowledge of Large Atomistic Models for Developing Domain-Specific Machine Learning Interatomic Potentials, *Clean Energy*, 2026, zkag029, https://doi.org/10.1093/ce/zkag029.
+Zhaoqing Liu, Zhe Deng, Huabo Zhao, Han Wang, Mohan Chen, Hong Jiang, DP-EVA: data-efficient fine-tuning framework via maximizing pretrained knowledge of large atomistic models for developing domain-specific machine-learning interatomic potentials, *Clean Energy*, 2026, **10**(4), 103–116, https://doi.org/10.1093/ce/zkag029.
 
 ```bibtex
 @article{liu2026dpeva,
   author = {Liu, Zhaoqing and Deng, Zhe and Zhao, Huabo and Wang, Han and Chen, Mohan and Jiang, Hong},
-  title = {DP-EVA: Data-Efficient Fine-Tuning Framework via Maximizing Pre-Trained Knowledge of Large Atomistic Models for Developing Domain-Specific Machine Learning Interatomic Potentials},
+  title = {DP-EVA: data-efficient fine-tuning framework via maximizing pretrained knowledge of large atomistic models for developing domain-specific machine-learning interatomic potentials},
   journal = {Clean Energy},
   year = {2026},
-  pages = {zkag029},
+  volume = {10},
+  number = {4},
+  pages = {103--116},
   doi = {10.1093/ce/zkag029},
   url = {https://doi.org/10.1093/ce/zkag029},
 }
@@ -74,4 +98,4 @@ Zhaoqing Liu, Zhe Deng, Huabo Zhao, Han Wang, Mohan Chen, Hong Jiang, DP-EVA: Da
 
 ## License
 
-[LGPL-v3 License](LICENCE)
+[LGPL-v3 License](https://github.com/QuantumMisaka/dpeva/blob/main/LICENCE)
