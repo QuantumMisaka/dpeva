@@ -2,7 +2,7 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-10-21
+last-updated: 2026-10-22
 owner: Docs Owner
 ---
 
@@ -138,7 +138,7 @@ DP-EVA (Deep Potential EVolution Accelerator, 深度势能演化加速器) 是�
 *   可执行门禁目录是 `scripts/gates.toml`；`scripts/run_gate.py` 是本地与托管入口唯一的命令分发器。
 *   日常代码检查：`python scripts/run_gate.py local`。
 *   文档检查：`python scripts/run_gate.py docs_pr`；发布检查：`python scripts/run_gate.py release`。
-*   每个 profile 只证明其声明的层级；DeepMD 资格 profile 只在发布改变 DeepMD 能力声明时调用。当前能力矩阵仅有 3 条 DPA4 `supported` 记录，DPA4C 仍为 experimental。
+*   每个 profile 只证明其声明的层级；DeepMD 资格 profile 只在发布改变 DeepMD 能力声明时调用。当前能力矩阵有 4 条 DPA4 `supported` 记录（含 `test + deepmd/lmdb`），DPA4C 仍为 experimental。
 *   需要查看单个门禁或 profile 时运行 `python scripts/run_gate.py --list`；不要在本页复制 gate argv。
 
 #### 1.6.4 运行完成语义

@@ -7,11 +7,14 @@ from unittest.mock import patch
 import dpdata
 import numpy as np
 import pytest
+from packaging.version import Version
 
 from dpeva.labeling.integration import (
     DataIntegrationManager,
     PublicationError,
 )
+from dpeva.io.dataset import load_systems
+from dpeva.io.lmdb_writer import write_lmdb
 
 
 class _FakeMultiSystems(list):
@@ -25,10 +28,15 @@ class _FakeMultiSystems(list):
 class _FakeSystem:
     def __init__(self, coords, atom_names=None, atom_types=None, atom_numbs=None):
         names = atom_names or ["Fe", "C"]
+        coords = np.asarray(coords, dtype=float)
+        types = atom_types if atom_types is not None else [0]
+        if coords.ndim == 3 and coords.shape[0] == 1 and coords.shape[1] == 1:
+            if len(types) > 1:
+                coords = np.repeat(coords, len(types), axis=1)
         self.data = {
             "coords": coords,
             "atom_names": names,
-            "atom_types": atom_types if atom_types is not None else [0],
+            "atom_types": types,
             "atom_numbs": atom_numbs if atom_numbs is not None else [1 for _ in names],
             "type_map": list(names),
         }
@@ -98,7 +106,7 @@ def test_real_dpdata_partial_intersection_across_multi_frame_systems():
     assert overlap == 1
 
 
-def test_real_dpdata_identity_includes_cell_pbc_and_atom_type_map():
+def test_real_dpdata_identity_includes_cell_and_pbc_not_type_map_order():
     base = _real_system([[[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]]])
     other_cell = _real_system(
         [[[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]]], cells=np.eye(3) * 2
@@ -111,9 +119,46 @@ def test_real_dpdata_identity_includes_cell_pbc_and_atom_type_map():
     )
     identities = {
         DataIntegrationManager._frame_identity(frame)
-        for frame in (base, other_cell, nonperiodic, other_types)
+        for frame in (base, other_cell, nonperiodic)
     }
-    assert len(identities) == 4
+    assert len(identities) == 3
+    assert DataIntegrationManager._frame_identity(base) == DataIntegrationManager._frame_identity(other_types)
+
+
+def test_real_dpdata_identity_ignores_atom_storage_order_and_permutes_labels():
+    base = _real_system(
+        [[[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]]],
+        atom_names=("H", "O"),
+        atom_types=(0, 1),
+    )
+    base.data["forces"] = np.array([[[0.1, 0.0, 0.0], [0.2, 0.0, 0.0]]])
+    swapped = _real_system(
+        [[[1.0, 0.0, 0.0], [0.0, 0.0, 0.0]]],
+        atom_names=("H", "O"),
+        atom_types=(1, 0),
+    )
+    swapped.data["forces"] = np.array([[[0.2, 0.0, 0.0], [0.1, 0.0, 0.0]]])
+    type_reordered = _real_system(
+        [[[1.0, 0.0, 0.0], [0.0, 0.0, 0.0]]],
+        atom_names=("O", "H"),
+        atom_types=(0, 1),
+    )
+    type_reordered.data["forces"] = np.array([[[0.2, 0.0, 0.0], [0.1, 0.0, 0.0]]])
+
+    assert DataIntegrationManager._frame_identity(base) == DataIntegrationManager._frame_identity(swapped)
+    assert DataIntegrationManager._frame_identity(base) == DataIntegrationManager._frame_identity(type_reordered)
+    assert DataIntegrationManager._frame_label_identity(base) == DataIntegrationManager._frame_label_identity(swapped)
+    assert DataIntegrationManager._frame_label_identity(base) == DataIntegrationManager._frame_label_identity(type_reordered)
+
+
+def test_real_dpdata_label_identity_detects_force_changes():
+    first = _real_system([[[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]]])
+    second = _real_system([[[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]]])
+    first.data["forces"] = np.array([[[0.1, 0.0, 0.0], [0.2, 0.0, 0.0]]])
+    second.data["forces"] = np.array([[[0.1, 0.0, 0.0], [0.3, 0.0, 0.0]]])
+
+    assert DataIntegrationManager._frame_identity(first) == DataIntegrationManager._frame_identity(second)
+    assert DataIntegrationManager._frame_label_identity(first) != DataIntegrationManager._frame_label_identity(second)
 
 
 def test_real_dpdata_duplicate_structure_with_conflicting_labels_fails_closed():
@@ -366,7 +411,35 @@ def test_integration_manager_custom_output_format(mock_load_systems, tmp_path):
     )
 
     assert result["output_format"] == "deepmd/npy"
-    assert (out_dir / "export.ok").read_text() == "deepmd/npy"
+
+
+@patch("dpeva.labeling.integration.dpdata.MultiSystems", _FakeMultiSystems)
+@patch("dpeva.labeling.integration.load_systems")
+@patch("dpeva.labeling.integration.write_lmdb")
+def test_integration_manager_lmdb_output(mock_write_lmdb, mock_load_systems, tmp_path):
+    new_dir = tmp_path / "new_cleaned"
+    out_dir = tmp_path / "merged"
+    new_dir.mkdir()
+    mock_load_systems.return_value = [_FakeSystem([[[0.0, 0.0, 0.0]]])]
+
+    def fake_write(systems, path, **kwargs):
+        Path(path).write_text("lmdb-placeholder", encoding="utf-8")
+
+    mock_write_lmdb.side_effect = fake_write
+
+    result = DataIntegrationManager(
+        deduplicate=False, output_format="deepmd/lmdb"
+    ).integrate(
+        new_labeled_data_path=new_dir,
+        merged_output_path=out_dir,
+    )
+
+    mock_write_lmdb.assert_called_once()
+    assert mock_write_lmdb.call_args.kwargs["type_map"] == ["Fe", "C"]
+    assert (out_dir / "dataset.lmdb").is_file()
+    assert result["output_format"] == "deepmd/lmdb"
+    manifest = json.loads((out_dir / "dataset-manifest.json").read_text())
+    assert manifest["format"] == "deepmd/lmdb"
 
 
 @patch("dpeva.labeling.integration.dpdata.MultiSystems", _FakeMultiSystems)
@@ -666,3 +739,38 @@ def test_rename_noreplace_syscall_failure_fails_closed(error, tmp_path):
     plain_rename.assert_not_called()
     assert source.exists()
     assert not target.exists()
+
+
+@pytest.mark.skipif(
+    Version(getattr(dpdata, "__version__", "0")) < Version("1.1"),
+    reason="deepmd/lmdb writing requires dpdata>=1.1",
+)
+def test_integration_handles_multi_composition_lmdb(tmp_path: Path) -> None:
+    def write_system(name: str, atom_type: int):
+        system_dir = tmp_path / name
+        (system_dir / "set.000").mkdir(parents=True)
+        (system_dir / "type.raw").write_text(f"{atom_type} {atom_type}\n")
+        (system_dir / "type_map.raw").write_text("H\nO\n")
+        np.save(
+            system_dir / "set.000" / "coord.npy",
+            np.array([[0.0, 0.0, 0.0, 1.0, 0.0, 0.0]]),
+        )
+        np.save(system_dir / "set.000" / "box.npy", np.eye(3).reshape(1, 9) * 10.0)
+        np.save(system_dir / "set.000" / "energy.npy", np.array([-1.0]))
+        np.save(system_dir / "set.000" / "force.npy", np.zeros((1, 6)))
+        np.save(system_dir / "set.000" / "virial.npy", np.zeros((1, 9)))
+        return dpdata.LabeledSystem(str(system_dir), fmt="deepmd/npy")
+
+    first = write_system("first", 0)
+    second = write_system("second", 1)
+    source = tmp_path / "multi.lmdb"
+    write_lmdb([first, second], source, type_map=["H", "O"])
+    output = tmp_path / "integrated"
+
+    result = DataIntegrationManager(
+        deduplicate=False, output_format="deepmd/lmdb"
+    ).integrate(new_labeled_data_path=source, merged_output_path=output)
+
+    assert result["reference_type_map"] == ["H", "O"]
+    systems = load_systems(str(output / "dataset.lmdb"))
+    assert len(systems) == 2

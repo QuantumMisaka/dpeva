@@ -482,14 +482,14 @@ class LabelingConfig(BaseWorkflowConfig):
     # Output format
     output_format: str = Field(
         default=DEFAULT_LABELING_OUTPUT_FORMAT,
-        description="Output format for cleaned/anomalies dataset (deepmd/npy or deepmd/npy/mixed)",
+        description="Output format for cleaned/anomalies dataset (deepmd/npy, deepmd/npy/mixed, or deepmd/lmdb)",
     )
     integration_enabled: bool = Field(default=False, description="Whether to integrate cleaned data into next-gen training data.")
     existing_training_data_path: Optional[Path] = Field(None, description="Path to existing training dataset.")
     merged_training_data_path: Optional[Path] = Field(None, description="Output path for merged training dataset.")
     integration_output_format: str = Field(
         default=DEFAULT_LABELING_INTEGRATION_OUTPUT_FORMAT,
-        description="Output format for merged training dataset (deepmd/npy or deepmd/npy/mixed)",
+        description="Output format for merged training dataset (deepmd/npy, deepmd/npy/mixed, or deepmd/lmdb)",
     )
     integration_deduplicate: bool = Field(default=False, description="Whether to enable deduplication in integration.")
 
@@ -508,6 +508,13 @@ class TrainingConfig(BaseWorkflowConfig):
     num_models: int = Field(DEFAULT_NUM_MODELS, ge=3, description="Number of models (>=3 for UQ).")
     training_mode: Literal["init", "cont"] = Field("init")
     model_head: str = Field(..., description="Model head name.")
+    allow_experimental: bool = Field(
+        False,
+        description=(
+            "Explicitly allow experimental data-format capabilities such as "
+            "fine-tuning from deepmd/lmdb."
+        ),
+    )
     
     input_json_path: Path = Path(DEFAULT_INPUT_JSON)
     seeds: Optional[List[int]] = None

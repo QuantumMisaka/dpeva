@@ -2,7 +2,7 @@
 title: Technical Reports
 status: active
 audience: Developers
-last-updated: 2026-10-12
+last-updated: 2026-10-22
 owner: Docs Owner
 ---
 
@@ -10,7 +10,7 @@ owner: Docs Owner
 
 - Status: active
 - Audience: All
-- Last-Updated: 2026-10-12
+- Last-Updated: 2026-10-22
 
 本文档目录用于存放“项目级、可共享、可追溯”的技术结论，不承载执行过程草稿。
 
@@ -42,11 +42,12 @@ owner: Docs Owner
 
 - [2026-10-11-v082-release-cut.md](2026-10-11-v082-release-cut.md) — v0.8.2 发布记录：发布点、tag/Release 与部署证据、门禁与 CI 结果、入职文档补丁范围与已知限制。
 - [2026-09-05-v082-compatibility-closeout.md](2026-09-05-v082-compatibility-closeout.md) — v0.8.2 release identity, bounded DeepMD compatibility, reliable-run/package evidence, and remaining external review boundary.
+- [2026-09-04-deepmd-3.2-compatibility.md](2026-09-04-deepmd-3.2-compatibility.md) — DeepMD-kit 3.2 capability qualification, including the LMDB CPU contract and SAI npy↔lmdb A/B evidence.
 - [2026-09-04-project-governance-final-review.md](2026-09-04-project-governance-final-review.md) — Historical Plans A–E implementation evidence and independent governance review at its frozen pre-qualification scope.
 
 ## 5. Active Focused Reports
 
-- [2026-09-19-lmdb-read-support.md](2026-09-19-lmdb-read-support.md) — 数据侧格式扩展提案：`io.dataset` 支持 `deepmd/lmdb` 输入，并把「零 system 加载」从静默返回空改为报错（含依赖边界 `dpdata>=1.1`、验收标准与 GitHub issue 摘要）。**读侧已实施**（`bf1b58d`）；报告内容按冻结原则保持原样，剩余范围与决策门见 [实施计划](../superpowers/plans/2026-09-20-lmdb-format-compatibility.md)，上游 `eval-desc`/`embed` 缺口见 [deepmd-kit#6034](https://github.com/deepmodeling/deepmd-kit/issues/6034)。
+- [2026-09-19-lmdb-read-support.md](2026-09-19-lmdb-read-support.md) — 数据侧格式扩展提案：`io.dataset` 支持 `deepmd/lmdb` 输入，并把「零 system 加载」从静默返回空改为报错（含依赖边界 `dpdata>=1.1`、验收标准与 GitHub issue 摘要）。**读侧、写侧与 `test + deepmd/lmdb` 已收口**（CPU contract `1893534` + SAI A/B `1893546`）；报告内容按冻结原则保持原样，剩余范围与决策门见 [实施计划](../superpowers/plans/2026-09-20-lmdb-format-compatibility.md)，上游 `eval-desc`/`embed` 缺口见 [deepmd-kit#6034](https://github.com/deepmodeling/deepmd-kit/issues/6034)。
 - 已闭环专题报告请查看 [v0.8.0 归档报告索引](../archive/v0.8.0/reports/README.md)。
 
 ## 6. Active Experiment Series

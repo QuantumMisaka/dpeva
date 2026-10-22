@@ -1,0 +1,131 @@
+{
+  "commands": {
+    "lmdb": [
+      "dp",
+      "--pt",
+      "test",
+      "-m",
+      "<model>",
+      "-n",
+      "0",
+      "-s",
+      "<lmdb>",
+      "-d",
+      "<lmdb-detail>"
+    ],
+    "npy": [
+      "dp",
+      "--pt",
+      "test",
+      "-m",
+      "<model>",
+      "-n",
+      "0",
+      "-s",
+      "<npy>",
+      "-d",
+      "<npy-detail>"
+    ]
+  },
+  "detail_sha256": {
+    "lmdb": {
+      "lmdb-detail.e_peratom.out": "030e8d6f5066b2f982f9ecb49086ab9170b54e2c0f9979c5bdd0a5739d9d308e",
+      "lmdb-detail.f.out": "26a5831771ba3090cc1c092e71731d4d940abf501cdec8c1cb917d9212f2528c",
+      "lmdb-detail.s.out": "1b103257b9277bcc8ae0691e16bc858343297faa9d6a1e241165a56fa0750fde",
+      "lmdb-detail.v_peratom.out": "8d8a1d7dbd1cd90b98425843d7500121d112cb3a6a6fc31430c9786ae6b39cc7"
+    },
+    "npy": {
+      "npy-detail.e_peratom.out": "acd1eea51203791d238d66b9427463a4ab26f0669099ca5260df7307021b31ba",
+      "npy-detail.f.out": "1efd48ddb26aeb7cb93cdf6d4cb525c4de2fd001175f381600df9dfeffc2fc51",
+      "npy-detail.s.out": "2a73929ddfb5de9aa912a248068a70889520220729fb75eaa3a56ad3ddcae6a1",
+      "npy-detail.v_peratom.out": "4dbf8bccd98863b819a3d3e03e62e9b60a18b4e19a024fc19b082b688e0584ab"
+    }
+  },
+  "environment": {
+    "deepmd_version": "DeePMD-kit v3.2.0",
+    "dpdata_version": "1.0.2",
+    "gpus_per_node": 1,
+    "lmdb_version": "2.2.0",
+    "msgpack_version": "1.1.2",
+    "name": "dpeva-dpa4-320",
+    "partition": "4V100",
+    "qos": "improper-gpu",
+    "torch_version": "2.11.0+cu126"
+  },
+  "fixture_provenance": {
+    "exact_sai_runtime_dpdata_version": "1.0.2",
+    "generated_outside_exact_sai_runtime": true,
+    "lmdb_generation_dpdata_version": "1.1.0",
+    "note": "LMDB input was generated once with dpdata 1.1.0 outside the exact dpeva-dpa4-320 runtime (dpdata 1.0.2); the SAI job exercised the DeepMD reader/CLI path."
+  },
+  "inputs": {
+    "lmdb_datanames": 841,
+    "lmdb_datanames_nframe_sha256": "5db1be07cf1eda7d897fdae4d0075ce1eaa16cff076f581c884e7613d8f47d82",
+    "lmdb_format": "deepmd/lmdb",
+    "lmdb_frames": 2604,
+    "lmdb_systems": 841,
+    "lmdb_tree_sha256": "b0c3f6f78144da2cb87c07f80be4063f05a98f425a9bbad64311d1a76520ae7e",
+    "model_sha256": "7ac5fb696fc057229ceebc33f31f7a96b2f3616ac5b63a512acd1848f2d41a09",
+    "npy_format": "deepmd/npy",
+    "npy_frames": 2604,
+    "npy_systems": 964,
+    "npy_tree_sha256": "c85bfe5b8bcf23c66d9e2c59a1cb5c98d849db56ea4512eef5a7fffe08f1e0cd"
+  },
+  "job_id": "1893546",
+  "metrics": {
+    "comparison": {
+      "energy_mae_per_atom": {
+        "absolute_diff": 0.0,
+        "lmdb": 1836.583,
+        "npy": 1836.583,
+        "passed": true,
+        "relative_diff": 0.0
+      },
+      "force_mae": {
+        "absolute_diff": 0.0,
+        "lmdb": 0.1696743,
+        "npy": 0.1696743,
+        "passed": true,
+        "relative_diff": 0.0
+      },
+      "stress_mae": {
+        "absolute_diff": 0.0,
+        "lmdb": 0.004999766,
+        "npy": 0.004999766,
+        "passed": true,
+        "relative_diff": 0.0
+      },
+      "virial_mae_per_atom": {
+        "absolute_diff": 0.0,
+        "lmdb": 0.08897196,
+        "npy": 0.08897196,
+        "passed": true,
+        "relative_diff": 0.0
+      }
+    },
+    "lmdb": {
+      "energy_mae_per_atom": 1836.583,
+      "force_mae": 0.1696743,
+      "stress_mae": 0.004999766,
+      "virial_mae_per_atom": 0.08897196
+    },
+    "npy": {
+      "energy_mae_per_atom": 1836.583,
+      "force_mae": 0.1696743,
+      "stress_mae": 0.004999766,
+      "virial_mae_per_atom": 0.08897196
+    }
+  },
+  "purpose": "DeepMD-kit 3.2.0 npy/LMDB format-equivalence qualification",
+  "raw_evidence": {
+    "ab_result_sha256": "9e95d567bd2b876b63de9a68c75feb5f0ff35b421fa3005dd2f2c2224ff82bc3",
+    "environment_sha256": "e3667e78e18cc09e6243915e857970dd2114c916b030808d79f3f51fbbd712c1",
+    "lmdb_log_sha256": "5c2cc416b12a428639cb2baf0b4cb1d320351309aec01badb4ddff29ded44f05",
+    "npy_log_sha256": "43719f85844de334de63c3b3c013b39b3e7d523d3a4d7018ed0e0361d7154ed0"
+  },
+  "raw_evidence_retained_on_sai": true,
+  "schema_version": "1.0",
+  "source_job_id": "1893546",
+  "status": "finished",
+  "threshold_relative": 2e-05
+}

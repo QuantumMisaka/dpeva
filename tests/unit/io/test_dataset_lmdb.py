@@ -17,6 +17,7 @@ import pytest
 from dpeva.io.dataset import (
     DatasetLoadError,
     LMDB_FORMAT,
+    data_format_for,
     detect_dataset_kind,
     is_lmdb_detail_label,
     is_lmdb_path,
@@ -61,6 +62,15 @@ class TestLmdbDetection:
         assert is_lmdb_detail_label("/data/g3.lmdb [nloc=9]")
         assert is_lmdb_detail_label("/data/g3.lmdb")
         assert not is_lmdb_detail_label("/data/cleaned_v1/Fe6O0C2")
+
+    def test_data_format_for_distinguishes_lmdb_from_npy_layouts(self, tmp_path):
+        lmdb = _make_lmdb_dir(tmp_path)
+        npy = tmp_path / "Fe6O0C2"
+        npy.mkdir()
+        (npy / "type.raw").write_text("0 1")
+
+        assert data_format_for(lmdb) == LMDB_FORMAT
+        assert data_format_for(npy) == "deepmd/npy"
 
 
 class TestLmdbRouting:

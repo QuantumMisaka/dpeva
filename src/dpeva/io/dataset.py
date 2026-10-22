@@ -69,6 +69,16 @@ def normalize_format(fmt: str) -> str:
     return fmt
 
 
+def data_format_for(path) -> str:
+    """Return the capability-layer data format for a dataset path.
+
+    Mixed ``deepmd/npy`` layouts share the same capability key as regular
+    ``deepmd/npy`` because the distinction is a storage layout, not a different
+    DeepMD consumer contract. LMDB is the only path that needs a separate key.
+    """
+    return LMDB_FORMAT if is_lmdb_path(path) else "deepmd/npy"
+
+
 def _lmdb_stored_frame_count(path) -> Optional[int]:
     """Read ``nframes`` from an LMDB dataset's metadata, or ``None`` if unavailable."""
     try:

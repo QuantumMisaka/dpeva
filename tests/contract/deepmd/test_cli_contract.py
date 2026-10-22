@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import subprocess
 from pathlib import Path
 
@@ -17,6 +18,8 @@ from dpeva.compatibility import (
     validate_promotion_evidence,
 )
 from dpeva.compatibility.adapter import DeepMDAdapter
+from dpeva.io.dataproc import DPTestResultParser
+from dpeva.io.lmdb_index import read_lmdb_frame_index
 
 from conftest import classify_contract_result, frame_count, head_args, run_contract, write_cpu_attestation
 
@@ -29,6 +32,117 @@ def _numeric_table(path: Path) -> np.ndarray:
     assert table.shape[1] >= 2
     assert np.isfinite(table).all()
     return table
+
+
+def _compact_dpa4_train_config(
+    root: Path, lmdb_path: Path, type_map: list[str]
+) -> dict[str, object]:
+    """Build a two-step DPA4 training contract with explicit LMDB inputs."""
+
+    return {
+        "_comment": "DP-EVA LMDB CPU contract fixture; execution only.",
+        "model": {
+            "type": "dpa4",
+            "type_map": type_map,
+            "descriptor": {
+                "type": "dpa4",
+                "sel": 120,
+                "rcut": 6.0,
+                "env_exp": [7, 5],
+                "channels": 16,
+                "n_radial": 6,
+                "radial_mlp": [0],
+                "use_env_seed": True,
+                "random_gamma": True,
+                "l_schedule": [1, 1],
+                "mmax": 1,
+                "so2_norm": False,
+                "so2_layers": 2,
+                "so2_attn_res": "none",
+                "n_focus": 1,
+                "focus_dim": 0,
+                "n_atten_head": 1,
+                "ffn_neurons": 0,
+                "grid_mlp": False,
+                "ffn_blocks": 1,
+                "sandwich_norm": [True, False, True, False],
+                "mlp_bias": False,
+                "layer_scale": False,
+                "full_attn_res": "none",
+                "block_attn_res": "none",
+                "s2_activation": [False, True],
+                "activation_function": "silu",
+                "glu_activation": True,
+                "use_amp": False,
+                "precision": "float32",
+                "seed": 42,
+            },
+            "fitting_net": {
+                "neuron": [0],
+                "activation_function": "silu",
+                "precision": "float32",
+                "seed": 42,
+            },
+            "use_compile": False,
+            "enable_tf32": False,
+        },
+        "learning_rate": {
+            "type": "wsd",
+            "start_lr": 0.0005,
+            "stop_lr": 1e-06,
+            "warmup_steps": 1,
+            "warmup_start_factor": 0.2,
+            "decay_phase_ratio": 0.65,
+            "decay_type": "cosine",
+        },
+        "loss": {
+            "type": "ener",
+            "loss_func": "mae",
+            "f_use_norm": True,
+            "start_pref_e": 20,
+            "limit_pref_e": 20,
+            "start_pref_f": 20,
+            "limit_pref_f": 20,
+            "start_pref_v": 0,
+            "limit_pref_v": 0,
+        },
+        "optimizer": {
+            "type": "HybridMuon",
+            "muon_mode": "slice",
+            "enable_gram": True,
+            "magma_muon": True,
+            "lr_adjust": 0.0,
+            "weight_decay": 0.001,
+        },
+        "training": {
+            "training_data": {
+                "systems": str(lmdb_path),
+                "batch_size": 1,
+            },
+            "validation_data": {
+                "systems": str(lmdb_path),
+                "batch_size": 1,
+                "numb_btch": 1,
+            },
+            "numb_steps": 2,
+            "gradient_max_norm": 5.0,
+            "save_freq": 1,
+            "max_ckpt_keep": 1,
+            "enable_ema": False,
+            "disp_file": str(root / "lcurve.out"),
+            "disp_freq": 1,
+            "disp_avg": True,
+            "disp_training": True,
+            "time_training": True,
+            "save_dir": str(root / "models"),
+            "seed": 7,
+        },
+        "validating": {
+            "full_validation": False,
+            "ema_full_validation": False,
+            "validation_freq": 1,
+        },
+    }
 
 
 @pytest.mark.deepmd_contract
@@ -64,7 +178,9 @@ def test_pt_test_requires_numeric_output(
     attestation_path = write_cpu_attestation("test", dp_executable, result, case="pt-test")
     manifest_record = next(
         record for record in CapabilityMatrix.load_default().records
-        if record.key.operation == "test" and record.key.backend == "pt"
+        if record.key.operation == "test"
+        and record.key.backend == "pt"
+        and record.key.data_format == "deepmd/npy"
     )
     promoted_shape = manifest_record.model_copy(update={
         "status": "supported",
@@ -73,6 +189,104 @@ def test_pt_test_requires_numeric_output(
         "evidence_ref": CapabilityEvidence(cpu_contract=str(attestation_path)),
     })
     assert validate_promotion_evidence(promoted_shape, Path.cwd())
+
+
+@pytest.mark.deepmd_contract
+def test_pt_test_reads_lmdb_and_attributes_detail(
+    dp_executable: str,
+    pt_model: Path,
+    pt_head: str | None,
+    lmdb_periodic_data: Path,
+    tmp_path: Path,
+) -> None:
+    index = read_lmdb_frame_index(lmdb_periodic_data)
+    prefix = tmp_path / "results"
+    energy_output = prefix.with_suffix(".e_peratom.out")
+    result = run_contract(
+        [
+            dp_executable,
+            "--pt",
+            "test",
+            "-s",
+            str(lmdb_periodic_data),
+            "-m",
+            str(pt_model),
+            *head_args(pt_head),
+            "-d",
+            str(prefix),
+        ],
+        [energy_output],
+    )
+    table = _numeric_table(energy_output)
+    assert table.shape[0] == len(index.frames)
+    parsed = DPTestResultParser(
+        str(tmp_path),
+        head="results",
+        testdata_dir=str(lmdb_periodic_data),
+    ).parse()
+    assert parsed["dataname_list"] == index.dataname_list
+    assert parsed["datanames_nframe"] == index.datanames_nframe
+    attestation_path = write_cpu_attestation(
+        "test",
+        dp_executable,
+        result,
+        case="pt-test-lmdb",
+        data_format="deepmd/lmdb",
+    )
+    manifest_record = next(
+        record
+        for record in CapabilityMatrix.load_default().records
+        if record.key.operation == "test"
+        and record.key.data_format == "deepmd/lmdb"
+    )
+    promoted_shape = manifest_record.model_copy(
+        update={
+            "status": "supported",
+            "required_evidence": ("cpu-contract",),
+            "sai_verification_cases": None,
+            "evidence_ref": CapabilityEvidence(cpu_contract=str(attestation_path)),
+        }
+    )
+    assert validate_promotion_evidence(promoted_shape, Path.cwd())
+
+
+@pytest.mark.deepmd_contract
+def test_pt_train_consumes_lmdb(
+    dp_executable: str,
+    lmdb_periodic_data: Path,
+    periodic_type_map: list[str],
+    tmp_path: Path,
+) -> None:
+    config_path = tmp_path / "input.json"
+    config_path.write_text(
+        json.dumps(
+            _compact_dpa4_train_config(
+                tmp_path, lmdb_periodic_data, periodic_type_map
+            ),
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    checkpoint = tmp_path / "models" / "model.ckpt-2.pt"
+    result = run_contract(
+        [
+            dp_executable,
+            "--pt",
+            "train",
+            str(config_path),
+        ],
+        [checkpoint],
+    )
+    assert checkpoint.is_file()
+    assert (tmp_path / "lcurve.out").is_file()
+    write_cpu_attestation(
+        "train",
+        dp_executable,
+        result,
+        case="pt-train-lmdb",
+        data_format="deepmd/lmdb",
+    )
 
 
 @pytest.mark.deepmd_contract

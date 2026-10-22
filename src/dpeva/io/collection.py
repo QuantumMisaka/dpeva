@@ -7,7 +7,8 @@ import numpy as np
 import pandas as pd
 from typing import List, Tuple, Dict, Optional
 
-from dpeva.io.dataset import load_systems
+from dpeva.io.dataset import is_lmdb_path, load_systems
+from dpeva.io.lmdb_systems import load_lmdb_systems_by_id
 from dpeva.utils.security import safe_join, normalize_sys_name
 
 class CollectionIOManager:
@@ -515,7 +516,17 @@ class CollectionIOManager:
                 shutil.rmtree(export_root)
             os.makedirs(export_root)
             
-        test_data = load_systems(testdata_dir, fmt="auto", target_systems=unique_system_names)
+        if is_lmdb_path(testdata_dir):
+            wanted = set(unique_system_names)
+            test_data = [
+                system
+                for system in load_lmdb_systems_by_id(testdata_dir)
+                if getattr(system, "target_name", "") in wanted
+            ]
+        else:
+            test_data = load_systems(
+                testdata_dir, fmt="auto", target_systems=unique_system_names
+            )
         
         count_sampled_sys = 0
         count_other_sys = 0

@@ -1,8 +1,8 @@
 ---
 title: LMDB 数据格式兼容 Implementation Plan
-status: proposed
+status: active
 audience: Developers / AI Agents
-last-updated: 2026-09-20
+last-updated: 2026-10-21
 owner: Workflow Owner (IO) / Compatibility Owner
 ---
 
@@ -15,6 +15,14 @@ owner: Workflow Owner (IO) / Compatibility Owner
 **Spec:** `docs/reports/2026-09-19-lmdb-read-support.md`（研究侧提案，status: proposed）+ 本计划 §1 实测基线（2026-09-19/20 复核并修正了该提案的三处表述）。
 
 **Authorization:** 主人 2026-09-20 要求编排完整兼容开发计划。计划落盘不改变代码；执行前需确认 §2 的 D1–D5，其中 D4/D5 影响 PR 切分。
+
+**2026-10-21 reopening:** 主人确认 LMDB 是后续主流数据格式，Phase 2–5 从
+deferred 改为 active。执行采用 L3 伞形计划下的 L2 工作包：WP-1 能力契约、
+WP-2 LMDB 帧索引与 infer/analysis 闭环、WP-3 跨格式身份与 Clean 原始 system
+划分、WP-4 写出侧、WP-5 证据晋级。WP-3 已在同日完成。
+`train`/`fine-tune + deepmd/lmdb` 先保持 experimental；`test + deepmd/lmdb`
+在 WP-2 完成前不登记；`eval-desc`/`embed + deepmd/lmdb` 记为 blocked-upstream
+（issue #6034）。
 
 **Architecture:** 单一格式探测原语（对齐 deepmd `is_lmdb`）→ 读侧路由（LMDB 只经 `dpdata.MultiSystems`，禁止单体系 API）→ 帧身份索引（`frame → system_id/nloc/frame_idx`）→ 能力矩阵 `data_format` 维度 + `DeepMDAdapter` preflight fail-closed → 写出侧按 D4 决定是否纳入 `output_format` 契约。
 
@@ -398,3 +406,303 @@ LMDB 是扁平帧存储，按组成分组读回；原始目录级体系身份只
 | `DeepMD 3.2 CPU Contract` / `Deploy Docs` | ❌ 既有 | 需受保护 fixture 的 qualification lane / 跟随 docs 构建失败 |
 
 **收口判定**：本轮交付范围（读侧契约、失败语义、可支持路径透传、不可支持组合前置拒绝、依赖边界与 doctor、文档与追踪登记）已完成并推送，CI 中直接检验本改动的三项检查全绿。计划自身保持 `proposed`：Phase 2–5 与决策门 D2–D4 未实施，表内其余红灯为既有问题，不由本轮引入、也不在本计划范围内。
+
+### 9.4 WP-1 能力契约（2026-10-21）
+
+**Ruling:** `fine-tune + deepmd/lmdb` 与 `train + deepmd/lmdb` 同时登记为
+experimental。DeepMDAdapter 用 operation 区分 `train` 与 `fine-tune`；只登记
+`train` 会让 DP-EVA 的主微调路径在严格 preflight 下被误拒绝。代价：两条
+experimental 记录共享同一份尚未完成的 Phase 5 证据。
+
+**落地内容**
+
+- `src/dpeva/io/dataset.py` 新增 `data_format_for(path)`；`deepmd/npy/mixed`
+  在 capability 层归入 `deepmd/npy`，只有 LMDB 使用独立 key。
+- `src/dpeva/compatibility/deepmd-3.2.json`：
+  - `train + deepmd/lmdb` 保持 experimental/planned；
+  - 新增 `fine-tune + deepmd/lmdb` experimental/planned；
+  - 新增 `eval-desc + deepmd/lmdb`、`embed + deepmd/lmdb` blocked-upstream，
+    引用 issue #6034；
+  - `test + deepmd/lmdb` 暂不登记，保持 no-record fail-closed，等待 WP-2。
+- 追踪矩阵和 DeepMD 3.2 兼容性报告同步到 21 条记录
+  （3 supported / 10 experimental / 4 unsupported / 4 blocked-upstream）。
+- 文档明确：`dpeva infer` 当前会在 LMDB `-d` 明细解析阶段拒绝，npy/mixed 是
+  WP-2 完成前的可用替代路径。
+
+**验证（本轮当前工作树）**
+
+- `tests/unit/compatibility/test_lmdb_capability.py`：能力记录与 fail-closed 语义；
+- `tests/unit/io/test_dataset_lmdb.py`：`data_format_for` 与既有 LMDB 读契约；
+- `tests/unit/compatibility/test_deepmd_matrix.py`：manifest 分布与报告同步；
+- `pytest tests/unit/compatibility ... tests/unit/io/test_dataset_lmdb.py` 通过。
+
+**下一步**：WP-2 实现 `dp test -d` 帧索引和 `infer`/`analysis` 明细归属，
+完成后登记 `test + deepmd/lmdb` 为 experimental；Clean 的原始 system 划分
+进入 WP-3。
+
+### 9.5 WP-2 LMDB 帧索引与 infer/analysis 解析（2026-10-21）
+
+**Ruling:** WP-2 先闭合 `infer`/`analysis` 的 `dp test -d` 明细解析；Clean 的
+原始 system 划分导出推迟到 WP-3。理由：`dpdata.MultiSystems` 对 LMDB 读回按
+组成分组，不能保证与 `frame_system_ids` 的原始 system 划分一一对应；如果把
+composition group 当作 Clean 的 system，会静默改变导出语义。
+
+**落地内容**
+
+- 新增 `src/dpeva/io/lmdb_index.py`：
+  - 从 `__metadata__` 读取 `frame_nlocs`/`frame_system_ids`；
+  - 兼容只有 `system_info` 的旧 LMDB；
+  - 无元数据时 fail-loud，不用猜测顺序；
+  - 输出 `frame → (system_id, system_frame_index, nloc)` 及 `dp test` 排序。
+- `DPTestResultParser` 识别 LMDB detail headers，使用帧索引生成
+  `dataname_list` / `datanames_nframe`，不再拒绝 LMDB 明细。
+- 真实小 LMDB 测试覆盖混合 nloc、system 顺序、parser 消费和错误组序拒绝。
+- `test + deepmd/lmdb` 登记为 experimental/planned；真实 CPU/SAI contract 仍属 WP-5。
+- Clean 仍在需要原始 system 划分时要求 npy/mixed；WP-3 处理跨格式身份。
+
+**验证**
+
+- `conda run -n ft2dp-post ... pytest tests/unit/io/test_lmdb_index.py -q`：3 passed；
+- 默认 lane `tests/unit/io/test_lmdb_index.py`：3 passed（metadata-only）
+  + 3 skipped（dpdata<1.1 的真实 writer guard）；
+- `tests/unit/io/test_dataproc.py`：LMDB 缺失源 fail-loud，正常 LMDB 由新索引用例覆盖；
+- 后续 WP-3 完成跨格式身份后再评估 Clean 的 LMDB 导出。
+
+### 9.6 WP-3A 跨格式 canonical frame identity（2026-10-21）
+
+**Ruling:** `_frame_identity` 不再把 `atom_names`/`type_map` 的顺序或原始
+`atom_types` 索引直接纳入身份；它先把原子映射到元素名，再按
+`(element, coordinates)` 稳定排序，并对同一排列下的原子级标签做同样重排。
+代价：历史上仅因 type-map 顺序不同而被视为不同的帧，现在会被识别为同一结构；
+这是跨 npy/lmdb 去重所需的行为变更。
+
+**落地内容**
+
+- `src/dpeva/labeling/integration.py`：
+  - 结构身份使用 canonical elements + coords + cell/PBC；
+  - `forces` 等带 atom axis 的标签随 canonical permutation 重排；
+  - `real_atom_types` 优先映射回真实元素名，缺失时使用规范化 `atom_types`；
+  - 标签内容不同仍保持 conflict fail-closed。
+- 新增真实 npy/lmdb 同构帧测试：不同原子存储顺序和 type-map 顺序得到同一
+  `frame_identity` 与 `frame_label_identity`。
+- `tests/unit/labeling/test_integration.py` 更新旧断言：type-map 重排不再改变身份；
+  cell/PBC 和实际 force 差异仍改变相应身份。
+
+**边界**
+
+- WP-3B 已完成 Clean 的原始 `frame_system_ids` system 划分与导出（见 §9.7）；
+- 本次没有把 LMDB composition group 冒充原始 system，也没有扩大 `output_format`。
+
+### 9.7 WP-3B Clean 原始 system 导出（2026-10-21）
+
+**Ruling:** `dpeva clean` 的 LMDB 分支使用 `frame_system_ids` 恢复原始 system，
+不使用 `dpdata.MultiSystems` 的 composition group。若 LMDB 缺少
+`frame_system_ids`/`system_info`，直接 fail-loud；不猜测 system 划分。
+
+**落地内容**
+
+- 新增 `src/dpeva/io/lmdb_systems.py::load_lmdb_systems_by_id`：
+  - 使用 dpdata 1.1 LMDB codec 读取每帧；
+  - 按 `frame_system_ids` 分组，保留 frame 顺序；
+  - 生成 `target_name=<lmdb>#sys<id>`，与 parser 的 dataname 对齐；
+  - 同一 composition 的多个原始 system 不会被合并。
+- `DataCleaningWorkflow` 在 LMDB 输入时调用该 loader；npy/mixed 路径保持原逻辑。
+- 测试覆盖同一 composition 两个 system 的划分与标签保留；缺失 system identity 时 fail-loud。
+
+**边界**
+
+- 真实 DeepMD CPU/SAI contract 仍属 WP-5；
+- WP-4A 显式 writer 已完成（§9.8）；WP-4B output_format 契约仍未开始。
+
+### 9.8 WP-4A 显式 LMDB writer（2026-10-21）
+
+**Ruling:** 先提供显式转换 API，不改变默认 `output_format`，也不自动把
+`label`/`integration` 输出切到 LMDB。这样可先获得可验证的写出路径，同时
+避免在未完成 WP-5 证据前改变公开产物契约。
+
+**落地内容**
+
+- 新增 `src/dpeva/io/lmdb_writer.py::write_lmdb`：
+  - 按输入 system 顺序调用 dpdata `dump_systems`；
+  - 默认 `overwrite=False`；
+  - 写后回读 frame 数、`frame_system_ids`、nloc 分布和 system identity；
+  - 任一项不一致 fail-loud。
+- 真实 LMDB 往返测试覆盖 system 划分和已有目标拒绝；
+- `output_format`、`label`/`integration` 的默认输出保持不变；WP-4B 已在 §9.9 作为显式可选格式完成。
+
+### 9.9 WP-4B Label/integration LMDB 输出（2026-10-21）
+
+**Ruling:** `deepmd/lmdb` 作为显式可选 `output_format`，默认仍为 npy/mixed。
+LMDB 输出统一写到 `<output_dir>/dataset.lmdb`，manifest/summary 留在输出目录；
+label cleaned/anomalies 与 integration merged 均复用 WP-4A writer。
+
+**落地内容**
+
+- `VALID_LABELING_OUTPUT_FORMATS` 增加 `deepmd/lmdb`；
+- `output_format` / `integration_output_format` 接受 LMDB，配置描述更新；
+- `AbacusPostProcessor.export_data` 在 LMDB 分支调用 writer；
+- `DataIntegrationManager.integrate` 在 LMDB 分支调用 writer，manifest 记录
+  `format=deepmd/lmdb`；
+- 配置、postprocess、integration 的单元测试覆盖 LMDB 分支。
+
+**边界**
+
+- 默认输出未改变；
+- 真实 DeepMD CPU/SAI contract 仍属 WP-5。
+
+### 9.10 WP-5 CPU contract、SAI A/B 与能力晋级（2026-10-22）
+
+**Ruling:** `test + deepmd/lmdb` 同时绑定 CPU contract 与 SAI npy↔lmdb A/B
+证据后晋级 `supported`；`train + deepmd/lmdb` 只完成 CPU contract，保持
+`experimental/implemented`；`fine-tune` 保持 planned。
+
+**CPU contract**
+
+- SAI CPU-MISC JobID `1893534`，环境 `dpeva-dpa4-320`，`DeePMD-kit v3.2.0`，
+  `8 passed / 0 skipped`，exit `0:0`；
+- 新增 `lmdb_periodic_data` fixture：优先读取 `DPEVA_DEEPMD_LMDB_DATA`，
+  否则由 protected npy fixture + `dpdata>=1.1` 生成；
+- `test` 契约执行真实 `dp --pt test -s <lmdb> -d ...`，并由
+  `DPTestResultParser` 校验帧索引归属；
+- `train` 契约执行两 step DPA4 `dp --pt train`，training/validation 均为
+  LMDB；
+- attestations 落库到
+  `docs/reports/evidence/deepmd-3.2/lmdb-cpu-job-1893534-attestations/`。
+
+**DeepMD 3.2.0 实测边界**
+
+- mixed-nloc LMDB 的 `-d` 输出只写首个 `[nloc=...]` header，但写出全部
+  2,604 行；
+- parser 仅在 header 是期望 nloc 组的前缀且总行数等于帧索引帧数时，按
+  nloc 组升序 + 组内 storage 序归属；否则 fail-loud；
+- 单 nloc 且无 `[nloc=...]` 的 header 走单组精确分支，不再把 `None`
+  传入 nloc group 查表；
+- LMDB writer 的 nloc 计数修正为“每个 system 的帧数 × nloc”，新增
+  multi-frame regression test。
+
+**SAI A/B**
+
+- JobID `1893546`，partition `4V100`，exact `dpeva-dpa4-320`，
+  `complement_validation_v5` 2,604 帧；
+- npy 与 lmdb 使用同一模型、同一命令、`-n 0`；
+- 四项 aggregate 指标相对差均为 `0`（打印精度内逐位相同）；
+- LMDB detail 2,604 帧全部由帧索引归属；该外部 LMDB 快照按 841 个组成组
+  标识，不冒充 964 个 npy 目录身份；
+- sanitized summary：
+  `docs/reports/evidence/deepmd-3.2/sai-lmdb-ab-job-1893546-public.json`；
+- one-case SAI promotion attestation（`case=pt-test`, `gpu=SAI 4V100`）：
+  `docs/reports/evidence/deepmd-3.2/sai-lmdb-ab-job-1893546-attestation.json`。
+
+**最终状态**
+
+- manifest：4 supported / 9 experimental / 4 unsupported / 4 blocked-upstream；
+- `test + deepmd/lmdb`：supported，CPU + SAI evidence 均通过
+  `validate_promotion_evidence`；
+- `train + deepmd/lmdb`：experimental/implemented，CPU evidence 已绑定；
+- `eval-desc`/`embed + deepmd/lmdb`：blocked-upstream（#6034）。
+
+### 9.11 真实 200-step 训练 A/B 执行 smoke（2026-10-22）
+
+**目的：** 补足 `train + deepmd/lmdb` 的真实训练执行证据，而不是把它误当成
+格式等价精度声明。
+
+- SAI 4V100 JobID `1893783`，`dpeva-dpa4-320`，`DeePMD-kit v3.2.0`；
+- 同一 16,485 帧训练集分别以 `deepmd/npy/mixed` 与 `deepmd/lmdb` 训练
+  200 step；
+- 同一 2,604 帧 npy 验证集、seed 42、`filter:255`、同一模型配置；
+- 两次 `dp --pt train` 均 rc=0，均写出 step-200 regular/EMA checkpoint；
+- step-100/200 稳态墙钟分别 mixed `34.98/37.71 s`、lmdb `36.46/35.96 s`；
+- 200-step lcurve 的 force-validation MAE 差异 13.6%，energy/RMSE 等接近；
+  这是短程随机采样差异，不能作为格式等价门；
+- 结果 JSON 明确 `execution_only=true`、`metric_equivalence_claimed=false`；
+- `train + deepmd/lmdb` 保持 experimental；`test + deepmd/lmdb` 的 supported
+  状态不受影响。
+
+证据：
+`docs/reports/evidence/deepmd-3.2/sai-lmdb-train-ab-job-1893783-public.json`
+及同目录 README；原始日志、lcurve、checkpoint 保留在 SAI。
+
+### 9.12 上游 LMDB exporter 状态复核（2026-10-22）
+
+- 上游 issue `deepmodeling/deepmd-kit#6034` 仍为 open；
+- `master` 最新提交
+  `a78bdfe8d5dc494a9d9a397e4a9e103a84205eaa`（2026-10-21）；
+- `deepmd/entrypoints/eval_desc.py` 与 `embedding.py` 仍使用
+  `expand_sys_str` + `DeepmdData`，没有 `is_lmdb`/`LmdbTestData` 分支；
+- `deepmd/utils/data.py` 仍无 LMDB 分支；
+- 未发现实现该 issue 的 open/closed PR；
+- 因此 `eval-desc`/`embed + deepmd/lmdb` 保持 `blocked-upstream`，暂不改
+  manifest 或引入 DP-EVA 侧替代实现。
+
+### 9.13 独立审查后的 hardening（2026-10-22）
+
+独立 cross-agent review 发现并已处理以下问题：
+
+- `load_lmdb_systems_by_id` 原先只取每个 source system 的第一帧元素表：
+  现对同一 atom count、不同组成的 mixed 帧保留
+  `real_atom_names`/`real_atom_types`；不同 atom count 的 source system
+  明确拒绝合并，避免伪造固定 atom 轴；
+- `write_lmdb` 改为 staging 写入 → 回读验证 → 原子发布；验证失败不会留下
+  半成品或覆盖旧目标；mixed source 缺少 `real_atom_names` 时从显式
+  type map 注入；可变 mixed nloc 支持写出，Clean loader 对无法安全合并的
+  可变 nloc 明确拒绝；
+- `AbacusPostProcessor.export_data` 不再吞掉导出异常，失败向上传播；
+- `dpeva collect` 对 LMDB `testdata_dir` 使用 source-system loader，
+  不再在 descriptor/UQ 计算后才因 `target_systems` 失败；
+- integration LMDB 输出传入 reference type map；
+- training workflow 在生成任务前对 LMDB fine-tune 做 capability preflight，
+  必须显式 `allow_experimental=true`；
+- `dpdata` 暂定 `>=1.1,<1.2`，因为 Clean 的恢复路径依赖 1.1 LMDB codec
+  私有接口；
+- CPU/SAI evidence 明确记录：SAI exact runtime 是 dpdata 1.0.2，LMDB fixture
+  由外部 dpdata 1.1.0 生成；CI lane 在 `dpdata>=1.1` 环境内生成。
+
+回归覆盖：
+
+- mixed same-nloc source-system 保留；
+- variable-nloc writer 写出与 Clean loader 的 fail-loud；
+- writer staging 失败不发布、已有目标不被覆盖；
+- label export 失败传播；
+- multi-composition LMDB integration；
+- collection LMDB export；
+- training LMDB experimental opt-in。
+
+### 9.13.1 第二轮 focused review 修复
+
+对 hardening commit 的 focused re-review 又发现 1 Critical / 3 Important /
+2 Minor，均已处理：
+
+- writer 的发布异常处理从 `Exception` 扩到 `BaseException`：
+  `KeyboardInterrupt`/`SystemExit` 发生在旧目标已移入 backup、新目标尚未
+  发布之间时，会在 `finally` 前恢复旧目标；cleanup 失败不再掩盖写入结论，
+  staging/backup 清理改为 best-effort；
+- training preflight 不再对未知 backend/模型族静默放行：`tf`/`pt-expt`
+  等无 manifest 记录的 LMDB fine-tune 现在 fail-closed；
+- preflight 与 `TrainingConfigManager` 使用同一路径解析：相对 `systems`
+  按 input JSON 目录解析，suffixless LMDB 目录不再漏检；
+- preflight 同时检查 `training_data` 与 `validation_data`：任一段是 LMDB
+  都要求显式 opt-in，避免 validation-only LMDB 绕过；
+- mixed source 的临时 `real_atom_names` 注入在 `BaseException`（含中断）
+  下也会回滚，不会把临时键留在调用方 system 上；
+- `examples/tutorials/paper_case/requirements.txt` 同步为
+  `dpdata>=1.1,<1.2`；
+- 文档明确 capability key 的 `environment` 是契约测试环境而非硬件资格。
+
+新增回归：发布中断后旧目标仍可读且无残留 backup/staging；
+相对路径 LMDB 预检命中；未注册 backend 预检拒绝。
+
+### 9.14 未随本 PR 收口的遗留项
+
+以下问题在独立审查中被提出，但不属于本 PR 新增的 LMDB 写入/读取面，
+作为后续工作记录，避免被误认为已完成：
+
+- `InferenceExecutionManager` 仍通过 `DeepMDAdapter.for_legacy_unchecked`
+  构建命令，没有完整 `CapabilityKey`；`dp test + deepmd/lmdb` 的
+  `supported` 状态目前靠 workflow 级与 contract 测试保证，而不是 adapter
+  的强制 preflight。后续需要给 inference manager 传入完整 science context
+  后切换到 `adapter.preflight(key)`。
+- `feature` 的 `eval-desc`/`embed + deepmd/lmdb` 仍是 manager 内的显式
+  `ValueError`（指向 upstream #6034），尚未改为 capability matrix 查询。
+  行为等价，但两处边界需要统一。
+- `allow_experimental` 目前只覆盖 training workflow 的 LMDB fine-tune；
+  其他 experimental 能力在接入生产 manager 时需要同样的显式 opt-in 通道。

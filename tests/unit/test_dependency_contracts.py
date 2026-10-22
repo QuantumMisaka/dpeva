@@ -25,7 +25,7 @@ def test_atst_tools_remains_optional_explore_dependency() -> None:
 def test_dpdata_floor_covers_lmdb_reading() -> None:
     data = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))
 
-    assert "dpdata>=1.1" in data["project"]["dependencies"]
+    assert "dpdata>=1.1,<1.2" in data["project"]["dependencies"]
     assert all(
         not dependency.startswith("dpdata")
         for dependency in data["project"]["optional-dependencies"]["dev"]

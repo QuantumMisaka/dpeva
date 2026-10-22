@@ -2,7 +2,7 @@
 title: Upstream Software
 status: active
 audience: Users / Developers
-last-updated: 2026-10-12
+last-updated: 2026-10-22
 owner: Docs Owner
 ---
 
@@ -10,7 +10,7 @@ owner: Docs Owner
 
 - Status: active
 - Audience: Users / Developers
-- Last-Updated: 2026-10-12
+- Last-Updated: 2026-10-22
 
 本文档汇总 DP-EVA 的上游软件，说明其仓库位置、安装层级与在本项目中的职责边界。
 
@@ -32,11 +32,12 @@ owner: Docs Owner
 
 DeepMD-kit 3.2 的能力状态由
 `src/dpeva/compatibility/deepmd-3.2.json` 的精确 operation/backend/model/
-artifact/data/environment key 管理。当前有 3 条 `supported` 记录（DPA4
-pt test/eval-desc/embed），其余能力仍保持明确的
+artifact/data/environment key 管理。当前有 4 条 `supported` 记录（DPA4
+pt test/eval-desc/embed，以及 `test + deepmd/lmdb`），其余能力仍保持明确的
 experimental/unsupported/blocked 边界。SAI V100 qualification
-JobID `1128260` 与 CPU contract JobID `1128442` 的 producer-issued JSON
-证据已落库；完整边界见仓库报告
+JobID `1128260`、CPU contract JobID `1128442`、LMDB CPU contract JobID
+`1893534` 与 LMDB SAI A/B JobID `1893546` 的 producer-issued JSON 证据已落库；
+完整边界见仓库报告
 `docs/reports/2026-09-04-deepmd-3.2-compatibility.md`。
 其中 SAI aggregate 保留 DPA4 regular/EMA × `test`/`eval-desc`/`embed`
 共六条历史 attestation；DPA4C periodic 路线仍为 experimental，未纳入这六条
@@ -53,18 +54,27 @@ CPU evidence，以及需要时的 SAI evidence 均存在并通过，Compatibilit
 3.2 已验证能力。legacy runtime 上缺少 3.2 才有的 CLI surface 属于信息性检查，
 不会把仍可用的旧环境整体判为 incompatible。
 
-当前 manifest 共 17 条（3 supported、8 experimental、4 unsupported、2
+当前 manifest 共 21 条（4 supported、9 experimental、4 unsupported、4
 blocked-upstream）。每条记录还声明 `verification_status` 与
 `required_evidence`；`implemented` 必须绑定可收集的 pytest node，尚未具备测试的
-train/fine-tune/freeze、LMDB、pretrained alias 和 deploy 路线保持 planned，不能把
-占位命令当作已执行证据。`candidate-evaluation` 是供上层 generic preflight 使用的
-policy capability，不映射为 DeepMD CLI command。
+train/fine-tune/freeze、LMDB fine-tune、pretrained alias 和 deploy 路线保持
+planned，不能把占位命令当作已执行证据。LMDB `train` 已有 CPU contract 与
+SAI 200-step execution A/B（仍为 experimental；训练曲线是随机 smoke，不作
+等价性声明）；`test + deepmd/lmdb` 已由 CPU contract 与 SAI npy↔lmdb A/B
+晋级 supported。LMDB 的 `eval-desc`/`embed` 记录由上游 issue #6034 标记为
+blocked-upstream。2026-10-22 复核 `master` commit `a78bdfe8`：该 issue 仍
+open，`eval_desc.py`/`embedding.py` 仍走 `expand_sys_str` + `DeepmdData`，
+尚无实现 PR；因此保持 blocked-upstream。
+`candidate-evaluation` 是供上层 generic preflight 使用的 policy capability，
+不映射为 DeepMD CLI command。
 
 ## 2. dpdata
 
 - 仓库地址：https://github.com/deepmodeling/dpdata
-- 版本下限：`dpdata>=1.1`（核心依赖）。读取 `deepmd/lmdb` 需要 `>=1.1`；`lmdb` 与 `msgpack`
-  由 dpdata 自身声明为运行依赖，DP-EVA 不新增直接依赖。
+- 版本边界：`dpdata>=1.1,<1.2`（核心依赖）。读取 `deepmd/lmdb` 需要 `>=1.1`；
+  `lmdb` 与 `msgpack` 由 dpdata 自身声明为运行依赖，DP-EVA 不新增直接依赖。
+  `clean` 的原始 system 恢复路径使用 dpdata 1.1 的 LMDB codec 私有方法，因此在
+  完成 1.2 兼容性验证前暂不放开上限。
 - 核心功能：处理 `deepmd/npy`、`deepmd/npy/mixed`、`deepmd/lmdb` 等机器学习势结构数据格式。
 - 在 DP-EVA 中的作用：
   - 负责数据集加载、结构读写与多系统数据组织。
@@ -75,12 +85,32 @@ policy capability，不映射为 DeepMD CLI command。
 | 消费方 | `deepmd/npy` / `npy/mixed` | `deepmd/lmdb` | 说明 |
 |---|---|---|---|
 | DP-EVA 读侧（`dpeva.io.dataset.load_systems`） | ✓ | ✓（dpdata≥1.1） | LMDB 只经 `dpdata.MultiSystems` 读取；体系分组口径为**组成分组** |
-| `dp train`（`training_data` / `validation_data`） | ✓ | ✓ | 要求 `systems` 为**单个字符串**路径，deepmd-kit 3.2 起原生流式读取 |
-| `dp test` | ✓ | ✓ | 整个 LMDB 视作 1 个数据源，按 nloc 分组评测；`-d` 明细行序 = nloc 组升序 |
+| `dp train`（`training_data` / `validation_data`） | ✓ | ✓（CPU contract + SAI 200-step smoke；experimental） | 要求 `systems` 为**单个字符串**路径，deepmd-kit 3.2 起原生流式读取；训练曲线随机性不作为格式等价门 |
+| `dp test` | ✓ | ✓（supported） | 整个 LMDB 视作 1 个数据源，按 nloc 分组评测；`-d` 明细行序 = nloc 组升序，DP-EVA 用帧索引恢复归属 |
 | `dp eval-desc` / `dp embed` | ✓ | ✗ | 上游基于 `expand_sys_str` + `DeepmdData`，无 LMDB 读取分支（3.2.0 GA、本地 dev 构建与 upstream master 均已核实）；DP-EVA 在提交作业前拒绝该组合 |
 
-`dp test` 在 LMDB 上不保留目录级体系身份，因此 DP-EVA 目前拒绝从 LMDB 明细文件推导
-逐 system 统计（见 `docs/guides/troubleshooting.md` §5.3）；`dp test` 自报的聚合指标不受影响。
+`dp test` 在 LMDB 上不保留目录级体系身份，但 DP-EVA 的 parser 现在通过
+`frame_nlocs`/`frame_system_ids` 恢复帧级 system 归属（缺失元数据时 fail-loud）。
+DeepMD-kit 3.2.0 的 `-d` 输出在 mixed-nloc LMDB 上只写首个 `[nloc=...]`
+header 却写出完整行集；parser 只在总行数与帧索引一致时按 nloc 组序归属，
+否则报错，不会静默猜测。
+`infer`/`analysis` 的明细解析和 Clean 的原始 system 导出因此可用；
+Clean 在没有 `frame_system_ids`/`system_info` 时 fail-loud；同一 source system
+内 atom count 不同的混合帧当前仍拒绝合并，避免伪造固定 atom 轴。`dp test`
+自报的聚合指标不受影响。
+
+`label` integration 的帧去重使用 canonical element/geometry identity：
+`type_map` 顺序和原子存储顺序不改变身份，标签数组随同一原子排列重排；
+LMDB 缺少 `real_atom_types` 时以规范化 `atom_types` 作为元素身份。该等价声明
+主要覆盖标准帧；npy/mixed 的 `real_atom_types` 与按组成分组的 LMDB 之间，
+混合类型跨格式去重不保证命中，需保留原始 mixed 元数据或显式使用 npy 副本。
+
+写出侧提供显式的 `dpeva.io.lmdb_writer.write_lmdb` 转换 API：
+它按输入 system 顺序写出到 staging，回读校验 `frame_system_ids`、帧数和
+nloc 组后原子发布；失败不会留下半成品或覆盖旧目标。缺少 `real_atom_names`
+的 mixed source 会从显式 type map 注入临时名称。Label 的
+`output_format` / `integration_output_format` 可选择 `deepmd/lmdb`，
+输出为 `<output_dir>/dataset.lmdb`；默认仍保持 npy/mixed，不自动切换。
 
 ## 3. ABACUS
 

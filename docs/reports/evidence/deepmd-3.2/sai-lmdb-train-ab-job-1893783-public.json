@@ -1,0 +1,178 @@
+{
+  "checkpoints_sha256": {
+    "lmdb_step_200": "44afaa199532b53c897b65fcdc6f7b77acd08fed7dfd31fc1d54f12c803bc065",
+    "mixed_step_200": "6ef39c7e6473f97e9bea33f36adaa7b52c99f22bf78baac18bce3fb09acbb409"
+  },
+  "commands": {
+    "lmdb": [
+      "dp",
+      "--pt",
+      "train",
+      "<lmdb-input.json>"
+    ],
+    "mixed": [
+      "dp",
+      "--pt",
+      "train",
+      "<mixed-input.json>"
+    ]
+  },
+  "dataset": {
+    "batch_size": "filter:255",
+    "lmdb_format": "deepmd/lmdb",
+    "mixed_format": "deepmd/npy/mixed",
+    "seed": 42,
+    "steps": 200,
+    "training_frames": 16485,
+    "training_systems": 208,
+    "validation_batch_size": "auto:255",
+    "validation_frames": 2604,
+    "validation_systems": 964
+  },
+  "environment": {
+    "deepmd_version": "DeePMD-kit v3.2.0",
+    "dpdata_version": "1.0.2",
+    "gpus_per_node": 1,
+    "lmdb_version": "2.2.0",
+    "msgpack_version": "1.1.2",
+    "name": "dpeva-dpa4-320",
+    "partition": "4V100",
+    "qos": "improper-gpu",
+    "torch_version": "2.11.0+cu126"
+  },
+  "execution_only": true,
+  "fixture_provenance": {
+    "exact_sai_runtime_dpdata_version": "1.0.2",
+    "generated_outside_exact_sai_runtime": true,
+    "lmdb_generation_dpdata_version": "1.1.0",
+    "note": "LMDB input was generated once with dpdata 1.1.0 outside the exact dpeva-dpa4-320 runtime (dpdata 1.0.2); the SAI job exercised the DeepMD reader/CLI path."
+  },
+  "inputs_sha256": {
+    "lmdb_config": "9bb44050f2e7e7ac376855ce0efa37e849218192646c483e84d2c9a75aa1a358",
+    "lmdb_data": "d1757014b65896da935c05a35adb9ee537613b68a2e82438d216c24acf4b0cf9",
+    "mixed_config": "d3a0400d5785aa9711fc0d70dde17f974fbcd32af90ec6fb77f37f5ba62fd677",
+    "mixed_data": "8486aaf1164a9de09621e5afeae60a9e62d63353857421765ec118e3caec0c37",
+    "stat_file": "b64e24c36bb135f153cdf16a28316302e9fd4096114ce568f6d3e153df91d818"
+  },
+  "job_id": "1893783",
+  "metric_equivalence_claimed": false,
+  "metric_equivalence_note": "Not claimed: 200-step training is a stochastic execution smoke. Loss trajectory differences are recorded for review, not used as a bitwise format-equivalence gate.",
+  "metrics": {
+    "comparison": {
+      "loss_at_step_200": {
+        "mae_e_trn": {
+          "lmdb": 10.9,
+          "mixed": 10.9,
+          "passed": true,
+          "relative_diff": 0.0
+        },
+        "mae_e_val": {
+          "lmdb": 10.1,
+          "mixed": 9.79,
+          "passed": true,
+          "relative_diff": 0.030693069306930745
+        },
+        "mae_f_trn": {
+          "lmdb": 7.23,
+          "mixed": 7.48,
+          "passed": true,
+          "relative_diff": 0.03342245989304812
+        },
+        "mae_f_val": {
+          "lmdb": 5.45,
+          "mixed": 4.71,
+          "passed": false,
+          "relative_diff": 0.1357798165137615
+        },
+        "mae_v_trn": {
+          "lmdb": 4.07,
+          "mixed": 3.98,
+          "passed": true,
+          "relative_diff": 0.022113022113022185
+        },
+        "mae_v_val": {
+          "lmdb": 4.02,
+          "mixed": 3.81,
+          "passed": true,
+          "relative_diff": 0.05223880597014914
+        },
+        "rmse_trn": {
+          "lmdb": 19.5,
+          "mixed": 19.6,
+          "passed": true,
+          "relative_diff": 0.005102040816326603
+        },
+        "rmse_val": {
+          "lmdb": 18.0,
+          "mixed": 17.4,
+          "passed": true,
+          "relative_diff": 0.03333333333333341
+        }
+      },
+      "loss_threshold": 0.1,
+      "passed": false,
+      "wall_threshold": 0.1,
+      "wall_time": {
+        "100": {
+          "lmdb_s": 36.46,
+          "mixed_s": 34.98,
+          "passed": true,
+          "relative_diff": 0.040592430060340204
+        },
+        "200": {
+          "lmdb_s": 35.96,
+          "mixed_s": 37.71,
+          "passed": true,
+          "relative_diff": 0.046406788650225406
+        }
+      }
+    },
+    "lmdb": {
+      "lr": 1e-06,
+      "mae_e_trn": 10.9,
+      "mae_e_val": 10.1,
+      "mae_f_trn": 7.23,
+      "mae_f_val": 5.45,
+      "mae_v_trn": 4.07,
+      "mae_v_val": 4.02,
+      "rmse_trn": 19.5,
+      "rmse_val": 18.0
+    },
+    "mixed": {
+      "lr": 1e-06,
+      "mae_e_trn": 10.9,
+      "mae_e_val": 9.79,
+      "mae_f_trn": 7.48,
+      "mae_f_val": 4.71,
+      "mae_v_trn": 3.98,
+      "mae_v_val": 3.81,
+      "rmse_trn": 19.6,
+      "rmse_val": 17.4
+    },
+    "step": 200
+  },
+  "purpose": "DeepMD-kit 3.2.0 real 200-step training execution A/B",
+  "raw_evidence": {
+    "lmdb_lcurve_sha256": "0d4015f6358cea61a050780129e07a63e0f3c7351cad1018430a7afbc68ff868",
+    "lmdb_log_sha256": "f77d7ef5e5192bbc0eeae93319377264a30f2037922ebdf2d563baf517af60b6",
+    "mixed_lcurve_sha256": "aee332458a48082d0b02136b59adb20d889dd1797b749687dd4d63d0701b6f67",
+    "mixed_log_sha256": "61777f66611f60db7c1299d89f0dc47f939822f23b7304f604f49fea2dc9a53b",
+    "run_times_sha256": "7fd7636e0d4eee215154b9b56a4d7342b284f9f1bd90271933af10722dc41721",
+    "train_ab_result_sha256": "7995fb346f0e1b79b3db80555504ca49737a8e245443fab19357dea2de072434"
+  },
+  "raw_evidence_retained_on_sai": true,
+  "schema_version": "1.0",
+  "status": "finished",
+  "wall_time_seconds": {
+    "lmdb": {
+      "1": 64.42,
+      "100": 36.46,
+      "200": 35.96
+    },
+    "mixed": {
+      "1": 104.05,
+      "100": 34.98,
+      "200": 37.71
+    }
+  }
+}

@@ -192,3 +192,37 @@ def test_data_cleaning_propagates_missing_result_file_error(tmp_path):
         workflow = DataCleaningWorkflow(config)
         with pytest.raises(FileNotFoundError, match="Energy file not found"):
             workflow.run()
+
+
+def test_data_cleaning_uses_lmdb_system_loader(tmp_path):
+    dataset_dir = tmp_path / "dataset.lmdb"
+    result_dir = tmp_path / "result"
+    output_dir = tmp_path / "out"
+    dataset_dir.mkdir()
+    result_dir.mkdir()
+    fake_system = FakeSystem("dataset.lmdb#sys0", 2)
+    parsed = _build_parsed_result()
+    parsed["dataname_list"] = [["dataset.lmdb#sys0", 0, 1], ["dataset.lmdb#sys0", 1, 1]]
+    parsed["datanames_nframe"] = {"dataset.lmdb#sys0": 2}
+    config = {
+        "dataset_dir": str(dataset_dir),
+        "result_dir": str(result_dir),
+        "output_dir": str(output_dir),
+        "force_max_diff_threshold": 0.3,
+    }
+    with patch("dpeva.workflows.data_cleaning.setup_workflow_logger"), patch(
+        "dpeva.workflows.data_cleaning.is_lmdb_path", return_value=True
+    ), patch(
+        "dpeva.workflows.data_cleaning.DPTestResultParser.parse", return_value=parsed
+    ), patch(
+        "dpeva.workflows.data_cleaning.load_lmdb_systems_by_id",
+        return_value=[fake_system],
+    ) as loader, patch(
+        "dpeva.workflows.data_cleaning.load_systems"
+    ) as npy_loader:
+        workflow = DataCleaningWorkflow(config)
+        workflow.run()
+
+    loader.assert_called_once_with(str(dataset_dir))
+    npy_loader.assert_not_called()
+    assert fake_system.calls == [[0], [1]]

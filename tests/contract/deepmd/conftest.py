@@ -21,6 +21,7 @@ _FIXTURE_ENV = {
     "dpa4c_model": "DPEVA_DEEPMD_DPA4C_MODEL",
     "periodic_data": "DPEVA_DEEPMD_PERIODIC_DATA",
 }
+_LMDB_FIXTURE_ENV = "DPEVA_DEEPMD_LMDB_DATA"
 CONTRACT_REQUIRED_ENV = "DPEVA_DEEPMD_CONTRACT_REQUIRED"
 _CONTRACT_LOG_DIR: Path | None = None
 _COMMAND_INDEX = 0
@@ -171,6 +172,84 @@ def periodic_data() -> Path:
     )
 
 
+@pytest.fixture(scope="session")
+def periodic_type_map(periodic_data: Path) -> list[str]:
+    """Return the fixture's element names without asserting a fixed ordering."""
+
+    import dpdata
+
+    from dpeva.io.dataset import is_lmdb_path
+
+    if is_lmdb_path(periodic_data):
+        systems = list(
+            dpdata.MultiSystems.from_file(
+                str(periodic_data), fmt="deepmd/lmdb", max_frames=None
+            )
+        )
+        if not systems:
+            raise FixtureConfigurationError(
+                f"DPEVA_DEEPMD_PERIODIC_DATA contains no systems: {periodic_data}"
+            )
+        system = systems[0]
+    else:
+        system = dpdata.LabeledSystem(str(periodic_data), fmt="deepmd/npy")
+    names = list(system.get_atom_names())
+    if not names:
+        raise FixtureConfigurationError(
+            f"DPEVA_DEEPMD_PERIODIC_DATA has no atom names: {periodic_data}"
+        )
+    return names
+
+
+@pytest.fixture(scope="session")
+def lmdb_periodic_data(
+    periodic_data: Path,
+    periodic_type_map: list[str],
+    tmp_path_factory: pytest.TempPathFactory,
+) -> Path:
+    """Return a real LMDB copy of the protected periodic fixture.
+
+    The protected fixture is an npy system. Generating the LMDB copy keeps the
+    CI bundle small and exercises the same dpdata writer used by DP-EVA. The
+    contract environment is pinned to ``dpdata>=1.1``; a missing writer is a
+    fixture failure rather than a reason to silently weaken the contract.
+    """
+
+    from dpeva.io.dataset import is_lmdb_path
+    from dpeva.io.lmdb_writer import write_lmdb
+
+    configured = os.environ.get(_LMDB_FIXTURE_ENV)
+    if configured:
+        return _resolve_required_path(_LMDB_FIXTURE_ENV, required=True)
+    if is_lmdb_path(periodic_data):
+        return periodic_data
+
+    try:
+        import dpdata
+    except ImportError as exc:  # pragma: no cover - dependency contract guard
+        raise FixtureConfigurationError("LMDB contract requires dpdata>=1.1") from exc
+
+    try:
+        system = dpdata.LabeledSystem(str(periodic_data), fmt="deepmd/npy")
+    except Exception as exc:
+        raise FixtureConfigurationError(
+            "DPEVA_DEEPMD_PERIODIC_DATA is not a readable deepmd/npy system: "
+            f"{periodic_data} ({exc})"
+        ) from exc
+    if len(system) < 1:
+        raise FixtureConfigurationError(
+            f"DPEVA_DEEPMD_PERIODIC_DATA contains no labeled frames: {periodic_data}"
+        )
+
+    target = tmp_path_factory.mktemp("lmdb-contract") / "periodic.lmdb"
+    write_lmdb(
+        [system],
+        target,
+        type_map=periodic_type_map,
+    )
+    return target
+
+
 def _iter_data_files(path: Path) -> list[Path]:
     if path.is_file():
         result: list[Path] = []
@@ -234,6 +313,7 @@ def write_cpu_attestation(
     result: subprocess.CompletedProcess[str],
     *,
     case: str,
+    data_format: str = "deepmd/npy",
 ) -> Path:
     """Persist an attestation only after a caller's full contract assertions."""
 
@@ -245,6 +325,7 @@ def write_cpu_attestation(
         for record in CapabilityMatrix.load_default().records
         if record.key.operation == operation
         and record.key.backend == backend
+        and record.key.data_format == data_format
         and record.verification_status == "implemented"
     ]
     if len(records) != 1 or records[0].verification_command is None:

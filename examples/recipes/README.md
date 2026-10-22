@@ -161,6 +161,10 @@ For users who want to use the sampling algorithms directly without the full DP-E
   - Uses `launcher_mode="mpi_abacus"` only for high-memory/multi-card tasks; DP-EVA then sources SAI rank-map and runs `mpirun -np $SLURM_NTASKS --map-by $MAP_OPT abacus`.
   - Run with `dpeva label examples/recipes/labeling/config_sai_abacus_slurm.json`
 
+Label outputs remain `deepmd/npy` / `deepmd/npy/mixed` by default. Set
+`output_format` or `integration_output_format` to `deepmd/lmdb` for an explicit
+LMDB product; it is written as `<output_dir>/dataset.lmdb`.
+
 ## 8. Script Entry Points
 
 For programmatic workflow demos and helper scripts, use:

@@ -2,7 +2,7 @@
 title: Feature-to-document traceability matrix
 status: active
 audience: Developers
-last-updated: 2026-09-05
+last-updated: 2026-10-21
 owner: Docs Owner
 ---
 
@@ -26,6 +26,7 @@ owner: Docs Owner
 | `run.contract` | `src/dpeva/run/context.py`; `src/dpeva/run/recorder.py`; `src/dpeva/run/status.py` | `docs/guides/developer-guide.md`; `examples/recipes/README.md` | `docs/reports/2026-09-04-run-contract-pilot-report.md` |
 | `lineage.evaluation-card` | `src/dpeva/run/dataset.py`; `src/dpeva/run/model.py`; `src/dpeva/evaluation/card.py` | `docs/guides/cli.md`; `examples/recipes/evaluation/config_eval_card.json` | `docs/reports/2026-09-04-dataset-lineage-eval-card-acceptance.md` |
 | `compatibility.deepmd-3.2` | `src/dpeva/compatibility/deepmd-3.2.json`; `src/dpeva/compatibility/adapter.py`; `src/dpeva/compatibility/attestation.py` | `docs/guides/developer/deepmd-kit-sai-build.md`; `docs/reports/templates/deepmd-3.2-qualification.md` | `docs/reports/2026-09-04-deepmd-3.2-compatibility.md` |
+| `io.dataset.lmdb` | `src/dpeva/io/dataset.py`; `src/dpeva/io/lmdb_index.py`; `src/dpeva/io/lmdb_systems.py`; `src/dpeva/io/lmdb_writer.py`; `src/dpeva/training/managers.py`; `src/dpeva/feature/managers.py`; `src/dpeva/io/dataproc.py`; `src/dpeva/config.py`; `src/dpeva/constants.py`; `src/dpeva/labeling/integration.py`; `src/dpeva/labeling/postprocess.py`; `src/dpeva/workflows/data_cleaning.py`; `src/dpeva/compatibility/deepmd-3.2.json`; `scripts/validation/compare_lmdb_ab.py`; `scripts/validation/compare_lmdb_train_ab.py` | `docs/reference/upstream-software.md`; `docs/guides/configuration.md`; `docs/guides/troubleshooting.md`; `examples/recipes/README.md`; `docs/reports/2026-09-04-deepmd-3.2-compatibility.md` | `docs/reports/2026-09-04-deepmd-3.2-compatibility.md` |
 
 ## 维护规则
 

@@ -91,8 +91,10 @@ DeepMD-kit 版本，不负责选择 PyTorch 的 CPU/CUDA wheel；集群自编译
 3.1.2 运行包络。这个依赖边界是安装兼容性承诺，不是新的科学能力验证；能力
 矩阵和 3.2 证据仍由显式 lane 单独管理。
 
-核心依赖中的 `dpdata>=1.1` 是数据侧能力边界：读取 `deepmd/lmdb` 需要该下限，
-`lmdb` 与 `msgpack` 由 dpdata 自身引入。预置环境（`--no-deps`）若仍是
+核心依赖中的 `dpdata>=1.1,<1.2` 是数据侧能力边界：读取 `deepmd/lmdb` 需要该
+下限，`lmdb` 与 `msgpack` 由 dpdata 自身引入。上限暂定为 `<1.2`，因为
+`clean` 的原始 system 恢复路径使用 dpdata 1.1 LMDB codec 的私有接口；在
+完成 1.2 兼容性验证前不会放开。预置环境（`--no-deps`）若仍是
 `dpdata<1.1`，`deepmd/lmdb` 输入会被明确拒绝；`dpeva doctor` 的 `dpdata.lmdb`
 检查会报告实际可读性。
 

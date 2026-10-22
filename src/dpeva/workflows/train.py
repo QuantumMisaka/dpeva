@@ -4,6 +4,12 @@ import json
 from typing import Union, Dict
 
 from dpeva.config import TrainingConfig
+from dpeva.compatibility import (
+    CapabilityKey,
+    CapabilityMatrix,
+    CapabilityUnavailable,
+)
+from dpeva.io.dataset import data_format_for, is_lmdb_path
 from dpeva.io.training import TrainingIOManager
 from dpeva.training.managers import TrainingConfigManager, TrainingExecutionManager
 from dpeva.constants import WORKFLOW_FINISHED_TAG, LOG_FILE_TRAIN
@@ -44,6 +50,7 @@ class TrainingWorkflow:
              
         with open(self.input_json_path, 'r') as f:
             base_config = json.load(f)
+        self.base_config = base_config
             
         self.config_manager = TrainingConfigManager(base_config, self.input_json_path)
         
@@ -67,6 +74,66 @@ class TrainingWorkflow:
         
         # Override training data path
         self.training_data_path = str(self.config.training_data_path) if self.config.training_data_path else None
+
+    def _resolve_training_data_paths(self):
+        """Return effective ``(section, path)`` training data sources.
+
+        ``TrainingConfigManager.resolve_data_path`` resolves relative paths
+        against the input JSON directory, so the preflight must do the same
+        before deciding whether a suffixless LMDB directory is in play. Both
+        ``training_data`` and ``validation_data`` accept LMDB, so both are
+        inspected.
+        """
+        training_config = self.base_config.get("training", {})
+        resolved = []
+        for section in ("training_data", "validation_data"):
+            if section == "training_data" and self.training_data_path is not None:
+                systems = self.training_data_path
+            else:
+                systems = training_config.get(section, {}).get("systems")
+            if not isinstance(systems, str) or not systems:
+                continue
+            if not os.path.isabs(systems):
+                systems = os.path.abspath(
+                    os.path.join(os.path.dirname(self.input_json_path), systems)
+                )
+            resolved.append((section, systems))
+        return resolved
+
+    def _preflight_lmdb_training_capability(self):
+        """Fail closed before task generation for an ungated LMDB training run.
+
+        The capability key's ``environment`` is the contract environment used
+        by every training record in the manifest ("cpu"); it is not a hardware
+        qualification. LMDB fine-tuning stays experimental, so non-local
+        execution still requires the explicit ``allow_experimental`` opt-in.
+        """
+
+        lmdb_sections = [
+            (section, path)
+            for section, path in self._resolve_training_data_paths()
+            if is_lmdb_path(path)
+        ]
+        if not lmdb_sections:
+            return
+        section, systems = lmdb_sections[0]
+        key = CapabilityKey(
+            operation="fine-tune",
+            backend=self.config.dp_backend,
+            model_family="DPA4",
+            artifact="checkpoint",
+            data_format=data_format_for(systems),
+            environment="cpu",
+        )
+        matrix = CapabilityMatrix.load_default()
+        try:
+            matrix.require(key, allow_experimental=self.config.allow_experimental)
+        except CapabilityUnavailable as exc:
+            raise CapabilityUnavailable(
+                f"LMDB fine-tuning is not authorized for "
+                f"backend={self.config.dp_backend!r} "
+                f"({section}={systems!r}): {exc}"
+            ) from exc
 
 
     def _setup_logger(self):
@@ -92,6 +159,7 @@ class TrainingWorkflow:
         
         self.logger.info(f"Initializing Training Workflow in {self.work_dir}")
         self.logger.info(f"Mode: {self.mode}, Backend: {self.config.submission.backend}")
+        self._preflight_lmdb_training_capability()
         
         # 1. Prepare Configs
         seeds = self.config_manager.generate_seeds(self.num_models, self.config.seeds)
