@@ -75,27 +75,30 @@ class TrainingWorkflow:
         # Override training data path
         self.training_data_path = str(self.config.training_data_path) if self.config.training_data_path else None
 
-    def _resolve_training_systems(self):
-        """Return the effective training systems path used by the manager.
+    def _resolve_training_data_paths(self):
+        """Return effective ``(section, path)`` training data sources.
 
         ``TrainingConfigManager.resolve_data_path`` resolves relative paths
         against the input JSON directory, so the preflight must do the same
-        before deciding whether a suffixless LMDB directory is in play.
+        before deciding whether a suffixless LMDB directory is in play. Both
+        ``training_data`` and ``validation_data`` accept LMDB, so both are
+        inspected.
         """
-        systems = self.training_data_path
-        if systems is None:
-            systems = (
-                self.base_config.get("training", {})
-                .get("training_data", {})
-                .get("systems")
-            )
-        if not isinstance(systems, str) or not systems:
-            return None
-        if not os.path.isabs(systems):
-            systems = os.path.abspath(
-                os.path.join(os.path.dirname(self.input_json_path), systems)
-            )
-        return systems
+        training_config = self.base_config.get("training", {})
+        resolved = []
+        for section in ("training_data", "validation_data"):
+            if section == "training_data" and self.training_data_path is not None:
+                systems = self.training_data_path
+            else:
+                systems = training_config.get(section, {}).get("systems")
+            if not isinstance(systems, str) or not systems:
+                continue
+            if not os.path.isabs(systems):
+                systems = os.path.abspath(
+                    os.path.join(os.path.dirname(self.input_json_path), systems)
+                )
+            resolved.append((section, systems))
+        return resolved
 
     def _preflight_lmdb_training_capability(self):
         """Fail closed before task generation for an ungated LMDB training run.
@@ -106,9 +109,14 @@ class TrainingWorkflow:
         execution still requires the explicit ``allow_experimental`` opt-in.
         """
 
-        systems = self._resolve_training_systems()
-        if systems is None or not is_lmdb_path(systems):
+        lmdb_sections = [
+            (section, path)
+            for section, path in self._resolve_training_data_paths()
+            if is_lmdb_path(path)
+        ]
+        if not lmdb_sections:
             return
+        section, systems = lmdb_sections[0]
         key = CapabilityKey(
             operation="fine-tune",
             backend=self.config.dp_backend,
@@ -123,7 +131,8 @@ class TrainingWorkflow:
         except CapabilityUnavailable as exc:
             raise CapabilityUnavailable(
                 f"LMDB fine-tuning is not authorized for "
-                f"backend={self.config.dp_backend!r}: {exc}"
+                f"backend={self.config.dp_backend!r} "
+                f"({section}={systems!r}): {exc}"
             ) from exc
 
 

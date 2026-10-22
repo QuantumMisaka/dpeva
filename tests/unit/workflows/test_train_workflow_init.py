@@ -177,3 +177,39 @@ def test_training_workflow_lmdb_preflight_fails_closed_for_unregistered_backend(
         workflow = TrainingWorkflow(base)
         with pytest.raises(CapabilityUnavailable, match="no capability record"):
             workflow._preflight_lmdb_training_capability()
+
+
+def test_training_workflow_preflight_checks_validation_lmdb(tmp_path):
+    train_dir = tmp_path / "train"
+    train_dir.mkdir()
+    validation_dir = tmp_path / "validation"
+    validation_dir.mkdir()
+    (validation_dir / "data.mdb").write_bytes(b"placeholder")
+    input_json_path = tmp_path / "input.json"
+    input_json_path.write_text(
+        json.dumps(
+            {
+                "training": {
+                    "training_data": {"systems": "train"},
+                    "validation_data": {"systems": str(validation_dir)},
+                },
+                "model": {"type_map": ["H", "O"]},
+            }
+        ),
+        encoding="utf-8",
+    )
+    base = {
+        "base_model_path": str(tmp_path / "model.ckpt"),
+        "input_json_path": str(input_json_path),
+        "work_dir": str(tmp_path),
+        "model_head": "default",
+        "submission": {"backend": "local"},
+    }
+
+    with patch("dpeva.workflows.train.TrainingConfigManager"), \
+         patch("dpeva.workflows.train.TrainingExecutionManager"), \
+         patch("dpeva.workflows.train.TrainingIOManager"), \
+         patch("dpeva.workflows.train.setup_workflow_logger"):
+        workflow = TrainingWorkflow(base)
+        with pytest.raises(CapabilityUnavailable, match="validation_data"):
+            workflow._preflight_lmdb_training_capability()

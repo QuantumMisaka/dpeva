@@ -156,6 +156,40 @@ def test_write_lmdb_injects_mixed_real_atom_names_and_preserves_frames(
 
 
 @requires_lmdb_writer
+def test_write_lmdb_unwinds_injected_names_when_scan_is_interrupted(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from dpeva.io import lmdb_writer
+
+    system = _mixed_system(
+        tmp_path,
+        "mixed",
+        real_types=np.array([[0, 0], [1, 1]]),
+        coords=np.array(
+            [
+                [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]],
+                [[0.0, 0.0, 0.0], [1.5, 0.0, 0.0]],
+            ]
+        ),
+        energies=np.array([-1.0, -2.0]),
+    )
+    real_inject = lmdb_writer._inject_real_atom_names
+
+    def interrupt_after_injection(target_system, type_map):
+        real_inject(target_system, type_map)
+        raise KeyboardInterrupt
+
+    monkeypatch.setattr(
+        "dpeva.io.lmdb_writer._inject_real_atom_names", interrupt_after_injection
+    )
+    with pytest.raises(KeyboardInterrupt):
+        write_lmdb([system], tmp_path / "mixed.lmdb", type_map=["H", "O"])
+
+    assert "real_atom_names" not in system.data
+    assert not (tmp_path / "mixed.lmdb").exists()
+
+
+@requires_lmdb_writer
 def test_write_lmdb_supports_variable_mixed_nloc(tmp_path: Path) -> None:
     system = _mixed_system(
         tmp_path,

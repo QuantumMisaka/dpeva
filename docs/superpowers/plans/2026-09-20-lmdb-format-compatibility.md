@@ -680,6 +680,10 @@ label cleaned/anomalies 与 integration merged 均复用 WP-4A writer。
   等无 manifest 记录的 LMDB fine-tune 现在 fail-closed；
 - preflight 与 `TrainingConfigManager` 使用同一路径解析：相对 `systems`
   按 input JSON 目录解析，suffixless LMDB 目录不再漏检；
+- preflight 同时检查 `training_data` 与 `validation_data`：任一段是 LMDB
+  都要求显式 opt-in，避免 validation-only LMDB 绕过；
+- mixed source 的临时 `real_atom_names` 注入在 `BaseException`（含中断）
+  下也会回滚，不会把临时键留在调用方 system 上；
 - `examples/tutorials/paper_case/requirements.txt` 同步为
   `dpdata>=1.1,<1.2`；
 - 文档明确 capability key 的 `environment` 是契约测试环境而非硬件资格。

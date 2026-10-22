@@ -32,12 +32,12 @@ def _discard(path: Path) -> None:
         pass
 
 
-def _inject_real_atom_names(system, type_map: list[str] | None) -> str | None:
+def _inject_real_atom_names(system, type_map: list[str] | None) -> None:
     """Temporarily supply the names required by dpdata's mixed-type writer."""
 
     data = system.data
     if data.get("real_atom_types") is None or data.get("real_atom_names") is not None:
-        return None
+        return
     names = type_map or data.get("type_map") or data.get("atom_names")
     if not names:
         raise DatasetLoadError(
@@ -45,7 +45,6 @@ def _inject_real_atom_names(system, type_map: list[str] | None) -> str | None:
             "and no usable type_map/atom_names"
         )
     data["real_atom_names"] = list(names)
-    return "real_atom_names"
 
 
 def write_lmdb(
@@ -78,15 +77,25 @@ def write_lmdb(
         raise FileExistsError(f"LMDB output already exists: {target}")
 
     expected_nlocs: list[int] = []
-    injected_names: list[tuple[object, str | None]] = []
+    injected_names: list[object] = []
     try:
         for index, system in enumerate(ordered_systems):
             coords = system.data.get("coords")
             atom_types = system.data.get("atom_types")
             if coords is None or atom_types is None:
                 raise ValueError(f"system[{index}] must expose coords and atom_types")
-            injected = _inject_real_atom_names(system, type_map)
-            injected_names.append((system, injected))
+            needs_injection = (
+                system.data.get("real_atom_types") is not None
+                and system.data.get("real_atom_names") is None
+            )
+            try:
+                _inject_real_atom_names(system, type_map)
+            except BaseException:
+                if needs_injection:
+                    system.data.pop("real_atom_names", None)
+                raise
+            if needs_injection:
+                injected_names.append(system)
             real_types = system.data.get("real_atom_types")
             if real_types is not None:
                 real_array = np.asarray(real_types)
@@ -96,10 +105,10 @@ def write_lmdb(
                     )
                     continue
             expected_nlocs.extend([int(len(atom_types))] * len(system))
-    except Exception:
-        for system, attribute in injected_names:
-            if attribute is not None:
-                system.data.pop(attribute, None)
+    except BaseException:
+        # Also unwind temporary mixed-type names on KeyboardInterrupt/SystemExit.
+        for system in injected_names:
+            system.data.pop("real_atom_names", None)
         raise
 
     staging = target.parent / f".{target.name}.staging-{uuid4().hex}"
@@ -169,9 +178,8 @@ def write_lmdb(
             _discard(staging)
         if backup is not None and target.exists():
             _discard(backup)
-        for system, attribute in injected_names:
-            if attribute is not None:
-                system.data.pop(attribute, None)
+        for system in injected_names:
+            system.data.pop("real_atom_names", None)
     return {
         "path": str(target),
         "nframes": len(index.frames),
