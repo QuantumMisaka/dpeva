@@ -495,8 +495,10 @@ DeepMD-kit 版本，不负责选择 PyTorch 的 CPU/CUDA wheel；集群自编译
 <p>默认安装在核心依赖中提供有界的 <code class="docutils literal notranslate"><span class="pre">deepmd-kit&gt;=3.1.2,&lt;3.3</span></code>，用于保留现有
 3.1.2 运行包络。这个依赖边界是安装兼容性承诺，不是新的科学能力验证；能力
 矩阵和 3.2 证据仍由显式 lane 单独管理。</p>
-<p>核心依赖中的 <code class="docutils literal notranslate"><span class="pre">dpdata&gt;=1.1</span></code> 是数据侧能力边界：读取 <code class="docutils literal notranslate"><span class="pre">deepmd/lmdb</span></code> 需要该下限，
-<code class="docutils literal notranslate"><span class="pre">lmdb</span></code> 与 <code class="docutils literal notranslate"><span class="pre">msgpack</span></code> 由 dpdata 自身引入。预置环境（<code class="docutils literal notranslate"><span class="pre">--no-deps</span></code>）若仍是
+<p>核心依赖中的 <code class="docutils literal notranslate"><span class="pre">dpdata&gt;=1.1,&lt;1.2</span></code> 是数据侧能力边界：读取 <code class="docutils literal notranslate"><span class="pre">deepmd/lmdb</span></code> 需要该
+下限，<code class="docutils literal notranslate"><span class="pre">lmdb</span></code> 与 <code class="docutils literal notranslate"><span class="pre">msgpack</span></code> 由 dpdata 自身引入。上限暂定为 <code class="docutils literal notranslate"><span class="pre">&lt;1.2</span></code>，因为
+<code class="docutils literal notranslate"><span class="pre">clean</span></code> 的原始 system 恢复路径使用 dpdata 1.1 LMDB codec 的私有接口；在
+完成 1.2 兼容性验证前不会放开。预置环境（<code class="docutils literal notranslate"><span class="pre">--no-deps</span></code>）若仍是
 <code class="docutils literal notranslate"><span class="pre">dpdata&lt;1.1</span></code>，<code class="docutils literal notranslate"><span class="pre">deepmd/lmdb</span></code> 输入会被明确拒绝；<code class="docutils literal notranslate"><span class="pre">dpeva</span> <span class="pre">doctor</span></code> 的 <code class="docutils literal notranslate"><span class="pre">dpdata.lmdb</span></code>
 检查会报告实际可读性。</p>
 <p><code class="docutils literal notranslate"><span class="pre">pandas</span></code> 用于表格、UQ 和采样数据处理，<code class="docutils literal notranslate"><span class="pre">packaging</span></code> 用于运行时版本判定；

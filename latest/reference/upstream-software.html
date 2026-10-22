@@ -394,7 +394,7 @@ document.write(`
 <ul class="simple">
 <li><p>Status: active</p></li>
 <li><p>Audience: Users / Developers</p></li>
-<li><p>Last-Updated: 2026-10-12</p></li>
+<li><p>Last-Updated: 2026-10-22</p></li>
 </ul>
 <p>本文档汇总 DP-EVA 的上游软件，说明其仓库位置、安装层级与在本项目中的职责边界。</p>
 <section id="deepmd-kit">
@@ -419,11 +419,12 @@ qualification lane 时安装 <code class="docutils literal notranslate"><span cl
 <h3>1.1 3.2 compatibility qualification<a class="headerlink" href="#compatibility-qualification" title="Link to this heading">#</a></h3>
 <p>DeepMD-kit 3.2 的能力状态由
 <code class="docutils literal notranslate"><span class="pre">src/dpeva/compatibility/deepmd-3.2.json</span></code> 的精确 operation/backend/model/
-artifact/data/environment key 管理。当前有 3 条 <code class="docutils literal notranslate"><span class="pre">supported</span></code> 记录（DPA4
-pt test/eval-desc/embed），其余能力仍保持明确的
+artifact/data/environment key 管理。当前有 4 条 <code class="docutils literal notranslate"><span class="pre">supported</span></code> 记录（DPA4
+pt test/eval-desc/embed，以及 <code class="docutils literal notranslate"><span class="pre">test</span> <span class="pre">+</span> <span class="pre">deepmd/lmdb</span></code>），其余能力仍保持明确的
 experimental/unsupported/blocked 边界。SAI V100 qualification
-JobID <code class="docutils literal notranslate"><span class="pre">1128260</span></code> 与 CPU contract JobID <code class="docutils literal notranslate"><span class="pre">1128442</span></code> 的 producer-issued JSON
-证据已落库；完整边界见仓库报告
+JobID <code class="docutils literal notranslate"><span class="pre">1128260</span></code>、CPU contract JobID <code class="docutils literal notranslate"><span class="pre">1128442</span></code>、LMDB CPU contract JobID
+<code class="docutils literal notranslate"><span class="pre">1893534</span></code> 与 LMDB SAI A/B JobID <code class="docutils literal notranslate"><span class="pre">1893546</span></code> 的 producer-issued JSON 证据已落库；
+完整边界见仓库报告
 <code class="docutils literal notranslate"><span class="pre">docs/reports/2026-09-04-deepmd-3.2-compatibility.md</span></code>。
 其中 SAI aggregate 保留 DPA4 regular/EMA × <code class="docutils literal notranslate"><span class="pre">test</span></code>/<code class="docutils literal notranslate"><span class="pre">eval-desc</span></code>/<code class="docutils literal notranslate"><span class="pre">embed</span></code>
 共六条历史 attestation；DPA4C periodic 路线仍为 experimental，未纳入这六条
@@ -437,20 +438,29 @@ CPU evidence，以及需要时的 SAI evidence 均存在并通过，Compatibilit
 保留旧环境可用性，稳定 3.2 版本另行报告 qualification；3.1 不会被重新标记为
 3.2 已验证能力。legacy runtime 上缺少 3.2 才有的 CLI surface 属于信息性检查，
 不会把仍可用的旧环境整体判为 incompatible。</p>
-<p>当前 manifest 共 17 条（3 supported、8 experimental、4 unsupported、2
+<p>当前 manifest 共 21 条（4 supported、9 experimental、4 unsupported、4
 blocked-upstream）。每条记录还声明 <code class="docutils literal notranslate"><span class="pre">verification_status</span></code> 与
 <code class="docutils literal notranslate"><span class="pre">required_evidence</span></code>；<code class="docutils literal notranslate"><span class="pre">implemented</span></code> 必须绑定可收集的 pytest node，尚未具备测试的
-train/fine-tune/freeze、LMDB、pretrained alias 和 deploy 路线保持 planned，不能把
-占位命令当作已执行证据。<code class="docutils literal notranslate"><span class="pre">candidate-evaluation</span></code> 是供上层 generic preflight 使用的
-policy capability，不映射为 DeepMD CLI command。</p>
+train/fine-tune/freeze、LMDB fine-tune、pretrained alias 和 deploy 路线保持
+planned，不能把占位命令当作已执行证据。LMDB <code class="docutils literal notranslate"><span class="pre">train</span></code> 已有 CPU contract 与
+SAI 200-step execution A/B（仍为 experimental；训练曲线是随机 smoke，不作
+等价性声明）；<code class="docutils literal notranslate"><span class="pre">test</span> <span class="pre">+</span> <span class="pre">deepmd/lmdb</span></code> 已由 CPU contract 与 SAI npy↔lmdb A/B
+晋级 supported。LMDB 的 <code class="docutils literal notranslate"><span class="pre">eval-desc</span></code>/<code class="docutils literal notranslate"><span class="pre">embed</span></code> 记录由上游 issue #6034 标记为
+blocked-upstream。2026-10-22 复核 <code class="docutils literal notranslate"><span class="pre">master</span></code> commit <code class="docutils literal notranslate"><span class="pre">a78bdfe8</span></code>：该 issue 仍
+open，<code class="docutils literal notranslate"><span class="pre">eval_desc.py</span></code>/<code class="docutils literal notranslate"><span class="pre">embedding.py</span></code> 仍走 <code class="docutils literal notranslate"><span class="pre">expand_sys_str</span></code> + <code class="docutils literal notranslate"><span class="pre">DeepmdData</span></code>，
+尚无实现 PR；因此保持 blocked-upstream。
+<code class="docutils literal notranslate"><span class="pre">candidate-evaluation</span></code> 是供上层 generic preflight 使用的 policy capability，
+不映射为 DeepMD CLI command。</p>
 </section>
 </section>
 <section id="dpdata">
 <h2>2. dpdata<a class="headerlink" href="#dpdata" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p>仓库地址：https://github.com/deepmodeling/dpdata</p></li>
-<li><p>版本下限：<code class="docutils literal notranslate"><span class="pre">dpdata&gt;=1.1</span></code>（核心依赖）。读取 <code class="docutils literal notranslate"><span class="pre">deepmd/lmdb</span></code> 需要 <code class="docutils literal notranslate"><span class="pre">&gt;=1.1</span></code>；<code class="docutils literal notranslate"><span class="pre">lmdb</span></code> 与 <code class="docutils literal notranslate"><span class="pre">msgpack</span></code>
-由 dpdata 自身声明为运行依赖，DP-EVA 不新增直接依赖。</p></li>
+<li><p>版本边界：<code class="docutils literal notranslate"><span class="pre">dpdata&gt;=1.1,&lt;1.2</span></code>（核心依赖）。读取 <code class="docutils literal notranslate"><span class="pre">deepmd/lmdb</span></code> 需要 <code class="docutils literal notranslate"><span class="pre">&gt;=1.1</span></code>；
+<code class="docutils literal notranslate"><span class="pre">lmdb</span></code> 与 <code class="docutils literal notranslate"><span class="pre">msgpack</span></code> 由 dpdata 自身声明为运行依赖，DP-EVA 不新增直接依赖。
+<code class="docutils literal notranslate"><span class="pre">clean</span></code> 的原始 system 恢复路径使用 dpdata 1.1 的 LMDB codec 私有方法，因此在
+完成 1.2 兼容性验证前暂不放开上限。</p></li>
 <li><p>核心功能：处理 <code class="docutils literal notranslate"><span class="pre">deepmd/npy</span></code>、<code class="docutils literal notranslate"><span class="pre">deepmd/npy/mixed</span></code>、<code class="docutils literal notranslate"><span class="pre">deepmd/lmdb</span></code> 等机器学习势结构数据格式。</p></li>
 <li><p>在 DP-EVA 中的作用：</p>
 <ul>
@@ -477,13 +487,13 @@ policy capability，不映射为 DeepMD CLI command。</p>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">train</span></code>（<code class="docutils literal notranslate"><span class="pre">training_data</span></code> / <code class="docutils literal notranslate"><span class="pre">validation_data</span></code>）</p></td>
 <td><p>✓</p></td>
-<td><p>✓</p></td>
-<td><p>要求 <code class="docutils literal notranslate"><span class="pre">systems</span></code> 为<strong>单个字符串</strong>路径，deepmd-kit 3.2 起原生流式读取</p></td>
+<td><p>✓（CPU contract + SAI 200-step smoke；experimental）</p></td>
+<td><p>要求 <code class="docutils literal notranslate"><span class="pre">systems</span></code> 为<strong>单个字符串</strong>路径，deepmd-kit 3.2 起原生流式读取；训练曲线随机性不作为格式等价门</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">test</span></code></p></td>
 <td><p>✓</p></td>
-<td><p>✓</p></td>
-<td><p>整个 LMDB 视作 1 个数据源，按 nloc 分组评测；<code class="docutils literal notranslate"><span class="pre">-d</span></code> 明细行序 = nloc 组升序</p></td>
+<td><p>✓（supported）</p></td>
+<td><p>整个 LMDB 视作 1 个数据源，按 nloc 分组评测；<code class="docutils literal notranslate"><span class="pre">-d</span></code> 明细行序 = nloc 组升序，DP-EVA 用帧索引恢复归属</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">eval-desc</span></code> / <code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">embed</span></code></p></td>
 <td><p>✓</p></td>
@@ -493,8 +503,26 @@ policy capability，不映射为 DeepMD CLI command。</p>
 </tbody>
 </table>
 </div>
-<p><code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">test</span></code> 在 LMDB 上不保留目录级体系身份，因此 DP-EVA 目前拒绝从 LMDB 明细文件推导
-逐 system 统计（见 <code class="docutils literal notranslate"><span class="pre">docs/guides/troubleshooting.md</span></code> §5.3）；<code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">test</span></code> 自报的聚合指标不受影响。</p>
+<p><code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">test</span></code> 在 LMDB 上不保留目录级体系身份，但 DP-EVA 的 parser 现在通过
+<code class="docutils literal notranslate"><span class="pre">frame_nlocs</span></code>/<code class="docutils literal notranslate"><span class="pre">frame_system_ids</span></code> 恢复帧级 system 归属（缺失元数据时 fail-loud）。
+DeepMD-kit 3.2.0 的 <code class="docutils literal notranslate"><span class="pre">-d</span></code> 输出在 mixed-nloc LMDB 上只写首个 <code class="docutils literal notranslate"><span class="pre">[nloc=...]</span></code>
+header 却写出完整行集；parser 只在总行数与帧索引一致时按 nloc 组序归属，
+否则报错，不会静默猜测。
+<code class="docutils literal notranslate"><span class="pre">infer</span></code>/<code class="docutils literal notranslate"><span class="pre">analysis</span></code> 的明细解析和 Clean 的原始 system 导出因此可用；
+Clean 在没有 <code class="docutils literal notranslate"><span class="pre">frame_system_ids</span></code>/<code class="docutils literal notranslate"><span class="pre">system_info</span></code> 时 fail-loud；同一 source system
+内 atom count 不同的混合帧当前仍拒绝合并，避免伪造固定 atom 轴。<code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">test</span></code>
+自报的聚合指标不受影响。</p>
+<p><code class="docutils literal notranslate"><span class="pre">label</span></code> integration 的帧去重使用 canonical element/geometry identity：
+<code class="docutils literal notranslate"><span class="pre">type_map</span></code> 顺序和原子存储顺序不改变身份，标签数组随同一原子排列重排；
+LMDB 缺少 <code class="docutils literal notranslate"><span class="pre">real_atom_types</span></code> 时以规范化 <code class="docutils literal notranslate"><span class="pre">atom_types</span></code> 作为元素身份。该等价声明
+主要覆盖标准帧；npy/mixed 的 <code class="docutils literal notranslate"><span class="pre">real_atom_types</span></code> 与按组成分组的 LMDB 之间，
+混合类型跨格式去重不保证命中，需保留原始 mixed 元数据或显式使用 npy 副本。</p>
+<p>写出侧提供显式的 <code class="docutils literal notranslate"><span class="pre">dpeva.io.lmdb_writer.write_lmdb</span></code> 转换 API：
+它按输入 system 顺序写出到 staging，回读校验 <code class="docutils literal notranslate"><span class="pre">frame_system_ids</span></code>、帧数和
+nloc 组后原子发布；失败不会留下半成品或覆盖旧目标。缺少 <code class="docutils literal notranslate"><span class="pre">real_atom_names</span></code>
+的 mixed source 会从显式 type map 注入临时名称。Label 的
+<code class="docutils literal notranslate"><span class="pre">output_format</span></code> / <code class="docutils literal notranslate"><span class="pre">integration_output_format</span></code> 可选择 <code class="docutils literal notranslate"><span class="pre">deepmd/lmdb</span></code>，
+输出为 <code class="docutils literal notranslate"><span class="pre">&lt;output_dir&gt;/dataset.lmdb</span></code>；默认仍保持 npy/mixed，不自动切换。</p>
 </section>
 </section>
 <section id="abacus">

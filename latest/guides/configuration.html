@@ -433,8 +433,10 @@ document.write(`
 <h3>3.0 数据集格式边界<a class="headerlink" href="#id4" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p>受支持的数据集输入：<code class="docutils literal notranslate"><span class="pre">deepmd/npy</span></code>、<code class="docutils literal notranslate"><span class="pre">deepmd/npy/mixed</span></code>、<code class="docutils literal notranslate"><span class="pre">deepmd/lmdb</span></code>（需要 <code class="docutils literal notranslate"><span class="pre">dpdata&gt;=1.1</span></code>）。</p></li>
-<li><p>LMDB 输入由 dpdata 按<strong>组成分组</strong>读回，不保留目录级体系身份；依赖 system 名称的配置
-（如 Clean 的逐 system 归属、<code class="docutils literal notranslate"><span class="pre">target_systems</span></code> 筛选）在 LMDB 上会被明确拒绝。</p></li>
+<li><p>LMDB 输入由 dpdata 按<strong>组成分组</strong>读回；<code class="docutils literal notranslate"><span class="pre">frame_nlocs</span></code>/<code class="docutils literal notranslate"><span class="pre">frame_system_ids</span></code> 可用于
+<code class="docutils literal notranslate"><span class="pre">infer</span></code>/<code class="docutils literal notranslate"><span class="pre">analysis</span></code> 的逐帧明细归属。Clean 在这些元数据存在时按
+<code class="docutils literal notranslate"><span class="pre">frame_system_ids</span></code> 恢复原始 system 并导出；若元数据不足则 fail-loud，
+不使用 composition group 冒充原始 system。</p></li>
 <li><p>Feature 工作流的 <code class="docutils literal notranslate"><span class="pre">feature_exporter=&quot;eval_desc&quot;</span></code>/<code class="docutils literal notranslate"><span class="pre">&quot;embed&quot;</span></code> 上游不支持 LMDB，DP-EVA 在
 提交作业前拒绝；请提供 npy/mixed 副本或使用进程内描述符生成。</p></li>
 <li><p>完整支持矩阵与实测依据见 <code class="docutils literal notranslate"><span class="pre">docs/reference/upstream-software.md</span></code> §2.1。</p></li>
@@ -587,11 +589,14 @@ descriptor 可通过 <code class="docutils literal notranslate"><span class="pre
 <code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">--version</span></code>，不能用范围依赖代替精确锁定。当前 <code class="docutils literal notranslate"><span class="pre">pt-expt</span></code>
 backend 提供 descriptor 提取，但尚未提供 <code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">embed</span></code> 所需的组合
 <code class="docutils literal notranslate"><span class="pre">eval_embedding</span></code> 接口，因此这一路径应使用 <code class="docutils literal notranslate"><span class="pre">eval_desc</span></code>。</p>
-<p>当前 DeepMD 3.2 兼容性通道已有 3 条 <code class="docutils literal notranslate"><span class="pre">supported</span></code> 能力：DPA4
-pt test/eval-desc/embed。这些声明同时
+<p>当前 DeepMD 3.2 兼容性通道已有 4 条 <code class="docutils literal notranslate"><span class="pre">supported</span></code> 能力：DPA4
+pt test/eval-desc/embed，以及 <code class="docutils literal notranslate"><span class="pre">test</span> <span class="pre">+</span> <span class="pre">deepmd/lmdb</span></code>。三条 npy 声明同时
 绑定 CPU contract JobID <code class="docutils literal notranslate"><span class="pre">1128442</span></code> 和完成的 SAI V100 qualification JobID
 <code class="docutils literal notranslate"><span class="pre">1128260</span></code>；脱敏 SAI promotion aggregate 与三个 CPU attestation 位于
-<code class="docutils literal notranslate"><span class="pre">docs/reports/evidence/deepmd-3.2/</span></code>。证据只证明选定 regular 模型、regular+EMA
+<code class="docutils literal notranslate"><span class="pre">docs/reports/evidence/deepmd-3.2/</span></code>。LMDB <code class="docutils literal notranslate"><span class="pre">test</span></code> 另绑定 CPU JobID <code class="docutils literal notranslate"><span class="pre">1893534</span></code>
+和 SAI npy↔lmdb A/B JobID <code class="docutils literal notranslate"><span class="pre">1893546</span></code>；LMDB <code class="docutils literal notranslate"><span class="pre">train</span></code> 另有 CPU contract 与
+SAI 200-step execution A/B JobID <code class="docutils literal notranslate"><span class="pre">1893783</span></code>，但训练曲线随机性不足以作格式
+等价声明，因此仍为 experimental。证据只证明选定 regular 模型、regular+EMA
 V100 命令链完成，不构成科学精度或所有下游 head 的支持声明。一次
 <code class="docutils literal notranslate"><span class="pre">pt-expt</span> <span class="pre">eval-desc</span></code> 虽然执行成功，但事后 descriptor inspection 证明所用 artifact
 实际为 DPA4 而非 DPA4C；因此周期性 DPA4C 路线仍为 experimental，不能因命令
@@ -631,10 +636,19 @@ V100 命令链完成，不构成科学精度或所有下游 head 的支持声明
 <span class="w">  </span><span class="nt">"base_model_path"</span><span class="p">:</span><span class="w"> </span><span class="s2">"DPA-3.1-3M.pt"</span><span class="p">,</span>
 <span class="w">  </span><span class="nt">"num_models"</span><span class="p">:</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span>
 <span class="w">  </span><span class="nt">"training_mode"</span><span class="p">:</span><span class="w"> </span><span class="s2">"init"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"allow_experimental"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
 <span class="w">  </span><span class="nt">"submission"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"backend"</span><span class="p">:</span><span class="w"> </span><span class="s2">"slurm"</span><span class="w"> </span><span class="p">}</span>
 <span class="p">}</span>
 </pre></div>
 </div>
+<p><code class="docutils literal notranslate"><span class="pre">allow_experimental=true</span></code> 是显式实验能力开关。当前它用于允许
+<code class="docutils literal notranslate"><span class="pre">deepmd/lmdb</span></code> 训练/fine-tune 输入；默认 <code class="docutils literal notranslate"><span class="pre">false</span></code> 时，LMDB 训练会在生成任务前
+按 capability matrix 失败。preflight 使用与训练 manager 相同的路径解析
+（相对路径按 input JSON 所在目录解析），且对 manifest 中未注册的
+backend/模型族保持 fail-closed，不会因为查不到记录而放行。capability key 中的
+<code class="docutils literal notranslate"><span class="pre">environment</span></code> 是契约测试环境（训练记录统一为 <code class="docutils literal notranslate"><span class="pre">cpu</span></code>），不是硬件资格；LMDB
+fine-tune 仍是 experimental，Slurm/GPU 执行同样需要该显式开关。
+该开关不放宽 <code class="docutils literal notranslate"><span class="pre">eval-desc</span></code>/<code class="docutils literal notranslate"><span class="pre">embed</span></code> 的上游限制。</p>
 </section>
 <section id="infer">
 <h3>5.3 Infer<a class="headerlink" href="#infer" title="Link to this heading">#</a></h3>
@@ -704,6 +718,11 @@ V100 命令链完成，不构成科学精度或所有下游 head 的支持声明
 <span class="p">}</span>
 </pre></div>
 </div>
+<p><code class="docutils literal notranslate"><span class="pre">output_format</span></code>（cleaned/anomalies）和 <code class="docutils literal notranslate"><span class="pre">integration_output_format</span></code>（merged）均支持
+<code class="docutils literal notranslate"><span class="pre">deepmd/npy</span></code>、<code class="docutils literal notranslate"><span class="pre">deepmd/npy/mixed</span></code>、<code class="docutils literal notranslate"><span class="pre">deepmd/lmdb</span></code>；默认值不变。选择
+<code class="docutils literal notranslate"><span class="pre">deepmd/lmdb</span></code> 时，数据写入对应输出目录下的 <code class="docutils literal notranslate"><span class="pre">dataset.lmdb</span></code>，manifest/summary
+仍保留在同一目录。该写出使用 WP-4A 的显式 writer，并在发布前校验 frame/system
+身份；不会把 LMDB 自动设为默认格式。</p>
 <p>整合成功后，在 <code class="docutils literal notranslate"><span class="pre">merged_training_data_path</span></code> 下同时生成
 <code class="docutils literal notranslate"><span class="pre">integration_summary.json</span></code>、当前代兼容指针 <code class="docutils literal notranslate"><span class="pre">dataset-manifest.json</span></code> 和不可变的
 <code class="docutils literal notranslate"><span class="pre">dataset-manifest-&lt;generation&gt;.json</span></code>。summary 的 <code class="docutils literal notranslate"><span class="pre">dataset_manifest_path</span></code> 是相对于

@@ -2,7 +2,7 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-10-15
+last-updated: 2026-10-22
 owner: Docs Owner
 ---
 
@@ -118,7 +118,8 @@ DPEVA_TAG: WORKFLOW_FINISHED
 
 - `load_systems` 报 `DatasetLoadError`，提示 "Reading 'deepmd/lmdb' requires dpdata>=1.1"
 - Feature 的 `eval-desc`/`embed` 在提交前报 "cannot consume a DeepMD LMDB dataset"
-- Analysis/Clean 报 `-d` 明细 "reports an LMDB data source"
+- `dpeva infer` 在解析旧 LMDB 明细时可能报缺少 `frame_nlocs`/`frame_system_ids`
+- Clean 在 LMDB 缺少 `frame_system_ids`/`system_info` 时会拒绝猜测原始 system 划分
 
 处理：
 
@@ -129,11 +130,22 @@ DPEVA_TAG: WORKFLOW_FINISHED
   `target_systems=` 筛选时，改用同一数据集的 `deepmd/npy`/`npy/mixed` 副本
 - `dp eval-desc`/`dp embed` 上游不支持 LMDB；Feature 工作流请指向 npy/mixed 副本，
   或使用进程内 `DescriptorGenerator` 路径。上游跟踪 issue：
-  [deepmodeling/deepmd-kit#6034](https://github.com/deepmodeling/deepmd-kit/issues/6034)
+  [deepmodeling/deepmd-kit#6034](https://github.com/deepmodeling/deepmd-kit/issues/6034)。
+  2026-10-22 复核 `master` commit `a78bdfe8`，issue 仍 open，尚无实现 PR。
 - 训练（`dp train`）支持 LMDB，但 `training_data.systems` 必须是**单个 LMDB 路径**；
-  不要把多个 LMDB 放在一个容器目录里让 DP-EVA 展开
-- `dp test` 自报的聚合指标在 LMDB 上有效；逐帧逐 system 的明细归属需要
-  帧索引映射（见 `docs/superpowers/plans/2026-09-20-lmdb-format-compatibility.md`）
+  不要把多个 LMDB 放在一个容器目录里让 DP-EVA 展开。SAI 200-step execution
+  A/B（JobID `1893783`）已证明两条训练路径均可完成并写出 checkpoint；短程
+  lcurve 受随机采样影响，不能据此声称训练曲线逐位等价。
+- `dp test` 自报的聚合指标在 LMDB 上有效；带 `frame_nlocs`/`frame_system_ids`
+  的 LMDB 可由 `dpeva infer`/`analysis` 解析逐帧明细。缺失元数据时 parser 会
+  fail-loud，不会猜测归属
+- `test + deepmd/lmdb` 已由 DeepMD 3.2.0 CPU contract 与 SAI npy↔lmdb A/B
+  证据晋级 supported。DeepMD-kit 3.2.0 的 mixed-nloc `-d` 输出可能只有首个
+  `[nloc=...]` header；parser 仅在总行数与帧索引完全一致时按组序归属，否则
+  报错。`clean` 在 LMDB 带 `frame_system_ids` 元数据时可用；缺失时请补齐元数据或使用
+  npy/mixed 副本。同一 source system 内 atom count 不同的混合帧仍会被
+  `clean` 拒绝合并；同 atom count、不同组成的 mixed 帧会保留
+  `real_atom_types`。
 
 ## 6. 作业与调度类问题（Slurm）
 

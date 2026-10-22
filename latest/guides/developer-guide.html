@@ -1010,7 +1010,7 @@ document.write(`
 <li><p>可执行门禁目录是 <code class="docutils literal notranslate"><span class="pre">scripts/gates.toml</span></code>；<code class="docutils literal notranslate"><span class="pre">scripts/run_gate.py</span></code> 是本地与托管入口唯一的命令分发器。</p></li>
 <li><p>日常代码检查：<code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">scripts/run_gate.py</span> <span class="pre">local</span></code>。</p></li>
 <li><p>文档检查：<code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">scripts/run_gate.py</span> <span class="pre">docs_pr</span></code>；发布检查：<code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">scripts/run_gate.py</span> <span class="pre">release</span></code>。</p></li>
-<li><p>每个 profile 只证明其声明的层级；DeepMD 资格 profile 只在发布改变 DeepMD 能力声明时调用。当前能力矩阵仅有 3 条 DPA4 <code class="docutils literal notranslate"><span class="pre">supported</span></code> 记录，DPA4C 仍为 experimental。</p></li>
+<li><p>每个 profile 只证明其声明的层级；DeepMD 资格 profile 只在发布改变 DeepMD 能力声明时调用。当前能力矩阵有 4 条 DPA4 <code class="docutils literal notranslate"><span class="pre">supported</span></code> 记录（含 <code class="docutils literal notranslate"><span class="pre">test</span> <span class="pre">+</span> <span class="pre">deepmd/lmdb</span></code>），DPA4C 仍为 experimental。</p></li>
 <li><p>需要查看单个门禁或 profile 时运行 <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">scripts/run_gate.py</span> <span class="pre">--list</span></code>；不要在本页复制 gate argv。</p></li>
 </ul>
 </section>

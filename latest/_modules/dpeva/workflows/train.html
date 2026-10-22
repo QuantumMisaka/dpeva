@@ -683,6 +683,12 @@ document.write(`
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Union</span><span class="p">,</span> <span class="n">Dict</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">dpeva.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">TrainingConfig</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dpeva.compatibility</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">CapabilityKey</span><span class="p">,</span>
+    <span class="n">CapabilityMatrix</span><span class="p">,</span>
+    <span class="n">CapabilityUnavailable</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dpeva.io.dataset</span><span class="w"> </span><span class="kn">import</span> <span class="n">data_format_for</span><span class="p">,</span> <span class="n">is_lmdb_path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dpeva.io.training</span><span class="w"> </span><span class="kn">import</span> <span class="n">TrainingIOManager</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dpeva.training.managers</span><span class="w"> </span><span class="kn">import</span> <span class="n">TrainingConfigManager</span><span class="p">,</span> <span class="n">TrainingExecutionManager</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dpeva.constants</span><span class="w"> </span><span class="kn">import</span> <span class="n">WORKFLOW_FINISHED_TAG</span><span class="p">,</span> <span class="n">LOG_FILE_TRAIN</span>
@@ -725,6 +731,7 @@ document.write(`
              
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_json_path</span><span class="p">,</span> <span class="s1">'r'</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
             <span class="n">base_config</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">base_config</span> <span class="o">=</span> <span class="n">base_config</span>
             
         <span class="bp">self</span><span class="o">.</span><span class="n">config_manager</span> <span class="o">=</span> <span class="n">TrainingConfigManager</span><span class="p">(</span><span class="n">base_config</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_json_path</span><span class="p">)</span>
         
@@ -748,6 +755,66 @@ document.write(`
         
         <span class="c1"># Override training data path</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">training_data_path</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">training_data_path</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">training_data_path</span> <span class="k">else</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_training_data_paths</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Return effective ``(section, path)`` training data sources.</span>
+
+<span class="sd">        ``TrainingConfigManager.resolve_data_path`` resolves relative paths</span>
+<span class="sd">        against the input JSON directory, so the preflight must do the same</span>
+<span class="sd">        before deciding whether a suffixless LMDB directory is in play. Both</span>
+<span class="sd">        ``training_data`` and ``validation_data`` accept LMDB, so both are</span>
+<span class="sd">        inspected.</span>
+<span class="sd">        """</span>
+        <span class="n">training_config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"training"</span><span class="p">,</span> <span class="p">{})</span>
+        <span class="n">resolved</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">section</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"training_data"</span><span class="p">,</span> <span class="s2">"validation_data"</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">section</span> <span class="o">==</span> <span class="s2">"training_data"</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">training_data_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">systems</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">training_data_path</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">systems</span> <span class="o">=</span> <span class="n">training_config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">section</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"systems"</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">systems</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">systems</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isabs</span><span class="p">(</span><span class="n">systems</span><span class="p">):</span>
+                <span class="n">systems</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span>
+                    <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_json_path</span><span class="p">),</span> <span class="n">systems</span><span class="p">)</span>
+                <span class="p">)</span>
+            <span class="n">resolved</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">section</span><span class="p">,</span> <span class="n">systems</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">resolved</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_preflight_lmdb_training_capability</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Fail closed before task generation for an ungated LMDB training run.</span>
+
+<span class="sd">        The capability key's ``environment`` is the contract environment used</span>
+<span class="sd">        by every training record in the manifest ("cpu"); it is not a hardware</span>
+<span class="sd">        qualification. LMDB fine-tuning stays experimental, so non-local</span>
+<span class="sd">        execution still requires the explicit ``allow_experimental`` opt-in.</span>
+<span class="sd">        """</span>
+
+        <span class="n">lmdb_sections</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">(</span><span class="n">section</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">section</span><span class="p">,</span> <span class="n">path</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_training_data_paths</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">is_lmdb_path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="p">]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">lmdb_sections</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="n">section</span><span class="p">,</span> <span class="n">systems</span> <span class="o">=</span> <span class="n">lmdb_sections</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="n">CapabilityKey</span><span class="p">(</span>
+            <span class="n">operation</span><span class="o">=</span><span class="s2">"fine-tune"</span><span class="p">,</span>
+            <span class="n">backend</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">dp_backend</span><span class="p">,</span>
+            <span class="n">model_family</span><span class="o">=</span><span class="s2">"DPA4"</span><span class="p">,</span>
+            <span class="n">artifact</span><span class="o">=</span><span class="s2">"checkpoint"</span><span class="p">,</span>
+            <span class="n">data_format</span><span class="o">=</span><span class="n">data_format_for</span><span class="p">(</span><span class="n">systems</span><span class="p">),</span>
+            <span class="n">environment</span><span class="o">=</span><span class="s2">"cpu"</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">matrix</span> <span class="o">=</span> <span class="n">CapabilityMatrix</span><span class="o">.</span><span class="n">load_default</span><span class="p">()</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">matrix</span><span class="o">.</span><span class="n">require</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">allow_experimental</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">allow_experimental</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">CapabilityUnavailable</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">CapabilityUnavailable</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"LMDB fine-tuning is not authorized for "</span>
+                <span class="sa">f</span><span class="s2">"backend=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">dp_backend</span><span class="si">!r}</span><span class="s2"> "</span>
+                <span class="sa">f</span><span class="s2">"(</span><span class="si">{</span><span class="n">section</span><span class="si">}</span><span class="s2">=</span><span class="si">{</span><span class="n">systems</span><span class="si">!r}</span><span class="s2">): </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
 
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_setup_logger</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -775,6 +842,7 @@ document.write(`
         
         <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Initializing Training Workflow in </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">work_dir</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Mode: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">mode</span><span class="si">}</span><span class="s2">, Backend: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">backend</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_preflight_lmdb_training_capability</span><span class="p">()</span>
         
         <span class="c1"># 1. Prepare Configs</span>
         <span class="n">seeds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config_manager</span><span class="o">.</span><span class="n">generate_seeds</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_models</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">seeds</span><span class="p">)</span>

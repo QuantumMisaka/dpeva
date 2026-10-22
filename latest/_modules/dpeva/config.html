@@ -1199,14 +1199,14 @@ document.write(`
     <span class="c1"># Output format</span>
     <span class="n">output_format</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="n">DEFAULT_LABELING_OUTPUT_FORMAT</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">"Output format for cleaned/anomalies dataset (deepmd/npy or deepmd/npy/mixed)"</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Output format for cleaned/anomalies dataset (deepmd/npy, deepmd/npy/mixed, or deepmd/lmdb)"</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">integration_enabled</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Whether to integrate cleaned data into next-gen training data."</span><span class="p">)</span>
     <span class="n">existing_training_data_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Path to existing training dataset."</span><span class="p">)</span>
     <span class="n">merged_training_data_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Output path for merged training dataset."</span><span class="p">)</span>
     <span class="n">integration_output_format</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="n">DEFAULT_LABELING_INTEGRATION_OUTPUT_FORMAT</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">"Output format for merged training dataset (deepmd/npy or deepmd/npy/mixed)"</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Output format for merged training dataset (deepmd/npy, deepmd/npy/mixed, or deepmd/lmdb)"</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">integration_deduplicate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Whether to enable deduplication in integration."</span><span class="p">)</span>
 
@@ -1231,6 +1231,13 @@ document.write(`
     <span class="n">num_models</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">DEFAULT_NUM_MODELS</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Number of models (&gt;=3 for UQ)."</span><span class="p">)</span>
     <span class="n">training_mode</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"init"</span><span class="p">,</span> <span class="s2">"cont"</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="s2">"init"</span><span class="p">)</span>
     <span class="n">model_head</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Model head name."</span><span class="p">)</span>
+    <span class="n">allow_experimental</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="kc">False</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">"Explicitly allow experimental data-format capabilities such as "</span>
+            <span class="s2">"fine-tuning from deepmd/lmdb."</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
     
     <span class="n">input_json_path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">DEFAULT_INPUT_JSON</span><span class="p">)</span>
     <span class="n">seeds</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>

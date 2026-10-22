@@ -2,7 +2,7 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-10-15
+last-updated: 2026-10-22
 owner: Docs Owner
 ---
 
@@ -30,8 +30,10 @@ owner: Docs Owner
 ### 3.0 数据集格式边界
 
 - 受支持的数据集输入：`deepmd/npy`、`deepmd/npy/mixed`、`deepmd/lmdb`（需要 `dpdata>=1.1`）。
-- LMDB 输入由 dpdata 按**组成分组**读回，不保留目录级体系身份；依赖 system 名称的配置
-  （如 Clean 的逐 system 归属、`target_systems` 筛选）在 LMDB 上会被明确拒绝。
+- LMDB 输入由 dpdata 按**组成分组**读回；`frame_nlocs`/`frame_system_ids` 可用于
+  `infer`/`analysis` 的逐帧明细归属。Clean 在这些元数据存在时按
+  `frame_system_ids` 恢复原始 system 并导出；若元数据不足则 fail-loud，
+  不使用 composition group 冒充原始 system。
 - Feature 工作流的 `feature_exporter="eval_desc"`/`"embed"` 上游不支持 LMDB，DP-EVA 在
   提交作业前拒绝；请提供 npy/mixed 副本或使用进程内描述符生成。
 - 完整支持矩阵与实测依据见 `docs/reference/upstream-software.md` §2.1。
@@ -190,11 +192,14 @@ descriptor 可通过 `dp --pt-expt eval-desc` 提取，单任务模型无需设�
 backend 提供 descriptor 提取，但尚未提供 `dp embed` 所需的组合
 `eval_embedding` 接口，因此这一路径应使用 `eval_desc`。
 
-当前 DeepMD 3.2 兼容性通道已有 3 条 `supported` 能力：DPA4
-pt test/eval-desc/embed。这些声明同时
+当前 DeepMD 3.2 兼容性通道已有 4 条 `supported` 能力：DPA4
+pt test/eval-desc/embed，以及 `test + deepmd/lmdb`。三条 npy 声明同时
 绑定 CPU contract JobID `1128442` 和完成的 SAI V100 qualification JobID
 `1128260`；脱敏 SAI promotion aggregate 与三个 CPU attestation 位于
-`docs/reports/evidence/deepmd-3.2/`。证据只证明选定 regular 模型、regular+EMA
+`docs/reports/evidence/deepmd-3.2/`。LMDB `test` 另绑定 CPU JobID `1893534`
+和 SAI npy↔lmdb A/B JobID `1893546`；LMDB `train` 另有 CPU contract 与
+SAI 200-step execution A/B JobID `1893783`，但训练曲线随机性不足以作格式
+等价声明，因此仍为 experimental。证据只证明选定 regular 模型、regular+EMA
 V100 命令链完成，不构成科学精度或所有下游 head 的支持声明。一次
 `pt-expt eval-desc` 虽然执行成功，但事后 descriptor inspection 证明所用 artifact
 实际为 DPA4 而非 DPA4C；因此周期性 DPA4C 路线仍为 experimental，不能因命令
@@ -238,9 +243,19 @@ DeepMD PyTorch 模型可使用 `dp embed` 导出 HDF5 embedding。该路线会�
   "base_model_path": "DPA-3.1-3M.pt",
   "num_models": 3,
   "training_mode": "init",
+  "allow_experimental": false,
   "submission": { "backend": "slurm" }
 }
 ```
+
+`allow_experimental=true` 是显式实验能力开关。当前它用于允许
+`deepmd/lmdb` 训练/fine-tune 输入；默认 `false` 时，LMDB 训练会在生成任务前
+按 capability matrix 失败。preflight 使用与训练 manager 相同的路径解析
+（相对路径按 input JSON 所在目录解析），且对 manifest 中未注册的
+backend/模型族保持 fail-closed，不会因为查不到记录而放行。capability key 中的
+`environment` 是契约测试环境（训练记录统一为 `cpu`），不是硬件资格；LMDB
+fine-tune 仍是 experimental，Slurm/GPU 执行同样需要该显式开关。
+该开关不放宽 `eval-desc`/`embed` 的上游限制。
 
 ### 5.3 Infer
 
@@ -315,6 +330,12 @@ LLPR / energy DPOSE 可作为 Collect UQ backend 使用。最小 energy LLPR 只
   "integration_output_format": "deepmd/npy/mixed"
 }
 ```
+
+`output_format`（cleaned/anomalies）和 `integration_output_format`（merged）均支持
+`deepmd/npy`、`deepmd/npy/mixed`、`deepmd/lmdb`；默认值不变。选择
+`deepmd/lmdb` 时，数据写入对应输出目录下的 `dataset.lmdb`，manifest/summary
+仍保留在同一目录。该写出使用 WP-4A 的显式 writer，并在发布前校验 frame/system
+身份；不会把 LMDB 自动设为默认格式。
 
 整合成功后，在 `merged_training_data_path` 下同时生成
 `integration_summary.json`、当前代兼容指针 `dataset-manifest.json` 和不可变的
