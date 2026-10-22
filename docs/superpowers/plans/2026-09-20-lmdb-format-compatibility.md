@@ -667,6 +667,26 @@ label cleaned/anomalies 与 integration merged 均复用 WP-4A writer。
 - collection LMDB export；
 - training LMDB experimental opt-in。
 
+### 9.13.1 第二轮 focused review 修复
+
+对 hardening commit 的 focused re-review 又发现 1 Critical / 3 Important /
+2 Minor，均已处理：
+
+- writer 的发布异常处理从 `Exception` 扩到 `BaseException`：
+  `KeyboardInterrupt`/`SystemExit` 发生在旧目标已移入 backup、新目标尚未
+  发布之间时，会在 `finally` 前恢复旧目标；cleanup 失败不再掩盖写入结论，
+  staging/backup 清理改为 best-effort；
+- training preflight 不再对未知 backend/模型族静默放行：`tf`/`pt-expt`
+  等无 manifest 记录的 LMDB fine-tune 现在 fail-closed；
+- preflight 与 `TrainingConfigManager` 使用同一路径解析：相对 `systems`
+  按 input JSON 目录解析，suffixless LMDB 目录不再漏检；
+- `examples/tutorials/paper_case/requirements.txt` 同步为
+  `dpdata>=1.1,<1.2`；
+- 文档明确 capability key 的 `environment` 是契约测试环境而非硬件资格。
+
+新增回归：发布中断后旧目标仍可读且无残留 backup/staging；
+相对路径 LMDB 预检命中；未注册 backend 预检拒绝。
+
 ### 9.14 未随本 PR 收口的遗留项
 
 以下问题在独立审查中被提出，但不属于本 PR 新增的 LMDB 写入/读取面，

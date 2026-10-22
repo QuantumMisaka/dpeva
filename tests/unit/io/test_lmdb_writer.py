@@ -1,5 +1,6 @@
 """Explicit LMDB writer and self-check tests."""
 
+import os
 from pathlib import Path
 
 import dpdata
@@ -237,6 +238,36 @@ def test_write_lmdb_preserves_existing_target_on_failed_overwrite(
 
     assert original_reader(target).frames
     assert not list(tmp_path.glob(".out.lmdb.backup-*"))
+
+
+@requires_lmdb_writer
+def test_write_lmdb_restores_target_when_publish_is_interrupted(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    system = _system(
+        tmp_path,
+        "one",
+        np.array([[[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]]]),
+        np.array([-1.0]),
+    )
+    target = tmp_path / "out.lmdb"
+    write_lmdb([system], target, type_map=["Fe"])
+
+    real_replace = os.replace
+
+    def interrupt_publish(source, destination):
+        if Path(destination) == target and "staging" in Path(source).name:
+            raise KeyboardInterrupt
+        return real_replace(source, destination)
+
+    monkeypatch.setattr("dpeva.io.lmdb_writer.os.replace", interrupt_publish)
+    with pytest.raises(KeyboardInterrupt):
+        write_lmdb([system], target, type_map=["Fe"], overwrite=True)
+
+    assert target.is_dir()
+    assert read_lmdb_frame_index(target).frames
+    assert not list(tmp_path.glob(".out.lmdb.backup-*"))
+    assert not list(tmp_path.glob(".out.lmdb.staging-*"))
 
 
 def test_write_lmdb_rejects_empty_input(tmp_path: Path) -> None:

@@ -23,6 +23,15 @@ def _remove_path(path: Path) -> None:
         path.unlink()
 
 
+def _discard(path: Path) -> None:
+    """Remove a staging/backup artifact without masking the write outcome."""
+
+    try:
+        _remove_path(path)
+    except OSError:
+        pass
+
+
 def _inject_real_atom_names(system, type_map: list[str] | None) -> str | None:
     """Temporarily supply the names required by dpdata's mixed-type writer."""
 
@@ -139,23 +148,27 @@ def write_lmdb(
             os.replace(target, backup)
         os.replace(staging, target)
         staging = None
-    except Exception as exc:
+    except BaseException as exc:
+        # KeyboardInterrupt/SystemExit must not leave the previous target
+        # stranded under a hidden backup name.
         if staging is not None:
-            _remove_path(staging)
-        if backup is not None and not target.exists():
+            _discard(staging)
+        if backup is not None and not target.exists() and backup.exists():
             try:
                 os.replace(backup, target)
                 backup = None
             except OSError:
                 pass
+        if not isinstance(exc, Exception):
+            raise
         if isinstance(exc, DatasetLoadError):
             raise
         raise DatasetLoadError(f"Failed to write LMDB {target!s}: {exc}") from exc
     finally:
         if staging is not None:
-            _remove_path(staging)
+            _discard(staging)
         if backup is not None and target.exists():
-            _remove_path(backup)
+            _discard(backup)
         for system, attribute in injected_names:
             if attribute is not None:
                 system.data.pop(attribute, None)

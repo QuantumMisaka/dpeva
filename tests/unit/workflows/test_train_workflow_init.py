@@ -108,3 +108,72 @@ def test_training_workflow_requires_explicit_lmdb_experimental_opt_in(tmp_path):
 
         workflow = TrainingWorkflow({**base, "allow_experimental": True})
         workflow._preflight_lmdb_training_capability()
+
+
+def test_training_workflow_preflight_resolves_relative_lmdb_path(tmp_path):
+    config_dir = tmp_path / "configs"
+    config_dir.mkdir()
+    data_dir = config_dir / "dataset"
+    data_dir.mkdir()
+    (data_dir / "data.mdb").write_bytes(b"placeholder")
+    input_json_path = config_dir / "input.json"
+    input_json_path.write_text(
+        json.dumps(
+            {
+                "training": {"training_data": {"systems": "dataset"}},
+                "model": {"type_map": ["H", "O"]},
+            }
+        ),
+        encoding="utf-8",
+    )
+    base = {
+        "base_model_path": str(tmp_path / "model.ckpt"),
+        "input_json_path": str(input_json_path),
+        "work_dir": str(tmp_path),
+        "model_head": "default",
+        "submission": {"backend": "local"},
+    }
+
+    with patch("dpeva.workflows.train.TrainingConfigManager"), \
+         patch("dpeva.workflows.train.TrainingExecutionManager"), \
+         patch("dpeva.workflows.train.TrainingIOManager"), \
+         patch("dpeva.workflows.train.setup_workflow_logger"):
+        workflow = TrainingWorkflow(base)
+        with pytest.raises(CapabilityUnavailable, match="experimental"):
+            workflow._preflight_lmdb_training_capability()
+
+
+def test_training_workflow_lmdb_preflight_fails_closed_for_unregistered_backend(
+    tmp_path,
+):
+    data_dir = tmp_path / "dataset.lmdb"
+    data_dir.mkdir()
+    (data_dir / "data.mdb").write_bytes(b"placeholder")
+    input_json_path = tmp_path / "input.json"
+    input_json_path.write_text(
+        json.dumps(
+            {
+                "training": {"training_data": {"systems": str(data_dir)}},
+                "model": {"type_map": ["H", "O"]},
+            }
+        ),
+        encoding="utf-8",
+    )
+    base = {
+        "base_model_path": str(tmp_path / "model.ckpt"),
+        "training_data_path": str(data_dir),
+        "input_json_path": str(input_json_path),
+        "work_dir": str(tmp_path),
+        "model_head": "default",
+        "submission": {"backend": "local"},
+        "dp_backend": "tf",
+        "allow_experimental": True,
+    }
+
+    with patch("dpeva.workflows.train.TrainingConfigManager"), \
+         patch("dpeva.workflows.train.TrainingExecutionManager"), \
+         patch("dpeva.workflows.train.TrainingIOManager"), \
+         patch("dpeva.workflows.train.setup_workflow_logger"):
+        workflow = TrainingWorkflow(base)
+        with pytest.raises(CapabilityUnavailable, match="no capability record"):
+            workflow._preflight_lmdb_training_capability()

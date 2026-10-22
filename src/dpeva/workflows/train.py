@@ -75,9 +75,13 @@ class TrainingWorkflow:
         # Override training data path
         self.training_data_path = str(self.config.training_data_path) if self.config.training_data_path else None
 
-    def _preflight_lmdb_training_capability(self):
-        """Fail before task generation when a known LMDB capability is not opted in."""
+    def _resolve_training_systems(self):
+        """Return the effective training systems path used by the manager.
 
+        ``TrainingConfigManager.resolve_data_path`` resolves relative paths
+        against the input JSON directory, so the preflight must do the same
+        before deciding whether a suffixless LMDB directory is in play.
+        """
         systems = self.training_data_path
         if systems is None:
             systems = (
@@ -85,7 +89,25 @@ class TrainingWorkflow:
                 .get("training_data", {})
                 .get("systems")
             )
-        if not isinstance(systems, str) or not is_lmdb_path(systems):
+        if not isinstance(systems, str) or not systems:
+            return None
+        if not os.path.isabs(systems):
+            systems = os.path.abspath(
+                os.path.join(os.path.dirname(self.input_json_path), systems)
+            )
+        return systems
+
+    def _preflight_lmdb_training_capability(self):
+        """Fail closed before task generation for an ungated LMDB training run.
+
+        The capability key's ``environment`` is the contract environment used
+        by every training record in the manifest ("cpu"); it is not a hardware
+        qualification. LMDB fine-tuning stays experimental, so non-local
+        execution still requires the explicit ``allow_experimental`` opt-in.
+        """
+
+        systems = self._resolve_training_systems()
+        if systems is None or not is_lmdb_path(systems):
             return
         key = CapabilityKey(
             operation="fine-tune",
@@ -97,12 +119,12 @@ class TrainingWorkflow:
         )
         matrix = CapabilityMatrix.load_default()
         try:
-            matrix.get(key)
-        except CapabilityUnavailable:
-            # Unknown legacy backend/family combinations keep their existing
-            # manager-level boundary until a complete capability key exists.
-            return
-        matrix.require(key, allow_experimental=self.config.allow_experimental)
+            matrix.require(key, allow_experimental=self.config.allow_experimental)
+        except CapabilityUnavailable as exc:
+            raise CapabilityUnavailable(
+                f"LMDB fine-tuning is not authorized for "
+                f"backend={self.config.dp_backend!r}: {exc}"
+            ) from exc
 
 
     def _setup_logger(self):
