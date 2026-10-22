@@ -302,6 +302,11 @@ class DPTestResultParser:
                 )
             lmdb_path = next(iter(paths))
             index = read_lmdb_frame_index(lmdb_path)
+            if not index.has_system_identity:
+                raise DatasetLoadError(
+                    f"{lmdb_path} has no frame_system_ids/system_info metadata; "
+                    "dp test detail rows cannot be attributed to source systems"
+                )
             expected_nlocs = list(index.nloc_groups)
             header_nlocs = [nloc for _, nloc, _ in lmdb_headers]
             with open(e_file, 'r') as f:

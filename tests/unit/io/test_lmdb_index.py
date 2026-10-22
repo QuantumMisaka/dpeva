@@ -283,6 +283,29 @@ def test_metadata_index_rejects_system_with_multiple_nlocs(tmp_path: Path) -> No
         read_lmdb_frame_index(target)
 
 
+def test_parser_rejects_lmdb_without_system_identity(tmp_path: Path) -> None:
+    target = _write_metadata_lmdb(
+        tmp_path,
+        {
+            "nframes": 2,
+            "frame_nlocs": [2, 2],
+        },
+    )
+    (tmp_path / "results.e_peratom.out").write_text(
+        f"# {target} [nloc=2]: data_e pred_e\n0 0\n0 0\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "results.f.out").write_text(
+        f"# {target} [nloc=2]: data_fx data_fy data_fz pred_fx pred_fy pred_fz\n"
+        + "\n".join(["0 0 0 0 0 0"] * 4)
+        + "\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(DatasetLoadError, match="no frame_system_ids/system_info"):
+        DPTestResultParser(str(tmp_path), head="results").parse()
+
+
 @requires_lmdb_writer
 def test_npy_and_lmdb_share_canonical_frame_identity(tmp_path: Path) -> None:
     from dpeva.labeling.integration import DataIntegrationManager
