@@ -4,6 +4,12 @@ import json
 from typing import Union, Dict
 
 from dpeva.config import TrainingConfig
+from dpeva.compatibility import (
+    CapabilityKey,
+    CapabilityMatrix,
+    CapabilityUnavailable,
+)
+from dpeva.io.dataset import data_format_for, is_lmdb_path
 from dpeva.io.training import TrainingIOManager
 from dpeva.training.managers import TrainingConfigManager, TrainingExecutionManager
 from dpeva.constants import WORKFLOW_FINISHED_TAG, LOG_FILE_TRAIN
@@ -44,6 +50,7 @@ class TrainingWorkflow:
              
         with open(self.input_json_path, 'r') as f:
             base_config = json.load(f)
+        self.base_config = base_config
             
         self.config_manager = TrainingConfigManager(base_config, self.input_json_path)
         
@@ -67,6 +74,35 @@ class TrainingWorkflow:
         
         # Override training data path
         self.training_data_path = str(self.config.training_data_path) if self.config.training_data_path else None
+
+    def _preflight_lmdb_training_capability(self):
+        """Fail before task generation when a known LMDB capability is not opted in."""
+
+        systems = self.training_data_path
+        if systems is None:
+            systems = (
+                self.base_config.get("training", {})
+                .get("training_data", {})
+                .get("systems")
+            )
+        if not isinstance(systems, str) or not is_lmdb_path(systems):
+            return
+        key = CapabilityKey(
+            operation="fine-tune",
+            backend=self.config.dp_backend,
+            model_family="DPA4",
+            artifact="checkpoint",
+            data_format=data_format_for(systems),
+            environment="cpu",
+        )
+        matrix = CapabilityMatrix.load_default()
+        try:
+            matrix.get(key)
+        except CapabilityUnavailable:
+            # Unknown legacy backend/family combinations keep their existing
+            # manager-level boundary until a complete capability key exists.
+            return
+        matrix.require(key, allow_experimental=self.config.allow_experimental)
 
 
     def _setup_logger(self):
@@ -92,6 +128,7 @@ class TrainingWorkflow:
         
         self.logger.info(f"Initializing Training Workflow in {self.work_dir}")
         self.logger.info(f"Mode: {self.mode}, Backend: {self.config.submission.backend}")
+        self._preflight_lmdb_training_capability()
         
         # 1. Prepare Configs
         seeds = self.config_manager.generate_seeds(self.num_models, self.config.seeds)

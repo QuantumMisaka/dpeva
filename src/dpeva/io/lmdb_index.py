@@ -247,15 +247,6 @@ def read_lmdb_frame_index(path) -> LmdbFrameIndex:
     finally:
         env.close()
 
-    nloc_by_system: dict[int, int] = {}
-    for system_id, nloc in zip(frame_system_ids, frame_nlocs):
-        prior = nloc_by_system.setdefault(system_id, nloc)
-        if prior != nloc:
-            raise DatasetLoadError(
-                f"LMDB system_id {system_id} has multiple nloc values "
-                f"({prior}, {nloc}); dp test detail rows are not contiguous"
-            )
-
     base = os.path.basename(os.path.normpath(resolved_path))
     system_frame_offsets: dict[int, int] = defaultdict(int)
     frames: list[LmdbFrameRef] = []

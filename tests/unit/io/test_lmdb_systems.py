@@ -38,6 +38,34 @@ def _write_system(root: Path, name: str, coords: np.ndarray, energies: np.ndarra
     return dpdata.LabeledSystem(str(system_dir), fmt="deepmd/npy")
 
 
+def _write_mixed_system(
+    root: Path,
+    name: str,
+    *,
+    real_types: np.ndarray,
+    coords: np.ndarray,
+    energies: np.ndarray,
+):
+    system_dir = root / name
+    (system_dir / "set.000").mkdir(parents=True)
+    nframes, natoms = real_types.shape
+    (system_dir / "type.raw").write_text(" ".join("0" for _ in range(natoms)))
+    (system_dir / "type_map.raw").write_text("H\nO\n")
+    np.save(system_dir / "set.000" / "real_atom_types.npy", real_types)
+    np.save(system_dir / "set.000" / "coord.npy", coords.reshape(nframes, -1))
+    np.save(
+        system_dir / "set.000" / "box.npy",
+        np.tile(np.eye(3).reshape(1, 9), (nframes, 1)) * 10.0,
+    )
+    np.save(system_dir / "set.000" / "energy.npy", energies)
+    np.save(
+        system_dir / "set.000" / "force.npy",
+        np.zeros((nframes, natoms * 3), dtype=float),
+    )
+    np.save(system_dir / "set.000" / "virial.npy", np.zeros((nframes, 9)))
+    return dpdata.LabeledSystem(str(system_dir), fmt="deepmd/npy")
+
+
 def _write_metadata_only(root: Path) -> Path:
     target = root / "meta.lmdb"
     env = lmdb.open(str(target), map_size=1024 * 1024)
@@ -104,3 +132,55 @@ def test_loader_preserves_same_composition_system_partition(tmp_path: Path) -> N
     assert systems[1]["energies"].tolist() == [-3.0, -4.0]
     assert np.allclose(systems[0]["coords"][0], [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]])
     assert np.allclose(systems[1]["coords"][0], [[4.0, 0.0, 0.0], [5.0, 0.0, 0.0]])
+
+
+@requires_lmdb_writer
+def test_loader_preserves_mixed_composition_within_source_system(
+    tmp_path: Path,
+) -> None:
+    from dpeva.io.lmdb_writer import write_lmdb
+
+    system = _write_mixed_system(
+        tmp_path,
+        "mixed",
+        real_types=np.array([[0, 0], [1, 1]]),
+        coords=np.array(
+            [
+                [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]],
+                [[0.0, 0.0, 0.0], [1.5, 0.0, 0.0]],
+            ]
+        ),
+        energies=np.array([-1.0, -2.0]),
+    )
+    target = tmp_path / "mixed.lmdb"
+    write_lmdb([system], target, type_map=["H", "O"])
+
+    systems = load_lmdb_systems_by_id(target)
+
+    assert len(systems) == 1
+    assert systems[0]["atom_names"] == ["H", "O"]
+    assert systems[0]["real_atom_names"] == ["H", "O"]
+    assert systems[0]["real_atom_types"].tolist() == [[0, 0], [1, 1]]
+
+
+@requires_lmdb_writer
+def test_loader_rejects_variable_nloc_within_source_system(tmp_path: Path) -> None:
+    from dpeva.io.lmdb_writer import write_lmdb
+
+    system = _write_mixed_system(
+        tmp_path,
+        "variable",
+        real_types=np.array([[0, 0, -1], [1, 1, 1]]),
+        coords=np.array(
+            [
+                [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [99.0, 99.0, 99.0]],
+                [[0.0, 0.0, 0.0], [1.5, 0.0, 0.0], [2.0, 0.0, 0.0]],
+            ]
+        ),
+        energies=np.array([-1.0, -2.0]),
+    )
+    target = tmp_path / "variable.lmdb"
+    write_lmdb([system], target, type_map=["H", "O"])
+
+    with pytest.raises(DatasetLoadError, match="different atom counts"):
+        load_lmdb_systems_by_id(target)

@@ -41,6 +41,12 @@
     "torch_version": "2.11.0+cu126"
   },
   "execution_only": true,
+  "fixture_provenance": {
+    "exact_sai_runtime_dpdata_version": "1.0.2",
+    "generated_outside_exact_sai_runtime": true,
+    "lmdb_generation_dpdata_version": "1.1.0",
+    "note": "LMDB input was generated once with dpdata 1.1.0 outside the exact dpeva-dpa4-320 runtime (dpdata 1.0.2); the SAI job exercised the DeepMD reader/CLI path."
+  },
   "inputs_sha256": {
     "lmdb_config": "9bb44050f2e7e7ac376855ce0efa37e849218192646c483e84d2c9a75aa1a358",
     "lmdb_data": "d1757014b65896da935c05a35adb9ee537613b68a2e82438d216c24acf4b0cf9",

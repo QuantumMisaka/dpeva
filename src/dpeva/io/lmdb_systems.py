@@ -88,16 +88,40 @@ def load_lmdb_systems_by_id(path) -> List:
         formatter._validate_group_schema(
             canonical_frames, list(range(len(canonical_frames)))
         )
-        composition = tuple(
-            np.bincount(
-                canonical_frames[0]["atom_types"], minlength=len(names)
-            ).tolist()
+        frame_atom_types = [
+            np.asarray(frame["atom_types"], dtype=int).reshape(-1)
+            for frame in canonical_frames
+        ]
+        if any(
+            len(types) != len(frame_atom_types[0])
+            for types in frame_atom_types[1:]
+        ):
+            raise DatasetLoadError(
+                f"LMDB system {system_id} has frames with different atom counts; "
+                "refusing to combine incompatible source frames"
+            )
+        mixed_types = any(
+            not np.array_equal(frame_atom_types[0], types)
+            for types in frame_atom_types[1:]
         )
-        present = [index_value for index_value, count in enumerate(composition) if count]
-        atom_names = [names[index_value] for index_value in present]
-        remap = np.full(len(names), -1, dtype=int)
-        remap[present] = np.arange(len(present))
-        atom_types = remap[canonical_frames[0]["atom_types"]]
+        if mixed_types:
+            atom_names = list(names)
+            atom_types = frame_atom_types[0]
+        else:
+            composition = tuple(
+                np.bincount(
+                    frame_atom_types[0], minlength=len(names)
+                ).tolist()
+            )
+            present = [
+                index_value
+                for index_value, count in enumerate(composition)
+                if count
+            ]
+            atom_names = [names[index_value] for index_value in present]
+            remap = np.full(len(names), -1, dtype=int)
+            remap[present] = np.arange(len(present))
+            atom_types = remap[frame_atom_types[0]]
         data = {
             "atom_names": atom_names,
             "atom_numbs": np.bincount(
@@ -106,12 +130,17 @@ def load_lmdb_systems_by_id(path) -> List:
             "atom_types": atom_types,
             "orig": np.zeros(3),
         }
+        if mixed_types:
+            data["type_map"] = list(names)
         formatter._aggregate_group(
             data,
             canonical_frames,
             list(range(len(canonical_frames))),
             dp_specs,
         )
+        if mixed_types:
+            data["real_atom_names"] = list(names)
+            data["real_atom_types"] = np.stack(frame_atom_types, axis=0)
         datasets.append((system_id, data))
 
     formatter._register_specs([data for _, data in datasets], dp_specs)

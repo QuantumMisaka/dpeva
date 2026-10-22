@@ -175,7 +175,11 @@ class DataIntegrationManager:
         )
         try:
             if self.output_format == "deepmd/lmdb":
-                write_lmdb(list(merged), staging_path / "dataset.lmdb")
+                write_lmdb(
+                    list(merged),
+                    staging_path / "dataset.lmdb",
+                    type_map=list(reference_type_map or reference_atom_names or []),
+                )
             else:
                 merged.to(self.output_format, str(staging_path))
             content_identity = self._hash_exported_dataset(staging_path)

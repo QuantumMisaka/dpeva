@@ -52,6 +52,12 @@
     "qos": "improper-gpu",
     "torch_version": "2.11.0+cu126"
   },
+  "fixture_provenance": {
+    "exact_sai_runtime_dpdata_version": "1.0.2",
+    "generated_outside_exact_sai_runtime": true,
+    "lmdb_generation_dpdata_version": "1.1.0",
+    "note": "LMDB input was generated once with dpdata 1.1.0 outside the exact dpeva-dpa4-320 runtime (dpdata 1.0.2); the SAI job exercised the DeepMD reader/CLI path."
+  },
   "inputs": {
     "lmdb_datanames": 841,
     "lmdb_datanames_nframe_sha256": "5db1be07cf1eda7d897fdae4d0075ce1eaa16cff076f581c884e7613d8f47d82",

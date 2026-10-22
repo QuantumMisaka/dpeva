@@ -7,11 +7,14 @@ from unittest.mock import patch
 import dpdata
 import numpy as np
 import pytest
+from packaging.version import Version
 
 from dpeva.labeling.integration import (
     DataIntegrationManager,
     PublicationError,
 )
+from dpeva.io.dataset import load_systems
+from dpeva.io.lmdb_writer import write_lmdb
 
 
 class _FakeMultiSystems(list):
@@ -432,6 +435,7 @@ def test_integration_manager_lmdb_output(mock_write_lmdb, mock_load_systems, tmp
     )
 
     mock_write_lmdb.assert_called_once()
+    assert mock_write_lmdb.call_args.kwargs["type_map"] == ["Fe", "C"]
     assert (out_dir / "dataset.lmdb").is_file()
     assert result["output_format"] == "deepmd/lmdb"
     manifest = json.loads((out_dir / "dataset-manifest.json").read_text())
@@ -735,3 +739,38 @@ def test_rename_noreplace_syscall_failure_fails_closed(error, tmp_path):
     plain_rename.assert_not_called()
     assert source.exists()
     assert not target.exists()
+
+
+@pytest.mark.skipif(
+    Version(getattr(dpdata, "__version__", "0")) < Version("1.1"),
+    reason="deepmd/lmdb writing requires dpdata>=1.1",
+)
+def test_integration_handles_multi_composition_lmdb(tmp_path: Path) -> None:
+    def write_system(name: str, atom_type: int):
+        system_dir = tmp_path / name
+        (system_dir / "set.000").mkdir(parents=True)
+        (system_dir / "type.raw").write_text(f"{atom_type} {atom_type}\n")
+        (system_dir / "type_map.raw").write_text("H\nO\n")
+        np.save(
+            system_dir / "set.000" / "coord.npy",
+            np.array([[0.0, 0.0, 0.0, 1.0, 0.0, 0.0]]),
+        )
+        np.save(system_dir / "set.000" / "box.npy", np.eye(3).reshape(1, 9) * 10.0)
+        np.save(system_dir / "set.000" / "energy.npy", np.array([-1.0]))
+        np.save(system_dir / "set.000" / "force.npy", np.zeros((1, 6)))
+        np.save(system_dir / "set.000" / "virial.npy", np.zeros((1, 9)))
+        return dpdata.LabeledSystem(str(system_dir), fmt="deepmd/npy")
+
+    first = write_system("first", 0)
+    second = write_system("second", 1)
+    source = tmp_path / "multi.lmdb"
+    write_lmdb([first, second], source, type_map=["H", "O"])
+    output = tmp_path / "integrated"
+
+    result = DataIntegrationManager(
+        deduplicate=False, output_format="deepmd/lmdb"
+    ).integrate(new_labeled_data_path=source, merged_output_path=output)
+
+    assert result["reference_type_map"] == ["H", "O"]
+    systems = load_systems(str(output / "dataset.lmdb"))
+    assert len(systems) == 2

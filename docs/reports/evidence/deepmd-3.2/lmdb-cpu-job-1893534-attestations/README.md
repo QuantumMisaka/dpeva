@@ -14,7 +14,12 @@ These producer-issued attestations record the first complete exact
 
 The job used the `dpeva-dpa4-320` environment, the protected four-atom
 periodic fixture, and a generated `deepmd/lmdb` copy of that fixture. The
-contract covers:
+exact SAI runtime still has `dpdata 1.0.2`; the LMDB copy was generated once
+outside that runtime with `dpdata 1.1.0` and copied into the job. The CI
+contract lane generates the same fixture in-test under `dpdata>=1.1`. This
+contract proves the exact DeepMD reader/CLI plus DP-EVA parser on the SAI
+runtime; the writer is separately qualified in the `ft2dp-post` dpdata 1.1
+lane and the CI contract lane. The contract covers:
 
 - `dp --pt test -s <lmdb> -d ...`, including DP-EVA frame-index attribution of
   the detail rows;

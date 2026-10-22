@@ -1,6 +1,10 @@
 import os
 import json
 from unittest.mock import patch
+
+import pytest
+
+from dpeva.compatibility import CapabilityUnavailable
 from dpeva.workflows.train import TrainingWorkflow
 
 def test_training_workflow_init_multi_model(tmp_path):
@@ -67,3 +71,40 @@ def test_training_workflow_init_multi_model(tmp_path):
         assert mock_io_manager.copy_base_model.call_count == 4
         assert mock_exec_manager.generate_script.call_count == 4
         assert mock_exec_manager.submit_jobs.called
+
+
+def test_training_workflow_requires_explicit_lmdb_experimental_opt_in(tmp_path):
+    data_dir = tmp_path / "dataset.lmdb"
+    data_dir.mkdir()
+    (data_dir / "data.mdb").write_bytes(b"placeholder")
+    input_json_path = tmp_path / "input.json"
+    input_json_path.write_text(
+        json.dumps(
+            {
+                "training": {
+                    "training_data": {"systems": str(data_dir)},
+                },
+                "model": {"type_map": ["H", "O"]},
+            }
+        ),
+        encoding="utf-8",
+    )
+    base = {
+        "base_model_path": str(tmp_path / "model.ckpt"),
+        "training_data_path": str(data_dir),
+        "input_json_path": str(input_json_path),
+        "work_dir": str(tmp_path),
+        "model_head": "default",
+        "submission": {"backend": "local"},
+    }
+
+    with patch("dpeva.workflows.train.TrainingConfigManager"), \
+         patch("dpeva.workflows.train.TrainingExecutionManager"), \
+         patch("dpeva.workflows.train.TrainingIOManager"), \
+         patch("dpeva.workflows.train.setup_workflow_logger"):
+        workflow = TrainingWorkflow(base)
+        with pytest.raises(CapabilityUnavailable, match="experimental"):
+            workflow._preflight_lmdb_training_capability()
+
+        workflow = TrainingWorkflow({**base, "allow_experimental": True})
+        workflow._preflight_lmdb_training_capability()

@@ -143,7 +143,9 @@ DPEVA_TAG: WORKFLOW_FINISHED
   证据晋级 supported。DeepMD-kit 3.2.0 的 mixed-nloc `-d` 输出可能只有首个
   `[nloc=...]` header；parser 仅在总行数与帧索引完全一致时按组序归属，否则
   报错。`clean` 在 LMDB 带 `frame_system_ids` 元数据时可用；缺失时请补齐元数据或使用
-  npy/mixed 副本
+  npy/mixed 副本。同一 source system 内 atom count 不同的混合帧仍会被
+  `clean` 拒绝合并；同 atom count、不同组成的 mixed 帧会保留
+  `real_atom_types`。
 
 ## 6. 作业与调度类问题（Slurm）
 

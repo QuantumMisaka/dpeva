@@ -338,3 +338,4 @@ class AbacusPostProcessor:
             logger.info(f"Exported {len(new_ms)} systems to {output_dir}")
         except Exception as e:
             logger.error(f"Export failed: {e}")
+            raise

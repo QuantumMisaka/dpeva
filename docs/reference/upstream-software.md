@@ -71,8 +71,10 @@ open，`eval_desc.py`/`embedding.py` 仍走 `expand_sys_str` + `DeepmdData`，
 ## 2. dpdata
 
 - 仓库地址：https://github.com/deepmodeling/dpdata
-- 版本下限：`dpdata>=1.1`（核心依赖）。读取 `deepmd/lmdb` 需要 `>=1.1`；`lmdb` 与 `msgpack`
-  由 dpdata 自身声明为运行依赖，DP-EVA 不新增直接依赖。
+- 版本边界：`dpdata>=1.1,<1.2`（核心依赖）。读取 `deepmd/lmdb` 需要 `>=1.1`；
+  `lmdb` 与 `msgpack` 由 dpdata 自身声明为运行依赖，DP-EVA 不新增直接依赖。
+  `clean` 的原始 system 恢复路径使用 dpdata 1.1 的 LMDB codec 私有方法，因此在
+  完成 1.2 兼容性验证前暂不放开上限。
 - 核心功能：处理 `deepmd/npy`、`deepmd/npy/mixed`、`deepmd/lmdb` 等机器学习势结构数据格式。
 - 在 DP-EVA 中的作用：
   - 负责数据集加载、结构读写与多系统数据组织。
@@ -93,14 +95,20 @@ DeepMD-kit 3.2.0 的 `-d` 输出在 mixed-nloc LMDB 上只写首个 `[nloc=...]`
 header 却写出完整行集；parser 只在总行数与帧索引一致时按 nloc 组序归属，
 否则报错，不会静默猜测。
 `infer`/`analysis` 的明细解析和 Clean 的原始 system 导出因此可用；
-Clean 在没有 `frame_system_ids`/`system_info` 时 fail-loud。`dp test` 自报的聚合指标不受影响。
+Clean 在没有 `frame_system_ids`/`system_info` 时 fail-loud；同一 source system
+内 atom count 不同的混合帧当前仍拒绝合并，避免伪造固定 atom 轴。`dp test`
+自报的聚合指标不受影响。
 
 `label` integration 的帧去重使用 canonical element/geometry identity：
 `type_map` 顺序和原子存储顺序不改变身份，标签数组随同一原子排列重排；
-LMDB 缺少 `real_atom_types` 时以规范化 `atom_types` 作为元素身份。
+LMDB 缺少 `real_atom_types` 时以规范化 `atom_types` 作为元素身份。该等价声明
+主要覆盖标准帧；npy/mixed 的 `real_atom_types` 与按组成分组的 LMDB 之间，
+混合类型跨格式去重不保证命中，需保留原始 mixed 元数据或显式使用 npy 副本。
 
 写出侧提供显式的 `dpeva.io.lmdb_writer.write_lmdb` 转换 API：
-它按输入 system 顺序写出并回读校验 `frame_system_ids`。Label 的
+它按输入 system 顺序写出到 staging，回读校验 `frame_system_ids`、帧数和
+nloc 组后原子发布；失败不会留下半成品或覆盖旧目标。缺少 `real_atom_names`
+的 mixed source 会从显式 type map 注入临时名称。Label 的
 `output_format` / `integration_output_format` 可选择 `deepmd/lmdb`，
 输出为 `<output_dir>/dataset.lmdb`；默认仍保持 npy/mixed，不自动切换。
 

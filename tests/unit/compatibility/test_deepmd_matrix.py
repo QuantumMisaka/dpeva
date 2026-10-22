@@ -315,6 +315,8 @@ def test_lmdb_sai_ab_evidence_is_public_and_bound_to_raw_result() -> None:
     assert public["inputs"]["npy_frames"] == 2604
     assert public["inputs"]["lmdb_frames"] == 2604
     assert public["inputs"]["npy_systems"] == 964
+    assert public["fixture_provenance"]["lmdb_generation_dpdata_version"] == "1.1.0"
+    assert public["fixture_provenance"]["exact_sai_runtime_dpdata_version"] == "1.0.2"
     assert all(
         item["passed"] and item["relative_diff"] <= 2e-5
         for item in public["metrics"]["comparison"].values()
@@ -339,6 +341,7 @@ def test_lmdb_train_ab_is_execution_only_and_sanitized() -> None:
     assert payload["job_id"] == "1893783"
     assert payload["execution_only"] is True
     assert payload["metric_equivalence_claimed"] is False
+    assert payload["fixture_provenance"]["lmdb_generation_dpdata_version"] == "1.1.0"
     assert payload["checkpoints_sha256"]["mixed_step_200"]
     assert payload["checkpoints_sha256"]["lmdb_step_200"]
     serialized = path.read_text(encoding="utf-8")

@@ -243,9 +243,14 @@ DeepMD PyTorch 模型可使用 `dp embed` 导出 HDF5 embedding。该路线会�
   "base_model_path": "DPA-3.1-3M.pt",
   "num_models": 3,
   "training_mode": "init",
+  "allow_experimental": false,
   "submission": { "backend": "slurm" }
 }
 ```
+
+`allow_experimental=true` 是显式实验能力开关。当前它用于允许
+`deepmd/lmdb` 训练/fine-tune 输入；默认 `false` 时，LMDB 训练会在生成任务前
+按 capability matrix 失败。该开关不放宽 `eval-desc`/`embed` 的上游限制。
 
 ### 5.3 Infer
 

@@ -269,7 +269,7 @@ def test_metadata_index_falls_back_to_system_info(tmp_path: Path) -> None:
     }
 
 
-def test_metadata_index_rejects_system_with_multiple_nlocs(tmp_path: Path) -> None:
+def test_metadata_index_allows_variable_nloc_inside_source_system(tmp_path: Path) -> None:
     target = _write_metadata_lmdb(
         tmp_path,
         {
@@ -279,8 +279,16 @@ def test_metadata_index_rejects_system_with_multiple_nlocs(tmp_path: Path) -> No
         },
     )
 
-    with pytest.raises(DatasetLoadError, match="multiple nloc"):
-        read_lmdb_frame_index(target)
+    index = read_lmdb_frame_index(target)
+
+    assert [(frame.system_id, frame.nloc) for frame in index.test_order] == [
+        (0, 2),
+        (0, 3),
+    ]
+    assert index.dataname_list == [
+        ["meta.lmdb#sys0", 0, 2],
+        ["meta.lmdb#sys0", 1, 3],
+    ]
 
 
 def test_parser_rejects_lmdb_without_system_identity(tmp_path: Path) -> None:

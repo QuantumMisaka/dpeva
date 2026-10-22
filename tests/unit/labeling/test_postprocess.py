@@ -3,6 +3,7 @@ from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pandas as pd
+import pytest
 
 from dpeva.labeling.postprocess import AbacusPostProcessor
 
@@ -361,7 +362,8 @@ def test_export_data_logs_export_failure(mock_multi_systems, tmp_path: Path):
     new_ms.to.side_effect = RuntimeError("write failed")
 
     with patch("dpeva.labeling.postprocess.logger.error") as mock_error:
-        pp.export_data([system], df_clean, tmp_path / "cleaned")
+        with pytest.raises(RuntimeError, match="write failed"):
+            pp.export_data([system], df_clean, tmp_path / "cleaned")
 
     mock_error.assert_any_call("Export failed: write failed")
 

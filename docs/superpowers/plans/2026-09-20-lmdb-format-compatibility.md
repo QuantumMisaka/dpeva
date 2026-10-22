@@ -633,3 +633,52 @@ label cleaned/anomalies 与 integration merged 均复用 WP-4A writer。
 - 未发现实现该 issue 的 open/closed PR；
 - 因此 `eval-desc`/`embed + deepmd/lmdb` 保持 `blocked-upstream`，暂不改
   manifest 或引入 DP-EVA 侧替代实现。
+
+### 9.13 独立审查后的 hardening（2026-10-22）
+
+独立 cross-agent review 发现并已处理以下问题：
+
+- `load_lmdb_systems_by_id` 原先只取每个 source system 的第一帧元素表：
+  现对同一 atom count、不同组成的 mixed 帧保留
+  `real_atom_names`/`real_atom_types`；不同 atom count 的 source system
+  明确拒绝合并，避免伪造固定 atom 轴；
+- `write_lmdb` 改为 staging 写入 → 回读验证 → 原子发布；验证失败不会留下
+  半成品或覆盖旧目标；mixed source 缺少 `real_atom_names` 时从显式
+  type map 注入；可变 mixed nloc 支持写出，Clean loader 对无法安全合并的
+  可变 nloc 明确拒绝；
+- `AbacusPostProcessor.export_data` 不再吞掉导出异常，失败向上传播；
+- `dpeva collect` 对 LMDB `testdata_dir` 使用 source-system loader，
+  不再在 descriptor/UQ 计算后才因 `target_systems` 失败；
+- integration LMDB 输出传入 reference type map；
+- training workflow 在生成任务前对 LMDB fine-tune 做 capability preflight，
+  必须显式 `allow_experimental=true`；
+- `dpdata` 暂定 `>=1.1,<1.2`，因为 Clean 的恢复路径依赖 1.1 LMDB codec
+  私有接口；
+- CPU/SAI evidence 明确记录：SAI exact runtime 是 dpdata 1.0.2，LMDB fixture
+  由外部 dpdata 1.1.0 生成；CI lane 在 `dpdata>=1.1` 环境内生成。
+
+回归覆盖：
+
+- mixed same-nloc source-system 保留；
+- variable-nloc writer 写出与 Clean loader 的 fail-loud；
+- writer staging 失败不发布、已有目标不被覆盖；
+- label export 失败传播；
+- multi-composition LMDB integration；
+- collection LMDB export；
+- training LMDB experimental opt-in。
+
+### 9.14 未随本 PR 收口的遗留项
+
+以下问题在独立审查中被提出，但不属于本 PR 新增的 LMDB 写入/读取面，
+作为后续工作记录，避免被误认为已完成：
+
+- `InferenceExecutionManager` 仍通过 `DeepMDAdapter.for_legacy_unchecked`
+  构建命令，没有完整 `CapabilityKey`；`dp test + deepmd/lmdb` 的
+  `supported` 状态目前靠 workflow 级与 contract 测试保证，而不是 adapter
+  的强制 preflight。后续需要给 inference manager 传入完整 science context
+  后切换到 `adapter.preflight(key)`。
+- `feature` 的 `eval-desc`/`embed + deepmd/lmdb` 仍是 manager 内的显式
+  `ValueError`（指向 upstream #6034），尚未改为 capability matrix 查询。
+  行为等价，但两处边界需要统一。
+- `allow_experimental` 目前只覆盖 training workflow 的 LMDB fine-tune；
+  其他 experimental 能力在接入生产 manager 时需要同样的显式 opt-in 通道。

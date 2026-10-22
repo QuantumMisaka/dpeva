@@ -508,6 +508,13 @@ class TrainingConfig(BaseWorkflowConfig):
     num_models: int = Field(DEFAULT_NUM_MODELS, ge=3, description="Number of models (>=3 for UQ).")
     training_mode: Literal["init", "cont"] = Field("init")
     model_head: str = Field(..., description="Model head name.")
+    allow_experimental: bool = Field(
+        False,
+        description=(
+            "Explicitly allow experimental data-format capabilities such as "
+            "fine-tuning from deepmd/lmdb."
+        ),
+    )
     
     input_json_path: Path = Path(DEFAULT_INPUT_JSON)
     seeds: Optional[List[int]] = None
