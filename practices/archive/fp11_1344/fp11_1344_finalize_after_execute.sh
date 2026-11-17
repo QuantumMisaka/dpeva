@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Historical FP11 campaign asset; see README.md before use.
 set -Eeuo pipefail
 
 FP11_ROOT="${FP11_ROOT:-$HOME/fp11-sai1344/fp11}"
@@ -75,7 +76,7 @@ write_backend_report() {
   local rc
 
   log "writing backend report to $REPORT_PATH"
-  if "$PYTHON_BIN" "$REPO_ROOT/scripts/fp11_1344_backend_report.py" "$FP11_ROOT" > "$REPORT_PATH" 2>> "$FINALIZE_LOG"; then
+  if "$PYTHON_BIN" "$REPO_ROOT/practices/archive/fp11_1344/fp11_1344_backend_report.py" "$FP11_ROOT" > "$REPORT_PATH" 2>> "$FINALIZE_LOG"; then
     rc=0
   else
     rc=$?

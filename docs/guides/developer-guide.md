@@ -2,7 +2,7 @@
 title: Document
 status: active
 audience: Developers
-last-updated: 2026-10-22
+last-updated: 2026-11-17
 owner: Docs Owner
 ---
 
@@ -10,7 +10,7 @@ owner: Docs Owner
 
 - Status: active
 - Audience: Developers
-- Last-Updated: 2026-10-12
+- Last-Updated: 2026-11-17
 - Related:
   - 配置字段字典：`API Reference`（由 `src/dpeva/config.py` 自动生成）
   - 校验规则补充：`docs/reference/validation.md`
@@ -54,7 +54,7 @@ DP-EVA (Deep Potential EVolution Accelerator, 深度势能演化加速器) 是�
 
 #### 1.2.2 架构实践
 *   **模块解耦 (Modular Design)**：将复杂的科研脚本拆解为职责单一的原子模块 (Training, Inference, Uncertainty, Sampling)。
-*   **领域驱动设计 (Domain-Driven Design)**：v2.8.0+ 引入了领域驱动架构，将核心工作流拆分为 IO、Config、Execution 等独立服务层，大幅降低耦合度。
+*   **工作流与 Manager 分层**：工作流负责业务编排，IO、Config、Execution 等 Manager 承接对应职责；按各工作流的实际需求拆分，共享底层能力。
 *   **数据标准化 (Data Standardization)**：引入标准化的 `PredictionData` 接口，替代不透明的遗留对象。
 *   **双模调度 (Dual-Mode Scheduling)**：底层统一封装 `JobManager`，无缝支持 Local (Multiprocessing) 和 Slurm 集群环境。
 *   **日志规范 (Logging Discipline)**：库代码不干预全局日志配置，确保日志输出清晰、无冗余且易于追踪。
@@ -62,10 +62,10 @@ DP-EVA (Deep Potential EVolution Accelerator, 深度势能演化加速器) 是�
 
 ### 1.3 优化方向与路线图 (Roadmap)
 基于 Code Review 的建议，项目后续将重点关注以下方向：
-1.  **全链路 DDD 重构**：目前 Training, Collection, Inference 模块已完成 DDD 改造，后续需将 Feature 模块迁移至相同架构 (IO/Config/Execution Managers)。
+1.  **能力预审接线**：Training、Collection、Inference、Feature 已采用 workflow/manager 分层；后续应补齐执行 Manager 所需的完整能力上下文，收敛 DeepMD 临时兼容路径。
 2.  **统一配置管理**：进一步强化 Pydantic 在所有配置类中的应用，消除字典传递，确保类型安全。
 3.  **测试覆盖率**：提升集成测试的覆盖范围，特别是针对 Slurm 提交和异常处理的边界测试。
-4.  **遗留代码清理**：逐步移除标记为 Deprecated 的单体类 (`ParallelTrainer` 等)，保持代码库轻量化。
+4.  **兼容迁移与历史退役**：按公开承诺迁移仍有消费者的兼容入口；已结束 campaign 的操作脚本退出通用工具目录，保留历史复现位置。
 
 ### 1.4 开发流程标准 (Development Process Standard)
 为确保代码质量与知识沉淀，所有开发活动必须严格遵循以下标准流程：
@@ -158,6 +158,28 @@ DP-EVA (Deep Potential EVolution Accelerator, 深度势能演化加速器) 是�
 *   `docs/guides/*`、`docs/policy/*`、`docs/governance/*` 负责完整流程与治理细则，`AGENTS.md` 只保留跳转与最小摘要。
 
 
+(compatibility-retirement)=
+### 1.7 兼容迁移与已结束 campaign
+
+新代码使用 `DeepMDAdapter` 构建命令，并以完整 `CapabilityKey` 预审具体能力；环境探测使用
+`dpeva.run.doctor.probe_deepmd`。当前仍保留以下迁移边界：
+
+- `DPCommandBuilder` 的旧位置参数与 `set_backend()` 属于已承诺保留一版的兼容 facade；
+  `check_deepmd_version()` 也是带弃用提示的探测 wrapper。本次历史清理不撤销这些公开入口。
+- 顶层 submission aliases 仍按 `config_migration.py` 迁移并告警，目标移除版本为 `1.0`；
+  新配置统一使用嵌套 `submission`，冲突与未知字段仍报错。
+- Inference 的数字目录发现仍承接现有训练输出与缺省配置；新研究配置用显式
+  `model_ref_paths` 表达模型身份和 regular/EMA 角色，不能在尚未迁移消费者时删除发现路径。
+- Training、Inference、Feature 的默认 Manager 尚未传入完整科学能力上下文，仍使用
+  `for_legacy_unchecked`；这表示预审接线未完成，不代表组合已通过资格验证。
+  删除该桥接及 `preflight(matrix, key)` 兼容形式前，需要完成调用方迁移与接口验证。
+
+已结束的 FP11/SAI-1344 campaign 专用脚本已从 `scripts/fp11*` 移至
+[历史复现目录](https://github.com/QuantumMisaka/dpeva/tree/main/practices/archive/fp11_1344)，其中保存旧路径映射和适用范围。
+旧收尾/恢复 wrapper 带固定作业与环境假设，不能用作新的标注入口；新 campaign 使用
+`dpeva label` 及其配置/分阶段执行能力。生产环境脚本 `scripts/env/dpeva-dpa4.env` 继续有效。
+
+
 ---
 
 ## 2. 系统架构 (Architecture)
@@ -193,11 +215,11 @@ dpeva/
 │   │   ├── feature.py      # 特征生成工作流 (FeatureWorkflow)
 │   │   ├── labeling.py     # 标注工作流 (LabelingWorkflow)
 │   │   └── data_cleaning.py # 数据清洗工作流 (DataCleaningWorkflow)
-│   ├── training/           # 训练模块 (ParallelTrainer)
+│   ├── training/           # 训练 Config/Execution Managers（IO 位于 io/training.py）
 │   ├── inference/          # 推理模块 (StatsCalculator, Visualizer)
 │   ├── uncertain/          # 不确定度模块 (UQCalculator, UQFilter, Visualizer)
 │   ├── sampling/           # 采样模块 (DIRECT, PCA, Clustering)
-│   ├── feature/            # 特征生成模块 (DescriptorGenerator)
+│   ├── feature/            # Feature IO/Execution Managers 与 DescriptorGenerator
 │   ├── labeling/           # 标注模块 (Generator, Strategy, Postprocess, Integration)
 │   ├── submission/         # 任务提交抽象层 (JobManager, JobConfig, Templates)
 │   ├── io/                 # 数据读写辅助 (DPTestResultParser, PredictionData, CollectionIOManager 等)
@@ -283,7 +305,6 @@ graph TD
     *   **`TrainingIOManager`**: 负责工作空间管理与文件操作。
     *   **`TrainingConfigManager`**: 负责配置解析与随机种子管理。
     *   **`TrainingExecutionManager`**: 负责命令构建与作业提交。
-*   **`ParallelTrainer`**: (已过时/Deprecated) 遗留类，保留以维持向后兼容性。
 *   **特性**:
     *   自动工作目录隔离 (`0/`, `1/`, `2/`, `3/`)。
     *   支持 `OMP_NUM_THREADS` 自动配置。
@@ -292,7 +313,7 @@ graph TD
 ### 3.2 Inference 模块 (`dpeva.inference`)
 负责模型批量推理及后续的误差分析。
 *   **`InferenceWorkflow`**: 
-    *   自动扫描模型目录并提交 `dp test` 任务。
+    *   优先读取显式 `model_ref_paths` 并提交 `dp test`；未设置时保留 regular-only 数字目录发现兼容路径。
     *   **高级分析**: 内置 `StatsCalculator`，自动计算 RMSE/MAE。
     *   **相对能量分析**: 支持通过最小二乘法 (Least Squares) 拟合原子能量，计算 Cohesive Energy，从而在不同组分体系间进行公平比较。
     *   **可视化**: 自动生成 Parity Plot (能量/力) 和误差分布图。
@@ -324,13 +345,12 @@ graph TD
 
 ### 3.4 Feature 模块 (`dpeva.feature`)
 负责生成原子结构的描述符。
-*   **`DescriptorGenerator`**:
-    *   **CLI 模式**: 调用 `dp eval-desc` 命令，支持 Slurm 提交。
-    *   **DPA4C**: 使用 `dp_backend="pt-expt"` 和 `feature_exporter="eval_desc"` 导出 descriptor；单任务模型无需配置 `model_head`。正式发布版本要求 DeepMD-kit 3.2.0 或更新版本。当前 `pt-expt` 不提供 `dp embed` 所需的组合 embedding 接口。
-    *   **Python 模式**: 直接调用 `deepmd.infer` API，适合小规模或调试使用。
-    *   **数据一致性**: 统一使用 `dpeva.io.dataset.load_systems` 加载数据，确保在 `mixed` 格式下与 CLI 模式行为一致。
-    *   **单数据池兼容**: 智能识别 `desc_dir/System.npy` 格式的描述符文件，兼容单数据池模式下的平铺结构。
-    *   **多数据池支持**: 递归支持 `Dataset/System` 3层结构，通过增强的路径解析逻辑确保描述符与数据一一对应。
+*   **`FeatureWorkflow`**：校验 `FeatureConfig` 并编排运行。
+*   **`FeatureIOManager`**：识别单数据池与多数据池结构。
+*   **`FeatureExecutionManager`**：承接本地执行与 Slurm 提交；CLI 模式调用 `dp eval-desc` 或 `dp embed`，Python 模式调用 `DescriptorGenerator`。
+    *   **DPA4C**：使用 `dp_backend="pt-expt"` 和 `feature_exporter="eval_desc"` 导出 descriptor；单任务模型无需配置 `model_head`。正式发布版本要求 DeepMD-kit 3.2.0 或更新版本。当前 `pt-expt` 不提供 `dp embed` 所需的组合 embedding 接口。
+*   **`DescriptorGenerator`**：通过 `deepmd.infer` API 计算描述符或 fitting last-layer features，使用 `dpeva.io.dataset.load_systems` 加载数据。
+*   **描述符读取**：`CollectionIOManager` 承接 `desc_dir/System.npy` 单池平铺格式与多池 `Dataset/System` 路径匹配。
 
 ### 3.5 Submission 模块 (`dpeva.submission`)
 统一的任务提交抽象层。
@@ -568,25 +588,15 @@ FeCHO 教学包独立于 GPU 工作流；入口为 `examples/tutorials/paper_cas
 冻结科学证据保留其原始适用范围，不因脚本清理而宣称获得新的资格。
 用户教程直接引用实际 recipe，避免在 Markdown 内维护第二套完整 JSON。
 
-*   **运行兼容性测试 (Compatibility Test)**:
-    ```bash
-    cd test
-    python run_compat_test.py
-    ```
-    此脚本会自动验证单数据池 (Single Pool) 和多数据池 (Multi Pool) 在普通模式与联合模式下的运行正确性。
-    *   **描述符一致性**: 已通过 `verify_desc_consistency.py` 验证 CLI 模式下 NPY/Mixed 格式生成结果的一致性 (Diff < 1e-5)。
-
-*   **运行 Auto-UQ 测试**:
-    ```bash
-    cd test/verification_test_run
-    python run_auto_uq_test.py
-    ```
-    验证 KDE 阈值计算逻辑及可视化图表。
+单数据池、多数据池与联合采样的行为验证由 `tests/unit/io/test_collection_io*.py`、
+`tests/unit/workflows/test_collect_joint.py` 等现行测试承接；UQ 测试位于
+`tests/unit/uncertain/`。测试层级和运行入口见[测试指南](https://github.com/QuantumMisaka/dpeva/blob/main/docs/guides/testing/README.md)，不再引用已退役的
+`test/run_compat_test.py` 与 `test/verification_test_run/run_auto_uq_test.py`。
 
 ### 5.3 常见问题 (FAQ)
 
-**Q: 单数据池模式下提示 "Found descriptor via basename fallback" 是什么意思？**
-A: 旧版本会产生此 Warning，**新版本 (v2.2.0)** 已将其优化为 Info 级别的兼容性提示。这表示系统自动通过 `System.npy` 文件名匹配到了嵌套在 `Dataset/System` 路径下的结构数据，属于正常行为。
+**Q: 单数据池模式下提示 "Matched descriptor via basename" 是什么意思？**
+A: `CollectionIOManager` 在 Info 级别记录这条兼容性提示，表示通过 `System.npy` 文件名匹配到了 `Dataset/System` 路径对应的描述符，属于正常行为。
 
 **Q: 为什么联合采样导出的样本数少于 `direct_n_clusters`？**
 A: 这是预期行为。在联合模式下，`direct_n_clusters` 定义的是特征空间的总覆盖目标。如果某些区域已经被现有训练集覆盖，DIRECT 算法就不会再重复采样，从而节省标注成本。
@@ -630,6 +640,10 @@ DPEVA_TAG: WORKFLOW_FINISHED
 ### 6.2 版本历史
 
 #### **Current Era (v0.8.x)**
+
+*   **未发布维护变更** (2026-11-17):
+    *   **[历史退役]** FP11/SAI-1344 的六个专用脚本从 `scripts/` 移至 `practices/archive/fp11_1344/`；旧路径退出通用操作入口，专用回归测试继续覆盖历史行为。
+    *   **[文档对齐]** 对齐 Feature/Training Manager 架构，移除不存在的 `ParallelTrainer` 兼容叙述与失效测试命令；公开兼容 API 及其迁移承诺保留。
 
 *   **v0.8.2** (2026-09-06):
     *   **[兼容性]** 默认安装继续保留 `deepmd-kit>=3.1.2,<3.3` 的 legacy 运行包络；`dpeva[deepmd]` 提供 `>=3.2,<3.3` lane，研究生产仍精确锁定 `3.2.0`，版本范围本身不是科学资格结论。

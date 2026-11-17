@@ -2,7 +2,13 @@ import importlib.util
 from pathlib import Path
 
 
-MODULE_PATH = Path(__file__).resolve().parents[3] / "scripts" / "fp11_1344_backend_report.py"
+MODULE_PATH = (
+    Path(__file__).resolve().parents[3]
+    / "practices"
+    / "archive"
+    / "fp11_1344"
+    / "fp11_1344_backend_report.py"
+)
 
 
 def load_module():

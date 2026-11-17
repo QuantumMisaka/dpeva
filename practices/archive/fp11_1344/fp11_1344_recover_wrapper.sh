@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Historical FP11 campaign asset; see README.md before use.
 set -euo pipefail
 
 ROOT="${FP11_WORKSPACE_ROOT:-$HOME/fp11-sai1344}"
@@ -18,11 +19,11 @@ export PYTHONUNBUFFERED=1
 
 date '+%F %T %Z'
 "${CONDA_BIN}" run --no-capture-output -n dpeva-dpa4 python \
-  "${DPEVA_DIR}/scripts/fp11_1344_recover_after_false_finish.py" \
+  "${DPEVA_DIR}/practices/archive/fp11_1344/fp11_1344_recover_after_false_finish.py" \
   config_gpu_1344.json \
   --wait-job-id 581295 \
   --next-attempt 2 \
   --interval "${INTERVAL}"
 
-"${CONDA_BIN}" run --no-capture-output -n dpeva-dpa4 python "${DPEVA_DIR}/scripts/fp11_1344_backend_report.py"
+"${CONDA_BIN}" run --no-capture-output -n dpeva-dpa4 python "${DPEVA_DIR}/practices/archive/fp11_1344/fp11_1344_backend_report.py"
 date '+%F %T %Z'

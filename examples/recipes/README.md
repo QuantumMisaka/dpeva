@@ -41,6 +41,17 @@ signatures; new code should inject independent `DeepMDAdapter` instances or pass
 `backend` override. Legacy top-level submission aliases are migrated with warnings, and unknown
 or conflicting fields remain errors.
 
+The top-level submission aliases target removal at `1.0`; new recipes should already use
+nested submission settings. The deprecated `check_deepmd_version()` wrapper remains available;
+new Python callers should use `dpeva.run.doctor.probe_deepmd`. See the
+[developer guide](../../docs/guides/developer-guide.md#compatibility-retirement)
+for the retained manager and model-discovery migration boundaries.
+
+The completed FP11/SAI-1344 campaign scripts have moved from `scripts/fp11*` to
+[`practices/archive/fp11_1344/`](../../practices/archive/fp11_1344/README.md).
+That directory records the old-to-new path mapping for historical reproduction. Start new
+labeling campaigns with `dpeva label` and the labeling recipes below.
+
 ## 1. Active Learning Collection (`collection/`)
 
 The `collect` workflow is the heart of DP-EVA, handling Uncertainty Quantification (UQ), Filtering, and Sampling.

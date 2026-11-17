@@ -8,7 +8,9 @@ from types import SimpleNamespace
 
 MODULE_PATH = (
     Path(__file__).resolve().parents[3]
-    / "scripts"
+    / "practices"
+    / "archive"
+    / "fp11_1344"
     / "fp11_1344_recover_after_false_finish.py"
 )
 
