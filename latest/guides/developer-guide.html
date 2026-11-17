@@ -750,6 +750,7 @@ document.write(`
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#agents">1.6.5 AGENTS 与开发文档的治理边界</a></li>
 </ul>
 </li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#campaign">1.7 兼容迁移与已结束 campaign</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#architecture">2. 系统架构 (Architecture)</a><ul class="nav section-nav flex-column">
@@ -830,7 +831,7 @@ document.write(`
 <ul class="simple">
 <li><p>Status: active</p></li>
 <li><p>Audience: Developers</p></li>
-<li><p>Last-Updated: 2026-10-12</p></li>
+<li><p>Last-Updated: 2026-11-17</p></li>
 <li><p>Related:</p>
 <ul>
 <li><p>配置字段字典：<code class="docutils literal notranslate"><span class="pre">API</span> <span class="pre">Reference</span></code>（由 <code class="docutils literal notranslate"><span class="pre">src/dpeva/config.py</span></code> 自动生成）</p></li>
@@ -882,7 +883,7 @@ document.write(`
 <h4>1.2.2 架构实践<a class="headerlink" href="#id3" title="Link to this heading">#</a></h4>
 <ul class="simple">
 <li><p><strong>模块解耦 (Modular Design)</strong>：将复杂的科研脚本拆解为职责单一的原子模块 (Training, Inference, Uncertainty, Sampling)。</p></li>
-<li><p><strong>领域驱动设计 (Domain-Driven Design)</strong>：v2.8.0+ 引入了领域驱动架构，将核心工作流拆分为 IO、Config、Execution 等独立服务层，大幅降低耦合度。</p></li>
+<li><p><strong>工作流与 Manager 分层</strong>：工作流负责业务编排，IO、Config、Execution 等 Manager 承接对应职责；按各工作流的实际需求拆分，共享底层能力。</p></li>
 <li><p><strong>数据标准化 (Data Standardization)</strong>：引入标准化的 <code class="docutils literal notranslate"><span class="pre">PredictionData</span></code> 接口，替代不透明的遗留对象。</p></li>
 <li><p><strong>双模调度 (Dual-Mode Scheduling)</strong>：底层统一封装 <code class="docutils literal notranslate"><span class="pre">JobManager</span></code>，无缝支持 Local (Multiprocessing) 和 Slurm 集群环境。</p></li>
 <li><p><strong>日志规范 (Logging Discipline)</strong>：库代码不干预全局日志配置，确保日志输出清晰、无冗余且易于追踪。</p></li>
@@ -894,10 +895,10 @@ document.write(`
 <h3>1.3 优化方向与路线图 (Roadmap)<a class="headerlink" href="#roadmap" title="Link to this heading">#</a></h3>
 <p>基于 Code Review 的建议，项目后续将重点关注以下方向：</p>
 <ol class="arabic simple">
-<li><p><strong>全链路 DDD 重构</strong>：目前 Training, Collection, Inference 模块已完成 DDD 改造，后续需将 Feature 模块迁移至相同架构 (IO/Config/Execution Managers)。</p></li>
+<li><p><strong>能力预审接线</strong>：Training、Collection、Inference、Feature 已采用 workflow/manager 分层；后续应补齐执行 Manager 所需的完整能力上下文，收敛 DeepMD 临时兼容路径。</p></li>
 <li><p><strong>统一配置管理</strong>：进一步强化 Pydantic 在所有配置类中的应用，消除字典传递，确保类型安全。</p></li>
 <li><p><strong>测试覆盖率</strong>：提升集成测试的覆盖范围，特别是针对 Slurm 提交和异常处理的边界测试。</p></li>
-<li><p><strong>遗留代码清理</strong>：逐步移除标记为 Deprecated 的单体类 (<code class="docutils literal notranslate"><span class="pre">ParallelTrainer</span></code> 等)，保持代码库轻量化。</p></li>
+<li><p><strong>兼容迁移与历史退役</strong>：按公开承诺迁移仍有消费者的兼容入口；已结束 campaign 的操作脚本退出通用工具目录，保留历史复现位置。</p></li>
 </ol>
 </section>
 <section id="development-process-standard">
@@ -1034,6 +1035,26 @@ document.write(`
 </ul>
 </section>
 </section>
+<section id="campaign">
+<span id="compatibility-retirement"></span><h3>1.7 兼容迁移与已结束 campaign<a class="headerlink" href="#campaign" title="Link to this heading">#</a></h3>
+<p>新代码使用 <code class="docutils literal notranslate"><span class="pre">DeepMDAdapter</span></code> 构建命令，并以完整 <code class="docutils literal notranslate"><span class="pre">CapabilityKey</span></code> 预审具体能力；环境探测使用
+<code class="docutils literal notranslate"><span class="pre">dpeva.run.doctor.probe_deepmd</span></code>。当前仍保留以下迁移边界：</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">DPCommandBuilder</span></code> 的旧位置参数与 <code class="docutils literal notranslate"><span class="pre">set_backend()</span></code> 属于已承诺保留一版的兼容 facade；
+<code class="docutils literal notranslate"><span class="pre">check_deepmd_version()</span></code> 也是带弃用提示的探测 wrapper。本次历史清理不撤销这些公开入口。</p></li>
+<li><p>顶层 submission aliases 仍按 <code class="docutils literal notranslate"><span class="pre">config_migration.py</span></code> 迁移并告警，目标移除版本为 <code class="docutils literal notranslate"><span class="pre">1.0</span></code>；
+新配置统一使用嵌套 <code class="docutils literal notranslate"><span class="pre">submission</span></code>，冲突与未知字段仍报错。</p></li>
+<li><p>Inference 的数字目录发现仍承接现有训练输出与缺省配置；新研究配置用显式
+<code class="docutils literal notranslate"><span class="pre">model_ref_paths</span></code> 表达模型身份和 regular/EMA 角色，不能在尚未迁移消费者时删除发现路径。</p></li>
+<li><p>Training、Inference、Feature 的默认 Manager 尚未传入完整科学能力上下文，仍使用
+<code class="docutils literal notranslate"><span class="pre">for_legacy_unchecked</span></code>；这表示预审接线未完成，不代表组合已通过资格验证。
+删除该桥接及 <code class="docutils literal notranslate"><span class="pre">preflight(matrix,</span> <span class="pre">key)</span></code> 兼容形式前，需要完成调用方迁移与接口验证。</p></li>
+</ul>
+<p>已结束的 FP11/SAI-1344 campaign 专用脚本已从 <code class="docutils literal notranslate"><span class="pre">scripts/fp11*</span></code> 移至
+<a class="reference external" href="https://github.com/QuantumMisaka/dpeva/tree/main/practices/archive/fp11_1344">历史复现目录</a>，其中保存旧路径映射和适用范围。
+旧收尾/恢复 wrapper 带固定作业与环境假设，不能用作新的标注入口；新 campaign 使用
+<code class="docutils literal notranslate"><span class="pre">dpeva</span> <span class="pre">label</span></code> 及其配置/分阶段执行能力。生产环境脚本 <code class="docutils literal notranslate"><span class="pre">scripts/env/dpeva-dpa4.env</span></code> 继续有效。</p>
+</section>
 </section>
 <hr class="docutils" />
 <section id="architecture">
@@ -1068,11 +1089,11 @@ document.write(`
 │   │   ├── feature.py      # 特征生成工作流 (FeatureWorkflow)
 │   │   ├── labeling.py     # 标注工作流 (LabelingWorkflow)
 │   │   └── data_cleaning.py # 数据清洗工作流 (DataCleaningWorkflow)
-│   ├── training/           # 训练模块 (ParallelTrainer)
+│   ├── training/           # 训练 Config/Execution Managers（IO 位于 io/training.py）
 │   ├── inference/          # 推理模块 (StatsCalculator, Visualizer)
 │   ├── uncertain/          # 不确定度模块 (UQCalculator, UQFilter, Visualizer)
 │   ├── sampling/           # 采样模块 (DIRECT, PCA, Clustering)
-│   ├── feature/            # 特征生成模块 (DescriptorGenerator)
+│   ├── feature/            # Feature IO/Execution Managers 与 DescriptorGenerator
 │   ├── labeling/           # 标注模块 (Generator, Strategy, Postprocess, Integration)
 │   ├── submission/         # 任务提交抽象层 (JobManager, JobConfig, Templates)
 │   ├── io/                 # 数据读写辅助 (DPTestResultParser, PredictionData, CollectionIOManager 等)
@@ -1165,7 +1186,6 @@ document.write(`
 <li><p><strong><code class="docutils literal notranslate"><span class="pre">TrainingExecutionManager</span></code></strong>: 负责命令构建与作业提交。</p></li>
 </ul>
 </li>
-<li><p><strong><code class="docutils literal notranslate"><span class="pre">ParallelTrainer</span></code></strong>: (已过时/Deprecated) 遗留类，保留以维持向后兼容性。</p></li>
 <li><p><strong>特性</strong>:</p>
 <ul>
 <li><p>自动工作目录隔离 (<code class="docutils literal notranslate"><span class="pre">0/</span></code>, <code class="docutils literal notranslate"><span class="pre">1/</span></code>, <code class="docutils literal notranslate"><span class="pre">2/</span></code>, <code class="docutils literal notranslate"><span class="pre">3/</span></code>)。</p></li>
@@ -1181,7 +1201,7 @@ document.write(`
 <ul class="simple">
 <li><p><strong><code class="docutils literal notranslate"><span class="pre">InferenceWorkflow</span></code></strong>:</p>
 <ul>
-<li><p>自动扫描模型目录并提交 <code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">test</span></code> 任务。</p></li>
+<li><p>优先读取显式 <code class="docutils literal notranslate"><span class="pre">model_ref_paths</span></code> 并提交 <code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">test</span></code>；未设置时保留 regular-only 数字目录发现兼容路径。</p></li>
 <li><p><strong>高级分析</strong>: 内置 <code class="docutils literal notranslate"><span class="pre">StatsCalculator</span></code>，自动计算 RMSE/MAE。</p></li>
 <li><p><strong>相对能量分析</strong>: 支持通过最小二乘法 (Least Squares) 拟合原子能量，计算 Cohesive Energy，从而在不同组分体系间进行公平比较。</p></li>
 <li><p><strong>可视化</strong>: 自动生成 Parity Plot (能量/力) 和误差分布图。</p></li>
@@ -1239,16 +1259,15 @@ document.write(`
 <h3>3.4 Feature 模块 (<code class="docutils literal notranslate"><span class="pre">dpeva.feature</span></code>)<a class="headerlink" href="#feature-dpeva-feature" title="Link to this heading">#</a></h3>
 <p>负责生成原子结构的描述符。</p>
 <ul class="simple">
-<li><p><strong><code class="docutils literal notranslate"><span class="pre">DescriptorGenerator</span></code></strong>:</p>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">FeatureWorkflow</span></code></strong>：校验 <code class="docutils literal notranslate"><span class="pre">FeatureConfig</span></code> 并编排运行。</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">FeatureIOManager</span></code></strong>：识别单数据池与多数据池结构。</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">FeatureExecutionManager</span></code></strong>：承接本地执行与 Slurm 提交；CLI 模式调用 <code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">eval-desc</span></code> 或 <code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">embed</span></code>，Python 模式调用 <code class="docutils literal notranslate"><span class="pre">DescriptorGenerator</span></code>。</p>
 <ul>
-<li><p><strong>CLI 模式</strong>: 调用 <code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">eval-desc</span></code> 命令，支持 Slurm 提交。</p></li>
-<li><p><strong>DPA4C</strong>: 使用 <code class="docutils literal notranslate"><span class="pre">dp_backend=&quot;pt-expt&quot;</span></code> 和 <code class="docutils literal notranslate"><span class="pre">feature_exporter=&quot;eval_desc&quot;</span></code> 导出 descriptor；单任务模型无需配置 <code class="docutils literal notranslate"><span class="pre">model_head</span></code>。正式发布版本要求 DeepMD-kit 3.2.0 或更新版本。当前 <code class="docutils literal notranslate"><span class="pre">pt-expt</span></code> 不提供 <code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">embed</span></code> 所需的组合 embedding 接口。</p></li>
-<li><p><strong>Python 模式</strong>: 直接调用 <code class="docutils literal notranslate"><span class="pre">deepmd.infer</span></code> API，适合小规模或调试使用。</p></li>
-<li><p><strong>数据一致性</strong>: 统一使用 <code class="docutils literal notranslate"><span class="pre">dpeva.io.dataset.load_systems</span></code> 加载数据，确保在 <code class="docutils literal notranslate"><span class="pre">mixed</span></code> 格式下与 CLI 模式行为一致。</p></li>
-<li><p><strong>单数据池兼容</strong>: 智能识别 <code class="docutils literal notranslate"><span class="pre">desc_dir/System.npy</span></code> 格式的描述符文件，兼容单数据池模式下的平铺结构。</p></li>
-<li><p><strong>多数据池支持</strong>: 递归支持 <code class="docutils literal notranslate"><span class="pre">Dataset/System</span></code> 3层结构，通过增强的路径解析逻辑确保描述符与数据一一对应。</p></li>
+<li><p><strong>DPA4C</strong>：使用 <code class="docutils literal notranslate"><span class="pre">dp_backend=&quot;pt-expt&quot;</span></code> 和 <code class="docutils literal notranslate"><span class="pre">feature_exporter=&quot;eval_desc&quot;</span></code> 导出 descriptor；单任务模型无需配置 <code class="docutils literal notranslate"><span class="pre">model_head</span></code>。正式发布版本要求 DeepMD-kit 3.2.0 或更新版本。当前 <code class="docutils literal notranslate"><span class="pre">pt-expt</span></code> 不提供 <code class="docutils literal notranslate"><span class="pre">dp</span> <span class="pre">embed</span></code> 所需的组合 embedding 接口。</p></li>
 </ul>
 </li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">DescriptorGenerator</span></code></strong>：通过 <code class="docutils literal notranslate"><span class="pre">deepmd.infer</span></code> API 计算描述符或 fitting last-layer features，使用 <code class="docutils literal notranslate"><span class="pre">dpeva.io.dataset.load_systems</span></code> 加载数据。</p></li>
+<li><p><strong>描述符读取</strong>：<code class="docutils literal notranslate"><span class="pre">CollectionIOManager</span></code> 承接 <code class="docutils literal notranslate"><span class="pre">desc_dir/System.npy</span></code> 单池平铺格式与多池 <code class="docutils literal notranslate"><span class="pre">Dataset/System</span></code> 路径匹配。</p></li>
 </ul>
 </section>
 <section id="submission-dpeva-submission">
@@ -1511,30 +1530,15 @@ gate 命令或独立审批层。</p></li>
 确认承接和活跃引用后移除重复入口。跨进程、真实上游和集群契约仍归相应测试层；
 冻结科学证据保留其原始适用范围，不因脚本清理而宣称获得新的资格。
 用户教程直接引用实际 recipe，避免在 Markdown 内维护第二套完整 JSON。</p>
-<ul>
-<li><p><strong>运行兼容性测试 (Compatibility Test)</strong>:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span><span class="nb">test</span>
-python<span class="w"> </span>run_compat_test.py
-</pre></div>
-</div>
-<p>此脚本会自动验证单数据池 (Single Pool) 和多数据池 (Multi Pool) 在普通模式与联合模式下的运行正确性。</p>
-<ul class="simple">
-<li><p><strong>描述符一致性</strong>: 已通过 <code class="docutils literal notranslate"><span class="pre">verify_desc_consistency.py</span></code> 验证 CLI 模式下 NPY/Mixed 格式生成结果的一致性 (Diff &lt; 1e-5)。</p></li>
-</ul>
-</li>
-<li><p><strong>运行 Auto-UQ 测试</strong>:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>test/verification_test_run
-python<span class="w"> </span>run_auto_uq_test.py
-</pre></div>
-</div>
-<p>验证 KDE 阈值计算逻辑及可视化图表。</p>
-</li>
-</ul>
+<p>单数据池、多数据池与联合采样的行为验证由 <code class="docutils literal notranslate"><span class="pre">tests/unit/io/test_collection_io*.py</span></code>、
+<code class="docutils literal notranslate"><span class="pre">tests/unit/workflows/test_collect_joint.py</span></code> 等现行测试承接；UQ 测试位于
+<code class="docutils literal notranslate"><span class="pre">tests/unit/uncertain/</span></code>。测试层级和运行入口见<a class="reference external" href="https://github.com/QuantumMisaka/dpeva/blob/main/docs/guides/testing/README.md">测试指南</a>，不再引用已退役的
+<code class="docutils literal notranslate"><span class="pre">test/run_compat_test.py</span></code> 与 <code class="docutils literal notranslate"><span class="pre">test/verification_test_run/run_auto_uq_test.py</span></code>。</p>
 </section>
 <section id="faq">
 <h3>5.3 常见问题 (FAQ)<a class="headerlink" href="#faq" title="Link to this heading">#</a></h3>
-<p><strong>Q: 单数据池模式下提示 &quot;Found descriptor via basename fallback&quot; 是什么意思？</strong>
-A: 旧版本会产生此 Warning，<strong>新版本 (v2.2.0)</strong> 已将其优化为 Info 级别的兼容性提示。这表示系统自动通过 <code class="docutils literal notranslate"><span class="pre">System.npy</span></code> 文件名匹配到了嵌套在 <code class="docutils literal notranslate"><span class="pre">Dataset/System</span></code> 路径下的结构数据，属于正常行为。</p>
+<p><strong>Q: 单数据池模式下提示 &quot;Matched descriptor via basename&quot; 是什么意思？</strong>
+A: <code class="docutils literal notranslate"><span class="pre">CollectionIOManager</span></code> 在 Info 级别记录这条兼容性提示，表示通过 <code class="docutils literal notranslate"><span class="pre">System.npy</span></code> 文件名匹配到了 <code class="docutils literal notranslate"><span class="pre">Dataset/System</span></code> 路径对应的描述符，属于正常行为。</p>
 <p><strong>Q: 为什么联合采样导出的样本数少于 <code class="docutils literal notranslate"><span class="pre">direct_n_clusters</span></code>？</strong>
 A: 这是预期行为。在联合模式下，<code class="docutils literal notranslate"><span class="pre">direct_n_clusters</span></code> 定义的是特征空间的总覆盖目标。如果某些区域已经被现有训练集覆盖，DIRECT 算法就不会再重复采样，从而节省标注成本。</p>
 </section>
@@ -1589,6 +1593,12 @@ A: 这是预期行为。在联合模式下，<code class="docutils literal notra
 <section id="current-era-v0-8-x">
 <h4><strong>Current Era (v0.8.x)</strong><a class="headerlink" href="#current-era-v0-8-x" title="Link to this heading">#</a></h4>
 <ul class="simple">
+<li><p><strong>未发布维护变更</strong> (2026-11-17):</p>
+<ul>
+<li><p><strong>[历史退役]</strong> FP11/SAI-1344 的六个专用脚本从 <code class="docutils literal notranslate"><span class="pre">scripts/</span></code> 移至 <code class="docutils literal notranslate"><span class="pre">practices/archive/fp11_1344/</span></code>；旧路径退出通用操作入口，专用回归测试继续覆盖历史行为。</p></li>
+<li><p><strong>[文档对齐]</strong> 对齐 Feature/Training Manager 架构，移除不存在的 <code class="docutils literal notranslate"><span class="pre">ParallelTrainer</span></code> 兼容叙述与失效测试命令；公开兼容 API 及其迁移承诺保留。</p></li>
+</ul>
+</li>
 <li><p><strong>v0.8.2</strong> (2026-09-06):</p>
 <ul>
 <li><p><strong>[兼容性]</strong> 默认安装继续保留 <code class="docutils literal notranslate"><span class="pre">deepmd-kit&gt;=3.1.2,&lt;3.3</span></code> 的 legacy 运行包络；<code class="docutils literal notranslate"><span class="pre">dpeva[deepmd]</span></code> 提供 <code class="docutils literal notranslate"><span class="pre">&gt;=3.2,&lt;3.3</span></code> lane，研究生产仍精确锁定 <code class="docutils literal notranslate"><span class="pre">3.2.0</span></code>，版本范围本身不是科学资格结论。</p></li>
@@ -1969,6 +1979,7 @@ A: 这是预期行为。在联合模式下，<code class="docutils literal notra
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#agents">1.6.5 AGENTS 与开发文档的治理边界</a></li>
 </ul>
 </li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#campaign">1.7 兼容迁移与已结束 campaign</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#architecture">2. 系统架构 (Architecture)</a><ul class="nav section-nav flex-column">
